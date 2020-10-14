@@ -1,0 +1,19 @@
+.DS_Store
+cover.out
+
+# Editor directories and files
+.idea
+.vscode
+.project
+project.dict
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+#
+/cache/
+/reports/
+/cover-data/
+/.scannerwork
