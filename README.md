@@ -1,6 +1,6 @@
 # Monoskope
 
-![Monoskope Logo](logo/monoskope.png)
+![Monoskope Logo](assets/logo/monoskope.png)
 
 [![pipeline status](https://gitlab.figo.systems/platform/monoskope/monoskope/badges/master/pipeline.svg)](https://gitlab.figo.systems/platform/tenancy-system/commits/master)
 
