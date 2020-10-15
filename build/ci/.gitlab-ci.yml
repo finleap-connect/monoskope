@@ -1,0 +1,23 @@
+stages:
+  #  - test
+  - deliver
+
+# lint:golang:
+#   stage: test
+#   image: golang:1.13.6-buster
+#   only:
+#     changes:
+#       - cmd/**/*
+#       - pkg/**/*
+#       - go.mod
+#   script:
+#     - make go-lint
+
+deliver:chart:
+  stage: deliver
+  only:
+    - tag
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-chart --chart-dir ./build/package/helm --promote-version $VERSION
