@@ -15,16 +15,20 @@ go-%:
 
 # helm
 
-.PHONY: helm-deploy helm-template helm-dependency-update
+.PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
 
 helm-template-clean:
-	rm -R $(HELM_OUTPUT_DIR)
+	@rm -Rf $(HELM_OUTPUT_DIR)
 
 helm-dependency-update:
-	$(HELM) dep update $(HELM_PATH_MONOSKOPE)
+	@$(HELM) dep update $(HELM_PATH_MONOSKOPE)
 
-helm-deploy:
-	$(HELM) upgrade --install monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+helm-install:
+	@$(HELM) upgrade --install monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+
+helm-uninstall:
+	@$(HELM) uninstall monoskope --namespace $(KUBE_NAMESPACE)
 
 helm-template: helm-template-clean
-	$(HELM) template monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds
+	@mkdir -p $(HELM_OUTPUT_DIR)
+	@$(HELM) template monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds

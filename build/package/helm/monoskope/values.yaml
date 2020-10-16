@@ -14,7 +14,6 @@ dex:
   imageTag: "v2.24.0"
   imagePullPolicy: "Always"
   imagePullSecrets: {}
-  inMiniKube: false
   nodeSelector: {}
   podLabels: {}
   podAnnotations: {}
@@ -85,8 +84,6 @@ dex:
     timeoutSeconds: 1
   service:
     type: ClusterIP
-    # Override IP for the Service Type: LoadBalancer.
-    # This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created.
     # loadBalancerIP: 127.0.0.1
     annotations: {}
   ingress:
@@ -104,40 +101,12 @@ dex:
   extraVolumes: []
   extraVolumeMounts: []
   certs:
-    securityContext:
-      enabled: true
-      runAsUser: 65534
-      fsGroup: 65534
-    image: gcr.io/google_containers/kubernetes-dashboard-init-amd64
-    imageTag: "v1.0.0"
-    imagePullPolicy: "IfNotPresent"
     # Section below is relevant only when https termination is enabled
     web:
-      create: true
-      activeDeadlineSeconds: 300
-      caDays: 10000
-      certDays: 10000
-      altNames:
-        - dex.example.com
-      altIPs: {}
-      secret:
-        tlsName: dex-web-server-tls
-        caName: dex-web-server-ca
-      pod:
-        annotations: {}
+      create: false
     # Section below is relevant only when grpc support is enabled
     grpc:
-      create: true
-      activeDeadlineSeconds: 300
-      altNames:
-        - dex.example.com
-      altIPs: {}
-      secret:
-        serverTlsName: dex-grpc-server-tls
-        clientTlsName: dex-grpc-client-tls
-        caName: dex-grpc-ca
-      pod:
-        annotations: {}
+      create: false
   env: []
   rbac:
     # Specifies whether RBAC resources should be created

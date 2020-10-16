@@ -23,7 +23,7 @@ version: 0.0.1
 appVersion: 0.0.1
 
 dependencies: # A list of the chart requirements
-  - name: dex
-    version: "2.14.0"
-    repository: https://kubernetes-charts.storage.googleapis.com
-    condition: dex.enabled
+  # - name: dex
+  #   version: "2.14.0"
+  #   repository: https://kubernetes-charts.storage.googleapis.com
+  #   condition: dex.enabled
