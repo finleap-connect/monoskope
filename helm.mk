@@ -8,7 +8,7 @@ HELM_OUTPUT_DIR     ?= tmp
 template-clean:
 	@rm -Rf $(HELM_OUTPUT_DIR)
 
-dependency-update:
+dep:
 	@$(HELM) dep update $(HELM_PATH_MONOSKOPE)
 
 install:
