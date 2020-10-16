@@ -121,13 +121,13 @@ dex:
     #  expiry:
     #    signingKeys: "6h"
     #    idTokens: "24h"
-    staticClients:
-      - id: gateway
-        redirectURIs:
-          - "http://127.0.0.1:8080/oauth2/callback"
-        name: "Monoskope Gateway"
-        secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-    enablePasswordDB: true
+    # staticClients:
+    #   - id: gateway
+    #     redirectURIs:
+    #       - "http://127.0.0.1:8080/oauth2/callback"
+    #     name: "Monoskope Gateway"
+    #     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+    enablePasswordDB: false
   #  staticPasswords:
   #   - email: "admin@example.com"
   #     # bcrypt hash of the string "password"
