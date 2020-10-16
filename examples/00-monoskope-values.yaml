@@ -7,6 +7,3 @@ nameOverride: ""
 fullnameOverride: ""
 
 pullSecret: ""
-
-dex:
-  enabled: true
