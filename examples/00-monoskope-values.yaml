@@ -20,11 +20,15 @@ dex:
   # cpu: 100m
   # memory: 50Mi
   # grpc support
-  grpc:
-    enabled: true
-    enableTLS: true
+  grpc: true
   # https termination by dex itself
   https: false
+  ports:
+    web:
+      servicePort: 5556
+    # Relevant only when grpc support is enabled
+    grpc:
+      servicePort: 5000
   # expose prometheus metrics ?
   telemetry: true
   certs:
@@ -63,7 +67,7 @@ dex:
     {}
     # maxUnavailable: 1
   config:
-    issuer: http://127.0.0.1:5080
+    issuer: http://127.0.0.1:5556
     storage:
       type: kubernetes
       config:

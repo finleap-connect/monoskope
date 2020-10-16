@@ -11,12 +11,15 @@ template-clean:
 dep:
 	@$(HELM) dep update $(HELM_PATH_MONOSKOPE)
 
-install:
+lint:
+	@$(HELM) lint $(HELM_PATH_MONOSKOPE)
+
+install: lint
 	@$(HELM) upgrade --install monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
-uninstall:
+uninstall: 
 	@$(HELM) uninstall monoskope --namespace $(KUBE_NAMESPACE)
 
-template: helm-template-clean
+template: helm-template-clean lint
 	@mkdir -p $(HELM_OUTPUT_DIR)
 	@$(HELM) template monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds
