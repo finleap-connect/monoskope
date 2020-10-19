@@ -6,11 +6,10 @@ name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
-pullSecret: ""
-
 dex: # OIDC Provider
   enabled: false
   imagePullPolicy: "Always"
+  imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
     issuer: http://127.0.0.1:8080/dex

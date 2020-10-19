@@ -1,6 +1,6 @@
 dependencies:
 - name: dex
   repository: https://kubism.github.io/charts
-  version: 1.0.3
-digest: sha256:f2f595ce316c242fb4283af08546d5b73b5ffe147feb7a02ec2c7b1dc45c327c
-generated: "2020-10-19T10:06:37.93835116+02:00"
+  version: 1.0.5
+digest: sha256:16f5645b4eecee3a7f4d33d91019fc78be5a0c48e719e17ce9bf586fc76e399b
+generated: "2020-10-19T15:48:01.574699853+02:00"

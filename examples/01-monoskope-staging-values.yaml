@@ -4,8 +4,6 @@ name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
-pullSecret: ""
-
 dex:
   enabled: true
   config:
