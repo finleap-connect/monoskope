@@ -1,0 +1,23 @@
+# Staging environment values for monoskope.
+
+name: monoskope
+nameOverride: ""
+fullnameOverride: ""
+
+pullSecret: ""
+
+dex:
+  enabled: true
+  config:
+    connectors:
+      - type: gitlab
+        id: gitlab-dev
+        name: GitLab DEV
+        config:
+          baseURL: "https://gitlab.figo.systems"
+          clientID: "{{ gitlab-client-id }}"
+          clientSecret: "{{ gitlab-client-secret }}"
+          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
+          groups:
+            - "wolke7"
+          use_login_as_id: false

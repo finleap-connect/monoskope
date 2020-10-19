@@ -1,6 +1,6 @@
 HELM                ?= helm3
 HELM_PATH_MONOSKOPE ?= build/package/helm/monoskope
-HELM_VALUES_FILE    ?= examples/00-monoskope-values.yaml
+HELM_VALUES_FILE    ?= examples/00-monoskope-dev-values.yaml
 HELM_OUTPUT_DIR     ?= tmp
 
 .PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template

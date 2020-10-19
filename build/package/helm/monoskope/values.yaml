@@ -31,24 +31,18 @@ dex: # OIDC Provider
       alwaysShowLoginScreen: false
       skipApprovalScreen: true
     enablePasswordDB: false
-    connectors:
-      - type: gitlab
-        id: gitlab-dev
-        name: GitLab DEV
-        config:
-          baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ gitlab-client-id }}"
-          clientSecret: "{{ gitlab-client-secret }}"
-          redirectURI: https://monoskope.dev.finleap.cloud/oauth/callback
-          groups:
-            - "wolke7"
-          use_login_as_id: false
+    connectors: []
     staticClients:
+      - id: gateway
+        secret: "{{ gateway-app-secret }}"
+        name: "Monoskope Gateway"
+        redirectURIs:
+          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
       - id: monoctl
         secret: "{{ monoctl-app-secret }}"
         name: "Monoskope CLI"
         redirectURIs:
-          - "http://127.0.0.1:5555/callback"
+          - "http://localhost:5555/oauth/callback" # callback from dex to cli
   https: false
   ports:
     web:
