@@ -8,5 +8,79 @@ fullnameOverride: ""
 
 pullSecret: ""
 
-dex:
+dex: # OIDC Provider
   enabled: false
+  imagePullPolicy: "Always"
+  config:
+    existingSecret: monoskope-dex-config # use vaultsecret to configure dex
+    issuer: http://127.0.0.1:8080/dex
+    storage:
+      config:
+        inCluster: true
+      type: kubernetes
+    logger:
+      level: debug
+    web:
+      http: 0.0.0.0:5556
+    grpc:
+      addr: 0.0.0.0:5000
+      tlsCert: /etc/dex/tls/grpc/server/tls.crt
+      tlsKey: /etc/dex/tls/grpc/server/tls.key
+      tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
+    oauth2:
+      alwaysShowLoginScreen: false
+      skipApprovalScreen: true
+    enablePasswordDB: false
+    connectors:
+      - type: gitlab
+        id: gitlab-dev
+        name: GitLab DEV
+        config:
+          baseURL: "https://gitlab.figo.systems"
+          clientID: "{{ gitlab-client-id }}"
+          clientSecret: "{{ gitlab-client-secret }}"
+          redirectURI: https://monoskope.dev.finleap.cloud/oauth/callback
+          groups:
+            - "wolke7"
+          use_login_as_id: false
+    staticClients:
+      - id: monoctl
+        secret: "{{ monoctl-app-secret }}"
+        name: "Monoskope CLI"
+        redirectURIs:
+          - "http://127.0.0.1:5555/callback"
+  https: false
+  ports:
+    web:
+      servicePort: 5556
+    grpc:
+      servicePort: 5000
+  grpc: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 50Mi
+  telemetry: true
+  certs:
+    web:
+      create: false
+    grpc:
+      create: false
+  rbac:
+    # Specifies whether RBAC resources should be created
+    create: false
+  crd:
+    # Specifies whether dex's CRDs are already present (if not cluster role and cluster role binding will be created
+    # to enable dex to create them). Depends on rbac.create
+    present: true
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: false
+    # The name of the ServiceAccount to use.
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+  # frontend:
+  #   logoURL: https://example.com/yourlogo.png
