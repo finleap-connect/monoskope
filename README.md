@@ -35,9 +35,11 @@ The following targets are defined. Please not that there are variables (uppercas
 
 | target | Description |
 | --------- | ----------- |
+| *general* | |
 | `clean` | Cleans everything, tools, tmp dir used, whatever |
 | `tools` | Install necessary tools to `TOOLS_DIR`, like `kind`, `ginkgo`, `golangci-lint`, ... |
 | `tools-clean` | Removes the tools |
+| *helm* | |
 | `helm-add-kubism` | Add the kubism helm repository to the local list of repos |
 | `helm-template` | Templates the helm chart to `HELM_OUTPUT_DIR/monoskope` |
 | `helm-install` | Installs the helm chart to namespace `KUBE_NAMESPACE` with your current `kubecontext` and `HELM` |
@@ -45,9 +47,11 @@ The following targets are defined. Please not that there are variables (uppercas
 | `helm-clean` | Clears `HELM_OUTPUT_DIR` |
 | `helm-dep` | Does a helm dep update for `monoskope` |
 | `helm-lint` | Does a helm lint for `monoskope` |
+| *kind* | |
 | `kind-create` | Ramps up a kind cluster `KIND_CLUSTER` |
 | `kind-delete` | Deletes the kind cluster `KIND_CLUSTER` |
 | `kind-get-kubeconfig` | Gets the kubeconfig to connect the kind cluster `KIND_CLUSTER` |
+| *go* | |
 | `go-prepare` | Downloads all require go modules |
 | `go-lint` | Lints all go code |
 | `go-vet` | Vets all go code |
