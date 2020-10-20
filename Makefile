@@ -25,6 +25,11 @@ helm-%:
 kind-%:
 	@$(MAKE) -f kind.mk $*
 
+# docs
+
+diagrams:
+	$(SHELL) ./build/ci/gen_charts.sh
+
 # Phony target to install all required tools into ${TOOLS_DIR}
 tools: kind-get go-ginkgo-get go-golangci-lint-get
 

@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant U as User
+    participant M as monoctl
+    participant B as Browser
+    participant D as Dex
+    participant I as Identity Provider
+    participant G as Gateway
+    U-->>M: monoctl auth login
+    M-->>B: open with url of Dex
+    B-->>D: redirect
+    D-->>I: OAuth2 request
+    I-->>I: determines user’s identity
+    I-->>M: redirects with code
+    M-->>D: exchanges code for an id_token
+    M-->>G: get monoskope server version
+    G-->>G: validate id_token
+    G-->>M: return monoskope server version
