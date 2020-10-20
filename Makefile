@@ -8,6 +8,8 @@ KUBE_NAMESPACE ?= platform-monoskope-monoskope
 
 export 
 
+clean: go-clean kind-clean helm-clean tools-clean
+
 # go
 
 go-%:

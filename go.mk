@@ -48,3 +48,5 @@ ginkgo-clean:
 
 golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
+
+clean: ginkgo-clean golangci-lint-clean
