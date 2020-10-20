@@ -1,3 +1,4 @@
+{{- if and .Values.dex.config.existingSecret .Values.dex.certs.grpc.use }}
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
@@ -6,3 +7,4 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   selfSigned: {}
+{{- end }}

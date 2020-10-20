@@ -6,6 +6,9 @@ fullnameOverride: ""
 
 dex:
   enabled: true
+  certs:
+    grpc:
+      use: false # use linkerd for tls instead
   config:
     connectors:
       - type: gitlab

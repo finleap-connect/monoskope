@@ -1,3 +1,4 @@
+{{- if and .Values.dex.config.existingSecret .Values.dex.certs.grpc.use }}
 {{- $dexsvcname := (printf "%s-dex" .Values.name ) -}}
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -66,3 +67,4 @@ spec:
   usages:
   - client auth
   - server auth
+{{- end }}
