@@ -23,3 +23,7 @@ uninstall:
 template: clean lint
 	@mkdir -p $(HELM_OUTPUT_DIR)
 	@$(HELM) template monoskope $(HELM_PATH_MONOSKOPE) --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+
+add-kubism:
+	@$(HELM) repo add kubism.io https://kubism.github.io/charts/
+	@$(HELM) repo update
