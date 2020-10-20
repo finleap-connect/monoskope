@@ -17,3 +17,7 @@ project.dict
 /reports/
 /cover-data/
 /.scannerwork
+/tmp/
+
+/tools/*
+!/tools/goget-wrapper

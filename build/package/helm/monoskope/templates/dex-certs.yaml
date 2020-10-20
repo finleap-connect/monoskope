@@ -1,0 +1,70 @@
+{{- if and .Values.dex.config.existingSecret .Values.dex.certs.grpc.use }}
+{{- $dexsvcname := (printf "%s-dex" .Values.name ) -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-dex-grpc-ca
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: dex-grpc-ca
+  commonName: dex CA
+  organization:
+  - dex
+  isCA: true
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-selfsigning-issuer
+    kind: Issuer
+  usages:
+  - client auth
+  - server auth
+  - digital signature
+  - key encipherment
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.fullname" . }}-dex-issuer
+spec:
+  ca:
+    secretName: dex-grpc-ca
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-dex-root
+spec:
+  secretName: dex-root
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-dex-issuer
+    kind: Issuer
+  commonName: root
+  organization:
+  - dex
+  usages:
+  - client auth
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-dex-grpc-server-tls
+spec:
+  secretName: dex-grpc-server-tls
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-dex-issuer
+    kind: Issuer
+  commonName: grpc
+  organization:
+  - dex
+  ipAddresses:
+  - 127.0.0.1
+  - '::'
+  dnsNames:
+  - localhost
+  - {{ $dexsvcname }}
+  - {{ $dexsvcname }}.{{.Release.Namespace}}
+  - {{ $dexsvcname }}.{{.Release.Namespace}}.svc.cluster.local
+  usages:
+  - client auth
+  - server auth
+{{- end }}

@@ -1,0 +1,79 @@
+# Default values for monoskope.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+name: monoskope
+nameOverride: ""
+fullnameOverride: ""
+
+dex: # OIDC Provider
+  enabled: false
+  imagePullPolicy: "Always"
+  imagePullSecrets: []
+  config:
+    existingSecret: monoskope-dex-config # use vaultsecret to configure dex
+    issuer: http://127.0.0.1:8080/dex
+    storage:
+      config:
+        inCluster: true
+      type: kubernetes
+    logger:
+      level: debug
+    web:
+      http: 0.0.0.0:5556
+    grpc:
+      addr: 0.0.0.0:5000
+      tlsCert: /etc/dex/tls/grpc/server/tls.crt
+      tlsKey: /etc/dex/tls/grpc/server/tls.key
+      tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
+    oauth2:
+      alwaysShowLoginScreen: false
+      skipApprovalScreen: true
+    enablePasswordDB: false
+    connectors: []
+    staticClients:
+      - id: gateway
+        secret: "{{ gateway-app-secret }}"
+        name: "Monoskope Gateway"
+        redirectURIs:
+          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
+      - id: monoctl
+        secret: "{{ monoctl-app-secret }}"
+        name: "Monoskope CLI"
+        redirectURIs:
+          - "http://localhost:5555/oauth/callback" # callback from dex to cli
+  https: false
+  ports:
+    web:
+      servicePort: 5556
+    grpc:
+      servicePort: 5000
+  grpc: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 50Mi
+  telemetry: true
+  certs:
+    web:
+      create: false
+    grpc:
+      create: false
+  rbac:
+    # Specifies whether RBAC resources should be created
+    create: false
+  crd:
+    # Specifies whether dex's CRDs are already present (if not cluster role and cluster role binding will be created
+    # to enable dex to create them). Depends on rbac.create
+    present: true
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: false
+    # The name of the ServiceAccount to use.
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+  # frontend:
+  #   logoURL: https://example.com/yourlogo.png

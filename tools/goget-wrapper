@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wd=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+pwd=$(pwd)
+tmp_dir=$(mktemp -d)
+function cleanup {
+    cd ${pwd}
+    rm -rf ${tmp_dir}
+}
+trap cleanup EXIT
+cd ${tmp_dir}
+
+go mod init tmp
+export GOBIN=${wd}
+go get $1
+
