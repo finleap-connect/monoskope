@@ -24,7 +24,7 @@ endef
 prepare:
 	$(GO) mod download
 
-lint: golangci-lint-get
+lint:
 	$(GO) mod verify
 	$(LINTER) run -v --no-config --deadline=5m
 
@@ -36,6 +36,9 @@ vet:
 
 run-%:
 	$(call go-run,$*)
+
+test:
+	$(GINKGO) -r -v -cover pkg
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
