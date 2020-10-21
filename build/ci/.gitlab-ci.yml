@@ -2,9 +2,11 @@ stages:
   - test
   - deliver
 
-lint:golang:
+test:golang:
   stage: test
-  image: golang:1.13.6-buster
+  image: gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15-buster
+  services:
+    - docker:18-dind
   only:
     - main
     - merge_requests
