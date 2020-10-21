@@ -21,14 +21,11 @@ define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint prepare fmt vet test clean
+.PHONY: lint mod fmt vet test clean
 
-prepare: golangci-lint-get ginkgo-get
+mod:
 	$(GO) mod download
-
-lint:
 	$(GO) mod verify
-	$(LINTER) run -v --no-config --deadline=5m
 
 fmt:
 	$(GO) fmt ./...
@@ -36,10 +33,13 @@ fmt:
 vet:
 	$(GO) vet ./...
 
+lint: golangci-lint-get
+	$(LINTER) run -v --no-config --deadline=5m
+
 run-%:
 	$(call go-run,$*)
 
-test:
+test: ginkgo-get
 	$(GINKGO) -r -v -cover pkg -- $(TEST_FLAGS)
 
 ginkgo-get:

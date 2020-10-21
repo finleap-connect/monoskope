@@ -15,6 +15,7 @@ lint:golang:
   stage: test
   extends: .test
   script:
+    - make go-vet
     - make go-lint
 
 test:golang:

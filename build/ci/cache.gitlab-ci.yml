@@ -28,4 +28,4 @@ build:cache:
   stage: prepare
   extends: .cache
   script:
-    - make go-prepare
+    - make go-mod
