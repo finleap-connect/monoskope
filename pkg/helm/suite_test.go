@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
+	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/kubism/testutil/pkg/helm"
 	"github.com/kubism/testutil/pkg/kind"
@@ -39,6 +40,14 @@ var _ = BeforeSuite(func(done Done) {
 	By("setup kind cluster")
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
+		kind.ClusterWithConfig(&v1alpha4.Cluster{KubeadmConfigPatchesJSON6902: []v1alpha4.PatchJSON6902{
+			{
+				Group:   "kubeadm.k8s.io",
+				Version: "v1beta2",
+				Kind:    "ClusterConfiguration",
+				Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
+			},
+		}}),
 	}
 	if KindCluster != "" {
 		clusterOptions = append(clusterOptions,

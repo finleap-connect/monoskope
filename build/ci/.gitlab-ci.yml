@@ -8,8 +8,6 @@ include:
 
 .test:
   extends: .cache-no-push
-  services:
-    - docker:18-dind
 
 build:builder:
   stage: prepare
@@ -32,6 +30,8 @@ lint:golang:
 test:golang:
   stage: test
   extends: .test
+  services:
+    - docker:18-dind
   script:
     - make go-test
 
