@@ -1,7 +1,7 @@
 FROM gitlab.figo.systems/platform/dependency_proxy/containers/docker:19
 
 # Install Alpine Dependencies
-RUN apk update && apk upgrade && apk add --no-cache bash make
+RUN apk update && apk upgrade && apk add --no-cache bash make git gcc
 
 RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 
