@@ -1,20 +1,23 @@
 stages:
+  - prepare
   - test
   - deliver
 
-test:golang:
-  stage: test
-  image: gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15-buster
+.test:
+  extends: .cache-no-push
   services:
     - docker:18-dind
-  only:
-    - main
-    - merge_requests
-    - tags
+
+lint:golang:
+  stage: test
+  extends: .test
   script:
-    - make go-prepare
-    - make go-vet
     - make go-lint
+
+test:golang:
+  stage: test
+  extends: .test
+  script:
     - make go-test
 
 deliver:chart:
