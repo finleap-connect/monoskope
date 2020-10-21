@@ -16,7 +16,7 @@ build:builder:
       - build/package/builder.Dockerfile
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
   services:
-    - docker:18-dind
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:19-dind
   script:
     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
 
@@ -31,7 +31,7 @@ test:golang:
   stage: test
   extends: .test
   services:
-    - docker:18-dind
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:19-dind
   script:
     - make go-test
 
