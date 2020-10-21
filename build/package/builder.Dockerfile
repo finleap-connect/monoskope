@@ -40,5 +40,5 @@ VOLUME /var/log/docker
 EXPOSE 2375 2376
 ENV container docker
 
-COPY entrypoint.sh /entrypoint.sh
+COPY build/package/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
