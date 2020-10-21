@@ -36,6 +36,7 @@ RUN set -x && \
 
 VOLUME /var/lib/docker
 VOLUME /var/log/docker
+
 EXPOSE 2375 2376
 ENV container docker
 
