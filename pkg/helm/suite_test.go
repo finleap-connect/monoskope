@@ -40,14 +40,19 @@ var _ = BeforeSuite(func(done Done) {
 	By("setup kind cluster")
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
-		kind.ClusterWithConfig(&v1alpha4.Cluster{KubeadmConfigPatchesJSON6902: []v1alpha4.PatchJSON6902{
-			{
-				Group:   "kubeadm.k8s.io",
-				Version: "v1beta2",
-				Kind:    "ClusterConfiguration",
-				Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
+		kind.ClusterWithConfig(&v1alpha4.Cluster{
+			KubeadmConfigPatchesJSON6902: []v1alpha4.PatchJSON6902{
+				{
+					Group:   "kubeadm.k8s.io",
+					Version: "v1beta2",
+					Kind:    "ClusterConfiguration",
+					Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
+				},
 			},
-		}}),
+			KubeadmConfigPatches: []string{
+				"kind: InitConfiguration\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"kind\"\n",
+			},
+		}),
 	}
 	if KindCluster != "" {
 		clusterOptions = append(clusterOptions,
