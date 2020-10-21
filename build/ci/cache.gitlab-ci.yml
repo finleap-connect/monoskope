@@ -1,5 +1,5 @@
 .cache:
-  image: jieyu/dind-buster-golang
+  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
   only:
     - main
     - merge_requests
