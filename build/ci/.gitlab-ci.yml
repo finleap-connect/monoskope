@@ -11,6 +11,17 @@ include:
   services:
     - docker:18-dind
 
+build:builder:
+  stage: prepare
+  only:
+    changes:
+      - build/package/builder.Dockerfile
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - docker:18-dind
+  script:
+    - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
+
 lint:golang:
   stage: test
   extends: .test

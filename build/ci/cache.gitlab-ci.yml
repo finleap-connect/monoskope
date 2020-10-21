@@ -1,5 +1,5 @@
 .cache:
-  image: gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15-buster
+  image: registry.gitlab.figo.systems/platform/monoskope/builder:latest
   only:
     - main
     - merge_requests
