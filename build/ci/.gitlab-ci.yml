@@ -3,6 +3,9 @@ stages:
   - test
   - deliver
 
+include:
+  - local: build/ci/cache.gitlab-ci.yml
+
 .test:
   extends: .cache-no-push
   services:
