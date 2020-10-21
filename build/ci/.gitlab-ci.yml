@@ -6,10 +6,9 @@ lint:golang:
   stage: test
   image: golang:1.13.6-buster
   only:
-    changes:
-      - cmd/**/*
-      - pkg/**/*
-      - go.mod
+    - main
+    - merge_requests
+    - tags
   script:
     - make go-prepare
     - make go-vet
