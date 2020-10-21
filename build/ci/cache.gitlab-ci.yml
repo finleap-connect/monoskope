@@ -1,5 +1,5 @@
 .cache:
-  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
+  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:102185
   only:
     - main
     - merge_requests
