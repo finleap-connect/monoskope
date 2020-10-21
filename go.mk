@@ -17,15 +17,13 @@ VERSION    	   ?= 0.0.1-dev
 
 TEST_FLAGS     ?= -helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
 
-
-
 define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint prepare fmt vet
+.PHONY: lint prepare fmt vet test clean
 
-prepare:
+prepare: golangci-lint-get ginkgo-get
 	$(GO) mod download
 
 lint:

@@ -1,17 +1,20 @@
 stages:
-  #  - test
+  - test
   - deliver
 
-# lint:golang:
-#   stage: test
-#   image: golang:1.13.6-buster
-#   only:
-#     changes:
-#       - cmd/**/*
-#       - pkg/**/*
-#       - go.mod
-#   script:
-#     - make go-lint
+lint:golang:
+  stage: test
+  image: golang:1.13.6-buster
+  only:
+    changes:
+      - cmd/**/*
+      - pkg/**/*
+      - go.mod
+  script:
+    - make go-prepare
+    - make go-vet
+    - make go-lint
+    - make go-test
 
 deliver:chart:
   stage: deliver
