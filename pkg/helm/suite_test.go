@@ -49,9 +49,6 @@ var _ = BeforeSuite(func(done Done) {
 					Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
 				},
 			},
-			KubeadmConfigPatches: []string{
-				"kind: InitConfiguration\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"kind\"\n",
-			},
 		}),
 	}
 	if KindCluster != "" {
