@@ -1,4 +1,4 @@
-package helm_test
+package helm
 
 import (
 	"github.com/kubism/testutil/pkg/helm"
@@ -8,7 +8,7 @@ import (
 
 var _ = Describe("Helm chart", func() {
 	It("can be installed", func() {
-		rls, err := helmClient.Install("kubism.io/monoskope", "", helm.ValuesOptions{},
+		rls, err := helmClient.Install(HelmChartPath, "", helm.ValuesOptions{ValueFiles: []string{HelmChartValues}},
 			helm.InstallWithReleaseName("monoskope"),
 		)
 		Expect(err).ToNot(HaveOccurred())

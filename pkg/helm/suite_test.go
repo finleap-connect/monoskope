@@ -1,4 +1,4 @@
-package helm_test
+package helm
 
 import (
 	"testing"
@@ -39,6 +39,13 @@ var _ = BeforeSuite(func(done Done) {
 	By("setup kind cluster")
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
+	}
+	if KindCluster != "" {
+		clusterOptions = append(clusterOptions,
+			kind.ClusterWithName(KindCluster),
+			kind.ClusterUseExisting(),
+			kind.ClusterDoNotDelete(),
+		)
 	}
 	cluster, err = kind.NewCluster(clusterOptions...)
 	Expect(err).To(Succeed())

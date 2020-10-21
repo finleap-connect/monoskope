@@ -1,3 +1,5 @@
+BUILD_PATH ?= $(shell pwd)
+
 GO             ?= go
 
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
@@ -13,7 +15,9 @@ PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-BUILD_PATH ?= $(shell pwd)
+TEST_FLAGS     ?= -helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+
+
 
 define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
@@ -38,7 +42,7 @@ run-%:
 	$(call go-run,$*)
 
 test:
-	$(GINKGO) -r -v -cover pkg
+	$(GINKGO) -r -v -cover pkg -- $(TEST_FLAGS)
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))

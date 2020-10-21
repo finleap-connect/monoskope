@@ -17,6 +17,9 @@ go-%:
 
 # helm
 
+HELM_PATH_MONOSKOPE 		?= build/package/helm/monoskope
+HELM_VALUES_FILE_MONOSKOPE  ?= examples/00-monoskope-dev-values.yaml
+
 helm-%:
 	@$(MAKE) -f helm.mk $*
 
