@@ -14,7 +14,7 @@ import (
 
 var (
 	cluster          *kind.Cluster
-	kubeconfig       string
+	kubeConfig       string
 	helmClient       *helm.Client
 	stableRepository = &helm.RepositoryEntry{
 		Name: "stable",
@@ -36,25 +36,29 @@ func TestHelm(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	var err error
 
-	By("bootstrapping test environment")
+	By("setup kind cluster")
+	clusterOptions := []kind.ClusterOption{
+		kind.ClusterWithWaitForReady(3 * time.Minute),
+	}
+	cluster, err = kind.NewCluster(clusterOptions...)
+	Expect(err).To(Succeed())
 
-	cluster, err = kind.NewCluster(kind.ClusterWithWaitForReady(5 * time.Minute))
-	Expect(err).ToNot(HaveOccurred())
+	By("setup kubeconfig")
+	kubeConfig, err = cluster.GetKubeConfig()
+	Expect(err).To(Succeed())
 
-	kubeconfig, err = cluster.GetKubeConfig()
-	Expect(err).ToNot(HaveOccurred())
-
-	helmClient, err = helm.NewClient(kubeconfig, helm.ClientWithDriver("secret"))
-	Expect(err).ToNot(HaveOccurred())
+	helmClient, err = helm.NewClient(kubeConfig)
+	Expect(err).To(Succeed())
 	err = helmClient.AddRepository(stableRepository)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).To(Succeed())
 	err = helmClient.AddRepository(kubismRepository)
-	Expect(err).ToNot(HaveOccurred())
-})
+	Expect(err).To(Succeed())
+
+	close(done)
+}, 240)
 
 var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-
+	By("tearing down kind cluster")
 	if cluster != nil {
 		cluster.Close()
 	}

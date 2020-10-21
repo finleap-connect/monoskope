@@ -6,12 +6,13 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Helm", func() {
-	Describe("Install monoskope helm chart", func() {
-		It("should install helm chart", func() {
-			release, err := helmClient.Install("monoskope", "local", helm.ValuesOptions{ValueFiles: []string{"examples/00-monoskope-dev-values.yaml"}}, helm.InstallWithReleaseName("local"))
-			Expect(err).To(BeNil())
-			Expect(release).To(Not(nil))
-		})
+var _ = Describe("Helm chart", func() {
+	It("can be installed", func() {
+		rls, err := helmClient.Install("kubism.io/monoskope", "", helm.ValuesOptions{},
+			helm.InstallWithReleaseName("monoskope"),
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(rls).ToNot(BeNil())
+		Expect(helmClient.Uninstall(rls.Name)).To(Succeed())
 	})
 })
