@@ -29,7 +29,7 @@ lint:golang:
 
 lint:helm:
   stage: test
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.0-rc1
   only:
     - main
     - merge_requests
