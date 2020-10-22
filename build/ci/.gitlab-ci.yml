@@ -36,6 +36,7 @@ lint:helm:
     - tags
   script:
     - make helm-lint
+  needs: []
 
 test:golang:
   stage: test
