@@ -44,7 +44,7 @@ run-%:
 	$(call go-run,$*)
 
 test: ginkgo-get
-	$(GINKGO) -r -v -cover pkg -- $(TEST_FLAGS)
+	$(GINKGO) -r -v -cover internal pkg -- $(TEST_FLAGS)
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))

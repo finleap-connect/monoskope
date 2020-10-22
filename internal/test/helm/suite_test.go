@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	"github.com/kubism/testutil/pkg/helm"
@@ -34,7 +35,7 @@ func TestHelm(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	if !WithKind {
+	if !test.WithKind {
 		close(done)
 		return
 	}
@@ -45,9 +46,9 @@ var _ = BeforeSuite(func(done Done) {
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
 	}
-	if KindCluster != "" {
+	if test.KindCluster != "" {
 		clusterOptions = append(clusterOptions,
-			kind.ClusterWithName(KindCluster),
+			kind.ClusterWithName(test.KindCluster),
 			kind.ClusterUseExisting(),
 			kind.ClusterDoNotDelete(),
 		)
@@ -70,7 +71,7 @@ var _ = BeforeSuite(func(done Done) {
 }, 240)
 
 var _ = AfterSuite(func() {
-	if !WithKind {
+	if !test.WithKind {
 		return
 	}
 
