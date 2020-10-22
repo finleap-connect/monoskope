@@ -27,6 +27,16 @@ lint:golang:
     - make go-vet
     - make go-lint
 
+lint:helm:
+  stage: test
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
+  only:
+    - main
+    - merge_requests
+    - tags
+  script:
+    - make helm-lint
+
 test:golang:
   stage: test
   extends: .test
