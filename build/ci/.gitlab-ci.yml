@@ -1,17 +1,48 @@
 stages:
-  #  - test
+  - prepare
+  - test
   - deliver
 
-# lint:golang:
-#   stage: test
-#   image: golang:1.13.6-buster
+include:
+  - local: build/ci/cache.gitlab-ci.yml
+
+.test:
+  extends: .cache-no-push
+
+# build:builder:
+#   stage: prepare
 #   only:
 #     changes:
-#       - cmd/**/*
-#       - pkg/**/*
-#       - go.mod
+#       - build/package/builder.Dockerfile
+#   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+#   services:
+#     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
 #   script:
-#     - make go-lint
+#     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
+
+lint:golang:
+  stage: test
+  extends: .test
+  script:
+    - make go-vet
+    - make go-lint
+
+lint:helm:
+  stage: test
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
+  only:
+    - main
+    - merge_requests
+    - tags
+  script:
+    - make helm-lint
+  needs: []
+
+test:golang:
+  stage: test
+  extends: .test
+  script:
+    - make go-test
 
 deliver:chart:
   stage: deliver

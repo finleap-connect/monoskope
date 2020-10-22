@@ -1,0 +1,31 @@
+.cache:
+  image: gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15.3-buster
+  only:
+    - main
+    - merge_requests
+    - tags
+  cache:
+    key:
+      files:
+        - go.sum
+    paths:
+      - cache/
+  before_script:
+    - mkdir -p cache/mod $GOPATH/pkg /root/.cache
+    - mv cache/mod $GOPATH/pkg/mod
+    - rm -rf cache
+  after_script:
+    - mkdir -p cache
+    - mv $GOPATH/pkg/mod cache/mod
+
+.cache-no-push:
+  extends: .cache
+  cache:
+    policy: pull
+  after_script: [] # the after script above is only required for building the cache, so we can empty-override this here
+
+build:cache:
+  stage: prepare
+  extends: .cache
+  script:
+    - make go-mod

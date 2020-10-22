@@ -1,3 +1,5 @@
+BUILD_PATH ?= $(shell pwd)
+
 GO             ?= go
 
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
@@ -13,20 +15,21 @@ PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-BUILD_PATH ?= $(shell pwd)
+TEST_FLAGS     ?=
+
+ifdef TEST_WITH_KIND
+	TEST_FLAGS += -with-kind -helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+endif
 
 define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint prepare fmt vet
+.PHONY: lint mod fmt vet test clean
 
-prepare:
+mod:
 	$(GO) mod download
-
-lint: golangci-lint-get
 	$(GO) mod verify
-	$(LINTER) run -v --no-config --deadline=5m
 
 fmt:
 	$(GO) fmt ./...
@@ -34,8 +37,14 @@ fmt:
 vet:
 	$(GO) vet ./...
 
+lint: golangci-lint-get
+	$(LINTER) run -v --no-config --deadline=5m
+
 run-%:
 	$(call go-run,$*)
+
+test: ginkgo-get
+	$(GINKGO) -r -v -cover internal pkg -- $(TEST_FLAGS)
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
