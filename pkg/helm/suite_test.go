@@ -41,13 +41,8 @@ var _ = BeforeSuite(func(done Done) {
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
 		kind.ClusterWithConfig(&v1alpha4.Cluster{
-			KubeadmConfigPatchesJSON6902: []v1alpha4.PatchJSON6902{
-				{
-					Group:   "kubeadm.k8s.io",
-					Version: "v1beta2",
-					Kind:    "ClusterConfiguration",
-					Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
-				},
+			KubeadmConfigPatches: []string{
+				"apiVersion: kubeadm.k8s.io/v1beta2\nkind: JoinConfiguration\nmetadata:\n  name: config\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"/kubelet\"\n", "apiVersion: kubeadm.k8s.io/v1beta2\nkind: InitConfiguration\nmetadata:\n  name: config\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"/kubelet\"\n",
 			},
 		}),
 	}
