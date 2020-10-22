@@ -1,44 +1,5 @@
 FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15.3-buster
 
-# Install docker, make, git, kubectl, helm
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-    apt-transport-https \
-    ca-certificates \
-    gnupg2 \
-    curl \
-    tini \
-    git \
-    make \
-    kmod \
-    procps && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
-    echo "deb [arch=amd64] https://download.docker.com/linux/debian buster stable" | tee /etc/apt/sources.list.d/docker.list && \
-    apt-get update && \
-    apt-get install --no-install-recommends -y docker-ce && \
-    apt-get autoclean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Switch to use iptables instead of nftables (to match the CI hosts)
-# TODO use some kind of runtime auto-detection instead if/when
-# nftables is supported (https://github.com/moby/moby/issues/26824)
-RUN update-alternatives --set iptables  /usr/sbin/iptables-legacy || true && \
-    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy || true && \
-    update-alternatives --set arptables /usr/sbin/arptables-legacy || true
-
-# Set up subuid/subgid so that "--userns-remap=default" works
-# out-of-the-box.
-RUN set -x && \
-    addgroup --system dockremap && \
-    adduser --system --ingroup dockremap dockremap && \
-    echo 'dockremap:165536:65536' >> /etc/subuid && \
-    echo 'dockremap:165536:65536' >> /etc/subgid
-
-VOLUME /var/lib/docker
-VOLUME /var/log/docker
-
-EXPOSE 2375 2376
-ENV container docker
-
-COPY build/package/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
+# Install Docker
+RUN apt-get update && apt install docker.io -y \
+    && rm -rf /var/lib/apt/lists/*

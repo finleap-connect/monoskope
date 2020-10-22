@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/kubism/testutil/pkg/helm"
 	"github.com/kubism/testutil/pkg/kind"
@@ -35,24 +34,16 @@ func TestHelm(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
+	if !WithKind {
+		close(done)
+		return
+	}
+
 	var err error
 
 	By("setup kind cluster")
 	clusterOptions := []kind.ClusterOption{
 		kind.ClusterWithWaitForReady(3 * time.Minute),
-		kind.ClusterWithConfig(&v1alpha4.Cluster{
-			KubeadmConfigPatchesJSON6902: []v1alpha4.PatchJSON6902{
-				{
-					Group:   "kubeadm.k8s.io",
-					Version: "v1beta2",
-					Kind:    "ClusterConfiguration",
-					Patch:   "- op: add\r\n  path: /apiServer/certSANs/-\r\n  value: docker",
-				},
-			},
-			KubeadmConfigPatches: []string{
-				"apiVersion: kubeadm.k8s.io/v1beta2\nkind: JoinConfiguration\nmetadata:\n  name: config\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"/kubelet\"\n", "apiVersion: kubeadm.k8s.io/v1beta2\nkind: InitConfiguration\nmetadata:\n  name: config\nnodeRegistration:\n  kubeletExtraArgs:\n    cgroup-root: \"/kubelet\"\n",
-			},
-		}),
 	}
 	if KindCluster != "" {
 		clusterOptions = append(clusterOptions,
@@ -79,6 +70,10 @@ var _ = BeforeSuite(func(done Done) {
 }, 240)
 
 var _ = AfterSuite(func() {
+	if !WithKind {
+		return
+	}
+
 	By("tearing down kind cluster")
 	if cluster != nil {
 		cluster.Close()

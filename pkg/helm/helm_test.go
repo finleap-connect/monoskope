@@ -8,6 +8,10 @@ import (
 
 var _ = Describe("Helm chart", func() {
 	It("can be installed", func() {
+		if !WithKind {
+			return
+		}
+
 		rls, err := helmClient.Install(HelmChartPath, "", helm.ValuesOptions{ValueFiles: []string{HelmChartValues}},
 			helm.InstallWithReleaseName("monoskope"),
 		)

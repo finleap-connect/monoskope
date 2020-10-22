@@ -11,5 +11,4 @@ require (
 	github.com/spf13/cobra v1.1.1
 	go.uber.org/zap v1.10.0
 	sigs.k8s.io/controller-runtime v0.6.1
-	sigs.k8s.io/kind v0.9.0
 )
