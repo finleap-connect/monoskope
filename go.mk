@@ -59,3 +59,7 @@ golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
 
 clean: ginkgo-clean golangci-lint-clean
+
+protobuf:
+	cd api
+	$(PROTOC) --go_out=. --go-grpc_out=. api/*.proto
