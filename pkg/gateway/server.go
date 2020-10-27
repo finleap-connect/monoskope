@@ -9,7 +9,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	promgrpc "github.com/grpc-ecosystem/go-grpc-prometheus"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -44,12 +45,12 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, 
 	// Configure gRPC server
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			promgrpc.StreamServerInterceptor,
-			authInterceptor.StreamServerInterceptor,
+			grpc_prometheus.StreamServerInterceptor,
+			grpc_auth.StreamServerInterceptor(authInterceptor.EnsureValid),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			promgrpc.UnaryServerInterceptor,
-			authInterceptor.UnaryServerInterceptor,
+			grpc_prometheus.UnaryServerInterceptor,
+			grpc_auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
 		)),
 	}
 	if keepAlive {
@@ -65,7 +66,7 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, 
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
 	// Register the metric interceptors with prometheus
-	promgrpc.Register(s.grpc)
+	grpc_prometheus.Register(s.grpc)
 	// Enable reflection API
 	reflection.Register(s.grpc)
 	return s, nil
