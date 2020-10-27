@@ -15,6 +15,8 @@ build:builder:
     changes:
       - build/package/builder.Dockerfile
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:19-dind
   script:
     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
 
