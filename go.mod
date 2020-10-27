@@ -3,6 +3,9 @@ module gitlab.figo.systems/platform/monoskope/monoskope
 go 1.15
 
 require (
+	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/coreos/go-oidc v2.1.0+incompatible
+	github.com/dexidp/dex/api v0.0.0-20200701124149-0be5232edd1a
 	github.com/go-logr/logr v0.2.1
 	github.com/go-logr/zapr v0.2.0
 	github.com/golang/protobuf v1.4.3
