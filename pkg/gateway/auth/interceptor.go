@@ -47,16 +47,33 @@ func (s *AuthInterceptor) valid(ctx context.Context, authorization []string) boo
 // the token is missing or invalid, the interceptor blocks execution of the
 // handler and returns an error. Otherwise, the interceptor invokes the unary
 // handler.
-func (s *AuthInterceptor) UnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (s *AuthInterceptor) ensureValid(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, grpcutil.ErrMissingMetadata
+		return grpcutil.ErrMissingMetadata
 	}
 	// The keys within metadata.MD are normalized to lowercase.
 	// See: https://godoc.org/google.golang.org/grpc/metadata#New
 	if !s.valid(ctx, md["authorization"]) {
-		return nil, grpcutil.ErrInvalidToken
+		return grpcutil.ErrInvalidToken
+	}
+	return nil
+}
+
+func (s *AuthInterceptor) UnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	err := s.ensureValid(ctx)
+	if err != nil {
+		return nil, err
 	}
 	// Continue execution of handler after ensuring a valid token.
 	return handler(ctx, req)
+}
+
+func (s *AuthInterceptor) StreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	err := s.ensureValid(ss.Context())
+	if err != nil {
+		return err
+	}
+	// Continue execution of handler after ensuring a valid token.
+	return handler(srv, ss)
 }

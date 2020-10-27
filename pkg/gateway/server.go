@@ -45,7 +45,7 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, 
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
 		grpc.StreamInterceptor(promgrpc.StreamServerInterceptor),
 		grpc.UnaryInterceptor(promgrpc.UnaryServerInterceptor),
-		// TODO: grpc.StreamInterceptor(authInterceptor.StreamServerInterceptor),
+		grpc.StreamInterceptor(authInterceptor.StreamServerInterceptor),
 		grpc.UnaryInterceptor(authInterceptor.UnaryServerInterceptor),
 	}
 	if keepAlive {
