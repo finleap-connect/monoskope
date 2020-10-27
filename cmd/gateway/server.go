@@ -68,6 +68,6 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
-	flags.StringVar(&dexAddr, "dex-addr", "127.0.0.1:5557", "Address of dex gRPC service")
-	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://127.0.0.1:5556", "Issuer URL")
+	flags.StringVar(&dexAddr, "dex-addr", "localhost:5000", "Address of dex gRPC service")
+	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:5556", "Issuer URL")
 }
