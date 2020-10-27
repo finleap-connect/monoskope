@@ -32,16 +32,11 @@ dex: # OIDC Provider
     enablePasswordDB: false
     connectors: []
     staticClients:
-      - id: gateway
-        secret: "{{ gateway-app-secret }}"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
       - id: monoctl
         secret: "{{ monoctl-app-secret }}"
         name: "Monoskope CLI"
         redirectURIs:
-          - "http://localhost:5555/oauth/callback" # callback from dex to cli
+          - "http://localhost:6555/oauth/callback" # callback from dex to cli
   https: false
   ports:
     web:

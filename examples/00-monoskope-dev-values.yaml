@@ -16,16 +16,11 @@ dex:
       config:
         file: /tmp/dex.db
     staticClients:
-      - id: gateway
-        secret: "gateway-app-secret"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "http://localhost:6555/oauth/callback"
       - id: monoctl
         secret: "monoctl-app-secret"
         name: "Monoskope CLI"
         redirectURIs:
-          - "http://localhost:5555/oauth/callback"
+          - "http://localhost:6555/oauth/callback"
     enablePasswordDB: true
     staticPasswords:
       - email: "admin@example.com"
