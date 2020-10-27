@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	promgrpc "github.com/grpc-ecosystem/go-grpc-prometheus"
-
 	"gitlab.figo.systems/platform/monoskope/monoskope/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -43,10 +43,14 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, 
 
 	// Configure gRPC server
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
-		grpc.StreamInterceptor(promgrpc.StreamServerInterceptor),
-		grpc.UnaryInterceptor(promgrpc.UnaryServerInterceptor),
-		grpc.StreamInterceptor(authInterceptor.StreamServerInterceptor),
-		grpc.UnaryInterceptor(authInterceptor.UnaryServerInterceptor),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			promgrpc.StreamServerInterceptor,
+			authInterceptor.StreamServerInterceptor,
+		)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			promgrpc.UnaryServerInterceptor,
+			authInterceptor.UnaryServerInterceptor,
+		)),
 	}
 	if keepAlive {
 		opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{

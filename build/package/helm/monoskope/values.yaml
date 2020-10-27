@@ -20,9 +20,9 @@ dex: # OIDC Provider
     logger:
       level: debug
     web:
-      http: 0.0.0.0:5556
+      address: 0.0.0.0
     grpc:
-      addr: 0.0.0.0:5000
+      address: 127.0.0.1
       tlsCert: /etc/dex/tls/grpc/server/tls.crt
       tlsKey: /etc/dex/tls/grpc/server/tls.key
       tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
@@ -40,7 +40,7 @@ dex: # OIDC Provider
   https: false
   ports:
     web:
-      servicePort: 5556
+      containerPort: 5556
     grpc:
       servicePort: 5000
   grpc: true

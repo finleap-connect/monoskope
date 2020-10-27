@@ -15,10 +15,10 @@ PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-TEST_FLAGS     ?=
+TEST_FLAGS     ?= --dex-conf-path "$(BUILD_PATH)/config/dex"
 
 ifdef TEST_WITH_KIND
-	TEST_FLAGS += -with-kind -helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+	TEST_FLAGS += --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
 endif
 
 define go-run

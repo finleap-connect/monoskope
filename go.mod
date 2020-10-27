@@ -9,6 +9,7 @@ require (
 	github.com/go-logr/logr v0.2.1
 	github.com/go-logr/zapr v0.2.0
 	github.com/golang/protobuf v1.4.3
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/onsi/ginkgo v1.14.2
