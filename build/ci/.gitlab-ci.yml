@@ -9,16 +9,14 @@ include:
 .test:
   extends: .cache-no-push
 
-# build:builder:
-#   stage: prepare
-#   only:
-#     changes:
-#       - build/package/builder.Dockerfile
-#   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
-#   services:
-#     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-#   script:
-#     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
+build:builder:
+  stage: prepare
+  only:
+    changes:
+      - build/package/builder.Dockerfile
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  script:
+    - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
 
 lint:golang:
   stage: test
@@ -41,6 +39,8 @@ lint:helm:
 test:golang:
   stage: test
   extends: .test
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:19-dind
   script:
     - make go-test
 
