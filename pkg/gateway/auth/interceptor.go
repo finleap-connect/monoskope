@@ -30,20 +30,20 @@ func NewAuthInterceptor(dexClient dexpb.DexClient, authConfig *Config) (*AuthInt
 	}, nil
 }
 
-// valid validates the authorization.
+// validates the authorization.
 func (s *AuthInterceptor) valid(ctx context.Context, authorization []string) bool {
 	if len(authorization) < 1 {
 		return false
 	}
 	token := strings.TrimPrefix(authorization[0], "Bearer ")
-	// Perform the token validation here. For the sake of this example, the code
-	// here forgoes any of the usual OAuth2 token validation and instead checks
-	// for a token matching an arbitrary string.
+
+	// Perform the token validation here.
 	_, err := s.authHandler.Verify(ctx, token)
+
 	return err == nil
 }
 
-// ensureValidToken ensures a valid token exists within a request's metadata. If
+// ensures a valid token exists within a request's metadata. If
 // the token is missing or invalid, the interceptor blocks execution of the
 // handler and returns an error. Otherwise, the interceptor invokes the unary
 // handler.
