@@ -18,8 +18,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/examples/data"
 
-	dexpb "github.com/dexidp/dex/api"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -89,13 +87,8 @@ var _ = BeforeSuite(func(done Done) {
 	}
 	log.Info("dex issuer url: " + dexWebEndpoint)
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	dexConn, err = grpc.Dial(fmt.Sprintf("127.0.0.1:%s", dexContainer.GetPort("5000/tcp")), opts...)
-	Expect(err).ToNot(HaveOccurred())
-	dexClient := dexpb.NewDexClient(dexConn)
-
 	// Create interceptor for auth
-	authInterceptor, err = auth_server.NewInterceptor(dexClient, authConfig)
+	authInterceptor, err = auth_server.NewInterceptor(authConfig)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway

@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 
-	dexpb "github.com/dexidp/dex/api"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
@@ -16,8 +15,8 @@ type AuthServerInterceptor struct {
 	authHandler *Handler
 }
 
-func NewInterceptor(dexClient dexpb.DexClient, authConfig *Config) (*AuthServerInterceptor, error) {
-	authHandler, err := NewHandler(dexClient, authConfig)
+func NewInterceptor(authConfig *Config) (*AuthServerInterceptor, error) {
+	authHandler, err := NewHandler(authConfig)
 	if err != nil {
 		return nil, err
 	}

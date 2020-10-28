@@ -8,25 +8,21 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	dexpb "github.com/dexidp/dex/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type Handler struct {
-	log         logger.Logger
-	dexClient   dexpb.DexClient
-	httpClient  *http.Client
-	oauthClient *dexpb.Client
-	verifier    *oidc.IDTokenVerifier
-	provider    *oidc.Provider
-	config      *Config
+	log        logger.Logger
+	httpClient *http.Client
+	verifier   *oidc.IDTokenVerifier
+	provider   *oidc.Provider
+	config     *Config
 }
 
-func NewHandler(dexClient dexpb.DexClient, config *Config) (*Handler, error) {
+func NewHandler(config *Config) (*Handler, error) {
 	n := &Handler{
 		log:        logger.WithName("auth-server"),
-		dexClient:  dexClient,
 		config:     config,
 		httpClient: http.DefaultClient,
 	}

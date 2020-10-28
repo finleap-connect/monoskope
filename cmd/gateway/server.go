@@ -4,11 +4,9 @@ import (
 	"net"
 	"os"
 
-	dexpb "github.com/dexidp/dex/api"
 	"github.com/spf13/cobra"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
-	"google.golang.org/grpc"
 )
 
 var (
@@ -44,17 +42,8 @@ var serverCmd = &cobra.Command{
 		}
 		defer metricsLis.Close()
 
-		// Connect to dex
-		opts := []grpc.DialOption{grpc.WithInsecure()}
-		dexConn, err := grpc.Dial(dexAddr, opts...)
-		if err != nil {
-			return err
-		}
-		defer dexConn.Close()
-		dexClient := dexpb.NewDexClient(dexConn)
-
 		// Create interceptor for auth
-		authInterceptor, err := auth_server.NewInterceptor(dexClient, &authConfig)
+		authInterceptor, err := auth_server.NewInterceptor(&authConfig)
 		if err != nil {
 			return err
 		}
