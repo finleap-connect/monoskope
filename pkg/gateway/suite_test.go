@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"testing"
@@ -11,6 +12,8 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/examples/data"
 
 	dexpb "github.com/dexidp/dex/api"
 
@@ -29,11 +32,12 @@ var (
 	pool         *dockertest.Pool
 	dexContainer *dockertest.Resource
 
-	metricsLis      net.Listener
-	apiLis          net.Listener
-	dexConn         *grpc.ClientConn
-	server          *Server
-	authInterceptor *auth.AuthInterceptor
+	metricsLis                 net.Listener
+	apiLis                     net.Listener
+	dexConn                    *grpc.ClientConn
+	server                     *Server
+	authInterceptor            *auth.AuthInterceptor
+	clientTransportCredentials credentials.TransportCredentials
 )
 
 func TestGateway(t *testing.T) {
@@ -64,6 +68,9 @@ var _ = BeforeSuite(func(done Done) {
 	dexContainer, err = pool.RunWithOptions(options)
 	Expect(err).ToNot(HaveOccurred())
 
+	clientTransportCredentials, err = credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
+	Expect(err).ToNot(HaveOccurred())
+
 	authConfig := &auth.Config{
 		IssuerURL:      fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp")),
 		OfflineAsScope: true,
@@ -86,11 +93,14 @@ var _ = BeforeSuite(func(done Done) {
 	apiLis, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 
+	cert, err := tls.LoadX509KeyPair(data.Path("x509/server_cert.pem"), data.Path("x509/server_key.pem"))
+	Expect(err).ToNot(HaveOccurred())
+
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 5 * time.Second
 	err = backoff.Retry(func() error {
 		var err error
-		server, err = NewServer(false, authInterceptor)
+		server, err = NewServer(false, authInterceptor, &cert)
 		return err
 	}, ebo)
 	Expect(err).ToNot(HaveOccurred())

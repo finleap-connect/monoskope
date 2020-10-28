@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
@@ -35,7 +37,7 @@ type Server struct {
 	shutdown *util.ShutdownWaitGroup
 }
 
-func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, error) {
+func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor, tlsCert *tls.Certificate) (*Server, error) {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName("gateway"),
@@ -58,6 +60,9 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor) (*Server, 
 			MaxConnectionIdle: 5 * time.Minute,
 			Time:              2 * time.Second,
 		}))
+	}
+	if tlsCert != nil {
+		opts = append(opts, grpc.Creds(credentials.NewServerTLSFromCert(tlsCert)))
 	}
 	s.grpc = grpc.NewServer(opts...)
 

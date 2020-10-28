@@ -54,7 +54,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create the server
-		s, err := gateway.NewServer(keepAlive, authInterceptor)
+		s, err := gateway.NewServer(keepAlive, authInterceptor, nil)
 		if err != nil {
 			return err
 		}
