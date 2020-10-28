@@ -13,7 +13,6 @@ var (
 	apiAddr     string
 	metricsAddr string
 	keepAlive   bool
-	dexAddr     string
 	authConfig  auth_server.Config
 )
 
@@ -68,6 +67,5 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
-	flags.StringVar(&dexAddr, "dex-addr", "localhost:5000", "Address of dex gRPC service")
 	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:5556", "Issuer URL")
 }
