@@ -4,8 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/url"
 )
+
+type BaseConfig struct {
+	IssuerURL      string
+	OfflineAsScope bool
+}
 
 type ExtraClaims struct {
 	Email         string   `json:"email"`
@@ -14,9 +18,7 @@ type ExtraClaims struct {
 }
 
 type State struct {
-	Callback    string `form:"callback" json:"callback,omitempty"`
-	ConnectorID string `form:"connector_id" json:"connector_id,omitempty"`
-	InviteOnly  bool   `form:"invite_only" json:"invite_only,omitempty"`
+	Callback string `form:"callback" json:"callback,omitempty"`
 }
 
 type AuthCodeURLConfig struct {
@@ -42,12 +44,4 @@ func (state *State) Encode() (string, error) {
 	}
 	encoded := base64.RawURLEncoding.EncodeToString(data)
 	return encoded, nil
-}
-
-func (state *State) IsValid() bool {
-	if state.ConnectorID == "" || state.Callback == "" {
-		return false
-	}
-	_, err := url.Parse(state.Callback)
-	return err == nil
 }

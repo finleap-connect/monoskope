@@ -3,79 +3,37 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
 
-	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type Handler struct {
-	log        logger.Logger
-	httpClient *http.Client
-	verifier   *oidc.IDTokenVerifier
-	provider   *oidc.Provider
-	config     *Config
+	auth.BaseHandler
+	config   *Config
+	verifier *oidc.IDTokenVerifier
+	log      logger.Logger
 }
 
 func NewHandler(config *Config) (*Handler, error) {
-	n := &Handler{
-		log:        logger.WithName("auth-server"),
-		config:     config,
-		httpClient: http.DefaultClient,
-	}
-	// Setup OIDC
-	err := n.setupOIDC()
+	baseHandler, err := auth.NewBaseHandler(&config.BaseConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	n := &Handler{
+		BaseHandler: *baseHandler,
+		config:      config,
+		log:         logger.WithName("auth-server"),
+	}
+	n.setupVerifier()
+
 	return n, nil
 }
 
-func (n *Handler) setupOIDC() error {
-	ctx := oidc.ClientContext(context.Background(), n.httpClient)
-
-	// Using an exponantial backoff to avoid issues in development environments
-	backoffParams := backoff.NewExponentialBackOff()
-	backoffParams.MaxElapsedTime = time.Second * 10
-	err := backoff.Retry(func() error {
-		var err error
-		n.provider, err = oidc.NewProvider(ctx, n.config.IssuerURL)
-		return err
-	}, backoffParams)
-	if err != nil {
-		return fmt.Errorf("failed to query provider %q: %v", n.config.IssuerURL, err)
-	}
-
-	// What scopes does a provider support?
-	var scopes struct {
-		// See: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
-		Supported []string `json:"scopes_supported"`
-	}
-	if err := n.provider.Claims(&scopes); err != nil {
-		return fmt.Errorf("failed to parse provider scopes_supported: %v", err)
-	}
-	if len(scopes.Supported) == 0 {
-		// scopes_supported is a "RECOMMENDED" discovery claim, not a required
-		// one. If missing, assume that the provider follows the spec and has
-		// an "offline_access" scope.
-		n.config.OfflineAsScope = true
-	} else {
-		// See if scopes_supported has the "offline_access" scope.
-		n.config.OfflineAsScope = func() bool {
-			for _, scope := range scopes.Supported {
-				if scope == oidc.ScopeOfflineAccess {
-					return true
-				}
-			}
-			return false
-		}()
-	}
-
-	n.verifier = n.provider.Verifier(&oidc.Config{ClientID: n.config.ValidClientId})
-	return nil
+func (n *Handler) setupVerifier() {
+	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ValidClientId})
 }
 
 func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken, error) {
@@ -89,7 +47,7 @@ func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*auth.ExtraClaims, error) {
 	if n.config.RootToken != nil && bearerToken == *n.config.RootToken {
-		n.log.Info("### user authenticated via root token ###")
+		n.log.Info("### user authenticated via root token")
 		return &auth.ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
 	}
 
@@ -105,6 +63,8 @@ func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*auth.Extr
 	if !claims.EmailVerified {
 		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
 	}
+
+	n.log.Info("user authenticated via bearer token", "user", claims.Email)
 
 	return claims, nil
 }

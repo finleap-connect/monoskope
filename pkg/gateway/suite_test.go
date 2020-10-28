@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
@@ -80,10 +81,12 @@ var _ = BeforeSuite(func(done Done) {
 
 	dexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 	authConfig := &auth_server.Config{
-		IssuerURL:      dexWebEndpoint,
-		OfflineAsScope: true,
-		RootToken:      &authRootToken,
-		ValidClientId:  "monoctl",
+		BaseConfig: auth.BaseConfig{
+			IssuerURL:      dexWebEndpoint,
+			OfflineAsScope: true,
+		},
+		RootToken:     &authRootToken,
+		ValidClientId: "monoctl",
 	}
 	log.Info("dex issuer url: " + dexWebEndpoint)
 

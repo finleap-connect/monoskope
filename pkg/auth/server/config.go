@@ -1,8 +1,9 @@
 package server
 
+import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+
 type Config struct {
-	IssuerURL      string
-	OfflineAsScope bool
-	RootToken      *string
-	ValidClientId  string
+	auth.BaseConfig
+	RootToken     *string
+	ValidClientId string
 }

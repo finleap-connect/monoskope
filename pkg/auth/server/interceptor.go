@@ -20,7 +20,6 @@ func NewInterceptor(authConfig *Config) (*AuthServerInterceptor, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &AuthServerInterceptor{
 		authHandler: authHandler,
 	}, nil
@@ -28,7 +27,7 @@ func NewInterceptor(authConfig *Config) (*AuthServerInterceptor, error) {
 
 // ensures a valid token exists within a request's metadata. If
 // the token is missing or invalid, the interceptor blocks execution of the
-// handler and returns an error. Otherwise, the interceptor invokes the unary
+// handler and returns an error. Otherwise, the interceptor invokes the
 // handler.
 func (s *AuthServerInterceptor) EnsureValid(ctx context.Context) (context.Context, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")

@@ -1,10 +1,11 @@
 package client
 
+import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+
 type Config struct {
-	IssuerURL      string
-	OfflineAsScope bool
-	Nonce          string
-	ClientId       string
-	ClientSecret   string
-	RedirectURI    string
+	auth.BaseConfig
+	Nonce        string
+	ClientId     string
+	ClientSecret string
+	RedirectURI  string
 }

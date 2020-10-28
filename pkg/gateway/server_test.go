@@ -75,12 +75,14 @@ var _ = Describe("Gateway", func() {
 		var state auth.State
 
 		handler, err := auth_client.NewHandler(&auth_client.Config{
-			IssuerURL:      dexWebEndpoint,
-			RedirectURI:    redirectURL,
-			Nonce:          "secret-nonce",
-			ClientId:       "monoctl",
-			ClientSecret:   "monoctl-app-secret",
-			OfflineAsScope: true,
+			BaseConfig: auth.BaseConfig{
+				IssuerURL:      dexWebEndpoint,
+				OfflineAsScope: true,
+			},
+			RedirectURI:  redirectURL,
+			Nonce:        "secret-nonce",
+			ClientId:     "monoctl",
+			ClientSecret: "monoctl-app-secret",
 		})
 		Expect(err).ToNot(HaveOccurred())
 
