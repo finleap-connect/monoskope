@@ -66,6 +66,21 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
+	It("can go through oidc-flow with existing user", func() {
+		// var state auth.State
+
+		// // Redirect if no error occured
+		// authCodeURL, err := s.authHandler.GetAuthCodeURL(&state, &auth.AuthCodeURLConfig{
+		// 	Scopes:        []string{"offline_access"},
+		// 	Clients:       []string{},
+		// 	OfflineAccess: true,
+		// })
+		// if err != nil {
+		// 	c.String(http.StatusInternalServerError, "failed to acquire auth code url")
+		// 	return
+		// }
+		// c.Redirect(http.StatusSeeOther, authCodeURL)
+	})
 })
 
 // invalidToken simulates a token lookup and omits the details of proper token

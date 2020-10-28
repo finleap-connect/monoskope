@@ -20,12 +20,12 @@ type Handler struct {
 	oauthClient *dexpb.Client
 	verifier    *oidc.IDTokenVerifier
 	provider    *oidc.Provider
-	config      *auth.Config
+	config      *Config
 }
 
-func NewHandler(dexClient dexpb.DexClient, config *auth.Config) (*Handler, error) {
+func NewHandler(dexClient dexpb.DexClient, config *Config) (*Handler, error) {
 	n := &Handler{
-		log:        logger.WithName("auth"),
+		log:        logger.WithName("auth-server"),
 		dexClient:  dexClient,
 		config:     config,
 		httpClient: http.DefaultClient,

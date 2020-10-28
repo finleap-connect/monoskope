@@ -6,7 +6,6 @@ import (
 
 	dexpb "github.com/dexidp/dex/api"
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"google.golang.org/grpc"
@@ -17,7 +16,7 @@ var (
 	metricsAddr string
 	keepAlive   bool
 	dexAddr     string
-	authConfig  auth.Config
+	authConfig  auth_server.Config
 )
 
 var serverCmd = &cobra.Command{

@@ -16,7 +16,7 @@ type AuthServerInterceptor struct {
 	authHandler *Handler
 }
 
-func NewInterceptor(dexClient dexpb.DexClient, authConfig *auth.Config) (*AuthServerInterceptor, error) {
+func NewInterceptor(dexClient dexpb.DexClient, authConfig *Config) (*AuthServerInterceptor, error) {
 	authHandler, err := NewHandler(dexClient, authConfig)
 	if err != nil {
 		return nil, err

@@ -20,7 +20,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
@@ -74,7 +73,7 @@ var _ = BeforeSuite(func(done Done) {
 	clientTransportCredentials, err = credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
 	Expect(err).ToNot(HaveOccurred())
 
-	authConfig := &auth.Config{
+	authConfig := &auth_server.Config{
 		IssuerURL:      fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp")),
 		OfflineAsScope: true,
 		RootToken:      &authRootToken,
