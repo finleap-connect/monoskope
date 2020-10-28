@@ -45,6 +45,11 @@ test:golang:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
   script:
     - make go-test
+  artifacts:
+    name: "Go Tests"
+    when: always
+    reports:
+      junit: ["reports/*.xml"]
 
 deliver:chart:
   stage: deliver
