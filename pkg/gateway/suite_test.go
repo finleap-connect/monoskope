@@ -20,7 +20,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -38,7 +39,7 @@ var (
 	apiLis                     net.Listener
 	dexConn                    *grpc.ClientConn
 	server                     *Server
-	authInterceptor            *auth.AuthInterceptor
+	authInterceptor            *auth_server.AuthServerInterceptor
 	clientTransportCredentials credentials.TransportCredentials
 )
 
@@ -86,7 +87,7 @@ var _ = BeforeSuite(func(done Done) {
 	dexClient := dexpb.NewDexClient(dexConn)
 
 	// Create interceptor for auth
-	authInterceptor, err = auth.NewAuthInterceptor(dexClient, authConfig)
+	authInterceptor, err = auth_server.NewInterceptor(dexClient, authConfig)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
@@ -100,9 +101,9 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	conf := &ServerConfig{
-		KeepAlive:       false,
-		AuthInterceptor: authInterceptor,
-		TlsCert:         &cert,
+		KeepAlive:             false,
+		AuthServerInterceptor: authInterceptor,
+		TlsCert:               &cert,
 	}
 
 	ebo := backoff.NewExponentialBackOff()

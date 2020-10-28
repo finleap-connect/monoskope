@@ -14,7 +14,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -39,9 +39,9 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	KeepAlive       bool
-	AuthInterceptor *auth.AuthInterceptor
-	TlsCert         *tls.Certificate
+	KeepAlive             bool
+	AuthServerInterceptor *auth_server.AuthServerInterceptor
+	TlsCert               *tls.Certificate
 }
 
 func NewServer(conf *ServerConfig) (*Server, error) {
@@ -55,11 +55,11 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_prometheus.StreamServerInterceptor,
-			grpc_auth.StreamServerInterceptor(conf.AuthInterceptor.EnsureValid),
+			grpc_auth.StreamServerInterceptor(conf.AuthServerInterceptor.EnsureValid),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_prometheus.UnaryServerInterceptor,
-			grpc_auth.UnaryServerInterceptor(conf.AuthInterceptor.EnsureValid),
+			grpc_auth.UnaryServerInterceptor(conf.AuthServerInterceptor.EnsureValid),
 		)),
 	}
 	if conf.KeepAlive {

@@ -6,8 +6,9 @@ import (
 
 	dexpb "github.com/dexidp/dex/api"
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"google.golang.org/grpc"
 )
 
@@ -54,15 +55,15 @@ var serverCmd = &cobra.Command{
 		dexClient := dexpb.NewDexClient(dexConn)
 
 		// Create interceptor for auth
-		authInterceptor, err := auth.NewAuthInterceptor(dexClient, &authConfig)
+		authInterceptor, err := auth_server.NewInterceptor(dexClient, &authConfig)
 		if err != nil {
 			return err
 		}
 
 		// Create the server
 		conf := &gateway.ServerConfig{
-			KeepAlive:       false,
-			AuthInterceptor: authInterceptor,
+			KeepAlive:             false,
+			AuthServerInterceptor: authInterceptor,
 		}
 
 		s, err := gateway.NewServer(conf)

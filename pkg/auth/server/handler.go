@@ -1,4 +1,4 @@
-package auth
+package server
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	dexpb "github.com/dexidp/dex/api"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -19,10 +20,10 @@ type Handler struct {
 	oauthClient *dexpb.Client
 	verifier    *oidc.IDTokenVerifier
 	provider    *oidc.Provider
-	config      *Config
+	config      *auth.Config
 }
 
-func NewHandler(dexClient dexpb.DexClient, config *Config) (*Handler, error) {
+func NewHandler(dexClient dexpb.DexClient, config *auth.Config) (*Handler, error) {
 	n := &Handler{
 		log:        logger.WithName("auth"),
 		dexClient:  dexClient,
@@ -90,10 +91,10 @@ func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken
 }
 
 // authorize verifies a bearer token and pulls user information form the claims.
-func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClaims, error) {
+func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*auth.ExtraClaims, error) {
 	if n.config.RootToken != nil && bearerToken == *n.config.RootToken {
 		n.log.Info("### user authenticated via root token ###")
-		return &ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
+		return &auth.ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
 	}
 
 	idToken, err := n.verify(ctx, bearerToken)
@@ -101,7 +102,7 @@ func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClai
 		return nil, err
 	}
 
-	claims := &ExtraClaims{}
+	claims := &auth.ExtraClaims{}
 	if err = idToken.Claims(claims); err != nil {
 		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
