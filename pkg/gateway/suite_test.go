@@ -29,6 +29,8 @@ const (
 )
 
 var (
+	authRootToken = "super-secret-root-token"
+
 	pool         *dockertest.Pool
 	dexContainer *dockertest.Resource
 
@@ -74,6 +76,7 @@ var _ = BeforeSuite(func(done Done) {
 	authConfig := &auth.Config{
 		IssuerURL:      fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp")),
 		OfflineAsScope: true,
+		RootToken:      &authRootToken,
 	}
 	log.Info("dex issuer url: " + authConfig.IssuerURL)
 
@@ -96,11 +99,17 @@ var _ = BeforeSuite(func(done Done) {
 	cert, err := tls.LoadX509KeyPair(data.Path("x509/server_cert.pem"), data.Path("x509/server_key.pem"))
 	Expect(err).ToNot(HaveOccurred())
 
+	conf := &ServerConfig{
+		KeepAlive:       false,
+		AuthInterceptor: authInterceptor,
+		TlsCert:         &cert,
+	}
+
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 5 * time.Second
 	err = backoff.Retry(func() error {
 		var err error
-		server, err = NewServer(false, authInterceptor, &cert)
+		server, err = NewServer(conf)
 		return err
 	}, ebo)
 	Expect(err).ToNot(HaveOccurred())

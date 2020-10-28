@@ -38,7 +38,13 @@ type Server struct {
 	shutdown *util.ShutdownWaitGroup
 }
 
-func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor, tlsCert *tls.Certificate) (*Server, error) {
+type ServerConfig struct {
+	KeepAlive       bool
+	AuthInterceptor *auth.AuthInterceptor
+	TlsCert         *tls.Certificate
+}
+
+func NewServer(conf *ServerConfig) (*Server, error) {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName("gateway"),
@@ -49,21 +55,21 @@ func NewServer(keepAlive bool, authInterceptor *auth.AuthInterceptor, tlsCert *t
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_prometheus.StreamServerInterceptor,
-			grpc_auth.StreamServerInterceptor(authInterceptor.EnsureValid),
+			grpc_auth.StreamServerInterceptor(conf.AuthInterceptor.EnsureValid),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_prometheus.UnaryServerInterceptor,
-			grpc_auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
+			grpc_auth.UnaryServerInterceptor(conf.AuthInterceptor.EnsureValid),
 		)),
 	}
-	if keepAlive {
+	if conf.KeepAlive {
 		opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: 5 * time.Minute,
 			Time:              2 * time.Second,
 		}))
 	}
-	if tlsCert != nil {
-		opts = append(opts, grpc.Creds(credentials.NewServerTLSFromCert(tlsCert)))
+	if conf.TlsCert != nil {
+		opts = append(opts, grpc.Creds(credentials.NewServerTLSFromCert(conf.TlsCert)))
 	}
 	s.grpc = grpc.NewServer(opts...)
 

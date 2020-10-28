@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"os"
 
 	dexpb "github.com/dexidp/dex/api"
 	"github.com/spf13/cobra"
@@ -24,6 +25,11 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+
+		// Some options can be provided by env variables
+		if v := os.Getenv("AUTH_ROOT_TOKEN"); v != "" {
+			authConfig.RootToken = &v
+		}
 
 		// Setup grpc listener
 		apiLis, err := net.Listen("tcp", apiAddr)
@@ -54,7 +60,12 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create the server
-		s, err := gateway.NewServer(keepAlive, authInterceptor, nil)
+		conf := &gateway.ServerConfig{
+			KeepAlive:       false,
+			AuthInterceptor: authInterceptor,
+		}
+
+		s, err := gateway.NewServer(conf)
 		if err != nil {
 			return err
 		}

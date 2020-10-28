@@ -3,6 +3,7 @@ package auth
 type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
+	RootToken      *string
 }
 
 type ExtraClaims struct {

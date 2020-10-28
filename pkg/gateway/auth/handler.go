@@ -81,7 +81,7 @@ func (n *Handler) setupOIDC() error {
 	return nil
 }
 
-func (n *Handler) Verify(ctx context.Context, bearerToken string) (*oidc.IDToken, error) {
+func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken, error) {
 	idToken, err := n.verifier.Verify(ctx, bearerToken)
 	if err != nil {
 		return nil, fmt.Errorf("could not verify bearer token: %v", err)
@@ -91,7 +91,12 @@ func (n *Handler) Verify(ctx context.Context, bearerToken string) (*oidc.IDToken
 
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClaims, error) {
-	idToken, err := n.Verify(ctx, bearerToken)
+	if n.config.RootToken != nil && bearerToken == *n.config.RootToken {
+		n.log.Info("### user authenticated via root token ###")
+		return &ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
+	}
+
+	idToken, err := n.verify(ctx, bearerToken)
 	if err != nil {
 		return nil, err
 	}
