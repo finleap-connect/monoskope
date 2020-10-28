@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
+	"net/http/cookiejar"
 	"testing"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"golang.org/x/net/publicsuffix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/examples/data"
@@ -26,13 +29,14 @@ import (
 
 const (
 	anyLocalAddr = "127.0.0.1:0"
+	redirectURL  = "http://localhost:6555/oauth/callback"
 )
 
 var (
 	authRootToken = "super-secret-root-token"
-
-	pool         *dockertest.Pool
-	dexContainer *dockertest.Resource
+	authCode      string
+	pool          *dockertest.Pool
+	dexContainer  *dockertest.Resource
 
 	metricsLis                 net.Listener
 	apiLis                     net.Listener
@@ -40,6 +44,9 @@ var (
 	server                     *Server
 	authInterceptor            *auth_server.AuthServerInterceptor
 	clientTransportCredentials credentials.TransportCredentials
+	httpClient                 *http.Client
+	dexWebEndpoint             string
+	log                        logger.Logger
 )
 
 func TestGateway(t *testing.T) {
@@ -50,7 +57,7 @@ func TestGateway(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	var err error
-	log := logger.WithName("gatewaysetup")
+	log = logger.WithName("gatewaysetup")
 
 	By("bootstrapping gateway test env")
 	pool, err = dockertest.NewPool("")
@@ -73,12 +80,14 @@ var _ = BeforeSuite(func(done Done) {
 	clientTransportCredentials, err = credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
 	Expect(err).ToNot(HaveOccurred())
 
+	dexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 	authConfig := &auth_server.Config{
-		IssuerURL:      fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp")),
+		IssuerURL:      dexWebEndpoint,
 		OfflineAsScope: true,
 		RootToken:      &authRootToken,
+		ValidClientId:  "monoctl",
 	}
-	log.Info("dex issuer url: " + authConfig.IssuerURL)
+	log.Info("dex issuer url: " + dexWebEndpoint)
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	dexConn, err = grpc.Dial(fmt.Sprintf("127.0.0.1:%s", dexContainer.GetPort("5000/tcp")), opts...)
@@ -121,8 +130,42 @@ var _ = BeforeSuite(func(done Done) {
 		}
 	}()
 
+	// Setup HTTP client
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	Expect(err).ToNot(HaveOccurred())
+	httpClient = &http.Client{
+		Jar: jar,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/oauth/callback", callback)
+	server := &http.Server{
+		Addr:    ":6555",
+		Handler: mux,
+	}
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	close(done)
 }, 60)
+
+func callback(rw http.ResponseWriter, r *http.Request) {
+	log.Info("received auth callback")
+	err := r.ParseForm()
+	if err != nil {
+		return
+	}
+	// Authorization redirect callback from OAuth2 auth flow.
+	if errMsg := r.Form.Get("error"); errMsg != "" {
+		log.Error(err, errMsg)
+		return
+	}
+	authCode = r.Form.Get("code")
+}
 
 var _ = AfterSuite(func() {
 	var err error

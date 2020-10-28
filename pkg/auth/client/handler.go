@@ -20,7 +20,6 @@ import (
 
 type Handler struct {
 	log         logger.Logger
-	dexClient   dexpb.DexClient
 	httpClient  *http.Client
 	oauthClient *dexpb.Client
 	verifier    *oidc.IDTokenVerifier
@@ -28,10 +27,9 @@ type Handler struct {
 	config      *Config
 }
 
-func NewHandler(dexClient dexpb.DexClient, config *Config) (*Handler, error) {
+func NewHandler(config *Config) (*Handler, error) {
 	n := &Handler{
 		log:        logger.WithName("auth-client"),
-		dexClient:  dexClient,
 		config:     config,
 		httpClient: http.DefaultClient,
 	}
@@ -48,7 +46,7 @@ func NewHandler(dexClient dexpb.DexClient, config *Config) (*Handler, error) {
 }
 
 func (n *Handler) setupOAuthRedirect() {
-	redirectUri := n.config.BaseURL + "/auth/callback"
+	redirectUri := n.config.RedirectURL
 	client := &dexpb.Client{
 		Id:           "monoctl",
 		Secret:       n.config.ClientSecret,

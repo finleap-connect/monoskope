@@ -78,7 +78,7 @@ func (n *Handler) setupOIDC() error {
 		}()
 	}
 
-	n.verifier = n.provider.Verifier(&oidc.Config{ClientID: n.oauthClient.GetId()})
+	n.verifier = n.provider.Verifier(&oidc.Config{ClientID: n.config.ValidClientId})
 	return nil
 }
 

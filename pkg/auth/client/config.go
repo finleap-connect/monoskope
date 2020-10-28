@@ -5,5 +5,5 @@ type Config struct {
 	OfflineAsScope bool
 	Nonce          string
 	ClientSecret   string
-	BaseURL        string
+	RedirectURL    string
 }
