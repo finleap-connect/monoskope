@@ -8,8 +8,6 @@ logger:
   level: debug
 web:
   http: 0.0.0.0:5556
-grpc:
-  addr: 127.0.0.1:5000
 oauth2:
   alwaysShowLoginScreen: false
   skipApprovalScreen: true

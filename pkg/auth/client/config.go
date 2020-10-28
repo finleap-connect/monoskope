@@ -4,6 +4,7 @@ type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
 	Nonce          string
+	ClientId       string
 	ClientSecret   string
-	RedirectURL    string
+	RedirectURI    string
 }

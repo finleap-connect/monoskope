@@ -76,8 +76,9 @@ var _ = Describe("Gateway", func() {
 
 		handler, err := auth_client.NewHandler(&auth_client.Config{
 			IssuerURL:      dexWebEndpoint,
-			RedirectURL:    redirectURL,
+			RedirectURI:    redirectURL,
 			Nonce:          "secret-nonce",
+			ClientId:       "monoctl",
 			ClientSecret:   "monoctl-app-secret",
 			OfflineAsScope: true,
 		})

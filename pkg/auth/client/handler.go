@@ -8,23 +8,18 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	dexpb "github.com/dexidp/dex/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/oauth2"
 )
 
-// TODO: we should probably replace the cookie system we use with something
-//       like proper server-side session handling... \o/
-
 type Handler struct {
-	log         logger.Logger
-	httpClient  *http.Client
-	oauthClient *dexpb.Client
-	verifier    *oidc.IDTokenVerifier
-	provider    *oidc.Provider
-	config      *Config
+	log        logger.Logger
+	httpClient *http.Client
+	verifier   *oidc.IDTokenVerifier
+	provider   *oidc.Provider
+	config     *Config
 }
 
 func NewHandler(config *Config) (*Handler, error) {
@@ -34,29 +29,13 @@ func NewHandler(config *Config) (*Handler, error) {
 		httpClient: http.DefaultClient,
 	}
 	// Setup the redirect handler before continuing
-	n.log.Info("Setup OAuth-Client with Dex")
-	n.setupOAuthRedirect()
-	n.log.Info("OAuth-Client setup", "id", n.oauthClient.Id, "redirectURIs", n.oauthClient.RedirectUris)
+	n.log.Info("OAuth-Client setup", "id", n.config.ClientId, "redirectURI", n.config.RedirectURI)
 	// Setup OIDC
 	err := n.setupOIDC()
 	if err != nil {
 		return nil, err
 	}
 	return n, nil
-}
-
-func (n *Handler) setupOAuthRedirect() {
-	redirectUri := n.config.RedirectURL
-	client := &dexpb.Client{
-		Id:           "monoctl",
-		Secret:       n.config.ClientSecret,
-		RedirectUris: []string{redirectUri},
-		TrustedPeers: []string{},
-		Public:       false,
-		Name:         "Monoskope CLI",
-		LogoUrl:      "",
-	}
-	n.oauthClient = client
 }
 
 func (n *Handler) setupOIDC() error {
@@ -99,17 +78,17 @@ func (n *Handler) setupOIDC() error {
 		}()
 	}
 
-	n.verifier = n.provider.Verifier(&oidc.Config{ClientID: n.oauthClient.GetId()})
+	n.verifier = n.provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
 	return nil
 }
 
 func (n *Handler) getOauth2Config(scopes []string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     n.oauthClient.GetId(),
-		ClientSecret: n.oauthClient.GetSecret(),
+		ClientID:     n.config.ClientId,
+		ClientSecret: n.config.ClientSecret,
 		Endpoint:     n.provider.Endpoint(),
 		Scopes:       scopes,
-		RedirectURL:  n.oauthClient.GetRedirectUris()[0],
+		RedirectURL:  n.config.RedirectURI,
 	}
 }
 

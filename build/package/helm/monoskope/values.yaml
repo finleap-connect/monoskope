@@ -21,11 +21,6 @@ dex: # OIDC Provider
       level: debug
     web:
       address: 0.0.0.0
-    grpc:
-      address: 127.0.0.1
-      tlsCert: /etc/dex/tls/grpc/server/tls.crt
-      tlsKey: /etc/dex/tls/grpc/server/tls.key
-      tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
     oauth2:
       alwaysShowLoginScreen: false
       skipApprovalScreen: true
@@ -41,9 +36,7 @@ dex: # OIDC Provider
   ports:
     web:
       containerPort: 5556
-    grpc:
-      servicePort: 5000
-  grpc: true
+  grpc: false
   resources:
     limits:
       cpu: 500m
@@ -68,7 +61,5 @@ dex: # OIDC Provider
     # Specifies whether a ServiceAccount should be created
     create: false
     # The name of the ServiceAccount to use.
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
