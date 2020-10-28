@@ -19,4 +19,6 @@ service Gateway {
 message ServerInformation {
   // server version
   string version = 1;
+  // commit from which server has been built
+  string commit = 2;
 }

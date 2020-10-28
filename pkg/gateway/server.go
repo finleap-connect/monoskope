@@ -13,6 +13,7 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
@@ -119,5 +120,8 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 }
 
 func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api.ServerInformation, error) {
-	return nil, nil
+	return &api.ServerInformation{
+		Version: metadata.Version,
+		Commit:  metadata.Commit,
+	}, nil
 }

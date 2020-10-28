@@ -1,4 +1,5 @@
 BUILD_PATH ?= $(shell pwd)
+GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 
 GO             ?= go
 
@@ -9,7 +10,7 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.25.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
-LDFLAGS    	   += -ldflags "-X=main.version=$(VERSION) -X=main.commit=$(COMMIT)"
+LDFLAGS    	   += -ldflags "-X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)"
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 

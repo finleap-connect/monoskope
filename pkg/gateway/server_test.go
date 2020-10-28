@@ -15,7 +15,7 @@ import (
 
 var _ = Describe("Gateway", func() {
 	It("declines invalid bearer token", func() {
-		perRPC := oauth.NewOauthAccess(fetchToken())
+		perRPC := oauth.NewOauthAccess(invalidToken())
 
 		opts := []grpc.DialOption{
 			// In addition to the following grpc.DialOption, callers may also use
@@ -42,10 +42,10 @@ var _ = Describe("Gateway", func() {
 	})
 })
 
-// fetchToken simulates a token lookup and omits the details of proper token
+// invalidToken simulates a token lookup and omits the details of proper token
 // acquisition. For examples of how to acquire an OAuth2 token, see:
 // https://godoc.org/golang.org/x/oauth2
-func fetchToken() *oauth2.Token {
+func invalidToken() *oauth2.Token {
 	return &oauth2.Token{
 		AccessToken: "some-secret-token",
 	}

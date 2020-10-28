@@ -4,11 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-)
-
-var (
-	version string = "DEV"
-	commit  string = "DEBUG"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
 )
 
 var versionCmd = &cobra.Command{
@@ -16,7 +12,7 @@ var versionCmd = &cobra.Command{
 	Short: "Prints version information",
 	Long:  `Prints version information and the commit`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("monoctl\nversion: %s commit: %s\n", version, commit)
+		fmt.Printf("monoctl\nversion: %s commit: %s\n", metadata.Version, metadata.Commit)
 	},
 }
 
