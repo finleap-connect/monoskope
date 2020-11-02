@@ -6,9 +6,12 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
+	"golang.org/x/oauth2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	auth_client "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/client"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
@@ -79,6 +82,20 @@ var _ = BeforeSuite(func(done Done) {
 	}()
 }, 60)
 
+var _ = AfterSuite(func() {
+	var err error
+	By("tearing down the test environment")
+	err = env.Shutdown()
+	Expect(err).To(BeNil())
+
+	gatewayServer.shutdown.Expect()
+
+	err = gatewayApiListener.Close()
+	Expect(err).To(BeNil())
+
+	_ = httpServer.Close()
+})
+
 func callback(rw http.ResponseWriter, r *http.Request) {
 	log.Info("received auth callback")
 	err := r.ParseForm()
@@ -93,16 +110,36 @@ func callback(rw http.ResponseWriter, r *http.Request) {
 	authCode = r.Form.Get("code")
 }
 
-var _ = AfterSuite(func() {
-	var err error
-	By("tearing down the test environment")
-	err = env.Shutdown()
-	Expect(err).To(BeNil())
+func invalidToken() *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken: "some-invalid-token",
+	}
+}
 
-	gatewayServer.shutdown.Expect()
+func rootToken() *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken: util.AuthRootToken,
+	}
+}
 
-	err = gatewayApiListener.Close()
-	Expect(err).To(BeNil())
+func getClientAuthHandler(issuerURL, redirectURL string) (*auth_client.Handler, error) {
+	return auth_client.NewHandler(&auth_client.Config{
+		BaseConfig: auth.BaseConfig{
+			IssuerURL:      issuerURL,
+			OfflineAsScope: true,
+		},
+		RedirectURI:  redirectURL,
+		Nonce:        "secret-nonce",
+		ClientId:     "monoctl",
+		ClientSecret: "monoctl-app-secret",
+	})
+}
 
-	_ = httpServer.Close()
-})
+func getAuthURL(handler *auth_client.Handler) (string, error) {
+	var state auth.State
+	return handler.GetAuthCodeURL(&state, &auth.AuthCodeURLConfig{
+		Scopes:        []string{"offline_access"},
+		Clients:       []string{},
+		OfflineAccess: true,
+	})
+}

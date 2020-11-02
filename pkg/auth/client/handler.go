@@ -49,6 +49,7 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 	return oidc.ClientContext(ctx, n.httpClient)
 }
 
+// AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
 func (n *Handler) GetAuthCodeURL(state *auth.State, config *auth.AuthCodeURLConfig) (string, error) {
 	// Encode state and calculate nonce
 	encoded, err := state.Encode()
@@ -85,6 +86,7 @@ func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Tok
 	return n.getOauth2Config(nil).TokenSource(n.clientContext(ctx), t).Token()
 }
 
+// Exchange converts an authorization code into a token.
 func (n *Handler) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
 	return n.getOauth2Config(nil).Exchange(n.clientContext(ctx), code)
 }
