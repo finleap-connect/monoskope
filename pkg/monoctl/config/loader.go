@@ -1,0 +1,111 @@
+package config
+
+import (
+	"io/ioutil"
+	"os"
+	"path"
+
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/util/homedir"
+)
+
+const (
+	RecommendedConfigPathFlag   = "monoskopeconfig"
+	RecommendedConfigPathEnvVar = "MONOSKOPECONFIG"
+	RecommendedHomeDir          = ".monoskope"
+	RecommendedFileName         = "config"
+)
+
+var (
+	RecommendedConfigDir = path.Join(homedir.HomeDir(), RecommendedHomeDir)
+	RecommendedHomeFile  = path.Join(RecommendedConfigDir, RecommendedFileName)
+)
+
+type ClientConfigLoader struct {
+	// Logger interface
+	log        logger.Logger
+	config     *Config
+	configPath string
+}
+
+// LoadAndStoreConfig loads and stores the config either from env or home file.
+func (l *ClientConfigLoader) LoadAndStoreConfig() error {
+	// Load config from envvar path if provided
+	envVarFile := os.Getenv(RecommendedConfigPathEnvVar)
+	if len(envVarFile) != 0 {
+		if err := l.loadAndStoreConfig(envVarFile); err != nil {
+			return err
+		}
+		l.configPath = envVarFile
+		return nil
+	}
+
+	// Load recommended home file if present
+	if err := l.loadAndStoreConfig(RecommendedHomeFile); err != nil {
+		return err
+	}
+	l.configPath = RecommendedHomeFile
+
+	return nil
+}
+
+// loadAndStoreConfig checks if the given file exists and loads it's contents
+func (l *ClientConfigLoader) loadAndStoreConfig(filename string) error {
+	var err error
+	if _, err = os.Stat(filename); os.IsNotExist(err) {
+		return err
+	}
+	l.config, err = l.LoadFromFile(filename)
+	return err
+}
+
+// GetConfigPath returns the path of the previously loaded config
+func (l *ClientConfigLoader) GetConfigPath() string {
+	return l.configPath
+}
+
+// GetConfig returns the previously loaded config
+func (l *ClientConfigLoader) GetConfig() *Config {
+	return l.config
+}
+
+// LoadFromFile takes a filename and deserializes the contents into Config object
+func (l *ClientConfigLoader) LoadFromFile(filename string) (*Config, error) {
+	monoconfigBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	config, err := l.LoadFromBytes(monoconfigBytes)
+	if err != nil {
+		return nil, err
+	}
+	l.log.Info("Config loaded from file", "filename", filename)
+
+	return config, nil
+}
+
+// Load takes a byte slice and deserializes the contents into Config object.
+// Encapsulates deserialization without assuming the source is a file.
+func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
+	config := NewConfig()
+
+	err := yaml.Unmarshal([]byte(data), &config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = config.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// NewLoader is a convenience function that returns a new ClientConfigLoader object with defaults
+func NewLoader() *ClientConfigLoader {
+	return &ClientConfigLoader{
+		log: logger.WithName("client-config-loader"),
+	}
+}

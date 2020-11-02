@@ -16,12 +16,6 @@ PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-TEST_FLAGS     ?= --dex-conf-path "$(BUILD_PATH)/config/dex"
-
-ifdef TEST_WITH_KIND
-	TEST_FLAGS += --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
-endif
-
 define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
 endef
@@ -44,8 +38,12 @@ lint: golangci-lint-get
 run-%:
 	$(call go-run,$*)
 
-test: ginkgo-get
-	$(GINKGO) -r -v -cover internal pkg -- $(TEST_FLAGS)
+test-kind: 
+	$(GINKGO) -r -v -cover internal -- --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+
+test:
+	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
+	$(GINKGO) -r -v -cover pkg/monoctl
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
