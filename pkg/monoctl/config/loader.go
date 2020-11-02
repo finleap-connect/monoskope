@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	RecommendedConfigPathFlag   = "monoskopeconfig"
 	RecommendedConfigPathEnvVar = "MONOSKOPECONFIG"
 	RecommendedHomeDir          = ".monoskope"
 	RecommendedFileName         = "config"
@@ -24,13 +23,29 @@ var (
 
 type ClientConfigLoader struct {
 	// Logger interface
-	log        logger.Logger
-	config     *Config
-	configPath string
+	log          logger.Logger
+	config       *Config
+	configPath   string
+	ExplicitFile string
+}
+
+// NewLoader is a convenience function that returns a new ClientConfigLoader object with defaults
+func NewLoader() *ClientConfigLoader {
+	return &ClientConfigLoader{
+		log: logger.WithName("client-config-loader"),
+	}
 }
 
 // LoadAndStoreConfig loads and stores the config either from env or home file.
 func (l *ClientConfigLoader) LoadAndStoreConfig() error {
+	if l.ExplicitFile != "" {
+		if err := l.loadAndStoreConfig(l.ExplicitFile); err != nil {
+			return err
+		}
+		l.configPath = l.ExplicitFile
+		return nil
+	}
+
 	// Load config from envvar path if provided
 	envVarFile := os.Getenv(RecommendedConfigPathEnvVar)
 	if len(envVarFile) != 0 {
@@ -101,11 +116,4 @@ func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
 	}
 
 	return config, nil
-}
-
-// NewLoader is a convenience function that returns a new ClientConfigLoader object with defaults
-func NewLoader() *ClientConfigLoader {
-	return &ClientConfigLoader{
-		log: logger.WithName("client-config-loader"),
-	}
 }

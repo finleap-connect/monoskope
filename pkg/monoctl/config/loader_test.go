@@ -39,4 +39,17 @@ var _ = Describe("loader", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())
 	})
+	It("loads config from explicit file path", func() {
+		loader := NewLoader()
+
+		tempFile, err := testutil_fs.NewTempFile([]byte(fakeConfigData))
+		Expect(err).NotTo(HaveOccurred())
+		defer tempFile.Close()
+
+		loader.ExplicitFile = tempFile.Path
+		err = loader.LoadAndStoreConfig()
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(loader.config).ToNot(BeNil())
+	})
 })
