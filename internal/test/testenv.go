@@ -1,4 +1,4 @@
-package util
+package test
 
 import (
 	"crypto/tls"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -66,7 +65,7 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 		},
 		ExposedPorts: []string{"5556", "5000"},
 		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
-		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", test.DexConfigPath)},
+		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", DexConfigPath)},
 	}
 	dexContainer, err := pool.RunWithOptions(options)
 	if err != nil {

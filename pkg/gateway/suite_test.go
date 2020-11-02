@@ -10,10 +10,10 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_client "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/client"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	env      *util.OAuthTestEnv
+	env      *test.OAuthTestEnv
 	authCode string
 
 	gatewayApiListener net.Listener
@@ -44,7 +44,7 @@ var _ = BeforeSuite(func(done Done) {
 	log = logger.WithName("gateway")
 
 	By("bootstrapping test env")
-	env, err = util.SetupAuthTestEnv()
+	env, err = test.SetupAuthTestEnv()
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
@@ -118,7 +118,7 @@ func invalidToken() *oauth2.Token {
 
 func rootToken() *oauth2.Token {
 	return &oauth2.Token{
-		AccessToken: util.AuthRootToken,
+		AccessToken: test.AuthRootToken,
 	}
 }
 

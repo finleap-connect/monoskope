@@ -13,10 +13,3 @@ func TestConfig(t *testing.T) {
 	junitReporter := reporters.NewJUnitReporter("../../../reports/monoctl-config-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "Monoctl Config", []Reporter{junitReporter})
 }
-
-var _ = BeforeSuite(func(done Done) {
-	defer close(done)
-}, 60)
-
-var _ = AfterSuite(func() {
-})
