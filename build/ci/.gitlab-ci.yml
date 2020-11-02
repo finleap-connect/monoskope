@@ -32,6 +32,7 @@ lint:helm:
   image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
   only:
     - main
+    - develop
     - merge_requests
     - tags
   script:
