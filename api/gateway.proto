@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+// import "google/protobuf/wrappers.proto";
+// import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "MG";
+option go_package = "api";
+
+package gateway;
+
+service Gateway {
+  rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
+}
+
+message ServerInformation {
+  // server version
+  string version = 1;
+  // commit from which server has been built
+  string commit = 2;
+}

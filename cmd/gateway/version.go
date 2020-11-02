@@ -12,7 +12,7 @@ var versionCmd = &cobra.Command{
 	Short: "Prints version information",
 	Long:  `Prints version information and the commit`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("monoctl\nversion: %s commit: %s\n", metadata.Version, metadata.Commit)
+		fmt.Printf("gateway\nversion: %s commit: %s\n", metadata.Version, metadata.Commit)
 	},
 }
 

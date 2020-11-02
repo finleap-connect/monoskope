@@ -1,4 +1,5 @@
 BUILD_PATH ?= $(shell pwd)
+GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 
 GO             ?= go
 
@@ -9,16 +10,16 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.25.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
-LDFLAGS    	   += -ldflags "-X=main.version=$(VERSION) -X=main.commit=$(COMMIT)"
+LDFLAGS    	   += -ldflags "-X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)"
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-TEST_FLAGS     ?=
+TEST_FLAGS     ?= --dex-conf-path "$(BUILD_PATH)/config/dex"
 
 ifdef TEST_WITH_KIND
-	TEST_FLAGS += -with-kind -helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+	TEST_FLAGS += --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
 endif
 
 define go-run
@@ -59,3 +60,7 @@ golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
 
 clean: ginkgo-clean golangci-lint-clean
+
+protobuf:
+	cd api
+	$(PROTOC) --go_out=. --go-grpc_out=. api/*.proto

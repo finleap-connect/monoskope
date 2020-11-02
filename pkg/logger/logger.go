@@ -33,7 +33,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to setup logging: %v", err))
 	}
-	log = zapr.NewLogger(zapLog)
+	log = zapr.NewLogger(zapLog.WithOptions(zap.AddCallerSkip(1)))
 }
 
 func WithName(name string) logr.Logger {

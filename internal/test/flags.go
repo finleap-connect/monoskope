@@ -9,6 +9,7 @@ var (
 	HelmChartPath   string
 	HelmChartValues string
 	WithKind        bool
+	DexConfigPath   string
 )
 
 func init() {
@@ -16,4 +17,5 @@ func init() {
 	flag.StringVar(&KindCluster, "kind-cluster", "", "define pre-existing cluster to use for tests")
 	flag.StringVar(&HelmChartPath, "helm-chart-path", "", "define path to local helm chart to use for tests")
 	flag.StringVar(&HelmChartValues, "helm-chart-values", "", "define path to local helm chart values file to use for tests")
+	flag.StringVar(&DexConfigPath, "dex-conf-path", "", "define path to local dex config file to use for tests")
 }

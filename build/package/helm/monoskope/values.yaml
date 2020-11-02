@@ -20,35 +20,23 @@ dex: # OIDC Provider
     logger:
       level: debug
     web:
-      http: 0.0.0.0:5556
-    grpc:
-      addr: 0.0.0.0:5000
-      tlsCert: /etc/dex/tls/grpc/server/tls.crt
-      tlsKey: /etc/dex/tls/grpc/server/tls.key
-      tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
+      address: 0.0.0.0
     oauth2:
       alwaysShowLoginScreen: false
       skipApprovalScreen: true
     enablePasswordDB: false
     connectors: []
     staticClients:
-      - id: gateway
-        secret: "{{ gateway-app-secret }}"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
       - id: monoctl
         secret: "{{ monoctl-app-secret }}"
         name: "Monoskope CLI"
         redirectURIs:
-          - "http://localhost:5555/oauth/callback" # callback from dex to cli
+          - "http://localhost:6555/oauth/callback" # callback from dex to cli
   https: false
   ports:
     web:
-      servicePort: 5556
-    grpc:
-      servicePort: 5000
-  grpc: true
+      containerPort: 5556
+  grpc: false
   resources:
     limits:
       cpu: 500m
@@ -73,7 +61,5 @@ dex: # OIDC Provider
     # Specifies whether a ServiceAccount should be created
     create: false
     # The name of the ServiceAccount to use.
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
