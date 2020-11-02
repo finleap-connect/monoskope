@@ -70,4 +70,26 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
+	It("can go through oidc-flow declining non-existing user", func() {
+		handler, err := getClientAuthHandler(env.DexWebEndpoint, redirectURL)
+		Expect(err).ToNot(HaveOccurred())
+		authCodeURL, err := getAuthURL(handler)
+		Expect(err).ToNot(HaveOccurred())
+
+		res, err := httpClient.Get(authCodeURL)
+		Expect(err).NotTo(HaveOccurred())
+		doc, err := goquery.NewDocumentFromReader(res.Body)
+		Expect(err).NotTo(HaveOccurred())
+		path, ok := doc.Find("form").Attr("action")
+		Expect(ok).To(BeTrue())
+		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", env.DexWebEndpoint, path), url.Values{
+			"login": {"wronguser"}, "password": {"wrongpassword"},
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res.StatusCode).To(Equal(http.StatusOK))
+
+		authToken, err := handler.Exchange(context.Background(), authCode)
+		Expect(err).To(HaveOccurred())
+		Expect(authToken).To((BeNil()))
+	})
 })
