@@ -32,7 +32,7 @@ fmt:
 vet:
 	$(GO) vet ./...
 
-lint: golangci-lint-get
+lint:
 	$(LINTER) run -v --no-config --deadline=5m
 
 run-%:

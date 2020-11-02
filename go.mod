@@ -14,18 +14,17 @@ require (
 	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
-	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/ory/dockertest/v3 v3.6.2
 	github.com/prometheus/client_golang v1.8.0
 	github.com/spf13/cobra v1.1.1
 	go.uber.org/zap v1.16.0
-	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102
+	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	google.golang.org/grpc v1.33.1
 	google.golang.org/grpc/examples v0.0.0-20201030225255-4e179b8d3ec4
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/client-go v0.18.6
 	sigs.k8s.io/controller-runtime v0.6.3
 	sigs.k8s.io/kind v0.9.0
 )

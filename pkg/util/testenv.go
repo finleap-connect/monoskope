@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	anyLocalAddr  = "127.0.0.1:0"
 	AuthRootToken = "super-secret-root-token"
 )
 
@@ -52,7 +51,7 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 	log.Info("Creating docker pool...")
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		env.Shutdown()
+		_ = env.Shutdown()
 		return nil, err
 	}
 	env.pool = pool
@@ -71,7 +70,7 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 	}
 	dexContainer, err := pool.RunWithOptions(options)
 	if err != nil {
-		env.Shutdown()
+		_ = env.Shutdown()
 		return nil, err
 	}
 	env.resources[dexContainer.Container.Name] = dexContainer
@@ -79,14 +78,14 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 
 	clientTransportCredentials, err := credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
 	if err != nil {
-		env.Shutdown()
+		_ = env.Shutdown()
 		return nil, err
 	}
 	env.GatewayClientTransportCredentials = clientTransportCredentials
 
 	cert, err := tls.LoadX509KeyPair(data.Path("x509/server_cert.pem"), data.Path("x509/server_key.pem"))
 	if err != nil {
-		env.Shutdown()
+		_ = env.Shutdown()
 		return nil, err
 	}
 	env.GatewayTlsCert = &cert
@@ -103,7 +102,7 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 
 	authInterceptor, err := auth_server.NewInterceptor(authConfig)
 	if err != nil {
-		env.Shutdown()
+		_ = env.Shutdown()
 		return nil, err
 	}
 	env.AuthInterceptor = authInterceptor
