@@ -86,19 +86,24 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 
 func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	shutdown := s.shutdown
-	// Start the http server in a different goroutine
-	shutdown.Add(1)
-	go func() {
-		s.log.Info("starting to serve prometheus metrics", "addr", metricsLis.Addr())
-		err := s.http.Serve(metricsLis)
-		// If shutdown is expected, we don't care about the error,
-		// but if we do not expect shutdown, we panic!
-		if !shutdown.IsExpected() && err != nil {
-			panic(fmt.Sprintf("shutdown unexpected: %v", err))
-		}
-		s.log.Info("http server stopped")
-		shutdown.Done() // Notify workgroup
-	}()
+
+	if metricsLis != nil {
+		// Start the http server in a different goroutine
+		shutdown.Add(1)
+
+		go func() {
+			s.log.Info("starting to serve prometheus metrics", "addr", metricsLis.Addr())
+			err := s.http.Serve(metricsLis)
+			// If shutdown is expected, we don't care about the error,
+			// but if we do not expect shutdown, we panic!
+			if !shutdown.IsExpected() && err != nil {
+				panic(fmt.Sprintf("shutdown unexpected: %v", err))
+			}
+			s.log.Info("http server stopped")
+			shutdown.Done() // Notify workgroup
+		}()
+	}
+
 	// Start routine waiting for signals
 	shutdown.RegisterSignalHandler(func() {
 		// Stop the HTTP server
@@ -110,7 +115,7 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 		s.log.Info("grpc server stopping gracefully")
 		s.grpc.GracefulStop()
 	})
-	//
+
 	s.log.Info("starting to serve grpc", "addr", apiLis.Addr())
 	err := s.grpc.Serve(apiLis)
 	s.log.Info("grpc server stopped")

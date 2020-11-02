@@ -12,6 +12,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/api"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	auth_client "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/client"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/oauth"
@@ -30,11 +31,11 @@ var _ = Describe("Gateway", func() {
 			grpc.WithPerRPCCredentials(perRPC),
 			// oauth.NewOauthAccess requires the configuration of transport
 			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
+			grpc.WithTransportCredentials(env.GatewayClientTransportCredentials),
 		}
 
 		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
+		conn, err := grpc.Dial(gatewayApiListener.Addr().String(), opts...)
 		if err != nil {
 			log.Error(err, "did not connect: %v")
 		}
@@ -56,11 +57,11 @@ var _ = Describe("Gateway", func() {
 			grpc.WithPerRPCCredentials(perRPC),
 			// oauth.NewOauthAccess requires the configuration of transport
 			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
+			grpc.WithTransportCredentials(env.GatewayClientTransportCredentials),
 		}
 
 		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
+		conn, err := grpc.Dial(gatewayApiListener.Addr().String(), opts...)
 		if err != nil {
 			log.Error(err, "did not connect: %v")
 		}
@@ -76,7 +77,7 @@ var _ = Describe("Gateway", func() {
 
 		handler, err := auth_client.NewHandler(&auth_client.Config{
 			BaseConfig: auth.BaseConfig{
-				IssuerURL:      dexWebEndpoint,
+				IssuerURL:      env.DexWebEndpoint,
 				OfflineAsScope: true,
 			},
 			RedirectURI:  redirectURL,
@@ -99,7 +100,7 @@ var _ = Describe("Gateway", func() {
 		Expect(err).NotTo(HaveOccurred())
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
-		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", dexWebEndpoint, path), url.Values{
+		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", env.DexWebEndpoint, path), url.Values{
 			"login": {"admin@example.com"}, "password": {"password"},
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -118,11 +119,11 @@ var _ = Describe("Gateway", func() {
 			grpc.WithPerRPCCredentials(perRPC),
 			// oauth.NewOauthAccess requires the configuration of transport
 			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
+			grpc.WithTransportCredentials(env.GatewayClientTransportCredentials),
 		}
 
 		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
+		conn, err := grpc.Dial(gatewayApiListener.Addr().String(), opts...)
 		if err != nil {
 			log.Error(err, "did not connect: %v")
 		}
@@ -143,6 +144,6 @@ func invalidToken() *oauth2.Token {
 
 func rootToken() *oauth2.Token {
 	return &oauth2.Token{
-		AccessToken: authRootToken,
+		AccessToken: util.AuthRootToken,
 	}
 }
