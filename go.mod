@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/hashicorp/go-version v1.2.0
 	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3

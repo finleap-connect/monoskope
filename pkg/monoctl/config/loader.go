@@ -58,6 +58,9 @@ func (l *ClientConfigLoader) LoadAndStoreConfig() error {
 
 	// Load recommended home file if present
 	if err := l.loadAndStoreConfig(RecommendedHomeFile); err != nil {
+		if os.IsNotExist(err) {
+			return ErrNoConfigExists
+		}
 		return err
 	}
 	l.configPath = RecommendedHomeFile
