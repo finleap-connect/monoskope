@@ -168,15 +168,12 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 		return nil, grpcutil.ErrInvalidArgument(errors.Errorf("callback url invalid"))
 	}
 
-	claims := &ExtraClaims{}
-	if err = idToken.Claims(claims); err != nil {
-		return nil, fmt.Errorf("failed to parse claims: %v", err)
-	}
-	if !claims.EmailVerified {
-		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
+	claims, err := getClaims(idToken)
+	if err != nil {
+		return nil, err
 	}
 
-	n.log.Info("user authenticated via bearer token", "user", claims.Email)
+	n.log.Info("verified bearer token", "user", claims.Email)
 
 	return claims, nil
 }
@@ -193,15 +190,24 @@ func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClai
 		return nil, err
 	}
 
+	claims, err := getClaims(idToken)
+	if err != nil {
+		return nil, err
+	}
+
+	n.log.Info("user authenticated via bearer token", "user", claims.Email)
+
+	return claims, nil
+}
+
+func getClaims(idToken *oidc.IDToken) (*ExtraClaims, error) {
 	claims := &ExtraClaims{}
-	if err = idToken.Claims(claims); err != nil {
+	if err := idToken.Claims(claims); err != nil {
 		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
 	if !claims.EmailVerified {
 		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
 	}
-
-	n.log.Info("user authenticated via bearer token", "user", claims.Email)
 
 	return claims, nil
 }
