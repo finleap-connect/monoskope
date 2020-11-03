@@ -49,7 +49,6 @@ var _ = BeforeSuite(func(done Done) {
 	conf := &ServerConfig{
 		KeepAlive:  false,
 		AuthConfig: env.AuthConfig,
-		TlsCert:    env.GatewayTlsCert,
 	}
 
 	gatewayServer, err = NewServer(conf)

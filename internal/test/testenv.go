@@ -1,15 +1,12 @@
 package test
 
 import (
-	"crypto/tls"
 	"fmt"
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/examples/data"
 )
 
 const (
@@ -24,10 +21,8 @@ type TestEnv struct {
 
 type OAuthTestEnv struct {
 	*TestEnv
-	DexWebEndpoint                    string
-	GatewayClientTransportCredentials credentials.TransportCredentials
-	GatewayTlsCert                    *tls.Certificate
-	AuthConfig                        *auth.Config
+	DexWebEndpoint string
+	AuthConfig     *auth.Config
 }
 
 func SetupGeneralTestEnv() *TestEnv {
@@ -73,20 +68,6 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 	}
 	env.resources[dexContainer.Container.Name] = dexContainer
 	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
-
-	clientTransportCredentials, err := credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.GatewayClientTransportCredentials = clientTransportCredentials
-
-	cert, err := tls.LoadX509KeyPair(data.Path("x509/server_cert.pem"), data.Path("x509/server_key.pem"))
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.GatewayTlsCert = &cert
 
 	rootToken := AuthRootToken
 	env.AuthConfig = &auth.Config{
