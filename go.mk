@@ -16,6 +16,9 @@ PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
+CMD_MONOCTL = $(BUILD_PATH)/monoctl
+CMD_MONOCTL_SRC = cmd/monoctl/*.go
+
 define go-run
 	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
 endef
@@ -62,3 +65,11 @@ clean: ginkgo-clean golangci-lint-clean
 protobuf:
 	cd api
 	$(PROTOC) --go_out=. --go-grpc_out=. api/*.proto
+
+$(CMD_MONOCTL):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) $(LDFLAGS) $(CMD_MONOCTL_SRC)
+
+build-clean: 
+	rm $(CMD_MONOCTL)
+	
+build-monoctl: $(CMD_MONOCTL)
