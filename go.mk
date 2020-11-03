@@ -63,8 +63,8 @@ golangci-lint-clean:
 clean: ginkgo-clean golangci-lint-clean
 
 protobuf:
-	cd api
-	$(PROTOC) --go_out=. --go-grpc_out=. api/*.proto
+	find ./api -name '*.go' -exec rm {} \;
+	find ./api -name '*.proto' -exec $(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. {} \;
 
 $(CMD_MONOCTL):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) $(LDFLAGS) $(CMD_MONOCTL_SRC)

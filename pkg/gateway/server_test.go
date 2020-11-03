@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/api"
+	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -20,7 +20,7 @@ var _ = Describe("Gateway", func() {
 			log.Error(err, "did not connect: %v")
 		}
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc := gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).To(HaveOccurred())
@@ -32,7 +32,7 @@ var _ = Describe("Gateway", func() {
 			log.Error(err, "did not connect: %v")
 		}
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc := gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
@@ -64,7 +64,7 @@ var _ = Describe("Gateway", func() {
 			log.Error(err, "did not connect: %v")
 		}
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc := gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())

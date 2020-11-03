@@ -12,7 +12,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"gitlab.figo.systems/platform/monoskope/monoskope/api"
+	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
 	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -27,7 +27,7 @@ import (
 )
 
 type Server struct {
-	api.UnimplementedGatewayServer
+	gateway.UnimplementedGatewayServer
 	// HTTP-server exposing the metrics
 	http *http.Server
 	// gRPC-server exposing both the API and health
@@ -74,7 +74,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	s.grpc = grpc.NewServer(opts...)
 
 	// Add user-authenticator service
-	api.RegisterGatewayServer(s.grpc, s)
+	gateway.RegisterGatewayServer(s.grpc, s)
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
 	// Register the metric interceptors with prometheus
@@ -130,8 +130,8 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	return err // Return the error, if grpc stopped gracefully there is no error
 }
 
-func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api.ServerInformation, error) {
-	return &api.ServerInformation{
+func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*gateway.ServerInformation, error) {
+	return &gateway.ServerInformation{
 		Version: metadata.Version,
 		Commit:  metadata.Commit,
 	}, nil
