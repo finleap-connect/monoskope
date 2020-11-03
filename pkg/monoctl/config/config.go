@@ -3,8 +3,9 @@ package config
 import "sigs.k8s.io/kind/pkg/errors"
 
 var (
-	ErrEmptyServer    = errors.New("has no server defined")
-	ErrNoConfigExists = errors.New("no valid monoconfig found")
+	ErrEmptyServer        = errors.New("has no server defined")
+	ErrNoConfigExists     = errors.New("no valid monoconfig found")
+	ErrAlreadyInitialized = errors.New("a configuartion already exists")
 )
 
 // Config holds the information needed to build connect to remote monoskope instance as a given user

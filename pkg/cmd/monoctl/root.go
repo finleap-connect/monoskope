@@ -29,6 +29,7 @@ func NewRootCmd() *cobra.Command {
 	flags.StringVar(&configLoader.ExplicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
 
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
+	rootCmd.AddCommand(NewInitCmd(configLoader))
 	rootCmd.AddCommand(auth.NewAuthCmd(configLoader))
 
 	return rootCmd

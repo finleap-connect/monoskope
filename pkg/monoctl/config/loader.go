@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/util/homedir"
 )
@@ -34,6 +35,37 @@ func NewLoader() *ClientConfigLoader {
 	return &ClientConfigLoader{
 		log: logger.WithName("client-config-loader"),
 	}
+}
+
+func (l *ClientConfigLoader) InitConifg(config *Config) error {
+	if l.ExplicitFile != "" {
+		exists, err := util.FileExists(l.ExplicitFile)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return ErrAlreadyInitialized
+		}
+		l.config = config
+		l.configPath = l.ExplicitFile
+		return l.SaveToFile(config, l.configPath, 0644)
+	}
+
+	exists, err := util.FileExists(RecommendedHomeFile)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return ErrAlreadyInitialized
+	}
+	err = util.CreateDir(RecommendedConfigDir, 0644)
+	if err != nil {
+		return err
+	}
+
+	l.config = config
+	l.configPath = RecommendedHomeFile
+	return l.SaveToFile(config, l.configPath, 0644)
 }
 
 // LoadAndStoreConfig loads and stores the config either from env or home file.
@@ -119,4 +151,19 @@ func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func (l *ClientConfigLoader) SaveToFile(config *Config, filename string, permission os.FileMode) error {
+	bytes, err := yaml.Marshal(&config)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, bytes, permission)
+	if err != nil {
+		return err
+	}
+	l.log.Info("Config saved to file", "filename", filename)
+
+	return nil
 }
