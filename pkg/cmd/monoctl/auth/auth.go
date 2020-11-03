@@ -15,6 +15,7 @@ func NewAuthCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
 	}
 
 	authCmd.AddCommand(NewAuthStatusCmd(configLoader))
+	authCmd.AddCommand(NewAuthLoginCmd(configLoader))
 
 	return authCmd
 }
