@@ -5,7 +5,7 @@ syntax = "proto3";
 
 // import "google/protobuf/empty.proto";
 // import "google/protobuf/wrappers.proto";
-// import "google/protobuf/timestamp.proto";
+import "google/protobuf/timestamp.proto";
 
 option objc_class_prefix = "MGA";
 option go_package =
@@ -16,3 +16,14 @@ package gateway.auth;
 message AuthState { string CallbackURL = 1; }
 
 message AuthInformation { string AuthCodeURL = 1; }
+
+message AuthCode {
+  string code = 1;
+  string state = 2;
+}
+
+message UserInfo {
+  string AccessToken = 1;
+  string RefreshToken = 2;
+  google.protobuf.Timestamp Expiry = 3;
+}

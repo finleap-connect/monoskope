@@ -10,11 +10,12 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
-	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -24,10 +25,11 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Server struct {
-	gateway.UnimplementedGatewayServer
+	api_gw.UnimplementedGatewayServer
 	// HTTP-server exposing the metrics
 	http *http.Server
 	// gRPC-server exposing both the API and health
@@ -35,31 +37,46 @@ type Server struct {
 	// Logger interface
 	log logger.Logger
 	//
-	shutdown *util.ShutdownWaitGroup
+	shutdown    *util.ShutdownWaitGroup
+	authConfig  *auth.Config
+	authHandler *auth.Handler
 }
 
 type ServerConfig struct {
-	KeepAlive             bool
-	AuthServerInterceptor *auth_server.AuthServerInterceptor
-	TlsCert               *tls.Certificate
+	KeepAlive  bool
+	AuthConfig *auth.Config
+	TlsCert    *tls.Certificate
 }
 
 func NewServer(conf *ServerConfig) (*Server, error) {
 	s := &Server{
-		http:     metrics.NewServer(),
-		log:      logger.WithName("gateway"),
-		shutdown: util.NewShutdownWaitGroup(),
+		http:       metrics.NewServer(),
+		log:        logger.WithName("gateway"),
+		shutdown:   util.NewShutdownWaitGroup(),
+		authConfig: conf.AuthConfig,
+	}
+
+	// Create interceptor for auth
+	authHandler, err := auth.NewHandler(conf.AuthConfig)
+	if err != nil {
+		return nil, err
+	}
+	s.authHandler = authHandler
+
+	authInterceptor, err := auth.NewInterceptor(authHandler)
+	if err != nil {
+		return nil, err
 	}
 
 	// Configure gRPC server
 	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_prometheus.StreamServerInterceptor,
-			grpc_auth.StreamServerInterceptor(conf.AuthServerInterceptor.EnsureValid),
+			auth.StreamServerInterceptor(authInterceptor.EnsureValid),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_prometheus.UnaryServerInterceptor,
-			grpc_auth.UnaryServerInterceptor(conf.AuthServerInterceptor.EnsureValid),
+			auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
 		)),
 	}
 	if conf.KeepAlive {
@@ -74,7 +91,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	s.grpc = grpc.NewServer(opts...)
 
 	// Add user-authenticator service
-	gateway.RegisterGatewayServer(s.grpc, s)
+	api_gw.RegisterGatewayServer(s.grpc, s)
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
 	// Register the metric interceptors with prometheus
@@ -130,9 +147,40 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	return err // Return the error, if grpc stopped gracefully there is no error
 }
 
-func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*gateway.ServerInformation, error) {
-	return &gateway.ServerInformation{
+func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInformation, error) {
+	return &api_gw.ServerInformation{
 		Version: metadata.Version,
 		Commit:  metadata.Commit,
+	}, nil
+}
+
+func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
+	url, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
+		Scopes:        []string{"offline_access"},
+		Clients:       []string{},
+		OfflineAccess: true,
+	})
+	if err != nil {
+		return nil, grpcutil.ErrInvalidArgument(err)
+	}
+
+	return &api_gwauth.AuthInformation{AuthCodeURL: url}, nil
+}
+
+func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.UserInfo, error) {
+	token, err := s.authHandler.Exchange(ctx, code.GetCode())
+	if err != nil {
+		return nil, grpcutil.ErrInvalidArgument(err)
+	}
+
+	err = s.authHandler.VerifyState(ctx, token, code.GetState())
+	if err != nil {
+		return nil, grpcutil.ErrInvalidArgument(err)
+	}
+
+	return &api_gwauth.UserInfo{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Expiry:       timestamppb.New(token.Expiry),
 	}, nil
 }

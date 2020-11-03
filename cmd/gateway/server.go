@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 )
 
@@ -13,7 +13,7 @@ var (
 	apiAddr     string
 	metricsAddr string
 	keepAlive   bool
-	authConfig  auth_server.Config
+	authConfig  auth.Config
 )
 
 var serverCmd = &cobra.Command{
@@ -41,16 +41,10 @@ var serverCmd = &cobra.Command{
 		}
 		defer metricsLis.Close()
 
-		// Create interceptor for auth
-		authInterceptor, err := auth_server.NewInterceptor(&authConfig)
-		if err != nil {
-			return err
-		}
-
 		// Create the server
 		conf := &gateway.ServerConfig{
-			KeepAlive:             false,
-			AuthServerInterceptor: authInterceptor,
+			KeepAlive:  false,
+			AuthConfig: &authConfig,
 		}
 
 		s, err := gateway.NewServer(conf)

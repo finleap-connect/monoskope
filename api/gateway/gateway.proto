@@ -17,6 +17,7 @@ package gateway;
 service Gateway {
   // Auth
   rpc GetAuthInformation(auth.AuthState) returns(auth.AuthInformation);
+  rpc ExchangeAuthCode(auth.AuthCode) returns(auth.UserInfo);
 
   rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
 }

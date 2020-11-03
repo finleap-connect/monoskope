@@ -11,19 +11,17 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
-	auth_client "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/client"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 const (
 	anyLocalAddr = "127.0.0.1:0"
-	redirectURL  = "http://localhost:6555/oauth/callback"
 )
 
 var (
-	env      *test.OAuthTestEnv
-	authCode string
+	env       *test.OAuthTestEnv
+	authCode  string
+	authState string
 
 	gatewayApiListener net.Listener
 	httpClient         *http.Client
@@ -52,9 +50,9 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	conf := &ServerConfig{
-		KeepAlive:             false,
-		AuthServerInterceptor: env.AuthInterceptor,
-		TlsCert:               env.GatewayTlsCert,
+		KeepAlive:  false,
+		AuthConfig: env.AuthConfig,
+		TlsCert:    env.GatewayTlsCert,
 	}
 
 	gatewayServer, err = NewServer(conf)
@@ -97,7 +95,6 @@ var _ = AfterSuite(func() {
 })
 
 func callback(rw http.ResponseWriter, r *http.Request) {
-	log.Info("received auth callback")
 	err := r.ParseForm()
 	if err != nil {
 		return
@@ -108,38 +105,20 @@ func callback(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	authCode = r.Form.Get("code")
+	authState = r.Form.Get("state")
+	log.Info("received auth callback", "authCode", authCode, "authState", authState)
+}
+
+func toToken(token string) *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken: token,
+	}
 }
 
 func invalidToken() *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: "some-invalid-token",
-	}
+	return toToken("some-invalid-token")
 }
 
 func rootToken() *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: test.AuthRootToken,
-	}
-}
-
-func getClientAuthHandler(issuerURL, redirectURL string) (*auth_client.Handler, error) {
-	return auth_client.NewHandler(&auth_client.Config{
-		BaseConfig: auth.BaseConfig{
-			IssuerURL:      issuerURL,
-			OfflineAsScope: true,
-		},
-		RedirectURI:  redirectURL,
-		Nonce:        "secret-nonce",
-		ClientId:     "monoctl",
-		ClientSecret: "monoctl-app-secret",
-	})
-}
-
-func getAuthURL(handler *auth_client.Handler) (string, error) {
-	var state auth.State
-	return handler.GetAuthCodeURL(&state, &auth.AuthCodeURLConfig{
-		Scopes:        []string{"offline_access"},
-		Clients:       []string{},
-		OfflineAccess: true,
-	})
+	return toToken(test.AuthRootToken)
 }

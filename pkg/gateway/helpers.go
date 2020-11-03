@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/oauth"
 )
 
-func CreateGatewayConnecton(url string, transportCredentials credentials.TransportCredentials, token *oauth2.Token) (*grpc.ClientConn, error) {
+func CreateGatewayAuthedConnecton(url string, transportCredentials credentials.TransportCredentials, token *oauth2.Token) (*grpc.ClientConn, error) {
 	perRPC := oauth.NewOauthAccess(token)
 
 	opts := []grpc.DialOption{
@@ -18,6 +18,15 @@ func CreateGatewayConnecton(url string, transportCredentials credentials.Transpo
 		grpc.WithPerRPCCredentials(perRPC),
 		// oauth.NewOauthAccess requires the configuration of transport
 		// credentials.
+		grpc.WithTransportCredentials(transportCredentials),
+	}
+
+	opts = append(opts, grpc.WithBlock())
+	return grpc.Dial(url, opts...)
+}
+
+func CreateGatewayConnecton(url string, transportCredentials credentials.TransportCredentials) (*grpc.ClientConn, error) {
+	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),
 	}
 

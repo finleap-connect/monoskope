@@ -7,7 +7,6 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
-	auth_server "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/server"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/examples/data"
@@ -28,7 +27,7 @@ type OAuthTestEnv struct {
 	DexWebEndpoint                    string
 	GatewayClientTransportCredentials credentials.TransportCredentials
 	GatewayTlsCert                    *tls.Certificate
-	AuthInterceptor                   *auth_server.AuthServerInterceptor
+	AuthConfig                        *auth.Config
 }
 
 func SetupGeneralTestEnv() *TestEnv {
@@ -90,21 +89,15 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 	env.GatewayTlsCert = &cert
 
 	rootToken := AuthRootToken
-	authConfig := &auth_server.Config{
-		BaseConfig: auth.BaseConfig{
-			IssuerURL:      env.DexWebEndpoint,
-			OfflineAsScope: true,
-		},
-		RootToken:     &rootToken,
-		ValidClientId: "monoctl",
+	env.AuthConfig = &auth.Config{
+		IssuerURL:      env.DexWebEndpoint,
+		OfflineAsScope: true,
+		RootToken:      &rootToken,
+		RedirectURI:    "http://localhost:6555/oauth/callback",
+		ClientId:       "gateway",
+		ClientSecret:   "app-secret",
+		Nonce:          "secret-nonce",
 	}
-
-	authInterceptor, err := auth_server.NewInterceptor(authConfig)
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.AuthInterceptor = authInterceptor
 
 	return env, nil
 }

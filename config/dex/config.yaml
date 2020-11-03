@@ -12,11 +12,11 @@ oauth2:
   alwaysShowLoginScreen: false
   skipApprovalScreen: true
 staticClients:
-  - id: monoctl
-    name: Monoskope CLI
+  - id: gateway
+    name: Monoskope Gateway
     redirectURIs:
       - http://localhost:6555/oauth/callback
-    secret: monoctl-app-secret
+    secret: app-secret
 enablePasswordDB: true
 staticPasswords:
   - email: admin@example.com

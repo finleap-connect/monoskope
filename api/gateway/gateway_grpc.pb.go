@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 type GatewayClient interface {
 	// Auth
 	GetAuthInformation(ctx context.Context, in *auth.AuthState, opts ...grpc.CallOption) (*auth.AuthInformation, error)
+	ExchangeAuthCode(ctx context.Context, in *auth.AuthCode, opts ...grpc.CallOption) (*auth.UserInfo, error)
 	GetServerInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerInformation, error)
 }
 
@@ -35,6 +36,15 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 func (c *gatewayClient) GetAuthInformation(ctx context.Context, in *auth.AuthState, opts ...grpc.CallOption) (*auth.AuthInformation, error) {
 	out := new(auth.AuthInformation)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetAuthInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *auth.AuthCode, opts ...grpc.CallOption) (*auth.UserInfo, error) {
+	out := new(auth.UserInfo)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/ExchangeAuthCode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +66,7 @@ func (c *gatewayClient) GetServerInfo(ctx context.Context, in *empty.Empty, opts
 type GatewayServer interface {
 	// Auth
 	GetAuthInformation(context.Context, *auth.AuthState) (*auth.AuthInformation, error)
+	ExchangeAuthCode(context.Context, *auth.AuthCode) (*auth.UserInfo, error)
 	GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error)
 	mustEmbedUnimplementedGatewayServer()
 }
@@ -66,6 +77,9 @@ type UnimplementedGatewayServer struct {
 
 func (UnimplementedGatewayServer) GetAuthInformation(context.Context, *auth.AuthState) (*auth.AuthInformation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthInformation not implemented")
+}
+func (UnimplementedGatewayServer) ExchangeAuthCode(context.Context, *auth.AuthCode) (*auth.UserInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
 }
 func (UnimplementedGatewayServer) GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServerInfo not implemented")
@@ -101,6 +115,24 @@ func _Gateway_GetAuthInformation_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Gateway_ExchangeAuthCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(auth.AuthCode)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).ExchangeAuthCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.Gateway/ExchangeAuthCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).ExchangeAuthCode(ctx, req.(*auth.AuthCode))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Gateway_GetServerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
@@ -126,6 +158,10 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAuthInformation",
 			Handler:    _Gateway_GetAuthInformation_Handler,
+		},
+		{
+			MethodName: "ExchangeAuthCode",
+			Handler:    _Gateway_ExchangeAuthCode_Handler,
 		},
 		{
 			MethodName: "GetServerInfo",
