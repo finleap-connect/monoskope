@@ -46,9 +46,6 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
-	gatewayApiListener, err = net.Listen("tcp", anyLocalAddr)
-	Expect(err).ToNot(HaveOccurred())
-
 	conf := &ServerConfig{
 		KeepAlive:  false,
 		AuthConfig: env.AuthConfig,
@@ -58,6 +55,8 @@ var _ = BeforeSuite(func(done Done) {
 	gatewayServer, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
 
+	gatewayApiListener, err = net.Listen("tcp", anyLocalAddr)
+	Expect(err).ToNot(HaveOccurred())
 	go func() {
 		err := gatewayServer.Serve(gatewayApiListener, nil)
 		if err != nil {
@@ -66,9 +65,7 @@ var _ = BeforeSuite(func(done Done) {
 	}()
 
 	// Setup HTTP client
-	Expect(err).ToNot(HaveOccurred())
 	httpClient = &http.Client{}
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/oauth/callback", callback)
 	httpServer = &http.Server{

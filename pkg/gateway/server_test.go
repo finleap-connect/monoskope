@@ -17,9 +17,7 @@ import (
 var _ = Describe("Gateway", func() {
 	It("declines invalid bearer token", func() {
 		conn, err := CreateGatewayAuthedConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials, invalidToken())
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
@@ -29,9 +27,7 @@ var _ = Describe("Gateway", func() {
 	})
 	It("accepts root bearer token", func() {
 		conn, err := CreateGatewayAuthedConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials, rootToken())
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
@@ -41,9 +37,7 @@ var _ = Describe("Gateway", func() {
 	})
 	It("can retrieve auth url", func() {
 		conn, err := CreateGatewayConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
@@ -54,9 +48,7 @@ var _ = Describe("Gateway", func() {
 	})
 	It("can go through oidc-flow with existing user", func() {
 		conn, err := CreateGatewayConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
@@ -78,11 +70,11 @@ var _ = Describe("Gateway", func() {
 
 		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authState})
 		Expect(err).ToNot(HaveOccurred())
+		Expect(userInfo).ToNot(BeNil())
+		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
 
 		conn, err = CreateGatewayAuthedConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials, toToken(userInfo.GetAccessToken()))
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc = gateway.NewGatewayClient(conn)
 
@@ -90,11 +82,9 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
-	It("can go through oidc-flow declining non-existing user", func() {
+	It("fail to go through oidc-flow for non-existing user", func() {
 		conn, err := CreateGatewayConnecton(gatewayApiListener.Addr().String(), env.GatewayClientTransportCredentials)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 

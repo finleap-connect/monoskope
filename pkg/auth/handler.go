@@ -149,26 +149,36 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 	return authCodeURL, nil
 }
 
-func (n *Handler) VerifyState(ctx context.Context, token *oauth2.Token, encodedState string) error {
+func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*ExtraClaims, error) {
 	idToken, err := n.verify(ctx, token.Extra("id_token").(string))
 	if err != nil {
-		return fmt.Errorf("failed to verify ID token: %v", err)
+		return nil, fmt.Errorf("failed to verify ID token: %v", err)
 	}
 
 	if idToken.Nonce != util.HashString(encodedState+n.config.Nonce) {
-		return fmt.Errorf("invalid id_token nonce")
+		return nil, fmt.Errorf("invalid id_token nonce")
 	}
 
 	state, err := DecodeState(encodedState)
 	if err != nil {
-		return fmt.Errorf("failed to decode state")
+		return nil, fmt.Errorf("failed to decode state")
 	}
 
 	if !state.IsValid() {
-		return grpcutil.ErrInvalidArgument(errors.Errorf("callback url invalid"))
+		return nil, grpcutil.ErrInvalidArgument(errors.Errorf("callback url invalid"))
 	}
 
-	return nil
+	claims := &ExtraClaims{}
+	if err = idToken.Claims(claims); err != nil {
+		return nil, fmt.Errorf("failed to parse claims: %v", err)
+	}
+	if !claims.EmailVerified {
+		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
+	}
+
+	n.log.Info("user authenticated via bearer token", "user", claims.Email)
+
+	return claims, nil
 }
 
 // authorize verifies a bearer token and pulls user information form the claims.

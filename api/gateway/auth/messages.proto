@@ -26,4 +26,7 @@ message UserInfo {
   string AccessToken = 1;
   string RefreshToken = 2;
   google.protobuf.Timestamp Expiry = 3;
+  string Email = 4;
+  bool EmailVerified = 5;
+  repeated string Groups = 6;
 }

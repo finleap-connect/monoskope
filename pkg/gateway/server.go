@@ -170,17 +170,21 @@ func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthS
 func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.UserInfo, error) {
 	token, err := s.authHandler.Exchange(ctx, code.GetCode())
 	if err != nil {
-		return nil, grpcutil.ErrInvalidArgument(err)
+		return nil, err
 	}
 
-	err = s.authHandler.VerifyState(ctx, token, code.GetState())
+	claims, err := s.authHandler.VerifyStateAndClaims(ctx, token, code.GetState())
 	if err != nil {
-		return nil, grpcutil.ErrInvalidArgument(err)
+		return nil, err
 	}
 
-	return &api_gwauth.UserInfo{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		Expiry:       timestamppb.New(token.Expiry),
-	}, nil
+	userInfo := &api_gwauth.UserInfo{
+		AccessToken:   token.AccessToken,
+		RefreshToken:  token.RefreshToken,
+		Expiry:        timestamppb.New(token.Expiry),
+		Email:         claims.Email,
+		EmailVerified: claims.EmailVerified,
+		Groups:        claims.Groups,
+	}
+	return userInfo, nil
 }
