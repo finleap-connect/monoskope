@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/int128/listener"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -17,6 +18,7 @@ type Server struct {
 	listener    *listener.Listener
 	RedirectURI string
 	config      *Config
+	log         logger.Logger
 }
 
 func NewServer(c *Config) (*Server, error) {
@@ -28,10 +30,12 @@ func NewServer(c *Config) (*Server, error) {
 		listener:    l,
 		config:      c,
 		RedirectURI: computeRedirectURL(l, c),
+		log:         logger.WithName("oidc-client-server"),
 	}, nil
 }
 
 func (s *Server) Close() {
+	s.log.Info("Server stopped")
 	defer s.listener.Close()
 }
 
@@ -74,6 +78,7 @@ func (s *Server) ReceiveCodeViaLocalServer(ctx context.Context, authCodeURL, sta
 		}
 		select {
 		case s.config.LocalServerReadyChan <- s.RedirectURI:
+			s.log.Info("Server ready")
 			return nil
 		case <-ctx.Done():
 			return ctx.Err()
