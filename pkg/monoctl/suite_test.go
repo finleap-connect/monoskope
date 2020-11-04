@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestGateway(t *testing.T) {
+func TestMonoctl(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../reports/monoctl-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "Monoctl", []Reporter{junitReporter})

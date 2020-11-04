@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-// FileExists check if the directory exists
+// FileExists check if file exists
 func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -19,7 +19,7 @@ func FileExists(path string) (bool, error) {
 	return true, err
 }
 
-// CreateDir creates a directory if it does no exist
+// CreateDir creates a directory if it does not exist
 func CreateDir(dirname string, permission os.FileMode) error {
 	exists, err := FileExists(dirname)
 	if err != nil {

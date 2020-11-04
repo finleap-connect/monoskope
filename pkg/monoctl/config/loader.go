@@ -36,35 +36,31 @@ func NewLoader() *ClientConfigLoader {
 	}
 }
 
-func (l *ClientConfigLoader) InitConifg(config *Config) error {
-	if l.ExplicitFile != "" {
-		exists, err := util.FileExists(l.ExplicitFile)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return ErrAlreadyInitialized
-		}
-		l.config = config
-		l.configPath = l.ExplicitFile
-		return l.SaveToFile(config, l.configPath, 0644)
-	}
-
-	exists, err := util.FileExists(RecommendedHomeFile)
+// loadAndStoreConfig checks if the given file exists and loads it's contents
+func (l *ClientConfigLoader) saveAndStoreConfig(filename string, config *Config) error {
+	exists, err := util.FileExists(filename)
 	if err != nil {
 		return err
 	}
 	if exists {
 		return ErrAlreadyInitialized
 	}
-	err = util.CreateDir(RecommendedConfigDir, 0700)
-	if err != nil {
-		return err
+	l.config = config
+	l.configPath = filename
+	return l.SaveToFile(config, l.configPath, 0644)
+}
+
+func (l *ClientConfigLoader) InitConifg(config *Config) error {
+	if l.ExplicitFile != "" {
+		return l.saveAndStoreConfig(l.ExplicitFile, config)
 	}
 
-	l.config = config
-	l.configPath = RecommendedHomeFile
-	return l.SaveToFile(config, l.configPath, 0600)
+	envVarFile := os.Getenv(RecommendedConfigPathEnvVar)
+	if len(envVarFile) != 0 {
+		return l.saveAndStoreConfig(envVarFile, config)
+	}
+
+	return l.saveAndStoreConfig(RecommendedHomeFile, config)
 }
 
 // LoadAndStoreConfig loads and stores the config either from env or home file.
@@ -134,7 +130,7 @@ func (l *ClientConfigLoader) LoadFromFile(filename string) (*Config, error) {
 	return config, nil
 }
 
-// Load takes a byte slice and deserializes the contents into Config object.
+// LoadFromBytes takes a byte slice and deserializes the contents into Config object.
 // Encapsulates deserialization without assuming the source is a file.
 func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
 	config := NewConfig()
@@ -152,6 +148,7 @@ func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
 	return config, nil
 }
 
+// SaveToFile takes a config, serializes the contents and stores them into a file.
 func (l *ClientConfigLoader) SaveToFile(config *Config, filename string, permission os.FileMode) error {
 	bytes, err := yaml.Marshal(&config)
 	if err != nil {

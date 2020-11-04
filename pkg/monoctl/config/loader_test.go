@@ -12,7 +12,7 @@ var (
 	fakeConfigData = `server: https://1.1.1.1`
 )
 
-var _ = Describe("loader", func() {
+var _ = Describe("client config loader", func() {
 	It("can load config from bytes", func() {
 		loader := NewLoader()
 		conf, err := loader.LoadFromBytes([]byte(fakeConfigData))
@@ -48,6 +48,38 @@ var _ = Describe("loader", func() {
 
 		loader.ExplicitFile = tempFile.Path
 		err = loader.LoadAndStoreConfig()
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(loader.config).ToNot(BeNil())
+	})
+	It("can init config for explicit file path", func() {
+		tempFile, err := testutil_fs.NewTempFile([]byte(fakeConfigData))
+		Expect(err).NotTo(HaveOccurred())
+		defer tempFile.Close()
+
+		loader := NewLoader()
+		conf := NewConfig()
+		conf.Server = "localhost"
+
+		loader.ExplicitFile = tempFile.Path
+		os.Remove(tempFile.Path)
+		err = loader.InitConifg(conf)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(loader.config).ToNot(BeNil())
+	})
+	It("can init config for env var path", func() {
+		tempFile, err := testutil_fs.NewTempFile([]byte(fakeConfigData))
+		Expect(err).NotTo(HaveOccurred())
+		defer tempFile.Close()
+
+		loader := NewLoader()
+		conf := NewConfig()
+		conf.Server = "localhost"
+
+		os.Setenv(RecommendedConfigPathEnvVar, tempFile.Path)
+		os.Remove(tempFile.Path)
+		err = loader.InitConifg(conf)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())
