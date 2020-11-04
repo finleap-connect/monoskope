@@ -22,7 +22,6 @@ func NewAuthLoginCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
 			if err := configLoader.LoadAndStoreConfig(); err != nil {
 				return err
 			}
-
 			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 			defer cancel()
 
