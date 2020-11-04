@@ -149,7 +149,7 @@ func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInf
 }
 
 func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
-	url, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
+	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
 		Scopes:        []string{"offline_access"},
 		Clients:       []string{},
 		OfflineAccess: true,
@@ -158,7 +158,7 @@ func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthS
 		return nil, grpcutil.ErrInvalidArgument(err)
 	}
 
-	return &api_gwauth.AuthInformation{AuthCodeURL: url}, nil
+	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
 }
 
 func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.UserInfo, error) {

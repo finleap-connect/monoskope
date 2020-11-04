@@ -121,11 +121,11 @@ func (n *Handler) Exchange(ctx context.Context, code string) (*oauth2.Token, err
 }
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeURLConfig) (string, error) {
+func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeURLConfig) (string, string, error) {
 	// Encode state and calculate nonce
 	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	nonce := util.HashString(encoded + n.config.Nonce)
 
@@ -146,7 +146,7 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 		authCodeURL = n.getOauth2Config(scopes).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	}
 
-	return authCodeURL, nil
+	return authCodeURL, encoded, nil
 }
 
 func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*ExtraClaims, error) {
