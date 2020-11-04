@@ -58,14 +58,14 @@ func (l *ClientConfigLoader) InitConifg(config *Config) error {
 	if exists {
 		return ErrAlreadyInitialized
 	}
-	err = util.CreateDir(RecommendedConfigDir, 0644)
+	err = util.CreateDir(RecommendedConfigDir, 0700)
 	if err != nil {
 		return err
 	}
 
 	l.config = config
 	l.configPath = RecommendedHomeFile
-	return l.SaveToFile(config, l.configPath, 0644)
+	return l.SaveToFile(config, l.configPath, 0600)
 }
 
 // LoadAndStoreConfig loads and stores the config either from env or home file.
