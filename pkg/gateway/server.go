@@ -13,7 +13,7 @@ import (
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"

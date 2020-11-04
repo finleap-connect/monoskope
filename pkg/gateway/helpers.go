@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 )

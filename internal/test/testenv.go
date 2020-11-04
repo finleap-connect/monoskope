@@ -5,7 +5,7 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
