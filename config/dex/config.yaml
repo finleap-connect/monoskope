@@ -15,7 +15,7 @@ staticClients:
   - id: gateway
     name: Monoskope Gateway
     redirectURIs:
-      - http://localhost:6555/oauth/callback
+      - http://localhost:8000/
     secret: app-secret
 enablePasswordDB: true
 staticPasswords:

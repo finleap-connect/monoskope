@@ -5,12 +5,15 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/auth"
 )
 
 const (
-	AuthRootToken = "super-secret-root-token"
+	AuthRootToken       = "super-secret-root-token"
+	RedirectURLHostname = "localhost"
+	RedirectURLPort     = ":8000"
 )
 
 type TestEnv struct {
@@ -22,7 +25,7 @@ type TestEnv struct {
 type OAuthTestEnv struct {
 	*TestEnv
 	DexWebEndpoint string
-	AuthConfig     *auth.Config
+	AuthConfig     *gw_auth.Config
 }
 
 func SetupGeneralTestEnv() *TestEnv {
@@ -70,11 +73,11 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
 	rootToken := AuthRootToken
-	env.AuthConfig = &auth.Config{
+	env.AuthConfig = &gw_auth.Config{
 		IssuerURL:      env.DexWebEndpoint,
 		OfflineAsScope: true,
 		RootToken:      &rootToken,
-		RedirectURI:    "http://localhost:6555/oauth/callback",
+		RedirectURI:    fmt.Sprintf("http://%s%s/", RedirectURLHostname, RedirectURLPort),
 		ClientId:       "gateway",
 		ClientSecret:   "app-secret",
 		Nonce:          "secret-nonce",
@@ -85,6 +88,21 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 
 func (env *OAuthTestEnv) Shutdown() error {
 	return env.TestEnv.Shutdown()
+}
+
+func (env *OAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
+	serverConf := &monoctl_auth.Config{
+		LocalServerBindAddress: []string{
+			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),
+		},
+		RedirectURLHostname:  RedirectURLHostname,
+		LocalServerReadyChan: ready,
+	}
+	server, err := monoctl_auth.NewServer(serverConf)
+	if err != nil {
+		return nil, err
+	}
+	return server, nil
 }
 
 func (env *TestEnv) Shutdown() error {

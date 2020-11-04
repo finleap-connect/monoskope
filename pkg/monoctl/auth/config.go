@@ -2,8 +2,6 @@ package auth
 
 type Config struct {
 	// Hostname of the redirect URL.
-	// You can set this if your provider does not accept localhost.
-	// Default to localhost.
 	RedirectURLHostname string
 
 	// Candidates of hostname and port which the local server binds to.

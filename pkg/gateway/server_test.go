@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -56,23 +57,48 @@ var _ = Describe("Gateway", func() {
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: env.AuthConfig.RedirectURI})
+		ready := make(chan string, 1)
+		oidcClientServer, err := env.NewOidcClientServer(ready)
+		Expect(err).ToNot(HaveOccurred())
+		defer oidcClientServer.Close()
+
+		log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
 
+		var innerErr error
 		res, err := httpClient.Get(authInfo.AuthCodeURL)
 		Expect(err).NotTo(HaveOccurred())
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
-		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", env.DexWebEndpoint, path), url.Values{
-			"login": {"admin@example.com"}, "password": {"password"},
-		})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(res.StatusCode).To(Equal(http.StatusOK))
+		formAction := fmt.Sprintf("%s%s", env.DexWebEndpoint, path)
 
-		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authState})
+		var authCode string
+		var statusCode int
+		var eg errgroup.Group
+		eg.Go(func() error {
+			var innerErr error
+			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
+			return innerErr
+		})
+		eg.Go(func() error {
+			log.Info("wait for oidc client server to get ready...")
+			<-ready
+			res, err = httpClient.PostForm(formAction, url.Values{
+				"login": {"admin@example.com"}, "password": {"password"},
+			})
+			if err == nil {
+				statusCode = res.StatusCode
+			}
+			return innerErr
+		})
+		Expect(eg.Wait()).NotTo(HaveOccurred())
+		Expect(statusCode).To(Equal(http.StatusOK))
+
+		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authInfo.GetState()})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(userInfo).ToNot(BeNil())
 		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
@@ -86,31 +112,5 @@ var _ = Describe("Gateway", func() {
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
-	})
-	It("fail to go through oidc-flow for non-existing user", func() {
-		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
-		Expect(err).ToNot(HaveOccurred())
-		defer conn.Close()
-		gwc := gateway.NewGatewayClient(conn)
-
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: env.AuthConfig.RedirectURI})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(authInfo).ToNot(BeNil())
-
-		res, err := httpClient.Get(authInfo.AuthCodeURL)
-		Expect(err).NotTo(HaveOccurred())
-		doc, err := goquery.NewDocumentFromReader(res.Body)
-		Expect(err).NotTo(HaveOccurred())
-		path, ok := doc.Find("form").Attr("action")
-		Expect(ok).To(BeTrue())
-		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", env.DexWebEndpoint, path), url.Values{
-			"login": {"wronguser"}, "password": {"wrongpassword"},
-		})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(res.StatusCode).To(Equal(http.StatusOK))
-
-		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authState})
-		Expect(err).To(HaveOccurred())
-		Expect(userInfo).To((BeNil()))
 	})
 })

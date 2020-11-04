@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/int128/listener"
@@ -14,7 +15,7 @@ import (
 
 type Server struct {
 	listener    *listener.Listener
-	RedirectURL string
+	RedirectURI string
 	config      *Config
 }
 
@@ -26,7 +27,7 @@ func NewServer(c *Config) (*Server, error) {
 	return &Server{
 		listener:    l,
 		config:      c,
-		RedirectURL: computeRedirectURL(l, c),
+		RedirectURI: computeRedirectURL(l, c),
 	}, nil
 }
 
@@ -34,9 +35,16 @@ func (s *Server) Close() {
 	defer s.listener.Close()
 }
 
-func (s *Server) ReceiveCodeViaLocalServer(ctx context.Context) (string, error) {
+func (s *Server) ReceiveCodeViaLocalServer(ctx context.Context, authCodeURL, state string) (string, error) {
 	respCh := make(chan *authorizationResponse)
-	server := http.Server{}
+	server := http.Server{
+		Handler: &localServerHandler{
+			localServerSuccessHTML: s.config.LocalServerSuccessHTML,
+			authCodeUrl:            authCodeURL,
+			state:                  state,
+			respCh:                 respCh,
+		},
+	}
 
 	shutdownCh := make(chan struct{})
 	var resp *authorizationResponse
@@ -65,7 +73,7 @@ func (s *Server) ReceiveCodeViaLocalServer(ctx context.Context) (string, error) 
 			return nil
 		}
 		select {
-		case s.config.LocalServerReadyChan <- s.RedirectURL:
+		case s.config.LocalServerReadyChan <- s.RedirectURI:
 			return nil
 		case <-ctx.Done():
 			return ctx.Err()
@@ -101,4 +109,58 @@ func computeRedirectURL(l net.Listener, c *Config) string {
 type authorizationResponse struct {
 	code string // non-empty if a valid code is received
 	err  error  // non-nil if an error is received or any error occurs
+}
+
+type localServerHandler struct {
+	state                  string
+	authCodeUrl            string
+	respCh                 chan<- *authorizationResponse // channel to send a response to
+	onceRespCh             sync.Once                     // ensure send once
+	localServerSuccessHTML string
+}
+
+func (h *localServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	switch {
+	case r.Method == "GET" && r.URL.Path == "/" && q.Get("error") != "":
+		h.onceRespCh.Do(func() {
+			h.respCh <- h.handleErrorResponse(w, r)
+		})
+	case r.Method == "GET" && r.URL.Path == "/" && q.Get("code") != "":
+		h.onceRespCh.Do(func() {
+			h.respCh <- h.handleCodeResponse(w, r)
+		})
+	case r.Method == "GET" && r.URL.Path == "/":
+		h.handleIndex(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (h *localServerHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, h.authCodeUrl, 302)
+}
+
+func (h *localServerHandler) handleCodeResponse(w http.ResponseWriter, r *http.Request) *authorizationResponse {
+	q := r.URL.Query()
+	code, state := q.Get("code"), q.Get("state")
+
+	if state != h.state {
+		http.Error(w, "authorization error", 500)
+		return &authorizationResponse{err: fmt.Errorf("state does not match (wants %s but got %s)", h.state, state)}
+	}
+	w.Header().Add("Content-Type", "text/html")
+	if _, err := fmt.Fprintf(w, h.localServerSuccessHTML); err != nil {
+		http.Error(w, "server error", 500)
+		return &authorizationResponse{err: fmt.Errorf("write error: %w", err)}
+	}
+	return &authorizationResponse{code: code}
+}
+
+func (h *localServerHandler) handleErrorResponse(w http.ResponseWriter, r *http.Request) *authorizationResponse {
+	q := r.URL.Query()
+	errorCode, errorDescription := q.Get("error"), q.Get("error_description")
+
+	http.Error(w, "authorization error", 500)
+	return &authorizationResponse{err: fmt.Errorf("authorization error from server: %s %s", errorCode, errorDescription)}
 }

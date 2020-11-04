@@ -19,15 +19,12 @@ const (
 )
 
 var (
-	env       *test.OAuthTestEnv
-	authCode  string
-	authState string
+	env *test.OAuthTestEnv
 
 	gatewayApiListener net.Listener
 	httpClient         *http.Client
 	log                logger.Logger
 	gatewayServer      *Server
-	httpServer         *http.Server
 )
 
 func TestGateway(t *testing.T) {
@@ -65,15 +62,6 @@ var _ = BeforeSuite(func(done Done) {
 
 	// Setup HTTP client
 	httpClient = &http.Client{}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/oauth/callback", callback)
-	httpServer = &http.Server{
-		Addr:    ":6555",
-		Handler: mux,
-	}
-	go func() {
-		_ = httpServer.ListenAndServe()
-	}()
 }, 60)
 
 var _ = AfterSuite(func() {
@@ -86,24 +74,7 @@ var _ = AfterSuite(func() {
 
 	err = gatewayApiListener.Close()
 	Expect(err).To(BeNil())
-
-	_ = httpServer.Close()
 })
-
-func callback(rw http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		return
-	}
-	// Authorization redirect callback from OAuth2 auth flow.
-	if errMsg := r.Form.Get("error"); errMsg != "" {
-		log.Error(err, errMsg)
-		return
-	}
-	authCode = r.Form.Get("code")
-	authState = r.Form.Get("state")
-	log.Info("received auth callback", "authCode", authCode, "authState", authState)
-}
 
 func toToken(token string) *oauth2.Token {
 	return &oauth2.Token{

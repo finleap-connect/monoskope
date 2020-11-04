@@ -73,13 +73,13 @@ func (a *AuthUseCase) Run() error {
 		return err
 	}
 
-	authState := &gw_auth.AuthState{CallbackURL: server.RedirectURL}
+	authState := &gw_auth.AuthState{CallbackURL: server.RedirectURI}
 	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
 	if err != nil {
 		return err
 	}
 
-	authCode, err := server.ReceiveCodeViaLocalServer(a.ctx)
+	authCode, err := server.ReceiveCodeViaLocalServer(a.ctx, authInfo.AuthCodeURL, authInfo.State)
 	if err != nil {
 		return err
 	}
