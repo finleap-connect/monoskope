@@ -20,16 +20,16 @@ type AuthUseCase struct {
 	config *config.Config
 }
 
-func Authenticate(ctx context.Context, config *config.Config) error {
+func NewAuthUsecase(ctx context.Context, config *config.Config) *AuthUseCase {
 	useCase := &AuthUseCase{
 		log:    logger.WithName("auth-use-case"),
 		config: config,
 		ctx:    ctx,
 	}
-	return useCase.run()
+	return useCase
 }
 
-func (a *AuthUseCase) run() error {
+func (a *AuthUseCase) Run() error {
 	conn, err := gateway.CreateGatewayConnecton(a.config.Server, nil)
 	if err != nil {
 		return err

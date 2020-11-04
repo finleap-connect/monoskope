@@ -1,6 +1,5 @@
 package auth
 
-// Config represents a config for GetToken.
 type Config struct {
 	// Hostname of the redirect URL.
 	// You can set this if your provider does not accept localhost.
