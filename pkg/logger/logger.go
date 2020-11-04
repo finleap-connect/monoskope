@@ -12,15 +12,18 @@ import (
 type Logger = logr.Logger
 
 var (
-	log    Logger
-	zapLog *zap.Logger
+	log     Logger
+	zapLog  *zap.Logger
+	logMode string
 )
 
 func init() {
-	logMode := os.Getenv("LOG_MODE")
-	var (
-		err error
-	)
+	var err error
+
+	if logMode == "" {
+		logMode = os.Getenv("LOG_MODE")
+	}
+
 	if logMode == "" || logMode == "dev" {
 		zapLog, err = zap.NewDevelopment()
 	} else if logMode == "prod" {
@@ -28,9 +31,11 @@ func init() {
 	} else {
 		zapLog = zap.NewNop()
 	}
+
 	if err != nil {
 		panic(fmt.Sprintf("failed to setup logging: %v", err))
 	}
+
 	log = zapr.NewLogger(zapLog)
 }
 

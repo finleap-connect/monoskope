@@ -10,7 +10,7 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.25.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
-LDFLAGS    	   += -ldflags "-X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)"
+LDFLAGS    	   += -X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
@@ -20,7 +20,7 @@ CMD_MONOCTL = $(BUILD_PATH)/monoctl
 CMD_MONOCTL_SRC = cmd/monoctl/*.go
 
 define go-run
-	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
+	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
 .PHONY: lint mod fmt vet test clean
@@ -67,7 +67,7 @@ protobuf:
 	find ./api -name '*.proto' -exec $(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. {} \;
 
 $(CMD_MONOCTL):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) $(LDFLAGS) $(CMD_MONOCTL_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" $(CMD_MONOCTL_SRC)
 
 build-clean: 
 	rm $(CMD_MONOCTL)
