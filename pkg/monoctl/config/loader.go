@@ -8,7 +8,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/util/homedir"
 )
 
 const (
@@ -18,7 +17,7 @@ const (
 )
 
 var (
-	RecommendedConfigDir = path.Join(homedir.HomeDir(), RecommendedHomeDir)
+	RecommendedConfigDir = path.Join(util.HomeDir(), RecommendedHomeDir)
 	RecommendedHomeFile  = path.Join(RecommendedConfigDir, RecommendedFileName)
 )
 
