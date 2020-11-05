@@ -10,20 +10,17 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.25.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
-LDFLAGS    	   += -ldflags "-X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)"
+LDFLAGS    	   += -X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
 VERSION    	   ?= 0.0.1-dev
 
-TEST_FLAGS     ?= --dex-conf-path "$(BUILD_PATH)/config/dex"
-
-ifdef TEST_WITH_KIND
-	TEST_FLAGS += --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
-endif
+CMD_MONOCTL = $(BUILD_PATH)/monoctl
+CMD_MONOCTL_SRC = cmd/monoctl/*.go
 
 define go-run
-	$(GO) run $(LDFLAGS) cmd/$(1)/*.go $(ARGS)
+	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
 .PHONY: lint mod fmt vet test clean
@@ -38,14 +35,19 @@ fmt:
 vet:
 	$(GO) vet ./...
 
-lint: golangci-lint-get
+lint:
 	$(LINTER) run -v --no-config --deadline=5m
 
 run-%:
 	$(call go-run,$*)
 
-test: ginkgo-get
-	$(GINKGO) -r -v -cover internal pkg -- $(TEST_FLAGS)
+test-kind: 
+	$(GINKGO) -r -v -cover internal -- --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
+
+test:
+	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
+	$(GINKGO) -r -v -cover pkg/monoctl
+	$(GINKGO) -r -v -cover pkg/util
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
@@ -62,5 +64,13 @@ golangci-lint-clean:
 clean: ginkgo-clean golangci-lint-clean
 
 protobuf:
-	cd api
-	$(PROTOC) --go_out=. --go-grpc_out=. api/*.proto
+	find ./api -name '*.go' -exec rm {} \;
+	find ./api -name '*.proto' -exec $(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. {} \;
+
+$(CMD_MONOCTL):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" $(CMD_MONOCTL_SRC)
+
+build-clean: 
+	rm $(CMD_MONOCTL)
+	
+build-monoctl: $(CMD_MONOCTL)

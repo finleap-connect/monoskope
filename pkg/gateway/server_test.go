@@ -9,140 +9,110 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/api"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
-	auth_client "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth/client"
-	"golang.org/x/oauth2"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/oauth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+var (
+	ctx = context.Background()
 )
 
 var _ = Describe("Gateway", func() {
 	It("declines invalid bearer token", func() {
-		perRPC := oauth.NewOauthAccess(invalidToken())
-
-		opts := []grpc.DialOption{
-			// In addition to the following grpc.DialOption, callers may also use
-			// the grpc.CallOption grpc.PerRPCCredentials with the RPC invocation
-			// itself.
-			// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-			grpc.WithPerRPCCredentials(perRPC),
-			// oauth.NewOauthAccess requires the configuration of transport
-			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
-		}
-
-		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), invalidToken())
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc := gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).To(HaveOccurred())
 		Expect(serverInfo).To(BeNil())
 	})
 	It("accepts root bearer token", func() {
-		perRPC := oauth.NewOauthAccess(rootToken())
-
-		opts := []grpc.DialOption{
-			// In addition to the following grpc.DialOption, callers may also use
-			// the grpc.CallOption grpc.PerRPCCredentials with the RPC invocation
-			// itself.
-			// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-			grpc.WithPerRPCCredentials(perRPC),
-			// oauth.NewOauthAccess requires the configuration of transport
-			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
-		}
-
-		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
+		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), rootToken())
+		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc := gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
+	It("can retrieve auth url", func() {
+		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		gwc := gateway.NewGatewayClient(conn)
+
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: env.AuthConfig.RedirectURI})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(authInfo).ToNot(BeNil())
+		log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
+	})
 	It("can go through oidc-flow with existing user", func() {
-		var state auth.State
-
-		handler, err := auth_client.NewHandler(&auth_client.Config{
-			BaseConfig: auth.BaseConfig{
-				IssuerURL:      dexWebEndpoint,
-				OfflineAsScope: true,
-			},
-			RedirectURI:  redirectURL,
-			Nonce:        "secret-nonce",
-			ClientId:     "monoctl",
-			ClientSecret: "monoctl-app-secret",
-		})
+		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		gwc := gateway.NewGatewayClient(conn)
 
-		authCodeURL, err := handler.GetAuthCodeURL(&state, &auth.AuthCodeURLConfig{
-			Scopes:        []string{"offline_access"},
-			Clients:       []string{},
-			OfflineAccess: true,
-		})
+		ready := make(chan string, 1)
+		oidcClientServer, err := env.NewOidcClientServer(ready)
 		Expect(err).ToNot(HaveOccurred())
+		defer oidcClientServer.Close()
 
-		res, err := httpClient.Get(authCodeURL)
+		log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: oidcClientServer.RedirectURI})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(authInfo).ToNot(BeNil())
+
+		var innerErr error
+		res, err := httpClient.Get(authInfo.AuthCodeURL)
 		Expect(err).NotTo(HaveOccurred())
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
-		res, err = httpClient.PostForm(fmt.Sprintf("%s%s", dexWebEndpoint, path), url.Values{
-			"login": {"admin@example.com"}, "password": {"password"},
+		formAction := fmt.Sprintf("%s%s", env.DexWebEndpoint, path)
+
+		var authCode string
+		var statusCode int
+		var eg errgroup.Group
+		eg.Go(func() error {
+			defer GinkgoRecover()
+			var innerErr error
+			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
+			return innerErr
 		})
+		eg.Go(func() error {
+			defer GinkgoRecover()
+			log.Info("wait for oidc client server to get ready...")
+			<-ready
+			res, err = httpClient.PostForm(formAction, url.Values{
+				"login": {"admin@example.com"}, "password": {"password"},
+			})
+			if err == nil {
+				statusCode = res.StatusCode
+			}
+			return innerErr
+		})
+		Expect(eg.Wait()).NotTo(HaveOccurred())
+		Expect(statusCode).To(Equal(http.StatusOK))
+
+		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authInfo.GetState()})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(res.StatusCode).To(Equal(http.StatusOK))
+		Expect(userInfo).ToNot(BeNil())
+		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
+		log.Info("Received user info", "AccessToken", userInfo.GetAccessToken(), "Expiry", userInfo.GetExpiry().AsTime())
 
-		validAuthToken, err := handler.Exchange(context.Background(), authCode)
+		conn, err = CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAccessToken()))
 		Expect(err).ToNot(HaveOccurred())
-
-		perRPC := oauth.NewOauthAccess(validAuthToken)
-
-		opts := []grpc.DialOption{
-			// In addition to the following grpc.DialOption, callers may also use
-			// the grpc.CallOption grpc.PerRPCCredentials with the RPC invocation
-			// itself.
-			// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-			grpc.WithPerRPCCredentials(perRPC),
-			// oauth.NewOauthAccess requires the configuration of transport
-			// credentials.
-			grpc.WithTransportCredentials(clientTransportCredentials),
-		}
-
-		opts = append(opts, grpc.WithBlock())
-		conn, err := grpc.Dial(apiLis.Addr().String(), opts...)
-		if err != nil {
-			log.Error(err, "did not connect: %v")
-		}
 		defer conn.Close()
-		gwc := api.NewGatewayClient(conn)
+		gwc = gateway.NewGatewayClient(conn)
 
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
 })
-
-func invalidToken() *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: "some-invalid-token",
-	}
-}
-
-func rootToken() *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: authRootToken,
-	}
-}

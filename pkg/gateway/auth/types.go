@@ -4,11 +4,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 )
 
-type BaseConfig struct {
+type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
+	RootToken      *string
+	Nonce          string
+	ClientId       string
+	ClientSecret   string
+	RedirectURI    string
 }
 
 type ExtraClaims struct {
@@ -17,14 +23,14 @@ type ExtraClaims struct {
 	Groups        []string `json:"groups"`
 }
 
-type State struct {
-	Callback string `form:"callback" json:"callback,omitempty"`
-}
-
 type AuthCodeURLConfig struct {
 	Scopes        []string
 	Clients       []string
 	OfflineAccess bool
+}
+
+type State struct {
+	Callback string `form:"callback" json:"callback,omitempty"`
 }
 
 func DecodeState(encoded string) (*State, error) {
@@ -44,4 +50,9 @@ func (state *State) Encode() (string, error) {
 	}
 	encoded := base64.RawURLEncoding.EncodeToString(data)
 	return encoded, nil
+}
+
+func (state *State) IsValid() bool {
+	_, err := url.Parse(state.Callback)
+	return err == nil
 }

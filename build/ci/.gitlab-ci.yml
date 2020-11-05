@@ -24,6 +24,7 @@ lint:golang:
   stage: test
   extends: .test
   script:
+    - make go-golangci-lint-get
     - make go-vet
     - make go-lint
 
@@ -45,6 +46,7 @@ test:golang:
   services:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
   script:
+    - make go-ginkgo-get
     - make go-test
   artifacts:
     name: "Go Tests"

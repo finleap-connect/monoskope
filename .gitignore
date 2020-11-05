@@ -22,3 +22,5 @@ project.dict
 /tools/*
 !/tools/goget-wrapper
 *.coverprofile
+
+/monoctl
