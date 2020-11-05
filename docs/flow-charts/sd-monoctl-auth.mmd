@@ -2,16 +2,43 @@ sequenceDiagram
     participant U as User
     participant M as monoctl
     participant B as Browser
+    participant G as Gateway
     participant D as Dex
     participant I as Identity Provider
-    participant G as Gateway
     U-->>M: monoctl auth login
-    M-->>B: open with url of Dex
-    B-->>D: redirect
-    D-->>I: OAuth2 request
+    activate M
+    M-->>G: calls GetAuthInformation
+    activate G
+    G-->>M: returns AuthInformation
+    deactivate G
+    M-->>B: open
+    B-->>D: navigate to AuthCodeURL from AuthInformation
+    activate D
+    D-->>B: redirect to IdP
+    deactivate D
+    B-->>I: navigate to IdP
+    activate I
     I-->>I: determines user’s identity
-    I-->>M: redirects with code
-    M-->>D: exchanges code for an id_token
-    M-->>G: get monoskope server version
-    G-->>G: validate id_token
-    G-->>M: return monoskope server version
+    I-->>B: redirects to localhost with auth_code
+    deactivate I
+    B-->>M: receives auth_code
+    M-->>B: show success page
+    M-->>G: calls ExchangeAuthCode
+    activate G
+    G-->>D: exchange auth_code
+    activate D
+    D-->>G: receive id_token
+    deactivate D
+    G-->>M: returns id_token
+    deactivate G
+    M-->>U: Output login success
+    deactivate M
+    U-->>M: monoctl version
+    activate M
+    M-->>G: calls GetServerInformation
+    activate G
+    G-->>G: validates id_token
+    G-->>M: returns ServerInformation
+    deactivate G
+    M-->>U: Output client/server version
+    deactivate M
