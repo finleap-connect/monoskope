@@ -1,0 +1,96 @@
+{{- $name := include "monoskope.name.gateway" . -}}
+{{- $fullname := include "monoskope.fullname.gateway" . -}}
+{{- $release := .Release.Name -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "monoskope.labels.gateway" . | nindent 4 }}
+spec:
+  progressDeadlineSeconds: 120
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  replicas: {{ .Values.gateway.replicaCount | default 3 }}
+  selector:
+    matchLabels:
+    {{- include "monoskope.selectorLabels.gateway" . | nindent 6 }}
+  template:
+    metadata:
+      labels: 
+        {{- include "monoskope.labels.gateway" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.pullSecret }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ $fullname }}
+              topologyKey: kubernetes.io/hostname
+      {{- with .Values.gateway.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gateway.priorityClassName }}
+      priorityClassName: {{.}}
+      {{- end }}
+      {{- with .Values.gateway.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ $name }}
+        {{- with .Values.gateway }}
+        image: {{ .image.repository }}:{{ if $.Values.tagOverride }}{{ $.Values.tagOverride }}{{ else }}{{ .image.tag }}{{ end }}
+        imagePullPolicy: {{ .image.pullPolicy }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.gateway.apiPort }}
+        - name: http-metrics
+          containerPort: {{ .Values.gateway.metricsPort }}
+        resources: {{- toYaml .Values.gateway.resources | nindent 10 }}
+        env:
+          - name: OIDC_NONCE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.gateway.secretName }}
+                key: oidc-nonce
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.gateway.secretName }}
+                key: oidc-clientsecret
+        args:
+          - /gateway
+          - server
+          - {{ (printf "--api-addr=:%v" .Values.gateway.apiPort) }}
+          - {{ (printf "--metrics-addr=:%v" .Values.gateway.metricsPort) }}
+          - {{ (printf "--issuer-url=https://%s%s" .Values.ingress.host .Values.ingress.dexPath ) }}
+        {{- if .Values.gateway.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+              path: /readyz
+              port: {{ .Values.gateway.apiPort }}
+          failureThreshold: {{ .Values.gateway.livenessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.gateway.livenessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.gateway.livenessProbe.initialDelaySeconds }}
+        {{- end }}
+        {{- if .Values.gateway.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+              path: /readyz
+              port: {{ .Values.gateway.apiPort }}
+          failureThreshold: {{ .Values.gateway.readinessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.gateway.readinessProbe.initialDelaySeconds }}
+        {{- end }}

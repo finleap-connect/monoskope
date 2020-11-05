@@ -6,13 +6,19 @@ name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+ingress:
+  enabled: false
+  host: &ingressHost "monoskope.dev.finleap.cloud"
+  dexPath: &ingressDexPath /dex
+  apiPath: /api
+
 dex: # OIDC Provider
   enabled: false
   imagePullPolicy: "Always"
   imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
-    issuer: http://127.0.0.1:8080/dex
+    issuer: http://*ingressHost/*ingressDexPath
     storage:
       config:
         inCluster: true
@@ -31,7 +37,8 @@ dex: # OIDC Provider
         secret: "{{ gateway-app-secret }}"
         name: "Monoskope Gateway"
         redirectURIs:
-          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
+          - "http://localhost:8000" # callback from dex to monoctl
+          - "http://localhost:18000"
   https: false
   ports:
     web:
@@ -63,3 +70,38 @@ dex: # OIDC Provider
     # The name of the ServiceAccount to use.
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
+
+gateway:
+  name: gateway
+  secretName: monoskope-gateway-secret
+  image:
+    repository: registry.gitlab.figo.systems/platform/monoskope/gateway
+    tag: latest
+    pullPolicy: Always
+  replicaCount: 3
+  livenessProbe:
+    enabled: true
+    failureThreshold: 10
+    periodSeconds: 5
+    initialDelaySeconds: 10
+  readinessProbe:
+    enabled: false
+    failureThreshold: 5
+    periodSeconds: 5
+    initialDelaySeconds: 5
+  resources:
+    limits:
+      cpu: 1
+      memory: 500Mi
+    requests:
+      cpu: 300m
+      memory: 300Mi
+  nodeSelector: {}
+  tolerations: []
+  apiPort: 8080
+  metricsPort: 9102
+  metricsAddress: :9102
+  keepAlive: false
+  service:
+    type: ClusterIP
+    port: 8080
