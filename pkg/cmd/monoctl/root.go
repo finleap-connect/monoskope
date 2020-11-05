@@ -11,6 +11,7 @@ import (
 
 var (
 	explicitFile string
+	rootToken    string
 )
 
 func NewRootCmd() *cobra.Command {
@@ -26,6 +27,7 @@ func NewRootCmd() *cobra.Command {
 	flags := rootCmd.PersistentFlags()
 	flags.AddGoFlagSet(flag.CommandLine)
 	flags.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
+	flags.StringVar(&rootToken, "root-token", "", "Root token to authenticate against monoskope")
 
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
 
