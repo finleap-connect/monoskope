@@ -14,7 +14,7 @@ func NewAuthStatusCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
 		Long:  `Shows if authenticated against any Monoskope instance and against which one.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := configLoader.LoadAndStoreConfig(); err != nil {
-				return err
+				return fmt.Errorf("Failed loading monoconfig: %w", err)
 			}
 
 			conf := configLoader.GetConfig()

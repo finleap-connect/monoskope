@@ -1,6 +1,8 @@
 package monoctl
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
 	"sigs.k8s.io/kind/pkg/errors"
@@ -17,14 +19,14 @@ func NewInitCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
 		Long:  `Init monoctl and create a new monoskope configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if serverURL == "" {
-				return errors.Errorf("server-url is required")
+				return errors.Errorf("Failed initializing monoconfig: server-url is required")
 			}
 
 			config := config.NewConfig()
 			config.Server = serverURL
 
 			if err := configLoader.InitConifg(config); err != nil {
-				return err
+				return fmt.Errorf("Failed initializing monoconfig: %w", err)
 			}
 
 			return nil

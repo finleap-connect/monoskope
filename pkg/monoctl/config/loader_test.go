@@ -40,13 +40,11 @@ var _ = Describe("client config loader", func() {
 		Expect(loader.config).ToNot(BeNil())
 	})
 	It("loads config from explicit file path", func() {
-		loader := NewLoader()
-
 		tempFile, err := testutil_fs.NewTempFile([]byte(fakeConfigData))
 		Expect(err).NotTo(HaveOccurred())
 		defer tempFile.Close()
 
-		loader.ExplicitFile = tempFile.Path
+		loader := NewLoaderFromExplicitFile(tempFile.Path)
 		err = loader.LoadAndStoreConfig()
 
 		Expect(err).NotTo(HaveOccurred())
@@ -57,11 +55,10 @@ var _ = Describe("client config loader", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer tempFile.Close()
 
-		loader := NewLoader()
 		conf := NewConfig()
 		conf.Server = "localhost"
 
-		loader.ExplicitFile = tempFile.Path
+		loader := NewLoaderFromExplicitFile(tempFile.Path)
 		os.Remove(tempFile.Path)
 		err = loader.InitConifg(conf)
 
@@ -83,5 +80,26 @@ var _ = Describe("client config loader", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())
+	})
+	It("can save config", func() {
+		tempFile, err := testutil_fs.NewTempFile([]byte(fakeConfigData))
+		Expect(err).NotTo(HaveOccurred())
+		defer tempFile.Close()
+
+		loader := NewLoaderFromExplicitFile(tempFile.Path)
+		err = loader.LoadAndStoreConfig()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(loader.config).ToNot(BeNil())
+
+		conf := loader.GetConfig()
+		conf.Server = "monoskope.io"
+		err = loader.SaveConfig()
+		Expect(err).NotTo(HaveOccurred())
+
+		loader = NewLoaderFromExplicitFile(tempFile.Path)
+		err = loader.LoadAndStoreConfig()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(loader.config).ToNot(BeNil())
+		Expect(loader.config.Server).To(Equal("monoskope.io"))
 	})
 })

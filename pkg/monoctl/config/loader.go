@@ -14,6 +14,7 @@ const (
 	RecommendedConfigPathEnvVar = "MONOSKOPECONFIG"
 	RecommendedHomeDir          = ".monoskope"
 	RecommendedFileName         = "config"
+	FileMode                    = 0644
 )
 
 var (
@@ -26,7 +27,7 @@ type ClientConfigLoader struct {
 	log          logger.Logger
 	config       *Config
 	configPath   string
-	ExplicitFile string
+	explicitFile string
 }
 
 // NewLoader is a convenience function that returns a new ClientConfigLoader object with defaults
@@ -34,6 +35,13 @@ func NewLoader() *ClientConfigLoader {
 	return &ClientConfigLoader{
 		log: logger.WithName("client-config-loader"),
 	}
+}
+
+// NewLoaderFromExplicitFile is a convenience function that returns a new ClientConfigLoader object with explicitFile set
+func NewLoaderFromExplicitFile(explicitFile string) *ClientConfigLoader {
+	loader := NewLoader()
+	loader.explicitFile = explicitFile
+	return loader
 }
 
 // loadAndStoreConfig checks if the given file exists and loads it's contents
@@ -47,12 +55,32 @@ func (l *ClientConfigLoader) saveAndStoreConfig(filename string, config *Config)
 	}
 	l.config = config
 	l.configPath = filename
-	return l.SaveToFile(config, l.configPath, 0644)
+	return l.SaveToFile(config, l.configPath, FileMode)
+}
+
+// loadAndStoreConfig checks if the given file exists and loads it's contents
+func (l *ClientConfigLoader) loadAndStoreConfig(filename string) error {
+	var err error
+	if _, err = os.Stat(filename); os.IsNotExist(err) {
+		return err
+	}
+	l.config, err = l.LoadFromFile(filename)
+	return err
+}
+
+// GetConfigPath returns the path of the previously loaded config
+func (l *ClientConfigLoader) GetConfigPath() string {
+	return l.configPath
+}
+
+// GetConfig returns the previously loaded config
+func (l *ClientConfigLoader) GetConfig() *Config {
+	return l.config
 }
 
 func (l *ClientConfigLoader) InitConifg(config *Config) error {
-	if l.ExplicitFile != "" {
-		return l.saveAndStoreConfig(l.ExplicitFile, config)
+	if l.explicitFile != "" {
+		return l.saveAndStoreConfig(l.explicitFile, config)
 	}
 
 	envVarFile := os.Getenv(RecommendedConfigPathEnvVar)
@@ -63,13 +91,20 @@ func (l *ClientConfigLoader) InitConifg(config *Config) error {
 	return l.saveAndStoreConfig(RecommendedHomeFile, config)
 }
 
+func (l *ClientConfigLoader) SaveConfig() error {
+	if l.configPath == "" || l.config == nil {
+		return ErrNoConfigExists
+	}
+	return l.SaveToFile(l.config, l.configPath, FileMode)
+}
+
 // LoadAndStoreConfig loads and stores the config either from env or home file.
 func (l *ClientConfigLoader) LoadAndStoreConfig() error {
-	if l.ExplicitFile != "" {
-		if err := l.loadAndStoreConfig(l.ExplicitFile); err != nil {
+	if l.explicitFile != "" {
+		if err := l.loadAndStoreConfig(l.explicitFile); err != nil {
 			return err
 		}
-		l.configPath = l.ExplicitFile
+		l.configPath = l.explicitFile
 		return nil
 	}
 
@@ -93,26 +128,6 @@ func (l *ClientConfigLoader) LoadAndStoreConfig() error {
 	l.configPath = RecommendedHomeFile
 
 	return nil
-}
-
-// loadAndStoreConfig checks if the given file exists and loads it's contents
-func (l *ClientConfigLoader) loadAndStoreConfig(filename string) error {
-	var err error
-	if _, err = os.Stat(filename); os.IsNotExist(err) {
-		return err
-	}
-	l.config, err = l.LoadFromFile(filename)
-	return err
-}
-
-// GetConfigPath returns the path of the previously loaded config
-func (l *ClientConfigLoader) GetConfigPath() string {
-	return l.configPath
-}
-
-// GetConfig returns the previously loaded config
-func (l *ClientConfigLoader) GetConfig() *Config {
-	return l.config
 }
 
 // LoadFromFile takes a filename and deserializes the contents into Config object

@@ -15,21 +15,25 @@ import (
 )
 
 type AuthUseCase struct {
-	log    logger.Logger
-	ctx    context.Context
-	config *config.Config
+	log          logger.Logger
+	ctx          context.Context
+	config       *config.Config
+	configLoader *config.ClientConfigLoader
 }
 
-func NewAuthUsecase(ctx context.Context, config *config.Config) *AuthUseCase {
+func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader) *AuthUseCase {
 	useCase := &AuthUseCase{
-		log:    logger.WithName("auth-use-case"),
-		config: config,
-		ctx:    ctx,
+		log:          logger.WithName("auth-use-case"),
+		config:       configLoader.GetConfig(),
+		configLoader: configLoader,
+		ctx:          ctx,
 	}
 	return useCase
 }
 
 func (a *AuthUseCase) Run() error {
+	var err error
+
 	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
 	if err != nil {
 		return err
@@ -85,10 +89,18 @@ func (a *AuthUseCase) Run() error {
 	}
 
 	//TODO implement what to do with the token stuff now
-	_, err = gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State})
+	userInfo, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State})
 	if err != nil {
 		return err
 	}
+
+	a.config.AuthInformation = &config.AuthInformation{
+		Token:        userInfo.GetAccessToken(),
+		RefreshToken: userInfo.GetRefreshToken(),
+		Expiry:       userInfo.GetExpiry().AsTime(),
+		Subject:      userInfo.GetEmail(),
+	}
+	err = a.configLoader.SaveConfig()
 
 	return nil
 }

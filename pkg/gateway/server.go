@@ -173,12 +173,11 @@ func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode
 	}
 
 	userInfo := &api_gwauth.UserInfo{
-		AccessToken:   token.AccessToken,
-		RefreshToken:  token.RefreshToken,
-		Expiry:        timestamppb.New(token.Expiry),
-		Email:         claims.Email,
-		EmailVerified: claims.EmailVerified,
-		Groups:        claims.Groups,
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Expiry:       timestamppb.New(token.Expiry),
+		Email:        claims.Email,
+		Groups:       claims.Groups,
 	}
 	return userInfo, nil
 }

@@ -10,11 +10,10 @@ import (
 )
 
 var (
-	configLoader *config.ClientConfigLoader
+	explicitFile string
 )
 
 func NewRootCmd() *cobra.Command {
-	configLoader = config.NewLoader()
 
 	rootCmd := &cobra.Command{
 		Use:          "monoctl action [flags]",
@@ -26,9 +25,11 @@ func NewRootCmd() *cobra.Command {
 	// Setup global flags
 	flags := rootCmd.PersistentFlags()
 	flags.AddGoFlagSet(flag.CommandLine)
-	flags.StringVar(&configLoader.ExplicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
+	flags.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
 
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
+
+	configLoader := config.NewLoaderFromExplicitFile(explicitFile)
 	rootCmd.AddCommand(NewInitCmd(configLoader))
 	rootCmd.AddCommand(auth.NewAuthCmd(configLoader))
 

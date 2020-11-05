@@ -28,8 +28,10 @@ type Config struct {
 
 type AuthInformation struct {
 	// Token is the bearer token for authentication to the Monoskope gateway.
-	Token  string    `json:"token,omitempty"`
-	Expiry time.Time `json:"expiry,omitempty"`
+	Token        string    `json:"auth_token,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	Subject      string    `json:"subject,omitempty"`
+	Expiry       time.Time `json:"expiry,omitempty"`
 }
 
 // NewConfig is a convenience function that returns a new Config object with defaults
