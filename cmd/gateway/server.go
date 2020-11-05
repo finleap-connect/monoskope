@@ -61,5 +61,7 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
-	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:5556", "Issuer URL")
+	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
+	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
+	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
 }
