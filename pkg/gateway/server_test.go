@@ -80,11 +80,13 @@ var _ = Describe("Gateway", func() {
 		var statusCode int
 		var eg errgroup.Group
 		eg.Go(func() error {
+			defer GinkgoRecover()
 			var innerErr error
 			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
 			return innerErr
 		})
 		eg.Go(func() error {
+			defer GinkgoRecover()
 			log.Info("wait for oidc client server to get ready...")
 			<-ready
 			res, err = httpClient.PostForm(formAction, url.Values{

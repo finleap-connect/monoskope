@@ -30,7 +30,7 @@ var (
 func TestGateway(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../reports/gateway-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Gateway", []Reporter{junitReporter})
+	RunSpecsWithDefaultAndCustomReporters(t, "gateway integration tests", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {
