@@ -30,14 +30,14 @@ func NewAuthLoginCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("Failed to authenticate: %w", err)
 			} else {
-				fmt.Printf("Successfully authenticated!")
+				fmt.Printf("Successfully authenticated as %s!", configLoader.GetConfig().AuthInformation.Subject)
 			}
 			return nil
 		},
 	}
 
 	flags := loginCmd.Flags()
-	flags.DurationVar(&timeout, "timeout", 60*time.Second, "Timeout for the auth process, defaults to 60s")
+	flags.DurationVar(&timeout, "timeout", 120*time.Second, "Timeout for the auth process, defaults to 60s")
 
 	return loginCmd
 }
