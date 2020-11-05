@@ -102,7 +102,7 @@ func (a *AuthUseCase) Run() error {
 	}
 	err = a.configLoader.SaveConfig()
 
-	return nil
+	return err
 }
 
 // DefaultLocalServerSuccessHTML is a default response body on authorization success.
