@@ -10,8 +10,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var _ = Describe("Gateway", func() {
-	It("can go through oidc-flow with existing user", func() {
+var _ = Describe("monoctl auth", func() {
+	It("can go through fake oidc-flow", func() {
 		ready := make(chan string, 1)
 		oidcClientServer, err := newOidcClientServer(ready)
 		Expect(err).ToNot(HaveOccurred())
