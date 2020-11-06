@@ -7,6 +7,20 @@ stages:
 include:
   - local: build/ci/cache.gitlab-ci.yml
   - local: build/ci/golang.gitlab-ci.yml
+  - local: build/ci/helm.gitlab-ci.yml
+
+.test:
+  extends: .cache-no-push
+
+.test-docker:
+  extends: .cache-no-push
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+
+.build:
+  extends: .cache-no-push
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
 
 build:builder:
   stage: prepare
@@ -18,12 +32,3 @@ build:builder:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
   script:
     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
-
-deliver:chart:
-  stage: deliver
-  only:
-    - tags
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-chart --chart-dir ./build/package/helm --promote-version $VERSION

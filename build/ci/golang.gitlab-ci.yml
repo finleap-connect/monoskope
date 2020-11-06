@@ -1,16 +1,3 @@
-.test:
-  extends: .cache-no-push
-
-.test-docker:
-  extends: .cache-no-push
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-
-.build:
-  extends: .cache-no-push
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-
 lint:golang:
   stage: test
   extends: .test
@@ -18,18 +5,6 @@ lint:golang:
     - make go-golangci-lint-get
     - make go-vet
     - make go-lint
-
-lint:helm:
-  stage: test
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
-  only:
-    - main
-    - develop
-    - merge_requests
-    - tags
-  script:
-    - make helm-lint
-  needs: []
 
 test:golang:
   stage: test
