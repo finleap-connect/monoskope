@@ -1,5 +1,5 @@
 .helm:
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.2
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.2-rc1
 
 lint:helm:monoskope:
   stage: test
