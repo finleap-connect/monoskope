@@ -33,7 +33,7 @@ deliver:chart:gateway:
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-package-gateway
-    - make helm-push-gateway
+    - VERSION=$VERSION make helm-push-gateway
   needs:
     - lint:helm:gateway
 
@@ -45,6 +45,6 @@ deliver:chart:monoskope:
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-package-monoskope
-    - make helm-push-monoskope
+    - VERSION=$VERSION make helm-push-monoskope
   needs:
     - lint:helm:monoskope
