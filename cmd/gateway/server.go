@@ -23,9 +23,16 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
+		authConfig = auth.Config{}
 		// Some options can be provided by env variables
 		if v := os.Getenv("AUTH_ROOT_TOKEN"); v != "" {
 			authConfig.RootToken = &v
+		}
+		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "test" {
+			authConfig.ClientSecret = v
+		}
+		if v := os.Getenv("OIDC_NONCE"); v != "test" {
+			authConfig.Nonce = v
 		}
 
 		// Setup grpc listener
@@ -64,4 +71,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
+	flags.StringVar(&authConfig.ClientId, "oidc-client-id", "gateway", "Client id for oidc")
 }
