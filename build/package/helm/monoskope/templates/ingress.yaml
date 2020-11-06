@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
-{{- $fullname := include "monoskope.fullname" . -}}
-{{- $name := include "monoskope.name.ingress" . -}}
+{{- $name := (printf "%s-%s" (include "monoskope.name" .) "ingress") -}}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "ingress") -}}
 {{- $release := .Release.Name -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -12,7 +12,8 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "monoskope.labels.ingress" . | nindent 4 }}
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   tls:
   - hosts:

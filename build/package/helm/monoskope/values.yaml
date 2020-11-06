@@ -100,7 +100,6 @@ gateway:
   tolerations: []
   apiPort: 8080
   metricsPort: 9102
-  metricsAddress: :9102
   keepAlive: false
   service:
     type: ClusterIP
