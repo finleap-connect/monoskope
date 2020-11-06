@@ -60,16 +60,18 @@ spec:
           containerPort: {{ .Values.gateway.metricsPort }}
         resources: {{- toYaml .Values.gateway.resources | nindent 10 }}
         env:
-          - name: OIDC_NONCE
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.gateway.secretName }}
-                key: oidc-nonce
           - name: OIDC_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.gateway.secretName }}
                 key: oidc-clientsecret
+{{- if .Values.gateway.auth.allowRootToken }}
+          - name: AUTH_ROOT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.gateway.secretName }}
+                key: auth-root-token
+{{- end }}
         args:
           - /gateway
           - server
