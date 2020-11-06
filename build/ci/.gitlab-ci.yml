@@ -22,7 +22,7 @@ build:builder:
 deliver:chart:
   stage: deliver
   only:
-    - tag
+    - tags
   image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
