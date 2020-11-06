@@ -1,13 +1,12 @@
 stages:
   - prepare
   - test
+  - build
   - deliver
 
 include:
   - local: build/ci/cache.gitlab-ci.yml
-
-.test:
-  extends: .cache-no-push
+  - local: build/ci/golang.gitlab-ci.yml
 
 build:builder:
   stage: prepare
@@ -19,40 +18,6 @@ build:builder:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
   script:
     - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
-
-lint:golang:
-  stage: test
-  extends: .test
-  script:
-    - make go-golangci-lint-get
-    - make go-vet
-    - make go-lint
-
-lint:helm:
-  stage: test
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
-  only:
-    - main
-    - develop
-    - merge_requests
-    - tags
-  script:
-    - make helm-lint
-  needs: []
-
-test:golang:
-  stage: test
-  extends: .test
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-  script:
-    - make go-ginkgo-get
-    - make go-test
-  artifacts:
-    name: "Go Tests"
-    when: always
-    reports:
-      junit: ["reports/*.xml"]
 
 deliver:chart:
   stage: deliver
