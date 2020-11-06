@@ -59,9 +59,9 @@ spec:
         {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.gateway.apiPort }}
+          containerPort: {{ .Values.gateway.ports.api }}
         - name: http-metrics
-          containerPort: {{ .Values.gateway.metricsPort }}
+          containerPort: {{ .Values.gateway.ports.metrics }}
         resources: {{- toYaml .Values.gateway.resources | nindent 10 }}
         env:
           - name: OIDC_CLIENT_SECRET
