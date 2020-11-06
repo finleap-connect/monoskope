@@ -72,41 +72,4 @@ dex: # OIDC Provider
   #   logoURL: https://example.com/yourlogo.png
 
 gateway:
-  name: gateway
-  secretName: monoskope-gateway-secret
-  image:
-    repository: registry.gitlab.figo.systems/platform/monoskope/gateway
-    tag: latest
-    pullPolicy: Always
-  replicaCount: 3
-  livenessProbe:
-    enabled: true
-    failureThreshold: 10
-    periodSeconds: 5
-    initialDelaySeconds: 10
-  readinessProbe:
-    enabled: false
-    failureThreshold: 5
-    periodSeconds: 5
-    initialDelaySeconds: 5
-  resources:
-    limits:
-      cpu: 1
-      memory: 500Mi
-    requests:
-      cpu: 300m
-      memory: 300Mi
-  nodeSelector: {}
-  tolerations: []
-  keepAlive: false
-  ports:
-    api: 8080
-    metrics: 9102
-  service:
-    api:
-      type: ClusterIP
-      port: 8080
-    metrics:
-      port: 9102
-  auth:
-    allowRootToken: false
+  enabled: true
