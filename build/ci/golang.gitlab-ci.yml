@@ -33,7 +33,9 @@ build:golang:
 
 deliver:gateway:
   stage: deliver
-  extends: .build-docker
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
   only:
     - tags
   script:
