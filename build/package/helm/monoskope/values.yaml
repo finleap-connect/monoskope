@@ -8,8 +8,8 @@ fullnameOverride: ""
 
 ingress:
   enabled: false
-  host: &ingressHost "monoskope.dev.finleap.cloud"
-  dexPath: &ingressDexPath /dex
+  host: monoskope.dev.finleap.cloud
+  dexPath: /dex
   apiPath: /api
 
 dex: # OIDC Provider
@@ -18,7 +18,7 @@ dex: # OIDC Provider
   imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
-    issuer: http://*ingressHost/*ingressDexPath
+    issuer: https://monoskope.dev.finleap.cloud/dex
     storage:
       config:
         inCluster: true
@@ -105,3 +105,5 @@ gateway:
   service:
     type: ClusterIP
     port: 8080
+  auth:
+    allowRootToken: false
