@@ -32,7 +32,8 @@ deliver:chart:gateway:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-chart --helm-binary helm3 --chart-dir ./build/package/helm/gateway --promote-version $VERSION
+    - make helm-package-gateway ARGS="VERSION=$VERSION"
+    - make helm-push-gateway
   needs:
     - lint:helm:gateway
 
@@ -43,6 +44,7 @@ deliver:chart:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-chart --helm-binary helm3 --chart-dir ./build/package/helm/monoskope --promote-version $VERSION
+    - make helm-package-monoskope ARGS="VERSION=$VERSION"
+    - make helm-push-monoskope
   needs:
     - lint:helm:monoskope
