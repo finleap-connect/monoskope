@@ -34,3 +34,6 @@ dex:
 gateway:
   auth:
     allowRootToken: true
+
+ingress:
+  enabled: true
