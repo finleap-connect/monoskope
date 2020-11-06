@@ -162,7 +162,7 @@ func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthS
 }
 
 func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.UserInfo, error) {
-	token, err := s.authHandler.Exchange(ctx, code.GetCode())
+	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
 	if err != nil {
 		return nil, err
 	}

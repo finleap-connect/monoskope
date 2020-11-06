@@ -46,7 +46,7 @@ var _ = Describe("Gateway", func() {
 		defer conn.Close()
 		gwc := gateway.NewGatewayClient(conn)
 
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: env.AuthConfig.RedirectURI})
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &auth.AuthState{CallbackURL: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
 		log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
@@ -100,7 +100,7 @@ var _ = Describe("Gateway", func() {
 		Expect(eg.Wait()).NotTo(HaveOccurred())
 		Expect(statusCode).To(Equal(http.StatusOK))
 
-		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authInfo.GetState()})
+		userInfo, err := gwc.ExchangeAuthCode(context.Background(), &auth.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(userInfo).ToNot(BeNil())
 		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
