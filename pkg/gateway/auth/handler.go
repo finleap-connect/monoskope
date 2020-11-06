@@ -93,13 +93,13 @@ func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken
 	return idToken, nil
 }
 
-func (n *Handler) getOauth2Config(scopes []string) *oauth2.Config {
+func (n *Handler) getOauth2Config(scopes []string, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     n.config.ClientId,
 		ClientSecret: n.config.ClientSecret,
 		Endpoint:     n.Provider.Endpoint(),
 		Scopes:       scopes,
-		RedirectURL:  n.config.RedirectURI,
+		RedirectURL:  redirectURL,
 	}
 }
 
@@ -112,12 +112,12 @@ func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Tok
 		RefreshToken: refreshToken,
 		Expiry:       time.Now().Add(-time.Hour),
 	}
-	return n.getOauth2Config(nil).TokenSource(n.clientContext(ctx), t).Token()
+	return n.getOauth2Config(nil, "").TokenSource(n.clientContext(ctx), t).Token()
 }
 
 // Exchange converts an authorization code into a token.
-func (n *Handler) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
-	return n.getOauth2Config(nil).Exchange(n.clientContext(ctx), code)
+func (n *Handler) Exchange(ctx context.Context, code, redirectURL string) (*oauth2.Token, error) {
+	return n.getOauth2Config(nil, redirectURL).Exchange(n.clientContext(ctx), code)
 }
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
@@ -138,12 +138,12 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 	// Construct authCodeURL
 	authCodeURL := ""
 	if config.OfflineAccess {
-		authCodeURL = n.getOauth2Config(scopes).AuthCodeURL(encoded, oidc.Nonce(nonce))
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else if n.config.OfflineAsScope {
 		scopes = append(scopes, oidc.ScopeOfflineAccess)
-		authCodeURL = n.getOauth2Config(scopes).AuthCodeURL(encoded, oidc.Nonce(nonce))
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else {
-		authCodeURL = n.getOauth2Config(scopes).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	}
 
 	return authCodeURL, encoded, nil

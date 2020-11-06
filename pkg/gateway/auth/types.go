@@ -14,7 +14,6 @@ type Config struct {
 	Nonce          string
 	ClientId       string
 	ClientSecret   string
-	RedirectURI    string
 }
 
 type ExtraClaims struct {
