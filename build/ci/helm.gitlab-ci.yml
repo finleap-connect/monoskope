@@ -1,4 +1,4 @@
-lint:helm:
+lint:helm:monoskope:
   stage: test
   image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
   only:
@@ -7,10 +7,34 @@ lint:helm:
     - merge_requests
     - tags
   script:
-    - make helm-lint
+    - make helm-lint-monoskope
   needs: []
 
-deliver:chart:
+lint:helm:gateway:
+  stage: test
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.1
+  only:
+    - main
+    - develop
+    - merge_requests
+    - tags
+  script:
+    - make helm-lint-gateway
+  needs: []
+
+deliver:chart:gateway:
+  stage: deliver
+  except:
+    refs:
+      - tags
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.7.0
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-chart --chart-dir ./build/package/helm/gateway --promote-version $VERSION
+  dependencies:
+    - lint:helm:gateway
+
+deliver:chart:monoskope:
   stage: deliver
   only:
     - tags
@@ -18,3 +42,5 @@ deliver:chart:
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-chart --chart-dir ./build/package/helm/monoskope --promote-version $VERSION
+  dependencies:
+    - lint:helm:monoskope

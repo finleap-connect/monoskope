@@ -1,6 +1,6 @@
 apiVersion: v2
-name: monoskope
-description: Monoskope implements the management and operation of tenants, users and their roles in a Kubernetes multi-cluster environment.
+name: gateway
+description: Monoskope Gateway
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -21,13 +21,3 @@ version: 0.0.1
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 appVersion: 0.0.1
-
-dependencies: # A list of the chart requirements
-  - name: dex
-    version: "1.0.6"
-    repository: https://kubism.github.io/charts
-    condition: dex.enabled
-  - name: gateway
-    version: "0.0.1-dev01"
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
-    condition: gateway.enabled

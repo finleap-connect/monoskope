@@ -1,5 +1,5 @@
-{{- $name := (printf "%s-%s" (include "monoskope.name" .) "gateway") -}}
-{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "gateway") -}}
+{{- $name := include "gateway.name" . -}}
+{{- $fullname := include "gateway.fullname" . -}}
 {{- $release := .Release.Name -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -8,23 +8,23 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: {{ $name }}
-    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- include "gateway.labels" . | nindent 4 }}
 spec:
   progressDeadlineSeconds: 120
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
-  replicas: {{ .Values.gateway.replicaCount | default 3 }}
+  replicas: {{ .Values.replicaCount | default 3 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
-      {{- include "monoskope.selectorLabels" . | nindent 6 }}
+      {{- include "gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels: 
         app.kubernetes.io/name: {{ $name }}
-        {{- include "monoskope.labels" . | nindent 8 }}
+        {{- include "gateway.labels" . | nindent 8 }}
     spec:
       imagePullSecrets:
       - name: {{ .Values.pullSecret }}
@@ -40,63 +40,63 @@ spec:
                   values:
                   - {{ $fullname }}
               topologyKey: kubernetes.io/hostname
-      {{- with .Values.gateway.nodeSelector }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.gateway.priorityClassName }}
+      {{- with .Values.priorityClassName }}
       priorityClassName: {{.}}
       {{- end }}
-      {{- with .Values.gateway.tolerations }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
       - name: {{ $name }}
-        {{- with .Values.gateway }}
+        {{- with .Values }}
         image: {{ .image.repository }}:{{ if $.Values.tagOverride }}{{ $.Values.tagOverride }}{{ else }}{{ .image.tag }}{{ end }}
         imagePullPolicy: {{ .image.pullPolicy }}
         {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.gateway.ports.api }}
+          containerPort: {{ .Values.ports.api }}
         - name: http-metrics
-          containerPort: {{ .Values.gateway.ports.metrics }}
-        resources: {{- toYaml .Values.gateway.resources | nindent 10 }}
+          containerPort: {{ .Values.ports.metrics }}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
         env:
           - name: OIDC_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.gateway.secretName }}
+                name: {{ .Values.secret.name }}
                 key: oidc-clientsecret
-{{- if .Values.gateway.auth.allowRootToken }}
+{{- if .Values.auth.allowRootToken }}
           - name: AUTH_ROOT_TOKEN
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.gateway.secretName }}
+                name: {{ .Values.secret.name }}
                 key: auth-root-token
 {{- end }}
         args:
           - /gateway
           - server
-          - {{ (printf "--api-addr=:%v" .Values.gateway.apiPort) }}
-          - {{ (printf "--metrics-addr=:%v" .Values.gateway.metricsPort) }}
-          - {{ (printf "--issuer-url=https://%s%s" .Values.ingress.host .Values.ingress.dexPath ) }}
-        {{- if .Values.gateway.livenessProbe.enabled }}
+          - {{ (printf "--api-addr=:%v" .Values.apiPort) }}
+          - {{ (printf "--metrics-addr=:%v" .Values.metricsPort) }}
+          - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
+        {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
               path: /readyz
-              port: {{ .Values.gateway.apiPort }}
-          failureThreshold: {{ .Values.gateway.livenessProbe.failureThreshold }}
-          periodSeconds: {{ .Values.gateway.livenessProbe.periodSeconds }}
-          initialDelaySeconds: {{ .Values.gateway.livenessProbe.initialDelaySeconds }}
+              port: {{ .Values.apiPort }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
         {{- end }}
-        {{- if .Values.gateway.readinessProbe.enabled }}
+        {{- if .Values.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
               path: /readyz
-              port: {{ .Values.gateway.apiPort }}
-          failureThreshold: {{ .Values.gateway.readinessProbe.failureThreshold }}
-          periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds }}
-          initialDelaySeconds: {{ .Values.gateway.readinessProbe.initialDelaySeconds }}
+              port: {{ .Values.apiPort }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
         {{- end }}

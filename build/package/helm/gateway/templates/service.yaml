@@ -1,0 +1,27 @@
+{{- $name := (printf "%s-%s" (include "gateway.name" .) "service") -}}
+{{- $gwname := include "gateway.name" . -}}
+{{- $fullname := include "gateway.fullname" . -}}
+{{- $release := .Release.Name -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "gateway.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.api.port }}
+      type: {{ .Values.service.api.type }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.metrics.port }}
+      targetPort: http-metrics
+      protocol: TCP
+      name: http-metrics
+  selector:
+      app.kubernetes.io/name: {{ $gwname }}
+      {{- include "gateway.selectorLabels" . | nindent 6 }}
