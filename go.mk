@@ -14,8 +14,6 @@ LDFLAGS    	   += -X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_M
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
-VERSION    	   ?= 0.0.1-dev
-
 CMD_MONOCTL = $(BUILD_PATH)/monoctl
 CMD_MONOCTL_SRC = cmd/monoctl/*.go
 
