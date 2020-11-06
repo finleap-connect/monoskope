@@ -1,5 +1,5 @@
-{{- $name := include "monoskope.name.gateway" . -}}
-{{- $fullname := include "monoskope.fullname.gateway" . -}}
+{{- $name := (printf "%s-%s" (include "monoskope.name" .) "gateway") -}}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "gateway") -}}
 {{- $release := .Release.Name -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -7,21 +7,24 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "monoskope.labels.gateway" . | nindent 4 }}
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   progressDeadlineSeconds: 120
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
+      maxUnavailable: 0
   replicas: {{ .Values.gateway.replicaCount | default 3 }}
   selector:
     matchLabels:
-    {{- include "monoskope.selectorLabels.gateway" . | nindent 6 }}
+      app.kubernetes.io/name: {{ $name }}
+      {{- include "monoskope.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels: 
-        {{- include "monoskope.labels.gateway" . | nindent 8 }}
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "monoskope.labels" . | nindent 8 }}
     spec:
       imagePullSecrets:
       - name: {{ .Values.pullSecret }}
