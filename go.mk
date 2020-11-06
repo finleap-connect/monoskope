@@ -19,6 +19,9 @@ VERSION    	   ?= 0.0.1-dev
 CMD_MONOCTL = $(BUILD_PATH)/monoctl
 CMD_MONOCTL_SRC = cmd/monoctl/*.go
 
+CMD_GATEWAY = $(BUILD_PATH)/gateway
+CMD_GATEWAY_SRC = cmd/gateway/*.go
+
 define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
@@ -70,7 +73,13 @@ protobuf:
 $(CMD_MONOCTL):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_MONOCTL) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" $(CMD_MONOCTL_SRC)
 
+$(CMD_GATEWAY):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
+
 build-clean: 
-	rm $(CMD_MONOCTL)
-	
+	rm -Rf $(CMD_MONOCTL)
+	rm -Rf $(CMD_GATEWAY)
+
 build-monoctl: $(CMD_MONOCTL)
+
+build-gateway: $(CMD_GATEWAY)
