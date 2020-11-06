@@ -24,7 +24,8 @@ build:golang:
   only:
     - tags
   script:
-    - make go-build-gateway
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - make go-build-gateway ARGS="VERSION=$VERSION"
   artifacts:
     paths:
       - gateway
@@ -32,9 +33,9 @@ build:golang:
 
 deliver:gateway:
   stage: deliver
+  extends: .build-docker
   only:
     - tags
-  image: registry.gitlab.figo.systems/platform/docker-builder:1.3.3
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
