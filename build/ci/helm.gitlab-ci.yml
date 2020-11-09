@@ -46,3 +46,5 @@ deliver:chart:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-package-monoskope
     - VERSION=$VERSION make helm-push-monoskope
+  needs:
+    - deliver:chart:gateway

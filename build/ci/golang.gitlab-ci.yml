@@ -32,7 +32,7 @@ build:golang:
     expire_in: 1 day
 
 deliver:gateway:
-  stage: deliver
+  stage: deliver-components
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
   services:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind

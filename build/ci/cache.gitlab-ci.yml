@@ -24,7 +24,7 @@
     policy: pull
   after_script: [] # the after script above is only required for building the cache, so we can empty-override this here
 
-build:cache:
+prepare:cache:
   stage: prepare
   extends: .cache
   script:
