@@ -33,7 +33,7 @@ dex: # OIDC Provider
     connectors: []
     staticClients:
       - id: gateway
-        secret: "{{ gateway-app-secret }}"
+        secret: "{{ .gatewayAppSecret }}"
         name: "Monoskope Gateway"
         redirectURIs:
           - "http://localhost:8000" # callback from dex to monoctl
