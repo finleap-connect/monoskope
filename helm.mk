@@ -19,7 +19,7 @@ install-%:
 	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
 install-from-repo-%:
-	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --version $(VERSION)
 
 uninstall-%: 
 	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
