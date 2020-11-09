@@ -50,7 +50,7 @@ deliver:chart:monoskope:
     - deliver:chart:gateway
 
 deploy:monoskope:
-  stage: deliver
+  stage: deploy
   extends: .helm
   only:
     - tags
