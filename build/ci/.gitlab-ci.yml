@@ -4,6 +4,7 @@ stages:
   - build
   - deliver-components
   - deliver
+  - deploy
 
 include:
   - local: build/ci/cache.gitlab-ci.yml
