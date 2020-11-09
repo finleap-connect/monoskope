@@ -79,14 +79,14 @@ spec:
         args:
           - /gateway
           - server
-          - {{ (printf "--api-addr=:%v" .Values.apiPort) }}
-          - {{ (printf "--metrics-addr=:%v" .Values.metricsPort) }}
+          - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
+          - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
           - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
               path: /readyz
-              port: {{ .Values.apiPort }}
+              port: {{ .Values.ports.api }}
           failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
           initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
@@ -95,7 +95,7 @@ spec:
         readinessProbe:
           httpGet:
               path: /readyz
-              port: {{ .Values.apiPort }}
+              port: {{ .Values.ports.api }}
           failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
