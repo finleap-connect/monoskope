@@ -18,18 +18,6 @@ dex:
         hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
         username: "admin"
         userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
-    connectors:
-      - type: gitlab
-        id: gitlab-dev
-        name: GitLab DEV
-        config:
-          baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ .gitlabClientId }}"
-          clientSecret: "{{ .gitlabClientSecret }}"
-          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
-          groups:
-            - "wolke7"
-          use_login_as_id: false
 
 monoskope-gateway:
   auth:

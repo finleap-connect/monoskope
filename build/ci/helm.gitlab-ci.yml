@@ -57,4 +57,4 @@ deploy:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make helm-install-from-repo-monoskope
+    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
