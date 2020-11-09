@@ -26,14 +26,14 @@ lint:helm:gateway:
   needs: []
 
 deliver:chart:gateway:
-  stage: deliver
+  stage: deliver-components
   extends: .helm
   only:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make helm-package-gateway
-    - VERSION=$VERSION make helm-push-gateway
+    - VERSION=$VERSION make helm-package-monoskope-gateway
+    - VERSION=$VERSION make helm-push-monoskope-gateway
   needs:
     - lint:helm:gateway
 
@@ -46,5 +46,3 @@ deliver:chart:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-package-monoskope
     - VERSION=$VERSION make helm-push-monoskope
-  needs:
-    - lint:helm:monoskope
