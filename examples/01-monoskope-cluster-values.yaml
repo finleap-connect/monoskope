@@ -1,0 +1,34 @@
+# Dev environment values for monoskope.
+
+name: monoskope
+nameOverride: ""
+fullnameOverride: ""
+
+dex:
+  enabled: true
+  config:
+    storage:
+      type: sqlite3
+      config:
+        file: /tmp/dex.db
+    enablePasswordDB: false
+    connectors:
+      - type: gitlab
+        id: gitlab-dev
+        name: GitLab DEV
+        config:
+          baseURL: "https://gitlab.figo.systems"
+          clientID: "{{ .gitlabClientId }}"
+          clientSecret: "{{ .gitlabClientSecret }}"
+          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
+          groups:
+            - "wolke7"
+          use_login_as_id: false
+
+monoskope-gateway:
+  auth:
+    allowRootToken: true
+  pullSecret: gitlab-registry
+
+ingress:
+  enabled: true
