@@ -31,9 +31,10 @@ dex:
             - "wolke7"
           use_login_as_id: false
 
-gateway:
+monoskope-gateway:
   auth:
     allowRootToken: true
+  pullSecret: gitlab-registry
 
 ingress:
   enabled: true

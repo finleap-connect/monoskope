@@ -54,7 +54,7 @@ spec:
       containers:
       - name: {{ $name }}
         {{- with .Values }}
-        image: {{ .image.repository }}:{{ if $.Values.tagOverride }}{{ $.Values.tagOverride }}{{ else }}{{ .image.tag }}{{ end }}
+        image: {{ .image.repository }}:{{ .image.tag }}
         imagePullPolicy: {{ .image.pullPolicy }}
         {{- end }}
         ports:
