@@ -39,19 +39,27 @@ The following targets are defined. Please not that there are variables (uppercas
 | --------- | ----------- |
 | *general* | |
 | `clean` | Cleans everything, tools, tmp dir used, whatever |
+| `diagrams` | Generates mermaidjs diagrams below `docs/flow-charts` |
 | `tools` | Install necessary tools to `TOOLS_DIR`, like `kind`, `ginkgo`, `golangci-lint`, ... |
 | `tools-clean` | Removes the tools |
+| `echo-<VARIABLENAME>` | Echos the content of `<VARIABLENAME>` |
 | *helm* | |
 | `helm-add-kubism` | Add the kubism helm repository to the local list of repos |
-| `helm-template` | Templates the helm chart to `HELM_OUTPUT_DIR/monoskope` |
-| `helm-install` | Installs the helm chart to namespace `KUBE_NAMESPACE` with your current `kubecontext` and `HELM` |
-| `helm-uninstall` | Uninstalls the helm chart from namespace `KUBE_NAMESPACE` |
+| `helm-template-<CHARTNAME>` | Templates the helm chart `<CHARTNAME>` to `HELM_OUTPUT_DIR/<CHARTNAME>` |
+| `helm-install-<CHARTNAME>` | Installs the helm chart `<CHARTNAME>` to namespace `KUBE_NAMESPACE` with your current `kubecontext` and `HELM` |
+| `helm-install-from-repo-<CHARTNAME>` | Installs the helm chart `<CHARTNAME>` to namespace `KUBE_NAMESPACE` from `HELM_REGISTRY_ALIAS` in version `VERSION` |
+| `helm-uninstall-<CHARTNAME>` | Uninstalls the helm chart `<CHARTNAME>` from namespace `KUBE_NAMESPACE` |
 | `helm-clean` | Clears `HELM_OUTPUT_DIR` |
-| `helm-dep` | Does a helm dep update for `monoskope` |
-| `helm-lint` | Does a helm lint for `monoskope` |
+| `helm-dep-<CHARTNAME>` | Does a helm dep update for `<CHARTNAME>` |
+| `helm-lint-<CHARTNAME>` | Does a helm lint for `<CHARTNAME>` |
+| `helm-update-chart-deps` | Updates the `monoskope` chart dependencies to monoskope subchart to `VERSION` |
+| `helm-package-<CHARTNAME>` | Does a helm package for `<CHARTNAME>` |
+| `helm-push-<CHARTNAME>` | Pushes the helm chart for `<CHARTNAME>` |
 | *go* | |
-| `go-prepare` | Downloads all require go modules |
-| `go-lint` | Lints all go code |
+| `go-mod` | Downloads all require go modules |
+| `go-fmt` | Formats all `*.go` files |
 | `go-vet` | Vets all go code |
-| `go-fmt` | Formats all go code |
+| `go-lint` | Lints all go code |
 | `go-run-*` | Runs the app in `cmd/*`, e.g. `go-run-monoctl` to run `monoctl` from sources |
+| `go-test` | Runs all go tests |
+| `go-protobuf` | Generates code for all proto specs in `api` folder and it's children |
