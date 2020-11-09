@@ -30,4 +30,4 @@ dependencies: # A list of the chart requirements
   - name: monoskope-gateway
     version: "latest"
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
-    condition: gateway.enabled
+    condition: monoskope-gateway.enabled

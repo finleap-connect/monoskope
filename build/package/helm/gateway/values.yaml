@@ -51,4 +51,4 @@ service:
     port: 9102
 auth:
   allowRootToken: false
-  issuerURL: localhost:5555
+  issuerURL: http://localhost:5555
