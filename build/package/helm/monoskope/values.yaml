@@ -74,4 +74,4 @@ monoskope-gateway:
   enabled: true
   auth:
     allowRootToken: false
-    issuerURL: &issuer
+    issuerURL: *issuer

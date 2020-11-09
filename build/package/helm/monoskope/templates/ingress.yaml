@@ -25,10 +25,10 @@ spec:
         paths:
         - path: /()(.*)
           backend:
-            serviceName: {{ (printf "%s-%s" $fullname "gateway") }}
+            serviceName: {{ (printf "%s-%s" $release "gateway-service") }}
             servicePort: http
         - path: /()(dex.*)
           backend:
-            serviceName: {{ (printf "%s-%s" $fullname "dex") }}
+            serviceName: {{ (printf "%s-%s" $release "dex") }}
             servicePort: http
 {{- end }}
