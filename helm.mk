@@ -33,6 +33,9 @@ add-kubism:
 	@$(HELM) repo add kubism.io https://kubism.github.io/charts/
 	@$(HELM) repo update
 
+update-chart-deps:
+	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
+
 package-%:
 	@cp "$(HELM_PATH)/$*/values.yaml" "$(HELM_PATH)/$*/values.yaml.bkp"
 	@yq write "$(HELM_PATH)/$*/values.yaml" image.tag "$(VERSION)" --inplace
