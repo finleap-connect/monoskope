@@ -19,8 +19,12 @@ install-%:
 	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
 install-from-repo-%:
-	@$(HELM) repo update
-	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --version $(VERSION)
+	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
+	@$(HELM) dep update $(HELM_PATH)/$*
+	@cp "$(HELM_PATH)/$*/values.yaml" "$(HELM_PATH)/$*/values.yaml.bkp"
+	@yq write "$(HELM_PATH)/$*/values.yaml" image.tag "$(VERSION)" --inplace
+	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+	@mv "$(HELM_PATH)/$*/values.yaml.bkp" "$(HELM_PATH)/$*/values.yaml"
 
 uninstall-%: 
 	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
