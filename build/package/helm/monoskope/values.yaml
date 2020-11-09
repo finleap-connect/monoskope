@@ -15,7 +15,6 @@ ingress:
 dex: # OIDC Provider
   enabled: false
   imagePullPolicy: "Always"
-  imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
     issuer: https://monoskope.dev.finleap.cloud/dex

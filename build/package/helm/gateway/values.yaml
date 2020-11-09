@@ -13,7 +13,7 @@ secret:
   name: monoskope-gateway-secret
 
 image:
-  repository: registry.gitlab.figo.systems/platform/monoskope/gateway
+  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway
   tag: latest
   pullPolicy: Always
 
