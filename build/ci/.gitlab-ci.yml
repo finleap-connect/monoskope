@@ -2,6 +2,7 @@ stages:
   - prepare
   - test
   - build
+  - deliver-components
   - deliver
 
 include:
@@ -20,7 +21,7 @@ include:
 .build:
   extends: .cache-no-push
 
-build:builder:
+prepare:builder:
   stage: prepare
   only:
     changes:

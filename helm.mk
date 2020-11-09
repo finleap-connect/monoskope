@@ -1,6 +1,7 @@
 HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
+HELM_REGISTRY_ALIAS			?= figo-helm
 
 
 .PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
@@ -16,6 +17,9 @@ lint-%:
 
 install-%: 
 	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+
+install-from-repo-%:
+	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
 uninstall-%: 
 	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
