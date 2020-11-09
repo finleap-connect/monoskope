@@ -56,4 +56,5 @@ deploy:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make helm-update-chart-deps
     - VERSION=$VERSION make helm-install-from-repo-monoskope
