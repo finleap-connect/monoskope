@@ -24,8 +24,8 @@ dex:
         name: GitLab DEV
         config:
           baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ gitlab-client-id }}"
-          clientSecret: "{{ gitlab-client-secret }}"
+          clientID: "{{ .gitlabClientId }}"
+          clientSecret: "{{ .gitlabClientSecret }}"
           redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
           groups:
             - "wolke7"
