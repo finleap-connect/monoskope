@@ -13,7 +13,7 @@ var (
 	apiAddr     string
 	metricsAddr string
 	keepAlive   bool
-	authConfig  auth.Config
+	authConfig  = auth.Config{}
 )
 
 var serverCmd = &cobra.Command{
@@ -23,7 +23,6 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
-		authConfig = auth.Config{}
 		// Some options can be provided by env variables
 		if v := os.Getenv("AUTH_ROOT_TOKEN"); v != "" {
 			authConfig.RootToken = &v
