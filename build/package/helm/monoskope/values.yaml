@@ -6,13 +6,18 @@ name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+ingress:
+  enabled: false
+  host: monoskope.dev.finleap.cloud
+  dexPath: /dex
+  apiPath: /api
+
 dex: # OIDC Provider
   enabled: false
   imagePullPolicy: "Always"
-  imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
-    issuer: http://127.0.0.1:8080/dex
+    issuer: &issuer https://monoskope.dev.finleap.cloud/dex
     storage:
       config:
         inCluster: true
@@ -28,10 +33,11 @@ dex: # OIDC Provider
     connectors: []
     staticClients:
       - id: gateway
-        secret: "{{ gateway-app-secret }}"
+        secret: "{{ .gatewayAppSecret }}"
         name: "Monoskope Gateway"
         redirectURIs:
-          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
+          - "http://localhost:8000" # callback from dex to monoctl
+          - "http://localhost:18000"
   https: false
   ports:
     web:
@@ -63,3 +69,9 @@ dex: # OIDC Provider
     # The name of the ServiceAccount to use.
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
+
+monoskope-gateway:
+  enabled: true
+  auth:
+    allowRootToken: false
+    issuerURL: *issuer

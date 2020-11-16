@@ -17,8 +17,8 @@ go-%:
 
 # helm
 
-HELM_PATH_MONOSKOPE 		?= build/package/helm/monoskope
-HELM_VALUES_FILE_MONOSKOPE  ?= examples/00-monoskope-dev-values.yaml
+HELM_PATH 		            ?= build/package/helm
+HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
 
 helm-%:
 	@$(MAKE) -f helm.mk $*
@@ -32,3 +32,6 @@ diagrams:
 tools: go-ginkgo-get go-golangci-lint-get
 
 tools-clean: go-ginkgo-clean go-golangci-lint-clean
+
+echo-%:
+	@echo $($*)

@@ -77,7 +77,6 @@ func SetupAuthTestEnv() (*OAuthTestEnv, error) {
 		IssuerURL:      env.DexWebEndpoint,
 		OfflineAsScope: true,
 		RootToken:      &rootToken,
-		RedirectURI:    fmt.Sprintf("http://%s%s/", RedirectURLHostname, RedirectURLPort),
 		ClientId:       "gateway",
 		ClientSecret:   "app-secret",
 		Nonce:          "secret-nonce",

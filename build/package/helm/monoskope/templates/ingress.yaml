@@ -1,0 +1,34 @@
+{{- if .Values.ingress.enabled }}
+{{- $name := (printf "%s-%s" (include "monoskope.name" .) "ingress") -}}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "ingress") -}}
+{{- $release := .Release.Name -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/tls-acme: "true" # automatically request the certificate (using the in-cluster cert-manager)
+    kubernetes.io/ingress.class: "nginx" # use the nginx ingress controller
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host }}
+    secretName: monoskope-tls
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+        - path: /()(.*)
+          backend:
+            serviceName: {{ (printf "%s-%s" $release "gateway-service") }}
+            servicePort: http
+        - path: /()(dex.*)
+          backend:
+            serviceName: {{ (printf "%s-%s" $release "dex") }}
+            servicePort: http
+{{- end }}

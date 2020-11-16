@@ -13,7 +13,7 @@ var (
 	apiAddr     string
 	metricsAddr string
 	keepAlive   bool
-	authConfig  auth.Config
+	authConfig  = auth.Config{}
 )
 
 var serverCmd = &cobra.Command{
@@ -26,6 +26,12 @@ var serverCmd = &cobra.Command{
 		// Some options can be provided by env variables
 		if v := os.Getenv("AUTH_ROOT_TOKEN"); v != "" {
 			authConfig.RootToken = &v
+		}
+		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "test" {
+			authConfig.ClientSecret = v
+		}
+		if v := os.Getenv("OIDC_NONCE"); v != "test" {
+			authConfig.Nonce = v
 		}
 
 		// Setup grpc listener
@@ -61,5 +67,8 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
-	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:5556", "Issuer URL")
+	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
+	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
+	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
+	flags.StringVar(&authConfig.ClientId, "oidc-client-id", "gateway", "Client id for oidc")
 }
