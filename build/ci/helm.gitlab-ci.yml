@@ -49,12 +49,11 @@ deliver:chart:monoskope:
     - VERSION=$VERSION make helm-push-monoskope
   needs:
     - deliver:chart:gateway
-
-deploy:monoskope:
-  stage: deploy
-  extends: .helm
-  only:
-    - tags
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
+# deploy:monoskope:
+#   stage: deploy
+#   extends: .helm
+#   only:
+#     - tags
+#   script:
+#     - VERSION=$(sh ./build/ci/configure_versions.sh)
+#     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
