@@ -66,6 +66,7 @@ func (a *AuthUseCase) Run() error {
 			a.log.Info("Open " + url)
 			if err := browser.OpenURL(url); err != nil {
 				a.log.Error(err, "could not open the browser")
+				return err
 			}
 			return nil
 		case <-ctx.Done():
