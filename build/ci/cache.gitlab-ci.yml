@@ -4,6 +4,8 @@
     - main
     - merge_requests
     - tags
+  except:
+    - schedules
   cache:
     key:
       files:
