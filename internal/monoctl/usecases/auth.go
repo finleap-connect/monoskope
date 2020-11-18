@@ -34,7 +34,7 @@ func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader
 func (a *AuthUseCase) Run() error {
 	var err error
 
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
+	conn, err := gateway.CreateInsecureGatewayConnecton(a.ctx, a.config.Server, nil)
 	if err != nil {
 		return err
 	}
