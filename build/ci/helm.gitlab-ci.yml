@@ -57,7 +57,7 @@ deploy:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-monoskope
+    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
 
 deploy:monoskope:latest_tag:
   stage: deploy
@@ -66,4 +66,4 @@ deploy:monoskope:latest_tag:
     - schedules
   script:
     - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-monoskope
+    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
