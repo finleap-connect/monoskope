@@ -4,11 +4,6 @@
 lint:helm:monoskope:
   stage: test
   extends: .helm
-  only:
-    - main
-    - develop
-    - merge_requests
-    - tags
   script:
     - make helm-lint-monoskope
   needs: []
@@ -16,11 +11,6 @@ lint:helm:monoskope:
 lint:helm:gateway:
   stage: test
   extends: .helm
-  only:
-    - main
-    - develop
-    - merge_requests
-    - tags
   script:
     - make helm-lint-gateway
   needs: []

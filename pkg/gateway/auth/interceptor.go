@@ -28,7 +28,10 @@ func NewInterceptor(authHandler *Handler) (*AuthServerInterceptor, error) {
 // handler and returns an error. Otherwise, the interceptor invokes the
 // handler.
 func (s *AuthServerInterceptor) EnsureValid(ctx context.Context, fullMethodName string) (context.Context, error) {
-	if strings.HasSuffix(fullMethodName, "GetAuthInformation") || strings.HasSuffix(fullMethodName, "ExchangeAuthCode") {
+	// Allow some methods to be called unauthenticated
+	if strings.HasSuffix(fullMethodName, "GetAuthInformation") ||
+		strings.HasSuffix(fullMethodName, "ExchangeAuthCode") ||
+		strings.HasPrefix(fullMethodName, "/grpc.health.v1.Health") {
 		return ctx, nil
 	}
 

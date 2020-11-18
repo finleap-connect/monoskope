@@ -12,6 +12,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"golang.org/x/sync/errgroup"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -114,5 +115,18 @@ var _ = Describe("Gateway", func() {
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
+	})
+})
+
+var _ = Describe("HealthCheck", func() {
+	It("can do health checks", func() {
+		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+
+		hc := healthpb.NewHealthClient(conn)
+		res, err := hc.Check(ctx, &healthpb.HealthCheckRequest{})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res.GetStatus()).To(Equal(healthpb.HealthCheckResponse_SERVING))
 	})
 })
