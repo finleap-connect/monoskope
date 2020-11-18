@@ -36,8 +36,6 @@ message AuthResponse {
   string RefreshToken = 2;
 }
 
-message TokenRefreshRequest { string RefreshToken = 1; }
-
 message AccessToken {
   string Token = 1;
   google.protobuf.Timestamp Expiry = 2;

@@ -110,7 +110,7 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
 	t := &oauth2.Token{
 		RefreshToken: refreshToken,
-		Expiry:       time.Now().Add(-time.Hour),
+		Expiry:       time.Now().Add(-time.Hour), // to force token refresh, set expired
 	}
 	return n.getOauth2Config(nil, "").TokenSource(n.clientContext(ctx), t).Token()
 }
