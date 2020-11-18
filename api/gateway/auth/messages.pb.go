@@ -78,7 +78,7 @@ type AuthInformation struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AuthCodeURL string `protobuf:"bytes,1,opt,name=AuthCodeURL,proto3" json:"AuthCodeURL,omitempty"`
+	AuthCodeURL string `protobuf:"bytes,1,opt,name=AuthCodeURL,proto3" json:"AuthCodeURL,omitempty"` // URL to redirect client to aquire a new auth token
 	State       string `protobuf:"bytes,2,opt,name=State,proto3" json:"State,omitempty"`
 }
 
@@ -196,11 +196,8 @@ type UserInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AccessToken  string               `protobuf:"bytes,1,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
-	RefreshToken string               `protobuf:"bytes,2,opt,name=RefreshToken,proto3" json:"RefreshToken,omitempty"`
-	Expiry       *timestamp.Timestamp `protobuf:"bytes,3,opt,name=Expiry,proto3" json:"Expiry,omitempty"`
-	Email        string               `protobuf:"bytes,4,opt,name=Email,proto3" json:"Email,omitempty"`
-	Groups       []string             `protobuf:"bytes,6,rep,name=Groups,proto3" json:"Groups,omitempty"`
+	AuthResponse *AuthResponse `protobuf:"bytes,1,opt,name=AuthResponse,proto3" json:"AuthResponse,omitempty"`
+	Email        string        `protobuf:"bytes,2,opt,name=Email,proto3" json:"Email,omitempty"`
 }
 
 func (x *UserInfo) Reset() {
@@ -235,23 +232,9 @@ func (*UserInfo) Descriptor() ([]byte, []int) {
 	return file_api_gateway_auth_messages_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *UserInfo) GetAccessToken() string {
+func (x *UserInfo) GetAuthResponse() *AuthResponse {
 	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *UserInfo) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-func (x *UserInfo) GetExpiry() *timestamp.Timestamp {
-	if x != nil {
-		return x.Expiry
+		return x.AuthResponse
 	}
 	return nil
 }
@@ -263,9 +246,159 @@ func (x *UserInfo) GetEmail() string {
 	return ""
 }
 
-func (x *UserInfo) GetGroups() []string {
+type AuthResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AccessToken  *AccessToken `protobuf:"bytes,1,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
+	RefreshToken string       `protobuf:"bytes,2,opt,name=RefreshToken,proto3" json:"RefreshToken,omitempty"`
+}
+
+func (x *AuthResponse) Reset() {
+	*x = AuthResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_gateway_auth_messages_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AuthResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthResponse) ProtoMessage() {}
+
+func (x *AuthResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gateway_auth_messages_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthResponse.ProtoReflect.Descriptor instead.
+func (*AuthResponse) Descriptor() ([]byte, []int) {
+	return file_api_gateway_auth_messages_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *AuthResponse) GetAccessToken() *AccessToken {
 	if x != nil {
-		return x.Groups
+		return x.AccessToken
+	}
+	return nil
+}
+
+func (x *AuthResponse) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+type TokenRefreshRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RefreshToken string `protobuf:"bytes,1,opt,name=RefreshToken,proto3" json:"RefreshToken,omitempty"`
+}
+
+func (x *TokenRefreshRequest) Reset() {
+	*x = TokenRefreshRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_gateway_auth_messages_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TokenRefreshRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TokenRefreshRequest) ProtoMessage() {}
+
+func (x *TokenRefreshRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gateway_auth_messages_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TokenRefreshRequest.ProtoReflect.Descriptor instead.
+func (*TokenRefreshRequest) Descriptor() ([]byte, []int) {
+	return file_api_gateway_auth_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TokenRefreshRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+type AccessToken struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Token  string               `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
+	Expiry *timestamp.Timestamp `protobuf:"bytes,2,opt,name=Expiry,proto3" json:"Expiry,omitempty"`
+}
+
+func (x *AccessToken) Reset() {
+	*x = AccessToken{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_gateway_auth_messages_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AccessToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessToken) ProtoMessage() {}
+
+func (x *AccessToken) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gateway_auth_messages_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessToken.ProtoReflect.Descriptor instead.
+func (*AccessToken) Descriptor() ([]byte, []int) {
+	return file_api_gateway_auth_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AccessToken) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AccessToken) GetExpiry() *timestamp.Timestamp {
+	if x != nil {
+		return x.Expiry
 	}
 	return nil
 }
@@ -291,23 +424,34 @@ var file_api_gateway_auth_messages_proto_rawDesc = []byte{
 	0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65,
 	0x12, 0x20, 0x0a, 0x0b, 0x43, 0x61, 0x6c, 0x6c, 0x62, 0x61, 0x63, 0x6b, 0x55, 0x52, 0x4c, 0x18,
 	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x43, 0x61, 0x6c, 0x6c, 0x62, 0x61, 0x63, 0x6b, 0x55,
-	0x52, 0x4c, 0x22, 0xb2, 0x01, 0x0a, 0x08, 0x55, 0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x12,
-	0x20, 0x0a, 0x0b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65,
+	0x52, 0x4c, 0x22, 0x60, 0x0a, 0x08, 0x55, 0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x3e,
+	0x0a, 0x0c, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x61,
+	0x75, 0x74, 0x68, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x52, 0x0c, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14,
+	0x0a, 0x05, 0x45, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x45,
+	0x6d, 0x61, 0x69, 0x6c, 0x22, 0x6f, 0x0a, 0x0c, 0x41, 0x75, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x0b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x61, 0x74, 0x65,
+	0x77, 0x61, 0x79, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x0b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65,
 	0x6e, 0x12, 0x22, 0x0a, 0x0c, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65,
 	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x39, 0x0a, 0x13, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65,
+	0x66, 0x72, 0x65, 0x73, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x22, 0x0a, 0x0c,
+	0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0c, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x22, 0x57, 0x0a, 0x0b, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
+	0x14, 0x0a, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
 	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x32, 0x0a, 0x06, 0x45, 0x78, 0x70, 0x69, 0x72, 0x79, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
-	0x70, 0x52, 0x06, 0x45, 0x78, 0x70, 0x69, 0x72, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x6d, 0x61,
-	0x69, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x45, 0x6d, 0x61, 0x69, 0x6c, 0x12,
-	0x16, 0x0a, 0x06, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x06, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x42, 0x49, 0x5a, 0x41, 0x67, 0x69, 0x74, 0x6c, 0x61,
-	0x62, 0x2e, 0x66, 0x69, 0x67, 0x6f, 0x2e, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x70,
-	0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70,
-	0x65, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x61, 0x70, 0x69, 0x2f,
-	0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x61, 0x75, 0x74, 0x68, 0xa2, 0x02, 0x03, 0x4d,
-	0x47, 0x41, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x52, 0x06, 0x45, 0x78, 0x70, 0x69, 0x72, 0x79, 0x42, 0x49, 0x5a, 0x41, 0x67, 0x69, 0x74,
+	0x6c, 0x61, 0x62, 0x2e, 0x66, 0x69, 0x67, 0x6f, 0x2e, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73,
+	0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b,
+	0x6f, 0x70, 0x65, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x61, 0x70,
+	0x69, 0x2f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x61, 0x75, 0x74, 0x68, 0xa2, 0x02,
+	0x03, 0x4d, 0x47, 0x41, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -322,21 +466,26 @@ func file_api_gateway_auth_messages_proto_rawDescGZIP() []byte {
 	return file_api_gateway_auth_messages_proto_rawDescData
 }
 
-var file_api_gateway_auth_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_gateway_auth_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_api_gateway_auth_messages_proto_goTypes = []interface{}{
 	(*AuthState)(nil),           // 0: gateway.auth.AuthState
 	(*AuthInformation)(nil),     // 1: gateway.auth.AuthInformation
 	(*AuthCode)(nil),            // 2: gateway.auth.AuthCode
 	(*UserInfo)(nil),            // 3: gateway.auth.UserInfo
-	(*timestamp.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*AuthResponse)(nil),        // 4: gateway.auth.AuthResponse
+	(*TokenRefreshRequest)(nil), // 5: gateway.auth.TokenRefreshRequest
+	(*AccessToken)(nil),         // 6: gateway.auth.AccessToken
+	(*timestamp.Timestamp)(nil), // 7: google.protobuf.Timestamp
 }
 var file_api_gateway_auth_messages_proto_depIdxs = []int32{
-	4, // 0: gateway.auth.UserInfo.Expiry:type_name -> google.protobuf.Timestamp
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 0: gateway.auth.UserInfo.AuthResponse:type_name -> gateway.auth.AuthResponse
+	6, // 1: gateway.auth.AuthResponse.AccessToken:type_name -> gateway.auth.AccessToken
+	7, // 2: gateway.auth.AccessToken.Expiry:type_name -> google.protobuf.Timestamp
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_api_gateway_auth_messages_proto_init() }
@@ -393,6 +542,42 @@ func file_api_gateway_auth_messages_proto_init() {
 				return nil
 			}
 		}
+		file_api_gateway_auth_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AuthResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_gateway_auth_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TokenRefreshRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_api_gateway_auth_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AccessToken); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -400,7 +585,7 @@ func file_api_gateway_auth_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_gateway_auth_messages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

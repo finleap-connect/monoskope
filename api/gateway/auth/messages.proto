@@ -27,9 +27,18 @@ message AuthCode {
 }
 
 message UserInfo {
-  string AccessToken = 1;
+  AuthResponse AuthResponse = 1;
+  string Email = 2;
+}
+
+message AuthResponse {
+  AccessToken AccessToken = 1;
   string RefreshToken = 2;
-  google.protobuf.Timestamp Expiry = 3;
-  string Email = 4;
-  repeated string Groups = 6;
+}
+
+message TokenRefreshRequest { string RefreshToken = 1; }
+
+message AccessToken {
+  string Token = 1;
+  google.protobuf.Timestamp Expiry = 2;
 }

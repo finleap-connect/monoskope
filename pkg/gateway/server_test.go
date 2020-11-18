@@ -105,9 +105,9 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(userInfo).ToNot(BeNil())
 		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
-		log.Info("Received user info", "AccessToken", userInfo.GetAccessToken(), "Expiry", userInfo.GetExpiry().AsTime())
+		log.Info("Received user info", "AccessToken", userInfo.GetAuthResponse().GetAccessToken(), "Expiry", userInfo.GetAuthResponse().GetAccessToken().GetExpiry().AsTime())
 
-		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAccessToken()))
+		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAuthResponse().GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc = gateway.NewGatewayClient(conn)
@@ -120,7 +120,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
