@@ -105,9 +105,9 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(userInfo).ToNot(BeNil())
 		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
-		log.Info("Received user info", "AccessToken", userInfo.GetAuthResponse().GetAccessToken(), "Expiry", userInfo.GetAuthResponse().GetAccessToken().GetExpiry().AsTime())
+		log.Info("Received user info", "AccessToken", userInfo.GetAccessToken(), "Expiry", userInfo.GetAccessToken().GetExpiry().AsTime())
 
-		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAuthResponse().GetAccessToken().GetToken()))
+		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc = gateway.NewGatewayClient(conn)

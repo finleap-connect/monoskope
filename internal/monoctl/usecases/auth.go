@@ -95,13 +95,11 @@ func (a *AuthUseCase) Run() error {
 		return err
 	}
 
-	authResponse := userInfo.GetAuthResponse()
-	accessToken := authResponse.GetAccessToken()
+	accessToken := userInfo.GetAccessToken()
 	a.config.AuthInformation = &config.AuthInformation{
-		Token:        accessToken.GetToken(),
-		RefreshToken: authResponse.GetRefreshToken(),
-		Expiry:       accessToken.GetExpiry().AsTime(),
-		Subject:      userInfo.GetEmail(),
+		Token:   accessToken.GetToken(),
+		Expiry:  accessToken.GetExpiry().AsTime(),
+		Subject: userInfo.GetEmail(),
 	}
 	err = a.configLoader.SaveConfig()
 

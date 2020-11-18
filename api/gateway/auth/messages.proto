@@ -27,13 +27,8 @@ message AuthCode {
 }
 
 message UserInfo {
-  AuthResponse AuthResponse = 1;
-  string Email = 2;
-}
-
-message AuthResponse {
   AccessToken AccessToken = 1;
-  string RefreshToken = 2;
+  string Email = 2;
 }
 
 message AccessToken {
