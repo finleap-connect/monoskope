@@ -2,6 +2,7 @@
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
   only:
     - main
+    - develop
     - merge_requests
     - tags
   except:
