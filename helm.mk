@@ -1,7 +1,7 @@
 HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
-HELM_REGISTRY_ALIAS			?= finleap
+HELM_REGISTRY_ALIAS			?= figo-helm
 
 
 .PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
@@ -19,12 +19,7 @@ install-%:
 	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
 install-from-repo-%:
-	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
-	@$(HELM) dep update $(HELM_PATH)/$*
-	@cp "$(HELM_PATH)/$*/values.yaml" "$(HELM_PATH)/$*/values.yaml.bkp"
-	@yq write "$(HELM_PATH)/$*/values.yaml" image.tag "$(VERSION)" --inplace
-	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
-	@mv "$(HELM_PATH)/$*/values.yaml.bkp" "$(HELM_PATH)/$*/values.yaml"
+	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE)
 
 uninstall-%: 
 	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
