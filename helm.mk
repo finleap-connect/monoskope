@@ -1,7 +1,7 @@
 HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
-HELM_REGISTRY_ALIAS			?= figo-helm
+HELM_REGISTRY_ALIAS			?= finleap
 
 
 .PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
