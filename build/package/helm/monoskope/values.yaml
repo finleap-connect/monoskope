@@ -8,16 +8,14 @@ fullnameOverride: ""
 
 ingress:
   enabled: false
-  host: monoskope.dev.finleap.cloud
-  dexPath: /dex
-  apiPath: /api
+  host: monoskope.io
 
 dex: # OIDC Provider
   enabled: false
   imagePullPolicy: "Always"
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
-    issuer: &issuer https://monoskope.dev.finleap.cloud/dex
+    issuer: &issuer https://monoskope.io/dex
     storage:
       config:
         inCluster: true
