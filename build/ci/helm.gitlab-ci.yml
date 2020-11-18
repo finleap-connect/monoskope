@@ -53,6 +53,8 @@ deliver:chart:monoskope:
 deploy:monoskope:
   stage: deploy
   extends: .helm
+  environment:
+    name: figo-dev
   only:
     - tags
   script:
@@ -62,6 +64,8 @@ deploy:monoskope:
 deploy:monoskope:latest_tag:
   stage: deploy
   extends: .helm
+  environment:
+    name: figo-dev
   only:
     - schedules
   script:
