@@ -34,7 +34,7 @@ func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader
 func (a *AuthUseCase) Run() error {
 	var err error
 
-	conn, err := gateway.CreateInsecureGatewayConnecton(a.ctx, a.config.Server, nil)
+	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
 	if err != nil {
 		return err
 	}
@@ -59,6 +59,13 @@ func (a *AuthUseCase) Run() error {
 	}
 	defer server.Close()
 
+	authState := &gw_auth.AuthState{CallbackURL: server.RedirectURI}
+	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
+	if err != nil {
+		return err
+	}
+
+	var authCode string
 	eg, ctx := errgroup.WithContext(a.ctx)
 	eg.Go(func() error {
 		select {
@@ -73,24 +80,17 @@ func (a *AuthUseCase) Run() error {
 			return fmt.Errorf("context done while waiting for authorization: %w", ctx.Err())
 		}
 	})
+	eg.Go(func() error {
+		var innerErr error
+		authCode, innerErr = server.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
+		return innerErr
+	})
 	if err := eg.Wait(); err != nil {
 		a.log.Error(err, "authorization error: %s")
 		return err
 	}
 
-	authState := &gw_auth.AuthState{CallbackURL: server.RedirectURI}
-	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
-	if err != nil {
-		return err
-	}
-
-	authCode, err := server.ReceiveCodeViaLocalServer(a.ctx, authInfo.AuthCodeURL, authInfo.State)
-	if err != nil {
-		return err
-	}
-
-	//TODO implement what to do with the token stuff now
-	userInfo, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State})
+	userInfo, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
 	if err != nil {
 		return err
 	}
