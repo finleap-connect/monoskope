@@ -90,16 +90,17 @@ func (a *AuthUseCase) Run() error {
 		return err
 	}
 
-	userInfo, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
+	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
 	if err != nil {
 		return err
 	}
 
-	accessToken := userInfo.GetAccessToken()
+	accessToken := authResponse.GetAccessToken()
 	a.config.AuthInformation = &config.AuthInformation{
-		Token:   accessToken.GetToken(),
-		Expiry:  accessToken.GetExpiry().AsTime(),
-		Subject: userInfo.GetEmail(),
+		Token:        accessToken.GetToken(),
+		Expiry:       accessToken.GetExpiry().AsTime(),
+		RefreshToken: authResponse.GetRefreshToken(),
+		Subject:      authResponse.GetEmail(),
 	}
 	err = a.configLoader.SaveConfig()
 
