@@ -4,7 +4,6 @@ sequenceDiagram
     participant G as Gateway
     participant D as Dex
     participant I as Identity Provider
-    participant E as ETCD
     U-->>+M: monoctl auth login
     M-->>+G: calls GetAuthInformation
     G-->>-M: returns AuthInformation
@@ -15,8 +14,8 @@ sequenceDiagram
     I-->>-M: redirect with auth_code
     M-->>+G: calls ExchangeAuthCode
     G-->>+D: exchange auth_code
-    D-->>-G: receive id_token
-    G-->>E: store user session
-    Note right of G: Session contains<br>refresh_token
-    G-->>-M: returns bearer token
+    D-->>+I: exchange auth_code
+    I-->>-D: returns id_token
+    D-->>-G: returns id_token
+    G-->>-M: returns id_token
     M-->>-U: Output login success
