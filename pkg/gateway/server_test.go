@@ -101,13 +101,15 @@ var _ = Describe("Gateway", func() {
 		Expect(eg.Wait()).NotTo(HaveOccurred())
 		Expect(statusCode).To(Equal(http.StatusOK))
 
-		userInfo, err := gwcAuth.ExchangeAuthCode(context.Background(), &api_gw_auth.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
+		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api_gw_auth.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(userInfo).ToNot(BeNil())
-		Expect(userInfo.GetEmail()).To(Equal("admin@example.com"))
-		log.Info("Received user info", "AccessToken", userInfo.GetAccessToken(), "Expiry", userInfo.GetAccessToken().GetExpiry().AsTime())
+		Expect(authResponse).ToNot(BeNil())
+		Expect(authResponse.GetEmail()).To(Equal("admin@example.com"))
+		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
+		Expect(authResponse.GetRefreshToken()).ToNot(Equal(""))
+		log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
 
-		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(userInfo.GetAccessToken().GetToken()))
+		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api_gw.NewGatewayClient(conn)
@@ -115,6 +117,18 @@ var _ = Describe("Gateway", func() {
 		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
+
+		accessToken, err := gwcAuth.RefreshAuth(ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: authResponse.GetRefreshToken()})
+
+		conn, err = CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), toToken(accessToken.GetToken()))
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		gwc = api_gw.NewGatewayClient(conn)
+
+		serverInfo, err = gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(serverInfo).ToNot(BeNil())
+
 	})
 })
 

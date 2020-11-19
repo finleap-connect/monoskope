@@ -19,7 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 type AuthClient interface {
 	// Auth
 	GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error)
-	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*UserInfo, error)
+	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error)
+	RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AccessToken, error)
 }
 
 type authClient struct {
@@ -39,9 +40,18 @@ func (c *authClient) GetAuthInformation(ctx context.Context, in *AuthState, opts
 	return out, nil
 }
 
-func (c *authClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*UserInfo, error) {
-	out := new(UserInfo)
+func (c *authClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
 	err := c.cc.Invoke(ctx, "/gateway.auth.Auth/ExchangeAuthCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AccessToken, error) {
+	out := new(AccessToken)
+	err := c.cc.Invoke(ctx, "/gateway.auth.Auth/RefreshAuth", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +64,8 @@ func (c *authClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ..
 type AuthServer interface {
 	// Auth
 	GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error)
-	ExchangeAuthCode(context.Context, *AuthCode) (*UserInfo, error)
+	ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error)
+	RefreshAuth(context.Context, *RefreshAuthRequest) (*AccessToken, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -65,8 +76,11 @@ type UnimplementedAuthServer struct {
 func (UnimplementedAuthServer) GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthInformation not implemented")
 }
-func (UnimplementedAuthServer) ExchangeAuthCode(context.Context, *AuthCode) (*UserInfo, error) {
+func (UnimplementedAuthServer) ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
+}
+func (UnimplementedAuthServer) RefreshAuth(context.Context, *RefreshAuthRequest) (*AccessToken, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshAuth not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -117,6 +131,24 @@ func _Auth_ExchangeAuthCode_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_RefreshAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).RefreshAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.auth.Auth/RefreshAuth",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).RefreshAuth(ctx, req.(*RefreshAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Auth_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "gateway.auth.Auth",
 	HandlerType: (*AuthServer)(nil),
@@ -128,6 +160,10 @@ var _Auth_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExchangeAuthCode",
 			Handler:    _Auth_ExchangeAuthCode_Handler,
+		},
+		{
+			MethodName: "RefreshAuth",
+			Handler:    _Auth_RefreshAuth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

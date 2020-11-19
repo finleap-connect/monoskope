@@ -41,11 +41,6 @@ type Server struct {
 	authHandler *auth.Handler
 }
 
-type ServerConfig struct {
-	KeepAlive  bool
-	AuthConfig *auth.Config
-}
-
 func NewServer(conf *ServerConfig) (*Server, error) {
 	s := &Server{
 		http:       metrics.NewServer(),
@@ -85,9 +80,10 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	}
 	s.grpc = grpc.NewServer(opts...)
 
-	// Add user-authenticator service
-	api_gw.RegisterGatewayServer(s.grpc, s)
+	// Add authentication service
 	api_gwauth.RegisterAuthServer(s.grpc, s)
+	// Add actual api service
+	api_gw.RegisterGatewayServer(s.grpc, s)
 
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
@@ -95,6 +91,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	grpc_prometheus.Register(s.grpc)
 	// Enable reflection API
 	reflection.Register(s.grpc)
+
 	return s, nil
 }
 
@@ -164,7 +161,7 @@ func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthS
 	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
 }
 
-func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.UserInfo, error) {
+func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.AuthResponse, error) {
 	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
 	if err != nil {
 		return nil, err
@@ -175,12 +172,25 @@ func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode
 		return nil, err
 	}
 
-	userInfo := &api_gwauth.UserInfo{
+	userInfo := &api_gwauth.AuthResponse{
 		AccessToken: &api_gwauth.AccessToken{
 			Token:  token.AccessToken,
 			Expiry: timestamppb.New(token.Expiry),
 		},
-		Email: claims.Email,
+		RefreshToken: token.RefreshToken,
+		Email:        claims.Email,
 	}
 	return userInfo, nil
+}
+
+func (s *Server) RefreshAuth(ctx context.Context, request *api_gwauth.RefreshAuthRequest) (*api_gwauth.AccessToken, error) {
+	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
+	if err != nil {
+		return nil, err
+	}
+
+	return &api_gwauth.AccessToken{
+		Token:  token.AccessToken,
+		Expiry: timestamppb.New(token.Expiry),
+	}, nil
 }
