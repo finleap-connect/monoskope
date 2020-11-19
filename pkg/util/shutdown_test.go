@@ -1,8 +1,6 @@
 package util
 
 import (
-	"os"
-	"syscall"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -35,26 +33,26 @@ var _ = Describe("util.shutdown", func() {
 		shutdown.Wait()
 		Expect(shutdown.IsExpected()).To(BeTrue())
 	})
-	if os.Getenv("GITLAB_CI") == "" { // Test does not work in pipeline because signal is killing hte process
-		It("can wait for signal to finish", func() {
-			shutdown := NewShutdownWaitGroup()
+	// if os.Getenv("GITLAB_CI") == "" { // Test does not work in pipeline because signal is killing hte process
+	// 	It("can wait for signal to finish", func() {
+	// 		shutdown := NewShutdownWaitGroup()
 
-			shutdown.RegisterSignalHandler(func() {
-				shutdown.Expect()
-			})
+	// 		shutdown.RegisterSignalHandler(func() {
+	// 			shutdown.Expect()
+	// 		})
 
-			shutdown.Add(1)
-			go func() {
-				defer GinkgoRecover()
+	// 		shutdown.Add(1)
+	// 		go func() {
+	// 			defer GinkgoRecover()
 
-				err := syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
-				Expect(err).ToNot(HaveOccurred())
+	// 			err := syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
+	// 			Expect(err).ToNot(HaveOccurred())
 
-				shutdown.Done() // Notify workgroup
-			}()
+	// 			shutdown.Done() // Notify workgroup
+	// 		}()
 
-			shutdown.Wait()
-			Expect(shutdown.IsExpected()).To(BeTrue())
-		})
-	}
+	// 		shutdown.Wait()
+	// 		Expect(shutdown.IsExpected()).To(BeTrue())
+	// 	})
+	// }
 })

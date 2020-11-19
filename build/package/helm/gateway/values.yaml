@@ -52,3 +52,7 @@ service:
 auth:
   allowRootToken: false
   issuerURL: http://localhost:5555
+
+ingress:
+  enabled: false
+  host: api.monoskope.io
