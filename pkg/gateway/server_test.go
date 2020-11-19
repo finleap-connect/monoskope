@@ -120,7 +120,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, gatewayApiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
