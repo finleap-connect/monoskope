@@ -1,7 +1,11 @@
-# Flow charts
+# Monoskope flow charts
 
-## AuthN Flow
+## AuthN
+
+### Login
 
 ![image](images/sd-monoctl-auth.mmd.png)
+
+### Refresh
 
 ![image](images/sd-monoctl-refresh.mmd.png)
