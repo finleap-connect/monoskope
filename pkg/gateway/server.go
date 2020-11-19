@@ -28,6 +28,7 @@ import (
 
 type Server struct {
 	api_gw.UnimplementedGatewayServer
+	api_gwauth.UnimplementedAuthServer
 	// HTTP-server exposing the metrics
 	http *http.Server
 	// gRPC-server exposing both the API and health
@@ -86,6 +87,8 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 
 	// Add user-authenticator service
 	api_gw.RegisterGatewayServer(s.grpc, s)
+	api_gwauth.RegisterAuthServer(s.grpc, s)
+
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
 	// Register the metric interceptors with prometheus

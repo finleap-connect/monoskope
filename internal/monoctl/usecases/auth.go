@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/browser"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -39,7 +39,7 @@ func (a *AuthUseCase) Run() error {
 		return err
 	}
 	defer conn.Close()
-	gwc := api_gw.NewGatewayClient(conn)
+	gwc := api_gw_auth.NewAuthClient(conn)
 
 	ready := make(chan string, 1)
 	defer close(ready)
