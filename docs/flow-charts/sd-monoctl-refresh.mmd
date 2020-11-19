@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant U as User
+    participant M as monoctl
+    participant G as Gateway
+    participant E as ETCD
+    participant D as Dex
+    U-->>+M: monoctl command needing auth
+    M-->>+G: calls API
+    G-->>G: validates bearer token
+    G-->>-M: returns that token has expired
+    M-->>+G: calls RefreshAuth
+    G-->>+E: get user session
+    E-->>-G: returns user session
+    G-->>+D: use refresh_token from session to issue new id_token
+    D-->>-G: returns id_token
+    G-->>+E: update user session
+    G-->>-M: returns new bearer token
+    M-->>+G: calls API
+    G-->>G: validates bearer token
+    G-->>-M: returns API response
+    M-->>-U: Output command response
