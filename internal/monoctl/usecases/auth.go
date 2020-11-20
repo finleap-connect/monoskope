@@ -137,7 +137,10 @@ func (a *AuthUseCase) Run() error {
 		a.log.Info("your token has expired", "expiry", authInfo.Expiry)
 
 		if authInfo.HasRefreshToken() {
-			return a.RunRefreshFlow()
+			err := a.RunRefreshFlow()
+			if err != nil {
+				a.log.Error(err, "Failed to do refresh flow")
+			}
 		}
 	}
 	return a.RunAuthenticationFlow()
