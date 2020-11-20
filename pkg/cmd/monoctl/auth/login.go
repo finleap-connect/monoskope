@@ -14,7 +14,7 @@ var (
 	timeout time.Duration
 )
 
-func NewAuthLoginCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
+func NewAuthLoginCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 	loginCmd := &cobra.Command{
 		Use:   "login",
 		Short: "Start authentication flow",

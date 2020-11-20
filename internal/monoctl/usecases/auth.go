@@ -14,14 +14,15 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// AuthUseCase provides the internal use-case of authentication.
 type AuthUseCase struct {
 	log          logger.Logger
 	ctx          context.Context
 	config       *config.Config
-	configLoader *config.ClientConfigLoader
+	configLoader *config.ClientConfigManager
 }
 
-func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader) *AuthUseCase {
+func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigManager) *AuthUseCase {
 	useCase := &AuthUseCase{
 		log:          logger.WithName("auth-use-case"),
 		config:       configLoader.GetConfig(),
@@ -31,8 +32,8 @@ func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader
 	return useCase
 }
 
-func (a *AuthUseCase) Run() error {
-	var err error
+func (a *AuthUseCase) RunAuthenticationFlow() error {
+	a.log.Info("starting authentication")
 
 	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
 	if err != nil {
@@ -102,9 +103,44 @@ func (a *AuthUseCase) Run() error {
 		RefreshToken: authResponse.GetRefreshToken(),
 		Subject:      authResponse.GetEmail(),
 	}
-	err = a.configLoader.SaveConfig()
+	return a.configLoader.SaveConfig()
+}
 
-	return err
+func (a *AuthUseCase) RunRefreshFlow() error {
+	a.log.Info("refreshing the token")
+	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	gwc := api_gw_auth.NewAuthClient(conn)
+
+	accessToken, err := gwc.RefreshAuth(a.ctx, &gw_auth.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
+	if err != nil {
+		return err
+	}
+
+	a.config.AuthInformation.Token = accessToken.GetToken()
+	a.config.AuthInformation.Expiry = accessToken.GetExpiry().AsTime()
+	return a.configLoader.SaveConfig()
+}
+
+func (a *AuthUseCase) Run() error {
+	// Check if already authenticated
+	if a.config.HasAuthInformation() {
+		a.log.Info("checking expiration of existing token")
+		authInfo := a.config.AuthInformation
+		if authInfo.IsValid() {
+			a.log.Info("you already have a valid token", "expiry", authInfo.Expiry)
+			return nil
+		}
+		a.log.Info("your token has expired", "expiry", authInfo.Expiry)
+
+		if authInfo.HasRefreshToken() {
+			return a.RunRefreshFlow()
+		}
+	}
+	return a.RunAuthenticationFlow()
 }
 
 // DefaultLocalServerSuccessHTML is a default response body on authorization success.

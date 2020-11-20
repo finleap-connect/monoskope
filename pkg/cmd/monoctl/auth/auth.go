@@ -5,7 +5,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
 )
 
-func NewAuthCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
+func NewAuthCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 	authCmd := &cobra.Command{
 		Use:                   "auth",
 		SilenceUsage:          true,

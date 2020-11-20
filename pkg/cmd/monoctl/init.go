@@ -12,7 +12,7 @@ var (
 	serverURL string
 )
 
-func NewInitCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
+func NewInitCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Init monoctl",
