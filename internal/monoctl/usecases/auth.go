@@ -138,9 +138,10 @@ func (a *AuthUseCase) Run() error {
 
 		if authInfo.HasRefreshToken() {
 			err := a.RunRefreshFlow()
-			if err != nil {
-				a.log.Error(err, "Failed to do refresh flow")
+			if err == nil {
+				return nil
 			}
+			a.log.Error(err, "Failed to do refresh flow")
 		}
 	}
 	return a.RunAuthenticationFlow()
