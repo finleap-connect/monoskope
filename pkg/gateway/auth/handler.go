@@ -100,9 +100,11 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 }
 
 func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	// Generate a new token with a refresht token and the expiry of the access token set to golang zero date.
+	// Setting the access token expired will force the token source to automatically use the refresh token to issue a new token.
 	t := &oauth2.Token{
 		RefreshToken: refreshToken,
-		Expiry:       time.Now().Add(-time.Hour), // to force token refresh, set expired
+		Expiry:       time.Time{}, // golang zero date
 	}
 	return n.getOauth2Config(nil, "").TokenSource(n.clientContext(ctx), t).Token()
 }
