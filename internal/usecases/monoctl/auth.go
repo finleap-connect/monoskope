@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/browser"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -14,14 +14,15 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// AuthUseCase provides the internal use-case of authentication.
 type AuthUseCase struct {
 	log          logger.Logger
 	ctx          context.Context
 	config       *config.Config
-	configLoader *config.ClientConfigLoader
+	configLoader *config.ClientConfigManager
 }
 
-func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader) *AuthUseCase {
+func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigManager) *AuthUseCase {
 	useCase := &AuthUseCase{
 		log:          logger.WithName("auth-use-case"),
 		config:       configLoader.GetConfig(),
@@ -31,15 +32,15 @@ func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigLoader
 	return useCase
 }
 
-func (a *AuthUseCase) Run() error {
-	var err error
+func (a *AuthUseCase) RunAuthenticationFlow() error {
+	a.log.Info("starting authentication")
 
 	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	gwc := api_gw.NewGatewayClient(conn)
+	gwc := api_gw_auth.NewAuthClient(conn)
 
 	ready := make(chan string, 1)
 	defer close(ready)
@@ -90,20 +91,60 @@ func (a *AuthUseCase) Run() error {
 		return err
 	}
 
-	userInfo, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
+	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
 	if err != nil {
 		return err
 	}
 
+	accessToken := authResponse.GetAccessToken()
 	a.config.AuthInformation = &config.AuthInformation{
-		Token:        userInfo.GetAccessToken(),
-		RefreshToken: userInfo.GetRefreshToken(),
-		Expiry:       userInfo.GetExpiry().AsTime(),
-		Subject:      userInfo.GetEmail(),
+		Token:        accessToken.GetToken(),
+		Expiry:       accessToken.GetExpiry().AsTime(),
+		RefreshToken: authResponse.GetRefreshToken(),
+		Subject:      authResponse.GetEmail(),
 	}
-	err = a.configLoader.SaveConfig()
+	return a.configLoader.SaveConfig()
+}
 
-	return err
+func (a *AuthUseCase) RunRefreshFlow() error {
+	a.log.Info("refreshing the token")
+	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	gwc := api_gw_auth.NewAuthClient(conn)
+
+	accessToken, err := gwc.RefreshAuth(a.ctx, &gw_auth.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
+	if err != nil {
+		return err
+	}
+
+	a.config.AuthInformation.Token = accessToken.GetToken()
+	a.config.AuthInformation.Expiry = accessToken.GetExpiry().AsTime()
+	return a.configLoader.SaveConfig()
+}
+
+func (a *AuthUseCase) Run() error {
+	// Check if already authenticated
+	if a.config.HasAuthInformation() {
+		a.log.Info("checking expiration of existing token")
+		authInfo := a.config.AuthInformation
+		if authInfo.IsValid() {
+			a.log.Info("you already have a valid token", "expiry", authInfo.Expiry)
+			return nil
+		}
+		a.log.Info("your token has expired", "expiry", authInfo.Expiry)
+
+		if authInfo.HasRefreshToken() {
+			err := a.RunRefreshFlow()
+			if err == nil {
+				return nil
+			}
+			a.log.Error(err, "Failed to do refresh flow")
+		}
+	}
+	return a.RunAuthenticationFlow()
 }
 
 // DefaultLocalServerSuccessHTML is a default response body on authorization success.

@@ -12,21 +12,21 @@ var (
 	serverURL string
 )
 
-func NewInitCmd(configLoader *config.ClientConfigLoader) *cobra.Command {
+func NewInitCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "Init monoctl",
 		Long:  `Init monoctl and create a new monoskope configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if serverURL == "" {
-				return errors.Errorf("Failed initializing monoconfig: server-url is required")
+				return errors.Errorf("Failed initializing monoconfig: server-url is required\n")
 			}
 
 			config := config.NewConfig()
 			config.Server = serverURL
 
 			if err := configLoader.InitConifg(config); err != nil {
-				return fmt.Errorf("Failed initializing monoconfig: %w", err)
+				return fmt.Errorf("Failed initializing monoconfig: %w\n", err)
 			}
 
 			return nil

@@ -85,14 +85,6 @@ func (n *Handler) setupOIDC() error {
 	return nil
 }
 
-func (n *Handler) verify(ctx context.Context, bearerToken string) (*oidc.IDToken, error) {
-	idToken, err := n.verifier.Verify(ctx, bearerToken)
-	if err != nil {
-		return nil, fmt.Errorf("could not verify bearer token: %v", err)
-	}
-	return idToken, nil
-}
-
 func (n *Handler) getOauth2Config(scopes []string, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     n.config.ClientId,
@@ -108,9 +100,11 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 }
 
 func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	// Generate a new token with a refresht token and the expiry of the access token set to golang zero date.
+	// Setting the access token expired will force the token source to automatically use the refresh token to issue a new token.
 	t := &oauth2.Token{
 		RefreshToken: refreshToken,
-		Expiry:       time.Now().Add(-time.Hour),
+		Expiry:       time.Time{}, // golang zero date
 	}
 	return n.getOauth2Config(nil, "").TokenSource(n.clientContext(ctx), t).Token()
 }
@@ -150,7 +144,12 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 }
 
 func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*ExtraClaims, error) {
-	idToken, err := n.verify(ctx, token.Extra("id_token").(string))
+	if !token.Valid() {
+		return nil, fmt.Errorf("failed to verify ID token")
+	}
+
+	rawIDToken := token.Extra("id_token").(string)
+	idToken, err := n.verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ID token: %v", err)
 	}
@@ -185,7 +184,7 @@ func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClai
 		return &ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
 	}
 
-	idToken, err := n.verify(ctx, bearerToken)
+	idToken, err := n.verifier.Verify(ctx, bearerToken)
 	if err != nil {
 		return nil, err
 	}

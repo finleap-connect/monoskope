@@ -2,16 +2,16 @@ package monoctl
 
 import (
 	"flag"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/monoctl/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/version"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/monoctl/flags"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
 )
 
 var (
 	explicitFile string
-	rootToken    string
 )
 
 func NewRootCmd() *cobra.Command {
@@ -24,16 +24,16 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	// Setup global flags
-	flags := rootCmd.PersistentFlags()
-	flags.AddGoFlagSet(flag.CommandLine)
-	flags.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
-	flags.StringVar(&rootToken, "root-token", "", "Root token to authenticate against monoskope")
+	fl := rootCmd.PersistentFlags()
+	fl.AddGoFlagSet(flag.CommandLine)
+	fl.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
+	fl.StringVar(&flags.RootToken, "root-token", "", "Root token to authenticate against monoskope")
+	fl.DurationVar(&flags.Timoeut, "command-timeout", 120*time.Second, "Timeout for long running commands, defaults to 120s")
 
-	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
-
-	configLoader := config.NewLoaderFromExplicitFile(explicitFile)
-	rootCmd.AddCommand(NewInitCmd(configLoader))
-	rootCmd.AddCommand(auth.NewAuthCmd(configLoader))
+	configManager := config.NewLoaderFromExplicitFile(explicitFile)
+	rootCmd.AddCommand(NewVersionCmd(rootCmd.Name(), configManager))
+	rootCmd.AddCommand(NewInitCmd(configManager))
+	rootCmd.AddCommand(auth.NewAuthCmd(configManager))
 
 	return rootCmd
 }

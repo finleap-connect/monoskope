@@ -29,9 +29,8 @@ func NewInterceptor(authHandler *Handler) (*AuthServerInterceptor, error) {
 // handler.
 func (s *AuthServerInterceptor) EnsureValid(ctx context.Context, fullMethodName string) (context.Context, error) {
 	// Allow some methods to be called unauthenticated
-	if strings.HasSuffix(fullMethodName, "GetAuthInformation") ||
-		strings.HasSuffix(fullMethodName, "ExchangeAuthCode") ||
-		strings.HasPrefix(fullMethodName, "/grpc.health.v1.Health") {
+	if strings.HasPrefix(fullMethodName, "/gateway.auth.Auth") || // allow all auth service methods without auth
+		strings.HasPrefix(fullMethodName, "/grpc.health.v1.Health") { // allow health checks without auth
 		return ctx, nil
 	}
 

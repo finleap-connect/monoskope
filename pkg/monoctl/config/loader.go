@@ -22,7 +22,7 @@ var (
 	RecommendedHomeFile  = path.Join(RecommendedConfigDir, RecommendedFileName)
 )
 
-type ClientConfigLoader struct {
+type ClientConfigManager struct {
 	// Logger interface
 	log          logger.Logger
 	config       *Config
@@ -30,22 +30,22 @@ type ClientConfigLoader struct {
 	explicitFile string
 }
 
-// NewLoader is a convenience function that returns a new ClientConfigLoader object with defaults
-func NewLoader() *ClientConfigLoader {
-	return &ClientConfigLoader{
+// NewLoader is a convenience function that returns a new ClientConfigManager object with defaults
+func NewLoader() *ClientConfigManager {
+	return &ClientConfigManager{
 		log: logger.WithName("client-config-loader"),
 	}
 }
 
-// NewLoaderFromExplicitFile is a convenience function that returns a new ClientConfigLoader object with explicitFile set
-func NewLoaderFromExplicitFile(explicitFile string) *ClientConfigLoader {
+// NewLoaderFromExplicitFile is a convenience function that returns a new ClientConfigManager object with explicitFile set
+func NewLoaderFromExplicitFile(explicitFile string) *ClientConfigManager {
 	loader := NewLoader()
 	loader.explicitFile = explicitFile
 	return loader
 }
 
 // loadAndStoreConfig checks if the given file exists and loads it's contents
-func (l *ClientConfigLoader) saveAndStoreConfig(filename string, config *Config) error {
+func (l *ClientConfigManager) saveAndStoreConfig(filename string, config *Config) error {
 	exists, err := util.FileExists(filename)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (l *ClientConfigLoader) saveAndStoreConfig(filename string, config *Config)
 }
 
 // loadAndStoreConfig checks if the given file exists and loads it's contents
-func (l *ClientConfigLoader) loadAndStoreConfig(filename string) error {
+func (l *ClientConfigManager) loadAndStoreConfig(filename string) error {
 	var err error
 	if _, err = os.Stat(filename); os.IsNotExist(err) {
 		return err
@@ -69,16 +69,16 @@ func (l *ClientConfigLoader) loadAndStoreConfig(filename string) error {
 }
 
 // GetConfigPath returns the path of the previously loaded config
-func (l *ClientConfigLoader) GetConfigPath() string {
+func (l *ClientConfigManager) GetConfigPath() string {
 	return l.configPath
 }
 
 // GetConfig returns the previously loaded config
-func (l *ClientConfigLoader) GetConfig() *Config {
+func (l *ClientConfigManager) GetConfig() *Config {
 	return l.config
 }
 
-func (l *ClientConfigLoader) InitConifg(config *Config) error {
+func (l *ClientConfigManager) InitConifg(config *Config) error {
 	if l.explicitFile != "" {
 		return l.saveAndStoreConfig(l.explicitFile, config)
 	}
@@ -91,7 +91,7 @@ func (l *ClientConfigLoader) InitConifg(config *Config) error {
 	return l.saveAndStoreConfig(RecommendedHomeFile, config)
 }
 
-func (l *ClientConfigLoader) SaveConfig() error {
+func (l *ClientConfigManager) SaveConfig() error {
 	if l.configPath == "" || l.config == nil {
 		return ErrNoConfigExists
 	}
@@ -99,7 +99,7 @@ func (l *ClientConfigLoader) SaveConfig() error {
 }
 
 // LoadAndStoreConfig loads and stores the config either from env or home file.
-func (l *ClientConfigLoader) LoadAndStoreConfig() error {
+func (l *ClientConfigManager) LoadAndStoreConfig() error {
 	if l.explicitFile != "" {
 		if err := l.loadAndStoreConfig(l.explicitFile); err != nil {
 			return err
@@ -131,7 +131,7 @@ func (l *ClientConfigLoader) LoadAndStoreConfig() error {
 }
 
 // LoadFromFile takes a filename and deserializes the contents into Config object
-func (l *ClientConfigLoader) LoadFromFile(filename string) (*Config, error) {
+func (l *ClientConfigManager) LoadFromFile(filename string) (*Config, error) {
 	monoconfigBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func (l *ClientConfigLoader) LoadFromFile(filename string) (*Config, error) {
 
 // LoadFromBytes takes a byte slice and deserializes the contents into Config object.
 // Encapsulates deserialization without assuming the source is a file.
-func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
+func (*ClientConfigManager) LoadFromBytes(data []byte) (*Config, error) {
 	config := NewConfig()
 
 	err := yaml.Unmarshal([]byte(data), &config)
@@ -164,7 +164,7 @@ func (*ClientConfigLoader) LoadFromBytes(data []byte) (*Config, error) {
 }
 
 // SaveToFile takes a config, serializes the contents and stores them into a file.
-func (l *ClientConfigLoader) SaveToFile(config *Config, filename string, permission os.FileMode) error {
+func (l *ClientConfigManager) SaveToFile(config *Config, filename string, permission os.FileMode) error {
 	bytes, err := yaml.Marshal(&config)
 	if err != nil {
 		return err

@@ -3,8 +3,6 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-// import "google/protobuf/empty.proto";
-// import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
 option objc_class_prefix = "MGA";
@@ -26,10 +24,15 @@ message AuthCode {
   string CallbackURL = 3;
 }
 
-message UserInfo {
-  string AccessToken = 1;
+message AuthResponse {
+  AccessToken AccessToken = 1;
   string RefreshToken = 2;
-  google.protobuf.Timestamp Expiry = 3;
-  string Email = 4;
-  repeated string Groups = 6;
+  string Email = 3;
 }
+
+message AccessToken {
+  string Token = 1;
+  google.protobuf.Timestamp Expiry = 2;
+}
+
+message RefreshAuthRequest { string RefreshToken = 1; }
