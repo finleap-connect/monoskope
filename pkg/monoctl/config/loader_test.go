@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"time"
 
 	testutil_fs "github.com/kubism/testutil/pkg/fs"
 	. "github.com/onsi/ginkgo"
@@ -101,5 +102,38 @@ var _ = Describe("client config loader", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())
 		Expect(loader.config.Server).To(Equal("monoskope.io"))
+	})
+	It("can validate", func() {
+		loader := NewLoader()
+		conf, err := loader.LoadFromBytes([]byte(fakeConfigData))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(conf).ToNot(BeNil())
+
+		Expect(conf.HasAuthInformation()).To(BeFalse())
+
+		conf.AuthInformation = &AuthInformation{}
+		Expect(conf.HasAuthInformation()).To(BeTrue())
+		Expect(conf.AuthInformation.HasToken()).To(BeFalse())
+		Expect(conf.AuthInformation.HasRefreshToken()).To(BeFalse())
+		Expect(conf.AuthInformation.IsTokenExpired()).To(BeTrue())
+		Expect(conf.AuthInformation.IsValid()).To(BeFalse())
+
+		conf.AuthInformation.Token = "test"
+		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
+		Expect(conf.AuthInformation.HasRefreshToken()).To(BeFalse())
+		Expect(conf.AuthInformation.IsTokenExpired()).To(BeTrue())
+		Expect(conf.AuthInformation.IsValid()).To(BeFalse())
+
+		conf.AuthInformation.RefreshToken = "testrefresh"
+		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
+		Expect(conf.AuthInformation.HasRefreshToken()).To(BeTrue())
+		Expect(conf.AuthInformation.IsTokenExpired()).To(BeTrue())
+		Expect(conf.AuthInformation.IsValid()).To(BeFalse())
+
+		conf.AuthInformation.Expiry = time.Now().Add(1 * time.Hour)
+		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
+		Expect(conf.AuthInformation.HasRefreshToken()).To(BeTrue())
+		Expect(conf.AuthInformation.IsTokenExpired()).To(BeFalse())
+		Expect(conf.AuthInformation.IsValid()).To(BeTrue())
 	})
 })
