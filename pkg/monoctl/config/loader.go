@@ -68,11 +68,6 @@ func (l *ClientConfigManager) loadAndStoreConfig(filename string) error {
 	return err
 }
 
-// GetConfigPath returns the path of the previously loaded config
-func (l *ClientConfigManager) GetConfigPath() string {
-	return l.configPath
-}
-
 // GetConfig returns the previously loaded config
 func (l *ClientConfigManager) GetConfig() *Config {
 	return l.config

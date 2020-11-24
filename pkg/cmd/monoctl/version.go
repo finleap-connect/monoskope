@@ -20,7 +20,7 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 			util.PrintVersion(cmdName)
 
 			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, flags.Timoeut); err != nil {
-				return fmt.Errorf("Init failed: %w\n", err)
+				return fmt.Errorf("init failed: %w", err)
 			}
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), flags.Timoeut)
@@ -28,7 +28,7 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 
 			result, err := usecases.NewServerVersionUseCase(ctx, configManager.GetConfig()).Run()
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve server version: %w\n", err)
+				return fmt.Errorf("failed to retrieve server version: %w", err)
 			}
 			fmt.Print(result)
 			fmt.Println()

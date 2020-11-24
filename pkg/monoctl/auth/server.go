@@ -143,7 +143,7 @@ func (h *localServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *localServerHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, h.authCodeUrl, 302)
+	http.Redirect(w, r, h.authCodeUrl, http.StatusFound)
 }
 
 func (h *localServerHandler) handleCodeResponse(w http.ResponseWriter, r *http.Request) *authorizationResponse {

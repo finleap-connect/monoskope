@@ -11,7 +11,7 @@ import (
 
 func LoadConfig(configManager *config.ClientConfigManager) error {
 	if err := configManager.LoadAndStoreConfig(); err != nil {
-		return fmt.Errorf("Failed loading monoconfig: %w", err)
+		return fmt.Errorf("filed loading monoconfig: %w", err)
 	}
 	return nil
 }
