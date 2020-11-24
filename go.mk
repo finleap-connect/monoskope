@@ -50,6 +50,9 @@ test:
 	$(GINKGO) -r -v -cover pkg/monoctl
 	$(GINKGO) -r -v -cover pkg/util
 
+coverage:
+	find . -name '*.coverprofile' -exec go tool cover -func {} \;
+
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 

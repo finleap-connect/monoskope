@@ -33,26 +33,10 @@ var _ = Describe("util.shutdown", func() {
 		shutdown.Wait()
 		Expect(shutdown.IsExpected()).To(BeTrue())
 	})
-	// if os.Getenv("GITLAB_CI") == "" { // Test does not work in pipeline because signal is killing hte process
-	// 	It("can wait for signal to finish", func() {
-	// 		shutdown := NewShutdownWaitGroup()
-
-	// 		shutdown.RegisterSignalHandler(func() {
-	// 			shutdown.Expect()
-	// 		})
-
-	// 		shutdown.Add(1)
-	// 		go func() {
-	// 			defer GinkgoRecover()
-
-	// 			err := syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
-	// 			Expect(err).ToNot(HaveOccurred())
-
-	// 			shutdown.Done() // Notify workgroup
-	// 		}()
-
-	// 		shutdown.Wait()
-	// 		Expect(shutdown.IsExpected()).To(BeTrue())
-	// 	})
-	// }
+	It("can wait timeout for waitgroup to finish", func() {
+		shutdown := NewShutdownWaitGroup()
+		shutdown.Add(1)
+		success := shutdown.WaitOrTimeout(1 * time.Millisecond)
+		Expect(success).To(BeFalse())
+	})
 })

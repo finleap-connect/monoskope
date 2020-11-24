@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/browser"
 	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
-	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/auth"
@@ -60,7 +59,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 	}
 	defer server.Close()
 
-	authState := &gw_auth.AuthState{CallbackURL: server.RedirectURI}
+	authState := &api_gw_auth.AuthState{CallbackURL: server.RedirectURI}
 	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
 	if err != nil {
 		return err
@@ -91,7 +90,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 
-	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
+	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &api_gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
 	if err != nil {
 		return err
 	}
@@ -115,7 +114,7 @@ func (a *AuthUseCase) RunRefreshFlow() error {
 	defer conn.Close()
 	gwc := api_gw_auth.NewAuthClient(conn)
 
-	accessToken, err := gwc.RefreshAuth(a.ctx, &gw_auth.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
+	accessToken, err := gwc.RefreshAuth(a.ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
 	if err != nil {
 		return err
 	}

@@ -12,7 +12,6 @@ import (
 type Logger = logr.Logger
 
 var (
-	log     Logger
 	zapLog  *zap.Logger
 	logMode string
 )
@@ -35,12 +34,6 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to setup logging: %v", err))
 	}
-
-	log = zapr.NewLogger(zapLog)
-}
-
-func Default() logr.Logger {
-	return log
 }
 
 func WithOptions(opts ...zap.Option) logr.Logger {

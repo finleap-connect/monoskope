@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/version"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -22,6 +23,8 @@ func init() {
 }
 
 func main() {
+	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
+
 	if err := rootCmd.Execute(); err != nil {
 		log := logger.WithName("root-cmd")
 		log.Error(err, "command failed")

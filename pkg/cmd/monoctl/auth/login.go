@@ -17,7 +17,7 @@ func NewAuthLoginCmd(configManager *config.ClientConfigManager) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := util.LoadConfigAndAuth(cmd.Context(), configManager, flags.Timoeut)
 			if err != nil {
-				return fmt.Errorf("Failed to authenticate: %w\n", err)
+				return fmt.Errorf("failed to authenticate: %w", err)
 			} else {
 				fmt.Printf("Successfully authenticated as %s!\n", configManager.GetConfig().AuthInformation.Subject)
 			}
