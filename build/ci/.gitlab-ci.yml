@@ -29,6 +29,7 @@ prepare:builder:
       - build/package/builder.Dockerfile
   except:
     - schedules
+    - tags
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
   services:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
