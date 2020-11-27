@@ -53,8 +53,6 @@ The following targets are defined. Please not that there are variables (uppercas
 | `helm-dep-<CHARTNAME>` | Does a helm dep update for `<CHARTNAME>` |
 | `helm-lint-<CHARTNAME>` | Does a helm lint for `<CHARTNAME>` |
 | `helm-update-chart-deps` | Updates the `monoskope` chart dependencies to monoskope subchart to `VERSION` |
-| `helm-package-<CHARTNAME>` | Does a helm package for `<CHARTNAME>` |
-| `helm-push-<CHARTNAME>` | Pushes the helm chart for `<CHARTNAME>` |
 | *go* | |
 | `go-mod` | Downloads all require go modules |
 | `go-fmt` | Formats all `*.go` files |
