@@ -30,6 +30,7 @@ build:golang:
     paths:
       - gateway
     expire_in: 1 day
+  needs: []
 
 deliver:gateway:
   stage: deliver-components
