@@ -1,10 +1,5 @@
 .cache:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
-  only:
-    - main
-    - develop
-    - merge_requests
-    - tags
   except:
     - schedules
   cache:
@@ -28,6 +23,11 @@
   after_script: [] # the after script above is only required for building the cache, so we can empty-override this here
 
 prepare:cache:
+  only:
+    - main
+    - develop
+    - merge_requests
+    - tags
   stage: prepare
   extends: .cache
   script:
