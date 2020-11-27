@@ -35,12 +35,3 @@ add-kubism:
 
 update-chart-deps:
 	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
-
-package-%:
-	@cp "$(HELM_PATH)/$*/values.yaml" "$(HELM_PATH)/$*/values.yaml.bkp"
-	@yq write "$(HELM_PATH)/$*/values.yaml" image.tag "$(VERSION)" --inplace
-	@$(HELM) package $(HELM_PATH)/$* --dependency-update --version $(VERSION)
-	@mv "$(HELM_PATH)/$*/values.yaml.bkp" "$(HELM_PATH)/$*/values.yaml"
-
-push-%:
-	@curl --fail -u $(HELM_USER):$(HELM_PASSWORD) -T $*-$(VERSION).tgz "$(HELM_REGISTRY)/$*-$(VERSION).tgz"

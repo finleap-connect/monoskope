@@ -1,5 +1,5 @@
 .helm:
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.12.2-rc2
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.14.1
 
 lint:helm:monoskope:
   stage: test
@@ -22,8 +22,7 @@ deliver:chart:gateway:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make helm-package-gateway
-    - VERSION=$VERSION make helm-push-monoskope-gateway
+    - build-chart --chart-dir build/package/helm/gateway --promote-version $VERSION
   needs:
     - lint:helm:gateway
 
@@ -35,8 +34,7 @@ deliver:chart:monoskope:
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-update-chart-deps
-    - VERSION=$VERSION make helm-package-monoskope
-    - VERSION=$VERSION make helm-push-monoskope
+    - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
     - deliver:chart:gateway
 
