@@ -24,10 +24,8 @@
 
 prepare:cache:
   only:
-    - main
-    - develop
-    - merge_requests
-    - tags
+    changes:
+      - go.sum
   stage: prepare
   extends: .cache
   script:
