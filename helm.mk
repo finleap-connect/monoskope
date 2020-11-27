@@ -33,7 +33,7 @@ add-kubism:
 	@$(HELM) repo add kubism.io https://kubism.github.io/charts/
 
 add-finleap:
-  	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
+	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 update-chart-deps:
 	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
