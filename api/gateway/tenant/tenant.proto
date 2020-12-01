@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "api/gateway/tenant/messages.proto";
+import "google/protobuf/empty.proto";
+
+option objc_class_prefix = "MGT";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/tenant";
+
+package gateway.tenant;
+
+// Tenant service of the Monoskope Gateway.
+service TenantService {
+  // Create a new tenant
+  rpc CreateTenant(CreateTenantRequest) returns(Tenant);
+  // Get an existing tenant
+  rpc GetTenant(GetTenantRequest) returns(Tenant);
+  // Update an existing tenant
+  rpc UpdateTenant(UpdateTenantRequest) returns(Tenant);
+  // Delete a tenant
+  rpc DeleteTenant(DeleteTenantRequest) returns(google.protobuf.Empty);
+  // List all tenants
+  rpc ListTenants(ListTenantsRequest) returns(stream Tenant);
+}

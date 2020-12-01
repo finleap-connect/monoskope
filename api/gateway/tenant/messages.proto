@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "MGT";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/tenant";
+
+package gateway.tenant;
+
+// Tenant
+
+// Tenant within Monoskope
+message Tenant {
+  // Unique identifier of the tenant
+  string id = 1;
+  // Name of the tenant
+  string display_name = 2;
+  // Prefix for namespaces and other resources related to the tenant
+  string prefix = 3;
+  // When tenant has been created
+  google.protobuf.Timestamp Created = 4;
+  // By whom the tenant has been created
+  string CreatedBy = 5;
+  // When tenant has been last modified
+  google.protobuf.Timestamp LastModified = 6;
+  // By whom the tenant has been last modified
+  string LastModifiedBy = 7;
+  // When tenant has been deleted
+  google.protobuf.Timestamp Deleted = 8;
+  // By whom the tenant has been deleted
+  string DeletedBy = 9;
+}
+
+// Request to create a new tenant
+message CreateTenantRequest {
+  // Name of the tenant
+  string display_name = 1; // required
+  // Prefix for namespaces and other resources related to the tenant
+  string prefix = 2; // required
+}
+
+// Request to get a single tenant
+message GetTenantRequest { string id = 1; }
+
+// Request to update a single tenant
+message UpdateTenantRequest {
+  // Unique identifier of the tenant to update
+  string id = 1; // required
+  // The information to update
+  Update update = 2; // required
+
+  message Update {
+    // New name for the tenant
+    google.protobuf.StringValue display_name = 1; // optional
+    // New prefix for the tenant
+    google.protobuf.StringValue prefix = 2; // optional
+  }
+}
+
+// Request to delete a single tenant
+message DeleteTenantRequest {
+  string id = 1; // required
+}
+
+// Request to list all tenants
+message ListTenantsRequest {
+  // Inlcude tenants which have been deleted
+  bool include_deleted = 1;
+}

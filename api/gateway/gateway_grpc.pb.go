@@ -20,16 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 type GatewayClient interface {
 	// Get information like the version of the Gateway
 	GetServerInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerInformation, error)
-	// Create a new tenant
-	CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
-	// Get an existing tenant
-	GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
-	// Update an existing tenant
-	UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
-	// Delete a tenant
-	DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	// List all tenants
-	ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (Gateway_ListTenantsClient, error)
 }
 
 type gatewayClient struct {
@@ -49,90 +39,12 @@ func (c *gatewayClient) GetServerInfo(ctx context.Context, in *empty.Empty, opts
 	return out, nil
 }
 
-func (c *gatewayClient) CreateTenant(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/CreateTenant", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) GetTenant(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetTenant", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/UpdateTenant", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/DeleteTenant", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (Gateway_ListTenantsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Gateway_serviceDesc.Streams[0], "/gateway.Gateway/ListTenants", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &gatewayListTenantsClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Gateway_ListTenantsClient interface {
-	Recv() (*Tenant, error)
-	grpc.ClientStream
-}
-
-type gatewayListTenantsClient struct {
-	grpc.ClientStream
-}
-
-func (x *gatewayListTenantsClient) Recv() (*Tenant, error) {
-	m := new(Tenant)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // GatewayServer is the server API for Gateway service.
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
 	// Get information like the version of the Gateway
 	GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error)
-	// Create a new tenant
-	CreateTenant(context.Context, *CreateTenantRequest) (*Tenant, error)
-	// Get an existing tenant
-	GetTenant(context.Context, *GetTenantRequest) (*Tenant, error)
-	// Update an existing tenant
-	UpdateTenant(context.Context, *UpdateTenantRequest) (*Tenant, error)
-	// Delete a tenant
-	DeleteTenant(context.Context, *DeleteTenantRequest) (*empty.Empty, error)
-	// List all tenants
-	ListTenants(*ListTenantsRequest, Gateway_ListTenantsServer) error
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -142,21 +54,6 @@ type UnimplementedGatewayServer struct {
 
 func (UnimplementedGatewayServer) GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServerInfo not implemented")
-}
-func (UnimplementedGatewayServer) CreateTenant(context.Context, *CreateTenantRequest) (*Tenant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTenant not implemented")
-}
-func (UnimplementedGatewayServer) GetTenant(context.Context, *GetTenantRequest) (*Tenant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTenant not implemented")
-}
-func (UnimplementedGatewayServer) UpdateTenant(context.Context, *UpdateTenantRequest) (*Tenant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateTenant not implemented")
-}
-func (UnimplementedGatewayServer) DeleteTenant(context.Context, *DeleteTenantRequest) (*empty.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteTenant not implemented")
-}
-func (UnimplementedGatewayServer) ListTenants(*ListTenantsRequest, Gateway_ListTenantsServer) error {
-	return status.Errorf(codes.Unimplemented, "method ListTenants not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
 
@@ -189,99 +86,6 @@ func _Gateway_GetServerInfo_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Gateway_CreateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateTenantRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).CreateTenant(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/CreateTenant",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).CreateTenant(ctx, req.(*CreateTenantRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_GetTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTenantRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).GetTenant(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/GetTenant",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).GetTenant(ctx, req.(*GetTenantRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_UpdateTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateTenantRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).UpdateTenant(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/UpdateTenant",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).UpdateTenant(ctx, req.(*UpdateTenantRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_DeleteTenant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteTenantRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).DeleteTenant(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/DeleteTenant",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).DeleteTenant(ctx, req.(*DeleteTenantRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_ListTenants_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ListTenantsRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(GatewayServer).ListTenants(m, &gatewayListTenantsServer{stream})
-}
-
-type Gateway_ListTenantsServer interface {
-	Send(*Tenant) error
-	grpc.ServerStream
-}
-
-type gatewayListTenantsServer struct {
-	grpc.ServerStream
-}
-
-func (x *gatewayListTenantsServer) Send(m *Tenant) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 var _Gateway_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "gateway.Gateway",
 	HandlerType: (*GatewayServer)(nil),
@@ -290,29 +94,7 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 			MethodName: "GetServerInfo",
 			Handler:    _Gateway_GetServerInfo_Handler,
 		},
-		{
-			MethodName: "CreateTenant",
-			Handler:    _Gateway_CreateTenant_Handler,
-		},
-		{
-			MethodName: "GetTenant",
-			Handler:    _Gateway_GetTenant_Handler,
-		},
-		{
-			MethodName: "UpdateTenant",
-			Handler:    _Gateway_UpdateTenant_Handler,
-		},
-		{
-			MethodName: "DeleteTenant",
-			Handler:    _Gateway_DeleteTenant_Handler,
-		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "ListTenants",
-			Handler:       _Gateway_ListTenants_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/gateway/gateway.proto",
 }

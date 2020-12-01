@@ -17,15 +17,4 @@ package gateway;
 service Gateway {
   // Get information like the version of the Gateway
   rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
-
-  // Create a new tenant
-  rpc CreateTenant(CreateTenantRequest) returns(Tenant);
-  // Get an existing tenant
-  rpc GetTenant(GetTenantRequest) returns(Tenant);
-  // Update an existing tenant
-  rpc UpdateTenant(UpdateTenantRequest) returns(Tenant);
-  // Delete a tenant
-  rpc DeleteTenant(DeleteTenantRequest) returns(google.protobuf.Empty);
-  // List all tenants
-  rpc ListTenants(ListTenantsRequest) returns(stream Tenant);
 }
