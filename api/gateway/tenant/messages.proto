@@ -43,7 +43,12 @@ message CreateTenantRequest {
 }
 
 // Request to get a single tenant
-message GetTenantRequest { string id = 1; }
+message GetTenantRequest {
+  oneof find_by {
+    string id = 1;
+    string name = 2;
+  }
+}
 
 // Request to update a single tenant
 message UpdateTenantRequest {
@@ -67,6 +72,6 @@ message DeleteTenantRequest {
 
 // Request to list all tenants
 message ListTenantsRequest {
-  // Inlcude tenants which have been deleted
+  // Inlcude tenants which have previously been deleted
   bool include_deleted = 1;
 }
