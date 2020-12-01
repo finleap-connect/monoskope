@@ -16,4 +16,11 @@ package gateway;
 // RPCs of this service need authentication.
 service Gateway {
   rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
+
+  // Tenant CRUD
+  rpc CreateTenant(CreateTenantRequest) returns(Tenant);
+  rpc GetTenant(GetTenantRequest) returns(Tenant);
+  rpc UpdateTenant(UpdateTenantRequest) returns(Tenant);
+  rpc DeleteTenant(DeleteTenantRequest) returns(google.protobuf.Empty);
+  rpc ListTenants(ListTenantsRequest) returns(stream Tenant);
 }
