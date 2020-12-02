@@ -1,0 +1,29 @@
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "MES";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/eventstore";
+
+package eventstore;
+
+message Event {
+  // ID of the event (UUID 128-bit number)
+  string id = 1;
+  // Type of the event
+  string type = 2;
+  // Timestamp of when the event was created
+  google.protobuf.Timestamp timestamp = 3;
+  // ID of the aggregate that the event should be applied to (UUID 128-bit
+  // number)
+  string aggregate_id = 4;
+  // Type of the aggregate that the event can be applied to
+  string aggregate_type = 5;
+  // Event type specific event data
+  string data = 6;
+}
