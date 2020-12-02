@@ -13,6 +13,10 @@ option go_package =
 
 package eventstore;
 
+// Event describes anything that has happened.
+// An event type name should be in past tense and contain the intent
+// (TenantUpdated). The event should contain all the data needed when
+// applying/handling it.
 message Event {
   // ID of the event (UUID 128-bit number)
   string id = 1;
