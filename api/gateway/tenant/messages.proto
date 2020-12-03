@@ -60,8 +60,6 @@ message UpdateTenantRequest {
   message Update {
     // New name for the tenant
     google.protobuf.StringValue name = 1; // optional
-    // New prefix for the tenant
-    google.protobuf.StringValue prefix = 2; // optional
   }
 }
 
