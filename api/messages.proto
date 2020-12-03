@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "MT";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/api";
+
+package api;
+
+// Tenant within Monoskope
+message Tenant {
+  // Unique identifier of the tenant
+  string id = 1;
+  // Name of the tenant
+  string name = 2;
+  // Display name of the tenant.
+  // Can contain blanks and other special characters.
+  string display_name = 3;
+  // Prefix for namespaces and other resources related to the tenant.
+  // DNS compatibility is ensured on validation. E.g. no more than 12
+  // characters.
+  string prefix = 4;
+  // When tenant has been created
+  google.protobuf.Timestamp Created = 5;
+  // By whom the tenant has been created
+  User CreatedBy = 6;
+  // When tenant has been last modified
+  google.protobuf.Timestamp LastModified = 7;
+  // By whom the tenant has been last modified
+  User LastModifiedBy = 8;
+  // When tenant has been deleted
+  google.protobuf.Timestamp Deleted = 9;
+  // By whom the tenant has been deleted
+  User DeletedBy = 10;
+}
+
+// User within Monoskope
+message User {
+  // Unique identifier of the user
+  string id = 1;
+  // Name of the user
+  string name = 2;
+}

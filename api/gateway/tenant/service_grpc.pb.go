@@ -5,6 +5,7 @@ package tenant
 import (
 	context "context"
 	empty "github.com/golang/protobuf/ptypes/empty"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/api"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -19,13 +20,13 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TenantServiceClient interface {
 	// Create a new tenant
-	Create(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
+	Create(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error)
 	// Get an existing tenant
-	Get(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
+	Get(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error)
 	// List all tenants
 	List(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (TenantService_ListClient, error)
 	// Update an existing tenant
-	Update(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*Tenant, error)
+	Update(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error)
 	// Delete a tenant
 	Delete(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
@@ -38,8 +39,8 @@ func NewTenantServiceClient(cc grpc.ClientConnInterface) TenantServiceClient {
 	return &tenantServiceClient{cc}
 }
 
-func (c *tenantServiceClient) Create(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
+func (c *tenantServiceClient) Create(ctx context.Context, in *CreateTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error) {
+	out := new(api.Tenant)
 	err := c.cc.Invoke(ctx, "/gateway.tenant.TenantService/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -47,8 +48,8 @@ func (c *tenantServiceClient) Create(ctx context.Context, in *CreateTenantReques
 	return out, nil
 }
 
-func (c *tenantServiceClient) Get(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
+func (c *tenantServiceClient) Get(ctx context.Context, in *GetTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error) {
+	out := new(api.Tenant)
 	err := c.cc.Invoke(ctx, "/gateway.tenant.TenantService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func (c *tenantServiceClient) List(ctx context.Context, in *ListTenantsRequest, 
 }
 
 type TenantService_ListClient interface {
-	Recv() (*Tenant, error)
+	Recv() (*api.Tenant, error)
 	grpc.ClientStream
 }
 
@@ -80,16 +81,16 @@ type tenantServiceListClient struct {
 	grpc.ClientStream
 }
 
-func (x *tenantServiceListClient) Recv() (*Tenant, error) {
-	m := new(Tenant)
+func (x *tenantServiceListClient) Recv() (*api.Tenant, error) {
+	m := new(api.Tenant)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *tenantServiceClient) Update(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*Tenant, error) {
-	out := new(Tenant)
+func (c *tenantServiceClient) Update(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*api.Tenant, error) {
+	out := new(api.Tenant)
 	err := c.cc.Invoke(ctx, "/gateway.tenant.TenantService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -111,13 +112,13 @@ func (c *tenantServiceClient) Delete(ctx context.Context, in *DeleteTenantReques
 // for forward compatibility
 type TenantServiceServer interface {
 	// Create a new tenant
-	Create(context.Context, *CreateTenantRequest) (*Tenant, error)
+	Create(context.Context, *CreateTenantRequest) (*api.Tenant, error)
 	// Get an existing tenant
-	Get(context.Context, *GetTenantRequest) (*Tenant, error)
+	Get(context.Context, *GetTenantRequest) (*api.Tenant, error)
 	// List all tenants
 	List(*ListTenantsRequest, TenantService_ListServer) error
 	// Update an existing tenant
-	Update(context.Context, *UpdateTenantRequest) (*Tenant, error)
+	Update(context.Context, *UpdateTenantRequest) (*api.Tenant, error)
 	// Delete a tenant
 	Delete(context.Context, *DeleteTenantRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedTenantServiceServer()
@@ -127,16 +128,16 @@ type TenantServiceServer interface {
 type UnimplementedTenantServiceServer struct {
 }
 
-func (UnimplementedTenantServiceServer) Create(context.Context, *CreateTenantRequest) (*Tenant, error) {
+func (UnimplementedTenantServiceServer) Create(context.Context, *CreateTenantRequest) (*api.Tenant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedTenantServiceServer) Get(context.Context, *GetTenantRequest) (*Tenant, error) {
+func (UnimplementedTenantServiceServer) Get(context.Context, *GetTenantRequest) (*api.Tenant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedTenantServiceServer) List(*ListTenantsRequest, TenantService_ListServer) error {
 	return status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedTenantServiceServer) Update(context.Context, *UpdateTenantRequest) (*Tenant, error) {
+func (UnimplementedTenantServiceServer) Update(context.Context, *UpdateTenantRequest) (*api.Tenant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedTenantServiceServer) Delete(context.Context, *DeleteTenantRequest) (*empty.Empty, error) {
@@ -200,7 +201,7 @@ func _TenantService_List_Handler(srv interface{}, stream grpc.ServerStream) erro
 }
 
 type TenantService_ListServer interface {
-	Send(*Tenant) error
+	Send(*api.Tenant) error
 	grpc.ServerStream
 }
 
@@ -208,7 +209,7 @@ type tenantServiceListServer struct {
 	grpc.ServerStream
 }
 
-func (x *tenantServiceListServer) Send(m *Tenant) error {
+func (x *tenantServiceListServer) Send(m *api.Tenant) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -276,5 +277,5 @@ var _TenantService_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "api/gateway/tenant/tenant.proto",
+	Metadata: "api/gateway/tenant/service.proto",
 }

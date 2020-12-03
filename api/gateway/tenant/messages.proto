@@ -4,35 +4,12 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/wrappers.proto";
-import "google/protobuf/timestamp.proto";
 
 option objc_class_prefix = "MGT";
 option go_package =
     "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/tenant";
 
 package gateway.tenant;
-
-// Tenant within Monoskope
-message Tenant {
-  // Unique identifier of the tenant
-  string id = 1;
-  // Name of the tenant
-  string name = 2;
-  // Prefix for namespaces and other resources related to the tenant
-  string prefix = 3;
-  // When tenant has been created
-  google.protobuf.Timestamp Created = 4;
-  // By whom the tenant has been created
-  string CreatedBy = 5;
-  // When tenant has been last modified
-  google.protobuf.Timestamp LastModified = 6;
-  // By whom the tenant has been last modified
-  string LastModifiedBy = 7;
-  // When tenant has been deleted
-  google.protobuf.Timestamp Deleted = 8;
-  // By whom the tenant has been deleted
-  string DeletedBy = 9;
-}
 
 // Request to create a new tenant
 message CreateTenantRequest {
@@ -70,6 +47,6 @@ message DeleteTenantRequest {
 
 // Request to list all tenants
 message ListTenantsRequest {
-  // Inlcude tenants which have previously been deleted
+  // Include tenants which have previously been deleted
   bool include_deleted = 1;
 }

@@ -3,6 +3,7 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "api/messages.proto";
 import "api/gateway/tenant/messages.proto";
 import "google/protobuf/empty.proto";
 
@@ -15,13 +16,13 @@ package gateway.tenant;
 // Tenant service of the Monoskope Gateway.
 service TenantService {
   // Create a new tenant
-  rpc Create(CreateTenantRequest) returns(Tenant);
+  rpc Create(CreateTenantRequest) returns(api.Tenant);
   // Get an existing tenant
-  rpc Get(GetTenantRequest) returns(Tenant);
+  rpc Get(GetTenantRequest) returns(api.Tenant);
   // List all tenants
-  rpc List(ListTenantsRequest) returns(stream Tenant);
+  rpc List(ListTenantsRequest) returns(stream api.Tenant);
   // Update an existing tenant
-  rpc Update(UpdateTenantRequest) returns(Tenant);
+  rpc Update(UpdateTenantRequest) returns(api.Tenant);
   // Delete a tenant
   rpc Delete(DeleteTenantRequest) returns(google.protobuf.Empty);
 }
