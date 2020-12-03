@@ -12,7 +12,7 @@ package api;
 
 // Tenant within Monoskope
 message Tenant {
-  // Unique identifier of the tenant
+  // Unique identifier of the tenant (UUID 128-bit number)
   string id = 1;
   // Name of the tenant
   string name = 2;
@@ -39,7 +39,7 @@ message Tenant {
 
 // User within Monoskope
 message User {
-  // Unique identifier of the user
+  // Unique identifier of the user (UUID 128-bit number)
   string id = 1;
   // Name of the user
   string name = 2;
