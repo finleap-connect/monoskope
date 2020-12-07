@@ -1,0 +1,115 @@
+{{ if .Values.cockroachdb.enabled }}
+{{- $name := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ $name }}-selfsigning-issuer
+  labels:
+    app.kubernetes.io/name: {{ $name }}-selfsigning-issuer
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $name }}-ca
+  labels:
+    app.kubernetes.io/name: {{ $name }}-ca
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $name }}-ca
+  commonName: CockroachDB CA
+  organization:
+  - CockroachDB
+  isCA: true
+  issuerRef:
+    name: {{ $name }}-selfsigning-issuer
+    kind: Issuer
+  usages:
+  - client auth
+  - server auth
+  - digital signature
+  - key encipherment
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ $name }}-issuer
+  labels:
+    app.kubernetes.io/name: {{ $name }}-issuer
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ $name }}-ca
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $name }}-root
+  labels:
+    app.kubernetes.io/name: {{ $name }}-root
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $name }}-root
+  issuerRef:
+    name: {{ $name }}-issuer
+    kind: Issuer
+  commonName: root
+  organization:
+  - Cockroach
+  usages:
+  - client auth
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $name }}-client
+  labels:
+    app.kubernetes.io/name: {{ $name }}-client
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $name }}-client
+  issuerRef:
+    name: {{ $name }}-issuer
+    kind: Issuer
+  commonName: client
+  organization:
+  - Cockroach
+  usages:
+  - client auth
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $name }}-node
+spec:
+  secretName: {{ $name }}-node
+  issuerRef:
+    name: {{ $name }}-issuer
+    kind: Issuer
+  commonName: node
+  organization:
+  - Cockroach
+  ipAddresses:
+  - 127.0.0.1
+  - '::'
+  dnsNames:
+  - localhost
+  - {{.Release.Name}}-cockroachdb-public
+  - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}
+  - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local
+  - "*.{{.Release.Name}}-cockroachdb-public"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local"
+  - {{.Release.Name}}-cockroachdb
+  - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}
+  - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local
+  - "*.{{.Release.Name}}-cockroachdb"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local"
+
+  usages:
+  - client auth
+  - server auth
+{{ end }}

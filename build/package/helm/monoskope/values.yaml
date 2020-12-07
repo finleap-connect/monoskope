@@ -68,8 +68,47 @@ dex: # OIDC Provider
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
 
-monoskope-gateway:
+gateway:
   enabled: true
   auth:
     allowRootToken: false
     issuerURL: *issuer
+
+cockroachdb:
+  enabled: true
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
+    imagePullPolicy: Always
+  statefulset:
+    replicas: 3 # Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    annotations:
+      linkerd.io/inject: disabled
+  init:
+    annotations:
+      linkerd.io/inject: disabled
+  storage:
+    persistentVolume:
+      size: "20Gi" # ATTENTION: Increase for PROD according to your use-case
+  conf:
+    # Total size in bytes for caches, shared evenly if there are multiple
+    # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
+    # A percentage of physical memory can also be specified (e.g. `.25`).
+    cache: 25%
+    # Maximum memory capacity available to store temporary data for SQL clients,
+    # including prepared queries and intermediate data rows during query
+    # execution. Accepts numbers interpreted as bytes, size suffixes
+    # (e.g. `1GB` and `1GiB`) or a percentage of physical memory (e.g. `.25`).
+    maxSQLMemory: 25%
+  tls:
+    enabled: true
+    certs:
+      provided: true
+      tlsSecret: true
