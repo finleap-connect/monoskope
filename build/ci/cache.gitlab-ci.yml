@@ -1,8 +1,5 @@
 .cache:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
-  only:
-    changes:
-      - go.sum
   except:
     - schedules
   cache:
