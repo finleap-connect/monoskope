@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.12.4
-// source: api/gateway/gateway.proto
+// source: api/gateway/service.proto
 
 package gateway
 
@@ -25,11 +25,11 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-var File_api_gateway_gateway_proto protoreflect.FileDescriptor
+var File_api_gateway_service_proto protoreflect.FileDescriptor
 
-var file_api_gateway_gateway_proto_rawDesc = []byte{
-	0x0a, 0x19, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x67, 0x61,
-	0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x07, 0x67, 0x61, 0x74,
+var file_api_gateway_service_proto_rawDesc = []byte{
+	0x0a, 0x19, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x73, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x07, 0x67, 0x61, 0x74,
 	0x65, 0x77, 0x61, 0x79, 0x1a, 0x1b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x1a, 0x1a, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x6d,
@@ -46,11 +46,11 @@ var file_api_gateway_gateway_proto_rawDesc = []byte{
 	0x4d, 0x47, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_api_gateway_gateway_proto_goTypes = []interface{}{
+var file_api_gateway_service_proto_goTypes = []interface{}{
 	(*empty.Empty)(nil),       // 0: google.protobuf.Empty
 	(*ServerInformation)(nil), // 1: gateway.ServerInformation
 }
-var file_api_gateway_gateway_proto_depIdxs = []int32{
+var file_api_gateway_service_proto_depIdxs = []int32{
 	0, // 0: gateway.Gateway.GetServerInfo:input_type -> google.protobuf.Empty
 	1, // 1: gateway.Gateway.GetServerInfo:output_type -> gateway.ServerInformation
 	1, // [1:2] is the sub-list for method output_type
@@ -60,9 +60,9 @@ var file_api_gateway_gateway_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_api_gateway_gateway_proto_init() }
-func file_api_gateway_gateway_proto_init() {
-	if File_api_gateway_gateway_proto != nil {
+func init() { file_api_gateway_service_proto_init() }
+func file_api_gateway_service_proto_init() {
+	if File_api_gateway_service_proto != nil {
 		return
 	}
 	file_api_gateway_messages_proto_init()
@@ -70,17 +70,17 @@ func file_api_gateway_gateway_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_api_gateway_gateway_proto_rawDesc,
+			RawDescriptor: file_api_gateway_service_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_api_gateway_gateway_proto_goTypes,
-		DependencyIndexes: file_api_gateway_gateway_proto_depIdxs,
+		GoTypes:           file_api_gateway_service_proto_goTypes,
+		DependencyIndexes: file_api_gateway_service_proto_depIdxs,
 	}.Build()
-	File_api_gateway_gateway_proto = out.File
-	file_api_gateway_gateway_proto_rawDesc = nil
-	file_api_gateway_gateway_proto_goTypes = nil
-	file_api_gateway_gateway_proto_depIdxs = nil
+	File_api_gateway_service_proto = out.File
+	file_api_gateway_service_proto_rawDesc = nil
+	file_api_gateway_service_proto_goTypes = nil
+	file_api_gateway_service_proto_depIdxs = nil
 }

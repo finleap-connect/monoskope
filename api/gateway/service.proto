@@ -15,5 +15,6 @@ package gateway;
 // Actual API of the Monoskope Gateway.
 // RPCs of this service need authentication.
 service Gateway {
+  // Get information like the version of the Gateway
   rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
 }

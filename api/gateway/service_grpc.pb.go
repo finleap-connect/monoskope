@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
+	// Get information like the version of the Gateway
 	GetServerInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerInformation, error)
 }
 
@@ -42,6 +43,7 @@ func (c *gatewayClient) GetServerInfo(ctx context.Context, in *empty.Empty, opts
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
+	// Get information like the version of the Gateway
 	GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error)
 	mustEmbedUnimplementedGatewayServer()
 }
@@ -94,5 +96,5 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/gateway/gateway.proto",
+	Metadata: "api/gateway/service.proto",
 }
