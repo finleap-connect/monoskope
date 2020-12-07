@@ -112,3 +112,7 @@ cockroachdb:
     certs:
       provided: true
       tlsSecret: true
+      # Secret name for the client root cert.
+      clientRootSecret: monoskope-crdb-root
+      # Secret name for node cert.
+      nodeSecret: monoskope-crdb-node

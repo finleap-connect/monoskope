@@ -51,7 +51,7 @@ metadata:
     app.kubernetes.io/name: {{ $name }}-root
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ $name }}-root
+  secretName: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
   issuerRef:
     name: {{ $name }}-issuer
     kind: Issuer
@@ -84,7 +84,7 @@ kind: Certificate
 metadata:
   name: {{ $name }}-node
 spec:
-  secretName: {{ $name }}-node
+  secretName: {{ .Values.cockroachdb.tls.certs.nodeSecret }}
   issuerRef:
     name: {{ $name }}-issuer
     kind: Issuer
