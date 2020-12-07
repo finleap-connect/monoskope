@@ -31,3 +31,7 @@ dependencies: # A list of the chart requirements
     version: "latest"
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
     condition: monoskope-gateway.enabled
+  - name: cockroachdb
+    version: 5.0.2
+    repository: https://artifactory.figo.systems/artifactory/virtual_helm
+    condition: cockroachdb.enabled,global.cockroachdb.enabled
