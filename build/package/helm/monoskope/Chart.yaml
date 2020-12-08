@@ -29,8 +29,7 @@ dependencies: # A list of the chart requirements
     condition: dex.enabled
   - name: monoskope-gateway
     alias: gateway
-    version: "latest"
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
+    repository: "file://../gateway"
     condition: monoskope-gateway.enabled
   - name: cockroachdb
     version: 5.0.2
