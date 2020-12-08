@@ -52,7 +52,6 @@ The following targets are defined. Please not that there are variables (uppercas
 | `helm-clean` | Clears `HELM_OUTPUT_DIR` |
 | `helm-dep-<CHARTNAME>` | Does a helm dep update for `<CHARTNAME>` |
 | `helm-lint-<CHARTNAME>` | Does a helm lint for `<CHARTNAME>` |
-| `helm-update-chart-deps` | Updates the `monoskope` chart dependencies to monoskope subchart to `VERSION` |
 | *go* | |
 | `go-mod` | Downloads all require go modules |
 | `go-fmt` | Formats all `*.go` files |

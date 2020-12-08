@@ -28,6 +28,5 @@ dependencies: # A list of the chart requirements
     repository: https://kubism.github.io/charts
     condition: dex.enabled
   - name: monoskope-gateway
-    version: "latest"
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
+    repository: "file://../gateway"
     condition: monoskope-gateway.enabled
