@@ -27,9 +27,13 @@ uninstall-%:
 	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
 
 template-%: clean
-	@$(MAKE) helm-dep-$*
 	@mkdir -p $(HELM_OUTPUT_DIR)
 	@$(HELM) template $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+	@echo "ATTENTION:"
+	@echo "If you want to have the latest dependencies (e.g. gateway chart changes)"
+	@echo "execute the following command prior to the current command:"
+	@echo "$$ $(MAKE) helm-dep-$*"
+	@echo
 
 add-kubism:
 	@$(HELM) repo add kubism.io https://kubism.github.io/charts/
