@@ -24,7 +24,7 @@ appVersion: 0.0.1
 
 dependencies: # A list of the chart requirements
   - name: dex
-    version: 1.0.6
+    version: 1.0.7
     repository: https://kubism.github.io/charts
     condition: dex.enabled
   - name: monoskope-gateway

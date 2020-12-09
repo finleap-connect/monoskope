@@ -19,11 +19,16 @@ dex: # OIDC Provider
     storage:
       type: postgres
       config:
+        host: monoskope-cockroachdb-public
+        port: 26257
         database: dex_db
         user: dex
+        secret: monoskope-crdb-client
         ssl:
           mode: verify-ca
-          caFile: /etc/dex/postgres.ca
+          caFile: /etc/dex/tls/db/ca.crt
+          certFile: /etc/dex/tls/db/tls.crt
+          keyFile: /etc/dex/tls/db/tls.key
     logger:
       level: debug
     web:
