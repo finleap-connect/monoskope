@@ -17,9 +17,13 @@ dex: # OIDC Provider
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
     issuer: &issuer https://monoskope.io/dex
     storage:
+      type: postgres
       config:
-        inCluster: true
-      type: kubernetes
+        database: dex_db
+        user: dex
+        ssl:
+          mode: verify-ca
+          caFile: /etc/dex/postgres.ca
     logger:
       level: debug
     web:
@@ -67,7 +71,7 @@ dex: # OIDC Provider
     # The name of the ServiceAccount to use.
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
-
+      
 gateway:
   enabled: true
   auth:

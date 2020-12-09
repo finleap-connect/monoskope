@@ -8,10 +8,6 @@ dex:
   enabled: true
   config:
     issuer: &issuer https://monoskope.dev.finleap.cloud/dex
-    storage:
-      type: sqlite3
-      config:
-        file: /tmp/dex.db
     enablePasswordDB: false
     connectors:
       - type: gitlab
