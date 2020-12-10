@@ -1,0 +1,23 @@
+{{ if .Values.cockroachdb.enabled }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-metrics") -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    tenant: {{ .Values.monitoring.tenant }}
+spec:
+  jobLabel: target
+  selector:
+    matchLabels:
+      target: cockroachdb
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+  - port: http
+    path: /_status/vars
+    interval: 20s
+{{ end }}

@@ -6,6 +6,9 @@ name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+monitoring:
+  tenant: finleap-cloud
+
 ingress:
   enabled: false
   host: monoskope.io
