@@ -40,12 +40,14 @@ helm.sh/chart: {{ include "gateway.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/component: api
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "gateway.selectorLabels" -}}
+app.kubernetes.io/name: {{ (include "gateway.name" .) }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 

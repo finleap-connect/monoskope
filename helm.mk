@@ -17,19 +17,19 @@ lint-%:
 
 install-%:
 	@$(MAKE) helm-dep-$*
-	@$(HELM) upgrade --install $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
 
 install-from-repo-%:
 	@$(HELM) repo update
-	@$(HELM) upgrade --install $* $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE)
+	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE)
 
 uninstall-%: 
-	@$(HELM) uninstall $* --namespace $(KUBE_NAMESPACE)
+	@$(HELM) uninstall m8dev --namespace $(KUBE_NAMESPACE)
 
 template-%: clean
 	@$(MAKE) helm-dep-$*
 	@mkdir -p $(HELM_OUTPUT_DIR)
-	@$(HELM) template $* $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+	@$(HELM) template m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
 
 add-kubism:
 	@$(HELM) repo add kubism.io https://kubism.github.io/charts/

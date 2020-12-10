@@ -12,6 +12,8 @@ ingress:
 
 dex: # OIDC Provider
   enabled: false
+  image: quay.io/dexidp/dex
+  imageTag: "v2.25.0"
   imagePullPolicy: "Always"
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
@@ -68,11 +70,14 @@ dex: # OIDC Provider
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
 
-gateway:
+monoskope-gateway:
+  nameOverride: "gateway"
   enabled: true
   auth:
     allowRootToken: false
     issuerURL: *issuer
+  labels:
+    app.kubernetes.io/part-of: "monoskope"
 
 cockroachdb:
   enabled: true
@@ -117,3 +122,5 @@ cockroachdb:
       clientRootSecret: monoskope-crdb-root
       # Secret name for node cert.
       nodeSecret: monoskope-crdb-node
+  labels:
+    app.kubernetes.io/part-of: "monoskope"
