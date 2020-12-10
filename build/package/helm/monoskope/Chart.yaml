@@ -30,7 +30,7 @@ dependencies: # A list of the chart requirements
   - name: monoskope-gateway
     alias: gateway
     repository: "file://../gateway"
-    condition: monoskope-gateway.enabled
+    condition: gateway.enabled
   - name: cockroachdb
     version: 5.0.2
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
