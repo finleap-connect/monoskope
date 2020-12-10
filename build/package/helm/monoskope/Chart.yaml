@@ -24,11 +24,10 @@ appVersion: 0.0.1
 
 dependencies: # A list of the chart requirements
   - name: dex
-    version: 1.0.10
+    version: 1.0.11
     repository: https://kubism.github.io/charts
     condition: dex.enabled
   - name: monoskope-gateway
-    alias: gateway
     repository: "file://../gateway"
     condition: monoskope-gateway.enabled
   - name: cockroachdb

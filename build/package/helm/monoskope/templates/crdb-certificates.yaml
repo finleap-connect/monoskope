@@ -1,11 +1,10 @@
 {{ if .Values.cockroachdb.enabled }}
-{{- $name := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb") -}}
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
-  name: {{ $name }}-selfsigning-issuer
+  name: {{ $fullname }}-selfsigning-issuer
   labels:
-    app.kubernetes.io/name: {{ $name }}-selfsigning-issuer
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   selfSigned: {}
@@ -13,18 +12,17 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $name }}-ca
+  name: {{ $fullname }}-ca
   labels:
-    app.kubernetes.io/name: {{ $name }}-ca
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ $name }}-ca
+  secretName: {{ $fullname }}-ca
   commonName: CockroachDB CA
   organization:
   - CockroachDB
   isCA: true
   issuerRef:
-    name: {{ $name }}-selfsigning-issuer
+    name: {{ $fullname }}-selfsigning-issuer
     kind: Issuer
   usages:
   - client auth
@@ -35,25 +33,23 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
-  name: {{ $name }}-issuer
+  name: {{ $fullname }}-issuer
   labels:
-    app.kubernetes.io/name: {{ $name }}-issuer
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   ca:
-    secretName: {{ $name }}-ca
+    secretName: {{ $fullname }}-ca
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $name }}-root
+  name: {{ $fullname }}-root
   labels:
-    app.kubernetes.io/name: {{ $name }}-root
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   secretName: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
   issuerRef:
-    name: {{ $name }}-issuer
+    name: {{ $fullname }}-issuer
     kind: Issuer
   commonName: root
   organization:
@@ -64,14 +60,13 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $name }}-client
+  name: {{ $fullname }}-client
   labels:
-    app.kubernetes.io/name: {{ $name }}-client
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ $name }}-client
+  secretName: {{ $fullname }}-client
   issuerRef:
-    name: {{ $name }}-issuer
+    name: {{ $fullname }}-issuer
     kind: Issuer
   commonName: client
   organization:
@@ -82,11 +77,13 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $name }}-node
+  name: {{ $fullname }}-node
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   secretName: {{ .Values.cockroachdb.tls.certs.nodeSecret }}
   issuerRef:
-    name: {{ $name }}-issuer
+    name: {{ $fullname }}-issuer
     kind: Issuer
   commonName: node
   organization:

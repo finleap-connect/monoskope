@@ -46,6 +46,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "monoskope.selectorLabels" -}}
+app.kubernetes.io/name: {{ (include "monoskope.name" .) }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
