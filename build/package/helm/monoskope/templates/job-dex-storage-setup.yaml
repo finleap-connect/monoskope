@@ -1,6 +1,7 @@
 {{ if and .Values.cockroachdb.enabled (eq .Values.dex.config.storage.type "postgres") }}
 {{- $name := (printf "%s-%s" (include "monoskope.name" .) "dex-storage-setup") -}}
 {{- $crdbName := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
+{{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -23,7 +24,7 @@ spec:
       containers:
       - args:
         - sql
-        - --url=postgres://{{ .Release.Name }}-cockroachdb-public:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
+        - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
         - --execute=CREATE USER IF NOT EXISTS {{ .Values.dex.config.storage.config.user }};
         - --execute=CREATE DATABASE IF NOT EXISTS {{ .Values.dex.config.storage.config.database }};
         - --execute=GRANT ALL ON DATABASE {{ .Values.dex.config.storage.config.database }} TO {{ .Values.dex.config.storage.config.user }};

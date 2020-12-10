@@ -7,7 +7,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
-    target: cockroachdb
+    target: {{ (include "call-nested" (list . "cockroachdb" "cockroachdb.name")) }}
 spec:
   ports:
   - name: http
@@ -15,6 +15,7 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
+    app.kubernetes.io/name: {{ (include "call-nested" (list . "cockroachdb" "cockroachdb.name")) }}
     app.kubernetes.io/component: cockroachdb
     app.kubernetes.io/instance: {{ .Release.Name }}
   sessionAffinity: None

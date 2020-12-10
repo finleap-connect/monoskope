@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-name: monoskope
+name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
 
@@ -24,7 +24,6 @@ dex: # OIDC Provider
     storage:
       type: postgres
       config:
-        host: m8dev-cockroachdb-public
         port: 26257
         database: dex_db
         user: dex
@@ -81,7 +80,9 @@ dex: # OIDC Provider
     # The name of the ServiceAccount to use.
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
-
+  labels:
+    app.kubernetes.io/part-of: *name
+    
 monoskope-gateway:
   nameOverride: "gateway"
   enabled: true
@@ -89,7 +90,7 @@ monoskope-gateway:
     allowRootToken: false
     issuerURL: *issuer
   labels:
-    app.kubernetes.io/part-of: "monoskope"
+    app.kubernetes.io/part-of: *name
 
 cockroachdb:
   enabled: true
@@ -135,4 +136,4 @@ cockroachdb:
       # Secret name for node cert.
       nodeSecret: monoskope-crdb-node
   labels:
-    app.kubernetes.io/part-of: "monoskope"
+    app.kubernetes.io/part-of: *name

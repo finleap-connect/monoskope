@@ -12,7 +12,7 @@ spec:
   jobLabel: target
   selector:
     matchLabels:
-      target: cockroachdb
+      target: {{ (include "call-nested" (list . "cockroachdb" "cockroachdb.name")) }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}
