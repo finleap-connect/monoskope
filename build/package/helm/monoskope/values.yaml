@@ -78,6 +78,7 @@ cockroachdb:
   enabled: true
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
+    tag: v20.2.2
     imagePullPolicy: Always
   statefulset:
     replicas: 3 # Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
