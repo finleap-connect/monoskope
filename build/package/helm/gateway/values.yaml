@@ -56,3 +56,6 @@ auth:
 ingress:
   enabled: false
   host: api.monoskope.io
+
+labels: {}
+  # app.kubernetes.io/part-of: my-app

@@ -25,7 +25,6 @@ project.dict
 
 /monoctl
 /gateway
-/charts/
 
 build/package/helm/monoskope/Chart.lock
 build/package/helm/monoskope/charts/**
