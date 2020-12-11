@@ -4,10 +4,10 @@ GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 GO             ?= go
 
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
-GINKO_VERSION  ?= v1.12.0
+GINKO_VERSION  ?= v1.14.2
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
-LINTER_VERSION ?= v1.25.0
+LINTER_VERSION ?= v1.33.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)
