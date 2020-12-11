@@ -26,7 +26,8 @@ test_lint:golang:
   extends: .gobase-docker
   script:
     - make -j go-ginkgo-get go-golangci-lint-get
-    - make -j go-vet go-lint go-test
+    - make -j go-vet go-lint
+    - make go-test
   artifacts:
     name: "Go Tests"
     when: always
