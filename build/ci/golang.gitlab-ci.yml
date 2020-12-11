@@ -6,6 +6,7 @@
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:
     - mkdir -p .go
+    - make go-mod
   cache:
     paths:
       - .go/pkg/mod/
@@ -24,11 +25,8 @@ test_lint:golang:
   stage: test
   extends: .gobase-docker
   script:
-    - make go-ginkgo-get
-    - make go-golangci-lint-get
-    - make go-vet
-    - make go-lint
-    - make go-test
+    - make -j go-ginkgo-get go-golangci-lint-get
+    - make -j go-vet go-lint go-test
   artifacts:
     name: "Go Tests"
     when: always
