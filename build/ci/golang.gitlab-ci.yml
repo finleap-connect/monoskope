@@ -7,7 +7,18 @@
       files:
         - go.sum
     paths:
-      - /go/pkg/mod
+      - cache/
+  before_script:
+    - mkdir -p cache/mod $GOPATH/pkg /root/.cache
+    - mv cache/mod $GOPATH/pkg/mod
+    - rm -rf cache
+  after_script:
+    - mkdir -p cache
+
+.gobase-no-push:
+  extends: .cache
+  cache:
+    policy: pull
 
 .gobase-docker:
   extends: .gobase
@@ -36,7 +47,7 @@ test:golang:
 
 build:golang:
   stage: build
-  extends: .gobase
+  extends: .gobase-no-push
   only:
     - tags
   script:
