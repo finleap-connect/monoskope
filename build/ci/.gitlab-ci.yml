@@ -2,7 +2,6 @@ stages:
   - prepare
   - test
   - build
-  - deliver-components
   - deliver
   - deploy
 
