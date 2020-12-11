@@ -14,7 +14,7 @@ secret:
 
 image:
   repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway
-  tag: latest
+  tag: 0.0.1
   pullPolicy: Always
 
 livenessProbe:

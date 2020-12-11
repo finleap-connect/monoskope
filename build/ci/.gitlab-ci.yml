@@ -2,25 +2,12 @@ stages:
   - prepare
   - test
   - build
-  - deliver-components
   - deliver
   - deploy
 
 include:
-  - local: build/ci/cache.gitlab-ci.yml
   - local: build/ci/golang.gitlab-ci.yml
   - local: build/ci/helm.gitlab-ci.yml
-
-.test:
-  extends: .cache-no-push
-
-.test-docker:
-  extends: .cache-no-push
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-
-.build:
-  extends: .cache-no-push
 
 prepare:builder:
   stage: prepare
