@@ -65,7 +65,9 @@ ginkgo-clean:
 golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
 
-clean: ginkgo-clean golangci-lint-clean
+clean: ginkgo-clean golangci-lint-clean build-clean
+	rm -Rf reports/
+	find . -name '*.coverprofile' -exec rm {} \;
 
 protobuf:
 	find ./api -name '*.go' -exec rm {} \;
