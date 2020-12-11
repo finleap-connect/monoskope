@@ -38,5 +38,7 @@ add-finleap:
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 update-chart-deps:
+	yq write "$(HELM_PATH)/gateway/values.yaml" image.tag "$(VERSION)" --inplace
 	yq write "$(HELM_PATH)/gateway/Chart.yaml" version "$(VERSION)" --inplace
+	yq write "$(HELM_PATH)/gateway/Chart.yaml" appVersion "$(VERSION)" --inplace
 	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
