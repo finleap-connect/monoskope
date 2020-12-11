@@ -3,17 +3,9 @@
   except:
     - schedules
   cache:
-    key:
-      files:
-        - go.sum
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - cache/
-  before_script:
-    - mkdir -p cache/mod $GOPATH/pkg /root/.cache
-    - mv cache/mod $GOPATH/pkg/mod
-    - rm -rf cache
-  after_script:
-    - mkdir -p cache
+      - /go
 
 .gobase-no-push:
   extends: .gobase
