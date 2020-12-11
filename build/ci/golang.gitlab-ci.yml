@@ -2,12 +2,13 @@
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
   except:
     - schedules
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - /go/pkg
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
   before_script:
-    - mkdir -p /go/pkg
+    - mkdir -p .go
+  cache:
+    paths:
+      - .go/pkg/mod/
 
 .gobase-no-push:
   extends: .gobase
