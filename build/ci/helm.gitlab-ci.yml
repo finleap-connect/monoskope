@@ -15,17 +15,6 @@ lint:helm:gateway:
     - make helm-lint-gateway
   needs: []
 
-deliver:chart:gateway:
-  stage: deliver-components
-  extends: .helm
-  only:
-    - tags
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-chart --chart-dir build/package/helm/gateway --promote-version $VERSION
-  needs:
-    - lint:helm:gateway
-
 deliver:chart:monoskope:
   stage: deliver
   extends: .helm
@@ -36,7 +25,8 @@ deliver:chart:monoskope:
     - VERSION=$VERSION make helm-update-chart-deps
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
-    - deliver:chart:gateway
+    - lint:helm:gateway
+    - lint:helm:monoskope
 
 deploy:monoskope:
   stage: deploy
