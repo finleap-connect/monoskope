@@ -16,7 +16,7 @@
     - mkdir -p cache
 
 .gobase-no-push:
-  extends: .cache
+  extends: .gobase
   cache:
     policy: pull
 
