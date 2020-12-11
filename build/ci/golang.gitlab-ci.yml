@@ -5,7 +5,9 @@
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - /go
+      - /go/pkg
+  before_script:
+    - mkdir -p /go/pkg
 
 .gobase-no-push:
   extends: .gobase
