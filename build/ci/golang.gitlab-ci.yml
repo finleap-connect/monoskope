@@ -60,6 +60,5 @@ deliver:gateway:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
   dependencies:
-    - lint:golang
-    - test:golang
+    - test_lint:golang
     - build:golang:gateway
