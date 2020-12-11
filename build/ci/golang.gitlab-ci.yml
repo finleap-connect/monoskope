@@ -1,6 +1,19 @@
+.gobase:
+  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
+  except:
+    - schedules
+  cache:
+    paths:
+      - /go/pkg/mod
+
+.gobase-docker:
+  extends: .gobase
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+
 lint:golang:
   stage: test
-  extends: .test
+  extends: .gobase
   script:
     - make go-golangci-lint-get
     - make go-vet
@@ -8,7 +21,7 @@ lint:golang:
 
 test:golang:
   stage: test
-  extends: .test-docker
+  extends: .gobase-docker
   script:
     - make go-ginkgo-get
     - make go-test
@@ -20,7 +33,7 @@ test:golang:
 
 build:golang:
   stage: build
-  extends: .build
+  extends: .gobase
   only:
     - tags
   script:
