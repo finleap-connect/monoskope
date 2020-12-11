@@ -3,6 +3,9 @@
   except:
     - schedules
   cache:
+    key:
+      files:
+        - go.sum
     paths:
       - /go/pkg/mod
 
