@@ -22,7 +22,7 @@ deliver:chart:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make helm-update-chart-deps
+    - VERSION=$VERSION make helm-set-version-gateway
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
     - lint:helm:gateway

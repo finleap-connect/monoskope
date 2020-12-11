@@ -37,8 +37,13 @@ add-kubism:
 add-finleap:
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
-update-chart-deps:
-	yq write "$(HELM_PATH)/gateway/values.yaml" image.tag "$(VERSION)" --inplace
-	yq write "$(HELM_PATH)/gateway/Chart.yaml" version "$(VERSION)" --inplace
-	yq write "$(HELM_PATH)/gateway/Chart.yaml" appVersion "$(VERSION)" --inplace
-	@sed -i 's/latest/$(VERSION)/g' "$(HELM_PATH)/monoskope/Chart.yaml"
+set-chart-version-%:
+	yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
+
+set-app-version-%:
+	yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
+	yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
+
+set-version-%:
+	@$(MAKE) helm-set-chart-version-$*
+	@$(MAKE) helm-set-app-version-$*
