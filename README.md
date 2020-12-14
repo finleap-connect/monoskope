@@ -21,16 +21,42 @@ There are specific `*.mk` files for things like helm, kind, go, etc. which provi
 The following example renders the `monoskope` helm chart:
 
 ```sh
-$ make helm-template
-==> Linting build/package/helm/monoskope
-[INFO] Chart.yaml: icon is recommended
+$ make helm-template-monoskope
+install.go:172: [debug] Original chart version: ""
+install.go:189: [debug] CHART PATH: /home/jsteffen/dev/src/platform/monoskope/monoskope/build/package/helm/monoskope
 
-1 chart(s) linted, 0 chart(s) failed
-
-wrote tmp/monoskope/charts/dex/templates/serviceaccount.yaml
-wrote tmp/monoskope/charts/dex/templates/secret.yaml
+coalesce.go:196: warning: cannot overwrite table with non table for connectors (map[])
+coalesce.go:196: warning: cannot overwrite table with non table for connectors (map[])
+coalesce.go:196: warning: cannot overwrite table with non table for connectors (map[])
+wrote tmp/monoskope/charts/cockroachdb/templates/poddisruptionbudget.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/serviceaccount.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/role.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/rolebinding.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/service.discovery.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/service.public.yaml
 wrote tmp/monoskope/charts/dex/templates/service.yaml
+wrote tmp/monoskope/charts/monoskope-gateway/templates/service.yaml
+wrote tmp/monoskope/templates/service-crdb-metrics.yaml
 wrote tmp/monoskope/charts/dex/templates/deployment.yaml
+wrote tmp/monoskope/charts/monoskope-gateway/templates/deployment.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/statefulset.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/job.init.yaml
+wrote tmp/monoskope/templates/ingress.yaml
+wrote tmp/monoskope/templates/cert-crdb.yaml
+wrote tmp/monoskope/templates/cert-crdb.yaml
+wrote tmp/monoskope/templates/cert-crdb.yaml
+wrote tmp/monoskope/templates/cert-crdb.yaml
+wrote tmp/monoskope/templates/cert-crdb.yaml
+wrote tmp/monoskope/templates/servicemonitor-crdb-metrics.yaml
+wrote tmp/monoskope/charts/monoskope-gateway/templates/vaultsecret.yaml
+wrote tmp/monoskope/templates/vaultsecret-dex.yaml
+wrote tmp/monoskope/charts/cockroachdb/templates/tests/client.yaml
+
+ATTENTION:
+If you want to have the latest dependencies (e.g. gateway chart changes)
+execute the following command prior to the current command:
+$ make helm-dep-monoskope
+
 ```
 
 The following targets are defined. Please not that there are variables (uppercase) which can be overriden:
