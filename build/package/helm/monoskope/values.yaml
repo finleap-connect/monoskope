@@ -17,7 +17,7 @@ dex: # OIDC Provider
   enabled: false
   replicas: 3
   image: quay.io/dexidp/dex
-  imageTag: "v2.25.0"
+  imageTag: "v2.27.0"
   imagePullPolicy: "Always"
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
