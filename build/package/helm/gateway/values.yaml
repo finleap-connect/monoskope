@@ -6,7 +6,7 @@ name: gateway
 nameOverride: ""
 fullnameOverride: ""
 
-replicaCount: 3
+replicaCount: 1
 
 secret:
   generate: true

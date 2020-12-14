@@ -12,6 +12,7 @@ ingress:
 
 dex: # OIDC Provider
   enabled: false
+  replicas: 3
   image: quay.io/dexidp/dex
   imageTag: "v2.25.0"
   imagePullPolicy: "Always"
@@ -73,6 +74,7 @@ dex: # OIDC Provider
 monoskope-gateway:
   nameOverride: "gateway"
   enabled: true
+  replicaCount: 3
   auth:
     allowRootToken: false
     issuerURL: *issuer

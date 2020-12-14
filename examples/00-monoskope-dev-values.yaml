@@ -6,6 +6,7 @@ fullnameOverride: ""
 
 dex:
   enabled: true
+  replicas: 1
   config:
     storage:
       type: sqlite3
@@ -20,6 +21,7 @@ dex:
         userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
 
 monoskope-gateway:
+  replicaCount: 1
   auth:
     allowRootToken: true
   pullSecret: gitlab-registry
