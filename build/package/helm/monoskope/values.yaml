@@ -16,7 +16,7 @@ ingress:
 dex: # OIDC Provider
   enabled: false
   replicas: 3
-  image: quay.io/dexidp/dex
+  image: ghcr.io/dexidp/dex
   imageTag: "v2.27.0"
   imagePullPolicy: "Always"
   config:
