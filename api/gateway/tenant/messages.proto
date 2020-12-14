@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/wrappers.proto";
+
+option objc_class_prefix = "MGT";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/tenant";
+
+package gateway.tenant;
+
+// Request to create a new tenant
+message CreateTenantRequest {
+  // Name of the tenant
+  string name = 1; // required
+  // Prefix for namespaces and other resources related to the tenant
+  string prefix = 2; // required
+}
+
+// Request to get a single tenant
+message GetTenantRequest {
+  oneof find_by {
+    string id = 1;
+    string name = 2;
+  }
+}
+
+// Request to update a single tenant
+message UpdateTenantRequest {
+  // Unique identifier of the tenant to update
+  string id = 1; // required
+  // The information to update
+  Update update = 2; // required
+
+  message Update {
+    // New name for the tenant
+    google.protobuf.StringValue name = 1; // optional
+  }
+}
+
+// Request to delete a single tenant
+message DeleteTenantRequest {
+  string id = 1; // required
+}
+
+// Request to list all tenants
+message ListTenantsRequest {
+  // Include tenants which have previously been deleted
+  bool include_deleted = 1;
+}

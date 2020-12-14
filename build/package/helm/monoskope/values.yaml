@@ -2,30 +2,42 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-name: monoskope
+name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+monitoring:
+  tenant: finleap-cloud
+
+ingress:
+  enabled: false
+  host: monoskope.io
+
 dex: # OIDC Provider
   enabled: false
+  replicas: 3
+  image: quay.io/dexidp/dex
+  imageTag: "v2.25.0"
   imagePullPolicy: "Always"
-  imagePullSecrets: []
   config:
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
-    issuer: http://127.0.0.1:8080/dex
+    issuer: &issuer https://monoskope.io/dex
     storage:
+      type: postgres
       config:
-        inCluster: true
-      type: kubernetes
+        port: 26257
+        database: dex_db
+        user: dex
+        secret: m8dev-monoskope-crdb-client-dex
+        ssl:
+          mode: verify-ca
+          caFile: /etc/dex/certs/ca.crt
+          certFile: /etc/dex/certs/client.crt
+          keyFile: /etc/dex/certs/client.key
     logger:
       level: debug
     web:
-      http: 0.0.0.0:5556
-    grpc:
-      addr: 0.0.0.0:5000
-      tlsCert: /etc/dex/tls/grpc/server/tls.crt
-      tlsKey: /etc/dex/tls/grpc/server/tls.key
-      tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
+      address: 0.0.0.0
     oauth2:
       alwaysShowLoginScreen: false
       skipApprovalScreen: true
@@ -33,22 +45,16 @@ dex: # OIDC Provider
     connectors: []
     staticClients:
       - id: gateway
-        secret: "{{ gateway-app-secret }}"
+        secret: "{{ .gatewayAppSecret }}"
         name: "Monoskope Gateway"
         redirectURIs:
-          - "https://monoskope.dev.finleap.cloud/callback" # callback from dex to gateway
-      - id: monoctl
-        secret: "{{ monoctl-app-secret }}"
-        name: "Monoskope CLI"
-        redirectURIs:
-          - "http://localhost:5555/oauth/callback" # callback from dex to cli
+          - "http://localhost:8000" # callback from dex to monoctl
+          - "http://localhost:18000"
   https: false
   ports:
     web:
-      servicePort: 5556
-    grpc:
-      servicePort: 5000
-  grpc: true
+      containerPort: 5556
+  grpc: false
   resources:
     limits:
       cpu: 500m
@@ -73,7 +79,63 @@ dex: # OIDC Provider
     # Specifies whether a ServiceAccount should be created
     create: false
     # The name of the ServiceAccount to use.
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
+  labels:
+    app.kubernetes.io/part-of: *name
+    
+monoskope-gateway:
+  nameOverride: "gateway"
+  enabled: true
+  replicaCount: 3
+  auth:
+    allowRootToken: false
+    issuerURL: *issuer
+  labels:
+    app.kubernetes.io/part-of: *name
+
+cockroachdb:
+  enabled: true
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
+    tag: v20.2.2
+    imagePullPolicy: Always
+  statefulset:
+    replicas: 3 # Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    annotations:
+      linkerd.io/inject: disabled
+  init:
+    annotations:
+      linkerd.io/inject: disabled
+  storage:
+    persistentVolume:
+      size: "20Gi" # ATTENTION: Increase for PROD according to your use-case
+  conf:
+    # Total size in bytes for caches, shared evenly if there are multiple
+    # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
+    # A percentage of physical memory can also be specified (e.g. `.25`).
+    cache: 25%
+    # Maximum memory capacity available to store temporary data for SQL clients,
+    # including prepared queries and intermediate data rows during query
+    # execution. Accepts numbers interpreted as bytes, size suffixes
+    # (e.g. `1GB` and `1GiB`) or a percentage of physical memory (e.g. `.25`).
+    maxSQLMemory: 25%
+  tls:
+    enabled: true
+    certs:
+      provided: true
+      tlsSecret: true
+      # Secret name for the client root cert.
+      clientRootSecret: monoskope-crdb-root
+      # Secret name for node cert.
+      nodeSecret: monoskope-crdb-node
+  labels:
+    app.kubernetes.io/part-of: *name

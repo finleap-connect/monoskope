@@ -1,0 +1,18 @@
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option objc_class_prefix = "MG";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway";
+
+package gateway;
+
+message ServerInformation {
+  // server version
+  string version = 1;
+  // commit from which server has been built
+  string commit = 2;
+}

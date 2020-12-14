@@ -1,0 +1,56 @@
+{{ if and .Values.cockroachdb.enabled (eq .Values.dex.config.storage.type "postgres") }}
+{{- $name := (printf "%s-%s" (include "monoskope.name" .) "dex-storage-setup") -}}
+{{- $crdbName := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
+{{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 60
+  completions: 1
+  parallelism: 1
+  selector:
+    matchLabels:
+      job-name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        job-name: {{ $name }}
+      annotations:
+        linkerd.io/inject: disabled
+    spec:
+      containers:
+      - args:
+        - sql
+        - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
+        - --execute=CREATE USER IF NOT EXISTS {{ .Values.dex.config.storage.config.user }};
+        - --execute=CREATE DATABASE IF NOT EXISTS {{ .Values.dex.config.storage.config.database }};
+        - --execute=GRANT ALL ON DATABASE {{ .Values.dex.config.storage.config.database }} TO {{ .Values.dex.config.storage.config.user }};
+        image: {{ .Values.cockroachdb.image.repository }}:{{ .Values.cockroachdb.image.tag }}
+        imagePullPolicy: Always
+        name: {{ $name }}
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: certs
+        projected:
+          sources:
+          - secret:
+              name: {{ $crdbName }}-root
+              items:
+              - key: ca.crt
+                path: ca.crt
+                mode: 0400
+              - key: tls.crt
+                path: root.crt
+                mode: 0400
+              - key: tls.key
+                path: root.key
+                mode: 0400
+{{ end }}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+import "api/gateway/messages.proto";
+
+option objc_class_prefix = "MG";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway";
+
+package gateway;
+
+// Actual API of the Monoskope Gateway.
+// RPCs of this service need authentication.
+service Gateway {
+  // Get information like the version of the Gateway
+  rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
+}

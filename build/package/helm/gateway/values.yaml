@@ -1,0 +1,61 @@
+# Default values for monoskope-gateway.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+name: gateway
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+secret:
+  generate: true
+  name: monoskope-gateway-secret
+
+image:
+  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway
+  tag: 0.0.1
+  pullPolicy: Always
+
+livenessProbe:
+  enabled: true
+  failureThreshold: 10
+  periodSeconds: 5
+  initialDelaySeconds: 10
+readinessProbe:
+  enabled: true
+  failureThreshold: 5
+  periodSeconds: 5
+  initialDelaySeconds: 5
+
+resources:
+  limits:
+    cpu: 1
+    memory: 500Mi
+  requests:
+    cpu: 300m
+    memory: 300Mi
+
+nodeSelector: {}
+tolerations: []
+
+keepAlive: false
+ports:
+  api: 8080
+  metrics: 9102
+service:
+  type: ClusterIP
+  api:
+    port: 8080
+  metrics:
+    port: 9102
+auth:
+  allowRootToken: false
+  issuerURL: http://localhost:5555
+
+ingress:
+  enabled: false
+  host: api.monoskope.io
+
+labels: {}
+  # app.kubernetes.io/part-of: my-app

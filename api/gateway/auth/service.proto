@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "api/gateway/auth/messages.proto";
+
+option objc_class_prefix = "MGA";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth";
+
+package gateway.auth;
+
+// Authentication service of the Monoskope Gateway.
+// RPCs of this service do not need authentication.
+service Auth {
+  // Auth
+  rpc GetAuthInformation(AuthState) returns(AuthInformation);
+  rpc ExchangeAuthCode(AuthCode) returns(AuthResponse);
+  rpc RefreshAuth(RefreshAuthRequest) returns(AccessToken);
+}

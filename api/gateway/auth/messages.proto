@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "MGA";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth";
+
+package gateway.auth;
+
+message AuthState { string CallbackURL = 1; }
+
+message AuthInformation {
+  string AuthCodeURL = 1;
+  string State = 2;
+}
+
+message AuthCode {
+  string Code = 1;
+  string State = 2;
+  string CallbackURL = 3;
+}
+
+message AuthResponse {
+  AccessToken AccessToken = 1;
+  string RefreshToken = 2;
+  string Email = 3;
+}
+
+message AccessToken {
+  string Token = 1;
+  google.protobuf.Timestamp Expiry = 2;
+}
+
+message RefreshAuthRequest { string RefreshToken = 1; }

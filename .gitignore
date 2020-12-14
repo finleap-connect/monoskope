@@ -21,3 +21,10 @@ project.dict
 
 /tools/*
 !/tools/goget-wrapper
+*.coverprofile
+
+/monoctl
+/gateway
+
+build/package/helm/monoskope/Chart.lock
+build/package/helm/monoskope/charts/**

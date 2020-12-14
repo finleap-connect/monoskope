@@ -9,20 +9,20 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	DebugLevel = 3
-)
-
 type Logger = logr.Logger
 
-var log Logger
+var (
+	zapLog  *zap.Logger
+	logMode string
+)
 
 func init() {
-	logMode := os.Getenv("LOG_MODE")
-	var (
-		zapLog *zap.Logger
-		err    error
-	)
+	var err error
+
+	if logMode == "" {
+		logMode = os.Getenv("LOG_MODE")
+	}
+
 	if logMode == "" || logMode == "dev" {
 		zapLog, err = zap.NewDevelopment()
 	} else if logMode == "prod" {
@@ -30,12 +30,16 @@ func init() {
 	} else {
 		zapLog = zap.NewNop()
 	}
+
 	if err != nil {
 		panic(fmt.Sprintf("failed to setup logging: %v", err))
 	}
-	log = zapr.NewLogger(zapLog)
+}
+
+func WithOptions(opts ...zap.Option) logr.Logger {
+	return zapr.NewLogger(zapLog.WithOptions(opts...))
 }
 
 func WithName(name string) logr.Logger {
-	return log.WithName(name)
+	return WithOptions(zap.AddCaller()).WithName(name)
 }

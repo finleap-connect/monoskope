@@ -1,0 +1,54 @@
+.helm:
+  image: registry.gitlab.figo.systems/platform/helm-builder:1.14.3-rc1
+
+lint:helm:monoskope:
+  stage: test
+  extends: .helm
+  script:
+    - make helm-dep-monoskope
+    - make helm-lint-monoskope
+  needs: []
+
+lint:helm:gateway:
+  stage: test
+  extends: .helm
+  script:
+    - make helm-lint-gateway
+  needs: []
+
+deliver:chart:monoskope:
+  stage: deliver
+  extends: .helm
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make helm-set-version-gateway
+    - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
+  needs:
+    - lint:helm:gateway
+    - lint:helm:monoskope
+
+deploy:monoskope:
+  stage: deploy
+  extends: .helm
+  environment:
+    name: figo-dev
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - make helm-add-finleap
+    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
+
+deploy:monoskope:latest_tag:
+  stage: deploy
+  extends: .helm
+  environment:
+    name: figo-dev
+  only:
+    - schedules
+  script:
+    - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+    - make helm-add-finleap
+    - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope

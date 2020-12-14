@@ -1,0 +1,63 @@
+.gobase:
+  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
+  except:
+    - schedules
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go
+    - make go-mod
+  cache:
+    paths:
+      - .go/pkg/mod/
+
+.gobase-no-push:
+  extends: .gobase
+  cache:
+    policy: pull
+
+.gobase-docker:
+  extends: .gobase
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+
+test_lint:golang:
+  stage: test
+  extends: .gobase-docker
+  script:
+    - make -j go-ginkgo-get go-golangci-lint-get
+    - make -j go-vet go-lint
+    - make go-test
+  artifacts:
+    name: "Go Tests"
+    when: always
+    reports:
+      junit: ["reports/*.xml"]
+
+build:golang:gateway:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-gateway
+  artifacts:
+    paths:
+      - gateway
+    expire_in: 1 day
+  needs: []
+
+deliver:gateway:
+  stage: deliver
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
+  dependencies:
+    - test_lint:golang
+    - build:golang:gateway

@@ -8,7 +8,7 @@ KUBE_NAMESPACE ?= platform-monoskope-monoskope
 
 export 
 
-clean: go-clean kind-clean helm-clean tools-clean
+clean: go-clean helm-clean tools-clean
 
 # go
 
@@ -17,13 +17,11 @@ go-%:
 
 # helm
 
+HELM_PATH 		            ?= build/package/helm
+HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
+
 helm-%:
 	@$(MAKE) -f helm.mk $*
-
-# kind
-
-kind-%:
-	@$(MAKE) -f kind.mk $*
 
 # docs
 
@@ -31,6 +29,9 @@ diagrams:
 	$(SHELL) ./build/ci/gen_charts.sh
 
 # Phony target to install all required tools into ${TOOLS_DIR}
-tools: kind-get go-ginkgo-get go-golangci-lint-get
+tools: go-ginkgo-get go-golangci-lint-get
 
-tools-clean: kind-clean go-ginkgo-clean go-golangci-lint-clean
+tools-clean: go-ginkgo-clean go-golangci-lint-clean
+
+echo-%:
+	@echo $($*)
