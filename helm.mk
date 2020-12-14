@@ -16,20 +16,23 @@ lint-%:
 	@$(HELM) lint $(HELM_PATH)/$*
 
 install-%:
-	@$(MAKE) helm-dep-$*
-	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE)
+	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 2m
 
 install-from-repo-%:
-	@$(HELM) repo update
-	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE)
+	@$(MAKE) helm-dep-$*
+	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
 
 uninstall-%: 
 	@$(HELM) uninstall m8dev --namespace $(KUBE_NAMESPACE)
 
 template-%: clean
-	@$(MAKE) helm-dep-$*
 	@mkdir -p $(HELM_OUTPUT_DIR)
 	@$(HELM) template m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+	@echo "ATTENTION:"
+	@echo "If you want to have the latest dependencies (e.g. gateway chart changes)"
+	@echo "execute the following command prior to the current command:"
+	@echo "$$ $(MAKE) helm-dep-$*"
+	@echo
 
 add-kubism:
 	@$(HELM) repo add kubism.io https://kubism.github.io/charts/

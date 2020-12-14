@@ -5,6 +5,7 @@ lint:helm:monoskope:
   stage: test
   extends: .helm
   script:
+    - make helm-dep-monoskope
     - make helm-lint-monoskope
   needs: []
 

@@ -1,0 +1,19 @@
+{{ if and .Values.cockroachdb.enabled (eq .Values.dex.config.storage.type "postgres") }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb") -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-client-dex
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $fullname }}-client-dex
+  issuerRef:
+    name: {{ $fullname }}-issuer
+    kind: Issuer
+  commonName: {{ .Values.dex.config.storage.config.user }}
+  organization:
+  - Cockroach
+  usages:
+  - client auth
+{{ end }}

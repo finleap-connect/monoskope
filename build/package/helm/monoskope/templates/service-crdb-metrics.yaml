@@ -1,0 +1,23 @@
+{{ if .Values.cockroachdb.enabled }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-metrics") -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    target: {{ (include "call-nested" (list . "cockroachdb" "cockroachdb.name")) }}
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: {{ (include "call-nested" (list . "cockroachdb" "cockroachdb.name")) }}
+    app.kubernetes.io/component: cockroachdb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  sessionAffinity: None
+  type: ClusterIP
+{{ end }}

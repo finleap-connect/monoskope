@@ -2,9 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-name: monoskope
+name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
+
+monitoring:
+  tenant: finleap-cloud
 
 ingress:
   enabled: false
@@ -20,9 +23,17 @@ dex: # OIDC Provider
     existingSecret: monoskope-dex-config # use vaultsecret to configure dex
     issuer: &issuer https://monoskope.io/dex
     storage:
+      type: postgres
       config:
-        inCluster: true
-      type: kubernetes
+        port: 26257
+        database: dex_db
+        user: dex
+        secret: m8dev-monoskope-crdb-client-dex
+        ssl:
+          mode: verify-ca
+          caFile: /etc/dex/certs/ca.crt
+          certFile: /etc/dex/certs/client.crt
+          keyFile: /etc/dex/certs/client.key
     logger:
       level: debug
     web:
@@ -70,7 +81,9 @@ dex: # OIDC Provider
     # The name of the ServiceAccount to use.
   # frontend:
   #   logoURL: https://example.com/yourlogo.png
-
+  labels:
+    app.kubernetes.io/part-of: *name
+    
 monoskope-gateway:
   nameOverride: "gateway"
   enabled: true
@@ -79,7 +92,7 @@ monoskope-gateway:
     allowRootToken: false
     issuerURL: *issuer
   labels:
-    app.kubernetes.io/part-of: "monoskope"
+    app.kubernetes.io/part-of: *name
 
 cockroachdb:
   enabled: true
@@ -125,4 +138,4 @@ cockroachdb:
       # Secret name for node cert.
       nodeSecret: monoskope-crdb-node
   labels:
-    app.kubernetes.io/part-of: "monoskope"
+    app.kubernetes.io/part-of: *name

@@ -60,23 +60,6 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $fullname }}-client
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  secretName: {{ $fullname }}-client
-  issuerRef:
-    name: {{ $fullname }}-issuer
-    kind: Issuer
-  commonName: client
-  organization:
-  - Cockroach
-  usages:
-  - client auth
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
   name: {{ $fullname }}-node
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
