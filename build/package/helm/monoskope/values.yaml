@@ -139,3 +139,10 @@ cockroachdb:
       nodeSecret: monoskope-crdb-node
   labels:
     app.kubernetes.io/part-of: *name
+  # CockroachDB's Prometheus operator ServiceMonitor support
+  serviceMonitor:
+    enabled: true
+    labels: {}
+    annotations: {}
+    interval: 30s
+    # scrapeTimeout: 10s
