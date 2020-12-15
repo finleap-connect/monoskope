@@ -83,7 +83,7 @@ dex: # OIDC Provider
   #   logoURL: https://example.com/yourlogo.png
   labels:
     app.kubernetes.io/part-of: *name
-    
+
 monoskope-gateway:
   nameOverride: "gateway"
   enabled: true
@@ -146,3 +146,50 @@ cockroachdb:
     annotations: {}
     interval: 30s
     # scrapeTimeout: 10s
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  persistence:
+    enabled: false
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
+    tag: 3.8.9
+    pullPolicy: Always
+  loadDefinition:
+    enabled: true
+    existingSecret: rabbitmq-load-definition
+  extraConfiguration: |-
+    load_definitions = /app/rabbitmq-definitions.json
+  service:
+    port: 5672
+    portName: amqp
+    labels:
+      app.kubernetes.io/part-of: *name
+  auth:
+    username: admin
+    password: foo  # this will be overwritten by a real password but needs to be set initially
+    existingErlangSecret: rabbitmq-erlang-cookie
+    tls:
+      enabled: true
+      failIfNoPeerCert: true
+      sslOptionsVerify: verify_peer
+      existingSecret: rabbitmq-leaf
+  statefulsetLabels:
+    app.kubernetes.io/part-of: *name
+  podAnnotations:
+    linkerd.io/inject: disabled
+  podLabels:
+    app.kubernetes.io/part-of: *name
+  metrics:
+    enabled: true
+    grafanaDashboard:
+      enabled: true
+      extraLabels:
+        tenant: finleap-cloud
+        app.kubernetes.io/part-of: *name
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        tenant: finleap-cloud
+        app.kubernetes.io/part-of: *name

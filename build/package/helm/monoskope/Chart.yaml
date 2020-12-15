@@ -34,3 +34,7 @@ dependencies: # A list of the chart requirements
     version: 5.0.2
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
     condition: cockroachdb.enabled,global.cockroachdb.enabled
+  - name: rabbitmq
+    version: 8.5.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled
