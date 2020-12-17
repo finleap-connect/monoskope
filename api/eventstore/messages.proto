@@ -6,6 +6,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
 
 option objc_class_prefix = "MES";
 option go_package =
@@ -35,4 +36,28 @@ message Event {
   string aggregate_type = 6;
   // Event type specific event data
   google.protobuf.Any data = 7;
+}
+
+// Request to get Events from to the store
+message EventFilter {
+  oneof filter_by {
+    // Get specific event by it's id
+    google.protobuf.StringValue event_id = 1;
+    Filter filter = 2;
+  }
+
+  message Filter {
+    // Filter events by aggregate_id
+    google.protobuf.StringValue aggregate_id = 1;
+    // Filter events for a specific aggregate type
+    google.protobuf.StringValue aggregate_type = 2;
+    // Filter events with a sequence_number >= to_sequence_number
+    google.protobuf.Int64Value from_sequence_number = 3;
+    // Filter events with a sequence_number <= to_sequence_number
+    google.protobuf.Int64Value to_sequence_number = 4;
+    // Filter events with a timestamp >= to_timestamp
+    google.protobuf.Timestamp from_timestamp = 5;
+    // Filter events with a timestamp <= to_timestamp
+    google.protobuf.Timestamp to_timestamp = 6;
+  }
 }

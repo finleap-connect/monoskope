@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+// import "api/gateway/messages.proto";
+import "api/eventstore/messages.proto";
+
+option objc_class_prefix = "MG";
+option go_package =
+    "gitlab.figo.systems/platform/monoskope/monoskope/api/eventstore";
+
+package eventstore;
+
+// API of the Monoskope EventStore.
+service EventStore {
+  // Stream events to the store.
+  rpc Store(stream Event) returns(google.protobuf.Empty);
+  // Get a stream of Events
+  rpc Retrieve(EventFilter) returns(stream Event);
+}
