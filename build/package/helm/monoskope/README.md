@@ -46,8 +46,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.certs.web.create | bool | `false` |  |
 | dex.config.connectors | list | `[]` |  |
 | dex.config.enablePasswordDB | bool | `false` |  |
-| dex.config.existingSecret | string | `"monoskope-dex-config"` |  |
-| dex.config.issuer | string | `"https://monoskope.io/dex"` |  |
+| dex.config.existingSecret | string | `"monoskope-dex-config"` | Name of the secret containing the dex config |
+| dex.config.issuer | string | `"https://monoskope.io/dex"` | Domain of the issuer (dex) |
 | dex.config.logger.level | string | `"debug"` |  |
 | dex.config.oauth2.alwaysShowLoginScreen | bool | `false` |  |
 | dex.config.oauth2.skipApprovalScreen | bool | `true` |  |
@@ -58,7 +58,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.config.staticClients[0].secret | string | `"{{ .gatewayAppSecret }}"` |  |
 | dex.config.storage.config.database | string | `"dex_db"` |  |
 | dex.config.storage.config.port | int | `26257` |  |
-| dex.config.storage.config.secret | string | `"m8dev-monoskope-crdb-client-dex"` |  |
+| dex.config.storage.config.secret | string | `"m8dev-monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
 | dex.config.storage.config.ssl.caFile | string | `"/etc/dex/certs/ca.crt"` |  |
 | dex.config.storage.config.ssl.certFile | string | `"/etc/dex/certs/client.crt"` |  |
 | dex.config.storage.config.ssl.keyFile | string | `"/etc/dex/certs/client.key"` |  |

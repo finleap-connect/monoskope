@@ -7,7 +7,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 monitoring:
-  tenant: finleap-cloud
+  tenant: &tenant finleap-cloud
 
 ingress:
   enabled: false
@@ -20,7 +20,9 @@ dex: # OIDC Provider
   imageTag: "v2.27.0"
   imagePullPolicy: "Always"
   config:
-    existingSecret: monoskope-dex-config # use vaultsecret to configure dex
+    # -- Name of the secret containing the dex config
+    existingSecret: monoskope-dex-config
+    # -- Domain of the issuer (dex)
     issuer: &issuer https://monoskope.io/dex
     storage:
       type: postgres
@@ -28,6 +30,7 @@ dex: # OIDC Provider
         port: 26257
         database: dex_db
         user: dex
+        # -- Secret containing the certificates to communicate with the storage backend
         secret: m8dev-monoskope-crdb-client-dex
         ssl:
           mode: verify-ca
@@ -186,10 +189,10 @@ rabbitmq:
     grafanaDashboard:
       enabled: true
       extraLabels:
-        tenant: finleap-cloud
+        tenant: *tenant
         app.kubernetes.io/part-of: *name
     serviceMonitor:
       enabled: true
       additionalLabels:
-        tenant: finleap-cloud
+        tenant: *tenant
         app.kubernetes.io/part-of: *name
