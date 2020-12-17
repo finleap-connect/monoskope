@@ -5,7 +5,6 @@ syntax = "proto3";
 
 import "api/gateway/auth/messages.proto";
 
-option objc_class_prefix = "MGA";
 option go_package =
     "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth";
 

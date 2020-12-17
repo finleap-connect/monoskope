@@ -5,7 +5,6 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option objc_class_prefix = "MGA";
 option go_package =
     "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth";
 

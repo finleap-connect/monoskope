@@ -6,7 +6,6 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "api/eventstore/messages.proto";
 
-option objc_class_prefix = "MG";
 option go_package =
     "gitlab.figo.systems/platform/monoskope/monoskope/api/eventstore";
 
