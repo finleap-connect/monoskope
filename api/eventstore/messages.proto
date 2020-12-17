@@ -49,10 +49,12 @@ message EventFilter {
 
   // EventStore filter
   message Filter {
-    // Filter events by aggregate_id
-    google.protobuf.StringValue aggregate_id = 1;
-    // Filter events for a specific aggregate type
-    google.protobuf.StringValue aggregate_type = 2;
+    oneof aggregate_by {
+      // Filter events by aggregate_id
+      google.protobuf.StringValue aggregate_id = 1;
+      // Filter events for a specific aggregate type
+      google.protobuf.StringValue aggregate_type = 2;
+    }
     // Filter events with a sequence_number >= to_sequence_number
     google.protobuf.Int64Value from_sequence_number = 3;
     // Filter events with a sequence_number <= to_sequence_number
