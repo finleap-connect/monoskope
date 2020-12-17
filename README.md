@@ -2,6 +2,8 @@
 
 ![Monoskope Logo](assets/logo/monoskope.png)
 
+`Monoskope` implements the management and operation of tenants, users and their roles in a [Kubernetes](https://kubernetes.io/) multi-cluster environment. It fullfills the needs of operators of the clusters as well as the needs of developers using the cloud infrastructure provided by the operators.
+
 ## Build status
 
 | `main` | `develop` |
@@ -13,8 +15,6 @@
 ![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 ![AppVersion: 0.0.1](https://img.shields.io/badge/AppVersion-0.0.1-informational?style=flat-square)
-
-`Monoskope` implements the management and operation of tenants, users and their roles in a [Kubernetes](https://kubernetes.io/) multi-cluster environment. It fullfills the needs of operators of the clusters as well as the needs of developers using the cloud infrastructure provided by the operators.
 
 ## Further documentation
 
