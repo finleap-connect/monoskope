@@ -1,26 +1,4 @@
-# Monoskope
-
-![Monoskope Logo](assets/logo/monoskope.png)
-
-`Monoskope` implements the management and operation of tenants, users and their roles in a [Kubernetes](https://kubernetes.io/) multi-cluster environment. It fullfills the needs of operators of the clusters as well as the needs of developers using the cloud infrastructure provided by the operators.
-
-## Build status
-
-| `main` | `develop` |
-| -- | -- |
-|[![pipeline status](https://gitlab.figo.systems/platform/monoskope/monoskope/badges/main/pipeline.svg)](https://gitlab.figo.systems/platform/monoskope/monoskope/-/commits/main)|[![pipeline status](https://gitlab.figo.systems/platform/monoskope/monoskope/badges/develop/pipeline.svg)](https://gitlab.figo.systems/platform/monoskope/monoskope/-/commits/develop)
-|[![coverage report](https://gitlab.figo.systems/platform/monoskope/monoskope/badges/main/coverage.svg)](https://gitlab.figo.systems/platform/monoskope/monoskope/-/commits/main)|[![coverage report](https://gitlab.figo.systems/platform/monoskope/monoskope/badges/develop/coverage.svg)](https://gitlab.figo.systems/platform/monoskope/monoskope/-/commits/develop)|
-
-## Helm chart
-{{ template "chart.versionBadge" . }}
-{{ template "chart.typeBadge" . }}
-{{ template "chart.appVersionBadge" . }}
-
-## Further documentation
-
-Find the detailed documentation at [/docs](docs/Overview.md).
-
-## Development
+# Makefile
 
 When developing, the `Makefile` comes in handy to help you with various tasks.
 There are specific `*.mk` files for things like helm, kind, go, etc. which provides targets for developing with those tools.
@@ -93,9 +71,3 @@ The following targets are defined. Please not that there are variables (uppercas
 | `go-run-*` | Runs the app in `cmd/*`, e.g. `go-run-monoctl` to run `monoctl` from sources |
 | `go-test` | Runs all go tests |
 | `go-protobuf` | Generates code for all proto specs in `api` folder and it's children |
-
-{{ template "chart.requirementsSection" . }}
-
-{{ template "chart.valuesSection" . }}
-
-{{ template "helm-docs.versionFooter" . }}

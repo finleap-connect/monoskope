@@ -52,5 +52,3 @@ set-version-%:
 
 docs:
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
-	@rm $(HELM_PATH)/gateway/README.md
-	@mv -f $(HELM_PATH)/monoskope/README.md README.md
