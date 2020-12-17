@@ -43,9 +43,11 @@ message EventFilter {
   oneof filter_by {
     // Get specific event by it's id
     google.protobuf.StringValue event_id = 1;
+    // Get event stream through filter
     Filter filter = 2;
   }
 
+  // EventStore filter
   message Filter {
     // Filter events by aggregate_id
     google.protobuf.StringValue aggregate_id = 1;
