@@ -3,8 +3,7 @@ HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
 HELM_REGISTRY_ALIAS			?= finleap
 
-
-.PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
+.PHONY: template-clean dependency-update install uninstall template docs
 
 clean:
 	@rm -Rf $(HELM_OUTPUT_DIR)
@@ -50,3 +49,8 @@ set-app-version-%:
 set-version-%:
 	@$(MAKE) helm-set-chart-version-$*
 	@$(MAKE) helm-set-app-version-$*
+
+docs:
+	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
+	@rm $(HELM_PATH)/gateway/README.md
+	@mv -f $(HELM_PATH)/monoskope/README.md README.md
