@@ -4,7 +4,6 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/empty.proto";
-// import "api/gateway/messages.proto";
 import "api/eventstore/messages.proto";
 
 option objc_class_prefix = "MG";
