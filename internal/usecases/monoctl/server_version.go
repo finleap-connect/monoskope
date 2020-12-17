@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway"
+	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"

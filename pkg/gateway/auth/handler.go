@@ -9,7 +9,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	"github.com/pkg/errors"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/auth"
+	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"

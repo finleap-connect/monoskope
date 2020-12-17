@@ -72,8 +72,9 @@ clean: ginkgo-clean golangci-lint-clean build-clean
 	find . -name '*.coverprofile' -exec rm {} \;
 
 protobuf:
-	find ./api -name '*.go' -exec rm {} \;
-	find ./api -name '*.proto' -exec $(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. {} \;
+	rm -rf $(BUILD_PATH)/pkg/api
+	mkdir -p $(BUILD_PATH)/pkg/api
+	find ./api -name '*.proto' -exec $(PROTOC) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. --go-grpc_out=. {} \;
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)

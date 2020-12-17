@@ -5,7 +5,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway";
+    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";
 
 package gateway;
 

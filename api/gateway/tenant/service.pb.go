@@ -9,7 +9,7 @@ package tenant
 import (
 	proto "github.com/golang/protobuf/proto"
 	empty "github.com/golang/protobuf/ptypes/empty"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/api"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

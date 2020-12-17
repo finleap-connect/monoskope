@@ -7,7 +7,7 @@ import "google/protobuf/empty.proto";
 import "api/eventstore/messages.proto";
 
 option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/api/eventstore";
+    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore";
 
 package eventstore;
 
