@@ -32,7 +32,7 @@ type Tenant struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Unique identifier of the tenant
+	// Unique identifier of the tenant (UUID 128-bit number)
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Name of the tenant
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -165,7 +165,7 @@ type User struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Unique identifier of the user
+	// Unique identifier of the user (UUID 128-bit number)
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Name of the user
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
