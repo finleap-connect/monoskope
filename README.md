@@ -1,4 +1,4 @@
-# Monoskope
+# Monoskope (m8)
 
 ![Monoskope Logo](assets/logo/monoskope.png)
 
@@ -13,9 +13,13 @@
 
 ## Documentation
 
-See the [GDrive](https://drive.google.com/drive/folders/1QEewDHF0LwSLr6aUVoHvMWrFgaJfJLty) for more information on the architecture and more.
+### General
 
-* [Flow charts](docs/flow-charts/Overview.md)
-* [Makefile](docs/Makefile.md)
-* [Gateway helm chart](build/package/helm/gateway/README.md)
-* [Monoskope helm chart](build/package/helm/monoskope/README.md)
+* Architecture and more in [GDrive](https://drive.google.com/drive/folders/1QEewDHF0LwSLr6aUVoHvMWrFgaJfJLty)
+* [Flow charts](docs/flow-charts/Overview.md) of certain parts of `monoskope`
+* Docs on the almighty [Makefile](docs/Makefile.md)
+
+### Helm Charts
+
+* `gateway` helm chart [readme](build/package/helm/gateway/README.md)
+* `monoskope` helm chart [readme](build/package/helm/monoskope/README.md)
