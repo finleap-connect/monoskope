@@ -45,8 +45,8 @@ func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
 	})
 }
 
-// NewEventStore creates a new EventStore.
-func NewEventStore(db *pg.DB) (*EventStore, error) {
+// NewPostgresEventStore creates a new EventStore.
+func NewPostgresEventStore(db *pg.DB) (*EventStore, error) {
 	s := &EventStore{
 		db: db,
 	}
