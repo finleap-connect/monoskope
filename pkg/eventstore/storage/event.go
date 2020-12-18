@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -112,3 +113,26 @@ func (e event) SequenceNumber() uint64 {
 func (e event) String() string {
 	return fmt.Sprintf("%s@%d", e.eventType, e.aggregateVersion)
 }
+
+// Error implements the Error method of the errors.Error interface.
+func (e EventStoreError) Error() string {
+	errStr := e.Err.Error()
+	if e.BaseErr != nil {
+		errStr += ": " + e.BaseErr.Error()
+	}
+	return errStr
+}
+
+// Cause returns the cause of this error.
+func (e EventStoreError) Cause() error {
+	return e.Err
+}
+
+// ErrNoEventsToAppend is when no events are available to append.
+var ErrNoEventsToAppend = errors.New("no events to append")
+
+// ErrInvalidEvent is when an event does not implement the Event interface.
+var ErrInvalidEvent = errors.New("invalid event")
+
+// ErrIncorrectEventAggregateVersion is when an event is for an other version of the aggregate.
+var ErrIncorrectEventVersion = errors.New("mismatching event aggreagte version")
