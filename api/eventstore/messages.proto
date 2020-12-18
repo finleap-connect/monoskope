@@ -20,35 +20,50 @@ package eventstore;
 // The combination of aggregate_type, aggregate_id and version is
 // unique.
 message Event {
+  // Global strict monotone counter
+  uint64 sequence_number = 1;
   // Type of the event
   string type = 2;
+  // Timestamp of when the event was created
+  google.protobuf.Timestamp timestamp = 3;
   // ID of the aggregate that the event should be applied to (UUID 128-bit
   // number)
   string aggregate_id = 5;
   // Type of the aggregate that the event can be applied to
   string aggregate_type = 6;
-  // Timestamp of when the event was created
-  google.protobuf.Timestamp timestamp = 3;
   // Strict monotone counter, per aggregate/aggregate_id relation
-  int64 version = 4;
+  google.protobuf.UInt64Value aggregate_version = 4;
   // Event type specific event data
   google.protobuf.Any data = 7;
 }
 
 // Request to get Events from to the store
 message EventFilter {
-  oneof aggregate_by {
+  oneof by_aggregate {
     // Filter events by aggregate_id
     google.protobuf.StringValue aggregate_id = 1;
     // Filter events for a specific aggregate type
     google.protobuf.StringValue aggregate_type = 2;
   }
-  // Filter events with a version >= min_version
-  google.protobuf.Int64Value min_version = 3;
-  // Filter events with a version <= max_version
-  google.protobuf.Int64Value max_version = 4;
-  // Filter events with a timestamp >= min_timestamp
-  google.protobuf.Timestamp min_timestamp = 5;
-  // Filter events with a timestamp <= max_timestamp
-  google.protobuf.Timestamp max_timestamp = 6;
+
+  oneof by_aggregate_version {
+    // Filter events with a version >= min_version
+    google.protobuf.UInt64Value min_version = 3;
+    // Filter events with a version <= max_version
+    google.protobuf.UInt64Value max_version = 4;
+  }
+
+  oneof by_sequence_number {
+    // Filter events with a sequence_number >= min_sequence_number
+    google.protobuf.UInt64Value min_sequence_number = 5;
+    // Filter events with a sequence_number <= max_sequence_number
+    google.protobuf.UInt64Value max_sequence_number = 6;
+  }
+
+  oneof by_timestamp {
+    // Filter events with a timestamp >= min_timestamp
+    google.protobuf.Timestamp min_timestamp = 7;
+    // Filter events with a timestamp <= max_timestamp
+    google.protobuf.Timestamp max_timestamp = 8;
+  }
 }

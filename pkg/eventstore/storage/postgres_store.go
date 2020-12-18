@@ -18,15 +18,16 @@ type EventStore struct {
 type EventLog struct {
 	tableName struct{} `sql:"events"`
 
-	EventID       uuid.UUID              `sql:"event_id,type:uuid,pk"`
-	EventType     EventType              `sql:"event_type,type:varchar(250)"`
-	AggregateID   uuid.UUID              `sql:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType AggregateType          `sql:"aggregate_type,type:varchar(250),unique:aggregate"`
-	Version       uint64                 `sql:"version,unique:aggregate"`
-	Timestamp     time.Time              `sql:"timestamp"`
-	Context       map[string]interface{} `sql:"context"`
-	RawData       json.RawMessage        `sql:"data,type:jsonb"`
-	data          EventData              `sql:"-"`
+	EventID        uuid.UUID              `sql:"event_id,type:uuid,pk"`
+	SequenceNumber uint64                 `sql:"sequence_number,type:serial,pk"`
+	EventType      EventType              `sql:"event_type,type:varchar(250)"`
+	AggregateID    uuid.UUID              `sql:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType  AggregateType          `sql:"aggregate_type,type:varchar(250),unique:aggregate"`
+	Version        uint64                 `sql:"version,unique:aggregate"`
+	Timestamp      time.Time              `sql:"timestamp"`
+	Context        map[string]interface{} `sql:"context"`
+	RawData        json.RawMessage        `sql:"data,type:jsonb"`
+	data           EventData              `sql:"-"`
 }
 
 var tables = []interface{}{
