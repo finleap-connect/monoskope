@@ -32,44 +32,6 @@ type StoreQuery struct {
 	MaxTimestamp *time.Time
 }
 
-// EventData is any additional data for an event.
-type EventData interface{}
-
-// EventType is the type of an event, used as its unique identifier.
-type EventType string
-
-// EventType is the type of an event, used as its unique identifier.
-type AggregateType string
-
-// Event describes anything that has happened in the system.
-// An event type name should be in past tense and contain the intent
-// (TenantUpdated). The event should contain all the data needed when
-// applying/handling it.
-// The combination of aggregate_type, aggregate_id and version is
-// unique.
-type Event interface {
-	// Type of the event.
-	EventType() EventType
-	// Type of the aggregate that the event can be applied to.
-	AggregateType() AggregateType
-	// ID of the aggregate that the event should be applied to.
-	AggregateID() uuid.UUID
-	// Timestamp of when the event was created.
-	Timestamp() time.Time
-	// Strict monotone counter, per aggregate/aggregate_id relation.
-	Version() uint64
-	// Event type specific event data.
-	Data() EventData
-	// A string representation of the event.
-	String() string
-}
-
-// CreateEventData creates an event data of a type using the factory registered
-// with RegisterEventData.
-func CreateEventData(eventType EventType) (EventData, error) {
-	panic("not implemented")
-}
-
 // EventStoreError is an error in the event store, with the namespace.
 type EventStoreError struct {
 	// Err is the error.
