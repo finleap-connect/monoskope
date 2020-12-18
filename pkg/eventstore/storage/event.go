@@ -48,21 +48,17 @@ func CreateEventData(eventType EventType) (EventData, error) {
 }
 
 // NewEvent creates a new event with a type and data, setting its timestamp.
-func NewEvent(seqNo uint64, eventType EventType, data EventData, timestamp time.Time) Event {
+func NewEvent(sequenceNumber uint64, eventType EventType, data EventData, timestamp time.Time,
+	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
 	return event{
-		sequenceNumber: seqNo,
-		eventType:      eventType,
-		data:           data,
-		timestamp:      timestamp,
+		sequenceNumber:   sequenceNumber,
+		eventType:        eventType,
+		data:             data,
+		timestamp:        timestamp,
+		aggregateType:    aggregateType,
+		aggregateID:      aggregateID,
+		aggregateVersion: aggregateVersion,
 	}
-}
-
-// ForAggregate sets the aggregate data on an event.
-func (event event) ForAggregate(aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
-	event.aggregateType = aggregateType
-	event.aggregateID = aggregateID
-	event.aggregateVersion = aggregateVersion
-	return event
 }
 
 // event is an internal representation of an event, returned when the aggregate
