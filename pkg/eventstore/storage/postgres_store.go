@@ -32,7 +32,7 @@ var tables = []interface{}{
 	(*EventLog)(nil),
 }
 
-func (s *EventStore) CreateTables(opts *orm.CreateTableOptions) error {
+func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
 	return s.db.RunInTransaction(func(tx *pg.Tx) error {
 		for _, table := range tables {
 			if err := s.db.CreateTable(table, opts); err != nil {
@@ -48,7 +48,7 @@ func NewEventStore(db *pg.DB) (*EventStore, error) {
 	s := &EventStore{
 		db: db,
 	}
-	err := s.CreateTables(&orm.CreateTableOptions{
+	err := s.createTables(&orm.CreateTableOptions{
 		IfNotExists: true,
 	})
 	if err != nil {

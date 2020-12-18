@@ -8,7 +8,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/go-logr/logr v0.2.1
 	github.com/go-logr/zapr v0.2.0
-	github.com/go-pg/pg v8.0.7+incompatible // indirect
+	github.com/go-pg/pg v8.0.7+incompatible
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
