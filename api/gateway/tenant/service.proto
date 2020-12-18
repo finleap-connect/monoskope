@@ -9,7 +9,7 @@ import "google/protobuf/empty.proto";
 
 option objc_class_prefix = "MGT";
 option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/api/gateway/tenant";
+    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/tenant";
 
 package gateway.tenant;
 
