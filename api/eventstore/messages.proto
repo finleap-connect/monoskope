@@ -54,13 +54,13 @@ message EventFilter {
       // Filter events for a specific aggregate type
       google.protobuf.StringValue aggregate_type = 2;
     }
-    // Filter events with a sequence_number >= to_sequence_number
-    google.protobuf.Int64Value from_sequence_number = 3;
-    // Filter events with a sequence_number <= to_sequence_number
-    google.protobuf.Int64Value to_sequence_number = 4;
-    // Filter events with a timestamp >= to_timestamp
-    google.protobuf.Timestamp from_timestamp = 5;
-    // Filter events with a timestamp <= to_timestamp
-    google.protobuf.Timestamp to_timestamp = 6;
+    // Filter events with a sequence_number >= min_sequence_number
+    google.protobuf.Int64Value min_sequence_number = 3;
+    // Filter events with a sequence_number <= max_sequence_number
+    google.protobuf.Int64Value max_sequence_number = 4;
+    // Filter events with a timestamp >= min_timestamp
+    google.protobuf.Timestamp min_timestamp = 5;
+    // Filter events with a timestamp <= max_timestamp
+    google.protobuf.Timestamp max_timestamp = 6;
   }
 }
