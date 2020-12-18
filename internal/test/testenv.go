@@ -108,10 +108,12 @@ func (env *TestEnv) Shutdown() error {
 	log := env.log
 	log.Info("Tearing down testenv...")
 
-	for key, element := range env.resources {
-		log.Info("Tearing down docker resource", "resource", key)
-		if err := env.pool.Purge(element); err != nil {
-			return err
+	if env.resources != nil {
+		for key, element := range env.resources {
+			log.Info("Tearing down docker resource", "resource", key)
+			if err := env.pool.Purge(element); err != nil {
+				return err
+			}
 		}
 	}
 

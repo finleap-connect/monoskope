@@ -51,6 +51,7 @@ test:
 	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover pkg/monoctl
 	$(GINKGO) -r -v -cover pkg/util
+	$(GINKGO) -r -v -cover pkg/eventstore
 
 coverage:
 	find . -name '*.coverprofile' -exec go tool cover -func {} \;
@@ -66,6 +67,8 @@ ginkgo-clean:
 
 golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
+
+tools: golangci-lint-get ginkgo-get
 
 clean: ginkgo-clean golangci-lint-clean build-clean
 	rm -Rf reports/
