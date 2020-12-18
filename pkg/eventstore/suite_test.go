@@ -26,7 +26,7 @@ var (
 func TestEventStore(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../reports/eventstore-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "eventstore integration tests", []Reporter{junitReporter})
+	RunSpecsWithDefaultAndCustomReporters(t, "eventstore/integration", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {

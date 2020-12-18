@@ -11,5 +11,5 @@ import (
 func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../../reports/monoctl-config-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Monoctl Config", []Reporter{junitReporter})
+	RunSpecsWithDefaultAndCustomReporters(t, "monoctl/conf", []Reporter{junitReporter})
 }
