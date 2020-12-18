@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -57,4 +58,14 @@ func NewPostgresEventStore(db *pg.DB) (*EventStore, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// Save implements the Save method of the EventStore interface.
+func (s *EventStore) Save(ctx context.Context, events []Event) error {
+	panic("not implemented")
+}
+
+// Load implements the Load method of the EventStore interface.
+func (s *EventStore) Load(ctx context.Context, query *StoreQuery) ([]Event, error) {
+	panic("not implemented")
 }

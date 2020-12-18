@@ -14,9 +14,6 @@ type Store interface {
 
 	// Load loads all events for the query from the store.
 	Load(context.Context, *StoreQuery) ([]Event, error)
-
-	// LoadById loads the event by it's id from the store.
-	LoadById(context.Context, uuid.UUID) (Event, error)
 }
 
 // StoreQuery contains query information on how to retrieve events from an event store
@@ -71,4 +68,12 @@ type Event interface {
 // with RegisterEventData.
 func CreateEventData(eventType EventType) (EventData, error) {
 	panic("not implemented")
+}
+
+// EventStoreError is an error in the event store, with the namespace.
+type EventStoreError struct {
+	// Err is the error.
+	Err error
+	// BaseErr is an optional underlying error, for example from the DB driver.
+	BaseErr error
 }
