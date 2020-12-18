@@ -11,7 +11,8 @@ import (
 
 // EventStore implements an EventStore for PostgreSQL.
 type EventStore struct {
-	db *pg.DB
+	db      *pg.DB
+	encoder Encoder
 }
 
 type EventLog struct {

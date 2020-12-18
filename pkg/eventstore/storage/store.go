@@ -66,3 +66,9 @@ type Event interface {
 	// A string representation of the event.
 	String() string
 }
+
+// CreateEventData creates an event data of a type using the factory registered
+// with RegisterEventData.
+func CreateEventData(eventType EventType) (EventData, error) {
+	panic("not implemented")
+}
