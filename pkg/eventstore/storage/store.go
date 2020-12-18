@@ -25,10 +25,10 @@ type StoreQuery struct {
 	AggregateId *uuid.UUID
 	// Filter events for a specific aggregate type
 	AggregateType *AggregateType
-	// Filter events with a SequenceNumber >= MinSequenceNumber
-	MinSequenceNumber *uint64
-	// Filter events with a SequenceNumber <= MaxSequenceNumber
-	MaxSequenceNumber *uint64
+	// Filter events with a Version >= MinVersion
+	MinVersion *uint64
+	// Filter events with a Version <= MaxVersion
+	MaxVersion *uint64
 	// Filter events with a Timestamp >= MinTimestamp
 	MinTimestamp *time.Time
 	// Filter events with a Timestamp <= MaxTimestamp
@@ -48,23 +48,21 @@ type AggregateType string
 // An event type name should be in past tense and contain the intent
 // (TenantUpdated). The event should contain all the data needed when
 // applying/handling it.
-// The combination of aggregate_type, aggregate_id and sequence_number is
+// The combination of aggregate_type, aggregate_id and version is
 // unique.
 type Event interface {
-	// ID of the event (PK).
-	Id() uuid.UUID
 	// Type of the event.
 	EventType() EventType
-	// Event type specific event data.
-	Data() EventData
-	// Timestamp of when the event was created.
-	Timestamp() time.Time
 	// Type of the aggregate that the event can be applied to.
 	AggregateType() AggregateType
 	// ID of the aggregate that the event should be applied to.
 	AggregateID() uuid.UUID
+	// Timestamp of when the event was created.
+	Timestamp() time.Time
 	// Strict monotone counter, per aggregate/aggregate_id relation.
-	SequenceNumber() uint64
+	Version() uint64
+	// Event type specific event data.
+	Data() EventData
 	// A string representation of the event.
 	String() string
 }
