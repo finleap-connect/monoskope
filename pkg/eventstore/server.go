@@ -12,6 +12,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/usecases"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -121,7 +122,7 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 }
 
 func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
-	events := make([]storage.Event, 0)
+	eventStream := make([]*api_es.Event, 0)
 	for {
 		// Read next event
 		event, err := stream.Recv()
@@ -134,22 +135,24 @@ func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
 			return err
 		}
 
-		// Convert proto events to storage events
-		events = append(events, NewEventFromProto(event))
+		// Append events to the stream
+		eventStream = append(eventStream, event)
 	}
 
-	// Store events in Event Store
-	err := s.store.Save(stream.Context(), events)
+	// Perform the use case for storing events
+	err := usecases.NewStoreEventsUseCase(stream.Context(), s.store, eventStream).Run()
 	if err != nil {
 		return err
 	}
 
-	// TODO: Send events via message bus
-
 	return stream.SendAndClose(&emptypb.Empty{})
 }
 
-func NewEventFromProto(protoEvent *api_es.Event) storage.Event {
-	panic("not implemented")
-	// return &storage.NewEvent(event.GetSequenceNumber(), storage.EventType(event.GetType())
+func (s *Server) Retrieve(filter *api_es.EventFilter, stream api_es.EventStore_RetrieveServer) error {
+	// Perform the use case for storing events
+	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter).Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
