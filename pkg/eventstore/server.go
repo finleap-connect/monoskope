@@ -3,6 +3,7 @@ package eventstore
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -10,6 +11,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -18,6 +20,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Server struct {
@@ -30,6 +33,7 @@ type Server struct {
 	log logger.Logger
 	//
 	shutdown *util.ShutdownWaitGroup
+	store    storage.Store
 }
 
 func NewServer(conf *ServerConfig) (*Server, error) {
@@ -37,6 +41,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 		http:     metrics.NewServer(),
 		log:      logger.WithName("eventstore"),
 		shutdown: util.NewShutdownWaitGroup(),
+		store:    conf.Store,
 	}
 
 	// Configure gRPC server
@@ -113,4 +118,38 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 		panic("shutting down gracefully exceeded 30 seconds")
 	}
 	return err // Return the error, if grpc stopped gracefully there is no error
+}
+
+func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
+	events := make([]storage.Event, 0)
+	for {
+		// Read next event
+		event, err := stream.Recv()
+
+		// End of stream
+		if err == io.EOF {
+			break
+		}
+		if err != nil { // Some other error
+			return err
+		}
+
+		// Convert proto events to storage events
+		events = append(events, NewEventFromProto(event))
+	}
+
+	// Store events in Event Store
+	err := s.store.Save(stream.Context(), events)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Send events via message bus
+
+	return stream.SendAndClose(&emptypb.Empty{})
+}
+
+func NewEventFromProto(protoEvent *api_es.Event) storage.Event {
+	panic("not implemented")
+	// return &storage.NewEvent(event.GetSequenceNumber(), storage.EventType(event.GetType())
 }
