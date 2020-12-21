@@ -35,7 +35,7 @@ func TestAuth(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
-	log = logger.WithName("monoctl-auth")
+	log = logger.WithName("TestAuth")
 
 	By("bootstrapping test env")
 

@@ -21,10 +21,10 @@ const (
 var (
 	env *test.OAuthTestEnv
 
-	gatewayApiListener net.Listener
-	httpClient         *http.Client
-	log                logger.Logger
-	gatewayServer      *Server
+	apiListener net.Listener
+	httpClient  *http.Client
+	log         logger.Logger
+	server      *Server
 )
 
 func TestGateway(t *testing.T) {
@@ -36,7 +36,7 @@ func TestGateway(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
-	log = logger.WithName("gateway")
+	log = logger.WithName("TestGateway")
 
 	By("bootstrapping test env")
 	env, err = test.SetupAuthTestEnv()
@@ -48,13 +48,13 @@ var _ = BeforeSuite(func(done Done) {
 		AuthConfig: env.AuthConfig,
 	}
 
-	gatewayServer, err = NewServer(conf)
+	server, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
 
-	gatewayApiListener, err = net.Listen("tcp", anyLocalAddr)
+	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := gatewayServer.Serve(gatewayApiListener, nil)
+		err := server.Serve(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -70,9 +70,9 @@ var _ = AfterSuite(func() {
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 
-	gatewayServer.shutdown.Expect()
+	server.shutdown.Expect()
 
-	err = gatewayApiListener.Close()
+	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })
 

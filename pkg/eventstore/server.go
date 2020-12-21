@@ -40,7 +40,7 @@ type Server struct {
 func NewServer(conf *ServerConfig) (*Server, error) {
 	s := &Server{
 		http:     metrics.NewServer(),
-		log:      logger.WithName("eventstore"),
+		log:      logger.WithName("server"),
 		shutdown: util.NewShutdownWaitGroup(),
 		store:    conf.Store,
 	}

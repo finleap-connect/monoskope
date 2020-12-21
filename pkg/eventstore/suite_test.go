@@ -32,7 +32,7 @@ func TestEventStore(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
-	log = logger.WithName("eventstore")
+	log = logger.WithName("TestEventStore")
 
 	By("bootstrapping test env")
 
