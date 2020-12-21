@@ -11,12 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrCouldNotClearDB is when the database could not be cleared.
-var ErrCouldNotClearDB = errors.New("could not clear database")
-
-// ErrConflictVersion is when a version conflict occurs when saving an aggregate.
-var ErrVersionConflict = errors.New("Can not create/update aggregate")
-
 // ErrCouldNotMarshalEvent is when an event could not be marshaled into JSON.
 var ErrCouldNotMarshalEvent = errors.New("could not marshal event")
 
@@ -119,8 +113,7 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 		}
 	}
 
-	// Build all event records, with incrementing versions starting from the
-	// original aggregate version.
+	// Validate incoming events and create all event records.
 	eventRecords := make([]EventRecord, len(events))
 	aggregateID := events[0].AggregateID()
 	aggregateType := events[0].AggregateType()
@@ -129,7 +122,7 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID && event.AggregateType() == aggregateType {
 			return EventStoreError{
-				Err: ErrInvalidEvent,
+				Err: ErrInvalidAggregateType,
 			}
 		}
 
@@ -146,6 +139,8 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 			return err
 		}
 		eventRecords[i] = *e
+
+		// Increment to checking order of following events.
 		nextVersion++
 	}
 

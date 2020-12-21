@@ -2,10 +2,20 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+// ErrNoEventsToAppend is when no events are available to append.
+var ErrNoEventsToAppend = errors.New("no events to append")
+
+// ErrIncorrectEventAggregateVersion is when an event is for an other version of the aggregate.
+var ErrIncorrectEventVersion = errors.New("mismatching event aggreagte version")
+
+// ErrInvalidAggregateType is when an event is for a different type of aggregate.
+var ErrInvalidAggregateType = errors.New("mismatching event aggreagte type")
 
 // Store is an interface for an event storage backend.
 type Store interface {
