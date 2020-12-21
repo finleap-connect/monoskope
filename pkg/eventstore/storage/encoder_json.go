@@ -13,16 +13,14 @@ func (jsonEncoder) Marshal(data EventData) ([]byte, error) {
 	return nil, nil
 }
 
-func (jsonEncoder) Unmarshal(eventType EventType, raw []byte) (data EventData, err error) {
+func (jsonEncoder) Unmarshal(raw []byte, data interface{}) error {
 	if len(raw) == 0 {
-		return nil, nil
+		return nil
 	}
-	if data, err = CreateEventData(eventType); err == nil {
-		if err = json.Unmarshal(raw, data); err == nil {
-			return data, nil
-		}
+	if err := json.Unmarshal(raw, data); err != nil {
+		return err
 	}
-	return nil, err
+	return nil
 }
 
 func (jsonEncoder) String() string {

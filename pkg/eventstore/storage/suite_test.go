@@ -10,8 +10,17 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
+type TestEventData struct {
+	Hello string `json:",omitempty"`
+}
+
 var (
-	log logger.Logger
+	TestEvent = EventType("TestEvent")
+	log       logger.Logger
+
+	jsonString = "{\"Hello\":\"World\"}"
+	jsonBytes  = []byte(jsonString)
+	eventData  = TestEventData{Hello: "World"}
 )
 
 func TestEventStoreStorage(t *testing.T) {

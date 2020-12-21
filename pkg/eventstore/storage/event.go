@@ -42,12 +42,6 @@ type Event interface {
 	String() string
 }
 
-// CreateEventData creates an event data of a type using the factory registered
-// with RegisterEventData.
-func CreateEventData(eventType EventType) (EventData, error) {
-	panic("not implemented")
-}
-
 // NewEvent creates a new event with a type and data, setting its timestamp.
 func NewEvent(sequenceNumber uint64, eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
