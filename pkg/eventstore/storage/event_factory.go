@@ -17,13 +17,15 @@ var ErrEventTypeDuplicate = errors.New("attempt to register event type which is 
 // ErrEventTypeUnknown is when one tries to unregister an event type which hasn't been registered before.
 var ErrEventTypeUnknown = errors.New("unregister of non-registered type")
 
+const EmptyEventType = EventType("")
+
 // RegisterEventData registers an event data factory for a type. The factory is
 // used to create concrete event data structs when loading from the database.
 //
 // An example would be:
 //     RegisterEventData(MyEventType, func() Event { return &MyEventData{} })
 func RegisterEventData(eventType EventType, factory func() EventData) error {
-	if eventType == EventType("") {
+	if eventType == EmptyEventType {
 		return ErrEventTypeEmpty
 	}
 
@@ -41,7 +43,7 @@ func RegisterEventData(eventType EventType, factory func() EventData) error {
 // a type. This is mainly useful in mainenance situations where the event data
 // needs to be switched in a migrations.
 func UnregisterEventData(eventType EventType) error {
-	if eventType == EventType("") {
+	if eventType == EmptyEventType {
 		return ErrEventTypeEmpty
 	}
 
