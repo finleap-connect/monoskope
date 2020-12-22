@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-pg/pg"
@@ -175,8 +176,54 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *EventStore) Load(ctx context.Context, query *StoreQuery) ([]Event, error) {
-	panic("not implemented")
+func (s *EventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
+	var events []Event
+
+	// Basic query to query all events
+	dbQuery := s.db.
+		WithContext(ctx).
+		Model((*EventRecord)(nil)).
+		Order("sequence_number ASC")
+
+	// Translate the abstrace query to a postgres query
+	mapStoreQuery(storeQuery, dbQuery)
+
+	err := dbQuery.ForEach(func(e *EventRecord) (err error) {
+		if e.data, err = s.encoder.Unmarshal(e.EventType, e.RawData); err != nil {
+			return EventStoreError{
+				BaseErr: err,
+				Err:     ErrCouldNotUnmarshalEvent,
+			}
+		}
+		e.RawData = nil
+		events = append(events, pgEvent{
+			EventRecord: *e,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, EventStoreError{
+			BaseErr: err,
+			Err:     err,
+		}
+	}
+
+	return events, nil
+}
+
+// mapStoreQuery maps the generic query struct to a postgress orm query
+func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
+	if storeQuery == nil {
+		return
+	}
+
+	if storeQuery.AggregateId != nil {
+		_ = dbQuery.Where("aggregate_id = ?", storeQuery.AggregateId)
+	} else if storeQuery.AggregateType != nil {
+		_ = dbQuery.Where("aggregate_type = ?", storeQuery.AggregateType)
+	}
+
+	//TODO implement all query options
 }
 
 // Clear clears the event storage. This is only for testing purposes.
@@ -187,4 +234,48 @@ func (s *EventStore) clear(ctx context.Context) error {
 			_, err = tx.Model((*EventRecord)(nil)).Delete()
 			return err
 		})
+}
+
+// event is the private implementation of the Event interface for a postgres event store.
+type pgEvent struct {
+	EventRecord
+}
+
+// EventType implements the EventType method of the Event interface.
+func (e pgEvent) EventType() EventType {
+	return e.EventRecord.EventType
+}
+
+// Data implements the Data method of the Event interface.
+func (e pgEvent) Data() EventData {
+	return e.data
+}
+
+// Timestamp implements the Timestamp method of the Event interface.
+func (e pgEvent) Timestamp() time.Time {
+	return e.EventRecord.Timestamp
+}
+
+// AggregateType implements the AggregateType method of the Event interface.
+func (e pgEvent) AggregateType() AggregateType {
+	return e.EventRecord.AggregateType
+}
+
+// AggrgateID implements the AggrgateID method of the Event interface.
+func (e pgEvent) AggregateID() uuid.UUID {
+	return e.EventRecord.AggregateID
+}
+
+// AggregateVersion implements the AggregateVersion method of the Event interface.
+func (e pgEvent) AggregateVersion() uint64 {
+	return e.EventRecord.AggregateVersion
+}
+
+func (e pgEvent) SequenceNumber() uint64 {
+	return e.EventRecord.SequenceNumber
+}
+
+// String implements the String method of the Event interface.
+func (e pgEvent) String() string {
+	return fmt.Sprintf("%s@%d", e.EventRecord.EventType, e.EventRecord.AggregateVersion)
 }

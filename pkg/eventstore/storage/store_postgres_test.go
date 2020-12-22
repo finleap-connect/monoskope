@@ -71,6 +71,27 @@ var _ = Describe("storage/postgres", func() {
 		Expect(esErr).ToNot(BeNil())
 		Expect(esErr.Err).To(Equal(ErrAggregateVersionAlreadyExists))
 	})
+	It("can load events from the store", func() {
+		es := createTestEventStore()
+		defer func() { _ = es.clear(ctx) }()
+		aggregateId := uuid.New()
+
+		events := []Event{
+			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
+			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
+			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
+		}
+		err := es.Save(ctx, events)
+		Expect(err).ToNot(HaveOccurred())
+
+		storeEvents, err := es.Load(ctx, &StoreQuery{
+			AggregateId: &aggregateId,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(storeEvents).ToNot(BeNil())
+		Expect(storeEvents).ToNot(BeEmpty())
+		Expect(len(storeEvents)).To(BeNumerically("==", len(events)))
+	})
 })
 
 func createTestEventStore() *EventStore {

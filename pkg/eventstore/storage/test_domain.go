@@ -19,7 +19,16 @@ type TestEventDataExtened struct {
 }
 
 func initTestDomain() error {
-	return RegisterEventData(testEventCreated, func() EventData { return &TestEventData{} })
+	if err := RegisterEventData(testEventCreated, func() EventData { return &TestEventData{} }); err != nil {
+		return err
+	}
+	if err := RegisterEventData(testEventChanged, func() EventData { return &TestEventData{} }); err != nil {
+		return err
+	}
+	if err := RegisterEventData(testEventDeleted, func() EventData { return &TestEventData{} }); err != nil {
+		return err
+	}
+	return nil
 }
 
 func createTestEventData(something string) *TestEventData {
