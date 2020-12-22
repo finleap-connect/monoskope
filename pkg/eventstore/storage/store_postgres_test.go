@@ -77,7 +77,7 @@ func createTestEventStore() *EventStore {
 	es, err := NewPostgresEventStore(env.DB, jsonEncoder{})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(es).ToNot(BeNil())
-	return es
+	return es.(*EventStore)
 }
 
 func now() time.Time {

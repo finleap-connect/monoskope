@@ -101,7 +101,7 @@ func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRec
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(db *pg.DB, encoder Encoder) (*EventStore, error) {
+func NewPostgresEventStore(db *pg.DB, encoder Encoder) (Store, error) {
 	s := &EventStore{
 		db:      db,
 		encoder: encoder,
