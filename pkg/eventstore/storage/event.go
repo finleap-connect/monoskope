@@ -43,10 +43,9 @@ type Event interface {
 }
 
 // NewEvent creates a new event with a type and data, setting its timestamp.
-func NewEvent(sequenceNumber uint64, eventType EventType, data EventData, timestamp time.Time,
+func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
 	return event{
-		sequenceNumber:   sequenceNumber,
 		eventType:        eventType,
 		data:             data,
 		timestamp:        timestamp,

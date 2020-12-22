@@ -12,7 +12,10 @@ import (
 var ErrNoEventsToAppend = errors.New("no events to append")
 
 // ErrIncorrectEventAggregateVersion is when an event is for an other version of the aggregate.
-var ErrIncorrectEventVersion = errors.New("mismatching event aggreagte version")
+var ErrIncorrectAggregateVersion = errors.New("mismatching event aggreagte version")
+
+// ErrAggregateVersionAlreadyExists is when an event is referencing an older version of the aggregate than is stored.
+var ErrAggregateVersionAlreadyExists = errors.New("event aggreagte version already exists in store")
 
 // ErrInvalidAggregateType is when an event is for a different type of aggregate.
 var ErrInvalidAggregateType = errors.New("mismatching event aggreagte type")
@@ -48,4 +51,11 @@ type EventStoreError struct {
 	Err error
 	// BaseErr is an optional underlying error, for example from the DB driver.
 	BaseErr error
+}
+
+func UnwrapEventStoreError(err error) *EventStoreError {
+	if esErr, ok := err.(EventStoreError); ok {
+		return &esErr
+	}
+	return nil
 }

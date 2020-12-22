@@ -101,9 +101,10 @@ func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRec
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(db *pg.DB) (*EventStore, error) {
+func NewPostgresEventStore(db *pg.DB, encoder Encoder) (*EventStore, error) {
 	s := &EventStore{
-		db: db,
+		db:      db,
+		encoder: encoder,
 	}
 	err := s.createTables(&orm.CreateTableOptions{
 		IfNotExists: true,
@@ -129,7 +130,7 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 	nextVersion := events[0].AggregateVersion()
 	for i, event := range events {
 		// Only accept events belonging to the same aggregate.
-		if event.AggregateID() != aggregateID && event.AggregateType() == aggregateType {
+		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
 			return EventStoreError{
 				Err: ErrInvalidAggregateType,
 			}
@@ -138,7 +139,7 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
 			return EventStoreError{
-				Err: ErrIncorrectEventVersion,
+				Err: ErrIncorrectAggregateVersion,
 			}
 		}
 
@@ -155,6 +156,14 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 
 	// Append events to the store.
 	err := s.db.WithContext(ctx).Insert(&eventRecords)
+	if pgErr, ok := err.(pg.Error); ok {
+		if pgErr.IntegrityViolation() {
+			return EventStoreError{
+				BaseErr: err,
+				Err:     ErrAggregateVersionAlreadyExists,
+			}
+		}
+	}
 	if err != nil {
 		return EventStoreError{
 			BaseErr: err,
@@ -168,4 +177,14 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 // Load implements the Load method of the EventStore interface.
 func (s *EventStore) Load(ctx context.Context, query *StoreQuery) ([]Event, error) {
 	panic("not implemented")
+}
+
+// Clear clears the event storage.
+func (s *EventStore) clear(ctx context.Context) error {
+	return s.db.
+		WithContext(ctx).
+		RunInTransaction(func(tx *pg.Tx) (err error) {
+			_, err = tx.Model((*EventRecord)(nil)).Delete()
+			return err
+		})
 }

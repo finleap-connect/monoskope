@@ -3,6 +3,7 @@ package storage
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	storage_test "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var _ = Describe("jsonEncoder", func() {
@@ -16,10 +17,10 @@ var _ = Describe("jsonEncoder", func() {
 	})
 	It("can unmarshal event data", func() {
 		encoder := &jsonEncoder{}
-		decodedEventData, err := encoder.Unmarshal(TestEvent, jsonBytes)
+		decodedEventData, err := encoder.Unmarshal(typeTestEventCreated, jsonBytes)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(decodedEventData).ToNot(BeNil())
-		ed, ok := decodedEventData.(*TestEventData)
+		ed, ok := decodedEventData.(*storage_test.TestEventData)
 		Expect(ok).To(BeTrue())
 		Expect(ed.Hello).To(Equal(testEventData.Hello))
 	})
@@ -31,7 +32,7 @@ var _ = Describe("jsonEncoder", func() {
 	})
 	It("ignores empty event data when unmarshalling", func() {
 		encoder := &jsonEncoder{}
-		decodedEventData, err := encoder.Unmarshal(TestEvent, []byte{})
+		decodedEventData, err := encoder.Unmarshal(typeTestEventCreated, []byte{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(decodedEventData).To(BeNil())
 	})

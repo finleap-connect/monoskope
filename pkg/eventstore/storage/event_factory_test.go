@@ -3,23 +3,24 @@ package storage
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	storage_test "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var _ = Describe("eventfactory", func() {
 	It("can register event data", func() {
-		err := RegisterEventData(TestEventExtended, func() EventData { return &TestEventDataExtened{} })
+		err := RegisterEventData(typeTestEventExtended, func() EventData { return &storage_test.TestEventDataExtened{} })
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("fails to register empty event data", func() {
-		err := RegisterEventData(EventType(""), func() EventData { return &TestEventDataExtened{} })
+		err := RegisterEventData(EventType(""), func() EventData { return &storage_test.TestEventDataExtened{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("fails to register event data more than once", func() {
-		err := RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
+		err := RegisterEventData(typeTestEventCreated, func() EventData { return &storage_test.TestEventData{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("can unregister event data", func() {
-		err := UnregisterEventData(TestEventExtended)
+		err := UnregisterEventData(typeTestEventExtended)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("fails to unregister empty event data", func() {
@@ -31,7 +32,7 @@ var _ = Describe("eventfactory", func() {
 		Expect(err).To(HaveOccurred())
 	})
 	It("can create event data", func() {
-		data, err := CreateEventData(TestEvent)
+		data, err := CreateEventData(typeTestEventCreated)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(data).ToNot(BeNil())
 	})
