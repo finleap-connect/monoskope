@@ -14,11 +14,20 @@ type TestEventData struct {
 	Hello string `json:",omitempty"`
 }
 
-var (
-	TestEvent = EventType("TestEvent")
-	log       logger.Logger
+type TestEventDataExtened struct {
+	Hello string `json:",omitempty"`
+	World string `json:",omitempty"`
+}
 
-	jsonString    = "{\"Hello\":\"World\"}"
+const (
+	TestEvent         = EventType("TestEvent")
+	TestEventExtended = EventType("TestEventExtended")
+	jsonString        = "{\"Hello\":\"World\"}"
+)
+
+var (
+	log logger.Logger
+
 	jsonBytes     = []byte(jsonString)
 	testEventData = TestEventData{Hello: "World"}
 )
