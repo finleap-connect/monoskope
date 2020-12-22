@@ -179,7 +179,7 @@ func (s *EventStore) Load(ctx context.Context, query *StoreQuery) ([]Event, erro
 	panic("not implemented")
 }
 
-// Clear clears the event storage.
+// Clear clears the event storage. This is only for testing purposes.
 func (s *EventStore) clear(ctx context.Context) error {
 	return s.db.
 		WithContext(ctx).
