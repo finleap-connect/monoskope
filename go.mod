@@ -16,7 +16,6 @@ require (
 	github.com/int128/listener v1.1.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/kubism/testutil v0.1.0-alpha.2
-	github.com/lib/pq v1.3.0
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
 	github.com/ory/dockertest/v3 v3.6.2
