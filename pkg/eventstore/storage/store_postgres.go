@@ -44,8 +44,17 @@ type EventRecord struct {
 	data             EventData       `sql:"-"`
 }
 
-var tables = []interface{}{
-	(*EventRecord)(nil),
+var tables []interface{}
+
+func init() {
+	// Just to silence linter
+	eventsTbl := &EventRecord{}
+	_ = eventsTbl.tableName
+	_ = eventsTbl.data
+
+	tables = []interface{}{
+		(*EventRecord)(nil),
+	}
 }
 
 func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
