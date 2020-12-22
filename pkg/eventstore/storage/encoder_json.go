@@ -6,6 +6,7 @@ import (
 
 type jsonEncoder struct{}
 
+// Marshal serializes EventData into JSON
 func (jsonEncoder) Marshal(data EventData) ([]byte, error) {
 	if data != nil {
 		return json.Marshal(data)
@@ -13,6 +14,7 @@ func (jsonEncoder) Marshal(data EventData) ([]byte, error) {
 	return nil, nil
 }
 
+// Unmarshal deserializes JSON into EventData
 func (jsonEncoder) Unmarshal(eventType EventType, raw []byte) (data EventData, err error) {
 	if len(raw) == 0 {
 		return nil, nil
@@ -26,6 +28,7 @@ func (jsonEncoder) Unmarshal(eventType EventType, raw []byte) (data EventData, e
 	return nil, err
 }
 
+// Returns the type of the encoder
 func (jsonEncoder) String() string {
 	return "json"
 }
