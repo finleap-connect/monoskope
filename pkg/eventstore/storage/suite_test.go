@@ -45,7 +45,8 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Register event data for test event
-	RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
+	err := RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
+	Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
