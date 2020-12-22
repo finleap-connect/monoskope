@@ -3,7 +3,6 @@ package storage
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	st "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var (
@@ -27,7 +26,7 @@ var _ = Describe("jsonEncoder", func() {
 		decodedEventData, err := encoder.Unmarshal(testEventCreated, jsonBytes)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(decodedEventData).ToNot(BeNil())
-		ed, ok := decodedEventData.(*st.TestEventData)
+		ed, ok := decodedEventData.(*TestEventData)
 		Expect(ok).To(BeTrue())
 		Expect(ed.Hello).To(Equal(testEventData.Hello))
 	})

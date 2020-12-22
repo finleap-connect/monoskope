@@ -1,7 +1,5 @@
 package storage
 
-import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
-
 const (
 	testEventCreated      EventType     = "TestEvent:Created"
 	testEventChanged      EventType     = "TestEvent:Changed"
@@ -11,10 +9,19 @@ const (
 	testAggregateExtended AggregateType = "TestAggregateExtended"
 )
 
-func initTestDomain() error {
-	return RegisterEventData(testEventCreated, func() EventData { return &test.TestEventData{} })
+type TestEventData struct {
+	Hello string `json:",omitempty"`
 }
 
-func createTestEventData(something string) *test.TestEventData {
-	return &test.TestEventData{Hello: something}
+type TestEventDataExtened struct {
+	Hello string `json:",omitempty"`
+	World string `json:",omitempty"`
+}
+
+func initTestDomain() error {
+	return RegisterEventData(testEventCreated, func() EventData { return &TestEventData{} })
+}
+
+func createTestEventData(something string) *TestEventData {
+	return &TestEventData{Hello: something}
 }

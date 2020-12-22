@@ -11,11 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	st "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var (
-	env *st.EventStoreTestEnv
+	env *EventStoreTestEnv
 	ctx = context.Background()
 )
 
@@ -30,7 +29,7 @@ var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 
 	By("bootstrapping test env")
-	env = &st.EventStoreTestEnv{
+	env = &EventStoreTestEnv{
 		TestEnv: test.SetupGeneralTestEnv("TestEventStoreStorage"),
 	}
 

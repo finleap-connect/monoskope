@@ -1,4 +1,4 @@
-package test
+package storage
 
 import (
 	"github.com/go-pg/pg"

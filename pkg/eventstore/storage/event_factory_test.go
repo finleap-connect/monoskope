@@ -3,20 +3,19 @@ package storage
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	st "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var _ = Describe("eventfactory", func() {
 	It("can register event data", func() {
-		err := RegisterEventData(testEventExtended, func() EventData { return &st.TestEventDataExtened{} })
+		err := RegisterEventData(testEventExtended, func() EventData { return &TestEventDataExtened{} })
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("fails to register empty event data", func() {
-		err := RegisterEventData("", func() EventData { return &st.TestEventDataExtened{} })
+		err := RegisterEventData("", func() EventData { return &TestEventDataExtened{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("fails to register event data more than once", func() {
-		err := RegisterEventData(testEventCreated, func() EventData { return &st.TestEventData{} })
+		err := RegisterEventData(testEventCreated, func() EventData { return &TestEventData{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("can unregister event data", func() {
