@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 const (
@@ -23,7 +22,6 @@ var (
 
 	apiListener net.Listener
 	httpClient  *http.Client
-	log         logger.Logger
 	server      *Server
 )
 
@@ -36,10 +34,9 @@ func TestGateway(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
-	log = logger.WithName("TestGateway")
 
 	By("bootstrapping test env")
-	env, err = test.SetupAuthTestEnv()
+	env, err = test.SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway

@@ -50,7 +50,7 @@ var _ = Describe("Gateway", func() {
 		authInfo, err := gwc.GetAuthInformation(context.Background(), &api_gw_auth.AuthState{CallbackURL: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
-		log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
+		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
@@ -63,7 +63,7 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer oidcClientServer.Close()
 
-		log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
+		env.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
 		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api_gw_auth.AuthState{CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
@@ -88,7 +88,7 @@ var _ = Describe("Gateway", func() {
 		})
 		eg.Go(func() error {
 			defer GinkgoRecover()
-			log.Info("wait for oidc client server to get ready...")
+			env.Log.Info("wait for oidc client server to get ready...")
 			<-ready
 			res, err = httpClient.PostForm(formAction, url.Values{
 				"login": {"admin@example.com"}, "password": {"password"},
@@ -107,7 +107,7 @@ var _ = Describe("Gateway", func() {
 		Expect(authResponse.GetEmail()).To(Equal("admin@example.com"))
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
 		Expect(authResponse.GetRefreshToken()).ToNot(Equal(""))
-		log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
+		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
 
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())

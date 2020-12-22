@@ -1,13 +1,15 @@
 package storage
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
+	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"github.com/ory/dockertest/v3"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
 type TestEventData struct {
@@ -19,6 +21,18 @@ type TestEventDataExtened struct {
 	World string `json:",omitempty"`
 }
 
+type EventStoreTestEnv struct {
+	*test.TestEnv
+	DB *pg.DB
+}
+
+func (env *EventStoreTestEnv) Shutdown() error {
+	if env.DB != nil {
+		defer env.DB.Close()
+	}
+	return env.TestEnv.Shutdown()
+}
+
 const (
 	TestEvent         = EventType("TestEvent")
 	TestEventExtended = EventType("TestEventExtended")
@@ -26,8 +40,7 @@ const (
 )
 
 var (
-	log logger.Logger
-
+	env           *EventStoreTestEnv
 	jsonBytes     = []byte(jsonString)
 	testEventData = TestEventData{Hello: "World"}
 )
@@ -39,16 +52,52 @@ func TestEventStoreStorage(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
+	var err error
 	defer close(done)
-	log = logger.WithName("TestEventStoreStorage")
 
 	By("bootstrapping test env")
+	env = &EventStoreTestEnv{
+		TestEnv: test.SetupGeneralTestEnv("TestEventStoreStorage"),
+	}
+
+	err = env.CreateDockerPool()
+	Expect(err).ToNot(HaveOccurred())
+
+	container, err := env.RunWithOptions(&dockertest.RunOptions{
+		Name:       "cockroach",
+		Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
+		Tag:        "v20.2.2",
+		Cmd: []string{
+			"start-single-node", "--insecure",
+		},
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	testDb := pg.Connect(&pg.Options{
+		Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
+		Database: "",
+		User:     "root",
+		Password: "",
+	})
+	res, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
+	Expect(err).ToNot(HaveOccurred())
+	Expect(res.RowsAffected()).To(BeNumerically(">", 0))
+
+	env.DB = pg.Connect(&pg.Options{
+		Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
+		Database: "test",
+		User:     "root",
+		Password: "",
+	})
 
 	// Register event data for test event
-	err := RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
+	err = RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
 	Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
+	var err error
 	By("tearing down the test environment")
+	err = env.Shutdown()
+	Expect(err).To(BeNil())
 })
