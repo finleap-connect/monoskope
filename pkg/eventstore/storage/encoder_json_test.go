@@ -8,7 +8,7 @@ import (
 var _ = Describe("jsonEncoder", func() {
 	It("can marshal event data", func() {
 		encoder := &jsonEncoder{}
-		bytes, err := encoder.Marshal(eventData)
+		bytes, err := encoder.Marshal(testEventData)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(bytes).ToNot(BeNil())
 		Expect(bytes).ToNot(BeEmpty())
@@ -16,11 +16,11 @@ var _ = Describe("jsonEncoder", func() {
 	})
 	It("can unmarshal event data", func() {
 		encoder := &jsonEncoder{}
-
-		decodedEventData := &TestEventData{}
-		err := encoder.Unmarshal(jsonBytes, decodedEventData)
+		decodedEventData, err := encoder.Unmarshal(TestEvent, jsonBytes)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(decodedEventData).ToNot(BeNil())
-		Expect(decodedEventData.Hello).To(Equal(eventData.Hello))
+		ed, ok := decodedEventData.(*TestEventData)
+		Expect(ok).To(BeTrue())
+		Expect(ed.Hello).To(Equal(testEventData.Hello))
 	})
 })

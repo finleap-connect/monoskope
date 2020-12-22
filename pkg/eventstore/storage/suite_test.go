@@ -18,9 +18,9 @@ var (
 	TestEvent = EventType("TestEvent")
 	log       logger.Logger
 
-	jsonString = "{\"Hello\":\"World\"}"
-	jsonBytes  = []byte(jsonString)
-	eventData  = TestEventData{Hello: "World"}
+	jsonString    = "{\"Hello\":\"World\"}"
+	jsonBytes     = []byte(jsonString)
+	testEventData = TestEventData{Hello: "World"}
 )
 
 func TestEventStoreStorage(t *testing.T) {
@@ -34,6 +34,9 @@ var _ = BeforeSuite(func(done Done) {
 	log = logger.WithName("TestEventStoreStorage")
 
 	By("bootstrapping test env")
+
+	// Register event data for test event
+	RegisterEventData(TestEvent, func() EventData { return &TestEventData{} })
 }, 60)
 
 var _ = AfterSuite(func() {
