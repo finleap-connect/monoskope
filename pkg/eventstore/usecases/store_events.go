@@ -36,8 +36,8 @@ func (u *StoreEventsUseCase) Run() error {
 		storageEvents = append(storageEvents, NewEventFromProto(v))
 	}
 
-	u.log.Info("Saving events in the store...")
 	// Store events in Event Store
+	u.log.Info("Saving events in the store...")
 	err := u.store.Save(u.ctx, storageEvents)
 	if err != nil {
 		return err

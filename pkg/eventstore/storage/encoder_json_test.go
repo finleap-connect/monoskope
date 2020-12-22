@@ -23,4 +23,16 @@ var _ = Describe("jsonEncoder", func() {
 		Expect(ok).To(BeTrue())
 		Expect(ed.Hello).To(Equal(testEventData.Hello))
 	})
+	It("ignores empty event data when marshalling", func() {
+		encoder := &jsonEncoder{}
+		bytes, err := encoder.Marshal(nil)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(bytes).To(BeNil())
+	})
+	It("ignores empty event data when unmarshalling", func() {
+		encoder := &jsonEncoder{}
+		decodedEventData, err := encoder.Unmarshal(TestEvent, []byte{})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(decodedEventData).To(BeNil())
+	})
 })
