@@ -33,6 +33,10 @@ func (t *TestEnv) CreateDockerPool() error {
 	return nil
 }
 
+func (t *TestEnv) Retry(op func() error) error {
+	return t.pool.Retry(op)
+}
+
 func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions) (*dockertest.Resource, error) {
 	t.Log.Info(fmt.Sprintf("Starting docker container resource %s/%s...", opts.Repository, opts.Name))
 	res, err := t.pool.RunWithOptions(opts)

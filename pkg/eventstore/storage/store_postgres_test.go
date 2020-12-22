@@ -7,7 +7,7 @@ import (
 
 var _ = Describe("storage/postgres", func() {
 	It("can create new event store", func() {
-		es, err := NewPostgresEventStore(nil)
+		es, err := NewPostgresEventStore(env.DB)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(es).ToNot(BeNil())
 	})

@@ -73,15 +73,17 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	testDb := pg.Connect(&pg.Options{
-		Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
-		Database: "",
-		User:     "root",
-		Password: "",
+	err = env.Retry(func() error {
+		testDb := pg.Connect(&pg.Options{
+			Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
+			Database: "",
+			User:     "root",
+			Password: "",
+		})
+		_, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
+		return err
 	})
-	res, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
 	Expect(err).ToNot(HaveOccurred())
-	Expect(res.RowsAffected()).To(BeNumerically(">", 0))
 
 	env.DB = pg.Connect(&pg.Options{
 		Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
