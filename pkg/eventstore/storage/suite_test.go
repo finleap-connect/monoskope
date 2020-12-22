@@ -11,24 +11,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	storage_test "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
-)
-
-const (
-	typeTestEventCreated      = EventType("TestEvent:Created")
-	typeTestEventChanged      = EventType("TestEvent:Changed")
-	typeTestEventDeleted      = EventType("TestEvent:Deleted")
-	typeTestEventExtended     = EventType("TestEventExtended:Created")
-	typeTestAggregate         = AggregateType("TestAggregate")
-	typeTestAggregateExtended = AggregateType("TestAggregateExtended")
-	jsonString                = "{\"Hello\":\"World\"}"
+	st "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage/test"
 )
 
 var (
-	env           *storage_test.EventStoreTestEnv
-	jsonBytes     = []byte(jsonString)
-	testEventData = createTestEventData("World")
-	ctx           = context.Background()
+	env *st.EventStoreTestEnv
+	ctx = context.Background()
 )
 
 func TestEventStoreStorage(t *testing.T) {
@@ -42,12 +30,12 @@ var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 
 	By("bootstrapping test env")
-	env = &storage_test.EventStoreTestEnv{
+	env = &st.EventStoreTestEnv{
 		TestEnv: test.SetupGeneralTestEnv("TestEventStoreStorage"),
 	}
 
 	// Register event data for test event
-	err = RegisterEventData(typeTestEventCreated, func() EventData { return &storage_test.TestEventData{} })
+	err = initTestDomain()
 	Expect(err).ToNot(HaveOccurred())
 
 	err = env.CreateDockerPool()
@@ -92,7 +80,3 @@ var _ = AfterSuite(func() {
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 })
-
-func createTestEventData(something string) *storage_test.TestEventData {
-	return &storage_test.TestEventData{Hello: something}
-}

@@ -18,9 +18,9 @@ var _ = Describe("storage/postgres", func() {
 		aggregateId := uuid.New()
 
 		err := es.Save(ctx, []Event{
-			NewEvent(typeTestEventCreated, createTestEventData("create"), time.Now().UTC(), typeTestAggregate, aggregateId, 0),
-			NewEvent(typeTestEventChanged, createTestEventData("change"), time.Now().UTC(), typeTestAggregate, aggregateId, 1),
-			NewEvent(typeTestEventDeleted, createTestEventData("delete"), time.Now().UTC(), typeTestAggregate, aggregateId, 2),
+			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
+			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
+			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
 		})
 		Expect(err).ToNot(HaveOccurred())
 	})
@@ -30,8 +30,8 @@ var _ = Describe("storage/postgres", func() {
 		aggregateId := uuid.New()
 
 		err := es.Save(ctx, []Event{
-			NewEvent(typeTestEventCreated, createTestEventData("create"), time.Now().UTC(), typeTestAggregate, aggregateId, 0),
-			NewEvent(typeTestEventChanged, createTestEventData("change"), time.Now().UTC(), typeTestAggregateExtended, aggregateId, 1),
+			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(EventStoreError{
@@ -44,8 +44,8 @@ var _ = Describe("storage/postgres", func() {
 		aggregateId := uuid.New()
 
 		err := es.Save(ctx, []Event{
-			NewEvent(typeTestEventCreated, createTestEventData("create"), time.Now().UTC(), typeTestAggregate, aggregateId, 0),
-			NewEvent(typeTestEventChanged, createTestEventData("change"), time.Now().UTC(), typeTestAggregate, aggregateId, 2),
+			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(EventStoreError{
@@ -58,13 +58,13 @@ var _ = Describe("storage/postgres", func() {
 		aggregateId := uuid.New()
 
 		err := es.Save(ctx, []Event{
-			NewEvent(typeTestEventCreated, createTestEventData("create"), time.Now().UTC(), typeTestAggregate, aggregateId, 0),
-			NewEvent(typeTestEventChanged, createTestEventData("change"), time.Now().UTC(), typeTestAggregate, aggregateId, 1),
+			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).ToNot(HaveOccurred())
 
 		err = es.Save(ctx, []Event{
-			NewEvent(typeTestEventChanged, createTestEventData("change"), time.Now().UTC(), typeTestAggregate, aggregateId, 1),
+			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		esErr := UnwrapEventStoreError(err)
@@ -78,4 +78,8 @@ func createTestEventStore() *EventStore {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(es).ToNot(BeNil())
 	return es
+}
+
+func now() time.Time {
+	return time.Now().UTC()
 }
