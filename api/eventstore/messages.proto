@@ -54,3 +54,5 @@ message EventFilter {
   // Filter events with a timestamp <= max_timestamp
   google.protobuf.Timestamp max_timestamp = 8;
 }
+
+message TestEventData { string hello = 1; }
