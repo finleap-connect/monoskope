@@ -9,7 +9,7 @@ import (
 )
 
 // EventData is any additional data for an event.
-type EventData interface{}
+type EventData string
 
 // EventType is the type of an event, used as its unique identifier.
 type EventType string

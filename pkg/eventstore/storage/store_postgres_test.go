@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -95,7 +96,7 @@ var _ = Describe("storage/postgres", func() {
 })
 
 func createTestEventStore() *EventStore {
-	es, err := NewPostgresEventStore(env.DB, jsonEncoder{})
+	es, err := NewPostgresEventStore(env.DB)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(es).ToNot(BeNil())
 	return es.(*EventStore)
@@ -103,4 +104,10 @@ func createTestEventStore() *EventStore {
 
 func now() time.Time {
 	return time.Now().UTC()
+}
+
+func createTestEventData(something string) EventData {
+	bytes, err := json.Marshal(&TestEventData{Hello: something})
+	Expect(err).ToNot(HaveOccurred())
+	return EventData(bytes)
 }

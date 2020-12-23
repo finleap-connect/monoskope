@@ -26,15 +26,14 @@ var ErrCouldNotSaveEvents = errors.New("could not save events")
 
 // EventStore implements an EventStore for PostgreSQL.
 type EventStore struct {
-	db      *pg.DB
-	encoder Encoder
+	db *pg.DB
 }
 
 type EventRecord struct {
 	tableName struct{} `sql:"events"`
 
 	EventID          uuid.UUID       `sql:"event_id,type:uuid,pk"`
-	SequenceNumber   uint64          `sql:"sequence_number,type:serial,pk"`
+	SequenceNumber   uint64          `sql:"sequence_number,type:serial,unique"`
 	EventType        EventType       `sql:"event_type,type:varchar(250)"`
 	AggregateID      uuid.UUID       `sql:"aggregate_id,type:uuid,unique:aggregate"`
 	AggregateType    AggregateType   `sql:"aggregate_type,type:varchar(250),unique:aggregate"`
@@ -42,7 +41,6 @@ type EventRecord struct {
 	Timestamp        time.Time       `sql:"timestamp"`
 	Context          json.RawMessage `sql:"context,type:jsonb"`
 	RawData          json.RawMessage `sql:"data,type:jsonb"`
-	data             EventData       `sql:"-"`
 }
 
 var tables []interface{}
@@ -51,7 +49,6 @@ func init() {
 	// Just to silence linter
 	eventsTbl := &EventRecord{}
 	_ = eventsTbl.tableName
-	_ = eventsTbl.data
 
 	tables = []interface{}{
 		(*EventRecord)(nil),
@@ -72,7 +69,7 @@ func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
 // newEventRecord returns a new EventRecord for an event.
 func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRecord, error) {
 	// Marshal event data if there is any.
-	eventData, err := s.encoder.Marshal(event.Data())
+	eventData, err := json.Marshal(event.Data())
 	if err != nil {
 		return nil, EventStoreError{
 			BaseErr: err,
@@ -81,7 +78,7 @@ func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRec
 	}
 
 	// Marshal event context if there is any.
-	context, err := s.encoder.Marshal(ctx)
+	context, err := json.Marshal(ctx)
 	if err != nil {
 		return nil, EventStoreError{
 			BaseErr: err,
@@ -102,10 +99,9 @@ func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRec
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(db *pg.DB, encoder Encoder) (Store, error) {
+func NewPostgresEventStore(db *pg.DB) (Store, error) {
 	s := &EventStore{
-		db:      db,
-		encoder: encoder,
+		db: db,
 	}
 	err := s.createTables(&orm.CreateTableOptions{
 		IfNotExists: true,
@@ -189,13 +185,6 @@ func (s *EventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event,
 	mapStoreQuery(storeQuery, dbQuery)
 
 	err := dbQuery.ForEach(func(e *EventRecord) (err error) {
-		if e.data, err = s.encoder.Unmarshal(e.EventType, e.RawData); err != nil {
-			return EventStoreError{
-				BaseErr: err,
-				Err:     ErrCouldNotUnmarshalEvent,
-			}
-		}
-		e.RawData = nil
 		events = append(events, pgEvent{
 			EventRecord: *e,
 		})
@@ -246,9 +235,8 @@ func (e pgEvent) EventType() EventType {
 	return e.EventRecord.EventType
 }
 
-// Data implements the Data method of the Event interface.
 func (e pgEvent) Data() EventData {
-	return e.data
+	return EventData(e.RawData)
 }
 
 // Timestamp implements the Timestamp method of the Event interface.

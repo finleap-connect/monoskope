@@ -33,10 +33,6 @@ var _ = BeforeSuite(func(done Done) {
 		TestEnv: test.SetupGeneralTestEnv("TestEventStoreStorage"),
 	}
 
-	// Register event data for test event
-	err = initTestDomain()
-	Expect(err).ToNot(HaveOccurred())
-
 	err = env.CreateDockerPool()
 	Expect(err).ToNot(HaveOccurred())
 

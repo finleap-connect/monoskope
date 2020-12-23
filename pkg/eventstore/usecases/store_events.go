@@ -33,7 +33,11 @@ func (u *StoreEventsUseCase) Run() error {
 	// Convert from proto events to storage events
 	storageEvents := make([]storage.Event, 0)
 	for _, v := range u.events {
-		storageEvents = append(storageEvents, NewEventFromProto(v))
+		ev, err := NewEventFromProto(v)
+		if err != nil {
+			return err
+		}
+		storageEvents = append(storageEvents, ev)
 	}
 
 	// Store events in Event Store
