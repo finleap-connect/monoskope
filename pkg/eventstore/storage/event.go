@@ -98,17 +98,3 @@ func (e event) AggregateVersion() uint64 {
 func (e event) String() string {
 	return fmt.Sprintf("%s@%d", e.eventType, e.aggregateVersion)
 }
-
-// Error implements the Error method of the errors.Error interface.
-func (e EventStoreError) Error() string {
-	errStr := e.Err.Error()
-	if e.BaseErr != nil {
-		errStr += ": " + e.BaseErr.Error()
-	}
-	return errStr
-}
-
-// Cause returns the cause of this error.
-func (e EventStoreError) Cause() error {
-	return e.Err
-}

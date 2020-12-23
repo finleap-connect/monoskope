@@ -53,6 +53,21 @@ type EventStoreError struct {
 	BaseErr error
 }
 
+// Error implements the Error method of the errors.Error interface.
+func (e EventStoreError) Error() string {
+	errStr := e.Err.Error()
+	if e.BaseErr != nil {
+		errStr += ": " + e.BaseErr.Error()
+	}
+	return errStr
+}
+
+// Cause returns the cause of this error.
+func (e EventStoreError) Cause() error {
+	return e.Err
+}
+
+// UnwrapEventStoreError returns the given error as EventStoreError if it is one
 func UnwrapEventStoreError(err error) *EventStoreError {
 	if esErr, ok := err.(EventStoreError); ok {
 		return &esErr
