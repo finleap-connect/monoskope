@@ -20,21 +20,19 @@ package eventstore;
 // The combination of aggregate_type, aggregate_id and version is
 // unique.
 message Event {
-  // Global strict monotone counter
-  uint64 sequence_number = 1;
   // Type of the event
-  string type = 2;
+  string type = 1;
   // Timestamp of when the event was created
-  google.protobuf.Timestamp timestamp = 3;
+  google.protobuf.Timestamp timestamp = 2;
   // ID of the aggregate that the event should be applied to (UUID 128-bit
   // number)
-  string aggregate_id = 5;
+  string aggregate_id = 3;
   // Type of the aggregate that the event can be applied to
-  string aggregate_type = 6;
+  string aggregate_type = 4;
   // Strict monotone counter, per aggregate/aggregate_id relation
-  google.protobuf.UInt64Value aggregate_version = 4;
+  google.protobuf.UInt64Value aggregate_version = 5;
   // Event type specific event data
-  google.protobuf.Any data = 7;
+  google.protobuf.Any data = 6;
 }
 
 // Request to get Events from to the store
@@ -51,13 +49,6 @@ message EventFilter {
     google.protobuf.UInt64Value min_version = 3;
     // Filter events with a version <= max_version
     google.protobuf.UInt64Value max_version = 4;
-  }
-
-  oneof by_sequence_number {
-    // Filter events with a sequence_number >= min_sequence_number
-    google.protobuf.UInt64Value min_sequence_number = 5;
-    // Filter events with a sequence_number <= max_sequence_number
-    google.protobuf.UInt64Value max_sequence_number = 6;
   }
 
   oneof by_timestamp {
