@@ -44,17 +44,13 @@ message EventFilter {
     google.protobuf.StringValue aggregate_type = 2;
   }
 
-  oneof by_aggregate_version {
-    // Filter events with a version >= min_version
-    google.protobuf.UInt64Value min_version = 3;
-    // Filter events with a version <= max_version
-    google.protobuf.UInt64Value max_version = 4;
-  }
+  // Filter events with a version >= min_version
+  google.protobuf.UInt64Value min_version = 3;
+  // Filter events with a version <= max_version
+  google.protobuf.UInt64Value max_version = 4;
 
-  oneof by_timestamp {
-    // Filter events with a timestamp >= min_timestamp
-    google.protobuf.Timestamp min_timestamp = 7;
-    // Filter events with a timestamp <= max_timestamp
-    google.protobuf.Timestamp max_timestamp = 8;
-  }
+  // Filter events with a timestamp >= min_timestamp
+  google.protobuf.Timestamp min_timestamp = 7;
+  // Filter events with a timestamp <= max_timestamp
+  google.protobuf.Timestamp max_timestamp = 8;
 }

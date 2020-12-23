@@ -30,9 +30,15 @@ func NewRetrieveEventsUseCase(stream api_es.EventStore_RetrieveServer, store sto
 }
 
 func (u *RetrieveEventsUseCase) Run() error {
+	// Convert filter
+	sq, err := NewStoreQueryFromProto(u.filter)
+	if err != nil {
+		return err
+	}
+
 	// Retrieve events from Event Store
 	u.log.Info("Retrieving events from the store...")
-	events, err := u.store.Load(u.ctx, NewStoreQuery(u.filter))
+	events, err := u.store.Load(u.ctx, sq)
 	if err != nil {
 		return err
 	}
@@ -40,7 +46,12 @@ func (u *RetrieveEventsUseCase) Run() error {
 	// Send events to client
 	u.log.Info("Sending events to client...")
 	for _, e := range events {
-		err := u.stream.Send(NewProtoEvent(e))
+		protoEvent, err := NewProtoFromEvent(e)
+		if err != nil {
+			return err
+		}
+
+		err = u.stream.Send(protoEvent)
 		if err != nil {
 			return err
 		}
