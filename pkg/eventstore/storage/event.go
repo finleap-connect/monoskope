@@ -23,8 +23,6 @@ type AggregateType string
 // The combination of AggregateType, AggregateID and AggregateVersion is
 // unique.
 type Event interface {
-	// Global strict monotone counter
-	SequenceNumber() uint64
 	// Type of the event.
 	EventType() EventType
 	// Type of the aggregate that the event can be applied to.
@@ -58,7 +56,6 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 // uses NewEvent to create a new event. The events loaded from the db is
 // represented by each DBs internal event type, implementing Event.
 type event struct {
-	sequenceNumber   uint64
 	eventType        EventType
 	data             EventData
 	timestamp        time.Time
@@ -95,10 +92,6 @@ func (e event) AggregateID() uuid.UUID {
 // AggregateVersion implements the AggregateVersion method of the Event interface.
 func (e event) AggregateVersion() uint64 {
 	return e.aggregateVersion
-}
-
-func (e event) SequenceNumber() uint64 {
-	return e.sequenceNumber
 }
 
 // String implements the String method of the Event interface.

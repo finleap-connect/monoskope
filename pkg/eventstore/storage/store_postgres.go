@@ -30,7 +30,6 @@ type EventRecord struct {
 	tableName struct{} `sql:"events"`
 
 	EventID          uuid.UUID       `sql:"event_id,type:uuid,pk"`
-	SequenceNumber   uint64          `sql:"sequence_number,type:serial,unique"`
 	EventType        EventType       `sql:"event_type,type:varchar(250)"`
 	AggregateID      uuid.UUID       `sql:"aggregate_id,type:uuid,unique:aggregate"`
 	AggregateType    AggregateType   `sql:"aggregate_type,type:varchar(250),unique:aggregate"`
@@ -176,7 +175,8 @@ func (s *EventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event,
 	dbQuery := s.db.
 		WithContext(ctx).
 		Model((*EventRecord)(nil)).
-		Order("sequence_number ASC")
+		Order("timestamp ASC").
+		Order("aggregate_version ASC")
 
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
@@ -254,10 +254,6 @@ func (e pgEvent) AggregateID() uuid.UUID {
 // AggregateVersion implements the AggregateVersion method of the Event interface.
 func (e pgEvent) AggregateVersion() uint64 {
 	return e.EventRecord.AggregateVersion
-}
-
-func (e pgEvent) SequenceNumber() uint64 {
-	return e.EventRecord.SequenceNumber
 }
 
 // String implements the String method of the Event interface.
