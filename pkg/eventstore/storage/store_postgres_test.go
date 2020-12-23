@@ -15,21 +15,16 @@ var _ = Describe("storage/postgres", func() {
 	})
 	It("can append new events to the store", func() {
 		es := createTestEventStore()
-		defer func() { _ = es.clear(ctx) }()
-		aggregateId := uuid.New()
+		defer clearEs(es)
 
-		err := es.Save(ctx, []Event{
-			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
-			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
-			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
-		})
+		err := es.Save(ctx, createTestEvents())
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("fails to append new events to the store when they are not of the same aggregate type", func() {
 		es := createTestEventStore()
-		defer func() { _ = es.clear(ctx) }()
-		aggregateId := uuid.New()
+		defer clearEs(es)
 
+		aggregateId := uuid.New()
 		err := es.Save(ctx, []Event{
 			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
 			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
@@ -41,9 +36,9 @@ var _ = Describe("storage/postgres", func() {
 	})
 	It("fails to append new events to the store when they are not in the right aggregate version order", func() {
 		es := createTestEventStore()
-		defer func() { _ = es.clear(ctx) }()
-		aggregateId := uuid.New()
+		defer clearEs(es)
 
+		aggregateId := uuid.New()
 		err := es.Save(ctx, []Event{
 			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
 			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
@@ -55,9 +50,9 @@ var _ = Describe("storage/postgres", func() {
 	})
 	It("fails to append new events to the store when the aggregate version does already exist", func() {
 		es := createTestEventStore()
-		defer func() { _ = es.clear(ctx) }()
-		aggregateId := uuid.New()
+		defer clearEs(es)
 
+		aggregateId := uuid.New()
 		err := es.Save(ctx, []Event{
 			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
 			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
@@ -74,19 +69,39 @@ var _ = Describe("storage/postgres", func() {
 	})
 	It("can load events from the store", func() {
 		es := createTestEventStore()
-		defer func() { _ = es.clear(ctx) }()
-		aggregateId := uuid.New()
+		defer clearEs(es)
 
-		events := []Event{
-			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
-			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
-			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
-		}
+		// append some events to load later
+		events := createTestEvents()
+		err := es.Save(ctx, events)
+		Expect(err).ToNot(HaveOccurred())
+		expectedEventCount := len(events)
+
+		// append some additional events
+		events = createTestEvents()
+		err = es.Save(ctx, events)
+		Expect(err).ToNot(HaveOccurred())
+
+		aggregateId := events[0].AggregateID()
+		storeEvents, err := es.Load(ctx, &StoreQuery{
+			AggregateId: &aggregateId,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(storeEvents).ToNot(BeNil())
+		Expect(storeEvents).ToNot(BeEmpty())
+		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
+	})
+	It("can load filter events to load from the store by aggregate type", func() {
+		es := createTestEventStore()
+		defer clearEs(es)
+
+		events := createTestEvents()
 		err := es.Save(ctx, events)
 		Expect(err).ToNot(HaveOccurred())
 
+		aggregateType := AggregateType(testAggregate)
 		storeEvents, err := es.Load(ctx, &StoreQuery{
-			AggregateId: &aggregateId,
+			AggregateType: &aggregateType,
 		})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(storeEvents).ToNot(BeNil())
@@ -94,6 +109,11 @@ var _ = Describe("storage/postgres", func() {
 		Expect(len(storeEvents)).To(BeNumerically("==", len(events)))
 	})
 })
+
+func clearEs(es *EventStore) {
+	err := es.clear(ctx)
+	Expect(err).ToNot(HaveOccurred())
+}
 
 func createTestEventStore() *EventStore {
 	es, err := NewPostgresEventStore(env.DB)
@@ -110,4 +130,14 @@ func createTestEventData(something string) EventData {
 	bytes, err := json.Marshal(&TestEventData{Hello: something})
 	Expect(err).ToNot(HaveOccurred())
 	return EventData(bytes)
+}
+
+func createTestEvents() []Event {
+	aggregateId := uuid.New()
+
+	return []Event{
+		NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
+		NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
+		NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
+	}
 }

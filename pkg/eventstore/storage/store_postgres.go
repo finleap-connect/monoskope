@@ -217,7 +217,7 @@ func (s *EventStore) clear(ctx context.Context) error {
 	return s.db.
 		WithContext(ctx).
 		RunInTransaction(func(tx *pg.Tx) (err error) {
-			_, err = tx.Model((*EventRecord)(nil)).Delete()
+			_, err = tx.Model((*EventRecord)(nil)).Where("1=1").Delete()
 			return err
 		})
 }
