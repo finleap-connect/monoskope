@@ -91,7 +91,7 @@ var _ = Describe("storage/postgres", func() {
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
 	})
-	It("can load filter events to load from the store by aggregate type", func() {
+	It("can filter events to load from the store by aggregate type", func() {
 		es := createTestEventStore()
 		defer clearEs(es)
 
@@ -107,6 +107,50 @@ var _ = Describe("storage/postgres", func() {
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", len(events)))
+	})
+	It("can filter events to load from the store by aggregate version", func() {
+		es := createTestEventStore()
+		defer clearEs(es)
+
+		events := createTestEvents()
+		err := es.Save(ctx, events)
+		Expect(err).ToNot(HaveOccurred())
+
+		minVersion := uint64(1)
+		maxVersion := uint64(1)
+		storeEvents, err := es.Load(ctx, &StoreQuery{
+			MinVersion: &minVersion,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(storeEvents).ToNot(BeNil())
+		Expect(storeEvents).ToNot(BeEmpty())
+
+		for _, ev := range storeEvents {
+			Expect(ev.AggregateVersion()).To(BeNumerically(">=", 1))
+		}
+
+		storeEvents, err = es.Load(ctx, &StoreQuery{
+			MaxVersion: &maxVersion,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(storeEvents).ToNot(BeNil())
+		Expect(storeEvents).ToNot(BeEmpty())
+
+		for _, ev := range storeEvents {
+			Expect(ev.AggregateVersion()).To(BeNumerically("<=", 1))
+		}
+
+		storeEvents, err = es.Load(ctx, &StoreQuery{
+			MinVersion: &minVersion,
+			MaxVersion: &maxVersion,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(storeEvents).ToNot(BeNil())
+		Expect(storeEvents).ToNot(BeEmpty())
+
+		for _, ev := range storeEvents {
+			Expect(ev.AggregateVersion()).To(BeNumerically("==", 1))
+		}
 	})
 })
 

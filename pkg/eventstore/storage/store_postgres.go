@@ -209,7 +209,19 @@ func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
 		_ = dbQuery.Where("aggregate_type = ?", storeQuery.AggregateType)
 	}
 
-	//TODO implement all query options
+	if storeQuery.MinVersion != nil {
+		_ = dbQuery.Where("aggregate_version >= ?", storeQuery.MinVersion)
+	}
+	if storeQuery.MaxVersion != nil {
+		_ = dbQuery.Where("aggregate_version <= ?", storeQuery.MaxVersion)
+	}
+
+	if storeQuery.MinTimestamp != nil {
+		_ = dbQuery.Where("timestamp >= ?", storeQuery.MinTimestamp)
+	}
+	if storeQuery.MaxTimestamp != nil {
+		_ = dbQuery.Where("timestamp <= ?", storeQuery.MaxTimestamp)
+	}
 }
 
 // Clear clears the event storage. This is only for testing purposes.
