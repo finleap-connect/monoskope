@@ -18,9 +18,6 @@ var ErrCouldNotMarshalEvent = errors.New("could not marshal event")
 // ErrCouldNotMarshalEventContext is when an event could not be marshaled into JSON.
 var ErrCouldNotMarshalEventContext = errors.New("could not marshal event context")
 
-// ErrCouldNotUnmarshalEvent is when an event could not be unmarshaled into a concrete type.
-var ErrCouldNotUnmarshalEvent = errors.New("could not unmarshal event")
-
 // ErrCouldNotSaveEvents is when events could not be saved.
 var ErrCouldNotSaveEvents = errors.New("could not save events")
 

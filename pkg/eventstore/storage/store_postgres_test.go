@@ -70,7 +70,7 @@ var _ = Describe("storage/postgres", func() {
 		Expect(err).To(HaveOccurred())
 		esErr := UnwrapEventStoreError(err)
 		Expect(esErr).ToNot(BeNil())
-		Expect(esErr.Err).To(Equal(ErrAggregateVersionAlreadyExists))
+		Expect(esErr.Cause()).To(Equal(ErrAggregateVersionAlreadyExists))
 	})
 	It("can load events from the store", func() {
 		es := createTestEventStore()

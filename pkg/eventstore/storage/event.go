@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -120,6 +119,3 @@ func (e EventStoreError) Error() string {
 func (e EventStoreError) Cause() error {
 	return e.Err
 }
-
-// ErrInvalidEvent is when an event does not implement the Event interface.
-var ErrInvalidEvent = errors.New("invalid event")
