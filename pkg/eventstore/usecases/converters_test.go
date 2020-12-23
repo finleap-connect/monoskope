@@ -10,6 +10,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -57,4 +59,9 @@ func checkProtoStorageEventEquality(pe *eventstore.Event, se storage.Event) {
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
 	Expect(pe.AggregateType).To(Equal(string(se.AggregateType())))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
+
+	eventData := &anypb.Any{}
+	err := protojson.Unmarshal([]byte(se.Data()), eventData)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(pe.GetData()).To(Equal(eventData))
 }
