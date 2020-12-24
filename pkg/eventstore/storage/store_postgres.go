@@ -26,6 +26,7 @@ type EventStore struct {
 	db *pg.DB
 }
 
+// EventRecord is the model for entries in the events table in the database.
 type EventRecord struct {
 	tableName struct{} `sql:"events"`
 
@@ -51,6 +52,7 @@ func init() {
 	}
 }
 
+// createTables creates the event table in the database.
 func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
 	return s.db.RunInTransaction(func(tx *pg.Tx) error {
 		for _, table := range tables {
@@ -234,7 +236,7 @@ func (s *EventStore) clear(ctx context.Context) error {
 		})
 }
 
-// event is the private implementation of the Event interface for a postgres event store.
+// pgEvent is the private implementation of the Event interface for a postgres event store.
 type pgEvent struct {
 	EventRecord
 }
@@ -244,6 +246,7 @@ func (e pgEvent) EventType() EventType {
 	return e.EventRecord.EventType
 }
 
+// Data implements the Data method of the Event interface.
 func (e pgEvent) Data() EventData {
 	return EventData(e.RawData)
 }

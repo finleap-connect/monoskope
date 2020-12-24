@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"testing"
@@ -10,20 +11,93 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/auth"
 )
 
 const (
-	anyLocalAddr = "127.0.0.1:0"
+	anyLocalAddr        = "127.0.0.1:0"
+	AuthRootToken       = "super-secret-root-token"
+	RedirectURLHostname = "localhost"
+	RedirectURLPort     = ":8000"
 )
 
 var (
-	env *test.OAuthTestEnv
+	env *OAuthTestEnv
 
 	apiListener net.Listener
 	httpClient  *http.Client
 	server      *Server
 )
+
+type OAuthTestEnv struct {
+	*test.TestEnv
+	DexWebEndpoint string
+	AuthConfig     *gw_auth.Config
+}
+
+func SetupAuthTestEnv(envName string) (*OAuthTestEnv, error) {
+	env := &OAuthTestEnv{
+		TestEnv: test.SetupGeneralTestEnv(envName),
+	}
+
+	err := env.CreateDockerPool()
+	if err != nil {
+		_ = env.Shutdown()
+		return nil, err
+	}
+
+	dexContainer, err := env.RunWithOptions(&dockertest.RunOptions{
+		Name:       "dex",
+		Repository: "quay.io/dexidp/dex",
+		Tag:        "v2.25.0",
+		PortBindings: map[dc.Port][]dc.PortBinding{
+			"5556": {{HostPort: "5556"}},
+		},
+		ExposedPorts: []string{"5556", "5000"},
+		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
+		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", test.DexConfigPath)},
+	})
+	if err != nil {
+		_ = env.Shutdown()
+		return nil, err
+	}
+	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
+
+	rootToken := AuthRootToken
+	env.AuthConfig = &gw_auth.Config{
+		IssuerURL:      env.DexWebEndpoint,
+		OfflineAsScope: true,
+		RootToken:      &rootToken,
+		ClientId:       "gateway",
+		ClientSecret:   "app-secret",
+		Nonce:          "secret-nonce",
+	}
+
+	return env, nil
+}
+
+func (env *OAuthTestEnv) Shutdown() error {
+	return env.TestEnv.Shutdown()
+}
+
+func (env *OAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
+	serverConf := &monoctl_auth.Config{
+		LocalServerBindAddress: []string{
+			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),
+		},
+		RedirectURLHostname:  RedirectURLHostname,
+		LocalServerReadyChan: ready,
+	}
+	server, err := monoctl_auth.NewServer(serverConf)
+	if err != nil {
+		return nil, err
+	}
+	return server, nil
+}
 
 func TestGateway(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -36,7 +110,7 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("bootstrapping test env")
-	env, err = test.SetupAuthTestEnv("TestGateway")
+	env, err = SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
@@ -84,5 +158,5 @@ func invalidToken() *oauth2.Token {
 }
 
 func rootToken() *oauth2.Token {
-	return toToken(test.AuthRootToken)
+	return toToken(AuthRootToken)
 }
