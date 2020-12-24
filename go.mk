@@ -48,10 +48,14 @@ test-kind:
 	$(GINKGO) -r -v -cover internal -- --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
 
 test:
+	find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover pkg/monoctl
 	$(GINKGO) -r -v -cover pkg/util
 	$(GINKGO) -r -v -cover pkg/eventstore
+	@echo "mode: set" > ./monoskope.coverprofile
+	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./pkg -name '*.coverprofile' -exec rm {} \;
 
 coverage:
 	find . -name '*.coverprofile' -exec go tool cover -func {} \;
