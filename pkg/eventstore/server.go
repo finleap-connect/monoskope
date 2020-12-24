@@ -24,6 +24,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Server is the implementation of the API server
 type Server struct {
 	api_es.UnimplementedEventStoreServer
 	// HTTP-server exposing the metrics
@@ -37,6 +38,7 @@ type Server struct {
 	store    storage.Store
 }
 
+// NewServer returns a new configured instance of Server
 func NewServer(conf *ServerConfig) (*Server, error) {
 	s := &Server{
 		http:     metrics.NewServer(),
@@ -75,6 +77,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	return s, nil
 }
 
+// Serve starts the api listeners of the Server
 func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	shutdown := s.shutdown
 
@@ -121,6 +124,7 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	return err // Return the error, if grpc stopped gracefully there is no error
 }
 
+// Store implements the API method for storing events
 func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
 	eventStream := make([]*api_es.Event, 0)
 	for {
@@ -148,6 +152,7 @@ func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
 	return stream.SendAndClose(&emptypb.Empty{})
 }
 
+// Retrieve implements the API method for retrieving events from the store
 func (s *Server) Retrieve(filter *api_es.EventFilter, stream api_es.EventStore_RetrieveServer) error {
 	// Perform the use case for storing events
 	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter).Run()

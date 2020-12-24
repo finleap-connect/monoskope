@@ -36,16 +36,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 
-	// Start server
+	// Create server
 	conf := &ServerConfig{
 		KeepAlive: false,
 	}
-
 	server, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
-
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
+
+	// Start server
 	go func() {
 		err := server.Serve(apiListener, nil)
 		if err != nil {
@@ -61,8 +61,8 @@ var _ = AfterSuite(func() {
 	var err error
 	By("tearing down the test environment")
 
+	// Shutdown server
 	server.shutdown.Expect()
-
 	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })
