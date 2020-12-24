@@ -48,7 +48,7 @@ test-kind:
 	$(GINKGO) -r -v -cover internal -- --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
 
 test:
-	find . -name '*.coverprofile' -exec rm {} \;
+	@find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover pkg/monoctl
 	$(GINKGO) -r -v -cover pkg/util
@@ -58,7 +58,10 @@ test:
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
 
 coverage:
-	find . -name '*.coverprofile' -exec go tool cover -func {} \;
+	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
+
+loc:
+	@gocloc .
 
 ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
