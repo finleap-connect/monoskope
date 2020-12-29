@@ -1,12 +1,41 @@
 package storage
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("storage/inmemory", func() {
+	now := func() time.Time {
+		return time.Now().UTC()
+	}
+	clearInMemoryEs := func(es *InMemoryEventStore) {
+		es.clear(ctx)
+	}
+	createInMemoryTestEventStore := func() *InMemoryEventStore {
+		es := NewInMemoryEventStore()
+		Expect(es).ToNot(BeNil())
+		return es.(*InMemoryEventStore)
+	}
+	createTestEventData := func(something string) EventData {
+		bytes, err := json.Marshal(&TestEventData{Hello: something})
+		Expect(err).ToNot(HaveOccurred())
+		return EventData(bytes)
+	}
+	createTestEvents := func() []Event {
+		aggregateId := uuid.New()
+
+		return []Event{
+			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
+			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
+			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
+		}
+	}
+
 	It("can create new event store", func() {
 		_ = createInMemoryTestEventStore()
 	})
@@ -150,13 +179,3 @@ var _ = Describe("storage/inmemory", func() {
 		}
 	})
 })
-
-func clearInMemoryEs(es *InMemoryEventStore) {
-	es.clear(ctx)
-}
-
-func createInMemoryTestEventStore() *InMemoryEventStore {
-	es := NewInMemoryEventStore()
-	Expect(es).ToNot(BeNil())
-	return es.(*InMemoryEventStore)
-}

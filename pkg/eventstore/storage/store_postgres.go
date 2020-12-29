@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,15 +10,6 @@ import (
 	"github.com/go-pg/pg/orm"
 	"github.com/google/uuid"
 )
-
-// ErrCouldNotMarshalEvent is when an event could not be marshaled into JSON.
-var ErrCouldNotMarshalEvent = errors.New("could not marshal event")
-
-// ErrCouldNotMarshalEventContext is when an event could not be marshaled into JSON.
-var ErrCouldNotMarshalEventContext = errors.New("could not marshal event context")
-
-// ErrCouldNotSaveEvents is when events could not be saved.
-var ErrCouldNotSaveEvents = errors.New("could not save events")
 
 // EventStore implements an EventStore for PostgreSQL.
 type EventStore struct {

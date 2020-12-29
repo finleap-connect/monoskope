@@ -10,6 +10,38 @@ import (
 )
 
 var _ = Describe("storage/postgres", func() {
+	clearEs := func(es *EventStore) {
+		err := es.clear(ctx)
+		Expect(err).ToNot(HaveOccurred())
+	}
+
+	createTestEventStore := func() *EventStore {
+		es, err := NewPostgresEventStore(env.DB)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(es).ToNot(BeNil())
+		return es.(*EventStore)
+	}
+
+	now := func() time.Time {
+		return time.Now().UTC()
+	}
+
+	createTestEventData := func(something string) EventData {
+		bytes, err := json.Marshal(&TestEventData{Hello: something})
+		Expect(err).ToNot(HaveOccurred())
+		return EventData(bytes)
+	}
+
+	createTestEvents := func() []Event {
+		aggregateId := uuid.New()
+
+		return []Event{
+			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
+			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
+			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
+		}
+	}
+
 	It("can create new event store", func() {
 		_ = createTestEventStore()
 	})
@@ -153,35 +185,3 @@ var _ = Describe("storage/postgres", func() {
 		}
 	})
 })
-
-func clearEs(es *EventStore) {
-	err := es.clear(ctx)
-	Expect(err).ToNot(HaveOccurred())
-}
-
-func createTestEventStore() *EventStore {
-	es, err := NewPostgresEventStore(env.DB)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(es).ToNot(BeNil())
-	return es.(*EventStore)
-}
-
-func now() time.Time {
-	return time.Now().UTC()
-}
-
-func createTestEventData(something string) EventData {
-	bytes, err := json.Marshal(&TestEventData{Hello: something})
-	Expect(err).ToNot(HaveOccurred())
-	return EventData(bytes)
-}
-
-func createTestEvents() []Event {
-	aggregateId := uuid.New()
-
-	return []Event{
-		NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
-		NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
-		NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
-	}
-}

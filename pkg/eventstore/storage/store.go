@@ -20,6 +20,15 @@ var ErrAggregateVersionAlreadyExists = errors.New("event aggreagte version alrea
 // ErrInvalidAggregateType is when an event is for a different type of aggregate.
 var ErrInvalidAggregateType = errors.New("mismatching event aggreagte type")
 
+// ErrCouldNotMarshalEvent is when an event could not be marshaled into JSON.
+var ErrCouldNotMarshalEvent = errors.New("could not marshal event")
+
+// ErrCouldNotMarshalEventContext is when an event could not be marshaled into JSON.
+var ErrCouldNotMarshalEventContext = errors.New("could not marshal event context")
+
+// ErrCouldNotSaveEvents is when events could not be saved.
+var ErrCouldNotSaveEvents = errors.New("could not save events")
+
 // Store is an interface for an event storage backend.
 type Store interface {
 	// Save appends all events in the event stream to the store.
