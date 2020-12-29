@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/monoctl"
+	monoctl "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd"
 )
 
 func main() {

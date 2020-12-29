@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

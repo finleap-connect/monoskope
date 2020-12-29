@@ -1,9 +1,8 @@
 package config
 
 import (
+	"errors"
 	"time"
-
-	"sigs.k8s.io/kind/pkg/errors"
 )
 
 var (

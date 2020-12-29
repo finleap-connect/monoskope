@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 
 func NewAuthStatusCmd(configLoader *config.ClientConfigManager) *cobra.Command {

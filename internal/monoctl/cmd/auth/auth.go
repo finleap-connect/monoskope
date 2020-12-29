@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 
 func NewAuthCmd(configLoader *config.ClientConfigManager) *cobra.Command {

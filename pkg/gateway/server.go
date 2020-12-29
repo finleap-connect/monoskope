@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/metadata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/cmd/version"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
@@ -143,8 +143,8 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 
 func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInformation, error) {
 	return &api_gw.ServerInformation{
-		Version: metadata.Version,
-		Commit:  metadata.Commit,
+		Version: version.Version,
+		Commit:  version.Commit,
 	}, nil
 }
 

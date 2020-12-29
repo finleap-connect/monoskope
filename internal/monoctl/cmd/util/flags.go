@@ -1,8 +1,8 @@
-package flags
+package util
 
 import "time"
 
 var (
 	RootToken string
-	Timoeut   time.Duration
+	Timeout   time.Duration
 )

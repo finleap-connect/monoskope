@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/usecases/monoctl"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
+	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/usecases"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 
 func LoadConfig(configManager *config.ClientConfigManager) error {

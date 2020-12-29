@@ -10,7 +10,7 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.33.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
-LDFLAGS    	   += -X=$(GO_MODULE)/internal/metadata.Version=$(VERSION) -X=$(GO_MODULE)/internal/metadata.Commit=$(COMMIT)
+LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
@@ -44,18 +44,17 @@ lint:
 run-%:
 	$(call go-run,$*)
 
-test-kind: 
-	$(GINKGO) -r -v -cover internal -- --with-kind --helm-chart-path "$(BUILD_PATH)/$(HELM_PATH_MONOSKOPE)" --helm-chart-values "$(BUILD_PATH)/$(HELM_VALUES_FILE_MONOSKOPE)"
-
 test:
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
-	$(GINKGO) -r -v -cover pkg/monoctl
+	$(GINKGO) -r -v -cover internal
 	$(GINKGO) -r -v -cover pkg/util
+	$(GINKGO) -r -v -cover pkg/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover pkg/eventstore
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
+	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
 coverage:
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;

@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/usecases/monoctl"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/monoctl/flags"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/cmd/util"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/config"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/cmd/version"
+	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/usecases"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 
 func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *cobra.Command {
@@ -17,13 +17,13 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 		Short: "Prints version information",
 		Long:  `Prints version information and the commit`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.PrintVersion(cmdName)
+			version.PrintVersion(cmdName)
 
-			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, flags.Timoeut); err != nil {
+			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, util.Timeout); err != nil {
 				return fmt.Errorf("init failed: %w", err)
 			}
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), flags.Timoeut)
+			ctx, cancel := context.WithTimeout(cmd.Context(), util.Timeout)
 			defer cancel()
 
 			result, err := usecases.NewServerVersionUseCase(ctx, configManager.GetConfig()).Run()

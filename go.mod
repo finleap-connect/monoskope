@@ -32,6 +32,4 @@ require (
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
 	mellium.im/sasl v0.2.1 // indirect
-	sigs.k8s.io/controller-runtime v0.6.3
-	sigs.k8s.io/kind v0.9.0
 )
