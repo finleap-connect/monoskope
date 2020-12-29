@@ -10,16 +10,16 @@ import (
 )
 
 var _ = Describe("storage/postgres", func() {
-	clearEs := func(es *EventStore) {
+	clearEs := func(es *PostgresEventStore) {
 		err := es.clear(ctx)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	createTestEventStore := func() *EventStore {
+	createTestEventStore := func() *PostgresEventStore {
 		es, err := NewPostgresEventStore(env.DB)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(es).ToNot(BeNil())
-		return es.(*EventStore)
+		return es.(*PostgresEventStore)
 	}
 
 	now := func() time.Time {

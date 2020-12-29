@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// EventStore implements an EventStore for PostgreSQL.
-type EventStore struct {
+// PostgresEventStore implements an EventStore for PostgreSQL.
+type PostgresEventStore struct {
 	db *pg.DB
 }
 
@@ -43,7 +43,7 @@ func init() {
 }
 
 // createTables creates the event table in the database.
-func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
+func (s *PostgresEventStore) createTables(opts *orm.CreateTableOptions) error {
 	return s.db.RunInTransaction(func(tx *pg.Tx) error {
 		for _, table := range tables {
 			if err := s.db.CreateTable(table, opts); err != nil {
@@ -55,7 +55,7 @@ func (s *EventStore) createTables(opts *orm.CreateTableOptions) error {
 }
 
 // newEventRecord returns a new EventRecord for an event.
-func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRecord, error) {
+func (s *PostgresEventStore) newEventRecord(ctx context.Context, event Event) (*EventRecord, error) {
 	// Marshal event data if there is any.
 	eventData, err := json.Marshal(event.Data())
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *EventStore) newEventRecord(ctx context.Context, event Event) (*EventRec
 
 // NewPostgresEventStore creates a new EventStore.
 func NewPostgresEventStore(db *pg.DB) (Store, error) {
-	s := &EventStore{
+	s := &PostgresEventStore{
 		db: db,
 	}
 	err := s.createTables(&orm.CreateTableOptions{
@@ -101,7 +101,7 @@ func NewPostgresEventStore(db *pg.DB) (Store, error) {
 }
 
 // Save implements the Save method of the EventStore interface.
-func (s *EventStore) Save(ctx context.Context, events []Event) error {
+func (s *PostgresEventStore) Save(ctx context.Context, events []Event) error {
 	if len(events) == 0 {
 		return EventStoreError{
 			Err: ErrNoEventsToAppend,
@@ -160,7 +160,7 @@ func (s *EventStore) Save(ctx context.Context, events []Event) error {
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *EventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
+func (s *PostgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
 	var events []Event
 
 	// Basic query to query all events
@@ -217,7 +217,7 @@ func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
 }
 
 // Clear clears the event storage. This is only for testing purposes.
-func (s *EventStore) clear(ctx context.Context) error {
+func (s *PostgresEventStore) clear(ctx context.Context) error {
 	return s.db.
 		WithContext(ctx).
 		RunInTransaction(func(tx *pg.Tx) (err error) {
