@@ -1,4 +1,4 @@
-package monoctl
+package main
 
 import (
 	"flag"
@@ -15,7 +15,6 @@ var (
 )
 
 func NewRootCmd() *cobra.Command {
-
 	rootCmd := &cobra.Command{
 		Use:          "monoctl action [flags]",
 		Short:        "monoctl",

@@ -1,4 +1,4 @@
-package monoctl
+package main
 
 import (
 	"os"
