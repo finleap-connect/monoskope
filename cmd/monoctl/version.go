@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/cmd/version"
-	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/usecases"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/usecases"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 )
 
 func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *cobra.Command {

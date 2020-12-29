@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/cmd/version"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 

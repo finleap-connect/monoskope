@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 

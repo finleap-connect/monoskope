@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	usecases "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/cmd/usecases"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/usecases"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
 
