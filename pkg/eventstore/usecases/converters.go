@@ -15,6 +15,9 @@ import (
 // ErrCouldNotMarshalEventData is when marshalling event data failed
 var ErrCouldNotMarshalEventData = errors.New("could not marshal event data")
 
+// ErrCouldNotUnmarshalEventData is when unmarshalling event data failed
+var ErrCouldNotUnmarshalEventData = errors.New("could not unmarshal event data")
+
 // ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
 var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
@@ -90,7 +93,7 @@ func NewProtoFromEvent(storeEvent storage.Event) (*api_es.Event, error) {
 	eventData := &anypb.Any{}
 	err := protojson.Unmarshal([]byte(storeEvent.Data()), eventData)
 	if err != nil {
-		return nil, ErrCouldNotMarshalEventData
+		return nil, ErrCouldNotUnmarshalEventData
 	}
 	ev.Data = eventData
 

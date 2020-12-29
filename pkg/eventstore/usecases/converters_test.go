@@ -80,6 +80,39 @@ var _ = Describe("Converters", func() {
 		Expect(q.MinTimestamp).To(Equal(&minTimestamp))
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
+	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
+		data, err := ptypes.MarshalAny(&api_es.TestEventData{Hello: "world"})
+		Expect(err).ToNot(HaveOccurred())
+
+		pe := &eventstore.Event{
+			Type:             "TestEventType",
+			Timestamp:        timestamppb.New(time.Now().UTC()),
+			AggregateId:      "", // invalid id
+			AggregateType:    "TestAggregateType",
+			AggregateVersion: wrapperspb.UInt64(0),
+			Data:             data,
+		}
+		se, err := NewEventFromProto(pe)
+		Expect(err).To(HaveOccurred())
+		Expect(se).To(BeNil())
+		Expect(err).To(Equal(ErrCouldNotParseAggregateId))
+	})
+	It("fails to convert to proto event from storage with illegal event data", func() {
+		timestamp := time.Now().UTC()
+		aggregateId := uuid.New()
+
+		se := storage.NewEvent(
+			storage.EventType("TestType"),
+			storage.EventData("{\"hello\":\"world\"}"), // illegal event data, missing type
+			timestamp,
+			storage.AggregateType("TestAggregateType"),
+			aggregateId,
+			0)
+		pe, err := NewProtoFromEvent(se)
+		Expect(err).To(HaveOccurred())
+		Expect(pe).To(BeNil())
+		Expect(err).To(Equal(ErrCouldNotUnmarshalEventData))
+	})
 })
 
 func checkProtoStorageEventEquality(pe *eventstore.Event, se storage.Event) {
