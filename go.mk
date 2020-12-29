@@ -46,7 +46,7 @@ run-%:
 
 test:
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -r -v -cover pkg
+	$(GINKGO) -r -v -cover pkg/*
 	$(GINKGO) -r -v -cover internal/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover internal/monoctl
 	$(GINKGO) -r -v -cover internal/eventstore
