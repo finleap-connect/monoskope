@@ -10,11 +10,11 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/usecases"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

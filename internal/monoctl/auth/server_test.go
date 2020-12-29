@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"golang.org/x/sync/errgroup"
 )
 

@@ -1,6 +1,6 @@
 package gateway
 
-import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+import "gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 
 type ServerConfig struct {
 	KeepAlive  bool

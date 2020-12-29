@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 )
 
 var (

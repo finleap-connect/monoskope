@@ -4,8 +4,8 @@ import (
 	"context"
 
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 type StoreEventsUseCase struct {

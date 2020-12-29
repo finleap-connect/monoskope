@@ -3,7 +3,7 @@ package messaging
 import (
 	"context"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventstore/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 type EventReceiver interface {

@@ -13,9 +13,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 )
 
 const (

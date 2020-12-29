@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/pkg/browser"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/sync/errgroup"
 )
