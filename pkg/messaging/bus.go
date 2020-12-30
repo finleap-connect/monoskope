@@ -19,3 +19,16 @@ type EventBusConsumer interface {
 	// AddReceiver adds a receiver for event matching the EventFilter.
 	AddReceiver(EventMatcher, EventReceiver) error
 }
+
+// EventMatcher is an interface used to define what events should be consumed
+type EventMatcher interface {
+	// Any matches any event.
+	Any() EventMatcher
+	// MatchEvent matches a specific event type, nil events never match.
+	MatchEvent(eventType storage.EventType) EventMatcher
+	// MatchAggregate matches a specific aggregate type, nil events never match.
+	MatchAggregate(aggregateType storage.AggregateType) EventMatcher
+}
+
+// EventReceiver is the function to call by the consumer on incoming events
+type EventReceiver func(storage.Event) error

@@ -13,17 +13,18 @@ import (
 )
 
 const (
-	exchangeName = "m8_events"
+	exchangeName = "m8_events" // name of the monoskope exchange
 )
 
+// RabbitMatcher implements the EventMatcher interface for rabbitmq
 type RabbitMatcher struct {
 	topicPrefix   string
 	eventType     string
 	aggregateType string
 }
 
-// MatchAny matches any event.
-func (m *RabbitMatcher) MatchAny() EventMatcher {
+// Any matches any event.
+func (m *RabbitMatcher) Any() EventMatcher {
 	m.eventType = "*"
 	m.aggregateType = "*"
 	return m
@@ -46,6 +47,7 @@ func (m *RabbitMatcher) generateRoutingKey() string {
 	return fmt.Sprintf("%s.%s.%s", m.topicPrefix, m.aggregateType, m.eventType)
 }
 
+// rabbitEvent implements the message body transfered via rabbitmq
 type rabbitEvent struct {
 	EventType        storage.EventType
 	Data             storage.EventData
@@ -87,6 +89,7 @@ func (b *RabbitEventBus) getChannel(forceNew bool) (*amqp.Channel, error) {
 	return b.createChannel()
 }
 
+// initExchange creates the exchange for rabbitmq.
 func (b *RabbitEventBus) initExchange() error {
 	ch, err := b.getChannel(false)
 	if err != nil {
@@ -105,11 +108,20 @@ func (b *RabbitEventBus) initExchange() error {
 	return err
 }
 
+// generateRoutingKey generates the routing key for an event.
 func (b *RabbitEventBus) generateRoutingKey(event storage.Event) string {
 	return fmt.Sprintf("%s.%s.%s", b.topicPrefix, event.AggregateType(), event.EventType())
 }
 
+/*
+NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
+
+- topicPrefix defaults to "*"
+*/
 func NewRabbitEventBusPublisher(conn *amqp.Connection, topicPrefix string) (EventBusPublisher, error) {
+	if topicPrefix == "" {
+		topicPrefix = "*"
+	}
 	s := &RabbitEventBus{
 		conn:        conn,
 		topicPrefix: topicPrefix,
@@ -121,7 +133,15 @@ func NewRabbitEventBusPublisher(conn *amqp.Connection, topicPrefix string) (Even
 	return s, nil
 }
 
+/*
+NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
+
+- topicPrefix defaults to "*"
+*/
 func NewRabbitEventBusConsumer(conn *amqp.Connection, topicPrefix string) (EventBusConsumer, error) {
+	if topicPrefix == "" {
+		topicPrefix = "*"
+	}
 	s := &RabbitEventBus{
 		conn:        conn,
 		topicPrefix: topicPrefix,
@@ -232,8 +252,10 @@ func (b *RabbitEventBus) AddReceiver(matcher EventMatcher, receiver EventReceive
 	return err
 }
 
+// Matcher returns a new EventMatcher of type RabbitMatcher
 func (b *RabbitEventBus) Matcher() EventMatcher {
-	return &RabbitMatcher{
+	matcher := &RabbitMatcher{
 		topicPrefix: b.topicPrefix,
 	}
+	return matcher.Any()
 }

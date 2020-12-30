@@ -20,7 +20,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	})
 	It("can publish and receive an event", func() {
 		event := storage.NewEvent(storage.EventType("TestEvent"), storage.EventData("test"), time.Now().UTC(), storage.AggregateType("TestAggregate"), uuid.New(), 0)
-		err := env.Consumer.AddReceiver(env.Consumer.Matcher().MatchAny(), func(e storage.Event) error {
+		err := env.Consumer.AddReceiver(env.Consumer.Matcher().Any(), func(e storage.Event) error {
 			Expect(e).NotTo(BeNil())
 			Expect(event).To(Equal(e))
 			env.Log.Info(e.String())
