@@ -30,14 +30,14 @@ func (m *RabbitMatcher) Any() EventMatcher {
 	return m
 }
 
-// MatchEvent matches a specific event type, nil events never match.
-func (m *RabbitMatcher) MatchEvent(eventType storage.EventType) EventMatcher {
+// MatchEventType matches a specific event type, nil events never match.
+func (m *RabbitMatcher) MatchEventType(eventType storage.EventType) EventMatcher {
 	m.eventType = string(eventType)
 	return m
 }
 
-// MatchAggregate matches a specific aggregate type, nil events never match.
-func (m *RabbitMatcher) MatchAggregate(aggregateType storage.AggregateType) EventMatcher {
+// MatchAggregateType matches a specific aggregate type, nil events never match.
+func (m *RabbitMatcher) MatchAggregateType(aggregateType storage.AggregateType) EventMatcher {
 	m.aggregateType = string(aggregateType)
 	return m
 }
@@ -119,11 +119,11 @@ func (b *RabbitEventBus) generateRoutingKey(event storage.Event) string {
 /*
 NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 
-- topicPrefix defaults to "*"
+- topicPrefix defaults to "m8"
 */
 func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, topicPrefix string) (EventBusPublisher, error) {
 	if topicPrefix == "" {
-		topicPrefix = "*"
+		topicPrefix = "m8"
 	}
 	s := &RabbitEventBus{
 		conn:        conn,
@@ -140,11 +140,11 @@ func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, topicP
 /*
 NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
 
-- topicPrefix defaults to "*"
+- topicPrefix defaults to "m8"
 */
 func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, consumerName, topicPrefix string) (EventBusConsumer, error) {
 	if topicPrefix == "" {
-		topicPrefix = "*"
+		topicPrefix = "m8"
 	}
 	b := &RabbitEventBus{
 		conn:        conn,
@@ -224,6 +224,7 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 		return err
 	}
 	b.queues = append(b.queues, &q)
+	b.log.Info(fmt.Sprintf("Registering new handler with queue '%s'...", q.Name))
 
 	for _, matcher := range matchers {
 		rabbitMatcher, ok := matcher.(*RabbitMatcher)
@@ -232,15 +233,17 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 			return ErrMatcherMustNotBeNil
 		}
 
+		routingKey := rabbitMatcher.generateRoutingKey()
 		err = ch.QueueBind(
-			q.Name,                             // queue name
-			rabbitMatcher.generateRoutingKey(), // routing key
-			exchangeName,                       // exchange
+			q.Name,       // queue name
+			routingKey,   // routing key
+			exchangeName, // exchange
 			false,
 			nil)
 		if err != nil {
 			return err
 		}
+		b.log.Info(fmt.Sprintf("Routing key '%s' bound for queue '%s'...", routingKey, q.Name))
 	}
 
 	msgs, err := ch.Consume(
@@ -256,8 +259,9 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 		return err
 	}
 	go b.handle(msgs, receiver)
+	b.log.Info(fmt.Sprintf("New handler using queue '%s' registered.", q.Name))
 
-	return err
+	return nil
 }
 
 func (b *RabbitEventBus) handle(msgs <-chan amqp.Delivery, receiver EventReceiver) {
@@ -293,6 +297,7 @@ func (b *RabbitEventBus) Close() error {
 	defer ch.Close()
 
 	for _, q := range b.queues {
+		b.log.Info(fmt.Sprintf("Deleting queue '%s'...", q.Name))
 		_, err := ch.QueueDelete(q.Name, true, true, true)
 		if err != nil {
 			return err

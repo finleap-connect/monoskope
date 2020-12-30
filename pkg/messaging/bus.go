@@ -44,10 +44,10 @@ type EventBusConsumer interface {
 type EventMatcher interface {
 	// Any matches any event.
 	Any() EventMatcher
-	// MatchEvent matches a specific event type, nil events never match.
-	MatchEvent(eventType storage.EventType) EventMatcher
+	// MatchEventType matches a specific event type, nil events never match.
+	MatchEventType(eventType storage.EventType) EventMatcher
 	// MatchAggregate matches a specific aggregate type, nil events never match.
-	MatchAggregate(aggregateType storage.AggregateType) EventMatcher
+	MatchAggregateType(aggregateType storage.AggregateType) EventMatcher
 }
 
 // EventReceiver is the function to call by the consumer on incoming events

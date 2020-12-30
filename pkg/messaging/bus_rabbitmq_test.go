@@ -13,26 +13,72 @@ import (
 var _ = Describe("messaging/rabbitmq", func() {
 	ctx := context.Background()
 
-	It("can publish an event", func() {
-		event := storage.NewEvent(storage.EventType("TestEvent"), storage.EventData("test"), time.Now().UTC(), storage.AggregateType("TestAggregate"), uuid.New(), 0)
+	createEvent := func() storage.Event {
+		return storage.NewEvent(storage.EventType("TestEvent"), storage.EventData("test"), time.Now().UTC(), storage.AggregateType("TestAggregate"), uuid.New(), 0)
+	}
+
+	publishEvent := func(event storage.Event) {
 		err := env.Publisher.PublishEvent(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
-	})
-	It("can publish and receive an event", func() {
-		event := storage.NewEvent(storage.EventType("TestEvent"), storage.EventData("test"), time.Now().UTC(), storage.AggregateType("TestAggregate"), uuid.New(), 0)
-		eventsFromBus := make(chan storage.Event)
+	}
 
-		err := env.Consumer.AddReceiver(func(e storage.Event) error {
+	createReceiver := func() (chan storage.Event, EventReceiver) {
+		eventsFromBus := make(chan storage.Event)
+		receiver := func(e storage.Event) error {
 			Expect(e).NotTo(BeNil())
-			Expect(event).To(Equal(e))
 			eventsFromBus <- e
 			return nil
-		}, env.Consumer.Matcher().Any())
+		}
+		return eventsFromBus, receiver
+	}
+
+	It("can publish an event", func() {
+		event := createEvent()
+		publishEvent(event)
+	})
+	It("can publish and receive an event", func() {
+		eventsFromBus, receiver := createReceiver()
+		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().Any())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = env.Publisher.PublishEvent(ctx, event)
+		event := createEvent()
+		publishEvent(event)
+		fromBus := <-eventsFromBus
+		Expect(fromBus).ToNot(BeNil())
+		Expect(fromBus).To(Equal(event))
+	})
+	It("can publish and receive an event matching aggregate type", func() {
+		event := createEvent()
+
+		eventsFromBus, receiver := createReceiver()
+		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()))
 		Expect(err).ToNot(HaveOccurred())
 
+		publishEvent(event)
+		fromBus := <-eventsFromBus
+		Expect(fromBus).ToNot(BeNil())
+		Expect(fromBus).To(Equal(event))
+	})
+	It("can publish and receive an event matching event type", func() {
+		event := createEvent()
+
+		eventsFromBus, receiver := createReceiver()
+		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchEventType(event.EventType()))
+		Expect(err).ToNot(HaveOccurred())
+
+		publishEvent(event)
+		fromBus := <-eventsFromBus
+		Expect(fromBus).ToNot(BeNil())
+		Expect(fromBus).To(Equal(event))
+	})
+	It("can publish and receive an event matching aggregate type and event type", func() {
+		event := createEvent()
+
+		eventsFromBus, receiver := createReceiver()
+		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+		Expect(err).ToNot(HaveOccurred())
+
+		publishEvent(event)
 		fromBus := <-eventsFromBus
 		Expect(fromBus).ToNot(BeNil())
 		Expect(fromBus).To(Equal(event))
