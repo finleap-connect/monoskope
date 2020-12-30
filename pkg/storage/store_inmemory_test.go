@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 var _ = Describe("storage/inmemory", func() {
+	ctx := context.Background()
+
 	now := func() time.Time {
 		return time.Now().UTC()
 	}

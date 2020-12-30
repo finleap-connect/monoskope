@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -15,13 +14,12 @@ import (
 
 var (
 	env *EventStoreTestEnv
-	ctx = context.Background()
 )
 
 func TestEventStoreStorage(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/eventstore-storage-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "eventstore/storage", []Reporter{junitReporter})
+	junitReporter := reporters.NewJUnitReporter("../../../reports/storage-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "storage", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {

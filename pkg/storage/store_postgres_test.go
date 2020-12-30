@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 var _ = Describe("storage/postgres", func() {
+	ctx := context.Background()
+
 	clearEs := func(es *PostgresEventStore) {
 		err := es.clear(ctx)
 		Expect(err).ToNot(HaveOccurred())
