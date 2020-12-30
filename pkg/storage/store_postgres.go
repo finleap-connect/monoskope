@@ -199,8 +199,7 @@ func (s *PostgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 	dbQuery := s.db.
 		WithContext(ctx).
 		Model((*EventRecord)(nil)).
-		Order("timestamp ASC").
-		Order("aggregate_version ASC")
+		Order("timestamp ASC")
 
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
