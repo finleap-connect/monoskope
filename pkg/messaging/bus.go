@@ -14,6 +14,8 @@ type EventBusPublisher interface {
 
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
+	// Matcher returns a new implementation specific matcher.
+	Matcher() EventMatcher
 	// AddReceiver adds a receiver for event matching the EventFilter.
-	AddReceiver(EventMatcher, EventReceiver)
+	AddReceiver(EventMatcher, EventReceiver) error
 }
