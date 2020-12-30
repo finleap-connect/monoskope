@@ -18,7 +18,7 @@ var (
 
 func TestEventStoreStorage(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/storage-junit.xml")
+	junitReporter := reporters.NewJUnitReporter("../../reports/storage-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "storage", []Reporter{junitReporter})
 }
 

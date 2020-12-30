@@ -19,7 +19,7 @@ var (
 
 func TestMessageBus(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/messaging-junit.xml")
+	junitReporter := reporters.NewJUnitReporter("../../reports/messaging-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "messaging", []Reporter{junitReporter})
 }
 
