@@ -3,12 +3,12 @@ package messaging
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/streadway/amqp"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
@@ -59,6 +59,7 @@ type rabbitEvent struct {
 
 // RabbitEventBus implements an EventBus using RabbitMQ.
 type RabbitEventBus struct {
+	log         logger.Logger
 	conn        *amqp.Connection
 	channel     *amqp.Channel
 	topicPrefix string
@@ -118,13 +119,14 @@ NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 
 - topicPrefix defaults to "*"
 */
-func NewRabbitEventBusPublisher(conn *amqp.Connection, topicPrefix string) (EventBusPublisher, error) {
+func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, topicPrefix string) (EventBusPublisher, error) {
 	if topicPrefix == "" {
 		topicPrefix = "*"
 	}
 	s := &RabbitEventBus{
 		conn:        conn,
 		topicPrefix: topicPrefix,
+		log:         log,
 	}
 	err := s.initExchange()
 	if err != nil {
@@ -138,13 +140,14 @@ NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
 
 - topicPrefix defaults to "*"
 */
-func NewRabbitEventBusConsumer(conn *amqp.Connection, topicPrefix string) (EventBusConsumer, error) {
+func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, topicPrefix string) (EventBusConsumer, error) {
 	if topicPrefix == "" {
 		topicPrefix = "*"
 	}
 	s := &RabbitEventBus{
 		conn:        conn,
 		topicPrefix: topicPrefix,
+		log:         log,
 	}
 	return s, nil
 }
@@ -162,12 +165,14 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 
 	bytes, err := json.Marshal(re)
 	if err != nil {
-		return err
+		b.log.Error(err, ErrCouldNotMarshalEvent.Error())
+		return ErrCouldNotMarshalEvent
 	}
 
 	ch, err := b.getChannel(false)
 	if err != nil {
-		return err
+		b.log.Error(err, ErrCouldNotPublishEvent.Error())
+		return ErrCouldNotPublishEvent
 	}
 
 	err = ch.Publish(
@@ -186,14 +191,18 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // AddReceiver adds a receiver for event matching the EventFilter.
 func (b *RabbitEventBus) AddReceiver(matcher EventMatcher, receiver EventReceiver) error {
 	if matcher == nil {
-		return errors.New("matcher can't be nil")
-	}
-	rabbitMatcher, ok := matcher.(*RabbitMatcher)
-	if !ok {
-		return errors.New("matcher must be of type RabbitMatcher")
+		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
+		return ErrMatcherMustNotBeNil
 	}
 	if receiver == nil {
-		return errors.New("receiver can't be nil")
+		b.log.Error(ErrReceiverMustNotBeNil, ErrReceiverMustNotBeNil.Error())
+		return ErrReceiverMustNotBeNil
+	}
+
+	rabbitMatcher, ok := matcher.(*RabbitMatcher)
+	if !ok {
+		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
+		return ErrMatcherMustNotBeNil
 	}
 
 	ch, err := b.createChannel()

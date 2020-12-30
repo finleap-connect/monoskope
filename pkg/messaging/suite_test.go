@@ -57,11 +57,11 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	publisher, err := NewRabbitEventBusPublisher(env.RabbitConn, "test")
+	publisher, err := NewRabbitEventBusPublisher(env.Log, env.RabbitConn, "")
 	Expect(err).ToNot(HaveOccurred())
 	env.Publisher = publisher
 
-	consumer, err := NewRabbitEventBusConsumer(env.RabbitConn, "test")
+	consumer, err := NewRabbitEventBusConsumer(env.Log, env.RabbitConn, "")
 	Expect(err).ToNot(HaveOccurred())
 	env.Consumer = consumer
 }, 60)
