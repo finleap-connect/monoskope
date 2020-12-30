@@ -185,7 +185,11 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			Body:        bytes,
 		})
 
-	return err
+	if err != nil {
+		b.log.Error(err, ErrCouldNotPublishEvent.Error())
+		return ErrCouldNotPublishEvent
+	}
+	return nil
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
