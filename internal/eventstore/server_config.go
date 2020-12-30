@@ -1,9 +1,13 @@
 package eventstore
 
-import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+import (
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+)
 
 // ServerConfig is the configuration for the API server
 type ServerConfig struct {
 	KeepAlive bool
 	Store     storage.Store
+	Bus       messaging.EventBusPublisher
 }

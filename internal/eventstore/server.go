@@ -13,6 +13,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -36,6 +37,7 @@ type Server struct {
 	//
 	shutdown *util.ShutdownWaitGroup
 	store    storage.Store
+	bus      messaging.EventBusPublisher
 }
 
 // NewServer returns a new configured instance of Server
@@ -45,6 +47,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 		log:      logger.WithName("server"),
 		shutdown: util.NewShutdownWaitGroup(),
 		store:    conf.Store,
+		bus:      conf.Bus,
 	}
 
 	// Configure gRPC server
@@ -144,7 +147,7 @@ func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
 	}
 
 	// Perform the use case for storing events
-	err := usecases.NewStoreEventsUseCase(stream.Context(), s.store, eventStream).Run()
+	err := usecases.NewStoreEventsUseCase(stream.Context(), s.store, s.bus, eventStream).Run()
 	if err != nil {
 		return err
 	}
