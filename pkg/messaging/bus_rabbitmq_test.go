@@ -29,6 +29,15 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}
 
+	receiveEvent := func(done chan<- bool, receiveChan <-chan storage.Event, event storage.Event) {
+		defer func() {
+			done <- true
+		}()
+		eventFromBus := <-receiveChan
+		Expect(eventFromBus).ToNot(BeNil())
+		Expect(eventFromBus).To(Equal(event))
+	}
+
 	createReceiver := func() (chan storage.Event, EventReceiver) {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
@@ -44,50 +53,54 @@ var _ = Describe("messaging/rabbitmq", func() {
 		publishEvent(event)
 	})
 	It("can publish and receive an event", func() {
+		done := make(chan bool)
 		receiveChan, receiver := createReceiver()
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().Any())
 		Expect(err).ToNot(HaveOccurred())
 
 		event := createEvent()
+		go receiveEvent(done, receiveChan, event)
 		go publishEvent(event)
-		eventFromBus := <-receiveChan
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
+
+		<-done
 	})
 	It("can publish and receive an event matching aggregate type", func() {
+		done := make(chan bool)
 		event := createEvent()
 
 		receiveChan, receiver := createReceiver()
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()))
 		Expect(err).ToNot(HaveOccurred())
 
+		go receiveEvent(done, receiveChan, event)
 		go publishEvent(event)
-		eventFromBus := <-receiveChan
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
+
+		<-done
 	})
 	It("can publish and receive an event matching event type", func() {
+		done := make(chan bool)
 		event := createEvent()
 
 		receiveChan, receiver := createReceiver()
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchEventType(event.EventType()))
 		Expect(err).ToNot(HaveOccurred())
 
+		go receiveEvent(done, receiveChan, event)
 		go publishEvent(event)
-		eventFromBus := <-receiveChan
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
+
+		<-done
 	})
 	It("can publish and receive an event matching aggregate type and event type", func() {
+		done := make(chan bool)
 		event := createEvent()
 
 		receiveChan, receiver := createReceiver()
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 		Expect(err).ToNot(HaveOccurred())
 
+		go receiveEvent(done, receiveChan, event)
 		go publishEvent(event)
-		eventFromBus := <-receiveChan
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
+
+		<-done
 	})
 })
