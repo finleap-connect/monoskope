@@ -7,14 +7,19 @@ import (
 
 type MessageBusTestEnv struct {
 	*test.TestEnv
-	RabbitConn *amqp.Connection
+	RabbitConn []*amqp.Connection
 	Publisher  EventBusPublisher
 	Consumer   EventBusConsumer
 }
 
 func (env *MessageBusTestEnv) Shutdown() error {
 	if env.RabbitConn != nil {
-		defer env.RabbitConn.Close()
+		for _, conn := range env.RabbitConn {
+			err := conn.Close()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return env.TestEnv.Shutdown()
 }

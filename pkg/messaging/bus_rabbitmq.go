@@ -250,7 +250,7 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 		q.Name, // queue
 		b.name, // consumer
 		false,  // auto ack
-		false,  // exclusive
+		true,   // exclusive
 		false,  // no local
 		false,  // no wait
 		nil,    // args

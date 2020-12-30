@@ -45,6 +45,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	// create rabbit conn
 	amqpURL := fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
+	env.RabbitConn = make([]*amqp.Connection, 0)
 	err = env.Retry(func() error {
 		env.Log.Info("Trying to connect rabbitmq...")
 		conn, err := amqp.Dial(amqpURL)
@@ -52,18 +53,32 @@ var _ = BeforeSuite(func(done Done) {
 			time.Sleep(3 * time.Second)
 			return err
 		}
-		env.RabbitConn = conn
+		env.RabbitConn = append(env.RabbitConn, conn)
+
+		consumer, err := NewRabbitEventBusConsumer(env.Log, conn, "test-consumer", "")
+		Expect(err).ToNot(HaveOccurred())
+		env.Consumer = consumer
+
 		return nil
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	publisher, err := NewRabbitEventBusPublisher(env.Log, env.RabbitConn, "")
-	Expect(err).ToNot(HaveOccurred())
-	env.Publisher = publisher
+	err = env.Retry(func() error {
+		env.Log.Info("Trying to connect rabbitmq...")
+		conn, err := amqp.Dial(amqpURL)
+		if err != nil {
+			time.Sleep(3 * time.Second)
+			return err
+		}
+		env.RabbitConn = append(env.RabbitConn, conn)
 
-	consumer, err := NewRabbitEventBusConsumer(env.Log, env.RabbitConn, "test-consumer", "")
+		publisher, err := NewRabbitEventBusPublisher(env.Log, conn, "")
+		Expect(err).ToNot(HaveOccurred())
+		env.Publisher = publisher
+
+		return nil
+	})
 	Expect(err).ToNot(HaveOccurred())
-	env.Consumer = consumer
 }, 60)
 
 var _ = AfterSuite(func() {
@@ -74,9 +89,6 @@ var _ = AfterSuite(func() {
 	Expect(err).To(BeNil())
 
 	err = env.Consumer.Close()
-	Expect(err).To(BeNil())
-
-	err = env.RabbitConn.Close()
 	Expect(err).To(BeNil())
 
 	err = env.Shutdown()

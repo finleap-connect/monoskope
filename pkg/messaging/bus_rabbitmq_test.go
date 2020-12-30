@@ -49,7 +49,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		event := createEvent()
-		publishEvent(event)
+		go publishEvent(event)
 		eventFromBus := <-receiveChan
 		Expect(eventFromBus).ToNot(BeNil())
 		Expect(eventFromBus).To(Equal(event))
@@ -61,7 +61,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()))
 		Expect(err).ToNot(HaveOccurred())
 
-		publishEvent(event)
+		go publishEvent(event)
 		eventFromBus := <-receiveChan
 		Expect(eventFromBus).ToNot(BeNil())
 		Expect(eventFromBus).To(Equal(event))
@@ -73,7 +73,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchEventType(event.EventType()))
 		Expect(err).ToNot(HaveOccurred())
 
-		publishEvent(event)
+		go publishEvent(event)
 		eventFromBus := <-receiveChan
 		Expect(eventFromBus).ToNot(BeNil())
 		Expect(eventFromBus).To(Equal(event))
@@ -85,7 +85,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 		Expect(err).ToNot(HaveOccurred())
 
-		publishEvent(event)
+		go publishEvent(event)
 		eventFromBus := <-receiveChan
 		Expect(eventFromBus).ToNot(BeNil())
 		Expect(eventFromBus).To(Equal(event))
