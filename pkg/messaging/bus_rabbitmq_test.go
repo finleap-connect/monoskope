@@ -60,7 +60,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		event := createEvent()
 		go receiveEvent(done, receiveChan, event)
-		go publishEvent(event)
+		publishEvent(event)
 
 		<-done
 	})
@@ -73,7 +73,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		go receiveEvent(done, receiveChan, event)
-		go publishEvent(event)
+		publishEvent(event)
 
 		<-done
 	})
@@ -86,7 +86,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		go receiveEvent(done, receiveChan, event)
-		go publishEvent(event)
+		publishEvent(event)
 
 		<-done
 	})
@@ -99,7 +99,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		go receiveEvent(done, receiveChan, event)
-		go publishEvent(event)
+		publishEvent(event)
 
 		<-done
 	})
