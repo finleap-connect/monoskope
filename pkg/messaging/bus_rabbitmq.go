@@ -62,7 +62,9 @@ type RabbitEventBus struct {
 	log         logger.Logger
 	conn        *amqp.Connection
 	channel     *amqp.Channel
+	queues      []*amqp.Queue
 	topicPrefix string
+	name        string
 }
 
 // createChannel creates a new channel for the current connection
@@ -140,16 +142,18 @@ NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
 
 - topicPrefix defaults to "*"
 */
-func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, topicPrefix string) (EventBusConsumer, error) {
+func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, consumerName, topicPrefix string) (EventBusConsumer, error) {
 	if topicPrefix == "" {
 		topicPrefix = "*"
 	}
-	s := &RabbitEventBus{
+	b := &RabbitEventBus{
 		conn:        conn,
 		topicPrefix: topicPrefix,
 		log:         log,
+		queues:      make([]*amqp.Queue, 0),
+		name:        consumerName,
 	}
-	return s, nil
+	return b, nil
 }
 
 // PublishEvent publishes the event on the bus.
@@ -193,20 +197,14 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *RabbitEventBus) AddReceiver(matcher EventMatcher, receiver EventReceiver) error {
-	if matcher == nil {
+func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) error {
+	if matchers == nil {
 		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
 		return ErrMatcherMustNotBeNil
 	}
 	if receiver == nil {
 		b.log.Error(ErrReceiverMustNotBeNil, ErrReceiverMustNotBeNil.Error())
 		return ErrReceiverMustNotBeNil
-	}
-
-	rabbitMatcher, ok := matcher.(*RabbitMatcher)
-	if !ok {
-		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
-		return ErrMatcherMustNotBeNil
 	}
 
 	ch, err := b.createChannel()
@@ -225,44 +223,57 @@ func (b *RabbitEventBus) AddReceiver(matcher EventMatcher, receiver EventReceive
 	if err != nil {
 		return err
 	}
+	b.queues = append(b.queues, &q)
 
-	err = ch.QueueBind(
-		q.Name,                             // queue name
-		rabbitMatcher.generateRoutingKey(), // routing key
-		exchangeName,                       // exchange
-		false,
-		nil)
-	if err != nil {
-		return err
+	for _, matcher := range matchers {
+		rabbitMatcher, ok := matcher.(*RabbitMatcher)
+		if !ok {
+			b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
+			return ErrMatcherMustNotBeNil
+		}
+
+		err = ch.QueueBind(
+			q.Name,                             // queue name
+			rabbitMatcher.generateRoutingKey(), // routing key
+			exchangeName,                       // exchange
+			false,
+			nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	msgs, err := ch.Consume(
 		q.Name, // queue
-		"",     // consumer
+		b.name, // consumer
 		false,  // auto ack
 		false,  // exclusive
 		false,  // no local
 		false,  // no wait
 		nil,    // args
 	)
-
-	go func() {
-		for d := range msgs {
-			re := &rabbitEvent{}
-			err := json.Unmarshal(d.Body, re)
-			if err != nil {
-				_ = d.Nack(false, false)
-			}
-			err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
-			if err != nil {
-				_ = d.Nack(false, false)
-			} else {
-				_ = d.Ack(false)
-			}
-		}
-	}()
+	if err != nil {
+		return err
+	}
+	go b.handle(msgs, receiver)
 
 	return err
+}
+
+func (b *RabbitEventBus) handle(msgs <-chan amqp.Delivery, receiver EventReceiver) {
+	for d := range msgs {
+		re := &rabbitEvent{}
+		err := json.Unmarshal(d.Body, re)
+		if err != nil {
+			_ = d.Nack(false, false)
+		}
+		err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
+		if err != nil {
+			_ = d.Nack(false, false)
+		} else {
+			_ = d.Ack(false)
+		}
+	}
 }
 
 // Matcher returns a new EventMatcher of type RabbitMatcher
@@ -271,4 +282,22 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 		topicPrefix: b.topicPrefix,
 	}
 	return matcher.Any()
+}
+
+// Close frees all disposable resources
+func (b *RabbitEventBus) Close() error {
+	ch, err := b.getChannel(false)
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+
+	for _, q := range b.queues {
+		_, err := ch.QueueDelete(q.Name, true, true, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

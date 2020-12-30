@@ -26,14 +26,18 @@ var ErrReceiverMustNotBeNil = errors.New("receiver must not be nil")
 type EventBusPublisher interface {
 	// PublishEvent publishes the event on the bus.
 	PublishEvent(context.Context, storage.Event) error
+	// Close for freeing all disposable resources
+	Close() error
 }
 
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
-	// AddReceiver adds a receiver for event matching the EventFilter.
-	AddReceiver(EventMatcher, EventReceiver) error
+	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
+	AddReceiver(EventReceiver, ...EventMatcher) error
+	// Close frees all disposable resources
+	Close() error
 }
 
 // EventMatcher is an interface used to define what events should be consumed

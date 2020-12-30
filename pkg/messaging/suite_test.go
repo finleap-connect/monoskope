@@ -61,7 +61,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	env.Publisher = publisher
 
-	consumer, err := NewRabbitEventBusConsumer(env.Log, env.RabbitConn, "")
+	consumer, err := NewRabbitEventBusConsumer(env.Log, env.RabbitConn, "test-consumer", "")
 	Expect(err).ToNot(HaveOccurred())
 	env.Consumer = consumer
 }, 60)
@@ -69,6 +69,16 @@ var _ = BeforeSuite(func(done Done) {
 var _ = AfterSuite(func() {
 	var err error
 	By("tearing down the test environment")
+
+	err = env.Publisher.Close()
+	Expect(err).To(BeNil())
+
+	err = env.Consumer.Close()
+	Expect(err).To(BeNil())
+
+	err = env.RabbitConn.Close()
+	Expect(err).To(BeNil())
+
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 })

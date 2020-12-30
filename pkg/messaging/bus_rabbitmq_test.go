@@ -22,12 +22,12 @@ var _ = Describe("messaging/rabbitmq", func() {
 		event := storage.NewEvent(storage.EventType("TestEvent"), storage.EventData("test"), time.Now().UTC(), storage.AggregateType("TestAggregate"), uuid.New(), 0)
 		eventsFromBus := make(chan storage.Event)
 
-		err := env.Consumer.AddReceiver(env.Consumer.Matcher().Any(), func(e storage.Event) error {
+		err := env.Consumer.AddReceiver(func(e storage.Event) error {
 			Expect(e).NotTo(BeNil())
 			Expect(event).To(Equal(e))
 			eventsFromBus <- e
 			return nil
-		})
+		}, env.Consumer.Matcher().Any())
 		Expect(err).ToNot(HaveOccurred())
 
 		err = env.Publisher.PublishEvent(ctx, event)
