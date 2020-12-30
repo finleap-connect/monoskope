@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/go-pg/pg"
@@ -140,7 +141,17 @@ func (s *PostgresEventStore) Save(ctx context.Context, events []Event) error {
 	}
 
 	// Append events to the store.
-	err := s.db.WithContext(ctx).Insert(&eventRecords)
+	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
+		e = s.db.WithContext(ctx).Insert(&eventRecords)
+		return e
+	}, func(e error) bool {
+		if pgErr, ok := e.(pg.Error); ok {
+			if pgErr.Field(byte('C')) == "40001" { // serialization_failure, see https://www.postgresql.org/docs/10/errcodes-appendix.html, see https://www.cockroachlabs.com/docs/stable/common-errors.html#result-is-ambiguous
+				return true
+			}
+		}
+		return false
+	})
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
 			return EventStoreError{
@@ -157,6 +168,27 @@ func (s *PostgresEventStore) Save(ctx context.Context, events []Event) error {
 	}
 
 	return nil
+}
+
+// retryWithExponentialBackoff retries a given function on error if either the recoverable function returns true or still attempts left
+func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f func() error, recoverable func(error) bool) (err error) {
+	for i := 0; ; i++ {
+
+		err = f()
+		if err == nil {
+			return
+		}
+
+		if !recoverable(err) {
+			return err
+		}
+		if i >= (attempts - 1) {
+			break
+		}
+		milliseconds := math.Pow(float64(initialBackoff.Milliseconds()), float64(2*(i+1)))
+		time.Sleep(time.Duration(milliseconds) * time.Millisecond)
+	}
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
 // Load implements the Load method of the EventStore interface.
