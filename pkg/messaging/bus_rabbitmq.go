@@ -433,10 +433,8 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 
 // Close will cleanly shutdown the channel and connection.
 func (b *RabbitEventBus) Close() error {
-	if !b.isReady {
-		return ErrMessageBusConnection
-	}
 	close(b.done)
+	b.isReady = false
 	err := b.channel.Close()
 	if err != nil {
 		return err
@@ -445,7 +443,6 @@ func (b *RabbitEventBus) Close() error {
 	if err != nil {
 		return err
 	}
-	b.isReady = false
 	return nil
 }
 

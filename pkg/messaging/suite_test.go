@@ -50,7 +50,7 @@ var _ = BeforeSuite(func(done Done) {
 	rabbitConnectionTry := 1
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
 	env.Log.Info("Waiting for rabbitmq to warm up...")
-	time.Sleep(10 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	err = env.Retry(func() error {
 		env.Log.Info("Trying to connect rabbitmq...")
