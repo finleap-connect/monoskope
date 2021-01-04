@@ -7,28 +7,28 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
-// TestEventBus implements an EventBus using RabbitMQ and adds debug logging.
-type TestEventBus struct {
+// TestWrapperEventBus wraps an actual event bus and adds logging for debug purposes.
+type TestWrapperEventBus struct {
 	log       logger.Logger
 	publisher EventBusPublisher
 	consumer  EventBusConsumer
 }
 
 func NewTestEventBusPublisher(log logger.Logger, publisher EventBusPublisher) EventBusPublisher {
-	return &TestEventBus{
+	return &TestWrapperEventBus{
 		log:       log,
 		publisher: publisher,
 	}
 }
 
 func NewTestEventBusConsumer(log logger.Logger, consumer EventBusConsumer) EventBusConsumer {
-	return &TestEventBus{
+	return &TestWrapperEventBus{
 		log:      log,
 		consumer: consumer,
 	}
 }
 
-func (b *TestEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *TestWrapperEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
 	b.log.Info("Publishing event...", "event", event.String())
 	err := b.publisher.PublishEvent(ctx, event)
 	if err != nil {
@@ -39,7 +39,7 @@ func (b *TestEventBus) PublishEvent(ctx context.Context, event storage.Event) *M
 	return err
 }
 
-func (b *TestEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) error {
+func (b *TestWrapperEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) error {
 	b.log.Info("Adding receiver...")
 	err := b.consumer.AddReceiver(func(e storage.Event) error {
 		err := receiver(e)
@@ -58,16 +58,16 @@ func (b *TestEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatc
 	return err
 }
 
-func (b *TestEventBus) Matcher() EventMatcher {
+func (b *TestWrapperEventBus) Matcher() EventMatcher {
 	return b.consumer.Matcher()
 }
 
-func (b *TestEventBus) AddErrorHandler(eh ErrorHandler) {
+func (b *TestWrapperEventBus) AddErrorHandler(eh ErrorHandler) {
 	b.consumer.AddErrorHandler(eh)
 }
 
 // Close frees all disposable resources
-func (b *TestEventBus) Close() error {
+func (b *TestWrapperEventBus) Close() error {
 	b.log.Info("Closing event bus...")
 	if b.publisher != nil {
 		if err := b.publisher.Close(); err != nil {

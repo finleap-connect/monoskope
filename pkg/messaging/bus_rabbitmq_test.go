@@ -46,6 +46,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	createReceiver := func(matchers ...EventMatcher) <-chan storage.Event {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
+			defer GinkgoRecover()
 			receiveChan <- e
 			return nil
 		}
@@ -54,15 +55,15 @@ var _ = Describe("messaging/rabbitmq", func() {
 		return receiveChan
 	}
 
-	failOnErr := func() {
-		defer GinkgoRecover()
+	addErrorHandler := func() {
 		env.Consumer.AddErrorHandler(func(mbe MessageBusError) {
+			defer GinkgoRecover()
 			Expect(mbe).ToNot(HaveOccurred())
 		})
 	}
 
 	testPubSub := func(matchers ...EventMatcher) {
-		go failOnErr()
+		addErrorHandler()
 
 		recChanA := createReceiver(matchers...)
 		recChanB := createReceiver(matchers...)
