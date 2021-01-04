@@ -47,11 +47,6 @@ var _ = Describe("messaging/rabbitmq", func() {
 		}
 		return receiveChan, receiver
 	}
-
-	It("can publish an event", func() {
-		event := createEvent()
-		publishEvent(event)
-	})
 	It("can publish and receive an event", func() {
 		receiveChan, receiver := createReceiver()
 		err := env.Consumer.AddReceiver(receiver, env.Consumer.Matcher().Any())
