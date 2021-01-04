@@ -269,6 +269,7 @@ func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 		re := &rabbitEvent{}
 		err := json.Unmarshal(d.Body, re)
 		if err != nil {
+			b.log.Error(err, "Failed to unmarshal event.", "event", d.Body)
 			_ = d.Nack(false, false)
 		}
 		err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
