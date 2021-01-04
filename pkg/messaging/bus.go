@@ -22,11 +22,16 @@ var ErrMatcherMustNotBeNil = errors.New("matcher must not be nil")
 // ErrReceiverMustNotBeNil is when an empty receiver has been provided
 var ErrReceiverMustNotBeNil = errors.New("receiver must not be nil")
 
+// ErrMessageNotConnected is when there is no connection
+var ErrMessageNotConnected = errors.New("message bus not connected")
+
 // ErrMessageBusConnection is when an unexpected error on message bus occured
 var ErrMessageBusConnection = errors.New("unexpected error on message bus occured")
 
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
+	// Connect
+	Connect(context.Context) *MessageBusError
 	// PublishEvent publishes the event on the bus.
 	PublishEvent(context.Context, storage.Event) *MessageBusError
 	// Close for freeing all disposable resources
@@ -35,12 +40,12 @@ type EventBusPublisher interface {
 
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
+	// Connect
+	Connect(context.Context) *MessageBusError
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(EventReceiver, ...EventMatcher) error
-	// AddErrorHandler adds a handler function to call if any error occurs
-	AddErrorHandler(ErrorHandler)
+	AddReceiver(EventReceiver, ...EventMatcher) *MessageBusError
 	// Close frees all disposable resources
 	Close() error
 }

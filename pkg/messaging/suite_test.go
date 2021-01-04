@@ -3,13 +3,11 @@ package messaging
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
-	"github.com/streadway/amqp"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
@@ -44,46 +42,25 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// create rabbit conn
-	rabbitConnectionTry := 1
-	amqpURL := fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
-	env.RabbitConn = make([]*amqp.Connection, 0)
-	err = env.Retry(func() error {
-		env.Log.Info("Trying to connect rabbitmq...")
-		conn, err := amqp.Dial(amqpURL)
-		if err != nil {
-			env.Log.Info(fmt.Sprintf("Failed, retrying in %v seconds ...", rabbitConnectionTry))
-			time.Sleep(time.Duration(rabbitConnectionTry) * time.Second)
-			rabbitConnectionTry++
-			return err
-		}
-		env.RabbitConn = append(env.RabbitConn, conn)
-
-		consumer, err := NewRabbitEventBusConsumer(env.Log, conn, "test-consumer", "")
-		Expect(err).ToNot(HaveOccurred())
-		env.Consumer = NewTestEventBusConsumer(env.Log, consumer)
-
-		return nil
-	})
-	Expect(err).ToNot(HaveOccurred())
-
-	conn, err := amqp.Dial(amqpURL)
-	Expect(err).ToNot(HaveOccurred())
-	env.RabbitConn = append(env.RabbitConn, conn)
-
-	publisher, err := NewRabbitEventBusPublisher(env.Log, conn, "")
-	Expect(err).ToNot(HaveOccurred())
-	env.Publisher = NewTestEventBusPublisher(env.Log, publisher)
+	// rabbitConnectionTry := 1
+	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
+	// err = env.Retry(func() error {
+	// 	env.Log.Info("Trying to connect rabbitmq...")
+	// 	conn, err := amqp.Dial(env.amqpURL)
+	// 	if err != nil {
+	// 		env.Log.Info(fmt.Sprintf("Failed, retrying in %v seconds ...", rabbitConnectionTry))
+	// 		time.Sleep(time.Duration(rabbitConnectionTry) * time.Second)
+	// 		rabbitConnectionTry++
+	// 		return err
+	// 	}
+	// 	return conn.Close()
+	// })
+	// Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
 	var err error
 	By("tearing down the test environment")
-
-	err = env.Publisher.Close()
-	Expect(err).To(BeNil())
-
-	err = env.Consumer.Close()
-	Expect(err).To(BeNil())
 
 	err = env.Shutdown()
 	Expect(err).To(BeNil())

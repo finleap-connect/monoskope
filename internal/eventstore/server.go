@@ -108,10 +108,31 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 		if err := s.http.Shutdown(context.Background()); err != nil {
 			s.log.Error(err, "http server shutdown problem")
 		}
+
 		// And the gRPC server
 		s.log.Info("grpc server stopping gracefully")
 		s.grpc.GracefulStop()
+
+		// And the bus
+		s.log.Info("closing connection to message bus gracefully")
+		if err := s.bus.Close(); err != nil {
+			s.log.Error(err, "message bzs shutdown problem")
+		}
+
+		// And the store
+		s.log.Info("closing connection to store gracefully")
+		if err := s.store.Close(); err != nil {
+			s.log.Error(err, "store shutdown problem")
+		}
 	})
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelFunc()
+	msgbusErr := s.bus.Connect(ctx)
+	if msgbusErr != nil {
+		s.log.Error(msgbusErr, "failed connectin to bus")
+		return msgbusErr.Cause()
+	}
 
 	s.log.Info("starting to serve grpc", "addr", apiLis.Addr())
 	err := s.grpc.Serve(apiLis)

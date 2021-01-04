@@ -94,6 +94,10 @@ func (s *InMemoryEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 	return events, nil
 }
 
+func (s *InMemoryEventStore) Close() error {
+	return nil
+}
+
 // Clear clears the event storage. This is only for testing purposes.
 func (s *InMemoryEventStore) clear(ctx context.Context) {
 	s.events = make([]Event, 0)

@@ -14,8 +14,11 @@ import (
 
 var _ = Describe("messaging/rabbitmq", func() {
 	var wg sync.WaitGroup
+	var consumer EventBusConsumer
+	var publisher EventBusPublisher
 	ctx := context.Background()
 	eventCounter := 0
+	consumerCount := 0
 
 	createEvent := func() storage.Event {
 		eventType := storage.EventType("TestEvent")
@@ -27,7 +30,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	publishEvent := func(event storage.Event) {
-		err := env.Publisher.PublishEvent(ctx, event)
+		err := publisher.PublishEvent(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
@@ -50,21 +53,12 @@ var _ = Describe("messaging/rabbitmq", func() {
 			receiveChan <- e
 			return nil
 		}
-		err := env.Consumer.AddReceiver(receiver, matchers...)
+		err := consumer.AddReceiver(receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
 		return receiveChan
 	}
 
-	addErrorHandler := func() {
-		env.Consumer.AddErrorHandler(func(mbe MessageBusError) {
-			defer GinkgoRecover()
-			Expect(mbe).ToNot(HaveOccurred())
-		})
-	}
-
 	testPubSub := func(matchers ...EventMatcher) {
-		addErrorHandler()
-
 		recChanA := createReceiver(matchers...)
 		recChanB := createReceiver(matchers...)
 		event := createEvent()
@@ -76,19 +70,43 @@ var _ = Describe("messaging/rabbitmq", func() {
 		wg.Wait()
 	}
 
+	BeforeEach(func() {
+		var err error
+		consumer, err = NewRabbitEventBusConsumer(env.amqpURL, fmt.Sprintf("test-%v", consumerCount), "")
+		consumerCount++
+		Expect(err).ToNot(HaveOccurred())
+		consumer = NewTestEventBusConsumer(env.Log, consumer)
+		err = consumer.Connect(ctx)
+		Expect(err).ToNot(HaveOccurred())
+
+		publisher, err = NewRabbitEventBusPublisher(env.amqpURL, "")
+		Expect(err).ToNot(HaveOccurred())
+		publisher = NewTestEventBusPublisher(env.Log, publisher)
+		err = publisher.Connect(ctx)
+		Expect(err).ToNot(HaveOccurred())
+	})
+	AfterEach(func() {
+		var err error
+
+		err = consumer.Close()
+		Expect(err).ToNot(HaveOccurred())
+
+		err = publisher.Close()
+		Expect(err).ToNot(HaveOccurred())
+	})
 	It("can publish and receive an event", func() {
-		testPubSub(env.Consumer.Matcher().Any())
+		testPubSub(consumer.Matcher().Any())
 	})
 	It("can publish and receive an event matching aggregate type", func() {
 		event := createEvent()
-		testPubSub(env.Consumer.Matcher().MatchAggregateType(event.AggregateType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()))
 	})
 	It("can publish and receive an event matching event type", func() {
 		event := createEvent()
-		testPubSub(env.Consumer.Matcher().MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchEventType(event.EventType()))
 	})
 	It("can publish and receive an event matching aggregate type and event type", func() {
 		event := createEvent()
-		testPubSub(env.Consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 	})
 })

@@ -28,6 +28,20 @@ func NewTestEventBusConsumer(log logger.Logger, consumer EventBusConsumer) Event
 	}
 }
 
+func (b *TestWrapperEventBus) Connect(ctx context.Context) *MessageBusError {
+	var err *MessageBusError
+
+	if b.publisher != nil {
+		err = b.publisher.Connect(ctx)
+	}
+
+	if b.consumer != nil {
+		err = b.consumer.Connect(ctx)
+	}
+
+	return err
+}
+
 func (b *TestWrapperEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
 	b.log.Info("Publishing event...", "event", event.String())
 	err := b.publisher.PublishEvent(ctx, event)
@@ -39,7 +53,7 @@ func (b *TestWrapperEventBus) PublishEvent(ctx context.Context, event storage.Ev
 	return err
 }
 
-func (b *TestWrapperEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) error {
+func (b *TestWrapperEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
 	b.log.Info("Adding receiver...")
 	err := b.consumer.AddReceiver(func(e storage.Event) error {
 		err := receiver(e)
@@ -60,10 +74,6 @@ func (b *TestWrapperEventBus) AddReceiver(receiver EventReceiver, matchers ...Ev
 
 func (b *TestWrapperEventBus) Matcher() EventMatcher {
 	return b.consumer.Matcher()
-}
-
-func (b *TestWrapperEventBus) AddErrorHandler(eh ErrorHandler) {
-	b.consumer.AddErrorHandler(eh)
 }
 
 // Close frees all disposable resources

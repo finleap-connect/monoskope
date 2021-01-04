@@ -6,9 +6,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/spf13/cobra"
-	"github.com/streadway/amqp"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
@@ -65,14 +63,8 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// create message bus connection
-		conn, err := amqp.Dial(msgbusUrl)
-		if err != nil {
-			return err
-		}
-
 		// init message bus publisher
-		publisher, err := messaging.NewRabbitEventBusPublisher(logger.WithName("server"), conn, "")
+		publisher, err := messaging.NewRabbitEventBusPublisher(msgbusUrl, msgbusPrefix)
 		if err != nil {
 			return err
 		}

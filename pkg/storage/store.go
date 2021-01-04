@@ -36,6 +36,9 @@ type Store interface {
 
 	// Load loads all events for the query from the store.
 	Load(context.Context, *StoreQuery) ([]Event, error)
+
+	// Close closes the underlying connections
+	Close() error
 }
 
 // StoreQuery contains query information on how to retrieve events from an event store

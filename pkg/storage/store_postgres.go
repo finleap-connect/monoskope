@@ -220,6 +220,10 @@ func (s *PostgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 	return events, nil
 }
 
+func (s *PostgresEventStore) Close() error {
+	return s.db.Close()
+}
+
 // mapStoreQuery maps the generic query struct to a postgress orm query
 func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
 	if storeQuery == nil {
