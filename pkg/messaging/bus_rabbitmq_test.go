@@ -30,12 +30,16 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
-		eventFromBus := <-receiveChan
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
+		select {
+		case eventFromBus := <-receiveChan:
+			Expect(eventFromBus).ToNot(BeNil())
+			Expect(eventFromBus).To(Equal(event))
+		case <-time.After(10 * time.Second):
+			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
+		}
 	}
 
-	createReceiver := func() (chan storage.Event, EventReceiver) {
+	createReceiver := func() (<-chan storage.Event, EventReceiver) {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
 			receiveChan <- e
