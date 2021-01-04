@@ -21,12 +21,17 @@
   services:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
 
-test_lint:golang:
+lint:golang:
   stage: test
   extends: .gobase-docker
   script:
     - make -j go-ginkgo-get go-golangci-lint-get
     - make -j go-vet go-lint
+
+test:golang:
+  stage: test
+  extends: .gobase-docker
+  script:
     - make go-test
   artifacts:
     name: "Go Tests"
@@ -59,5 +64,6 @@ deliver:gateway:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
   dependencies:
-    - test_lint:golang
+    - lint:golang
+    - test:golang
     - build:golang:gateway
