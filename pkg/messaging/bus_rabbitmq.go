@@ -258,13 +258,13 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 	if err != nil {
 		return err
 	}
-	go b.handle(msgs, receiver)
-	b.log.Info(fmt.Sprintf("New handler using queue '%s' registered.", q.Name))
+	go b.handle(q.Name, msgs, receiver)
 
 	return nil
 }
 
-func (b *RabbitEventBus) handle(msgs <-chan amqp.Delivery, receiver EventReceiver) {
+func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
+	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for d := range msgs {
 		re := &rabbitEvent{}
 		err := json.Unmarshal(d.Body, re)
@@ -278,6 +278,7 @@ func (b *RabbitEventBus) handle(msgs <-chan amqp.Delivery, receiver EventReceive
 			_ = d.Ack(false)
 		}
 	}
+	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
 // Matcher returns a new EventMatcher of type RabbitMatcher
