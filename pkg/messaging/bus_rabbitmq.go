@@ -59,12 +59,12 @@ type rabbitEvent struct {
 
 // RabbitEventBus implements an EventBus using RabbitMQ.
 type RabbitEventBus struct {
-	log         logger.Logger
-	conn        *amqp.Connection
-	channel     *amqp.Channel
-	queues      []*amqp.Queue
-	topicPrefix string
-	name        string
+	log              logger.Logger
+	conn             *amqp.Connection
+	channel          *amqp.Channel
+	queues           []*amqp.Queue
+	routingKeyPrefix string
+	name             string
 }
 
 // createChannel creates a new channel for the current connection
@@ -113,22 +113,22 @@ func (b *RabbitEventBus) initExchange() error {
 
 // generateRoutingKey generates the routing key for an event.
 func (b *RabbitEventBus) generateRoutingKey(event storage.Event) string {
-	return fmt.Sprintf("%s.%s.%s", b.topicPrefix, event.AggregateType(), event.EventType())
+	return fmt.Sprintf("%s.%s.%s", b.routingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
 /*
 NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 
-- topicPrefix defaults to "m8"
+- routingKeyPrefix defaults to "m8"
 */
-func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, topicPrefix string) (EventBusPublisher, error) {
-	if topicPrefix == "" {
-		topicPrefix = "m8"
+func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, routingKeyPrefix string) (EventBusPublisher, error) {
+	if routingKeyPrefix == "" {
+		routingKeyPrefix = "m8"
 	}
 	s := &RabbitEventBus{
-		conn:        conn,
-		topicPrefix: topicPrefix,
-		log:         log,
+		conn:             conn,
+		routingKeyPrefix: routingKeyPrefix,
+		log:              log,
 	}
 	err := s.initExchange()
 	if err != nil {
@@ -140,18 +140,18 @@ func NewRabbitEventBusPublisher(log logger.Logger, conn *amqp.Connection, topicP
 /*
 NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
 
-- topicPrefix defaults to "m8"
+- routingKeyPrefix defaults to "m8"
 */
-func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, consumerName, topicPrefix string) (EventBusConsumer, error) {
-	if topicPrefix == "" {
-		topicPrefix = "m8"
+func NewRabbitEventBusConsumer(log logger.Logger, conn *amqp.Connection, consumerName, routingKeyPrefix string) (EventBusConsumer, error) {
+	if routingKeyPrefix == "" {
+		routingKeyPrefix = "m8"
 	}
 	b := &RabbitEventBus{
-		conn:        conn,
-		topicPrefix: topicPrefix,
-		log:         log,
-		queues:      make([]*amqp.Queue, 0),
-		name:        consumerName,
+		conn:             conn,
+		routingKeyPrefix: routingKeyPrefix,
+		log:              log,
+		queues:           make([]*amqp.Queue, 0),
+		name:             consumerName,
 	}
 	return b, nil
 }
@@ -283,7 +283,7 @@ func (b *RabbitEventBus) handle(msgs <-chan amqp.Delivery, receiver EventReceive
 // Matcher returns a new EventMatcher of type RabbitMatcher
 func (b *RabbitEventBus) Matcher() EventMatcher {
 	matcher := &RabbitMatcher{
-		topicPrefix: b.topicPrefix,
+		topicPrefix: b.routingKeyPrefix,
 	}
 	return matcher.Any()
 }

@@ -6,18 +6,23 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/spf13/cobra"
+	"github.com/streadway/amqp"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 var (
-	apiAddr     string
-	metricsAddr string
-	keepAlive   bool
-	dbAddr      string
-	dbUser      string
-	dbName      string
-	dbPassword  string
+	apiAddr      string
+	metricsAddr  string
+	keepAlive    bool
+	dbAddr       string
+	dbUser       string
+	dbName       string
+	dbPassword   string
+	msgbusUrl    string
+	msgbusPrefix string
 )
 
 var serverCmd = &cobra.Command{
@@ -60,11 +65,23 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// TODO: create message bus connection
+		// create message bus connection
+		conn, err := amqp.Dial(msgbusUrl)
+		if err != nil {
+			return err
+		}
+
+		// init message bus publisher
+		publisher, err := messaging.NewRabbitEventBusPublisher(logger.WithName("server"), conn, "")
+		if err != nil {
+			return err
+		}
 
 		// Create the server
 		serverConfig := eventstore.ServerConfig{
-			Store: store,
+			Store:     store,
+			Bus:       publisher,
+			KeepAlive: keepAlive,
 		}
 		s, err := eventstore.NewServer(&serverConfig)
 		if err != nil {
@@ -86,4 +103,6 @@ func init() {
 	flags.StringVar(&dbAddr, "db-addr", "127.0.0.1:26257", "Store db host:port")
 	flags.StringVar(&dbUser, "db-user", "eventstore", "Store db user")
 	flags.StringVar(&dbName, "db-name", "eventstore", "Store db name")
+	flags.StringVar(&msgbusUrl, "msgbus-url", "amqp://user:bitnami@127.0.0.1:5672", "Messagebus URL")
+	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 }
