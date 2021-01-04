@@ -22,6 +22,9 @@ CMD_MONOCTL_SRC = cmd/monoctl/*.go
 CMD_GATEWAY = $(BUILD_PATH)/gateway
 CMD_GATEWAY_SRC = cmd/gateway/*.go
 
+CMD_EVENTSTORE = $(BUILD_PATH)/eventstore
+CMD_EVENTSTORE_SRC = cmd/eventstore/*.go
+
 define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
@@ -88,6 +91,9 @@ protobuf:
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
 
+$(CMD_EVENTSTORE):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_EVENTSTORE_SRC)
+
 $(CMD_MONOCTL_LINUX):
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" -o $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_SRC)
 
@@ -106,6 +112,8 @@ build-clean:
 build-monoctl: $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_OSX) $(CMD_MONOCTL_WIN)
 
 build-gateway: $(CMD_GATEWAY)
+
+build-eventstore: $(CMD_EVENTSTORE)
 
 push-monoctl:
 	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_LINUX) "https://artifactory.figo.systems/artifactory/binaries/linux/monoctl-$(VERSION)"
