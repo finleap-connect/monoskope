@@ -60,7 +60,7 @@ var _ = BeforeSuite(func(done Done) {
 
 		consumer, err := NewRabbitEventBusConsumer(env.Log, conn, "test-consumer", "")
 		Expect(err).ToNot(HaveOccurred())
-		env.Consumer = consumer
+		env.Consumer = NewTestEventBusConsumer(env.Log, consumer)
 
 		return nil
 	})
@@ -72,7 +72,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	publisher, err := NewRabbitEventBusPublisher(env.Log, conn, "")
 	Expect(err).ToNot(HaveOccurred())
-	env.Publisher = publisher
+	env.Publisher = NewTestEventBusPublisher(env.Log, publisher)
 }, 60)
 
 var _ = AfterSuite(func() {
