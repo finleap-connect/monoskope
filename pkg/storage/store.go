@@ -54,7 +54,7 @@ type StoreQuery struct {
 	MaxTimestamp *time.Time
 }
 
-// EventStoreError is an error in the event store, with the namespace.
+// EventStoreError is an error in the event store.
 type EventStoreError struct {
 	// Err is the error.
 	Err error
