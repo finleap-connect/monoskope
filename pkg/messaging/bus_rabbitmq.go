@@ -14,9 +14,10 @@ import (
 
 const (
 	exchangeName   = "m8_events"     // name of the monoskope exchange
-	reconnectDelay = 3 * time.Second // When reconnecting to the server after connection failure
-	reInitDelay    = 1 * time.Second // When setting up the channel after a channel exception
+	reconnectDelay = 5 * time.Second // When reconnecting to the server after connection failure
+	reInitDelay    = 3 * time.Second // When setting up the channel after a channel exception
 	resendDelay    = 3 * time.Second // When resending messages the server didn't confirm
+	maxResend      = 5               // How many times resending messages the server didn't confirm
 )
 
 // rabbitEvent implements the message body transfered via rabbitmq
@@ -132,7 +133,6 @@ func (b *RabbitEventBus) handleReconnect(addr string) {
 		b.log.Info("Attempting to connect...")
 
 		conn, err := b.connect(addr)
-
 		if err != nil {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
@@ -258,6 +258,7 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		}
 	}
 
+	resendsLeft := maxResend
 	for {
 		err := b.publishEvent(ctx, event)
 		if err != nil {
@@ -278,7 +279,15 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		case <-time.After(resendDelay):
 		}
-		b.log.Info("Publish wasn't confirm. Retrying...")
+		resendsLeft--
+		if resendsLeft > 0 {
+			b.log.Info("Publish wasn't confirmed. Retrying...")
+		} else {
+			return &MessageBusError{
+				Err:     ErrCouldNotPublishEvent,
+				BaseErr: err,
+			}
+		}
 	}
 }
 
