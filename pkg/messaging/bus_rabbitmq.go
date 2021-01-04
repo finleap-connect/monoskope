@@ -94,7 +94,7 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 		err := b.init(conn)
 
 		if err != nil {
-			b.log.Error(err, "Failed to initialize channel. Retrying...")
+			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
 			select {
 			case <-b.done:
@@ -109,14 +109,14 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 			return true
 		case errConnClose := <-b.notifyConnClose:
 			if errConnClose != nil {
-				b.log.Error(errConnClose, "Connection closed. Reconnecting...")
+				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
 			} else {
 				b.log.Info("Connection closed. Reconnecting...")
 			}
 			return false
 		case errChanClose := <-b.notifyChanClose:
 			if errChanClose != nil {
-				b.log.Error(errChanClose, "Channel closed. Re-running init...")
+				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
 			} else {
 				b.log.Info("Channel closed. Re-running init...")
 			}
@@ -134,7 +134,7 @@ func (b *RabbitEventBus) handleReconnect(addr string) {
 		conn, err := b.connect(addr)
 
 		if err != nil {
-			b.log.Error(err, "Failed to connect. Retrying...")
+			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
 			select {
 			case <-b.done:
