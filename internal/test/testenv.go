@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -28,13 +29,18 @@ func (t *TestEnv) Retry(op func() error) error {
 	return t.pool.Retry(op)
 }
 
-func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions) (*dockertest.Resource, error) {
+func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions, hcOpts ...func(*dc.HostConfig)) (*dockertest.Resource, error) {
 	t.Log.Info(fmt.Sprintf("Starting docker container resource %s/%s...", opts.Repository, opts.Name))
-	res, err := t.pool.RunWithOptions(opts)
+	res, err := t.pool.RunWithOptions(opts, hcOpts...)
+	if err != nil {
+		return nil, err
+	}
+	err = res.Expire(120)
 	if err != nil {
 		return nil, err
 	}
 	t.resources[res.Container.Name] = res
+
 	return res, err
 }
 
