@@ -30,7 +30,7 @@ func (t *TestEnv) Retry(op func() error) error {
 }
 
 func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions, hcOpts ...func(*dc.HostConfig)) (*dockertest.Resource, error) {
-	t.Log.Info(fmt.Sprintf("Starting docker container %s/%s:%s ...", opts.Repository, opts.Name, opts.Tag))
+	t.Log.Info(fmt.Sprintf("Starting docker container %s:%s ...", opts.Repository, opts.Tag))
 	res, err := t.pool.RunWithOptions(opts, hcOpts...)
 	if err != nil {
 		return nil, err
