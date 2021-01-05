@@ -1,6 +1,6 @@
 apiVersion: v2
-name: monoskope
-description: Monoskope implements the management and operation of tenants, users and their roles in a Kubernetes multi-cluster environment.
+name: monoskope-eventstore
+description: A Helm chart for the Monoskope EventStore
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -21,23 +21,3 @@ version: 0.0.1
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 appVersion: 0.0.1
-
-dependencies: # A list of the chart requirements
-  - name: dex
-    version: 1.0.18
-    repository: https://kubism.github.io/charts
-    condition: dex.enabled,global.dex.enabled
-  - name: monoskope-gateway
-    repository: "file://../gateway"
-    condition: monoskope-gateway.enabled,global.monoskope-gateway.enabled
-  - name: monoskope-eventstore
-    repository: "file://../eventstore"
-    condition: monoskope-eventstore.enabled,global.monoskope-eventstore.enabled
-  - name: cockroachdb
-    version: 5.0.2
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
-    condition: cockroachdb.enabled,global.cockroachdb.enabled
-  - name: rabbitmq
-    version: 8.5.2
-    repository: https://charts.bitnami.com/bitnami
-    condition: rabbitmq.enabled
