@@ -51,12 +51,13 @@ type RabbitEventBus struct {
 // and updates the channel listeners to reflect this.
 func (b *RabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	b.channel = channel
 	b.notifyChanClose = make(chan *amqp.Error)
 	b.notifyConfirm = make(chan amqp.Confirmation, 1)
 	b.channel.NotifyClose(b.notifyChanClose)
 	b.channel.NotifyPublish(b.notifyConfirm)
-	b.mu.Unlock()
 }
 
 // init will initialize channel & declare queue
@@ -132,6 +133,9 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 // changeConnection takes a new connection to the queue,
 // and updates the close listener to reflect this.
 func (b *RabbitEventBus) changeConnection(connection *amqp.Connection) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	b.connection = connection
 	b.notifyConnClose = make(chan *amqp.Error)
 	b.connection.NotifyClose(b.notifyConnClose)
@@ -276,6 +280,7 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 			continue
 		}
+
 		select {
 		case confirm := <-b.notifyConfirm:
 			if confirm.Ack {
@@ -283,9 +288,9 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		case <-time.After(resendDelay):
 		}
-		resendsLeft--
 		if resendsLeft > 0 {
 			b.log.Info("Publish wasn't confirmed. Retrying...")
+			resendsLeft--
 		} else {
 			return &MessageBusError{
 				Err:     ErrCouldNotPublishEvent,
@@ -300,6 +305,8 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // No guarantees are provided for whether the server will
 // recieve the message.
 func (b *RabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if !b.isReady {
 		return &MessageBusError{
 			Err: ErrMessageNotConnected,
@@ -436,8 +443,11 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 
 // Close will cleanly shutdown the channel and connection.
 func (b *RabbitEventBus) Close() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	b.log.Info("Closing channel and connection...")
 
+	b.done <- true
 	close(b.done)
 	b.isReady = false
 	err := b.channel.Close()
