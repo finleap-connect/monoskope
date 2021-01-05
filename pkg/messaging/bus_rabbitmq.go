@@ -195,7 +195,6 @@ func (b *RabbitEventBus) generateRoutingKey(event storage.Event) string {
 
 // handle handles the routing of the received messages and ack/nack based on receiver result
 func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
-
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for {
 		select {
