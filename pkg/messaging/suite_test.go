@@ -42,6 +42,9 @@ var _ = BeforeSuite(func(done Done) {
 		Tag:        "3",
 	}, func(config *dc.HostConfig) {
 		config.RestartPolicy = dc.AlwaysRestart()
+		config.LogConfig = dc.LogConfig{
+			Type: "journald",
+		}
 	})
 	Expect(err).ToNot(HaveOccurred())
 
