@@ -39,7 +39,10 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  api:
+    port: 8080
+  metrics:
+    port: 9102
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -52,6 +55,18 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+livenessProbe:
+  enabled: true
+  failureThreshold: 10
+  periodSeconds: 5
+  initialDelaySeconds: 10
+
+readinessProbe:
+  enabled: true
+  failureThreshold: 5
+  periodSeconds: 5
+  initialDelaySeconds: 5
 
 autoscaling:
   enabled: false
@@ -68,3 +83,7 @@ affinity: {}
 
 labels: {}
   # app.kubernetes.io/part-of: my-app
+
+ports:
+  api: 8080
+  metrics: 9102
