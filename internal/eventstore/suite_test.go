@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 )
 
 const (
@@ -39,6 +40,7 @@ var _ = BeforeSuite(func(done Done) {
 	// Create server
 	conf := &ServerConfig{
 		KeepAlive: false,
+		Bus:       messaging.NewMockEventBusPublisher(),
 	}
 	server, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
