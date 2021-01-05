@@ -16,6 +16,13 @@ lint:helm:gateway:
     - make helm-lint-gateway
   needs: []
 
+lint:helm:eventstore:
+  stage: test
+  extends: .helm
+  script:
+    - make helm-lint-eventstore
+  needs: []
+
 deliver:chart:monoskope:
   stage: deliver
   extends: .helm
