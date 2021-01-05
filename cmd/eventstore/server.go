@@ -64,7 +64,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// init message bus publisher
-		publisher, err := messaging.NewRabbitEventBusPublisher(msgbusUrl, msgbusPrefix)
+		publisher, err := messaging.NewRabbitEventBusPublisher(msgbusUrl, "event-store", msgbusPrefix)
 		if err != nil {
 			return err
 		}
