@@ -35,10 +35,6 @@ func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions, hcOpts ...func(*dc
 	if err != nil {
 		return nil, err
 	}
-	err = res.Expire(120)
-	if err != nil {
-		return nil, err
-	}
 	t.resources[res.Container.Name] = res
 
 	return res, err
