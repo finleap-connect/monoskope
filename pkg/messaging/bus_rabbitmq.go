@@ -58,6 +58,7 @@ func (b *RabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.notifyConfirm = make(chan amqp.Confirmation, 1)
 	b.channel.NotifyClose(b.notifyChanClose)
 	b.channel.NotifyPublish(b.notifyConfirm)
+	b.isReady = true
 }
 
 // init will initialize channel & declare queue
@@ -66,14 +67,13 @@ func (b *RabbitEventBus) init(conn *amqp.Connection) error {
 	if err != nil {
 		return err
 	}
-
-	// Indicate we only want 1 message to acknowledge at a time.
-	if err := ch.Qos(1, 0, false); err != nil {
-		return err
-	}
-
+	// Indicate we want confirmation of the publish.
 	err = ch.Confirm(false)
 	if err != nil {
+		return err
+	}
+	// Indicate we only want 1 message to acknowledge at a time.
+	if err := ch.Qos(1, 0, false); err != nil {
 		return err
 	}
 
@@ -91,7 +91,6 @@ func (b *RabbitEventBus) init(conn *amqp.Connection) error {
 	}
 
 	b.changeChannel(ch)
-	b.isReady = true
 
 	return nil
 }
@@ -177,8 +176,6 @@ func (b *RabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 // notifyConnClose, and then continuously attempt to reconnect.
 func (b *RabbitEventBus) handleReconnect(addr string) {
 	for {
-		b.isReady = false
-
 		conn, err := b.connect(addr)
 		if err != nil {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
