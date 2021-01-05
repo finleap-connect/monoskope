@@ -453,18 +453,14 @@ func (b *RabbitEventBus) Close() error {
 	defer b.mu.Unlock()
 	b.log.Info("Closing channel and connection...")
 
-	err := b.channel.Close()
-	if err != nil {
-		return err
-	}
-	b.log.Info("Channel closed.")
-
-	err = b.connection.Close()
-	if err != nil {
-		return err
-	}
 	close(b.done)
 	b.isReady = false
+
+	// closes underlying channels as well
+	err := b.connection.Close()
+	if err != nil {
+		return err
+	}
 
 	b.log.Info("Connection closed.")
 
