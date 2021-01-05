@@ -117,10 +117,11 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 		}
 
 		select {
-		case <-b.done:
-			b.log.Info("Automatic reinit stopped.")
-			return false
 		case errConnClose := <-b.notifyConnClose:
+			if _, ok := <-b.done; !ok {
+				b.log.Info("Connection closed.")
+				return false
+			}
 			if errConnClose != nil {
 				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
 			} else {
@@ -128,6 +129,10 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 			}
 			return true
 		case errChanClose := <-b.notifyChanClose:
+			if _, ok := <-b.done; !ok {
+				b.log.Info("Channel closed.")
+				return false
+			}
 			if errChanClose != nil {
 				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
 			} else {
@@ -478,7 +483,7 @@ func (b *RabbitEventBus) Close() error {
 	if err != nil {
 		return err
 	}
-	b.log.Info("Connection closed.")
+	b.log.Info("Shutdown complete.")
 
 	return nil
 }
