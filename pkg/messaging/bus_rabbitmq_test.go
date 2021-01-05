@@ -18,7 +18,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	var publisher EventBusPublisher
 	ctx := context.Background()
 	eventCounter := 0
-	consumerCount := 0
+	testCount := 0
 
 	createEvent := func() storage.Event {
 		eventType := storage.EventType("TestEvent")
@@ -72,18 +72,19 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	BeforeEach(func() {
 		var err error
-		consumer, err = NewRabbitEventBusConsumer(env.amqpURL, fmt.Sprintf("test-%v", consumerCount), "")
-		consumerCount++
+		consumer, err = NewRabbitEventBusConsumer(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
 		consumer = NewTestEventBusConsumer(env.Log, consumer)
 		err = consumer.Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
-		publisher, err = NewRabbitEventBusPublisher(env.amqpURL, "")
+		publisher, err = NewRabbitEventBusPublisher(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
 		publisher = NewTestEventBusPublisher(env.Log, publisher)
 		err = publisher.Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
+
+		testCount++
 	})
 	AfterEach(func() {
 		var err error

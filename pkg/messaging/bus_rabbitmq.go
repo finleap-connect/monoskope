@@ -205,6 +205,7 @@ func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 			_ = d.Ack(false)
 		}
 	}
+	_ = receiver(nil)
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
@@ -213,13 +214,13 @@ NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 
 - routingKeyPrefix defaults to "m8"
 */
-func NewRabbitEventBusPublisher(addr string, routingKeyPrefix string) (EventBusPublisher, error) {
+func NewRabbitEventBusPublisher(addr, name, routingKeyPrefix string) (EventBusPublisher, error) {
 	if routingKeyPrefix == "" {
 		routingKeyPrefix = "m8"
 	}
 	b := &RabbitEventBus{
 		routingKeyPrefix: routingKeyPrefix,
-		log:              logger.WithName("publisher"),
+		log:              logger.WithName("publisher").WithValues("name", name),
 		addr:             addr,
 		done:             make(chan bool),
 	}
@@ -231,14 +232,14 @@ NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
 
 - routingKeyPrefix defaults to "m8"
 */
-func NewRabbitEventBusConsumer(addr string, consumerName, routingKeyPrefix string) (EventBusConsumer, error) {
+func NewRabbitEventBusConsumer(addr, name, routingKeyPrefix string) (EventBusConsumer, error) {
 	if routingKeyPrefix == "" {
 		routingKeyPrefix = "m8"
 	}
 	b := &RabbitEventBus{
 		routingKeyPrefix: routingKeyPrefix,
-		log:              logger.WithName("consumer").WithValues("name", consumerName),
-		name:             consumerName,
+		log:              logger.WithName("consumer").WithValues("name", name),
+		name:             name,
 		addr:             addr,
 		done:             make(chan bool),
 	}
