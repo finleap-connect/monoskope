@@ -46,7 +46,7 @@ func (b *TestWrapperEventBus) PublishEvent(ctx context.Context, event storage.Ev
 	b.log.Info("Publishing event...", "event", event.String())
 	err := b.publisher.PublishEvent(ctx, event)
 	if err != nil {
-		b.log.Error(err, "Error publishing event.", "event", event.String())
+		b.log.Info("Error publishing event.", "event", event.String(), "error", err.Error())
 	} else {
 		b.log.Info("Published event.", "event", event.String())
 	}

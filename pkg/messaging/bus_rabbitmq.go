@@ -205,7 +205,6 @@ func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 			_ = d.Ack(false)
 		}
 	}
-	_ = receiver(nil)
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
@@ -246,14 +245,16 @@ func NewRabbitEventBusConsumer(addr, name, routingKeyPrefix string) (EventBusCon
 	return b, nil
 }
 
+// Connect starts automatic reconnect with rabbitmq
 func (b *RabbitEventBus) Connect(ctx context.Context) *MessageBusError {
 	go b.handleReconnect(b.addr)
 	for {
 		select {
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(300 * time.Millisecond):
 			if b.isReady {
 				return nil
 			}
+		case <-b.done:
 		case <-ctx.Done():
 			return &MessageBusError{
 				Err: ErrMessageNotConnected,
@@ -288,6 +289,7 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		select {
 		case confirm := <-b.notifyConfirm:
 			if confirm.Ack {
+				b.log.Info("Publish confirmed.")
 				return nil
 			}
 		case <-b.done:
@@ -460,12 +462,16 @@ func (b *RabbitEventBus) Close() error {
 	close(b.done)
 	b.isReady = false
 
-	// closes underlying channels as well
-	err := b.connection.Close()
+	err := b.channel.Close()
 	if err != nil {
 		return err
 	}
+	b.log.Info("Channel closed.")
 
+	err = b.connection.Close()
+	if err != nil {
+		return err
+	}
 	b.log.Info("Connection closed.")
 
 	return nil

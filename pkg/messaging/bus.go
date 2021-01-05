@@ -30,7 +30,7 @@ var ErrMessageBusConnection = errors.New("unexpected error on message bus occure
 
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
-	// Connect
+	// Connect connects to the bus
 	Connect(context.Context) *MessageBusError
 	// PublishEvent publishes the event on the bus.
 	PublishEvent(context.Context, storage.Event) *MessageBusError
@@ -40,7 +40,7 @@ type EventBusPublisher interface {
 
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
-	// Connect
+	// Connect connects to the bus
 	Connect(context.Context) *MessageBusError
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher

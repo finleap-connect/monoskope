@@ -74,13 +74,13 @@ var _ = Describe("messaging/rabbitmq", func() {
 		var err error
 		consumer, err = NewRabbitEventBusConsumer(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
-		consumer = NewTestEventBusConsumer(env.Log, consumer)
+		// consumer = NewTestEventBusConsumer(env.Log, consumer)
 		err = consumer.Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
 		publisher, err = NewRabbitEventBusPublisher(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
-		publisher = NewTestEventBusPublisher(env.Log, publisher)
+		// publisher = NewTestEventBusPublisher(env.Log, publisher)
 		err = publisher.Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
