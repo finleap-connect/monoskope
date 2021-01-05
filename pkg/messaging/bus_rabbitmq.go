@@ -414,7 +414,7 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 	for {
 		err := b.addReceiver(receiver, matchers...)
 		if err != nil {
-			b.log.Error(err, "Adding receiver failed. Retrying...")
+			b.log.Info("Adding receiver failed. Retrying...", "error", err.Cause().Error())
 			select {
 			case <-b.done:
 				return &MessageBusError{
