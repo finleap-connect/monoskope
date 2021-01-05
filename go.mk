@@ -7,7 +7,7 @@ GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.14.2
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
-LINTER_VERSION ?= v1.33.0
+LINTER_VERSION ?= v1.34.1
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)

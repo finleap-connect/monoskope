@@ -46,7 +46,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		}
 	}
 
-	createReceiver := func(matchers ...EventMatcher) <-chan storage.Event {
+	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
 			defer GinkgoRecover()
@@ -60,7 +60,10 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	testPubSub := func(matchers ...EventMatcher) {
 		recChanA := createReceiver(matchers...)
+		defer close(recChanA)
 		recChanB := createReceiver(matchers...)
+		defer close(recChanB)
+
 		event := createEvent()
 
 		wg.Add(2)
