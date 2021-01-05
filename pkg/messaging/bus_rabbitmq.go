@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,16 +44,19 @@ type RabbitEventBus struct {
 	routingKeyPrefix string
 	name             string
 	done             chan bool
+	mu               sync.Mutex
 }
 
 // changeChannel takes a new channel to the queue,
 // and updates the channel listeners to reflect this.
-func (session *RabbitEventBus) changeChannel(channel *amqp.Channel) {
-	session.channel = channel
-	session.notifyChanClose = make(chan *amqp.Error)
-	session.notifyConfirm = make(chan amqp.Confirmation, 1)
-	session.channel.NotifyClose(session.notifyChanClose)
-	session.channel.NotifyPublish(session.notifyConfirm)
+func (b *RabbitEventBus) changeChannel(channel *amqp.Channel) {
+	b.mu.Lock()
+	b.channel = channel
+	b.notifyChanClose = make(chan *amqp.Error)
+	b.notifyConfirm = make(chan amqp.Confirmation, 1)
+	b.channel.NotifyClose(b.notifyChanClose)
+	b.channel.NotifyPublish(b.notifyConfirm)
+	b.mu.Unlock()
 }
 
 // init will initialize channel & declare queue
@@ -86,7 +90,7 @@ func (b *RabbitEventBus) init(conn *amqp.Connection) error {
 	return nil
 }
 
-// handleReconnect will wait for a channel error
+// handleReInit will wait for a channel error
 // and then continuously attempt to re-initialize both channels
 func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 	for {
@@ -125,12 +129,34 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 	}
 }
 
+// changeConnection takes a new connection to the queue,
+// and updates the close listener to reflect this.
+func (b *RabbitEventBus) changeConnection(connection *amqp.Connection) {
+	b.connection = connection
+	b.notifyConnClose = make(chan *amqp.Error)
+	b.connection.NotifyClose(b.notifyConnClose)
+}
+
+// connect will create a new AMQP connection
+func (b *RabbitEventBus) connect(addr string) (*amqp.Connection, error) {
+	b.log.Info("Attempting to connect...")
+	conn, err := amqp.Dial(addr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	b.changeConnection(conn)
+	b.log.Info("Connection established.")
+
+	return conn, nil
+}
+
 // handleReconnect will wait for a connection error on
 // notifyConnClose, and then continuously attempt to reconnect.
 func (b *RabbitEventBus) handleReconnect(addr string) {
 	for {
 		b.isReady = false
-		b.log.Info("Attempting to connect...")
 
 		conn, err := b.connect(addr)
 		if err != nil {
@@ -148,28 +174,6 @@ func (b *RabbitEventBus) handleReconnect(addr string) {
 			break
 		}
 	}
-}
-
-// connect will create a new AMQP connection
-func (b *RabbitEventBus) connect(addr string) (*amqp.Connection, error) {
-	conn, err := amqp.Dial(addr)
-
-	if err != nil {
-		return nil, err
-	}
-
-	b.changeConnection(conn)
-	b.log.Info("Connection established.")
-
-	return conn, nil
-}
-
-// changeConnection takes a new connection to the queue,
-// and updates the close listener to reflect this.
-func (b *RabbitEventBus) changeConnection(connection *amqp.Connection) {
-	b.connection = connection
-	b.notifyConnClose = make(chan *amqp.Error)
-	b.connection.NotifyClose(b.notifyConnClose)
 }
 
 // generateRoutingKey generates the routing key for an event.
@@ -375,8 +379,7 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 			BaseErr: err,
 		}
 	}
-
-	b.log.Info(fmt.Sprintf("Registering new handler with queue '%s'...", q.Name))
+	b.log.Info(fmt.Sprintf("Queue declared '%s'.", q.Name))
 
 	for _, matcher := range matchers {
 		rabbitMatcher, ok := matcher.(*RabbitMatcher)
@@ -433,16 +436,22 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 
 // Close will cleanly shutdown the channel and connection.
 func (b *RabbitEventBus) Close() error {
+	b.log.Info("Closing channel and connection...")
+
 	close(b.done)
 	b.isReady = false
 	err := b.channel.Close()
 	if err != nil {
 		return err
 	}
+	b.log.Info("Channel closed.")
+
 	err = b.connection.Close()
 	if err != nil {
 		return err
 	}
+	b.log.Info("Connection closed.")
+
 	return nil
 }
 
