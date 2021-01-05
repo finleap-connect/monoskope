@@ -100,16 +100,13 @@ func (b *RabbitEventBus) init(conn *amqp.Connection) error {
 // and then continuously attempt to re-initialize both channels
 func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 	for {
-		b.isReady = false
-
 		err := b.init(conn)
-
 		if err != nil {
 			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
 			select {
 			case <-b.done:
-				b.log.Info("Automatic reinit stopped.")
+				b.log.Info("Aborting init. Shutting down...")
 				return false
 			case <-time.After(reInitDelay):
 				continue
@@ -119,9 +116,13 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 		select {
 		case errConnClose := <-b.notifyConnClose:
 			if _, ok := <-b.done; !ok {
-				b.log.Info("Connection closed.")
+				b.log.Info("Connection closed caused by shutdown.")
 				return false
 			}
+
+			b.mu.Lock()
+			defer b.mu.Unlock()
+			b.isReady = false
 			if errConnClose != nil {
 				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
 			} else {
@@ -133,6 +134,10 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 				b.log.Info("Channel closed.")
 				return false
 			}
+
+			b.mu.Lock()
+			defer b.mu.Unlock()
+			b.isReady = false
 			if errChanClose != nil {
 				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
 			} else {
@@ -474,7 +479,7 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 func (b *RabbitEventBus) Close() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.log.Info("Closing channel and connection...")
+	b.log.Info("Shutting down...")
 
 	close(b.done)
 	b.isReady = false
