@@ -42,15 +42,13 @@ var _ = BeforeSuite(func(done Done) {
 		Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq",
 		Tag:        "3.8.9-debian-10-r64",
 	}, func(config *dc.HostConfig) {
-		config.AutoRemove = true // set AutoRemove to true so that stopped container goes away by itself
+		config.RestartPolicy = dc.AlwaysRestart()
 	})
 	Expect(err).ToNot(HaveOccurred())
 
 	// create rabbit conn
 	rabbitConnectionTry := 1
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
-	env.Log.Info("Waiting for rabbitmq to warm up...")
-	time.Sleep(20 * time.Second)
 
 	err = env.Retry(func() error {
 		env.Log.Info("Trying to connect rabbitmq...")

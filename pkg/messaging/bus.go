@@ -28,6 +28,9 @@ var ErrMessageNotConnected = errors.New("message bus not connected")
 // ErrMessageBusConnection is when an unexpected error on message bus occured
 var ErrMessageBusConnection = errors.New("unexpected error on message bus occured")
 
+// ErrCouldNotAddReceiver is when an receiver could not be added
+var ErrCouldNotAddReceiver = errors.New("could not add receiver")
+
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
 	// Connect connects to the bus
