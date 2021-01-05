@@ -3,14 +3,12 @@ package messaging
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	"github.com/streadway/amqp"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
@@ -47,21 +45,21 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// create rabbit conn
-	rabbitConnectionTry := 1
+	// rabbitConnectionTry := 1
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@%s:%s", "127.0.0.1", container.GetPort("5672/tcp"))
 
-	err = env.Retry(func() error {
-		env.Log.Info("Trying to connect rabbitmq...")
-		conn, err := amqp.Dial(env.amqpURL)
-		if err != nil {
-			env.Log.Info(fmt.Sprintf("Failed, retrying in %v seconds ...", rabbitConnectionTry))
-			time.Sleep(time.Duration(rabbitConnectionTry) * time.Second)
-			rabbitConnectionTry++
-			return err
-		}
-		return conn.Close()
-	})
-	Expect(err).ToNot(HaveOccurred())
+	// err = env.Retry(func() error {
+	// 	env.Log.Info("Trying to connect rabbitmq...")
+	// 	conn, err := amqp.Dial(env.amqpURL)
+	// 	if err != nil {
+	// 		env.Log.Info(fmt.Sprintf("Failed, retrying in %v seconds ...", rabbitConnectionTry))
+	// 		time.Sleep(time.Duration(rabbitConnectionTry) * time.Second)
+	// 		rabbitConnectionTry++
+	// 		return err
+	// 	}
+	// 	return conn.Close()
+	// })
+	// Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
