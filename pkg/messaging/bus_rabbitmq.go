@@ -104,22 +104,24 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 
 			select {
 			case <-b.done:
-				return true
+				b.log.Info("Automatic reinit stopped.")
+				return false
 			case <-time.After(reInitDelay):
+				continue
 			}
-			continue
 		}
 
 		select {
 		case <-b.done:
-			return true
+			b.log.Info("Automatic reinit stopped.")
+			return false
 		case errConnClose := <-b.notifyConnClose:
 			if errConnClose != nil {
 				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
 			} else {
 				b.log.Info("Connection closed. Reconnecting...")
 			}
-			return false
+			return true
 		case errChanClose := <-b.notifyChanClose:
 			if errChanClose != nil {
 				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
@@ -174,10 +176,11 @@ func (b *RabbitEventBus) handleReconnect(addr string) {
 			continue
 		}
 
-		if done := b.handleReInit(conn); done {
+		if !b.handleReInit(conn) {
 			break
 		}
 	}
+	b.log.Info("Automatic reconnect stopped.")
 }
 
 // generateRoutingKey generates the routing key for an event.
