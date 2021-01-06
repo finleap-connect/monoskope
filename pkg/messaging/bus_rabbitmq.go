@@ -14,10 +14,10 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
-// RabbitEventBus implements an EventBus using RabbitMQ.
-type RabbitEventBus struct {
+// rabbitEventBus implements an EventBus using RabbitMQ.
+type rabbitEventBus struct {
 	log             logger.Logger
-	conf            *RabbitEventBusConfig
+	conf            *rabbitEventBusConfig
 	connection      *amqp.Connection
 	channel         *amqp.Channel
 	notifyConnClose chan *amqp.Error
@@ -29,13 +29,13 @@ type RabbitEventBus struct {
 }
 
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
-func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (EventBusPublisher, error) {
+func NewRabbitEventBusPublisher(conf *rabbitEventBusConfig) (EventBusPublisher, error) {
 	err := conf.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	b := &RabbitEventBus{
+	b := &rabbitEventBus{
 		log:  logger.WithName("publisher").WithValues("name", conf.Name),
 		conf: conf,
 		done: make(chan bool),
@@ -44,13 +44,13 @@ func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (EventBusPublisher, 
 }
 
 // NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
-func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (EventBusConsumer, error) {
+func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, error) {
 	err := conf.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	b := &RabbitEventBus{
+	b := &rabbitEventBus{
 		log:  logger.WithName("consumer").WithValues("name", conf.Name),
 		conf: conf,
 		done: make(chan bool),
@@ -59,7 +59,7 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (EventBusConsumer, er
 }
 
 // Connect starts automatic reconnect with rabbitmq
-func (b *RabbitEventBus) Connect(ctx context.Context) *MessageBusError {
+func (b *rabbitEventBus) Connect(ctx context.Context) *MessageBusError {
 	go b.handleReconnect(b.conf.Url)
 	for {
 		select {
@@ -77,7 +77,7 @@ func (b *RabbitEventBus) Connect(ctx context.Context) *MessageBusError {
 }
 
 // PublishEvent publishes the event on the bus.
-func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
 	if !b.isReady {
 		return &MessageBusError{
 			Err: ErrMessageNotConnected,
@@ -134,7 +134,7 @@ func (b *RabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // recieve the message.
-func (b *RabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *MessageBusError {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.isReady {
@@ -182,7 +182,7 @@ func (b *RabbitEventBus) publishEvent(ctx context.Context, event storage.Event) 
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
+func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
 	if !b.isReady {
 		return &MessageBusError{
 			Err: ErrMessageNotConnected,
@@ -231,7 +231,7 @@ func (b *RabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 }
 
 // addReceiver creates a queue along with bindings for the given matchers
-func (b *RabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
+func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.isReady {
@@ -302,7 +302,7 @@ func (b *RabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 }
 
 // Matcher returns a new EventMatcher of type RabbitMatcher
-func (b *RabbitEventBus) Matcher() EventMatcher {
+func (b *rabbitEventBus) Matcher() EventMatcher {
 	matcher := &RabbitMatcher{
 		routingKeyPrefix: b.conf.RoutingKeyPrefix,
 	}
@@ -310,7 +310,7 @@ func (b *RabbitEventBus) Matcher() EventMatcher {
 }
 
 // Close will cleanly shutdown the channel and connection.
-func (b *RabbitEventBus) Close() error {
+func (b *rabbitEventBus) Close() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.log.Info("Shutting down...")
@@ -329,7 +329,7 @@ func (b *RabbitEventBus) Close() error {
 
 // changeChannel takes a new channel to the queue,
 // and updates the channel listeners to reflect this.
-func (b *RabbitEventBus) changeChannel(channel *amqp.Channel) {
+func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -342,7 +342,7 @@ func (b *RabbitEventBus) changeChannel(channel *amqp.Channel) {
 }
 
 // init will initialize channel & declare queue
-func (b *RabbitEventBus) init(conn *amqp.Connection) error {
+func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -377,7 +377,7 @@ func (b *RabbitEventBus) init(conn *amqp.Connection) error {
 
 // handleReInit will wait for a channel error
 // and then continuously attempt to re-initialize both channels
-func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
+func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 	for {
 		err := b.init(conn)
 		if err != nil {
@@ -428,7 +428,7 @@ func (b *RabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 
 // changeConnection takes a new connection to the queue,
 // and updates the close listener to reflect this.
-func (b *RabbitEventBus) changeConnection(connection *amqp.Connection) {
+func (b *rabbitEventBus) changeConnection(connection *amqp.Connection) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -438,7 +438,7 @@ func (b *RabbitEventBus) changeConnection(connection *amqp.Connection) {
 }
 
 // connect will create a new AMQP connection
-func (b *RabbitEventBus) connect(addr string) (*amqp.Connection, error) {
+func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 	b.log.Info("Attempting to connect...")
 
 	conf := amqp.Config{
@@ -461,7 +461,7 @@ func (b *RabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 
 // handleReconnect will wait for a connection error on
 // notifyConnClose, and then continuously attempt to reconnect.
-func (b *RabbitEventBus) handleReconnect(addr string) {
+func (b *rabbitEventBus) handleReconnect(addr string) {
 	for {
 		conn, err := b.connect(addr)
 		if err != nil {
@@ -483,12 +483,12 @@ func (b *RabbitEventBus) handleReconnect(addr string) {
 }
 
 // generateRoutingKey generates the routing key for an event.
-func (b *RabbitEventBus) generateRoutingKey(event storage.Event) string {
+func (b *rabbitEventBus) generateRoutingKey(event storage.Event) string {
 	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
 // handle handles the routing of the received messages and ack/nack based on receiver result
-func (b *RabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
+func (b *rabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for {
 		select {

@@ -78,12 +78,12 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create the server
-		serverConfig := eventstore.ServerConfig{
-			Store:     store,
-			Bus:       publisher,
-			KeepAlive: keepAlive,
-		}
-		s, err := eventstore.NewServer(&serverConfig)
+		serverConfig := eventstore.NewServerConfig()
+		serverConfig.KeepAlive = keepAlive
+		serverConfig.Store = store
+		serverConfig.Bus = publisher
+
+		s, err := eventstore.NewServer(serverConfig)
 		if err != nil {
 			return err
 		}

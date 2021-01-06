@@ -48,10 +48,8 @@ var serverCmd = &cobra.Command{
 		defer metricsLis.Close()
 
 		// Create the server
-		conf := &gateway.ServerConfig{
-			KeepAlive:  false,
-			AuthConfig: &authConfig,
-		}
+		conf := gateway.NewServerConfig()
+		conf.AuthConfig = &authConfig
 
 		s, err := gateway.NewServer(conf)
 		if err != nil {

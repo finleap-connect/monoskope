@@ -28,7 +28,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 	env = &EventStoreTestEnv{
-		TestEnv: test.SetupGeneralTestEnv("TestEventStoreStorage"),
+		TestEnv: test.NewTestEnv("TestEventStoreStorage"),
 	}
 
 	err = env.CreateDockerPool()

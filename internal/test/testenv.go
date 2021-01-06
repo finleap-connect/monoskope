@@ -40,7 +40,7 @@ func (t *TestEnv) RunWithOptions(opts *dockertest.RunOptions, hcOpts ...func(*dc
 	return res, err
 }
 
-func SetupGeneralTestEnv(envName string) *TestEnv {
+func NewTestEnv(envName string) *TestEnv {
 	log := logger.WithName(envName)
 	env := &TestEnv{
 		Log:       log,

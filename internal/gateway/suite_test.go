@@ -30,7 +30,7 @@ var (
 
 	apiListener net.Listener
 	httpClient  *http.Client
-	server      *Server
+	testServer  *server
 )
 
 type OAuthTestEnv struct {
@@ -41,7 +41,7 @@ type OAuthTestEnv struct {
 
 func SetupAuthTestEnv(envName string) (*OAuthTestEnv, error) {
 	env := &OAuthTestEnv{
-		TestEnv: test.SetupGeneralTestEnv(envName),
+		TestEnv: test.NewTestEnv(envName),
 	}
 
 	err := env.CreateDockerPool()
@@ -114,18 +114,16 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
-	conf := &ServerConfig{
-		KeepAlive:  false,
-		AuthConfig: env.AuthConfig,
-	}
+	conf := NewServerConfig()
+	conf.AuthConfig = env.AuthConfig
 
-	server, err = NewServer(conf)
+	testServer, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
 
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := server.Serve(apiListener, nil)
+		err := testServer.Serve(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -141,7 +139,7 @@ var _ = AfterSuite(func() {
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 
-	server.shutdown.Expect()
+	testServer.shutdown.Expect()
 
 	err = apiListener.Close()
 	Expect(err).To(BeNil())

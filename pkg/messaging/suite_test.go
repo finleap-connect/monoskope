@@ -29,7 +29,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 	env = &MessageBusTestEnv{
-		TestEnv: test.SetupGeneralTestEnv("TestMessageBus"),
+		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
 
 	err = env.CreateDockerPool()

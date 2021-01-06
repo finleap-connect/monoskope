@@ -25,8 +25,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Server is the implementation of the API server
-type Server struct {
+// server is the implementation of the API server
+type server struct {
 	api_es.UnimplementedEventStoreServer
 	// HTTP-server exposing the metrics
 	http *http.Server
@@ -41,8 +41,8 @@ type Server struct {
 }
 
 // NewServer returns a new configured instance of Server
-func NewServer(conf *ServerConfig) (*Server, error) {
-	s := &Server{
+func NewServer(conf *serverConfig) (*server, error) {
+	s := &server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName("server"),
 		shutdown: util.NewShutdownWaitGroup(),
@@ -81,7 +81,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 }
 
 // Serve starts the api listeners of the Server
-func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
+func (s *server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	shutdown := s.shutdown
 
 	if metricsLis != nil {
@@ -149,7 +149,7 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 }
 
 // Store implements the API method for storing events
-func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
+func (s *server) Store(stream api_es.EventStore_StoreServer) error {
 	eventStream := make([]*api_es.Event, 0)
 	for {
 		// Read next event
@@ -177,7 +177,7 @@ func (s *Server) Store(stream api_es.EventStore_StoreServer) error {
 }
 
 // Retrieve implements the API method for retrieving events from the store
-func (s *Server) Retrieve(filter *api_es.EventFilter, stream api_es.EventStore_RetrieveServer) error {
+func (s *server) Retrieve(filter *api_es.EventFilter, stream api_es.EventStore_RetrieveServer) error {
 	// Perform the use case for storing events
 	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter).Run()
 	if err != nil {

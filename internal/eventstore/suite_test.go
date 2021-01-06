@@ -21,7 +21,7 @@ var (
 	apiListener net.Listener
 	httpClient  *http.Client
 	log         logger.Logger
-	server      *Server
+	testServer  *server
 )
 
 func TestEventStore(t *testing.T) {
@@ -38,18 +38,17 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	conf := &ServerConfig{
-		KeepAlive: false,
-		Bus:       messaging.NewMockEventBusPublisher(),
-	}
-	server, err = NewServer(conf)
+	conf := NewServerConfig()
+	conf.Bus = messaging.NewMockEventBusPublisher()
+
+	testServer, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start server
 	go func() {
-		err := server.Serve(apiListener, nil)
+		err := testServer.Serve(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -64,7 +63,7 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 
 	// Shutdown server
-	server.shutdown.Expect()
+	testServer.shutdown.Expect()
 	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })

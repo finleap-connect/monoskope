@@ -12,13 +12,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// PostgresEventStore implements an EventStore for PostgreSQL.
-type PostgresEventStore struct {
+// postgresEventStore implements an EventStore for PostgreSQL.
+type postgresEventStore struct {
 	db *pg.DB
 }
 
-// EventRecord is the model for entries in the events table in the database.
-type EventRecord struct {
+// eventRecord is the model for entries in the events table in the database.
+type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
 	EventID          uuid.UUID       `sql:"event_id,type:uuid,pk"`
@@ -35,16 +35,16 @@ var tables []interface{}
 
 func init() {
 	// Just to silence linter
-	eventsTbl := &EventRecord{}
+	eventsTbl := &eventRecord{}
 	_ = eventsTbl.tableName
 
 	tables = []interface{}{
-		(*EventRecord)(nil),
+		(*eventRecord)(nil),
 	}
 }
 
 // createTables creates the event table in the database.
-func (s *PostgresEventStore) createTables(opts *orm.CreateTableOptions) error {
+func (s *postgresEventStore) createTables(opts *orm.CreateTableOptions) error {
 	return s.db.RunInTransaction(func(tx *pg.Tx) error {
 		for _, table := range tables {
 			if err := s.db.CreateTable(table, opts); err != nil {
@@ -56,7 +56,7 @@ func (s *PostgresEventStore) createTables(opts *orm.CreateTableOptions) error {
 }
 
 // newEventRecord returns a new EventRecord for an event.
-func (s *PostgresEventStore) newEventRecord(ctx context.Context, event Event) (*EventRecord, error) {
+func (s *postgresEventStore) newEventRecord(ctx context.Context, event Event) (*eventRecord, error) {
 	// Marshal event data if there is any.
 	eventData, err := json.Marshal(event.Data())
 	if err != nil {
@@ -75,7 +75,7 @@ func (s *PostgresEventStore) newEventRecord(ctx context.Context, event Event) (*
 		}
 	}
 
-	return &EventRecord{
+	return &eventRecord{
 		EventID:          uuid.New(),
 		AggregateID:      event.AggregateID(),
 		AggregateType:    event.AggregateType(),
@@ -89,7 +89,7 @@ func (s *PostgresEventStore) newEventRecord(ctx context.Context, event Event) (*
 
 // NewPostgresEventStore creates a new EventStore.
 func NewPostgresEventStore(db *pg.DB) (Store, error) {
-	s := &PostgresEventStore{
+	s := &postgresEventStore{
 		db: db,
 	}
 	err := s.createTables(&orm.CreateTableOptions{
@@ -102,7 +102,7 @@ func NewPostgresEventStore(db *pg.DB) (Store, error) {
 }
 
 // Save implements the Save method of the EventStore interface.
-func (s *PostgresEventStore) Save(ctx context.Context, events []Event) error {
+func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 	if len(events) == 0 {
 		return EventStoreError{
 			Err: ErrNoEventsToAppend,
@@ -110,7 +110,7 @@ func (s *PostgresEventStore) Save(ctx context.Context, events []Event) error {
 	}
 
 	// Validate incoming events and create all event records.
-	eventRecords := make([]EventRecord, len(events))
+	eventRecords := make([]eventRecord, len(events))
 	aggregateID := events[0].AggregateID()
 	aggregateType := events[0].AggregateType()
 	nextVersion := events[0].AggregateVersion()
@@ -192,21 +192,21 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *PostgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
 	var events []Event
 
 	// Basic query to query all events
 	dbQuery := s.db.
 		WithContext(ctx).
-		Model((*EventRecord)(nil)).
+		Model((*eventRecord)(nil)).
 		Order("timestamp ASC")
 
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
 
-	err := dbQuery.ForEach(func(e *EventRecord) (err error) {
+	err := dbQuery.ForEach(func(e *eventRecord) (err error) {
 		events = append(events, pgEvent{
-			EventRecord: *e,
+			eventRecord: *e,
 		})
 		return nil
 	})
@@ -220,7 +220,7 @@ func (s *PostgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 	return events, nil
 }
 
-func (s *PostgresEventStore) Close() error {
+func (s *postgresEventStore) Close() error {
 	return s.db.Close()
 }
 
@@ -252,23 +252,23 @@ func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
 }
 
 // Clear clears the event storage. This is only for testing purposes.
-func (s *PostgresEventStore) clear(ctx context.Context) error {
+func (s *postgresEventStore) clear(ctx context.Context) error {
 	return s.db.
 		WithContext(ctx).
 		RunInTransaction(func(tx *pg.Tx) (err error) {
-			_, err = tx.Model((*EventRecord)(nil)).Where("1=1").Delete()
+			_, err = tx.Model((*eventRecord)(nil)).Where("1=1").Delete()
 			return err
 		})
 }
 
 // pgEvent is the private implementation of the Event interface for a postgres event store.
 type pgEvent struct {
-	EventRecord
+	eventRecord
 }
 
 // EventType implements the EventType method of the Event interface.
 func (e pgEvent) EventType() EventType {
-	return e.EventRecord.EventType
+	return e.eventRecord.EventType
 }
 
 // Data implements the Data method of the Event interface.
@@ -278,25 +278,25 @@ func (e pgEvent) Data() EventData {
 
 // Timestamp implements the Timestamp method of the Event interface.
 func (e pgEvent) Timestamp() time.Time {
-	return e.EventRecord.Timestamp
+	return e.eventRecord.Timestamp
 }
 
 // AggregateType implements the AggregateType method of the Event interface.
 func (e pgEvent) AggregateType() AggregateType {
-	return e.EventRecord.AggregateType
+	return e.eventRecord.AggregateType
 }
 
 // AggrgateID implements the AggrgateID method of the Event interface.
 func (e pgEvent) AggregateID() uuid.UUID {
-	return e.EventRecord.AggregateID
+	return e.eventRecord.AggregateID
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
 func (e pgEvent) AggregateVersion() uint64 {
-	return e.EventRecord.AggregateVersion
+	return e.eventRecord.AggregateVersion
 }
 
 // String implements the String method of the Event interface.
 func (e pgEvent) String() string {
-	return fmt.Sprintf("%s@%d", e.EventRecord.EventType, e.EventRecord.AggregateVersion)
+	return fmt.Sprintf("%s@%d", e.eventRecord.EventType, e.eventRecord.AggregateVersion)
 }

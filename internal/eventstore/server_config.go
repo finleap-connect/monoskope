@@ -6,8 +6,12 @@ import (
 )
 
 // ServerConfig is the configuration for the API server
-type ServerConfig struct {
+type serverConfig struct {
 	KeepAlive bool
 	Store     storage.Store
 	Bus       messaging.EventBusPublisher
+}
+
+func NewServerConfig() *serverConfig {
+	return &serverConfig{}
 }

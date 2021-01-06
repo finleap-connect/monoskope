@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Server struct {
+type server struct {
 	api_gw.UnimplementedGatewayServer
 	api_gwauth.UnimplementedAuthServer
 	// HTTP-server exposing the metrics
@@ -41,8 +41,8 @@ type Server struct {
 	authHandler *auth.Handler
 }
 
-func NewServer(conf *ServerConfig) (*Server, error) {
-	s := &Server{
+func NewServer(conf *serverConfig) (*server, error) {
+	s := &server{
 		http:       metrics.NewServer(),
 		log:        logger.WithName("server"),
 		shutdown:   util.NewShutdownWaitGroup(),
@@ -95,7 +95,7 @@ func NewServer(conf *ServerConfig) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
+func (s *server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	shutdown := s.shutdown
 
 	if metricsLis != nil {
@@ -141,14 +141,14 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	return err // Return the error, if grpc stopped gracefully there is no error
 }
 
-func (s *Server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInformation, error) {
+func (s *server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInformation, error) {
 	return &api_gw.ServerInformation{
 		Version: version.Version,
 		Commit:  version.Commit,
 	}, nil
 }
 
-func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
+func (s *server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
 	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
 		Scopes:        []string{"offline_access"},
 		Clients:       []string{},
@@ -161,7 +161,7 @@ func (s *Server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthS
 	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
 }
 
-func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.AuthResponse, error) {
+func (s *server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.AuthResponse, error) {
 	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (s *Server) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode
 	return userInfo, nil
 }
 
-func (s *Server) RefreshAuth(ctx context.Context, request *api_gwauth.RefreshAuthRequest) (*api_gwauth.AccessToken, error) {
+func (s *server) RefreshAuth(ctx context.Context, request *api_gwauth.RefreshAuthRequest) (*api_gwauth.AccessToken, error) {
 	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
 	if err != nil {
 		return nil, err

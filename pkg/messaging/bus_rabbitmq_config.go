@@ -10,7 +10,7 @@ const (
 	DefaultMaxResends     = 10               // How many times resending messages the server didn't confirm
 )
 
-type RabbitEventBusConfig struct {
+type rabbitEventBusConfig struct {
 	Name             string        // Name of the client, required
 	Url              string        // Connection string, required
 	RoutingKeyPrefix string        // Prefix for routing of messages
@@ -22,8 +22,8 @@ type RabbitEventBusConfig struct {
 }
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
-func NewRabbitEventBusConfig(name, url string) *RabbitEventBusConfig {
-	return &RabbitEventBusConfig{
+func NewRabbitEventBusConfig(name, url string) *rabbitEventBusConfig {
+	return &rabbitEventBusConfig{
 		Name:             name,
 		Url:              url,
 		RoutingKeyPrefix: "m8",
@@ -36,7 +36,7 @@ func NewRabbitEventBusConfig(name, url string) *RabbitEventBusConfig {
 }
 
 // Validate validates that all required fields have been provided
-func (conf *RabbitEventBusConfig) Validate() error {
+func (conf *rabbitEventBusConfig) Validate() error {
 	if conf.Name == "" {
 		return ErrConfigNameRequired
 	}
