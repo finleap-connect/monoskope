@@ -43,23 +43,6 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $fullname }}-root
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  secretName: {{ $fullname }}-root
-  issuerRef:
-    name: {{ $fullname }}-issuer
-    kind: Issuer
-  commonName: root
-  organization:
-    - RabbitMQ
-  usages:
-    - client auth
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
   name: {{ $fullname }}-leaf
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}

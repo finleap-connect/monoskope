@@ -1,0 +1,19 @@
+{{- if .Values.rabbitmq.auth.tls.enabled }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "rabbitmq") -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-auth-admin
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $fullname }}-auth-admin
+  issuerRef:
+    name: {{ $fullname }}-issuer
+    kind: Issuer
+  commonName: {{ .Values.rabbitmq.auth.username }}
+  organization:
+    - RabbitMQ
+  usages:
+    - client auth
+{{- end }}

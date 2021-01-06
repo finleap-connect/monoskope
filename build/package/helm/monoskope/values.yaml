@@ -173,8 +173,8 @@ rabbitmq:
     labels:
       app.kubernetes.io/part-of: *name
   auth:
-    username: admin
-    password: foo  # this will be overwritten by a real password but needs to be set initially
+    username: admin # admin user with read/write access
+    password: ""  # this will be overwritten by a real password but needs to be set initially
     existingErlangSecret: monoskope-rabbitmq-erlang-cookie
     tls:
       enabled: true
