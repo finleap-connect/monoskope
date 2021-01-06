@@ -19,7 +19,7 @@
 .gobase-docker:
   extends: .gobase
   services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:19.03.12-dind
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
 
 lint:golang:
   stage: test
