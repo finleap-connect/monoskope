@@ -59,7 +59,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.config.staticClients[0].secret | string | `"{{ .gatewayAppSecret }}"` |  |
 | dex.config.storage.config.database | string | `"dex_db"` |  |
 | dex.config.storage.config.port | int | `26257` |  |
-| dex.config.storage.config.secret | string | `"m8dev-monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
+| dex.config.storage.config.secret | string | `"monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
 | dex.config.storage.config.ssl.caFile | string | `"/etc/dex/certs/ca.crt"` |  |
 | dex.config.storage.config.ssl.certFile | string | `"/etc/dex/certs/client.crt"` |  |
 | dex.config.storage.config.ssl.keyFile | string | `"/etc/dex/certs/client.key"` |  |
@@ -97,10 +97,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | monoskope-gateway.replicaCount | int | `3` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
 | rabbitmq.auth.password | string | `"foo"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
-| rabbitmq.auth.tls.existingSecret | string | `"rabbitmq-leaf"` |  |
+| rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
 | rabbitmq.auth.username | string | `"admin"` |  |
@@ -110,7 +110,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
-| rabbitmq.loadDefinition.existingSecret | string | `"rabbitmq-load-definition"` |  |
+| rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |
 | rabbitmq.metrics.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |

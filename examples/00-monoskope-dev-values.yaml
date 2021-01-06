@@ -1,8 +1,11 @@
-# Dev environment values for monoskope.
+# Local dev environment values for monoskope.
 
-name: monoskope
 nameOverride: ""
 fullnameOverride: ""
+
+global:
+  imagePullSecrets:
+    - gitlab-registry
 
 dex:
   enabled: true
@@ -24,7 +27,6 @@ monoskope-gateway:
   replicaCount: 1
   auth:
     allowRootToken: true
-  pullSecret: gitlab-registry
 
 ingress:
   enabled: true
@@ -37,7 +39,6 @@ rabbitmq:
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
     tag: 3.8.9
-    pullPolicy: Always
   loadDefinition:
     enabled: true
     existingSecret: rabbitmq-load-definition
@@ -45,7 +46,7 @@ rabbitmq:
     load_definitions = /app/rabbitmq-definitions.json
   auth:
     username: admin
-    password: foo  # this will be overwritten by a real password but needs to be set initially
+    password: foo # this will be overwritten by a real password but needs to be set initially
     existingErlangSecret: rabbitmq-erlang-cookie
     tls:
       enabled: true

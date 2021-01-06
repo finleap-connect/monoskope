@@ -34,7 +34,6 @@ A Helm chart for the Monoskope EventStore
 | livenessProbe.failureThreshold | int | `10` |  |
 | livenessProbe.initialDelaySeconds | int | `10` |  |
 | livenessProbe.periodSeconds | int | `5` |  |
-| name | string | `"eventstore"` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |

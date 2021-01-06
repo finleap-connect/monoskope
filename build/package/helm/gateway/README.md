@@ -29,7 +29,6 @@ Monoskope Gateway
 | livenessProbe.failureThreshold | int | `10` |  |
 | livenessProbe.initialDelaySeconds | int | `10` |  |
 | livenessProbe.periodSeconds | int | `5` |  |
-| name | string | `"gateway"` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
