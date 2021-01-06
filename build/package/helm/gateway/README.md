@@ -12,7 +12,7 @@ Monoskope Gateway
 | auth.allowRootToken | bool | `false` | Controls if authentication via root token is allowed |
 | auth.issuerURL | string | `"http://localhost:5555"` | The URL of the issuer to use for OIDC |
 | autoscaling.enabled | bool | `false` |  |
-| autoscaling.maxReplicas | int | `100` |  |
+| autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | fullnameOverride | string | `""` |  |
