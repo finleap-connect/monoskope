@@ -36,7 +36,7 @@ dex: # OIDC Provider
         database: dex_db
         user: dex
         # -- Secret containing the certificates to communicate with the storage backend
-        secret: m8dev-monoskope-crdb-client-dex
+        secret: monoskope-crdb-client-dex
         ssl:
           mode: verify-ca
           caFile: /etc/dex/certs/ca.crt
@@ -164,7 +164,7 @@ rabbitmq:
     pullPolicy: Always
   loadDefinition:
     enabled: true
-    existingSecret: rabbitmq-load-definition
+    existingSecret: monoskope-rabbitmq-load-definition
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
   service:
@@ -175,12 +175,12 @@ rabbitmq:
   auth:
     username: admin
     password: foo  # this will be overwritten by a real password but needs to be set initially
-    existingErlangSecret: rabbitmq-erlang-cookie
+    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
     tls:
       enabled: true
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
-      existingSecret: rabbitmq-leaf
+      existingSecret: monoskope-rabbitmq-leaf
   statefulsetLabels:
     app.kubernetes.io/part-of: *name
   podAnnotations:
