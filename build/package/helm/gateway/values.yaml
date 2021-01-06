@@ -15,7 +15,7 @@ imagePullSecrets: []
 image:
   repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway
   pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 podAnnotations: {}

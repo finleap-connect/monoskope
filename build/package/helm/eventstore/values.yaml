@@ -15,7 +15,7 @@ imagePullSecrets: []
 image:
   repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/eventstore
   pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 podAnnotations: {}
@@ -83,3 +83,20 @@ ports:
   metrics: 9102
 
 keepAlive: false
+
+db:
+  addr: 127.0.0.1:26257
+  user: eventstore
+  name: events
+  secret: {}
+    # name: secret-containing-pw
+    # key: key-of-pw-field
+
+bus:
+  addr: 127.0.0.1:5672
+  user: eventstore
+  name: events
+  routingKeyPrefix: m8
+  secret: {}
+    # name: secret-containing-pw
+    # key: key-of-pw-field

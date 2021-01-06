@@ -64,6 +64,33 @@ spec:
             containerPort: {{ .Values.ports.api }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
+          {{- with .Values.db.secret }}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .name }}
+                  key: {{ .passwordKey }}
+          {{- end }}
+          {{- with .Values.bus.secret }}
+            - name: BUS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .name }}
+                  key: {{ .passwordKey }}
+          {{- end }}
+          args:
+            - /eventstore
+            - server
+            - {{ (printf "--keep-alive=:%v" .Values.keepAlive) }}
+            - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
+            - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
+            - {{ (printf "--db-addr=%s" .Values.db.addr ) }}
+            - {{ (printf "--db-user=%s" .Values.db.user ) }}
+            - {{ (printf "--db-name=%s" .Values.db.name ) }}
+            - {{ (printf "--msgbus-addr=%s" .Values.bus.addr ) }}
+            - {{ (printf "--msgbus-user=%s" .Values.bus.user ) }}
+            - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.bus.routingKeyPrefix ) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

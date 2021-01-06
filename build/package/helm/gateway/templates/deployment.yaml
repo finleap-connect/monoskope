@@ -81,6 +81,7 @@ spec:
           args:
             - /gateway
             - server
+            - {{ (printf "--keep-alive=:%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
