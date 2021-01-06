@@ -24,6 +24,7 @@ var (
 	msgbusAddr     string
 	msgbusUser     string
 	msgbusPassword string
+	msgbusTls      bool
 )
 
 var serverCmd = &cobra.Command{
@@ -72,6 +73,10 @@ var serverCmd = &cobra.Command{
 		// init message bus publisher
 		msgbusUrl := fmt.Sprintf("amqp://%s:%s@%s", msgbusUser, msgbusPassword, msgbusAddr)
 		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
+		if msgbusTls {
+			rabbitConf.AddTlsConfig()
+		}
+
 		publisher, err := messaging.NewRabbitEventBusPublisher(rabbitConf)
 		if err != nil {
 			return err
@@ -106,4 +111,5 @@ func init() {
 	flags.StringVar(&msgbusAddr, "msgbus-addr", "127.0.0.1:5672", "MessageBus host:port")
 	flags.StringVar(&msgbusUser, "msgbus-user", "eventstore", "MessageBus user")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
+	flags.BoolVar(&msgbusTls, "msgbus-use-tls", false, "If enabled, connection to message bus via tls")
 }

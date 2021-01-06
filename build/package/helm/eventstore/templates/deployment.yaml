@@ -69,28 +69,29 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .name }}
-                  key: {{ .passwordKey }}
+                  name: {{ .secretName }}
+                  key: {{ .field }}
           {{- end }}
-          {{- with .Values.bus.secret }}
+          {{- with .Values.bus.auth.password }}
             - name: BUS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .name }}
-                  key: {{ .passwordKey }}
+                  name: {{ .secretName }}
+                  key: {{ .field }}
           {{- end }}
           args:
             - /eventstore
             - server
-            - {{ (printf "--keep-alive=:%v" .Values.keepAlive) }}
+            - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--db-addr=%s" .Values.db.addr ) }}
             - {{ (printf "--db-user=%s" .Values.db.user ) }}
             - {{ (printf "--db-name=%s" .Values.db.name ) }}
             - {{ (printf "--msgbus-addr=%s" .Values.bus.addr ) }}
-            - {{ (printf "--msgbus-user=%s" .Values.bus.user ) }}
+            - {{ (printf "--msgbus-user=%s" .Values.bus.auth.user ) }}
             - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.bus.routingKeyPrefix ) }}
+            - {{ (printf "--msgbus-use-tls=%v" .Values.bus.auth.tls.enabled) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -109,6 +110,11 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.bus.auth.tls.enabled }}
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/eventstore/certs/bus
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -120,4 +126,17 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.bus.auth.tls.enabled }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ .Values.bus.auth.tls.secretName }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
       {{- end }}

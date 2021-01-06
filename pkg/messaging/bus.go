@@ -37,7 +37,7 @@ type EventBusPublisher interface {
 	Connect(context.Context) *messageBusError
 	// PublishEvent publishes the event on the bus.
 	PublishEvent(context.Context, storage.Event) *messageBusError
-	// Close for freeing all disposable resources
+	// Close closes the underlying connections
 	Close() error
 }
 
@@ -49,7 +49,7 @@ type EventBusConsumer interface {
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
 	AddReceiver(EventReceiver, ...EventMatcher) *messageBusError
-	// Close frees all disposable resources
+	// Close closes the underlying connections
 	Close() error
 }
 

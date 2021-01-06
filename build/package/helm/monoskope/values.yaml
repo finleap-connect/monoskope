@@ -100,6 +100,11 @@ monoskope-gateway:
     allowRootToken: false
     issuerURL: *issuer
 
+monoskope-eventstore:
+  nameOverride: "eventstore"
+  enabled: true
+  replicaCount: 3
+  
 cockroachdb:
   enabled: true
   image:
@@ -168,8 +173,7 @@ rabbitmq:
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
   service:
-    port: 5672
-    portName: amqp
+    tlsPort: 5671
     labels:
       app.kubernetes.io/part-of: *name
   auth:

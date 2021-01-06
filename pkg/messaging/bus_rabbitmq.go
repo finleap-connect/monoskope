@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -441,14 +440,7 @@ func (b *rabbitEventBus) changeConnection(connection *amqp.Connection) {
 func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 	b.log.Info("Attempting to connect...")
 
-	conf := amqp.Config{
-		Dial: func(network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, 10*time.Second)
-		},
-		Heartbeat: 10 * time.Second,
-	}
-	conn, err := amqp.DialConfig(addr, conf)
-
+	conn, err := amqp.DialConfig(addr, b.conf.amqpConfig)
 	if err != nil {
 		return nil, err
 	}
