@@ -9,24 +9,24 @@ metadata:
     kubernetes.io/tls-acme: "true" # automatically request the certificate (using the in-cluster cert-manager)
     kubernetes.io/ingress.class: "nginx" # use the nginx ingress controller
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-  name: {{ $fullname }}
+  name: {{ include "gateway.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "gateway.labels" . | nindent 4 }}
-    {{- with .Values.labels }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   tls:
   - hosts:
     - {{ .Values.ingress.host }}
-    secretName: {{ $name }}-tls
+    secretName: {{ include "gateway.fullname" . }}-ingress-tls
   rules:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
         - path: /
           backend:
-            serviceName: {{ (printf "%s-%s" $release "gateway-service") }}
+            serviceName: {{ include "gateway.fullname" . }}
             servicePort: http
 {{- end }}

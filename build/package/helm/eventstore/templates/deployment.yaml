@@ -2,15 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "eventstore.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eventstore.labels" . | nindent 4 }}
-    {{- with .Values.labels }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  progressDeadlineSeconds: 120
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
   selector:
     matchLabels:
       {{- include "eventstore.selectorLabels" . | nindent 6 }}
@@ -22,7 +28,7 @@ spec:
       {{- end }}
       labels:
         {{- include "eventstore.selectorLabels" . | nindent 8 }}
-        {{- with .Values.labels }}
+        {{- with (.Values.labels | default .Values.global.labels) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -30,7 +36,21 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "eventstore.serviceAccountName" . }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ (include "eventstore.name" .) }}
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - {{ .Release.Name }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -40,9 +60,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
+          - name: http
+            containerPort: {{ .Values.ports.api }}
+          - name: http-metrics
+            containerPort: {{ .Values.ports.metrics }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

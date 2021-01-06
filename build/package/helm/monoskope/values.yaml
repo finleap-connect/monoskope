@@ -8,6 +8,8 @@ fullnameOverride: ""
 
 global:
   imagePullSecrets: []
+  labels:
+    app.kubernetes.io/part-of: *name
 
 monitoring:
   tenant: &tenant finleap-cloud
@@ -97,8 +99,6 @@ monoskope-gateway:
   auth:
     allowRootToken: false
     issuerURL: *issuer
-  labels:
-    app.kubernetes.io/part-of: *name
 
 cockroachdb:
   enabled: true
