@@ -4,11 +4,11 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
-type MessageBusTestEnv struct {
+type messageBusTestEnv struct {
 	*test.TestEnv
 	amqpURL string
 }
 
-func (env *MessageBusTestEnv) Shutdown() error {
+func (env *messageBusTestEnv) Shutdown() error {
 	return env.TestEnv.Shutdown()
 }

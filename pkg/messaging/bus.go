@@ -34,9 +34,9 @@ var ErrCouldNotAddReceiver = errors.New("could not add receiver")
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
 	// Connect connects to the bus
-	Connect(context.Context) *MessageBusError
+	Connect(context.Context) *messageBusError
 	// PublishEvent publishes the event on the bus.
-	PublishEvent(context.Context, storage.Event) *MessageBusError
+	PublishEvent(context.Context, storage.Event) *messageBusError
 	// Close for freeing all disposable resources
 	Close() error
 }
@@ -44,11 +44,11 @@ type EventBusPublisher interface {
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
 	// Connect connects to the bus
-	Connect(context.Context) *MessageBusError
+	Connect(context.Context) *messageBusError
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(EventReceiver, ...EventMatcher) *MessageBusError
+	AddReceiver(EventReceiver, ...EventMatcher) *messageBusError
 	// Close frees all disposable resources
 	Close() error
 }
@@ -66,10 +66,10 @@ type EventMatcher interface {
 // EventReceiver is the function to call by the consumer on incoming events
 type EventReceiver func(storage.Event) error
 
-type ErrorHandler func(MessageBusError)
+type ErrorHandler func(messageBusError)
 
-// MessageBusError is an error from the bus
-type MessageBusError struct {
+// messageBusError is an error from the bus
+type messageBusError struct {
 	// Err is the error.
 	Err error
 	// BaseErr is an optional underlying error, for example from the message bus driver.
@@ -77,7 +77,7 @@ type MessageBusError struct {
 }
 
 // Error implements the Error method of the errors.Error interface.
-func (e MessageBusError) Error() string {
+func (e messageBusError) Error() string {
 	errStr := e.Err.Error()
 	if e.BaseErr != nil {
 		errStr += ": " + e.BaseErr.Error()
@@ -86,13 +86,13 @@ func (e MessageBusError) Error() string {
 }
 
 // Cause returns the cause of this error.
-func (e MessageBusError) Cause() error {
+func (e messageBusError) Cause() error {
 	return e.Err
 }
 
 // UnwraMessageBusError returns the given error as MessageBusError if it is one
-func UnwraMessageBusError(err error) *MessageBusError {
-	if esErr, ok := err.(MessageBusError); ok {
+func UnwraMessageBusError(err error) *messageBusError {
+	if esErr, ok := err.(messageBusError); ok {
 		return &esErr
 	}
 	return nil

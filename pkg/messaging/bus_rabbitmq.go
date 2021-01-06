@@ -59,7 +59,7 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, er
 }
 
 // Connect starts automatic reconnect with rabbitmq
-func (b *rabbitEventBus) Connect(ctx context.Context) *MessageBusError {
+func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 	go b.handleReconnect(b.conf.Url)
 	for {
 		select {
@@ -69,7 +69,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *MessageBusError {
 			}
 		case <-b.done:
 		case <-ctx.Done():
-			return &MessageBusError{
+			return &messageBusError{
 				Err: ErrMessageNotConnected,
 			}
 		}
@@ -77,9 +77,9 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *MessageBusError {
 }
 
 // PublishEvent publishes the event on the bus.
-func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	if !b.isReady {
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
 	}
@@ -91,7 +91,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			b.log.Error(err, "Publish failed. Retrying...")
 			select {
 			case <-b.done:
-				return &MessageBusError{
+				return &messageBusError{
 					Err: ErrCouldNotPublishEvent,
 				}
 			case <-time.After(b.conf.ResendDelay):
@@ -100,7 +100,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 					continue
 				} else {
 					b.log.Info("Publish failed.")
-					return &MessageBusError{
+					return &messageBusError{
 						Err: ErrCouldNotPublishEvent,
 					}
 				}
@@ -124,7 +124,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		}
 
 		b.log.Info("Publish failed.")
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrCouldNotPublishEvent,
 		}
 	}
@@ -134,11 +134,11 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // recieve the message.
-func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.isReady {
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
 	}
@@ -155,7 +155,7 @@ func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) 
 	bytes, err := json.Marshal(re)
 	if err != nil {
 		b.log.Error(err, ErrCouldNotMarshalEvent.Error())
-		return &MessageBusError{
+		return &messageBusError{
 			Err:     ErrCouldNotMarshalEvent,
 			BaseErr: err,
 		}
@@ -173,7 +173,7 @@ func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) 
 
 	if err != nil {
 		b.log.Error(err, ErrCouldNotPublishEvent.Error())
-		return &MessageBusError{
+		return &messageBusError{
 			Err:     ErrCouldNotPublishEvent,
 			BaseErr: err,
 		}
@@ -182,22 +182,22 @@ func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) 
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
+func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
 	if !b.isReady {
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
 	}
 
 	if matchers == nil {
 		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrMatcherMustNotBeNil,
 		}
 	}
 	if receiver == nil {
 		b.log.Error(ErrReceiverMustNotBeNil, ErrReceiverMustNotBeNil.Error())
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrReceiverMustNotBeNil,
 		}
 	}
@@ -209,7 +209,7 @@ func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 			b.log.Info("Adding receiver failed. Retrying...", "error", err.Cause().Error())
 			select {
 			case <-b.done:
-				return &MessageBusError{
+				return &messageBusError{
 					Err: ErrCouldNotAddReceiver,
 				}
 			case <-time.After(b.conf.ResendDelay):
@@ -218,7 +218,7 @@ func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 					continue
 				} else {
 					b.log.Info("Adding receiver failed.")
-					return &MessageBusError{
+					return &messageBusError{
 						Err: ErrCouldNotPublishEvent,
 					}
 				}
@@ -231,11 +231,11 @@ func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 }
 
 // addReceiver creates a queue along with bindings for the given matchers
-func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *MessageBusError {
+func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.isReady {
-		return &MessageBusError{
+		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
 	}
@@ -249,7 +249,7 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 		nil,   // arguments
 	)
 	if err != nil {
-		return &MessageBusError{
+		return &messageBusError{
 			Err:     ErrMessageBusConnection,
 			BaseErr: err,
 		}
@@ -257,10 +257,10 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 	b.log.Info(fmt.Sprintf("Queue declared '%s'.", q.Name))
 
 	for _, matcher := range matchers {
-		rabbitMatcher, ok := matcher.(*RabbitMatcher)
+		rabbitMatcher, ok := matcher.(*rabbitMatcher)
 		if !ok {
 			b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
-			return &MessageBusError{
+			return &messageBusError{
 				Err: ErrMatcherMustNotBeNil,
 			}
 		}
@@ -273,7 +273,7 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 			false,               // no wait
 			nil)
 		if err != nil {
-			return &MessageBusError{
+			return &messageBusError{
 				Err:     ErrMessageBusConnection,
 				BaseErr: err,
 			}
@@ -291,7 +291,7 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 		nil,   // args
 	)
 	if err != nil {
-		return &MessageBusError{
+		return &messageBusError{
 			Err:     ErrMessageBusConnection,
 			BaseErr: err,
 		}
@@ -303,7 +303,7 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 
 // Matcher returns a new EventMatcher of type RabbitMatcher
 func (b *rabbitEventBus) Matcher() EventMatcher {
-	matcher := &RabbitMatcher{
+	matcher := &rabbitMatcher{
 		routingKeyPrefix: b.conf.RoutingKeyPrefix,
 	}
 	return matcher.Any()

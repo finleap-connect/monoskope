@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	env *MessageBusTestEnv
+	env *messageBusTestEnv
 )
 
 func TestMessageBus(t *testing.T) {
@@ -28,7 +28,7 @@ var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 
 	By("bootstrapping test env")
-	env = &MessageBusTestEnv{
+	env = &messageBusTestEnv{
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
 

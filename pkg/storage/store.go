@@ -57,8 +57,8 @@ type StoreQuery struct {
 	MaxTimestamp *time.Time
 }
 
-// EventStoreError is an error in the event store.
-type EventStoreError struct {
+// eventStoreError is an error in the event store.
+type eventStoreError struct {
 	// Err is the error.
 	Err error
 	// BaseErr is an optional underlying error, for example from the DB driver.
@@ -66,7 +66,7 @@ type EventStoreError struct {
 }
 
 // Error implements the Error method of the errors.Error interface.
-func (e EventStoreError) Error() string {
+func (e eventStoreError) Error() string {
 	errStr := e.Err.Error()
 	if e.BaseErr != nil {
 		errStr += ": " + e.BaseErr.Error()
@@ -75,13 +75,13 @@ func (e EventStoreError) Error() string {
 }
 
 // Cause returns the cause of this error.
-func (e EventStoreError) Cause() error {
+func (e eventStoreError) Cause() error {
 	return e.Err
 }
 
 // UnwrapEventStoreError returns the given error as EventStoreError if it is one
-func UnwrapEventStoreError(err error) *EventStoreError {
-	if esErr, ok := err.(EventStoreError); ok {
+func UnwrapEventStoreError(err error) *eventStoreError {
+	if esErr, ok := err.(eventStoreError); ok {
 		return &esErr
 	}
 	return nil

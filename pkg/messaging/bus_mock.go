@@ -6,27 +6,27 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
-type MockEventBus struct {
+type mockEventBus struct {
 }
 
 func NewMockEventBusPublisher() EventBusPublisher {
-	return &MockEventBus{}
+	return &mockEventBus{}
 }
 
-func (b *MockEventBus) Connect(ctx context.Context) *MessageBusError {
+func (b *mockEventBus) Connect(ctx context.Context) *messageBusError {
 	// mock
 	return nil
 }
 
-func (b *MockEventBus) PublishEvent(ctx context.Context, event storage.Event) *MessageBusError {
+func (b *mockEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	panic("not implemented")
 }
 
-func (b *MockEventBus) Matcher() EventMatcher {
+func (b *mockEventBus) Matcher() EventMatcher {
 	panic("not implemented")
 }
 
-func (b *MockEventBus) Close() error {
+func (b *mockEventBus) Close() error {
 	// mock
 	return nil
 }

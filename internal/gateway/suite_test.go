@@ -26,21 +26,21 @@ const (
 )
 
 var (
-	env *OAuthTestEnv
+	env *oAuthTestEnv
 
 	apiListener net.Listener
 	httpClient  *http.Client
 	testServer  *server
 )
 
-type OAuthTestEnv struct {
+type oAuthTestEnv struct {
 	*test.TestEnv
 	DexWebEndpoint string
 	AuthConfig     *gw_auth.Config
 }
 
-func SetupAuthTestEnv(envName string) (*OAuthTestEnv, error) {
-	env := &OAuthTestEnv{
+func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
+	env := &oAuthTestEnv{
 		TestEnv: test.NewTestEnv(envName),
 	}
 
@@ -80,11 +80,11 @@ func SetupAuthTestEnv(envName string) (*OAuthTestEnv, error) {
 	return env, nil
 }
 
-func (env *OAuthTestEnv) Shutdown() error {
+func (env *oAuthTestEnv) Shutdown() error {
 	return env.TestEnv.Shutdown()
 }
 
-func (env *OAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
+func (env *oAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
 	serverConf := &monoctl_auth.Config{
 		LocalServerBindAddress: []string{
 			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),

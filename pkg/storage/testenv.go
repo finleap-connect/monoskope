@@ -13,16 +13,16 @@ const (
 	testAggregateExtended AggregateType = "TestAggregateExtended"
 )
 
-type TestEventData struct {
+type testEventData struct {
 	Hello string `json:",omitempty"`
 }
 
-type EventStoreTestEnv struct {
+type eventStoreTestEnv struct {
 	*test.TestEnv
 	DB *pg.DB
 }
 
-func (env *EventStoreTestEnv) Shutdown() error {
+func (env *eventStoreTestEnv) Shutdown() error {
 	if env.DB != nil {
 		defer env.DB.Close()
 	}

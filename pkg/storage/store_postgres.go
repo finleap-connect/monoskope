@@ -60,7 +60,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event Event) (*
 	// Marshal event data if there is any.
 	eventData, err := json.Marshal(event.Data())
 	if err != nil {
-		return nil, EventStoreError{
+		return nil, eventStoreError{
 			BaseErr: err,
 			Err:     ErrCouldNotMarshalEvent,
 		}
@@ -69,7 +69,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event Event) (*
 	// Marshal event context if there is any.
 	context, err := json.Marshal(ctx)
 	if err != nil {
-		return nil, EventStoreError{
+		return nil, eventStoreError{
 			BaseErr: err,
 			Err:     ErrCouldNotMarshalEventContext,
 		}
@@ -104,7 +104,7 @@ func NewPostgresEventStore(db *pg.DB) (Store, error) {
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 	if len(events) == 0 {
-		return EventStoreError{
+		return eventStoreError{
 			Err: ErrNoEventsToAppend,
 		}
 	}
@@ -117,14 +117,14 @@ func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 	for i, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return EventStoreError{
+			return eventStoreError{
 				Err: ErrInvalidAggregateType,
 			}
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return EventStoreError{
+			return eventStoreError{
 				Err: ErrIncorrectAggregateVersion,
 			}
 		}
@@ -154,14 +154,14 @@ func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 	})
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
-			return EventStoreError{
+			return eventStoreError{
 				BaseErr: err,
 				Err:     ErrAggregateVersionAlreadyExists,
 			}
 		}
 	}
 	if err != nil {
-		return EventStoreError{
+		return eventStoreError{
 			BaseErr: err,
 			Err:     ErrCouldNotSaveEvents,
 		}
@@ -211,7 +211,7 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 		return nil
 	})
 	if err != nil {
-		return nil, EventStoreError{
+		return nil, eventStoreError{
 			BaseErr: err,
 			Err:     err,
 		}

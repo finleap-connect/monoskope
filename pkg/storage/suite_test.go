@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	env *EventStoreTestEnv
+	env *eventStoreTestEnv
 )
 
 func TestEventStoreStorage(t *testing.T) {
@@ -27,7 +27,7 @@ var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 
 	By("bootstrapping test env")
-	env = &EventStoreTestEnv{
+	env = &eventStoreTestEnv{
 		TestEnv: test.NewTestEnv("TestEventStoreStorage"),
 	}
 

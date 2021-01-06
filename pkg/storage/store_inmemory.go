@@ -19,7 +19,7 @@ func NewInMemoryEventStore() Store {
 // Save implements the Save method of the EventStore interface.
 func (s *InMemoryEventStore) Save(ctx context.Context, events []Event) error {
 	if len(events) == 0 {
-		return EventStoreError{
+		return eventStoreError{
 			Err: ErrNoEventsToAppend,
 		}
 	}
@@ -32,21 +32,21 @@ func (s *InMemoryEventStore) Save(ctx context.Context, events []Event) error {
 	for _, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return EventStoreError{
+			return eventStoreError{
 				Err: ErrInvalidAggregateType,
 			}
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return EventStoreError{
+			return eventStoreError{
 				Err: ErrIncorrectAggregateVersion,
 			}
 		}
 
 		for _, se := range s.events {
 			if se.AggregateID() == event.AggregateID() && se.AggregateVersion() == event.AggregateVersion() && se.AggregateType() == event.AggregateType() {
-				return EventStoreError{
+				return eventStoreError{
 					Err: ErrAggregateVersionAlreadyExists,
 				}
 			}

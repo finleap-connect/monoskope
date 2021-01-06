@@ -30,7 +30,7 @@ var _ = Describe("storage/postgres", func() {
 	}
 
 	createTestEventData := func(something string) EventData {
-		bytes, err := json.Marshal(&TestEventData{Hello: something})
+		bytes, err := json.Marshal(&testEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
 		return EventData(bytes)
 	}
@@ -65,7 +65,7 @@ var _ = Describe("storage/postgres", func() {
 			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(EventStoreError{
+		Expect(err).To(Equal(eventStoreError{
 			Err: ErrInvalidAggregateType,
 		}))
 	})
@@ -79,7 +79,7 @@ var _ = Describe("storage/postgres", func() {
 			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(EventStoreError{
+		Expect(err).To(Equal(eventStoreError{
 			Err: ErrIncorrectAggregateVersion,
 		}))
 	})
