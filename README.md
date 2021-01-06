@@ -22,4 +22,5 @@
 ### Helm Charts
 
 * `gateway` helm chart [readme](build/package/helm/gateway/README.md)
+* `eventstore` helm chart [readme](build/package/helm/eventstore/README.md)
 * `monoskope` helm chart [readme](build/package/helm/monoskope/README.md)
