@@ -75,14 +75,19 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	BeforeEach(func() {
 		var err error
+
 		consumer, err = NewRabbitEventBusConsumer(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
-		err = consumer.Connect(ctx)
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 30*time.Second)
+		defer cancelFunc()
+		err = consumer.Connect(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		publisher, err = NewRabbitEventBusPublisher(env.amqpURL, fmt.Sprintf("test-%v", testCount), "")
 		Expect(err).ToNot(HaveOccurred())
-		err = publisher.Connect(ctx)
+		ctxWithTimeout, cancelFunc = context.WithTimeout(ctx, 30*time.Second)
+		defer cancelFunc()
+		err = publisher.Connect(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		testCount++
