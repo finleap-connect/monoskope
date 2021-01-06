@@ -29,8 +29,10 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
       imagePullSecrets:
-      - name: {{ .Values.pullSecret }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -57,7 +59,7 @@ spec:
       containers:
       - name: {{ $name }}
 {{- with .Values }}
-        image: {{ .image.repository }}:{{ .image.tag }}
+        image: "{{ .image.repository }}:{{ .image.tag | default $.Chart.AppVersion }}"
         imagePullPolicy: {{ .image.pullPolicy }}
 {{- end }}
         ports:

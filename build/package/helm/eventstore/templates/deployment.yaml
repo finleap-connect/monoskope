@@ -20,7 +20,7 @@ spec:
       labels:
         {{- include "eventstore.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.image.pullSecrets }}
+      {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}

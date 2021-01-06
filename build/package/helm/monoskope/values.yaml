@@ -6,6 +6,9 @@ name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  imagePullSecrets: []
+
 monitoring:
   tenant: &tenant finleap-cloud
 
