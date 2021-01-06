@@ -8,6 +8,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../eventstore | monoskope-eventstore |  |
 | file://../gateway | monoskope-gateway |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.5.2 |
@@ -84,13 +85,14 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.serviceAccount.create | bool | `false` |  |
 | dex.telemetry | bool | `true` |  |
 | fullnameOverride | string | `""` |  |
+| global.imagePullSecrets | list | `[]` |  |
+| global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | ingress.enabled | bool | `false` |  |
 | ingress.host | string | `"monoskope.io"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | monoskope-gateway.auth.allowRootToken | bool | `false` |  |
 | monoskope-gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
 | monoskope-gateway.enabled | bool | `true` |  |
-| monoskope-gateway.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | monoskope-gateway.nameOverride | string | `"gateway"` |  |
 | monoskope-gateway.replicaCount | int | `3` |  |
 | name | string | `"monoskope"` |  |
