@@ -48,7 +48,7 @@ var _ = BeforeSuite(func(done Done) {
 	// create rabbit conn
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
 	env.Log.Info("Waiting for rabbitmq to warm up...")
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 }, 60)
 
 var _ = AfterSuite(func() {

@@ -71,7 +71,8 @@ var serverCmd = &cobra.Command{
 
 		// init message bus publisher
 		msgbusUrl := fmt.Sprintf("amqp://%s:%s@%s", msgbusUser, msgbusPassword, msgbusAddr)
-		publisher, err := messaging.NewRabbitEventBusPublisher(msgbusUrl, "event-store", msgbusPrefix)
+		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
+		publisher, err := messaging.NewRabbitEventBusPublisher(rabbitConf)
 		if err != nil {
 			return err
 		}
