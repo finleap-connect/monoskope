@@ -14,7 +14,8 @@ import (
 
 // postgresEventStore implements an EventStore for PostgreSQL.
 type postgresEventStore struct {
-	db *pg.DB
+	db   *pg.DB
+	conf *postgresStoreConfig
 }
 
 // eventRecord is the model for entries in the events table in the database.
@@ -88,16 +89,23 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event Event) (*
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(db *pg.DB) (Store, error) {
-	s := &postgresEventStore{
-		db: db,
-	}
-	err := s.createTables(&orm.CreateTableOptions{
-		IfNotExists: true,
-	})
+func NewPostgresEventStore(config *postgresStoreConfig) (Store, error) {
+	err := config.Validate()
 	if err != nil {
 		return nil, err
 	}
+
+	s := &postgresEventStore{
+		conf: config,
+	}
+	err = s.createTables(&orm.CreateTableOptions{
+		IfNotExists: true,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	return s, nil
 }
 

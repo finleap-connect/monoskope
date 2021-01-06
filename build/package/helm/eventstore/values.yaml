@@ -87,21 +87,11 @@ db:
   addr: 127.0.0.1:26257
   user: eventstore
   name: events
-  auth:
-    password: {}
-      # secretName: secret-containing-pw
-      # field: field-containing-pw
+  tlsSecretName: "es-auth-store"
 
 bus:
   addr: 127.0.0.1:5672
   name: events
   routingKeyPrefix: m8
-  auth:
-    user: eventstore
-    password: {}
-      # secretName: secret-containing-pw
-      # field: field-containing-pw
-    tls:
-      enabled: false
-      secretName: ""
+  tlsSecretName: "es-auth-message-bus"
     

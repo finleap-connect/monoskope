@@ -64,21 +64,6 @@ spec:
             containerPort: {{ .Values.ports.api }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
-          {{- with .Values.db.secret }}
-          env:
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .secretName }}
-                  key: {{ .field }}
-          {{- end }}
-          {{- with .Values.bus.auth.password }}
-            - name: BUS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .secretName }}
-                  key: {{ .field }}
-          {{- end }}
           args:
             - /eventstore
             - server
@@ -89,9 +74,7 @@ spec:
             - {{ (printf "--db-user=%s" .Values.db.user ) }}
             - {{ (printf "--db-name=%s" .Values.db.name ) }}
             - {{ (printf "--msgbus-addr=%s" .Values.bus.addr ) }}
-            - {{ (printf "--msgbus-user=%s" .Values.bus.auth.user ) }}
             - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.bus.routingKeyPrefix ) }}
-            - {{ (printf "--msgbus-use-tls=%v" .Values.bus.auth.tls.enabled) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -110,11 +93,9 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.bus.auth.tls.enabled }}
           volumeMounts:
             - name: certs
               mountPath: /etc/eventstore/certs/bus
-          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -127,11 +108,10 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.bus.auth.tls.enabled }}
       volumes:
         - name: certs
           secret:
-            secretName: {{ .Values.bus.auth.tls.secretName }}
+            secretName: {{ .Values.bus.tlsSecretName }}
             items:
               - key: ca.crt
                 path: ca.crt
@@ -139,4 +119,3 @@ spec:
                 path: tls.crt
               - key: tls.key
                 path: tls.key
-      {{- end }}

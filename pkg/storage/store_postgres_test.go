@@ -19,7 +19,7 @@ var _ = Describe("storage/postgres", func() {
 	}
 
 	createTestEventStore := func() *postgresEventStore {
-		es, err := NewPostgresEventStore(env.DB)
+		es, err := NewPostgresEventStore(&postgresStoreConfig{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(es).ToNot(BeNil())
 		return es.(*postgresEventStore)
