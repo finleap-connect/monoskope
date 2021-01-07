@@ -10,9 +10,6 @@ import (
 // ErrCouldNotMarshalEvent is when an event could not be marshaled.
 var ErrCouldNotMarshalEvent = errors.New("could not marshal event")
 
-// ErrCouldNotUnmarshalEvent is when an event could not be unmarshaled.
-var ErrCouldNotUnmarshalEvent = errors.New("could not unmarshal event")
-
 // ErrCouldNotPublishEvent is when cannot send event to message bus
 var ErrCouldNotPublishEvent = errors.New("could not publish event")
 
@@ -68,8 +65,6 @@ type EventMatcher interface {
 
 // EventReceiver is the function to call by the consumer on incoming events
 type EventReceiver func(storage.Event) error
-
-type ErrorHandler func(messageBusError)
 
 // messageBusError is an error from the bus
 type messageBusError struct {

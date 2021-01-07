@@ -5,10 +5,8 @@ import (
 )
 
 var (
-	KindCluster     string
 	HelmChartPath   string
 	HelmChartValues string
-	WithKind        bool
 	DexConfigPath   string
 )
 
