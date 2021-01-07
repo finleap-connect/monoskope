@@ -20,7 +20,7 @@ ingress:
 
 dex: # OIDC Provider
   enabled: false
-  replicas: 3
+  replicas: 1
   image: ghcr.io/dexidp/dex
   imageTag: "v2.27.0"
   imagePullPolicy: "Always"
@@ -92,19 +92,21 @@ dex: # OIDC Provider
   labels:
     app.kubernetes.io/part-of: *name
 
-monoskope-gateway:
+gateway:
   nameOverride: "gateway"
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   auth:
     allowRootToken: false
     issuerURL: *issuer
 
-monoskope-eventstore:
+eventstore:
   nameOverride: "eventstore"
   enabled: true
-  replicaCount: 3
-  
+  replicaCount: 1
+  config:
+    existingSecret: monoskope-eventstore-config
+
 cockroachdb:
   enabled: true
   image:

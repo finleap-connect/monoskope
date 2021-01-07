@@ -62,9 +62,6 @@ spec:
     - {{.Release.Name}}-rabbitmq
     - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}
     - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}.svc.cluster.local
-    - "*.{{.Release.Name}}-rabbitmq"
-    - "*.{{.Release.Name}}-rabbitmq.{{.Release.Namespace}}"
-    - "*.{{.Release.Name}}-rabbitmq.{{.Release.Namespace}}.svc.cluster.local"
   usages:
     - client auth
     - server auth

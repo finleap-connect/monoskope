@@ -83,12 +83,13 @@ ports:
 
 keepAlive: false
 
-db:
-  url: postgres://root@127.0.0.1:26257/test?sslmode=disable
-  tlsSecretName: "es-auth-store"
-
-bus:
-  url: amqps://127.0.0.1:5672/
+config:
   routingKeyPrefix: m8
-  tlsSecretName: "es-auth-message-bus"
-    
+  dbUrl: postgres://root@127.0.0.1:26257/test?sslmode=disable
+  busUrl: amqps://127.0.0.1:5672/
+  # -- Name of the secret containing the config for the eventstore
+  existingSecret: ""
+  # -- Name of the secret containing the db tls configuration
+  dbTlsSecret: ""
+  # -- Name of the secret containing the bus tls configuration
+  busTlsSecret: ""

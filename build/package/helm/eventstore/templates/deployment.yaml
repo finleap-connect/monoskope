@@ -64,15 +64,24 @@ spec:
             containerPort: {{ .Values.ports.api }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.existingSecret | default (include "eventstore.fullname" .) }}
+                  key: dbUrl
+            - name: BUS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.existingSecret | default (include "eventstore.fullname" .) }}
+                  key: busUrl
           args:
             - /eventstore
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
-            - {{ (printf "--db-url=%s" .Values.db.url ) }}
-            - {{ (printf "--msgbus-url=%s" .Values.bus.url ) }}
-            - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.bus.routingKeyPrefix ) }}
+            - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.config.routingKeyPrefix ) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -92,11 +101,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: busCerts
-              mountPath: /etc/eventstore/certs/bus
-          volumeMounts:
+            {{- if .Values.config.dbTlsSecret }}
             - name: dbCerts
               mountPath: /etc/eventstore/certs/db
+            {{- end }}
+            {{- if .Values.config.busTlsSecret }}
+            - name: busCerts
+              mountPath: /etc/eventstore/certs/bus
+            {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -110,9 +122,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.config.dbTlsSecret }}
         - name: dbCerts
           secret:
-            secretName: {{ .Values.db.tlsSecretName }}
+            secretName: {{ .Values.config.dbTlsSecret }}
             items:
               - key: ca.crt
                 path: ca.crt
@@ -120,9 +133,11 @@ spec:
                 path: tls.crt
               - key: tls.key
                 path: tls.key
+        {{- end }}
+        {{- if .Values.config.busTlsSecret }}
         - name: busCerts
           secret:
-            secretName: {{ .Values.bus.tlsSecretName }}
+            secretName: {{ .Values.config.busTlsSecret }}
             items:
               - key: ca.crt
                 path: ca.crt
@@ -130,3 +145,4 @@ spec:
                 path: tls.crt
               - key: tls.key
                 path: tls.key
+        {{- end }}
