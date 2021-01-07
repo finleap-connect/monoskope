@@ -1,4 +1,4 @@
-# monoskope-eventstore
+# eventstore
 
 ![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.0.1](https://img.shields.io/badge/AppVersion-0.0.1-informational?style=flat-square)
 
@@ -13,11 +13,12 @@ A Helm chart for the Monoskope EventStore
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| bus.routingKeyPrefix | string | `"m8"` |  |
-| bus.tlsSecretName | string | `"es-auth-message-bus"` |  |
-| bus.url | string | `"amqps://127.0.0.1:5672/"` |  |
-| db.tlsSecretName | string | `"es-auth-store"` |  |
-| db.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
+| config.busTlsSecret | string | `""` | Name of the secret containing the bus tls configuration |
+| config.busUrl | string | `"amqps://127.0.0.1:5672/"` |  |
+| config.dbTlsSecret | string | `""` | Name of the secret containing the db tls configuration |
+| config.dbUrl | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
+| config.existingSecret | string | `""` | Name of the secret containing the config for the eventstore |
+| config.routingKeyPrefix | string | `"m8"` |  |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |

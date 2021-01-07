@@ -8,8 +8,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../eventstore | monoskope-eventstore |  |
-| file://../gateway | monoskope-gateway |  |
+| file://../eventstore | eventstore |  |
+| file://../gateway | gateway |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.5.2 |
 | https://kubism.github.io/charts | dex | 1.0.18 |
@@ -77,27 +77,28 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | dex.ports.web.containerPort | int | `5556` |  |
 | dex.rbac.create | bool | `false` |  |
-| dex.replicas | int | `3` |  |
+| dex.replicas | int | `1` |  |
 | dex.resources.limits.cpu | string | `"500m"` |  |
 | dex.resources.limits.memory | string | `"100Mi"` |  |
 | dex.resources.requests.cpu | string | `"100m"` |  |
 | dex.resources.requests.memory | string | `"50Mi"` |  |
 | dex.serviceAccount.create | bool | `false` |  |
 | dex.telemetry | bool | `true` |  |
+| eventstore.config.existingSecret | string | `"monoskope-eventstore-config"` |  |
+| eventstore.enabled | bool | `true` |  |
+| eventstore.nameOverride | string | `"eventstore"` |  |
+| eventstore.replicaCount | int | `1` |  |
 | fullnameOverride | string | `""` |  |
+| gateway.auth.allowRootToken | bool | `false` |  |
+| gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
+| gateway.enabled | bool | `true` |  |
+| gateway.nameOverride | string | `"gateway"` |  |
+| gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | ingress.enabled | bool | `false` |  |
 | ingress.host | string | `"monoskope.io"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
-| monoskope-eventstore.enabled | bool | `true` |  |
-| monoskope-eventstore.nameOverride | string | `"eventstore"` |  |
-| monoskope-eventstore.replicaCount | int | `3` |  |
-| monoskope-gateway.auth.allowRootToken | bool | `false` |  |
-| monoskope-gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
-| monoskope-gateway.enabled | bool | `true` |  |
-| monoskope-gateway.nameOverride | string | `"gateway"` |  |
-| monoskope-gateway.replicaCount | int | `3` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
