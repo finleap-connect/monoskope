@@ -1,10 +1,6 @@
-FROM registry.gitlab.figo.systems/platform/golang-builder:go1.15-alpine3.12 AS builder
+FROM registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest AS builder
 
 WORKDIR /tmp/build
-
-ENV GRPC_HEALTH_PROBE_VERSION=v0.3.5
-RUN wget -qOgrpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-    chmod +x grpc-health-probe
 
 # Install SSL ca certificates.
 # Ca-certificates is required to call HTTPS endpoints.
