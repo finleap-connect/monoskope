@@ -15,11 +15,11 @@ lint-%:
 	@$(HELM) lint $(HELM_PATH)/$*
 
 install-%:
-	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 2m
+	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
 
 install-from-repo-%:
 	@$(MAKE) helm-dep-$*
-	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
+	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 10m
 
 uninstall-%: 
 	@$(HELM) uninstall m8dev --namespace $(KUBE_NAMESPACE)
