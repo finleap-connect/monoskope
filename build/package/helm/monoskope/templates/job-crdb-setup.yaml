@@ -33,7 +33,7 @@ spec:
         - --execute=GRANT ALL ON DATABASE eventstore TO eventstore;
         image: {{ .Values.cockroachdb.image.repository }}:{{ .Values.cockroachdb.image.tag }}
         imagePullPolicy: Always
-        name: {{ $name }}
+        name: {{ include "monoskope.name" . }}
         volumeMounts:
         - name: certs
           mountPath: /certs

@@ -11,7 +11,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.5.2 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
 | https://kubism.github.io/charts | dex | 1.0.18 |
 
 ## Values
@@ -125,9 +125,11 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.podAnnotations."linkerd.io/inject" | string | `"disabled"` |  |
 | rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.rbac.create | bool | `false` |  |
 | rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | rabbitmq.service.tlsPort | int | `5671` |  |
+| rabbitmq.serviceAccount.create | bool | `false` |  |
 | rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 
 ----------------------------------------------
