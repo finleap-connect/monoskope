@@ -7,18 +7,20 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 const (
 	DefaultExchangeName   = "m8_events"      // Name of the database
 	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
+	DefaultReInitDelay    = 5 * time.Second  // When setting up db schema
 	DefaultResendDelay    = 3 * time.Second  // When retrying to read/write
 	DefaultMaxRetries     = 10               // How many times retrying read/write
 )
 
 type postgresStoreConfig struct {
 	ReconnectDelay time.Duration // When reconnecting to the server after connection failure
+	ReInitDelay    time.Duration // When setting up db schema
 	RetryDelay     time.Duration // When retrying to read/write
 	MaxRetries     int           // How many times retrying read/write
 	pgOptions      *pg.Options
@@ -31,16 +33,19 @@ var ErrConfigDbNameRequired = errors.New("database name must not be empty")
 var ErrConfigUrlRequired = errors.New("url must not be empty")
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
-func NewPostgresStoreConfig(dbName, url string) *postgresStoreConfig {
+func NewPostgresStoreConfig(url string) (*postgresStoreConfig, error) {
+	options, err := pg.ParseURL(url)
+	if err != nil {
+		return nil, err
+	}
+
 	return &postgresStoreConfig{
 		ReconnectDelay: DefaultReconnectDelay,
 		RetryDelay:     DefaultResendDelay,
 		MaxRetries:     DefaultMaxRetries,
-		pgOptions: &pg.Options{
-			Addr:     url,
-			Database: dbName,
-		},
-	}
+		ReInitDelay:    DefaultReInitDelay,
+		pgOptions:      options,
+	}, nil
 }
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth

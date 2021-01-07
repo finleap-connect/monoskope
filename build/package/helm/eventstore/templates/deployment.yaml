@@ -70,10 +70,8 @@ spec:
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
-            - {{ (printf "--db-addr=%s" .Values.db.addr ) }}
-            - {{ (printf "--db-user=%s" .Values.db.user ) }}
-            - {{ (printf "--db-name=%s" .Values.db.name ) }}
-            - {{ (printf "--msgbus-addr=%s" .Values.bus.addr ) }}
+            - {{ (printf "--db-url=%s" .Values.db.url ) }}
+            - {{ (printf "--msgbus-url=%s" .Values.bus.url ) }}
             - {{ (printf "--msgbus-routing-key-prefix=%s" .Values.bus.routingKeyPrefix ) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
@@ -94,8 +92,11 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: certs
+            - name: busCerts
               mountPath: /etc/eventstore/certs/bus
+          volumeMounts:
+            - name: dbCerts
+              mountPath: /etc/eventstore/certs/db
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -109,7 +110,17 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: certs
+        - name: dbCerts
+          secret:
+            secretName: {{ .Values.db.tlsSecretName }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        - name: busCerts
           secret:
             secretName: {{ .Values.bus.tlsSecretName }}
             items:

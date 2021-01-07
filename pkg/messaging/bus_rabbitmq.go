@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,8 +22,7 @@ type rabbitEventBus struct {
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
 	isReady         bool
-	done            chan bool
-	mu              sync.Mutex
+	shutdown        chan bool
 }
 
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
@@ -35,9 +33,9 @@ func NewRabbitEventBusPublisher(conf *rabbitEventBusConfig) (EventBusPublisher, 
 	}
 
 	b := &rabbitEventBus{
-		log:  logger.WithName("publisher").WithValues("name", conf.Name),
-		conf: conf,
-		done: make(chan bool),
+		log:      logger.WithName("publisher").WithValues("name", conf.Name),
+		conf:     conf,
+		shutdown: make(chan bool),
 	}
 	return b, nil
 }
@@ -50,9 +48,9 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, er
 	}
 
 	b := &rabbitEventBus{
-		log:  logger.WithName("consumer").WithValues("name", conf.Name),
-		conf: conf,
-		done: make(chan bool),
+		log:      logger.WithName("consumer").WithValues("name", conf.Name),
+		conf:     conf,
+		shutdown: make(chan bool),
 	}
 	return b, nil
 }
@@ -66,7 +64,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 			if b.isReady {
 				return nil
 			}
-		case <-b.done:
+		case <-b.shutdown:
 		case <-ctx.Done():
 			return &messageBusError{
 				Err: ErrMessageNotConnected,
@@ -77,21 +75,21 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
-	if !b.isReady {
-		return &messageBusError{
-			Err: ErrMessageNotConnected,
-		}
-	}
-
 	resendsLeft := b.conf.MaxResends
 	for {
-		err := b.publishEvent(ctx, event)
+		err := b.publishEvent(event)
 		if err != nil {
 			b.log.Error(err, "Publish failed. Retrying...")
 			select {
-			case <-b.done:
+			case <-b.shutdown:
+				b.log.Info("Publish failed because of shutdown.")
 				return &messageBusError{
 					Err: ErrCouldNotPublishEvent,
+				}
+			case <-ctx.Done():
+				b.log.Info("Publish failed because context deadline exceeded.")
+				return &messageBusError{
+					Err: ErrContextDeadlineExceeded,
 				}
 			case <-time.After(b.conf.ResendDelay):
 				if resendsLeft > 0 {
@@ -119,7 +117,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				resendsLeft--
 				continue
 			}
-		case <-b.done:
+		case <-ctx.Done():
+		case <-b.shutdown:
 		}
 
 		b.log.Info("Publish failed.")
@@ -133,9 +132,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // recieve the message.
-func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) *messageBusError {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
 	if !b.isReady {
 		return &messageBusError{
 			Err: ErrMessageNotConnected,
@@ -181,13 +178,7 @@ func (b *rabbitEventBus) publishEvent(ctx context.Context, event storage.Event) 
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
-	if !b.isReady {
-		return &messageBusError{
-			Err: ErrMessageNotConnected,
-		}
-	}
-
+func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
 	if matchers == nil {
 		b.log.Error(ErrMatcherMustNotBeNil, ErrMatcherMustNotBeNil.Error())
 		return &messageBusError{
@@ -207,9 +198,13 @@ func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 		if err != nil {
 			b.log.Info("Adding receiver failed. Retrying...", "error", err.Cause().Error())
 			select {
-			case <-b.done:
+			case <-b.shutdown:
 				return &messageBusError{
 					Err: ErrCouldNotAddReceiver,
+				}
+			case <-ctx.Done():
+				return &messageBusError{
+					Err: ErrContextDeadlineExceeded,
 				}
 			case <-time.After(b.conf.ResendDelay):
 				if resendsLeft > 0 {
@@ -231,8 +226,6 @@ func (b *rabbitEventBus) AddReceiver(receiver EventReceiver, matchers ...EventMa
 
 // addReceiver creates a queue along with bindings for the given matchers
 func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
-	b.mu.Lock()
-	defer b.mu.Unlock()
 	if !b.isReady {
 		return &messageBusError{
 			Err: ErrMessageNotConnected,
@@ -310,12 +303,10 @@ func (b *rabbitEventBus) Matcher() EventMatcher {
 
 // Close will cleanly shutdown the channel and connection.
 func (b *rabbitEventBus) Close() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.log.Info("Shutting down...")
 
-	close(b.done)
 	b.isReady = false
+	close(b.shutdown)
 
 	err := b.connection.Close()
 	if err != nil {
@@ -329,9 +320,6 @@ func (b *rabbitEventBus) Close() error {
 // changeChannel takes a new channel to the queue,
 // and updates the channel listeners to reflect this.
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	b.channel = channel
 	b.notifyChanClose = make(chan *amqp.Error)
 	b.notifyConfirm = make(chan amqp.Confirmation, 1)
@@ -383,7 +371,7 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
 			select {
-			case <-b.done:
+			case <-b.shutdown:
 				b.log.Info("Aborting init. Shutting down...")
 				return false
 			case <-time.After(b.conf.ReInitDelay):
@@ -393,13 +381,11 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 
 		select {
 		case errConnClose := <-b.notifyConnClose:
-			if _, ok := <-b.done; !ok {
+			if _, ok := <-b.shutdown; !ok {
 				b.log.Info("Connection closed caused by shutdown.")
 				return false
 			}
 
-			b.mu.Lock()
-			defer b.mu.Unlock()
 			b.isReady = false
 			if errConnClose != nil {
 				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
@@ -408,13 +394,11 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 			}
 			return true
 		case errChanClose := <-b.notifyChanClose:
-			if _, ok := <-b.done; !ok {
+			if _, ok := <-b.shutdown; !ok {
 				b.log.Info("Channel closed.")
 				return false
 			}
 
-			b.mu.Lock()
-			defer b.mu.Unlock()
 			b.isReady = false
 			if errChanClose != nil {
 				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
@@ -428,9 +412,6 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 // changeConnection takes a new connection to the queue,
 // and updates the close listener to reflect this.
 func (b *rabbitEventBus) changeConnection(connection *amqp.Connection) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	b.connection = connection
 	b.notifyConnClose = make(chan *amqp.Error)
 	b.connection.NotifyClose(b.notifyConnClose)
@@ -460,7 +441,7 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
 			select {
-			case <-b.done:
+			case <-b.shutdown:
 				return
 			case <-time.After(b.conf.ReconnectDelay):
 			}
@@ -498,7 +479,7 @@ func (b *rabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 			} else {
 				_ = d.Ack(false)
 			}
-		case <-b.done:
+		case <-b.shutdown:
 			b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 			return
 		}

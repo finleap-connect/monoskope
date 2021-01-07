@@ -7,53 +7,59 @@ import (
 	"math"
 	"time"
 
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 // postgresEventStore implements an EventStore for PostgreSQL.
 type postgresEventStore struct {
-	db   *pg.DB
-	conf *postgresStoreConfig
+	log      logger.Logger
+	db       *pg.DB
+	conf     *postgresStoreConfig
+	isReady  bool
+	shutdown chan bool
 }
 
 // eventRecord is the model for entries in the events table in the database.
 type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
-	EventID          uuid.UUID       `sql:"event_id,type:uuid,pk"`
-	EventType        EventType       `sql:"event_type,type:varchar(250)"`
-	AggregateID      uuid.UUID       `sql:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType    AggregateType   `sql:"aggregate_type,type:varchar(250),unique:aggregate"`
-	AggregateVersion uint64          `sql:"aggregate_version,unique:aggregate"`
-	Timestamp        time.Time       `sql:"timestamp"`
-	Context          json.RawMessage `sql:"context,type:jsonb"`
-	RawData          json.RawMessage `sql:"data,type:jsonb"`
+	EventID          uuid.UUID       `pg:"event_id,type:uuid,pk"`
+	EventType        EventType       `pg:"event_type,type:varchar(250)"`
+	AggregateID      uuid.UUID       `pg:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType    AggregateType   `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
+	AggregateVersion uint64          `pg:"aggregate_version,unique:aggregate"`
+	Timestamp        time.Time       `pg:""`
+	Context          json.RawMessage `pg:"context,type:jsonb"`
+	RawData          json.RawMessage `pg:"data,type:jsonb"`
 }
 
-var tables []interface{}
+var models []interface{}
 
 func init() {
 	// Just to silence linter
 	eventsTbl := &eventRecord{}
 	_ = eventsTbl.tableName
 
-	tables = []interface{}{
+	models = []interface{}{
 		(*eventRecord)(nil),
 	}
 }
 
 // createTables creates the event table in the database.
-func (s *postgresEventStore) createTables(opts *orm.CreateTableOptions) error {
-	return s.db.RunInTransaction(func(tx *pg.Tx) error {
-		for _, table := range tables {
-			if err := s.db.CreateTable(table, opts); err != nil {
-				return err
-			}
+func (s *postgresEventStore) createTables(ctx context.Context, db *pg.DB) error {
+	for _, model := range models {
+		err := db.Model(model).CreateTable(&orm.CreateTableOptions{
+			IfNotExists: true,
+		})
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+
+	return nil
 }
 
 // newEventRecord returns a new EventRecord for an event.
@@ -96,17 +102,27 @@ func NewPostgresEventStore(config *postgresStoreConfig) (Store, error) {
 	}
 
 	s := &postgresEventStore{
-		conf: config,
+		log:      logger.WithName("postgres-store"),
+		conf:     config,
+		shutdown: make(chan bool),
 	}
-	err = s.createTables(&orm.CreateTableOptions{
-		IfNotExists: true,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
 	return s, nil
+}
+
+// Connect starts automatic reconnect with postgres db
+func (b *postgresEventStore) Connect(ctx context.Context) error {
+	go b.handleReconnect(ctx)
+	for {
+		select {
+		case <-time.After(300 * time.Millisecond):
+			if b.isReady {
+				return nil
+			}
+		case <-b.shutdown:
+		case <-ctx.Done():
+			return ErrCouldNotConnect
+		}
+	}
 }
 
 // Save implements the Save method of the EventStore interface.
@@ -150,7 +166,10 @@ func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 
 	// Append events to the store.
 	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
-		e = s.db.WithContext(ctx).Insert(&eventRecords)
+		if !s.isReady {
+			return ErrConnectionClosed
+		}
+		_, e = s.db.Model(&eventRecords).Insert()
 		return e
 	}, func(e error) bool {
 		if pgErr, ok := e.(pg.Error); ok {
@@ -162,6 +181,7 @@ func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 	})
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
+			s.log.Info(ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
 			return eventStoreError{
 				BaseErr: err,
 				Err:     ErrAggregateVersionAlreadyExists,
@@ -169,19 +189,20 @@ func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
 		}
 	}
 	if err != nil {
+		s.log.Error(err, ErrCouldNotSaveEvents.Error())
 		return eventStoreError{
 			BaseErr: err,
 			Err:     ErrCouldNotSaveEvents,
 		}
 	}
 
+	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
 	return nil
 }
 
 // retryWithExponentialBackoff retries a given function on error if either the recoverable function returns true or still attempts left
 func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f func() error, recoverable func(error) bool) (err error) {
 	for i := 0; ; i++ {
-
 		err = f()
 		if err == nil {
 			return
@@ -201,6 +222,10 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
+	if !s.isReady {
+		return nil, ErrConnectionClosed
+	}
+
 	var events []Event
 
 	// Basic query to query all events
@@ -229,7 +254,18 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 }
 
 func (s *postgresEventStore) Close() error {
-	return s.db.Close()
+	s.log.Info("Shutting down...")
+
+	s.isReady = false
+	close(s.shutdown)
+
+	err := s.db.Close()
+	if err != nil {
+		return err
+	}
+	s.log.Info("Shutdown complete.")
+
+	return nil
 }
 
 // mapStoreQuery maps the generic query struct to a postgress orm query
@@ -262,11 +298,88 @@ func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
 // Clear clears the event storage. This is only for testing purposes.
 func (s *postgresEventStore) clear(ctx context.Context) error {
 	return s.db.
-		WithContext(ctx).
-		RunInTransaction(func(tx *pg.Tx) (err error) {
+		RunInTransaction(ctx, func(tx *pg.Tx) (err error) {
 			_, err = tx.Model((*eventRecord)(nil)).Where("1=1").Delete()
 			return err
 		})
+}
+
+// init will initialize db
+func (s *postgresEventStore) init(ctx context.Context, db *pg.DB) error {
+	err := s.createTables(ctx, db)
+	s.isReady = err == nil
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *postgresEventStore) handleReInit(ctx context.Context, db *pg.DB) error {
+	for {
+		err := s.init(ctx, db)
+		if err != nil {
+			s.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
+
+			select {
+			case <-s.shutdown:
+				s.log.Info("Aborting init. Shutting down...")
+				return ErrCouldNotConnect
+			case <-time.After(s.conf.ReInitDelay):
+				continue
+			}
+		}
+		return nil
+	}
+}
+
+// connect will create a new db connection
+func (s *postgresEventStore) connect(ctx context.Context) (*pg.DB, error) {
+	s.log.Info("Attempting to connect...")
+
+	db := pg.Connect(s.conf.pgOptions)
+	if err := db.Ping(ctx); err != nil {
+		return nil, err
+	}
+
+	s.db = db
+	s.log.Info("Connection established.")
+
+	return db, nil
+}
+
+// handleReconnect will wait for a connection error on
+// notifyConnClose, and then continuously attempt to reconnect.
+func (s *postgresEventStore) handleReconnect(ctx context.Context) {
+	for {
+		s.isReady = false
+		db, err := s.connect(ctx)
+		if err != nil {
+			s.log.Info("Failed to connect. Retrying...", "error", err.Error())
+
+			select {
+			case <-ctx.Done():
+			case <-s.shutdown:
+				s.log.Info("Automatic reconnect stopped.")
+				return
+			case <-time.After(s.conf.ReconnectDelay):
+			}
+			continue
+		}
+
+		err = s.handleReInit(ctx, db)
+		if err != nil {
+			s.log.Info("Failed to init. Retrying...", "error", err.Error())
+		} else {
+			for {
+				if err := db.Ping(ctx); err != nil {
+					s.isReady = false
+					s.log.Info("Connection closed. Reconnecting...")
+				}
+				time.Sleep(s.conf.ReconnectDelay)
+			}
+		}
+	}
 }
 
 // pgEvent is the private implementation of the Event interface for a postgres event store.

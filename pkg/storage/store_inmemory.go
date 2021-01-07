@@ -16,6 +16,11 @@ func NewInMemoryEventStore() Store {
 	return s
 }
 
+// Connect does nothing
+func (b *InMemoryEventStore) Connect(ctx context.Context) error {
+	return nil
+}
+
 // Save implements the Save method of the EventStore interface.
 func (s *InMemoryEventStore) Save(ctx context.Context, events []Event) error {
 	if len(events) == 0 {

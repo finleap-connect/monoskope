@@ -53,7 +53,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 			receiveChan <- e
 			return nil
 		}
-		err := consumer.AddReceiver(receiver, matchers...)
+		err := consumer.AddReceiver(ctx, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
 		return receiveChan
 	}

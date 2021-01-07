@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
@@ -58,13 +58,9 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	// create test db connection for tests
-	env.DB = pg.Connect(&pg.Options{
-		Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
-		Database: "test",
-		User:     "root",
-		Password: "",
-	})
+	conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
+	Expect(err).ToNot(HaveOccurred())
+	env.postgresStoreConfig = conf
 }, 60)
 
 var _ = AfterSuite(func() {

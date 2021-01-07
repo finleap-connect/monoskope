@@ -31,6 +31,9 @@ var ErrMessageBusConnection = errors.New("unexpected error on message bus occure
 // ErrCouldNotAddReceiver is when an receiver could not be added
 var ErrCouldNotAddReceiver = errors.New("could not add receiver")
 
+// ErrContextDeadlineExceeded is when execution has been aborted since the context deadline has been exceeded
+var ErrContextDeadlineExceeded = errors.New("context deadline exceeded")
+
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
 	// Connect connects to the bus
@@ -48,7 +51,7 @@ type EventBusConsumer interface {
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(EventReceiver, ...EventMatcher) *messageBusError
+	AddReceiver(context.Context, EventReceiver, ...EventMatcher) *messageBusError
 	// Close closes the underlying connections
 	Close() error
 }

@@ -29,8 +29,17 @@ var ErrCouldNotMarshalEventContext = errors.New("could not marshal event context
 // ErrCouldNotSaveEvents is when events could not be saved.
 var ErrCouldNotSaveEvents = errors.New("could not save events")
 
+// ErrCouldNotConnect is when store could not connect to the underlying storage
+var ErrCouldNotConnect = errors.New("could not connect to storage")
+
+// ErrConnectionClosed is when connection with underlying storage has been closed
+var ErrConnectionClosed = errors.New("conntion to storage closed")
+
 // Store is an interface for an event storage backend.
 type Store interface {
+	// Connect connects to the bus
+	Connect(context.Context) error
+
 	// Save appends all events in the event stream to the store.
 	Save(context.Context, []Event) error
 

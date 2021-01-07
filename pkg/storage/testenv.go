@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/go-pg/pg"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
@@ -19,12 +18,9 @@ type testEventData struct {
 
 type eventStoreTestEnv struct {
 	*test.TestEnv
-	DB *pg.DB
+	*postgresStoreConfig
 }
 
 func (env *eventStoreTestEnv) Shutdown() error {
-	if env.DB != nil {
-		defer env.DB.Close()
-	}
 	return env.TestEnv.Shutdown()
 }
