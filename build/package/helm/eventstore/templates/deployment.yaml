@@ -41,6 +41,7 @@ spec:
           preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 100
             podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
               labelSelector:
                 matchExpressions:
                 - key: app.kubernetes.io/name
@@ -102,11 +103,11 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             {{- if .Values.config.dbTlsSecret }}
-            - name: dbCerts
+            - name: dbcerts
               mountPath: /etc/eventstore/certs/db
             {{- end }}
             {{- if .Values.config.busTlsSecret }}
-            - name: busCerts
+            - name: buscerts
               mountPath: /etc/eventstore/certs/bus
             {{- end }}
       {{- with .Values.nodeSelector }}
@@ -123,7 +124,7 @@ spec:
       {{- end }}
       volumes:
         {{- if .Values.config.dbTlsSecret }}
-        - name: dbCerts
+        - name: dbcerts
           secret:
             secretName: {{ .Values.config.dbTlsSecret }}
             items:
@@ -135,7 +136,7 @@ spec:
                 path: tls.key
         {{- end }}
         {{- if .Values.config.busTlsSecret }}
-        - name: busCerts
+        - name: buscerts
           secret:
             secretName: {{ .Values.config.busTlsSecret }}
             items:

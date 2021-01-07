@@ -5,7 +5,7 @@ fullnameOverride: ""
 
 global:
   imagePullSecrets:
-    - gitlab-registry
+    - name: gitlab-registry
 
 dex:
   enabled: true
