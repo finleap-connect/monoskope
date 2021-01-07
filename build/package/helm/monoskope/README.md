@@ -90,6 +90,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ingress.enabled | bool | `false` |  |
 | ingress.host | string | `"monoskope.io"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
+| monoskope-eventstore.enabled | bool | `true` |  |
+| monoskope-eventstore.nameOverride | string | `"eventstore"` |  |
+| monoskope-eventstore.replicaCount | int | `3` |  |
 | monoskope-gateway.auth.allowRootToken | bool | `false` |  |
 | monoskope-gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
 | monoskope-gateway.enabled | bool | `true` |  |
@@ -98,7 +101,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
-| rabbitmq.auth.password | string | `"foo"` |  |
+| rabbitmq.auth.password | string | `""` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
 | rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
@@ -123,8 +126,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.service.port | int | `5672` |  |
-| rabbitmq.service.portName | string | `"amqp"` |  |
+| rabbitmq.service.tlsPort | int | `5671` |  |
 | rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 
 ----------------------------------------------
