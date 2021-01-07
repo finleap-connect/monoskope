@@ -54,6 +54,20 @@ build:golang:gateway:
     expire_in: 1 day
   needs: []
 
+build:golang:eventstore:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-eventstore
+  artifacts:
+    paths:
+      - eventstore
+    expire_in: 1 day
+  needs: []
+
 deliver:gateway:
   stage: deliver
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
@@ -68,3 +82,18 @@ deliver:gateway:
     - lint:golang
     - test:golang
     - build:golang:gateway
+
+deliver:eventstore:
+  stage: deliver
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/eventstore.Dockerfile -i eventstore --tag $VERSION
+  dependencies:
+    - lint:golang
+    - test:golang
+    - build:golang:eventstore
