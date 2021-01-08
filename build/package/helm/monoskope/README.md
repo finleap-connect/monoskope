@@ -109,7 +109,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
 | rabbitmq.auth.username | string | `"admin"` |  |
 | rabbitmq.enabled | bool | `true` |  |
-| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json"` |  |
+| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name"` |  |
+| rabbitmq.extraPlugins | string | `"rabbitmq_auth_mechanism_ssl"` |  |
 | rabbitmq.image.pullPolicy | string | `"Always"` |  |
 | rabbitmq.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
