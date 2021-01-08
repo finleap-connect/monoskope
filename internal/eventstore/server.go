@@ -126,17 +126,28 @@ func (s *server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 		}
 	})
 
+	s.log.Info("connecting to the message bus")
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 	msgbusErr := s.bus.Connect(ctx)
 	if msgbusErr != nil {
-		s.log.Error(msgbusErr, "failed connectin to bus")
+		s.log.Error(msgbusErr, "failed connecting the message bus")
 		return msgbusErr.Cause()
 	}
 
+	s.log.Info("connecting to the storage backend")
+	ctx, cancelFunc = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelFunc()
+	err := s.store.Connect(ctx)
+	if err != nil {
+		s.log.Error(err, "failed connecting to the storage backend")
+		return err
+	}
+
 	s.log.Info("starting to serve grpc", "addr", apiLis.Addr())
-	err := s.grpc.Serve(apiLis)
+	err = s.grpc.Serve(apiLis)
 	s.log.Info("grpc server stopped")
+
 	// Check if we are expecting shutdown
 	if !shutdown.IsExpected() {
 		panic(fmt.Sprintf("shutdown unexpected, grpc serve returned: %v", err))
