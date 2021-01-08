@@ -6,10 +6,13 @@ import (
 	"errors"
 	"io/ioutil"
 	"time"
+
+	"github.com/streadway/amqp"
 )
 
 const (
-	DefaultExchangeName   = "m8_events"      // name of the monoskope exchange
+	DefaultExchangeName   = "m8_events" // name of the monoskope exchange
+	DefaultHeartbeat      = 10 * time.Second
 	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
 	DefaultReInitDelay    = 5 * time.Second  // When setting up the channel after a channel exception
 	DefaultResendDelay    = 3 * time.Second  // When resending messages the server didn't confirm
@@ -25,7 +28,7 @@ type rabbitEventBusConfig struct {
 	ResendDelay      time.Duration // When resending messages the server didn't confirm
 	MaxResends       int           // How many times resending messages the server didn't confirm
 	ReInitDelay      time.Duration // When setting up the channel after a channel exception
-	tlsConfig        *tls.Config
+	amqpConfig       *amqp.Config
 }
 
 // ErrConfigNameRequired is when the config doesn't include a name.
@@ -45,7 +48,7 @@ func NewRabbitEventBusConfig(name, url string) *rabbitEventBusConfig {
 		ResendDelay:      DefaultResendDelay,
 		MaxResends:       DefaultMaxResends,
 		ReInitDelay:      DefaultReInitDelay,
-		tlsConfig:        &tls.Config{},
+		amqpConfig:       &amqp.Config{},
 	}
 }
 
@@ -66,7 +69,10 @@ func (conf *rabbitEventBusConfig) ConfigureTLS() error {
 		cfg.Certificates = append(cfg.Certificates, cert)
 	}
 
-	conf.tlsConfig = cfg
+	conf.amqpConfig.Heartbeat = DefaultHeartbeat
+	conf.amqpConfig.TLSClientConfig = cfg
+	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+
 	return nil
 }
 
@@ -79,4 +85,16 @@ func (conf *rabbitEventBusConfig) Validate() error {
 		return ErrConfigUrlRequired
 	}
 	return nil
+}
+
+// CertAuth for RabbitMQ-auth-mechanism-ssl.
+type CertAuth struct {
+}
+
+func (me *CertAuth) Mechanism() string {
+	return "EXTERNAL"
+}
+
+func (me *CertAuth) Response() string {
+	return "\000*\000*"
 }
