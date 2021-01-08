@@ -58,7 +58,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		return receiveChan
 	}
 
-	testPubSub := func(matchers ...EventMatcher) {
+	testPubSub := func(eventCount int, matchers ...EventMatcher) {
 		recChanA := createReceiver(matchers...)
 		defer close(recChanA)
 		recChanB := createReceiver(matchers...)
@@ -66,10 +66,16 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		event := createEvent()
 
-		wg.Add(2)
-		go receiveEvent(recChanA, event)
-		go receiveEvent(recChanB, event)
-		publishEvent(event)
+		for i := 0; i < eventCount; i++ {
+			wg.Add(2)
+			go receiveEvent(recChanA, event)
+			go receiveEvent(recChanB, event)
+		}
+
+		for i := 0; i < eventCount; i++ {
+			publishEvent(event)
+		}
+
 		wg.Wait()
 	}
 
@@ -105,19 +111,19 @@ var _ = Describe("messaging/rabbitmq", func() {
 		err = publisher.Close()
 		Expect(err).ToNot(HaveOccurred())
 	})
-	It("can publish and receive an event", func() {
-		testPubSub(consumer.Matcher().Any())
+	It("can publish and receive events", func() {
+		testPubSub(3, consumer.Matcher().Any())
 	})
 	It("can publish and receive an event matching aggregate type", func() {
 		event := createEvent()
-		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()))
+		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()))
 	})
 	It("can publish and receive an event matching event type", func() {
 		event := createEvent()
-		testPubSub(consumer.Matcher().MatchEventType(event.EventType()))
+		testPubSub(1, consumer.Matcher().MatchEventType(event.EventType()))
 	})
 	It("can publish and receive an event matching aggregate type and event type", func() {
 		event := createEvent()
-		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 	})
 })
