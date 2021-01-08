@@ -35,7 +35,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start single node crdb
-	container, err := env.RunWithOptions(&dockertest.RunOptions{
+	container, err := env.Run(&dockertest.RunOptions{
 		Name:       "cockroach",
 		Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
 		Tag:        "v20.2.2",

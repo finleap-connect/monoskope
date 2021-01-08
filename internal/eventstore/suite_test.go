@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 const (
@@ -40,6 +41,7 @@ var _ = BeforeSuite(func(done Done) {
 	// Create server
 	conf := NewServerConfig()
 	conf.Bus = messaging.NewMockEventBusPublisher()
+	conf.Store = storage.NewInMemoryEventStore()
 
 	testServer, err = NewServer(conf)
 	Expect(err).ToNot(HaveOccurred())

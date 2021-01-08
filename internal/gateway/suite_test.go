@@ -50,7 +50,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		return nil, err
 	}
 
-	dexContainer, err := env.RunWithOptions(&dockertest.RunOptions{
+	dexContainer, err := env.Run(&dockertest.RunOptions{
 		Name:       "dex",
 		Repository: "quay.io/dexidp/dex",
 		Tag:        "v2.25.0",

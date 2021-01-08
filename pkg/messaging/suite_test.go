@@ -9,7 +9,6 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
@@ -36,19 +35,21 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start rabbitmq
-	container, err := env.RunWithOptions(&dockertest.RunOptions{
+	container, err := env.Run(&dockertest.RunOptions{
 		Name:       "rabbitmq",
 		Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq",
 		Tag:        "3",
-	}, func(config *dc.HostConfig) {
-		config.RestartPolicy = dc.AlwaysRestart()
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	// create rabbit conn
+	// Build connection string
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
-	env.Log.Info("Waiting for rabbitmq to warm up...")
-	time.Sleep(30 * time.Second)
+
+	// Wait for rabbitmq to start
+	for i := 40; i > 0; i-- {
+		env.Log.Info("Waiting for rabbitmq to warm up...", "secondsLeft", i)
+		time.Sleep(1 * time.Second)
+	}
 }, 60)
 
 var _ = AfterSuite(func() {
