@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -46,7 +47,11 @@ var _ = BeforeSuite(func(done Done) {
 	env.amqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
 
 	// Wait for rabbitmq to start
-	for i := 40; i > 0; i-- {
+	warumupSeconds := 30
+	if _, ok := os.LookupEnv("CI"); ok {
+		warumupSeconds = 60 // wait longer for warmup in CI
+	}
+	for i := warumupSeconds; i > 0; i-- {
 		env.Log.Info("Waiting for rabbitmq to warm up...", "secondsLeft", i)
 		time.Sleep(1 * time.Second)
 	}
