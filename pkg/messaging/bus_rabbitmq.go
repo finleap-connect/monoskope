@@ -112,7 +112,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			case confirm := <-b.notifyConfirm:
 				b.log.Info("Confirm received.", "DeliveryTag", confirm.DeliveryTag, "Acked", confirm.Ack)
 				if confirm.Ack && confirm.DeliveryTag == b.confirmCounter {
-					b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag, "Acked", confirm.Ack)
+					b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag)
 					return nil
 				}
 			case <-time.After(b.conf.ResendDelay):
@@ -174,8 +174,9 @@ func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
 		false,                       // mandatory
 		false,                       // immediate
 		amqp.Publishing{
-			ContentType: "text/json",
-			Body:        bytes,
+			ContentType:  "text/json",
+			Body:         bytes,
+			DeliveryMode: amqp.Transient,
 		})
 
 	if err != nil {
