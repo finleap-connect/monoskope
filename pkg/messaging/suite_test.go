@@ -58,7 +58,7 @@ var _ = BeforeSuite(func(done Done) {
 		env.Log.Info("Waiting for rabbitmq to warm up...", "secondsLeft", i)
 		time.Sleep(1 * time.Second)
 	}
-}, 120)
+}, 180)
 
 var _ = AfterSuite(func() {
 	var err error
