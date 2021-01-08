@@ -40,15 +40,19 @@ add-finleap:
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 set-chart-version-%:
-	yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
 
 set-app-version-%:
-	yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
-	yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
 
 set-version-%:
 	@$(MAKE) helm-set-chart-version-$*
 	@$(MAKE) helm-set-app-version-$*
+
+set-app-version-latest-%:
+	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(LATEST_TAG)" --inplace
+	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(LATEST_TAG)" --inplace
 
 docs:
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl

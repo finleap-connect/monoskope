@@ -172,8 +172,11 @@ rabbitmq:
   loadDefinition:
     enabled: true
     existingSecret: monoskope-rabbitmq-load-definition
+  extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
+    auth_mechanisms.1 = EXTERNAL
+    ssl_cert_login_from = common_name
   serviceAccount:
     create: false
   rbac:
@@ -184,7 +187,7 @@ rabbitmq:
       app.kubernetes.io/part-of: *name
   auth:
     username: admin # admin user with read/write access
-    password: ""  # this will be overwritten by a real password but needs to be set initially
+    password: ""  # this will be overwritten by the load definition wich takes the password from a generated secret
     existingErlangSecret: monoskope-rabbitmq-erlang-cookie
     tls:
       enabled: true

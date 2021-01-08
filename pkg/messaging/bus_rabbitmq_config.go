@@ -6,8 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"time"
-
-	"github.com/streadway/amqp"
 )
 
 const (
@@ -27,7 +25,7 @@ type rabbitEventBusConfig struct {
 	ResendDelay      time.Duration // When resending messages the server didn't confirm
 	MaxResends       int           // How many times resending messages the server didn't confirm
 	ReInitDelay      time.Duration // When setting up the channel after a channel exception
-	amqpConfig       amqp.Config
+	tlsConfig        *tls.Config
 }
 
 // ErrConfigNameRequired is when the config doesn't include a name.
@@ -47,7 +45,7 @@ func NewRabbitEventBusConfig(name, url string) *rabbitEventBusConfig {
 		ResendDelay:      DefaultResendDelay,
 		MaxResends:       DefaultMaxResends,
 		ReInitDelay:      DefaultReInitDelay,
-		amqpConfig:       amqp.Config{},
+		tlsConfig:        &tls.Config{},
 	}
 }
 
@@ -68,7 +66,7 @@ func (conf *rabbitEventBusConfig) ConfigureTLS() error {
 		cfg.Certificates = append(cfg.Certificates, cert)
 	}
 
-	conf.amqpConfig.TLSClientConfig = cfg
+	conf.tlsConfig = cfg
 	return nil
 }
 

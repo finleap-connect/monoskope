@@ -6,6 +6,9 @@ TOOLS_DIR ?= $(shell cd tools && pwd)
 VERSION   ?= 0.0.1-local
 KUBE_NAMESPACE ?= platform-monoskope-monoskope
 
+LATEST_REV=$(shell git rev-list --tags --max-count=1)
+LATEST_TAG=$(shell git describe --tags $(LATEST_REV))
+
 export 
 
 clean: go-clean helm-clean tools-clean

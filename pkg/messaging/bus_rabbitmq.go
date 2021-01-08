@@ -420,8 +420,7 @@ func (b *rabbitEventBus) changeConnection(connection *amqp.Connection) {
 // connect will create a new AMQP connection
 func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 	b.log.Info("Attempting to connect...")
-
-	conn, err := amqp.DialConfig(addr, b.conf.amqpConfig)
+	conn, err := amqp.DialTLS(addr, b.conf.tlsConfig)
 	if err != nil {
 		return nil, err
 	}
