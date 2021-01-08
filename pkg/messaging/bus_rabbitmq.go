@@ -106,21 +106,30 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		}
 		b.confirmCounter++
 
-		select {
-		case confirm := <-b.notifyConfirm:
-			if confirm.Ack && confirm.DeliveryTag == b.confirmCounter {
-				b.log.Info("Publish confirmed.")
-				return nil
+		retry := true
+		for retry {
+			select {
+			case confirm := <-b.notifyConfirm:
+				b.log.Info("Confirm received.", "DeliveryTag", confirm.DeliveryTag, "Acked", confirm.Ack)
+				if confirm.Ack && confirm.DeliveryTag == b.confirmCounter {
+					b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag, "Acked", confirm.Ack)
+					return nil
+				}
+			case <-time.After(b.conf.ResendDelay):
+				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+				retry = false
+			case <-ctx.Done():
+			case <-b.shutdown:
+				b.log.Info("Publish failed.")
+				return &messageBusError{
+					Err: ErrCouldNotPublishEvent,
+				}
 			}
-		case <-time.After(b.conf.ResendDelay):
-			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+		}
 
-			if resendsLeft > 0 {
-				resendsLeft--
-				continue
-			}
-		case <-ctx.Done():
-		case <-b.shutdown:
+		if resendsLeft > 0 {
+			resendsLeft--
+			continue
 		}
 
 		b.log.Info("Publish failed.")
