@@ -61,7 +61,7 @@ var _ = BeforeSuite(func(done Done) {
 	conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
 	Expect(err).ToNot(HaveOccurred())
 	env.postgresStoreConfig = conf
-}, 60)
+}, 180)
 
 var _ = AfterSuite(func() {
 	var err error
