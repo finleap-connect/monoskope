@@ -15,8 +15,8 @@ const (
 	DefaultHeartbeat      = 10 * time.Second
 	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
 	DefaultReInitDelay    = 5 * time.Second  // When setting up the channel after a channel exception
-	DefaultResendDelay    = 3 * time.Second  // When resending messages the server didn't confirm
-	DefaultMaxResends     = 10               // How many times resending messages the server didn't confirm
+	DefaultResendDelay    = 5 * time.Second  // When resending messages the server didn't confirm
+	DefaultMaxResends     = 5                // How many times resending messages the server didn't confirm
 )
 
 type rabbitEventBusConfig struct {

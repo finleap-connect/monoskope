@@ -464,6 +464,8 @@ func (b *rabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 	for {
 		select {
 		case d := <-msgs:
+			b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
+
 			re := &rabbitEvent{}
 			err := json.Unmarshal(d.Body, re)
 			if err != nil {
