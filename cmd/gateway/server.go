@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 )
 
 var (
@@ -48,10 +48,8 @@ var serverCmd = &cobra.Command{
 		defer metricsLis.Close()
 
 		// Create the server
-		conf := &gateway.ServerConfig{
-			KeepAlive:  false,
-			AuthConfig: &authConfig,
-		}
+		conf := gateway.NewServerConfig()
+		conf.AuthConfig = &authConfig
 
 		s, err := gateway.NewServer(conf)
 		if err != nil {

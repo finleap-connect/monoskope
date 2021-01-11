@@ -1,4 +1,6 @@
-FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15.5-buster
+FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15-buster
+
+WORKDIR /tmp/build
 
 # Install Docker
 RUN apt-get update && apt install docker.io -y \

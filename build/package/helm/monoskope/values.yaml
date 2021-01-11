@@ -6,8 +6,13 @@ name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  imagePullSecrets: []
+  labels:
+    app.kubernetes.io/part-of: *name
+
 monitoring:
-  tenant: finleap-cloud
+  tenant: &tenant finleap-cloud
 
 ingress:
   enabled: false
@@ -15,12 +20,14 @@ ingress:
 
 dex: # OIDC Provider
   enabled: false
-  replicas: 3
-  image: quay.io/dexidp/dex
-  imageTag: "v2.25.0"
+  replicas: 1
+  image: ghcr.io/dexidp/dex
+  imageTag: "v2.27.0"
   imagePullPolicy: "Always"
   config:
-    existingSecret: monoskope-dex-config # use vaultsecret to configure dex
+    # -- Name of the secret containing the dex config
+    existingSecret: monoskope-dex-config
+    # -- Domain of the issuer (dex)
     issuer: &issuer https://monoskope.io/dex
     storage:
       type: postgres
@@ -28,7 +35,8 @@ dex: # OIDC Provider
         port: 26257
         database: dex_db
         user: dex
-        secret: m8dev-monoskope-crdb-client-dex
+        # -- Secret containing the certificates to communicate with the storage backend
+        secret: monoskope-crdb-client-dex
         ssl:
           mode: verify-ca
           caFile: /etc/dex/certs/ca.crt
@@ -83,16 +91,21 @@ dex: # OIDC Provider
   #   logoURL: https://example.com/yourlogo.png
   labels:
     app.kubernetes.io/part-of: *name
-    
-monoskope-gateway:
+
+gateway:
   nameOverride: "gateway"
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   auth:
     allowRootToken: false
     issuerURL: *issuer
-  labels:
-    app.kubernetes.io/part-of: *name
+
+eventstore:
+  nameOverride: "eventstore"
+  enabled: true
+  replicaCount: 1
+  config:
+    existingSecret: monoskope-eventstore-config
 
 cockroachdb:
   enabled: true
@@ -139,3 +152,63 @@ cockroachdb:
       nodeSecret: monoskope-crdb-node
   labels:
     app.kubernetes.io/part-of: *name
+  # CockroachDB's Prometheus operator ServiceMonitor support
+  serviceMonitor:
+    enabled: true
+    labels: {}
+    annotations: {}
+    interval: 30s
+    # scrapeTimeout: 10s
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  persistence:
+    enabled: false
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
+    tag: 3.8.9
+    pullPolicy: Always
+  loadDefinition:
+    enabled: true
+    existingSecret: monoskope-rabbitmq-load-definition
+  extraPlugins: 'rabbitmq_auth_mechanism_ssl'
+  extraConfiguration: |-
+    load_definitions = /app/rabbitmq-definitions.json
+    auth_mechanisms.1 = EXTERNAL
+    ssl_cert_login_from = common_name
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+  service:
+    tlsPort: 5671
+    labels:
+      app.kubernetes.io/part-of: *name
+  auth:
+    username: admin # admin user with read/write access
+    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
+    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
+    tls:
+      enabled: true
+      failIfNoPeerCert: true
+      sslOptionsVerify: verify_peer
+      existingSecret: monoskope-rabbitmq-leaf
+  statefulsetLabels:
+    app.kubernetes.io/part-of: *name
+  podAnnotations:
+    linkerd.io/inject: disabled
+  podLabels:
+    app.kubernetes.io/part-of: *name
+  metrics:
+    enabled: true
+    grafanaDashboard:
+      enabled: true
+      extraLabels:
+        tenant: *tenant
+        app.kubernetes.io/part-of: *name
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        tenant: *tenant
+        app.kubernetes.io/part-of: *name

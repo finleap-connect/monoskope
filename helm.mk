@@ -3,8 +3,7 @@ HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
 HELM_REGISTRY_ALIAS			?= finleap
 
-
-.PHONY: helm-template-clean helm-dependency-update helm-install helm-uninstall helm-template
+.PHONY: template-clean dependency-update install uninstall template docs
 
 clean:
 	@rm -Rf $(HELM_OUTPUT_DIR)
@@ -16,11 +15,11 @@ lint-%:
 	@$(HELM) lint $(HELM_PATH)/$*
 
 install-%:
-	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 2m
+	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
 
 install-from-repo-%:
 	@$(MAKE) helm-dep-$*
-	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
+	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 10m
 
 uninstall-%: 
 	@$(HELM) uninstall m8dev --namespace $(KUBE_NAMESPACE)
@@ -41,12 +40,19 @@ add-finleap:
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 set-chart-version-%:
-	yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
 
 set-app-version-%:
-	yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
-	yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
+	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
 
 set-version-%:
 	@$(MAKE) helm-set-chart-version-$*
 	@$(MAKE) helm-set-app-version-$*
+
+set-app-version-latest-%:
+	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(LATEST_TAG)" --inplace
+	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(LATEST_TAG)" --inplace
+
+docs:
+	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl

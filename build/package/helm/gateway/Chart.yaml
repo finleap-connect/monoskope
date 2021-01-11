@@ -1,5 +1,5 @@
 apiVersion: v2
-name: monoskope-gateway
+name: gateway
 description: Monoskope Gateway
 
 # A chart can be either an 'application' or a 'library' chart.

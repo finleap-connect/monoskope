@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ $fullname }}-client-dex
+  secretName: {{ .Values.dex.config.storage.config.secret }}
   issuerRef:
     name: {{ $fullname }}-issuer
     kind: Issuer
