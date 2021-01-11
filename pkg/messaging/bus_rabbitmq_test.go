@@ -61,13 +61,9 @@ var _ = Describe("messaging/rabbitmq", func() {
 		recChanB := createReceiver(matchers...)
 		defer close(recChanB)
 
-		event := createEvent()
-
 		for i := 0; i < eventCount; i++ {
+			event := createEvent()
 			go publishEvent(event)
-		}
-
-		for i := 0; i < eventCount; i++ {
 			receiveEvent(recChanA, event)
 			receiveEvent(recChanB, event)
 		}
