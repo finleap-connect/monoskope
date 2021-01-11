@@ -41,7 +41,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 			env.Log.Info("Received event.")
 			Expect(eventFromBus).ToNot(BeNil())
 			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			env.Log.Info("Timeout when receiving event.")
 			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
 		}
@@ -99,7 +99,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		testCount++
-	})
+	}, 10)
 	AfterEach(func() {
 		var err error
 
@@ -108,7 +108,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		err = publisher.Close()
 		Expect(err).ToNot(HaveOccurred())
-	})
+	}, 10)
 	It("can publish and receive events", func() {
 		testPubSub(3, consumer.Matcher().Any())
 	})
