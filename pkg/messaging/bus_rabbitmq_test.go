@@ -3,6 +3,7 @@ package messaging
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
+	var wg sync.WaitGroup
 	var consumer EventBusConsumer
 	var publisher EventBusPublisher
 	ctx := context.Background()
@@ -29,6 +31,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	publishEvent := func(event storage.Event) {
 		defer GinkgoRecover()
+		defer wg.Done()
 		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
@@ -36,6 +39,8 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
+		defer GinkgoRecover()
+		defer wg.Done()
 		select {
 		case eventFromBus := <-receiveChan:
 			env.Log.Info("Received event.")
@@ -71,9 +76,11 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		for i := 0; i < eventCount; i++ {
 			event := createEvent()
+			wg.Add(3)
+			go receiveEvent(recChanA, event)
+			go receiveEvent(recChanB, event)
 			go publishEvent(event)
-			receiveEvent(recChanA, event)
-			receiveEvent(recChanB, event)
+			wg.Wait()
 		}
 	}
 
