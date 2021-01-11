@@ -34,7 +34,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	warumupSeconds := 30
 	if _, ok := os.LookupEnv("CI"); ok {
-		warumupSeconds = 5 // wait less for warmup in CI
+		warumupSeconds = 0 // no warmup necessary in CI
 	}
 
 	err = env.CreateDockerPool()

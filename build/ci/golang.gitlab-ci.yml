@@ -1,7 +1,7 @@
 variables:
   RABBITMQ_DEFAULT_USER: guest
   RABBITMQ_DEFAULT_PASS: guest
-  AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
+  AMQP_URL: "amqp://guest:guest@127.0.0.1:5672"
 
 .gobase:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
