@@ -3,6 +3,7 @@ package messaging
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
+	var wg sync.WaitGroup
 	var consumer EventBusConsumer
 	var publisher EventBusPublisher
 	ctx := context.Background()
@@ -29,19 +31,22 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	publishEvent := func(event storage.Event) {
 		defer GinkgoRecover()
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		defer wg.Done()
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
 		defer cancelFunc()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
 	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
+		defer GinkgoRecover()
+		defer wg.Done()
 		select {
 		case eventFromBus := <-receiveChan:
 			env.Log.Info("Received event.")
 			Expect(eventFromBus).ToNot(BeNil())
 			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(10 * time.Second):
+		case <-time.After(20 * time.Second):
 			env.Log.Info("Timeout when receiving event.")
 			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
 		}
@@ -50,12 +55,11 @@ var _ = Describe("messaging/rabbitmq", func() {
 	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
-			env.Log.Info("Received event.")
 			receiveChan <- e
 			return nil
 		}
 
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
 		defer cancelFunc()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
@@ -65,15 +69,17 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	testPubSub := func(eventCount int, matchers ...EventMatcher) {
 		recChanA := createReceiver(matchers...)
-		defer close(recChanA)
 		recChanB := createReceiver(matchers...)
+		defer close(recChanA)
 		defer close(recChanB)
 
 		for i := 0; i < eventCount; i++ {
 			event := createEvent()
+			wg.Add(3)
+			go receiveEvent(recChanA, event)
+			go receiveEvent(recChanB, event)
 			go publishEvent(event)
-			receiveEvent(recChanA, event)
-			receiveEvent(recChanB, event)
+			wg.Wait()
 		}
 	}
 
