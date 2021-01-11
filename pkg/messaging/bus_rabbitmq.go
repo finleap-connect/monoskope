@@ -21,7 +21,6 @@ type rabbitEventBus struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
-	confirmCounter  uint64
 	isReady         bool
 	shutdown        chan bool
 }
@@ -104,14 +103,12 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				}
 			}
 		}
-		b.confirmCounter++
 
 		retry := true
 		for retry {
 			select {
 			case confirm := <-b.notifyConfirm:
-				b.log.Info("Confirm received.", "DeliveryTag", confirm.DeliveryTag, "Acked", confirm.Ack)
-				if confirm.Ack && confirm.DeliveryTag == b.confirmCounter {
+				if confirm.Ack {
 					b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag)
 					return nil
 				}
@@ -333,11 +330,8 @@ func (b *rabbitEventBus) Close() error {
 // and updates the channel listeners to reflect this.
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
-	b.notifyChanClose = make(chan *amqp.Error)
-	b.notifyConfirm = make(chan amqp.Confirmation)
-	b.confirmCounter = 0
-	b.channel.NotifyClose(b.notifyChanClose)
-	b.channel.NotifyPublish(b.notifyConfirm)
+	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
+	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	b.isReady = true
 }
 
