@@ -5,13 +5,13 @@ import (
 	"crypto/x509"
 	"errors"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/go-pg/pg/v10"
 )
 
 const (
-	DefaultExchangeName   = "m8_events"      // Name of the database
 	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
 	DefaultReInitDelay    = 5 * time.Second  // When setting up db schema
 	DefaultResendDelay    = 3 * time.Second  // When retrying to read/write
@@ -51,7 +51,8 @@ func NewPostgresStoreConfig(url string) (*postgresStoreConfig, error) {
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *postgresStoreConfig) ConfigureTLS() error {
 	cfg := &tls.Config{
-		RootCAs: x509.NewCertPool(),
+		RootCAs:    x509.NewCertPool(),
+		ServerName: strings.Split(conf.pgOptions.Addr, ":")[0],
 	}
 	if ca, err := ioutil.ReadFile("/etc/eventstore/certs/db/ca.crt"); err != nil {
 		return err
