@@ -32,7 +32,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	publishEvent := func(event storage.Event) {
 		defer GinkgoRecover()
 		defer wg.Done()
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
 		defer cancelFunc()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
@@ -46,7 +46,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 			env.Log.Info("Received event.")
 			Expect(eventFromBus).ToNot(BeNil())
 			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(10 * time.Second):
+		case <-time.After(20 * time.Second):
 			env.Log.Info("Timeout when receiving event.")
 			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
 		}
@@ -59,7 +59,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 			return nil
 		}
 
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
 		defer cancelFunc()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
