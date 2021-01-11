@@ -1,11 +1,15 @@
-# Dev environment values for monoskope.
+# Dev cluster environment values for monoskope.
 
-name: monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  imagePullSecrets:
+    - name: gitlab-registry
+
 dex:
   enabled: true
+  replicas: 3
   config:
     issuer: &issuer https://monoskope.dev.finleap.cloud/dex
     enablePasswordDB: false
@@ -22,14 +26,33 @@ dex:
             - "wolke7"
           use_login_as_id: false
 
-monoskope-gateway:
+cockroachdb:
+  enabled: true
+  statefulset:
+    replicas: 5
+  storage:
+    persistentVolume:
+      size: "1Gi"
+
+rabbitmq:
+  enabled: true
+  replicaCount: 5
+
+gateway:
+  replicaCount: 3
   auth:
     allowRootToken: true
     issuerURL: *issuer
-  pullSecret: gitlab-registry
   ingress:
     enabled: true
     host: api.monoskope.dev.finleap.cloud
+
+eventstore:
+  replicaCount: 3
+  enabled: true
+  config:
+    dbTlsSecret: monoskope-crdb-auth-evenstore
+    busTlsSecret: monoskope-rabbitmq-auth-evenstore
 
 ingress:
   enabled: true

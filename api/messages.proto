@@ -5,8 +5,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option objc_class_prefix = "MT";
-option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/api";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api";
 
 package api;
 

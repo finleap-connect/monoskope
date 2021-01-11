@@ -8,9 +8,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../gateway | monoskope-gateway |  |
+| file://../eventstore | eventstore |  |
+| file://../gateway | gateway |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.5.2 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
 | https://kubism.github.io/charts | dex | 1.0.18 |
 
 ## Values
@@ -58,7 +59,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.config.staticClients[0].secret | string | `"{{ .gatewayAppSecret }}"` |  |
 | dex.config.storage.config.database | string | `"dex_db"` |  |
 | dex.config.storage.config.port | int | `26257` |  |
-| dex.config.storage.config.secret | string | `"m8dev-monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
+| dex.config.storage.config.secret | string | `"monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
 | dex.config.storage.config.ssl.caFile | string | `"/etc/dex/certs/ca.crt"` |  |
 | dex.config.storage.config.ssl.certFile | string | `"/etc/dex/certs/client.crt"` |  |
 | dex.config.storage.config.ssl.keyFile | string | `"/etc/dex/certs/client.key"` |  |
@@ -76,39 +77,45 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | dex.ports.web.containerPort | int | `5556` |  |
 | dex.rbac.create | bool | `false` |  |
-| dex.replicas | int | `3` |  |
+| dex.replicas | int | `1` |  |
 | dex.resources.limits.cpu | string | `"500m"` |  |
 | dex.resources.limits.memory | string | `"100Mi"` |  |
 | dex.resources.requests.cpu | string | `"100m"` |  |
 | dex.resources.requests.memory | string | `"50Mi"` |  |
 | dex.serviceAccount.create | bool | `false` |  |
 | dex.telemetry | bool | `true` |  |
+| eventstore.config.existingSecret | string | `"monoskope-eventstore-config"` |  |
+| eventstore.enabled | bool | `true` |  |
+| eventstore.nameOverride | string | `"eventstore"` |  |
+| eventstore.replicaCount | int | `1` |  |
 | fullnameOverride | string | `""` |  |
+| gateway.auth.allowRootToken | bool | `false` |  |
+| gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
+| gateway.enabled | bool | `true` |  |
+| gateway.nameOverride | string | `"gateway"` |  |
+| gateway.replicaCount | int | `1` |  |
+| global.imagePullSecrets | list | `[]` |  |
+| global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | ingress.enabled | bool | `false` |  |
 | ingress.host | string | `"monoskope.io"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
-| monoskope-gateway.auth.allowRootToken | bool | `false` |  |
-| monoskope-gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
-| monoskope-gateway.enabled | bool | `true` |  |
-| monoskope-gateway.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| monoskope-gateway.nameOverride | string | `"gateway"` |  |
-| monoskope-gateway.replicaCount | int | `3` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"rabbitmq-erlang-cookie"` |  |
-| rabbitmq.auth.password | string | `"foo"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.password | string | `""` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
-| rabbitmq.auth.tls.existingSecret | string | `"rabbitmq-leaf"` |  |
+| rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
 | rabbitmq.auth.username | string | `"admin"` |  |
 | rabbitmq.enabled | bool | `true` |  |
-| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json"` |  |
+| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name"` |  |
+| rabbitmq.extraPlugins | string | `"rabbitmq_auth_mechanism_ssl"` |  |
 | rabbitmq.image.pullPolicy | string | `"Always"` |  |
 | rabbitmq.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
-| rabbitmq.loadDefinition.existingSecret | string | `"rabbitmq-load-definition"` |  |
+| rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |
 | rabbitmq.metrics.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
@@ -119,10 +126,11 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.podAnnotations."linkerd.io/inject" | string | `"disabled"` |  |
 | rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.rbac.create | bool | `false` |  |
 | rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.service.port | int | `5672` |  |
-| rabbitmq.service.portName | string | `"amqp"` |  |
+| rabbitmq.service.tlsPort | int | `5671` |  |
+| rabbitmq.serviceAccount.create | bool | `false` |  |
 | rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 
 ----------------------------------------------

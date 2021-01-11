@@ -26,15 +26,18 @@ dependencies: # A list of the chart requirements
   - name: dex
     version: 1.0.18
     repository: https://kubism.github.io/charts
-    condition: dex.enabled
-  - name: monoskope-gateway
+    condition: dex.enabled,global.dex.enabled
+  - name: gateway
     repository: "file://../gateway"
-    condition: monoskope-gateway.enabled
+    condition: gateway.enabled,global.gateway.enabled
+  - name: eventstore
+    repository: "file://../eventstore"
+    condition: eventstore.enabled,global.eventstore.enabled
   - name: cockroachdb
     version: 5.0.2
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
     condition: cockroachdb.enabled,global.cockroachdb.enabled
   - name: rabbitmq
-    version: 8.5.2
+    version: 8.6.1
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled

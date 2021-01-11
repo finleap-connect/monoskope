@@ -6,6 +6,11 @@ name: &name monoskope
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  imagePullSecrets: []
+  labels:
+    app.kubernetes.io/part-of: *name
+
 monitoring:
   tenant: &tenant finleap-cloud
 
@@ -15,7 +20,7 @@ ingress:
 
 dex: # OIDC Provider
   enabled: false
-  replicas: 3
+  replicas: 1
   image: ghcr.io/dexidp/dex
   imageTag: "v2.27.0"
   imagePullPolicy: "Always"
@@ -31,7 +36,7 @@ dex: # OIDC Provider
         database: dex_db
         user: dex
         # -- Secret containing the certificates to communicate with the storage backend
-        secret: m8dev-monoskope-crdb-client-dex
+        secret: monoskope-crdb-client-dex
         ssl:
           mode: verify-ca
           caFile: /etc/dex/certs/ca.crt
@@ -87,15 +92,20 @@ dex: # OIDC Provider
   labels:
     app.kubernetes.io/part-of: *name
 
-monoskope-gateway:
+gateway:
   nameOverride: "gateway"
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   auth:
     allowRootToken: false
     issuerURL: *issuer
-  labels:
-    app.kubernetes.io/part-of: *name
+
+eventstore:
+  nameOverride: "eventstore"
+  enabled: true
+  replicaCount: 1
+  config:
+    existingSecret: monoskope-eventstore-config
 
 cockroachdb:
   enabled: true
@@ -161,23 +171,29 @@ rabbitmq:
     pullPolicy: Always
   loadDefinition:
     enabled: true
-    existingSecret: rabbitmq-load-definition
+    existingSecret: monoskope-rabbitmq-load-definition
+  extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
+    auth_mechanisms.1 = EXTERNAL
+    ssl_cert_login_from = common_name
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
   service:
-    port: 5672
-    portName: amqp
+    tlsPort: 5671
     labels:
       app.kubernetes.io/part-of: *name
   auth:
-    username: admin
-    password: foo  # this will be overwritten by a real password but needs to be set initially
-    existingErlangSecret: rabbitmq-erlang-cookie
+    username: admin # admin user with read/write access
+    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
+    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
     tls:
       enabled: true
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
-      existingSecret: rabbitmq-leaf
+      existingSecret: monoskope-rabbitmq-leaf
   statefulsetLabels:
     app.kubernetes.io/part-of: *name
   podAnnotations:

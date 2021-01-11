@@ -1,119 +1,101 @@
 package test
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/monoctl/auth"
-)
-
-const (
-	AuthRootToken       = "super-secret-root-token"
-	RedirectURLHostname = "localhost"
-	RedirectURLPort     = ":8000"
 )
 
 type TestEnv struct {
 	pool      *dockertest.Pool
 	resources map[string]*dockertest.Resource
-	log       logger.Logger
+	Log       logger.Logger
 }
 
-type OAuthTestEnv struct {
-	*TestEnv
-	DexWebEndpoint string
-	AuthConfig     *gw_auth.Config
+func (t *TestEnv) CreateDockerPool() error {
+	t.Log.Info("Creating docker pool...")
+
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return err
+	}
+
+	t.pool = pool
+	return nil
 }
 
-func SetupGeneralTestEnv() *TestEnv {
-	log := logger.WithName("testenv")
+func (t *TestEnv) Retry(op func() error) error {
+	return t.pool.Retry(op)
+}
+
+func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error) {
+	res, present := t.pool.ContainerByName(opts.Name)
+	if present {
+		if err := t.pool.Purge(res); err != nil {
+			return nil, err
+		}
+	}
+
+	t.Log.Info(fmt.Sprintf("Starting docker container %s:%s ...", opts.Repository, opts.Tag))
+	res, err := t.pool.RunWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+	t.resources[res.Container.Name] = res
+
+	containerLogger := logWriter{}
+	logOptions := dc.LogsOptions{
+		Container:    opts.Name,
+		Follow:       true,
+		OutputStream: containerLogger,
+		ErrorStream:  containerLogger,
+		Stdout:       true,
+		Stderr:       true,
+		Context:      context.Background(),
+	}
+	go func() {
+		err = t.pool.Client.Logs(logOptions)
+		if err != nil {
+			t.Log.Error(err, err.Error())
+		}
+	}()
+
+	return res, err
+}
+
+func NewTestEnv(envName string) *TestEnv {
+	log := logger.WithName(envName)
 	env := &TestEnv{
-		log:       log,
+		Log:       log,
 		resources: make(map[string]*dockertest.Resource),
 	}
 	log.Info("Setting up testenv...")
 	return env
 }
 
-func SetupAuthTestEnv() (*OAuthTestEnv, error) {
-	env := &OAuthTestEnv{
-		TestEnv: SetupGeneralTestEnv(),
-	}
-	log := env.log
-
-	log.Info("Creating docker pool...")
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.pool = pool
-
-	log.Info("Spawning dex container")
-	options := &dockertest.RunOptions{
-		Name:       "dex",
-		Repository: "quay.io/dexidp/dex",
-		Tag:        "v2.25.0",
-		PortBindings: map[dc.Port][]dc.PortBinding{
-			"5556": {{HostPort: "5556"}},
-		},
-		ExposedPorts: []string{"5556", "5000"},
-		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
-		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", DexConfigPath)},
-	}
-	dexContainer, err := pool.RunWithOptions(options)
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.resources[dexContainer.Container.Name] = dexContainer
-	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
-
-	rootToken := AuthRootToken
-	env.AuthConfig = &gw_auth.Config{
-		IssuerURL:      env.DexWebEndpoint,
-		OfflineAsScope: true,
-		RootToken:      &rootToken,
-		ClientId:       "gateway",
-		ClientSecret:   "app-secret",
-		Nonce:          "secret-nonce",
-	}
-
-	return env, nil
-}
-
-func (env *OAuthTestEnv) Shutdown() error {
-	return env.TestEnv.Shutdown()
-}
-
-func (env *OAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
-	serverConf := &monoctl_auth.Config{
-		LocalServerBindAddress: []string{
-			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),
-		},
-		RedirectURLHostname:  RedirectURLHostname,
-		LocalServerReadyChan: ready,
-	}
-	server, err := monoctl_auth.NewServer(serverConf)
-	if err != nil {
-		return nil, err
-	}
-	return server, nil
-}
-
 func (env *TestEnv) Shutdown() error {
-	log := env.log
+	log := env.Log
 	log.Info("Tearing down testenv...")
 
-	for key, element := range env.resources {
-		log.Info("Tearing down docker resource", "resource", key)
-		if err := env.pool.Purge(element); err != nil {
-			return err
+	if env.resources != nil {
+		for key, element := range env.resources {
+			log.Info("Tearing down docker resource", "resource", key)
+			if err := env.pool.Purge(element); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+type logWriter struct {
+}
+
+func (l logWriter) Write(p []byte) (n int, err error) {
+	fmt.Print(string(p))
+	return len(p), nil
 }

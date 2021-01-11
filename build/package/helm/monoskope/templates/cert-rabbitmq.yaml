@@ -1,0 +1,68 @@
+{{- if .Values.rabbitmq.auth.tls.enabled }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "rabbitmq") -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ $fullname }}-selfsigning-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-ca
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $fullname }}-ca
+  commonName: RabbitMQ CA
+  organization:
+    - RabbitMQ
+  isCA: true
+  issuerRef:
+    name: {{ $fullname }}-selfsigning-issuer
+    kind: Issuer
+  usages:
+    - client auth
+    - server auth
+    - digital signature
+    - key encipherment
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ $fullname }}-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ $fullname }}-ca
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-leaf
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.rabbitmq.auth.tls.existingSecret }}
+  issuerRef:
+    name: {{ $fullname }}-issuer
+    kind: Issuer
+  commonName: leaf
+  organization:
+    - RabbitMQ
+  ipAddresses:
+    - 127.0.0.1
+    - '::'
+  dnsNames:
+    - localhost
+    - {{.Release.Name}}-rabbitmq
+    - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}
+    - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}.svc.cluster.local
+  usages:
+    - client auth
+    - server auth
+{{- end }}

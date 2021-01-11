@@ -1,7 +1,7 @@
 # Makefile
 
 When developing, the `Makefile` comes in handy to help you with various tasks.
-There are specific `*.mk` files for things like helm, kind, go, etc. which provides targets for developing with those tools.
+There are specific `*.mk` files for things like helm, go, etc. which provides targets for developing with those tools.
 
 The following example renders the `monoskope` helm chart:
 
@@ -51,7 +51,7 @@ The following targets are defined. Please not that there are variables (uppercas
 | *general* | |
 | `clean` | Cleans everything, tools, tmp dir used, whatever |
 | `diagrams` | Generates mermaidjs diagrams below `docs/flow-charts` |
-| `tools` | Install necessary tools to `TOOLS_DIR`, like `kind`, `ginkgo`, `golangci-lint`, ... |
+| `tools` | Install necessary tools to `TOOLS_DIR`, like `ginkgo`, `golangci-lint`, ... |
 | `tools-clean` | Removes the tools |
 | `echo-<VARIABLENAME>` | Echos the content of `<VARIABLENAME>` |
 | *helm* | |
