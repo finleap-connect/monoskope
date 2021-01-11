@@ -29,16 +29,20 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	publishEvent := func(event storage.Event) {
 		defer GinkgoRecover()
-		err := publisher.PublishEvent(ctx, event)
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		defer cancelFunc()
+		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
 	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
 		select {
 		case eventFromBus := <-receiveChan:
+			env.Log.Info("Received event.")
 			Expect(eventFromBus).ToNot(BeNil())
 			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Second):
+			env.Log.Info("Timeout when receiving event.")
 			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
 		}
 	}
@@ -46,12 +50,16 @@ var _ = Describe("messaging/rabbitmq", func() {
 	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
 		receiveChan := make(chan storage.Event)
 		receiver := func(e storage.Event) error {
-			defer GinkgoRecover()
+			env.Log.Info("Received event.")
 			receiveChan <- e
 			return nil
 		}
-		err := consumer.AddReceiver(ctx, receiver, matchers...)
+
+		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+		defer cancelFunc()
+		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
+
 		return receiveChan
 	}
 
