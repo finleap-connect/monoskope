@@ -44,6 +44,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		case <-time.After(10 * time.Second):
 			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
 		}
+		env.Log.Info("Receive event ended.")
 	}
 
 	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
