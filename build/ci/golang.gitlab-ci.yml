@@ -1,3 +1,8 @@
+variables:
+  RABBITMQ_DEFAULT_USER: guest
+  RABBITMQ_DEFAULT_PASS: guest
+  AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
+
 .gobase:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
   except:
@@ -31,6 +36,9 @@ lint:golang:
 test:golang:
   stage: test
   extends: .gobase-docker
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+    - gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq:3.8.9
   script:
     - make go-ginkgo-get
     - make go-test

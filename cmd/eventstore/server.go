@@ -30,7 +30,7 @@ var serverCmd = &cobra.Command{
 		if v := os.Getenv("DB_URL"); v != "" {
 			dbUrl = v
 		}
-		if v := os.Getenv("BUS_URL"); v != "test" {
+		if v := os.Getenv("BUS_URL"); v != "" {
 			msgbusUrl = v
 		}
 
