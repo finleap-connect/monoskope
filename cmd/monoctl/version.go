@@ -30,8 +30,11 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 			if err != nil {
 				return fmt.Errorf("failed to retrieve server version: %w", err)
 			}
-			fmt.Print(result)
-			fmt.Println()
+
+			for _, version := range result {
+				fmt.Print(version)
+				fmt.Println()
+			}
 
 			return nil
 		},

@@ -12,6 +12,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
@@ -29,6 +30,7 @@ import (
 type server struct {
 	api_gw.UnimplementedGatewayServer
 	api_gwauth.UnimplementedAuthServer
+	api_common.UnimplementedServiceInformationServiceServer
 	// HTTP-server exposing the metrics
 	http *http.Server
 	// gRPC-server exposing both the API and health
@@ -80,6 +82,8 @@ func NewServer(conf *serverConfig) (*server, error) {
 	}
 	s.grpc = grpc.NewServer(opts...)
 
+	// Add verions service
+	api_common.RegisterServiceInformationServiceServer(s.grpc, s)
 	// Add authentication service
 	api_gwauth.RegisterAuthServer(s.grpc, s)
 	// Add actual api service
@@ -141,11 +145,16 @@ func (s *server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	return err // Return the error, if grpc stopped gracefully there is no error
 }
 
-func (s *server) GetServerInfo(context.Context, *empty.Empty) (*api_gw.ServerInformation, error) {
-	return &api_gw.ServerInformation{
+func (s *server) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
+	err := stream.Send(&api_common.ServiceInformation{
+		Name:    "gateway",
 		Version: version.Version,
 		Commit:  version.Commit,
-	}, nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *server) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {

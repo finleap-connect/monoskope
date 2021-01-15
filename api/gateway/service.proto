@@ -3,17 +3,15 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "google/protobuf/empty.proto";
-import "api/gateway/messages.proto";
+import "api/commands/command.proto";
 
-option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";
 
 package gateway;
 
 // Actual API of the Monoskope Gateway.
 // RPCs of this service need authentication.
 service Gateway {
-  // Get information like the version of the Gateway
-  rpc GetServerInfo(google.protobuf.Empty) returns(ServerInformation);
+  // Executes a command and returns the execution result
+  rpc Execute(commands.CommandRequest) returns (commands.CommandResult);
 }

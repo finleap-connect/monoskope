@@ -4,7 +4,7 @@ package gateway
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
+	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -18,8 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
-	// Get information like the version of the Gateway
-	GetServerInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerInformation, error)
+	// Executes a command and returns the execution result
+	Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*commands.CommandResult, error)
 }
 
 type gatewayClient struct {
@@ -30,9 +30,9 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) GetServerInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServerInformation, error) {
-	out := new(ServerInformation)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetServerInfo", in, out, opts...)
+func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*commands.CommandResult, error) {
+	out := new(commands.CommandResult)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/Execute", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,8 @@ func (c *gatewayClient) GetServerInfo(ctx context.Context, in *empty.Empty, opts
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
-	// Get information like the version of the Gateway
-	GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error)
+	// Executes a command and returns the execution result
+	Execute(context.Context, *commands.CommandRequest) (*commands.CommandResult, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -52,8 +52,8 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (UnimplementedGatewayServer) GetServerInfo(context.Context, *empty.Empty) (*ServerInformation, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetServerInfo not implemented")
+func (UnimplementedGatewayServer) Execute(context.Context, *commands.CommandRequest) (*commands.CommandResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
 
@@ -68,20 +68,20 @@ func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
 	s.RegisterService(&_Gateway_serviceDesc, srv)
 }
 
-func _Gateway_GetServerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
+func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(commands.CommandRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).GetServerInfo(ctx, in)
+		return srv.(GatewayServer).Execute(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gateway.Gateway/GetServerInfo",
+		FullMethod: "/gateway.Gateway/Execute",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).GetServerInfo(ctx, req.(*empty.Empty))
+		return srv.(GatewayServer).Execute(ctx, req.(*commands.CommandRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -91,8 +91,8 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetServerInfo",
-			Handler:    _Gateway_GetServerInfo_Handler,
+			MethodName: "Execute",
+			Handler:    _Gateway_Execute_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

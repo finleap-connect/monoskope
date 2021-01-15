@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+// import "google/protobuf/wrappers.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands";
+
+package commands;
+
+// CommandRequest is a request to execute by Monoskope
+message CommandRequest {
+  // Type of the command
+  string type = 1;
+  // Command type specific data
+  google.protobuf.Any data = 2;
+}
+
+// Command is a command to be executed by the CommandHandler
+message Command {
+  // Type of the command
+  CommandRequest request = 1;
+  // Unique identifier of the user issuing the command (UUID 128-bit number)
+  string user_id = 2;
+}
+
+// CommandResult is the result of a command executed by the CommandHandler
+message CommandResult {
+  // Type of the command executed to trigger this result
+  string type = 1;
+  // Command type specific result data
+  google.protobuf.Any data = 6;
+}

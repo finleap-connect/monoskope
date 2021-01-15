@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"golang.org/x/sync/errgroup"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -25,19 +25,22 @@ var _ = Describe("Gateway", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), invalidToken())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_gw.NewGatewayClient(conn)
+		gwc := api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
+		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
+		Expect(err).ToNot(HaveOccurred())
+
+		info, err := serverInfo.Recv()
 		Expect(err).To(HaveOccurred())
-		Expect(serverInfo).To(BeNil())
+		Expect(info).To(BeNil())
 	})
 	It("accepts root bearer token", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), rootToken())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_gw.NewGatewayClient(conn)
+		gwc := api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
+		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 	})
@@ -112,9 +115,9 @@ var _ = Describe("Gateway", func() {
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_gw.NewGatewayClient(conn)
+		gwc := api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
+		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
 
@@ -123,12 +126,11 @@ var _ = Describe("Gateway", func() {
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(accessToken.GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc = api_gw.NewGatewayClient(conn)
+		gwc = api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err = gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
+		serverInfo, err = gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(serverInfo).ToNot(BeNil())
-
 	})
 })
 
