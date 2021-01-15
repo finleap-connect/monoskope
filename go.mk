@@ -53,6 +53,7 @@ test:
 	$(GINKGO) -r -v -cover internal/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover internal/monoctl
 	$(GINKGO) -r -v -cover internal/eventstore
+	$(GINKGO) -r -v -cover internal/commandhandler
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
