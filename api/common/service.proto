@@ -12,7 +12,8 @@ package common;
 
 // API for retrieving version information about a component.
 service ServiceInformationService {
-  // Get information like the version of the Gateway
+  // Get information about the service. This can include information for other
+  // services additionally.
   rpc GetServiceInformation(google.protobuf.Empty)
       returns (stream ServiceInformation);
 }

@@ -5,16 +5,14 @@ syntax = "proto3";
 
 import "api/gateway/auth/messages.proto";
 
-option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth";
 
 package gateway.auth;
 
 // Authentication service of the Monoskope Gateway.
-// RPCs of this service do not need authentication.
 service Auth {
   // Auth
-  rpc GetAuthInformation(AuthState) returns(AuthInformation);
-  rpc ExchangeAuthCode(AuthCode) returns(AuthResponse);
-  rpc RefreshAuth(RefreshAuthRequest) returns(AccessToken);
+  rpc GetAuthInformation(AuthState) returns (AuthInformation);
+  rpc ExchangeAuthCode(AuthCode) returns (AuthResponse);
+  rpc RefreshAuth(RefreshAuthRequest) returns (AccessToken);
 }

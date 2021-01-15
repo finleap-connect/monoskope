@@ -9,8 +9,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/ga
 
 package gateway;
 
-// Actual API of the Monoskope Gateway.
-// RPCs of this service need authentication.
+// API of the Monoskope Gateway.
 service Gateway {
   // Executes a command and returns the execution result
   rpc Execute(commands.CommandRequest) returns (commands.CommandResult);
