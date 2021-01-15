@@ -10,7 +10,6 @@ import (
 type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
-	RootToken      *string
 	Nonce          string
 	ClientId       string
 	ClientSecret   string

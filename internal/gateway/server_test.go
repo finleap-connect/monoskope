@@ -31,16 +31,6 @@ var _ = Describe("Gateway", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(serverInfo).To(BeNil())
 	})
-	It("accepts root bearer token", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), rootToken())
-		Expect(err).ToNot(HaveOccurred())
-		defer conn.Close()
-		gwc := api_gw.NewGatewayClient(conn)
-
-		serverInfo, err := gwc.GetServerInfo(context.Background(), &emptypb.Empty{})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(serverInfo).ToNot(BeNil())
-	})
 	It("can retrieve auth url", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
