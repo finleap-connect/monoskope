@@ -125,7 +125,12 @@ func checkProtoStorageEventEquality(pe *eventstore.Event, se storage.Event) {
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 
 	eventData := &anypb.Any{}
+	testEventData := &api_es.TestEventData{}
 	err := protojson.Unmarshal([]byte(se.Data()), eventData)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(pe.GetData()).To(Equal(eventData))
+
+	Expect(ptypes.Is(eventData, &api_es.TestEventData{})).To(BeTrue())
+	err = ptypes.UnmarshalAny(eventData, testEventData)
+	Expect(err).ToNot(HaveOccurred())
 }
