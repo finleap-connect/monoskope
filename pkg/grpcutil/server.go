@@ -44,7 +44,7 @@ type Server struct {
 }
 
 // NewServer returns a new configured instance of Server
-func NewServer(conf *serverConfig) (*Server, error) {
+func NewServer(conf *serverConfig) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName(conf.name),
@@ -75,7 +75,7 @@ func NewServer(conf *serverConfig) (*Server, error) {
 	// Enable reflection API
 	reflection.Register(s.grpc)
 
-	return s, nil
+	return s
 }
 
 // RegisterService registers your gRPC service implementation with the server

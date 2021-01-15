@@ -35,10 +35,9 @@ var _ = BeforeSuite(func(done Done) {
 
 	// Create server
 	conf := grpcutil.NewServerConfig("command_handler")
-	grpcServer, err = grpcutil.NewServer(conf)
-	Expect(err).ToNot(HaveOccurred())
+	grpcServer = grpcutil.NewServer(conf)
 
-	commandHandler, err := NewCommandHandler()
+	commandHandler, err := NewApiServer()
 	Expect(err).ToNot(HaveOccurred())
 
 	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {

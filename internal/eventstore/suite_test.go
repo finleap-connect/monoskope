@@ -9,20 +9,18 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
-)
-
-const (
-	anyLocalAddr = "127.0.0.1:0"
 )
 
 var (
 	apiListener net.Listener
 	httpClient  *http.Client
 	log         logger.Logger
-	testServer  *server
+	testServer  *apiServer
+	grpcServer  *grpcutil.Server
 )
 
 func TestEventStore(t *testing.T) {
@@ -39,18 +37,18 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	conf := NewServerConfig()
-	conf.Bus = messaging.NewMockEventBusPublisher()
-	conf.Store = storage.NewInMemoryEventStore()
+	grpcServerConf := grpcutil.NewServerConfig("eventstore")
+	grpcServer = grpcutil.NewServer(grpcServerConf)
 
-	testServer, err = NewServer(conf)
+	testServer, err = NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
 	Expect(err).ToNot(HaveOccurred())
-	apiListener, err = net.Listen("tcp", anyLocalAddr)
+
+	apiListener, err = net.Listen("tcp", "127.0.0.1:0")
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start server
 	go func() {
-		err := testServer.Serve(apiListener, nil)
+		err := grpcServer.Serve(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -65,7 +63,7 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 
 	// Shutdown server
-	testServer.shutdown.Expect()
+	grpcServer.Shutdown()
 	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })
