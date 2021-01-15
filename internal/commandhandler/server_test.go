@@ -18,6 +18,7 @@ var _ = Describe("HealthCheck", func() {
 		conn, err := grpcutil.
 			NewGrpcConnectionFactory(apiListener.Addr().String()).
 			WithInsecure().
+			WithBlock().
 			Build(ctx)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
