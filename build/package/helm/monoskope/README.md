@@ -89,7 +89,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | eventstore.nameOverride | string | `"eventstore"` |  |
 | eventstore.replicaCount | int | `1` |  |
 | fullnameOverride | string | `""` |  |
-| gateway.auth.allowRootToken | bool | `false` |  |
 | gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
 | gateway.enabled | bool | `true` |  |
 | gateway.nameOverride | string | `"gateway"` |  |

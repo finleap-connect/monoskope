@@ -84,8 +84,6 @@ ports:
 keepAlive: false
 
 auth:
-  # -- Controls if authentication via root token is allowed
-  allowRootToken: false
   # -- The URL of the issuer to use for OIDC
   issuerURL: http://localhost:5555
 

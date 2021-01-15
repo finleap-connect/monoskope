@@ -41,7 +41,6 @@ rabbitmq:
 gateway:
   replicaCount: 3
   auth:
-    allowRootToken: true
     issuerURL: *issuer
   ingress:
     enabled: true
