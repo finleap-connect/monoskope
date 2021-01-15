@@ -7,26 +7,23 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
 )
 
 func CreateInsecureGatewayConnecton(ctx context.Context, url string, token *oauth2.Token) (*grpc.ClientConn, error) {
-	opts := make([]grpc.DialOption, 0)
+	factory := grpcutil.NewGrpcConnectionFactory(url).WithInsecure()
 	if token != nil {
 		// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-		opts = append(opts, grpc.WithPerRPCCredentials(auth.NewOauthAccessWithoutTLS(token)))
+		factory = factory.WithPerRPCCredentials(auth.NewOauthAccessWithoutTLS(token))
 	}
-	return grpcutil.CreateInsecureGrpcConnecton(ctx, url, opts)
+	return factory.Build(ctx)
 }
 
 func CreateGatewayConnecton(ctx context.Context, url string, token *oauth2.Token) (*grpc.ClientConn, error) {
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
-	}
+	factory := grpcutil.NewGrpcConnectionFactory(url).WithTransportCredentials()
 	if token != nil {
 		// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-		opts = append(opts, grpc.WithPerRPCCredentials(oauth.NewOauthAccess(token)))
+		factory = factory.WithPerRPCCredentials(oauth.NewOauthAccess(token))
 	}
-	return grpcutil.CreateGrpcConnection(ctx, url, opts)
+	return factory.Build(ctx)
 }

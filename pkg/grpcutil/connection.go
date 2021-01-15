@@ -4,24 +4,64 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
-// Creates a gRPC connection with insecure.
-// opts can be passed as nil.
-func CreateInsecureGrpcConnecton(ctx context.Context, url string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
-	if opts == nil {
-		opts = make([]grpc.DialOption, 0)
-	}
-	opts = append(opts, grpc.WithInsecure())
-	return CreateGrpcConnection(ctx, url, opts)
+type grpcConnectionFactory struct {
+	opts []grpc.DialOption
+	url  string
 }
 
-// Creates a gRPC connection.
-// opts can be passed as nil.
-func CreateGrpcConnection(ctx context.Context, url string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
-	if opts == nil {
-		opts = make([]grpc.DialOption, 0)
+func NewGrpcConnectionFactory(url string) grpcConnectionFactory {
+	return grpcConnectionFactory{
+		url: url,
 	}
-	opts = append(opts, grpc.WithBlock())
-	return grpc.DialContext(ctx, url, opts...)
+}
+
+func NewGrpcConnectionFactoryWithOpts(url string, opts []grpc.DialOption) grpcConnectionFactory {
+	return grpcConnectionFactory{
+		url:  url,
+		opts: opts,
+	}
+}
+
+func (factory grpcConnectionFactory) Url(url string) grpcConnectionFactory {
+	factory.url = url
+	return factory
+}
+
+func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithInsecure())
+	return factory
+}
+
+func (factory grpcConnectionFactory) WithPerRPCCredentials(creds credentials.PerRPCCredentials) grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithPerRPCCredentials(creds))
+	return factory
+}
+
+func (factory grpcConnectionFactory) WithTransportCredentials() grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+	return factory
+}
+
+func (factory grpcConnectionFactory) WithBlock() grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithBlock())
+	return factory
+}
+
+func (factory grpcConnectionFactory) Build(ctx context.Context) (*grpc.ClientConn, error) {
+	return grpc.DialContext(ctx, factory.url, factory.opts...)
 }

@@ -15,7 +15,10 @@ var (
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := grpcutil.CreateInsecureGrpcConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := grpcutil.
+			NewGrpcConnectionFactory(apiListener.Addr().String()).
+			WithInsecure().
+			Build(ctx)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
