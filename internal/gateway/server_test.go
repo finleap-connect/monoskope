@@ -12,6 +12,7 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -21,16 +22,23 @@ var (
 )
 
 var _ = Describe("Gateway", func() {
+	checkServerVersion := func(conn *grpc.ClientConn) (*api_common.ServiceInformation, error) {
+		gwc := api_common.NewServiceInformationServiceClient(conn)
+		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			return nil, err
+		}
+		info, err := serverInfo.Recv()
+		if err != nil {
+			return nil, err
+		}
+		return info, nil
+	}
 	It("declines invalid bearer token", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), invalidToken())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_common.NewServiceInformationServiceClient(conn)
-
-		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
-		Expect(err).ToNot(HaveOccurred())
-
-		info, err := serverInfo.Recv()
+		info, err := checkServerVersion(conn)
 		Expect(err).To(HaveOccurred())
 		Expect(info).To(BeNil())
 	})
@@ -38,11 +46,9 @@ var _ = Describe("Gateway", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), rootToken())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_common.NewServiceInformationServiceClient(conn)
-
-		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
+		info, err := checkServerVersion(conn)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(serverInfo).ToNot(BeNil())
+		Expect(info).ToNot(BeNil())
 	})
 	It("can retrieve auth url", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
@@ -115,22 +121,20 @@ var _ = Describe("Gateway", func() {
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
+		info, err := checkServerVersion(conn)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(serverInfo).ToNot(BeNil())
+		Expect(info).ToNot(BeNil())
 
 		accessToken, err := gwcAuth.RefreshAuth(ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: authResponse.GetRefreshToken()})
 
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(accessToken.GetToken()))
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc = api_common.NewServiceInformationServiceClient(conn)
 
-		serverInfo, err = gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
+		info, err = checkServerVersion(conn)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(serverInfo).ToNot(BeNil())
+		Expect(info).ToNot(BeNil())
 	})
 })
 
