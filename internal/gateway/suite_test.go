@@ -20,7 +20,6 @@ import (
 
 const (
 	anyLocalAddr        = "127.0.0.1:0"
-	AuthRootToken       = "super-secret-root-token"
 	RedirectURLHostname = "localhost"
 	RedirectURLPort     = ":8000"
 )
@@ -67,11 +66,9 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 	}
 	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
-	rootToken := AuthRootToken
 	env.AuthConfig = &gw_auth.Config{
 		IssuerURL:      env.DexWebEndpoint,
 		OfflineAsScope: true,
-		RootToken:      &rootToken,
 		ClientId:       "gateway",
 		ClientSecret:   "app-secret",
 		Nonce:          "secret-nonce",
@@ -153,8 +150,4 @@ func toToken(token string) *oauth2.Token {
 
 func invalidToken() *oauth2.Token {
 	return toToken("some-invalid-token")
-}
-
-func rootToken() *oauth2.Token {
-	return toToken(AuthRootToken)
 }

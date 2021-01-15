@@ -26,7 +26,7 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      labels: 
+      labels:
         {{- include "gateway.selectorLabels" . | nindent 8 }}
         {{- with (.Values.labels | default .Values.global.labels) }}
         {{- toYaml . | nindent 8 }}
@@ -72,13 +72,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
                   key: oidc-clientsecret
-            {{- if .Values.auth.allowRootToken }}
-            - name: AUTH_ROOT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
-                  key: auth-root-token
-            {{- end }}
           args:
             - /gateway
             - server

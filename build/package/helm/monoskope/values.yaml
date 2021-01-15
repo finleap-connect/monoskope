@@ -97,7 +97,6 @@ gateway:
   enabled: true
   replicaCount: 1
   auth:
-    allowRootToken: false
     issuerURL: *issuer
 
 eventstore:

@@ -24,9 +24,6 @@ var serverCmd = &cobra.Command{
 		var err error
 
 		// Some options can be provided by env variables
-		if v := os.Getenv("AUTH_ROOT_TOKEN"); v != "" {
-			authConfig.RootToken = &v
-		}
 		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "test" {
 			authConfig.ClientSecret = v
 		}

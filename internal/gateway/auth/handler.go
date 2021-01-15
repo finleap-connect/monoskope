@@ -179,11 +179,6 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClaims, error) {
-	if n.config.RootToken != nil && bearerToken == *n.config.RootToken {
-		n.log.Info("### user authenticated via root token")
-		return &ExtraClaims{EmailVerified: true, Email: "root@monoskope"}, nil
-	}
-
 	idToken, err := n.verifier.Verify(ctx, bearerToken)
 	if err != nil {
 		return nil, err
