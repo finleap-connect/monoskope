@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
+	"google.golang.org/grpc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
@@ -19,7 +21,6 @@ var (
 	apiListener net.Listener
 	httpClient  *http.Client
 	log         logger.Logger
-	testServer  *apiServer
 	grpcServer  *grpcutil.Server
 )
 
@@ -37,11 +38,17 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	grpcServerConf := grpcutil.NewServerConfig("eventstore")
-	grpcServer = grpcutil.NewServer(grpcServerConf)
+	grpcServer = grpcutil.NewServer("event_store_grpc", false)
 
-	testServer, err = NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
+	eventStore, err := NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
 	Expect(err).ToNot(HaveOccurred())
+
+	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		api.RegisterEventStoreServer(s, eventStore)
+	})
+	grpcServer.RegisterOnShutdown(func() {
+		eventStore.Shutdown()
+	})
 
 	apiListener, err = net.Listen("tcp", "127.0.0.1:0")
 	Expect(err).ToNot(HaveOccurred())

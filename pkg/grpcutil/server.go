@@ -19,18 +19,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// ServerConfig is the configuration for the API server
-type serverConfig struct {
-	name      string
-	KeepAlive bool
-}
-
-func NewServerConfig(name string) *serverConfig {
-	return &serverConfig{
-		name: name,
-	}
-}
-
 // Server is the implementation of an API Server
 type Server struct {
 	// HTTP-server exposing the metrics
@@ -40,14 +28,15 @@ type Server struct {
 	// Logger interface
 	log logger.Logger
 	//
-	shutdown *util.ShutdownWaitGroup
+	shutdown   *util.ShutdownWaitGroup
+	onShutdown func()
 }
 
 // NewServer returns a new configured instance of Server
-func NewServer(conf *serverConfig) *Server {
+func NewServer(name string, keepAlive bool) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
-		log:      logger.WithName(conf.name),
+		log:      logger.WithName(name),
 		shutdown: util.NewShutdownWaitGroup(),
 	}
 
@@ -60,7 +49,7 @@ func NewServer(conf *serverConfig) *Server {
 			grpc_prometheus.UnaryServerInterceptor,
 		)),
 	}
-	if conf.KeepAlive {
+	if keepAlive {
 		opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: 5 * time.Minute,
 			Time:              2 * time.Second,
@@ -81,6 +70,10 @@ func NewServer(conf *serverConfig) *Server {
 // RegisterService registers your gRPC service implementation with the server
 func (s *Server) RegisterService(f func(grpc.ServiceRegistrar)) {
 	f(s.grpc)
+}
+
+func (s *Server) RegisterOnShutdown(f func()) {
+	s.onShutdown = f
 }
 
 // Serve starts the api listeners of the Server
@@ -120,6 +113,10 @@ func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
 	s.log.Info("starting to serve grpc", "addr", apiLis.Addr())
 	err := s.grpc.Serve(apiLis)
 	s.log.Info("grpc server stopped")
+
+	if s.onShutdown != nil {
+		s.onShutdown()
+	}
 
 	// Check if we are expecting shutdown
 	if !shutdown.IsExpected() {

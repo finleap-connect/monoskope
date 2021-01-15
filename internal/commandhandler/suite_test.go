@@ -34,8 +34,7 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	conf := grpcutil.NewServerConfig("command_handler")
-	grpcServer = grpcutil.NewServer(conf)
+	grpcServer = grpcutil.NewServer("command_handler_grpc", false)
 
 	commandHandler, err := NewApiServer()
 	Expect(err).ToNot(HaveOccurred())

@@ -81,17 +81,17 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create the server
-		grpcServerConfig := grpcutil.NewServerConfig("eventstore")
-		grpcServerConfig.KeepAlive = keepAlive
-		grpcServer := grpcutil.NewServer(grpcServerConfig)
-
 		eventStore, err := eventstore.NewApiServer(store, publisher)
 		if err != nil {
 			return err
 		}
 
+		grpcServer := grpcutil.NewServer("event-store-grpc", false)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
 			api.RegisterEventStoreServer(s, eventStore)
+		})
+		grpcServer.RegisterOnShutdown(func() {
+			eventStore.Shutdown()
 		})
 
 		// Finally start the server
