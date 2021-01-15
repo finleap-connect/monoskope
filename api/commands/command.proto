@@ -10,7 +10,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/co
 
 package commands;
 
-// CommandRequest is a request to execute by Monoskope
+// CommandRequest is a request to execute a Command by Monoskope
 message CommandRequest {
   // Type of the command
   string type = 1;
@@ -26,10 +26,11 @@ message Command {
   string user_id = 2;
 }
 
-// CommandResult is the result of a command executed by the CommandHandler
+// CommandResult is the result of a command executed
 message CommandResult {
   // Type of the command executed to trigger this result
   string type = 1;
+
   // Command type specific result data
-  google.protobuf.Any data = 6;
+  google.protobuf.Any data = 2;
 }

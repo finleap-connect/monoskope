@@ -9,6 +9,11 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/co
 
 package commands.tenant;
 
+message CreateTenantCommandResult {
+  // Unique identifier of the tenant created (UUID 128-bit number)
+  string id = 1;
+}
+
 // Request to create a new tenant
 message CreateTenantCommand {
   // Name of the tenant
