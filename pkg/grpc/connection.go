@@ -6,7 +6,6 @@ import (
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -72,7 +71,7 @@ func (factory grpcConnectionFactory) WithRetry() grpcConnectionFactory {
 
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(10 * time.Millisecond)),
-		grpc_retry.WithCodes(codes.NotFound, codes.Aborted, codes.Unavailable, codes.ResourceExhausted),
+		grpc_retry.WithCodes(grpc_retry.DefaultRetriableCodes...),
 		grpc_retry.WithMax(5),
 	}
 
