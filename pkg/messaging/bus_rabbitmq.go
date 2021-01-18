@@ -117,29 +117,24 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		}
 
-		retry := true
-		for retry {
-			select {
-			case confirm := <-b.notifyConfirm:
-				if confirm.Ack {
-					b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag)
-					return nil
-				}
-			case <-time.After(b.conf.ResendDelay):
-				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
-				b.channel.Close()
-				retry = false
-			case <-ctx.Done():
-				b.log.Info("Publish failed because context deadline exceeded.")
-				return &messageBusError{
-					Err:     ErrContextDeadlineExceeded,
-					BaseErr: ctx.Err(),
-				}
-			case <-b.ctx.Done():
-				b.log.Info("Publish failed because context deadline exceeded..")
-				return &messageBusError{
-					Err: ErrCouldNotPublishEvent,
-				}
+		select {
+		case confirm := <-b.notifyConfirm:
+			if confirm.Ack {
+				b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag)
+				return nil
+			}
+		case <-time.After(b.conf.ResendDelay):
+			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+		case <-ctx.Done():
+			b.log.Info("Publish failed because context deadline exceeded.")
+			return &messageBusError{
+				Err:     ErrContextDeadlineExceeded,
+				BaseErr: ctx.Err(),
+			}
+		case <-b.ctx.Done():
+			b.log.Info("Publish failed because of shutdown.")
+			return &messageBusError{
+				Err: ErrCouldNotPublishEvent,
 			}
 		}
 
@@ -336,7 +331,12 @@ func (b *rabbitEventBus) Close() error {
 	b.isReady = false
 	b.cancel()
 
-	err := b.connection.Close()
+	err := b.channel.Close()
+	if err != nil {
+		return err
+	}
+
+	err = b.connection.Close()
 	if err != nil {
 		return err
 	}
