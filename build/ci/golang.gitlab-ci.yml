@@ -42,6 +42,7 @@ test:golang:
   script:
     - make go-ginkgo-get
     - make go-test
+    - make go-coverage
   artifacts:
     name: "Go Tests"
     when: always
