@@ -5,8 +5,8 @@ import (
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
-	"google.golang.org/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
@@ -43,8 +43,8 @@ var serverCmd = &cobra.Command{
 		commandHandlerApiServer := commandhandler.NewApiServer()
 
 		// Create gRPC server and register implementation
-		grpcServer := grpcutil.NewServer("commandhandler-grpc", keepAlive)
-		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, commandHandlerApiServer)
 		})

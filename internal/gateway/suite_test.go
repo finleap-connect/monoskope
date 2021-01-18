@@ -18,9 +18,9 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"golang.org/x/oauth2"
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 )
 
 const (
@@ -34,7 +34,7 @@ var (
 
 	apiListener net.Listener
 	httpClient  *http.Client
-	grpcServer  *grpcutil.Server
+	grpcServer  *grpc.Server
 )
 
 type oAuthTestEnv struct {
@@ -124,14 +124,14 @@ var _ = BeforeSuite(func(done Done) {
 	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler)
 
 	// Create gRPC server and register implementation
-	grpcServer = grpcutil.NewServerWithOpts("gateway-grpc", false,
-		[]grpc.UnaryServerInterceptor{
+	grpcServer = grpc.NewServerWithOpts("gateway-grpc", false,
+		[]ggrpc.UnaryServerInterceptor{
 			auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
 		},
-		[]grpc.StreamServerInterceptor{
+		[]ggrpc.StreamServerInterceptor{
 			auth.StreamServerInterceptor(authInterceptor.EnsureValid),
 		})
-	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api_gw.RegisterGatewayServer(s, gatewayApiServer)
 		api_gwauth.RegisterAuthServer(s, gatewayApiServer)
 		api_common.RegisterServiceInformationServiceServer(s, gatewayApiServer)

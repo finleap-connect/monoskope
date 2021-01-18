@@ -7,8 +7,8 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
-	"google.golang.org/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
@@ -66,14 +66,14 @@ var serverCmd = &cobra.Command{
 		gws := gateway.NewApiServer(&authConfig, authHandler)
 
 		// Create gRPC server and register implementation
-		grpcServer := grpcutil.NewServerWithOpts("gateway-grpc", keepAlive,
-			[]grpc.UnaryServerInterceptor{
+		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
+			[]ggrpc.UnaryServerInterceptor{
 				auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
 			},
-			[]grpc.StreamServerInterceptor{
+			[]ggrpc.StreamServerInterceptor{
 				auth.StreamServerInterceptor(authInterceptor.EnsureValid),
 			})
-		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api_gw.RegisterGatewayServer(s, gws)
 			api_gwauth.RegisterAuthServer(s, gws)
 			api_common.RegisterServiceInformationServiceServer(s, gws)

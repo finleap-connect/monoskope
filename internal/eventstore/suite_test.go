@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
@@ -21,7 +21,7 @@ var (
 	apiListener net.Listener
 	httpClient  *http.Client
 	log         logger.Logger
-	grpcServer  *grpcutil.Server
+	grpcServer  *grpc.Server
 )
 
 func TestEventStore(t *testing.T) {
@@ -38,12 +38,12 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	grpcServer = grpcutil.NewServer("event_store_grpc", false)
+	grpcServer = grpc.NewServer("event_store_grpc", false)
 
 	eventStore, err := NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
 	Expect(err).ToNot(HaveOccurred())
 
-	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterEventStoreServer(s, eventStore)
 	})
 	grpcServer.RegisterOnShutdown(func() {

@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 )
 
 var (
@@ -86,8 +86,8 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		grpcServer := grpcutil.NewServer("event-store-grpc", keepAlive)
-		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterEventStoreServer(s, eventStore)
 		})
 		grpcServer.RegisterOnShutdown(func() {

@@ -1,9 +1,12 @@
-package grpcutil
+package grpc
 
 import (
 	"context"
+	"time"
 
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -59,6 +62,23 @@ func (factory grpcConnectionFactory) WithBlock() grpcConnectionFactory {
 		factory.opts = make([]grpc.DialOption, 0)
 	}
 	factory.opts = append(factory.opts, grpc.WithBlock())
+	return factory
+}
+
+func (factory grpcConnectionFactory) WithRetry() grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+
+	opts := []grpc_retry.CallOption{
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(10 * time.Millisecond)),
+		grpc_retry.WithCodes(codes.NotFound, codes.Aborted, codes.Unavailable, codes.ResourceExhausted),
+		grpc_retry.WithMax(5),
+	}
+
+	factory.opts = append(factory.opts, grpc.WithStreamInterceptor(grpc_retry.StreamClientInterceptor(opts...)))
+	factory.opts = append(factory.opts, grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(opts...)))
+
 	return factory
 }
 

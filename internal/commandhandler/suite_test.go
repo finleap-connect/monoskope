@@ -5,19 +5,19 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 var (
 	apiListener net.Listener
 	log         logger.Logger
-	grpcServer  *grpcutil.Server
+	grpcServer  *grpc.Server
 )
 
 func TestCommandHandler(t *testing.T) {
@@ -34,10 +34,10 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 
 	// Create server
-	grpcServer = grpcutil.NewServer("command_handler_grpc", false)
+	grpcServer = grpc.NewServer("command_handler_grpc", false)
 
 	commandHandler := NewApiServer()
-	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterCommandHandlerServer(s, commandHandler)
 	})
 

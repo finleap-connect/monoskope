@@ -18,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServiceInformationServiceClient interface {
-	// Get information like the version of the Gateway
+	// Get information about the service. This can include information for other
+	// services additionally.
 	GetServiceInformation(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error)
 }
 
@@ -66,7 +67,8 @@ func (x *serviceInformationServiceGetServiceInformationClient) Recv() (*ServiceI
 // All implementations must embed UnimplementedServiceInformationServiceServer
 // for forward compatibility
 type ServiceInformationServiceServer interface {
-	// Get information like the version of the Gateway
+	// Get information about the service. This can include information for other
+	// services additionally.
 	GetServiceInformation(*empty.Empty, ServiceInformationService_GetServiceInformationServer) error
 	mustEmbedUnimplementedServiceInformationServiceServer()
 }

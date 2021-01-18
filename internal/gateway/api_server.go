@@ -9,7 +9,7 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -53,7 +53,7 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.Au
 		OfflineAccess: true,
 	})
 	if err != nil {
-		return nil, grpcutil.ErrInvalidArgument(err)
+		return nil, grpc.ErrInvalidArgument(err)
 	}
 
 	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
