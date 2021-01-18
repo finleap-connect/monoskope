@@ -118,11 +118,18 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		}
 
 		select {
-		case confirm := <-b.notifyConfirm:
-			if confirm.Ack {
-				b.log.Info("Publish confirmed.", "DeliveryTag", confirm.DeliveryTag)
+		case confirmed, ok := <-b.notifyConfirm:
+			if !ok {
+				b.log.Info("Publish not confirmed. Channel closed.")
+				return &messageBusError{
+					Err: ErrCouldNotPublishEvent,
+				}
+			}
+			if confirmed.Ack {
+				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
 			}
+			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 		case <-time.After(b.conf.ResendDelay):
 			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 			if err := b.channel.Close(); err != nil {
