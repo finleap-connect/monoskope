@@ -65,7 +65,13 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 				return nil
 			}
 		case <-b.shutdown:
+			b.log.Info("Connection aborted because of shutdown.")
+			return &messageBusError{
+				Err:     ErrContextDeadlineExceeded,
+				BaseErr: ctx.Err(),
+			}
 		case <-ctx.Done():
+			b.log.Info("Connection aborted because context deadline exceeded.")
 			return &messageBusError{
 				Err: ErrMessageNotConnected,
 			}
