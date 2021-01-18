@@ -366,7 +366,7 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 		return err
 	}
 	// Indicate we only want 1 message to acknowledge at a time.
-	if err := ch.Qos(1, 0, false); err != nil {
+	if err := ch.Qos(1, 0, true); err != nil {
 		return err
 	}
 
