@@ -51,6 +51,7 @@ func NewApiServer(store storage.Store, bus messaging.EventBusPublisher) (*apiSer
 	return s, nil
 }
 
+// Shutdown closes all underyling connections
 func (s *apiServer) Shutdown() {
 	// And the bus
 	s.log.Info("closing connection to message bus gracefully")
