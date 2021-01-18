@@ -358,7 +358,7 @@ func (b *rabbitEventBus) Close() error {
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
-	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation))
+	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	b.isReady = true
 }
 
@@ -374,9 +374,9 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 		return err
 	}
 	// Indicate we only want 1 message to acknowledge at a time.
-	if err := ch.Qos(1, 0, true); err != nil {
-		return err
-	}
+	// if err := ch.Qos(1, 0, true); err != nil {
+	// 	return err
+	// }
 
 	err = ch.ExchangeDeclare(
 		b.conf.ExchangeName, // name
