@@ -22,7 +22,18 @@ type rabbitEventBus struct {
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
 	isReady         bool
-	shutdown        chan bool
+	ctx             context.Context
+	cancel          context.CancelFunc
+}
+
+func newRabbitEventBus(conf *rabbitEventBusConfig) *rabbitEventBus {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	return &rabbitEventBus{
+		conf:   conf,
+		ctx:    ctx,
+		cancel: cancel,
+	}
 }
 
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
@@ -32,11 +43,9 @@ func NewRabbitEventBusPublisher(conf *rabbitEventBusConfig) (EventBusPublisher, 
 		return nil, err
 	}
 
-	b := &rabbitEventBus{
-		log:      logger.WithName("publisher").WithValues("name", conf.Name),
-		conf:     conf,
-		shutdown: make(chan bool),
-	}
+	b := newRabbitEventBus(conf)
+	b.log = logger.WithName("publisher").WithValues("name", conf.Name)
+
 	return b, nil
 }
 
@@ -47,11 +56,8 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, er
 		return nil, err
 	}
 
-	b := &rabbitEventBus{
-		log:      logger.WithName("consumer").WithValues("name", conf.Name),
-		conf:     conf,
-		shutdown: make(chan bool),
-	}
+	b := newRabbitEventBus(conf)
+	b.log = logger.WithName("consumer").WithValues("name", conf.Name)
 	return b, nil
 }
 
@@ -64,7 +70,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 			if b.isReady {
 				return nil
 			}
-		case <-b.shutdown:
+		case <-b.ctx.Done():
 			b.log.Info("Connection aborted because of shutdown.")
 			return &messageBusError{
 				Err:     ErrContextDeadlineExceeded,
@@ -87,7 +93,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		if err != nil {
 			b.log.Error(err, "Publish failed. Retrying...")
 			select {
-			case <-b.shutdown:
+			case <-b.ctx.Done():
 				b.log.Info("Publish failed because of shutdown.")
 				return &messageBusError{
 					Err: ErrCouldNotPublishEvent,
@@ -128,8 +134,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 					Err:     ErrContextDeadlineExceeded,
 					BaseErr: ctx.Err(),
 				}
-			case <-b.shutdown:
-				b.log.Info("Publish failed.")
+			case <-b.ctx.Done():
+				b.log.Info("Publish failed because context deadline exceeded..")
 				return &messageBusError{
 					Err: ErrCouldNotPublishEvent,
 				}
@@ -219,7 +225,7 @@ func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver EventReceiver
 		if err != nil {
 			b.log.Info("Adding receiver failed. Retrying...", "error", err.Cause().Error())
 			select {
-			case <-b.shutdown:
+			case <-b.ctx.Done():
 				return &messageBusError{
 					Err: ErrCouldNotAddReceiver,
 				}
@@ -327,12 +333,13 @@ func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutting down...")
 
 	b.isReady = false
-	close(b.shutdown)
+	b.cancel()
 
 	err := b.connection.Close()
 	if err != nil {
 		return err
 	}
+
 	b.log.Info("Shutdown complete.")
 
 	return nil
@@ -390,7 +397,7 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
 			select {
-			case <-b.shutdown:
+			case <-b.ctx.Done():
 				b.log.Info("Aborting init. Shutting down...")
 				return false
 			case <-time.After(b.conf.ReInitDelay):
@@ -399,7 +406,7 @@ func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
 		}
 
 		select {
-		case <-b.shutdown:
+		case <-b.ctx.Done():
 			return false
 		case errConnClose := <-b.notifyConnClose:
 			b.isReady = false
@@ -451,7 +458,7 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
 			select {
-			case <-b.shutdown:
+			case <-b.ctx.Done():
 				return
 			case <-time.After(b.conf.ReconnectDelay):
 			}
@@ -491,7 +498,7 @@ func (b *rabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receive
 			} else {
 				_ = d.Ack(false)
 			}
-		case <-b.shutdown:
+		case <-b.ctx.Done():
 			b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 			return
 		}
