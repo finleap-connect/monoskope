@@ -89,7 +89,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			case <-ctx.Done():
 				b.log.Info("Publish failed because context deadline exceeded.")
 				return &messageBusError{
-					Err: ErrContextDeadlineExceeded,
+					Err:     ErrContextDeadlineExceeded,
+					BaseErr: ctx.Err(),
 				}
 			case <-time.After(b.conf.ResendDelay):
 				if resendsLeft > 0 {
@@ -116,6 +117,11 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 				retry = false
 			case <-ctx.Done():
+				b.log.Info("Publish failed because context deadline exceeded.")
+				return &messageBusError{
+					Err:     ErrContextDeadlineExceeded,
+					BaseErr: ctx.Err(),
+				}
 			case <-b.shutdown:
 				b.log.Info("Publish failed.")
 				return &messageBusError{

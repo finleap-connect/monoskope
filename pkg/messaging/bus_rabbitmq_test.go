@@ -32,8 +32,10 @@ var _ = Describe("messaging/rabbitmq", func() {
 	publishEvent := func(event storage.Event) {
 		defer GinkgoRecover()
 		defer wg.Done()
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
-		defer cancelFunc()
+
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
+
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
@@ -41,6 +43,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
 		defer GinkgoRecover()
 		defer wg.Done()
+
 		select {
 		case eventFromBus := <-receiveChan:
 			env.Log.Info("Received event.")
@@ -59,8 +62,8 @@ var _ = Describe("messaging/rabbitmq", func() {
 			return nil
 		}
 
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
-		defer cancelFunc()
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
 
