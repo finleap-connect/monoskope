@@ -86,7 +86,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		grpcServer := grpcutil.NewServer("event-store-grpc", false)
+		grpcServer := grpcutil.NewServer("event-store-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
 			api.RegisterEventStoreServer(s, eventStore)
 		})

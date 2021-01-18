@@ -6,16 +6,21 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-	"golang.org/x/oauth2"
-
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -29,7 +34,7 @@ var (
 
 	apiListener net.Listener
 	httpClient  *http.Client
-	testServer  *server
+	grpcServer  *grpcutil.Server
 )
 
 type oAuthTestEnv struct {
@@ -111,16 +116,31 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
-	conf := NewServerConfig()
-	conf.AuthConfig = env.AuthConfig
-
-	testServer, err = NewServer(conf)
+	authHandler, err := auth.NewHandler(env.AuthConfig)
 	Expect(err).ToNot(HaveOccurred())
+	authInterceptor, err := auth.NewInterceptor(authHandler)
+	Expect(err).ToNot(HaveOccurred())
+
+	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler)
+
+	// Create gRPC server and register implementation
+	grpcServer = grpcutil.NewServerWithOpts("gateway-grpc", false,
+		[]grpc.UnaryServerInterceptor{
+			auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
+		},
+		[]grpc.StreamServerInterceptor{
+			auth.StreamServerInterceptor(authInterceptor.EnsureValid),
+		})
+	grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		api_gw.RegisterGatewayServer(s, gatewayApiServer)
+		api_gwauth.RegisterAuthServer(s, gatewayApiServer)
+		api_common.RegisterServiceInformationServiceServer(s, gatewayApiServer)
+	})
 
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := testServer.Serve(apiListener, nil)
+		err := grpcServer.Serve(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -136,7 +156,7 @@ var _ = AfterSuite(func() {
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 
-	testServer.shutdown.Expect()
+	grpcServer.Shutdown()
 
 	err = apiListener.Close()
 	Expect(err).To(BeNil())

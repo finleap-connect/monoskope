@@ -34,20 +34,24 @@ type Server struct {
 
 // NewServer returns a new configured instance of Server
 func NewServer(name string, keepAlive bool) *Server {
+	return NewServerWithOpts(name, keepAlive, []grpc.UnaryServerInterceptor{}, []grpc.StreamServerInterceptor{})
+}
+
+// NewServerWithOpts returns a new configured instance of Server with additional interceptros specified
+func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName(name),
 		shutdown: util.NewShutdownWaitGroup(),
 	}
 
+	unaryServerInterceptors = append(unaryServerInterceptors, grpc_prometheus.UnaryServerInterceptor)    // add prometheus metrics interceptors
+	streamServerInterceptors = append(streamServerInterceptors, grpc_prometheus.StreamServerInterceptor) // add prometheus metrics interceptors
+
 	// Configure gRPC server
-	opts := []grpc.ServerOption{ // add prometheus metrics interceptors
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			grpc_prometheus.StreamServerInterceptor,
-		)),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_prometheus.UnaryServerInterceptor,
-		)),
+	opts := []grpc.ServerOption{
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamServerInterceptors...)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryServerInterceptors...)),
 	}
 	if keepAlive {
 		opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
