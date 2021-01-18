@@ -32,7 +32,7 @@ var _ = BeforeSuite(func(done Done) {
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
 
-	warumupSeconds := 30
+	warumupSeconds := 25
 	if _, ok := os.LookupEnv("CI"); ok {
 		warumupSeconds = 0 // no warmup necessary in CI
 	}

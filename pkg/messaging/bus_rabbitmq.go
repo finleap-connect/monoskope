@@ -127,6 +127,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				}
 			case <-time.After(b.conf.ResendDelay):
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+				b.channel.Close()
 				retry = false
 			case <-ctx.Done():
 				b.log.Info("Publish failed because context deadline exceeded.")
@@ -350,7 +351,7 @@ func (b *rabbitEventBus) Close() error {
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
-	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation))
 	b.isReady = true
 }
 
