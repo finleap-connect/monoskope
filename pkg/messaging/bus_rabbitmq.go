@@ -125,6 +125,12 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		case <-time.After(b.conf.ResendDelay):
 			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+			if err := b.channel.Close(); err != nil {
+				return &messageBusError{
+					Err:     ErrCouldNotPublishEvent,
+					BaseErr: err,
+				}
+			}
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
 			return &messageBusError{
