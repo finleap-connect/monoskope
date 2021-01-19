@@ -75,10 +75,11 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		for i := 0; i < eventCount; i++ {
 			event := createEvent()
+			publishEvent(event)
+
 			wg.Add(2)
 			go receiveEvent(recChanA, event)
 			go receiveEvent(recChanB, event)
-			go publishEvent(event)
 			wg.Wait()
 		}
 	}

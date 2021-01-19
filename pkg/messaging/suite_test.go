@@ -3,7 +3,6 @@ package messaging
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	_ "go.uber.org/automaxprocs"
 )
 
 var (
@@ -33,8 +31,6 @@ var _ = BeforeSuite(func(done Done) {
 	env = &messageBusTestEnv{
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
-
-	env.Log.Info("Checking runtime...", "GOMAXPROCS", runtime.GOMAXPROCS(0), "NUMCPU", runtime.NumCPU())
 
 	warumupSeconds := 25
 	if _, ok := os.LookupEnv("CI"); ok {
