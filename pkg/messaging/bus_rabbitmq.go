@@ -21,6 +21,7 @@ type rabbitEventBus struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
+	isPublisher     bool
 	isReady         bool
 	ctx             context.Context
 	cancel          context.CancelFunc
@@ -45,6 +46,7 @@ func NewRabbitEventBusPublisher(conf *rabbitEventBusConfig) (EventBusPublisher, 
 
 	b := newRabbitEventBus(conf)
 	b.log = logger.WithName("publisher").WithValues("name", conf.Name)
+	b.isPublisher = true
 
 	return b, nil
 }
@@ -85,15 +87,16 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
+	b.notifyConfirm = make(chan amqp.Confirmation, 1)
+	defer close(b.notifyConfirm)
+
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
-		b.notifyConfirm = make(chan amqp.Confirmation, 1)
-		defer close(b.notifyConfirm)
 
 		err := b.publishEvent(event)
 		if err != nil {
-			b.log.Error(err, "Publish failed. Retrying...")
+			_ = b.channel.Close()
 			select {
 			case <-b.ctx.Done():
 				b.log.Info("Publish failed because of shutdown.")
@@ -107,6 +110,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 					BaseErr: ctx.Err(),
 				}
 			case <-time.After(b.conf.ResendDelay):
+				b.log.Error(err, "Publish failed. Retrying...")
 				continue
 			}
 		}
@@ -116,6 +120,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			if confirmed.Ack {
 				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
+			} else {
+				b.log.Info("Publish not confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 			}
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
@@ -129,10 +135,10 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				Err: ErrCouldNotPublishEvent,
 			}
 		case <-time.After(b.conf.ResendDelay):
+			b.log.Info("Publish not confirmed within timeout.")
 		}
 
 		b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
-		close(b.notifyConfirm)
 	}
 
 	b.log.Info("Publish failed.")
@@ -339,12 +345,14 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
 	b.isReady = true
 
-	b.channel.NotifyPublish(b.confirmationHandler(make(chan amqp.Confirmation)))
+	if b.isPublisher {
+		b.channel.NotifyPublish(b.confirmationHandler(make(chan amqp.Confirmation, 1)))
+	}
 }
 
 func (b *rabbitEventBus) confirmationHandler(confirmation chan amqp.Confirmation) chan amqp.Confirmation {
 	go func() {
-		for range confirmation {
+		for {
 			confirmed, ok := <-confirmation
 			if !ok {
 				return

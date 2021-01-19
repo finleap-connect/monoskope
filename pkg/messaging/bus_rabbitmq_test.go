@@ -40,20 +40,20 @@ var _ = Describe("messaging/rabbitmq", func() {
 		defer GinkgoRecover()
 		defer wg.Done()
 
-		select {
-		case eventFromBus := <-receiveChan:
-			env.Log.Info("Received event.")
-			Expect(eventFromBus).ToNot(BeNil())
-			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(20 * time.Second):
-			env.Log.Info("Timeout when receiving event.")
-			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
-		}
+		eventFromBus := <-receiveChan
+		env.Log.Info("Received event.")
+		Expect(eventFromBus).ToNot(BeNil())
+		Expect(eventFromBus).To(Equal(event))
 	}
 
 	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
 		receiveChan := make(chan storage.Event)
-		receiver := func(e storage.Event) error {
+		receiver := func(e storage.Event) (err error) {
+			defer func() {
+				if recover() != nil {
+					err = nil
+				}
+			}()
 			receiveChan <- e
 			return nil
 		}
