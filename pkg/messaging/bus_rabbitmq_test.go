@@ -69,14 +69,17 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	testPubSub := func(eventCount int, matchers ...EventMatcher) {
 		recChanA := createReceiver(matchers...)
+		recChanB := createReceiver(matchers...)
 		defer close(recChanA)
+		defer close(recChanB)
 
 		for i := 0; i < eventCount; i++ {
 			event := createEvent()
 			publishEvent(event)
 
-			wg.Add(1)
+			wg.Add(2)
 			go receiveEvent(recChanA, event)
+			go receiveEvent(recChanB, event)
 			wg.Wait()
 		}
 	}
