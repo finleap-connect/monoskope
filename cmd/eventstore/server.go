@@ -10,6 +10,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
 )
 

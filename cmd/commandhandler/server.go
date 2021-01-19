@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (

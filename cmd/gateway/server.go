@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (
