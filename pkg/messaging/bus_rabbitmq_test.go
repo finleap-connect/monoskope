@@ -88,6 +88,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		var err error
 
 		conf := NewRabbitEventBusConfig(fmt.Sprintf("test-%v", testCount), env.amqpURL)
+		conf.ResendDelay = 10 * time.Second
 
 		// init publisher
 		publisher, err = NewRabbitEventBusPublisher(conf)
