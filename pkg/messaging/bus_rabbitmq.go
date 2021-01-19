@@ -88,6 +88,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
+		b.notifyConfirm = make(chan amqp.Confirmation, 1)
+		defer close(b.notifyConfirm)
 
 		err := b.publishEvent(event)
 		if err != nil {
@@ -334,8 +336,36 @@ func (b *rabbitEventBus) Close() error {
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
-	b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation))
 	b.isReady = true
+
+	b.channel.NotifyPublish(b.confirmationHandler(make(chan amqp.Confirmation, 1)))
+}
+
+func (b *rabbitEventBus) confirmationHandler(confirmation chan amqp.Confirmation) chan amqp.Confirmation {
+	go func() {
+		for {
+			select {
+			case confirmed := <-confirmation:
+				go func() {
+					defer func() {
+						if recover() != nil {
+							b.log.Info("Received confirmation but no one there to notify. Channel closed.")
+						}
+					}()
+					if b.notifyConfirm != nil {
+						b.notifyConfirm <- confirmed
+					} else {
+						b.log.Info("Received confirmation but no one there to notify.")
+					}
+				}()
+			case <-b.notifyChanClose:
+				return
+			case <-b.ctx.Done():
+				return
+			}
+		}
+	}()
+	return confirmation
 }
 
 // init will initialize channel & declare queue
