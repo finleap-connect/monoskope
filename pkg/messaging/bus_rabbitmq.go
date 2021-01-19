@@ -341,7 +341,7 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
 
 	if b.isPublisher {
-		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation))
 	}
 
 	b.isReady = true
