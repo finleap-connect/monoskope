@@ -29,6 +29,15 @@ lint:helm:eventstore:
     - make helm-lint-eventstore
   needs: []
 
+lint:helm:commandhandler:
+  stage: test
+  extends: .helm
+  except:
+    - schedules
+  script:
+    - make helm-lint-commandhandler
+  needs: []
+
 deliver:chart:monoskope:
   stage: deliver
   extends: .helm
@@ -42,6 +51,7 @@ deliver:chart:monoskope:
   needs:
     - lint:helm:gateway
     - lint:helm:eventstore
+    - lint:helm:commandhandler
     - lint:helm:monoskope
 
 deploy:monoskope:
