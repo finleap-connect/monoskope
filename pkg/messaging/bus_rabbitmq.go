@@ -21,6 +21,7 @@ type rabbitEventBus struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
+	notifyReturn    chan amqp.Return
 	isPublisher     bool
 	isReady         bool
 	ctx             context.Context
@@ -119,6 +120,8 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			} else {
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
 			}
+		case rt := <-b.notifyReturn:
+			b.log.Info("Publish wasn't confirmed. Retrying...", "ReplyText", rt.ReplyText, "ReplyCode", rt.ReplyCode)
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
 			return &messageBusError{
@@ -342,6 +345,7 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 
 	if b.isPublisher {
 		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation))
+		b.notifyReturn = b.channel.NotifyReturn(make(chan amqp.Return))
 	}
 
 	b.isReady = true
