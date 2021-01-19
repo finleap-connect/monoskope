@@ -16,7 +16,7 @@ var (
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
 		conn, err := grpc.
-			NewGrpcConnectionFactory(apiListener.Addr().String()).
+			NewGrpcConnectionFactory(testEnv.GetApiAddr()).
 			WithInsecure().
 			WithBlock().
 			Build(ctx)

@@ -1,6 +1,7 @@
 package commandhandler
 
 import (
+	"context"
 	"net"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -18,6 +20,7 @@ var (
 	apiListener net.Listener
 	log         logger.Logger
 	grpcServer  *grpc.Server
+	testEnv     *eventstore.EventStoreTestEnv
 )
 
 func TestCommandHandler(t *testing.T) {
@@ -33,10 +36,16 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 
+	testEnv, err = eventstore.NewEventStoreTestEnv()
+	Expect(err).To(Not(HaveOccurred()))
+
+	esClient, err := testEnv.GetApiClient(context.Background())
+	Expect(err).To(Not(HaveOccurred()))
+
 	// Create server
 	grpcServer = grpc.NewServer("command_handler_grpc", false)
 
-	commandHandler := NewApiServer()
+	commandHandler := NewApiServer(esClient)
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterCommandHandlerServer(s, commandHandler)
 	})

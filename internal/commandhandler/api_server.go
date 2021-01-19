@@ -8,17 +8,21 @@ import (
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 )
 
 // apiServer is the implementation of the CommandHandler API
 type apiServer struct {
 	api.UnimplementedCommandHandlerServer
 	api_common.UnimplementedServiceInformationServiceServer
+	esClient api_es.EventStoreClient
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer() *apiServer {
-	return &apiServer{}
+func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
+	return &apiServer{
+		esClient: esClient,
+	}
 }
 
 // Execute implements the API method Execute

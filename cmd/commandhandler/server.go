@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"net"
+	"time"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
@@ -14,9 +17,10 @@ import (
 )
 
 var (
-	apiAddr     string
-	metricsAddr string
-	keepAlive   bool
+	apiAddr        string
+	metricsAddr    string
+	keepAlive      bool
+	eventStoreAddr string
 )
 
 var serverCmd = &cobra.Command{
@@ -40,8 +44,21 @@ var serverCmd = &cobra.Command{
 		}
 		defer metricsLis.Close()
 
+		// Create EventStore client
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		conn, err := grpc.
+			NewGrpcConnectionFactory(eventStoreAddr).
+			WithTransportCredentials().
+			WithBlock().
+			Build(ctx)
+		if err != nil {
+			return err
+		}
+		esClient := api_es.NewEventStoreClient(conn)
+
 		// Gateway API server
-		commandHandlerApiServer := commandhandler.NewApiServer()
+		commandHandlerApiServer := commandhandler.NewApiServer(esClient)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
@@ -62,4 +79,5 @@ func init() {
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
+	flags.StringVarP(&eventStoreAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 }
