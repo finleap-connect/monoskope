@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (
