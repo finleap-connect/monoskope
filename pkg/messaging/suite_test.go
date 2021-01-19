@@ -3,6 +3,7 @@ package messaging
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -31,6 +32,8 @@ var _ = BeforeSuite(func(done Done) {
 	env = &messageBusTestEnv{
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
+
+	env.Log.Info("Checking runtime...", "GOMAXPROCS", runtime.GOMAXPROCS(0), "NUMCPU", runtime.NumCPU())
 
 	warumupSeconds := 25
 	if _, ok := os.LookupEnv("CI"); ok {

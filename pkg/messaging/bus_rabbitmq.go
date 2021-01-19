@@ -135,7 +135,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			b.log.Info("Publish not confirmed within timeout.")
 		}
 
-		go func() {
+		go func() { // Flush channel do not block closing
 			<-b.notifyConfirm
 		}()
 		_ = b.channel.Close()
