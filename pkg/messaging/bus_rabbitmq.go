@@ -21,6 +21,7 @@ type rabbitEventBus struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
+	expectedTag     uint64
 	isPublisher     bool
 	isReady         bool
 	ctx             context.Context
@@ -90,6 +91,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
+		b.expectedTag++
 
 		err := b.publishEvent(event)
 		if err != nil {
@@ -112,33 +114,37 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		}
 
-		select {
-		case confirmed := <-b.notifyConfirm:
-			if confirmed.Ack {
-				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
-				return nil
-			} else {
-				b.log.Info("Publish not confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+		waitForConfirmation := true
+		for waitForConfirmation {
+			select {
+			case confirmed := <-b.notifyConfirm:
+				if confirmed.DeliveryTag < b.expectedTag {
+					b.log.Info("Received cofirm for different tag.", "DeliveryTag", confirmed.DeliveryTag, "Expected", b.expectedTag)
+					continue
+				}
+				if confirmed.Ack {
+					b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+					return nil
+				} else {
+					b.log.Info("Publish not confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+				}
+			case <-ctx.Done():
+				b.log.Info("Publish failed because context deadline exceeded.")
+				return &messageBusError{
+					Err:     ErrContextDeadlineExceeded,
+					BaseErr: ctx.Err(),
+				}
+			case <-b.ctx.Done():
+				b.log.Info("Publish failed because of shutdown.")
+				return &messageBusError{
+					Err: ErrCouldNotPublishEvent,
+				}
+			case <-time.After(b.conf.ResendDelay):
+				b.log.Info("Publish not confirmed within timeout.")
+				waitForConfirmation = false
 			}
-		case <-ctx.Done():
-			b.log.Info("Publish failed because context deadline exceeded.")
-			return &messageBusError{
-				Err:     ErrContextDeadlineExceeded,
-				BaseErr: ctx.Err(),
-			}
-		case <-b.ctx.Done():
-			b.log.Info("Publish failed because of shutdown.")
-			return &messageBusError{
-				Err: ErrCouldNotPublishEvent,
-			}
-		case <-time.After(b.conf.ResendDelay):
-			b.log.Info("Publish not confirmed within timeout.")
 		}
 
-		go func() { // Flush channel do not block closing
-			<-b.notifyConfirm
-		}()
-		_ = b.channel.Close()
 		b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 	}
 
