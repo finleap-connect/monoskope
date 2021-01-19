@@ -64,12 +64,8 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, er
 // Connect starts automatic reconnect with rabbitmq
 func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 	go b.handleReconnect(b.conf.Url)
-	for {
+	for !b.isReady {
 		select {
-		case <-time.After(300 * time.Millisecond):
-			if b.isReady {
-				return nil
-			}
 		case <-b.ctx.Done():
 			b.log.Info("Connection aborted because of shutdown.")
 			return &messageBusError{
@@ -81,14 +77,18 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 			return &messageBusError{
 				Err: ErrMessageNotConnected,
 			}
+		case <-time.After(300 * time.Millisecond):
 		}
 	}
+	return nil
 }
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	resendsLeft := b.conf.MaxResends
-	for {
+	for resendsLeft > 0 {
+		resendsLeft--
+
 		err := b.publishEvent(event)
 		if err != nil {
 			b.log.Error(err, "Publish failed. Retrying...")
@@ -105,33 +105,19 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 					BaseErr: ctx.Err(),
 				}
 			case <-time.After(b.conf.ResendDelay):
-				if resendsLeft > 0 {
-					resendsLeft--
-					continue
-				} else {
-					b.log.Info("Publish failed.")
-					return &messageBusError{
-						Err: ErrCouldNotPublishEvent,
-					}
-				}
+				continue
 			}
 		}
 
 		select {
-		case confirmed, ok := <-b.notifyConfirm:
-			if !ok {
-				b.log.Info("Publish not confirmed. Channel closed.")
-				return &messageBusError{
-					Err: ErrCouldNotPublishEvent,
-				}
-			}
+		case confirmed := <-b.notifyConfirm:
 			if confirmed.Ack {
 				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
 			}
 			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 		case <-time.After(b.conf.ResendDelay):
-			b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
+			b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
 			return &messageBusError{
@@ -144,16 +130,11 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				Err: ErrCouldNotPublishEvent,
 			}
 		}
+	}
 
-		if resendsLeft > 0 {
-			resendsLeft--
-			continue
-		}
-
-		b.log.Info("Publish failed.")
-		return &messageBusError{
-			Err: ErrCouldNotPublishEvent,
-		}
+	b.log.Info("Publish failed.")
+	return &messageBusError{
+		Err: ErrCouldNotPublishEvent,
 	}
 }
 
@@ -335,15 +316,10 @@ func (b *rabbitEventBus) Matcher() EventMatcher {
 func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutting down...")
 
-	b.isReady = false
 	b.cancel()
+	b.isReady = false
 
-	err := b.channel.Close()
-	if err != nil {
-		return err
-	}
-
-	err = b.connection.Close()
+	err := b.connection.Close()
 	if err != nil {
 		return err
 	}
@@ -358,7 +334,7 @@ func (b *rabbitEventBus) Close() error {
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
-	b.notifyConfirm = channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation))
 	b.isReady = true
 }
 
@@ -368,15 +344,16 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 	if err != nil {
 		return err
 	}
+
 	// Indicate we want confirmation of the publish.
-	err = ch.Confirm(false)
-	if err != nil {
+	if err = ch.Confirm(false); err != nil {
 		return err
 	}
+
 	// Indicate we only want 1 message to acknowledge at a time.
-	// if err := ch.Qos(1, 0, true); err != nil {
-	// 	return err
-	// }
+	if err := ch.Qos(1, 0, true); err != nil {
+		return err
+	}
 
 	err = ch.ExchangeDeclare(
 		b.conf.ExchangeName, // name
@@ -469,8 +446,8 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			case <-b.ctx.Done():
 				return
 			case <-time.After(b.conf.ReconnectDelay):
+				continue
 			}
-			continue
 		}
 
 		if !b.handleReInit(conn) {
