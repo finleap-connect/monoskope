@@ -21,7 +21,6 @@ type rabbitEventBus struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
-	notifyReturn    chan amqp.Return
 	isPublisher     bool
 	isReady         bool
 	ctx             context.Context
@@ -120,8 +119,6 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			} else {
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
 			}
-		case rt := <-b.notifyReturn:
-			b.log.Info("Publish wasn't confirmed. Retrying...", "ReplyText", rt.ReplyText, "ReplyCode", rt.ReplyCode)
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
 			return &messageBusError{
@@ -344,8 +341,7 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
 
 	if b.isPublisher {
-		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation))
-		b.notifyReturn = b.channel.NotifyReturn(make(chan amqp.Return))
+		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	}
 
 	b.isReady = true
@@ -392,14 +388,15 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 // connect will create a new AMQP connection
 func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 	b.log.Info("Attempting to connect...")
+
 	conn, err := amqp.DialConfig(addr, *b.conf.amqpConfig)
 	if err != nil {
 		return nil, err
 	}
-
 	b.connection = conn
-	b.notifyConnClose = make(chan *amqp.Error)
-	b.connection.NotifyClose(b.notifyConnClose)
+
+	b.notifyConnClose = conn.NotifyClose(make(chan *amqp.Error))
+
 	b.log.Info("Connection established.")
 
 	return conn, nil
