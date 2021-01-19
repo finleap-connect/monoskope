@@ -52,11 +52,11 @@ run-%:
 
 test:
 	@find . -name '*.coverprofile' -exec rm {} \;
+	$(GINKGO) -r -v -cover pkg/*
 	$(GINKGO) -r -v -cover internal/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
 	$(GINKGO) -r -v -cover internal/monoctl
 	$(GINKGO) -r -v -cover internal/eventstore
 	$(GINKGO) -r -v -cover internal/commandhandler
-	$(GINKGO) -r -v -cover pkg/*
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
