@@ -87,9 +87,6 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
-	b.notifyConfirm = make(chan amqp.Confirmation, 1)
-	defer close(b.notifyConfirm)
-
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
@@ -138,6 +135,10 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			b.log.Info("Publish not confirmed within timeout.")
 		}
 
+		go func() {
+			<-b.notifyConfirm
+		}()
+		_ = b.channel.Close()
 		b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft)
 	}
 
@@ -346,33 +347,8 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.isReady = true
 
 	if b.isPublisher {
-		b.channel.NotifyPublish(b.confirmationHandler(make(chan amqp.Confirmation, 1)))
+		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	}
-}
-
-func (b *rabbitEventBus) confirmationHandler(confirmation chan amqp.Confirmation) chan amqp.Confirmation {
-	go func() {
-		for {
-			confirmed, ok := <-confirmation
-			if !ok {
-				return
-			} else {
-				go func() {
-					defer func() {
-						if recover() != nil {
-							b.log.Info("Received confirmation but no one there to notify. Channel closed.")
-						}
-					}()
-					if b.notifyConfirm != nil {
-						b.notifyConfirm <- confirmed
-					} else {
-						b.log.Info("Received confirmation but no one there to notify.")
-					}
-				}()
-			}
-		}
-	}()
-	return confirmation
 }
 
 // init will initialize channel & declare queue
