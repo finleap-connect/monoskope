@@ -364,79 +364,35 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 		return err
 	}
 
-	// Indicate we want confirmation of the publish.
-	if err = ch.Confirm(false); err != nil {
-		return err
+	if !b.isPublisher {
+		// Indicate we only want 1 message to acknowledge at a time.
+		if err := ch.Qos(1, 0, true); err != nil {
+			return err
+		}
 	}
 
-	// Indicate we only want 1 message to acknowledge at a time.
-	if err := ch.Qos(1, 0, true); err != nil {
-		return err
-	}
-
-	err = ch.ExchangeDeclare(
-		b.conf.ExchangeName, // name
-		amqp.ExchangeTopic,  // type
-		true,                // durable
-		false,               // auto-deleted
-		false,               // internal
-		false,               // no-wait
-		nil,                 // arguments
-	)
-	if err != nil {
-		return err
+	if b.isPublisher {
+		// Indicate we want confirmation of the publish.
+		if err = ch.Confirm(false); err != nil {
+			return err
+		}
+		err = ch.ExchangeDeclare(
+			b.conf.ExchangeName, // name
+			amqp.ExchangeTopic,  // type
+			true,                // durable
+			false,               // auto-deleted
+			false,               // internal
+			false,               // no-wait
+			nil,                 // arguments
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	b.changeChannel(ch)
 
 	return nil
-}
-
-// handleReInit will wait for a channel error
-// and then continuously attempt to re-initialize both channels
-func (b *rabbitEventBus) handleReInit(conn *amqp.Connection) bool {
-	for {
-		err := b.init(conn)
-		if err != nil {
-			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
-
-			select {
-			case <-b.ctx.Done():
-				b.log.Info("Aborting init. Shutting down...")
-				return false
-			case <-time.After(b.conf.ReInitDelay):
-				continue
-			}
-		}
-
-		select {
-		case <-b.ctx.Done():
-			return false
-		case errConnClose := <-b.notifyConnClose:
-			b.isReady = false
-			if errConnClose != nil {
-				b.log.Info("Connection closed. Reconnecting...", "error", errConnClose.Error())
-			} else {
-				b.log.Info("Connection closed. Reconnecting...")
-			}
-			return true
-		case errChanClose := <-b.notifyChanClose:
-			b.isReady = false
-			if errChanClose != nil {
-				b.log.Info("Channel closed. Re-running init...", "error", errChanClose.Error())
-			} else {
-				b.log.Info("Channel closed. Re-running init...")
-			}
-		}
-	}
-}
-
-// changeConnection takes a new connection to the queue,
-// and updates the close listener to reflect this.
-func (b *rabbitEventBus) changeConnection(connection *amqp.Connection) {
-	b.connection = connection
-	b.notifyConnClose = make(chan *amqp.Error)
-	b.connection.NotifyClose(b.notifyConnClose)
 }
 
 // connect will create a new AMQP connection
@@ -447,7 +403,9 @@ func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 		return nil, err
 	}
 
-	b.changeConnection(conn)
+	b.connection = conn
+	b.notifyConnClose = make(chan *amqp.Error)
+	b.connection.NotifyClose(b.notifyConnClose)
 	b.log.Info("Connection established.")
 
 	return conn, nil
@@ -469,11 +427,31 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			}
 		}
 
-		if !b.handleReInit(conn) {
-			break
+		if err = b.init(conn); err != nil {
+			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
+
+			select {
+			case <-b.ctx.Done():
+				b.log.Info("Aborting init. Shutting down...")
+				return
+			case <-time.After(b.conf.ReInitDelay):
+				continue
+			}
+		}
+
+		select {
+		case <-b.notifyConnClose:
+			b.isReady = false
+			b.log.Info("Connection closed. Reconnecting...")
+			continue
+		case <-b.notifyChanClose:
+			b.isReady = false
+			b.log.Info("Channel closed. Re-running init...")
+			continue
+		case <-b.ctx.Done():
+			return
 		}
 	}
-	b.log.Info("Automatic reconnect stopped.")
 }
 
 // generateRoutingKey generates the routing key for an event.
