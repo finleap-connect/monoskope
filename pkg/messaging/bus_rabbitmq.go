@@ -111,27 +111,34 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		}
 
-		select {
-		case confirmed := <-b.notifyConfirm:
-			if confirmed.Ack {
-				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
-				return nil
-			} else {
-				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
+		wait := true
+		for wait {
+			wait = false
+			select {
+			case confirmed := <-b.notifyConfirm:
+				if confirmed.Ack {
+					b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+					return nil
+				} else {
+					b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
+				}
+			case <-ctx.Done():
+				b.log.Info("Publish failed because context deadline exceeded.")
+				return &messageBusError{
+					Err:     ErrContextDeadlineExceeded,
+					BaseErr: ctx.Err(),
+				}
+			case <-b.ctx.Done():
+				b.log.Info("Publish failed because of shutdown.")
+				return &messageBusError{
+					Err: ErrCouldNotPublishEvent,
+				}
+			case <-time.After(b.conf.ResendDelay):
+				b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
+			default:
+				time.Sleep(1 * time.Millisecond)
+				wait = true
 			}
-		case <-ctx.Done():
-			b.log.Info("Publish failed because context deadline exceeded.")
-			return &messageBusError{
-				Err:     ErrContextDeadlineExceeded,
-				BaseErr: ctx.Err(),
-			}
-		case <-b.ctx.Done():
-			b.log.Info("Publish failed because of shutdown.")
-			return &messageBusError{
-				Err: ErrCouldNotPublishEvent,
-			}
-		case <-time.After(b.conf.ResendDelay):
-			b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
 		}
 	}
 
