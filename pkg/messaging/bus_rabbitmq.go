@@ -91,6 +91,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 	for resendsLeft > 0 {
 		resendsLeft--
 
+		b.FlushConfirms()
 		err := b.publishEvent(event)
 		if err != nil {
 			select {
@@ -111,34 +112,27 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		}
 
-		wait := true
-		for wait {
-			wait = false
-			select {
-			case confirmed := <-b.notifyConfirm:
-				if confirmed.Ack {
-					b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
-					return nil
-				} else {
-					b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
-				}
-			case <-ctx.Done():
-				b.log.Info("Publish failed because context deadline exceeded.")
-				return &messageBusError{
-					Err:     ErrContextDeadlineExceeded,
-					BaseErr: ctx.Err(),
-				}
-			case <-b.ctx.Done():
-				b.log.Info("Publish failed because of shutdown.")
-				return &messageBusError{
-					Err: ErrCouldNotPublishEvent,
-				}
-			case <-time.After(b.conf.ResendDelay):
-				b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
-			default:
-				time.Sleep(1 * time.Millisecond)
-				wait = true
+		select {
+		case confirmed := <-b.notifyConfirm:
+			if confirmed.Ack {
+				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+				return nil
+			} else {
+				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
 			}
+		case <-ctx.Done():
+			b.log.Info("Publish failed because context deadline exceeded.")
+			return &messageBusError{
+				Err:     ErrContextDeadlineExceeded,
+				BaseErr: ctx.Err(),
+			}
+		case <-b.ctx.Done():
+			b.log.Info("Publish failed because of shutdown.")
+			return &messageBusError{
+				Err: ErrCouldNotPublishEvent,
+			}
+		case <-time.After(b.conf.ResendDelay):
+			b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
 		}
 	}
 
@@ -339,6 +333,22 @@ func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutdown complete.")
 
 	return nil
+}
+
+// FlushConfirms removes all previous confirmations pending processing.
+func (b *rabbitEventBus) FlushConfirms() {
+	for {
+		if b.connection.IsClosed() {
+			return
+		}
+
+		select {
+		case <-b.notifyConfirm: // Some weird use case where the Channel is being flooded with confirms after connection disrupt
+			return
+		default:
+			return
+		}
+	}
 }
 
 // changeChannel takes a new channel to the queue,
