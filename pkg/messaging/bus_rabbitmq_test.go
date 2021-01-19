@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
@@ -34,22 +35,12 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
-		eventFromBus := <-receiveChan
-		env.Log.Info("Received event.")
-		Expect(eventFromBus).ToNot(BeNil())
-		Expect(eventFromBus).To(Equal(event))
-	}
-
-	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
-		receiveChan := make(chan storage.Event)
+	createReceiver := func(event storage.Event, matchers ...EventMatcher) {
 		receiver := func(e storage.Event) (err error) {
-			defer func() {
-				if recover() != nil {
-					err = nil
-				}
-			}()
-			receiveChan <- e
+			defer ginkgo.GinkgoRecover()
+			env.Log.Info("Received event.")
+			Expect(e).ToNot(BeNil())
+			Expect(e).To(Equal(event))
 			return nil
 		}
 
@@ -57,26 +48,18 @@ var _ = Describe("messaging/rabbitmq", func() {
 		defer cancel()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
-
-		return receiveChan
 	}
 
-	testPubSub := func(eventCount int, matchers ...EventMatcher) {
-		recChan := createReceiver(matchers...)
-		defer close(recChan)
-
-		for i := 0; i < eventCount; i++ {
-			event := createEvent()
-			publishEvent(event)
-			receiveEvent(recChan, event)
-		}
+	testPubSub := func(matchers ...EventMatcher) {
+		event := createEvent()
+		createReceiver(event, matchers...)
+		publishEvent(event)
 	}
 
 	BeforeEach(func() {
 		var err error
 
 		conf := NewRabbitEventBusConfig(fmt.Sprintf("test-%v", testCount), env.amqpURL)
-		conf.ResendDelay = 10 * time.Second
 
 		// init publisher
 		publisher, err = NewRabbitEventBusPublisher(conf)
@@ -106,18 +89,18 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}, 10)
 	It("can publish and receive events", func() {
-		testPubSub(3, consumer.Matcher().Any())
+		testPubSub(consumer.Matcher().Any())
 	})
 	It("can publish and receive an event matching aggregate type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()))
 	})
 	It("can publish and receive an event matching event type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchEventType(event.EventType()))
 	})
 	It("can publish and receive an event matching aggregate type and event type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 	})
 })

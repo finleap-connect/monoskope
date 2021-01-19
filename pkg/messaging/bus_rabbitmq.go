@@ -324,12 +324,6 @@ func (b *rabbitEventBus) Close() error {
 	b.cancel()
 	b.isReady = false
 
-	go func() {
-		for range b.notifyConfirm {
-			// Read all pending confirms before closing connection
-		}
-	}()
-
 	err := b.connection.Close()
 	if err != nil {
 		return err
