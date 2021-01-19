@@ -30,12 +30,8 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	publishEvent := func(event storage.Event) {
-		defer GinkgoRecover()
-		defer wg.Done()
-
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
-
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
@@ -78,10 +74,10 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 		for i := 0; i < eventCount; i++ {
 			event := createEvent()
-			wg.Add(3)
+			wg.Add(2)
 			go receiveEvent(recChanA, event)
 			go receiveEvent(recChanB, event)
-			go publishEvent(event)
+			publishEvent(event)
 			wg.Wait()
 		}
 	}
