@@ -77,6 +77,20 @@ build:golang:eventstore:
     expire_in: 1 day
   needs: []
 
+build:golang:commandhandler:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-commandhandler
+  artifacts:
+    paths:
+      - commandhandler
+    expire_in: 1 day
+  needs: []
+
 deliver:gateway:
   stage: deliver
   image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2

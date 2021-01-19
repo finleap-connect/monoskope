@@ -4,6 +4,8 @@
 lint:helm:monoskope:
   stage: test
   extends: .helm
+  except:
+    - schedules
   script:
     - make helm-dep-monoskope
     - make helm-lint-monoskope
@@ -12,6 +14,8 @@ lint:helm:monoskope:
 lint:helm:gateway:
   stage: test
   extends: .helm
+  except:
+    - schedules
   script:
     - make helm-lint-gateway
   needs: []
@@ -19,6 +23,8 @@ lint:helm:gateway:
 lint:helm:eventstore:
   stage: test
   extends: .helm
+  except:
+    - schedules
   script:
     - make helm-lint-eventstore
   needs: []
@@ -49,6 +55,9 @@ deploy:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
+  needs:
+    - job: deliver:chart:monoskope
+      artifacts: false
 
 deploy:monoskope:latest_tag:
   stage: deploy
@@ -61,3 +70,4 @@ deploy:monoskope:latest_tag:
     - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
+  needs: []
