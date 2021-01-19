@@ -344,9 +344,11 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 
 func (b *rabbitEventBus) confirmationHandler(confirmation chan amqp.Confirmation) chan amqp.Confirmation {
 	go func() {
-		for {
-			select {
-			case confirmed := <-confirmation:
+		for range confirmation {
+			confirmed, ok := <-confirmation
+			if !ok {
+				return
+			} else {
 				go func() {
 					defer func() {
 						if recover() != nil {
@@ -359,10 +361,6 @@ func (b *rabbitEventBus) confirmationHandler(confirmation chan amqp.Confirmation
 						b.log.Info("Received confirmation but no one there to notify.")
 					}
 				}()
-			case <-b.notifyChanClose:
-				return
-			case <-b.ctx.Done():
-				return
 			}
 		}
 	}()
