@@ -93,7 +93,6 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 
 		err := b.publishEvent(event)
 		if err != nil {
-			_ = b.channel.Close()
 			select {
 			case <-b.ctx.Done():
 				b.log.Info("Publish failed because of shutdown.")
@@ -183,6 +182,8 @@ func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
 		})
 
 	if err != nil {
+		_ = b.channel.Close()
+		b.isReady = false
 		b.log.Error(err, ErrCouldNotPublishEvent.Error())
 		return &messageBusError{
 			Err:     ErrCouldNotPublishEvent,
@@ -323,6 +324,12 @@ func (b *rabbitEventBus) Close() error {
 	b.cancel()
 	b.isReady = false
 
+	go func() {
+		for range b.notifyConfirm {
+			// Read all pending confirms before closing connection
+		}
+	}()
+
 	err := b.connection.Close()
 	if err != nil {
 		return err
@@ -338,11 +345,12 @@ func (b *rabbitEventBus) Close() error {
 func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.channel = channel
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
-	b.isReady = true
 
 	if b.isPublisher {
 		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	}
+
+	b.isReady = true
 }
 
 // init will initialize channel & declare queue
@@ -403,6 +411,7 @@ func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 // notifyConnClose, and then continuously attempt to reconnect.
 func (b *rabbitEventBus) handleReconnect(addr string) {
 	for {
+		b.isReady = false
 		conn, err := b.connect(addr)
 		if err != nil {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
@@ -429,11 +438,9 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 
 		select {
 		case <-b.notifyConnClose:
-			b.isReady = false
 			b.log.Info("Connection closed. Reconnecting...")
 			continue
 		case <-b.notifyChanClose:
-			b.isReady = false
 			b.log.Info("Channel closed. Re-running init...")
 			continue
 		case <-b.ctx.Done():
