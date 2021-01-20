@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	TestCommandType   CommandType          = "Test"
-	TestAggregateType events.AggregateType = "Test"
+	TestCommandType   CommandType          = "TestCommandType"
+	TestAggregateType events.AggregateType = "TestAggregateType"
 )
 
 // TestCommand is a command for tests.
