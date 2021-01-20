@@ -17,7 +17,7 @@ A Helm chart for the Monoskope CommandHandler
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
-| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/eventstore"` |  |
+| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/commandhandler"` |  |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` |  |
 | keepAlive | bool | `false` |  |
