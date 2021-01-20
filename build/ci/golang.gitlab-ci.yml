@@ -42,6 +42,7 @@ test:golang:
   script:
     - make go-ginkgo-get
     - make go-test
+    - make go-coverage
   artifacts:
     name: "Go Tests"
     when: always
@@ -73,6 +74,20 @@ build:golang:eventstore:
   artifacts:
     paths:
       - eventstore
+    expire_in: 1 day
+  needs: []
+
+build:golang:commandhandler:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-commandhandler
+  artifacts:
+    paths:
+      - commandhandler
     expire_in: 1 day
   needs: []
 

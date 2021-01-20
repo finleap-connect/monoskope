@@ -22,7 +22,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.8.0
 	github.com/spf13/cobra v1.1.1
-	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
+	github.com/streadway/amqp v1.0.0
+	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208

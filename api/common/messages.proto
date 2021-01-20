@@ -1,0 +1,18 @@
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common";
+
+package common;
+
+message ServiceInformation {
+  // version
+  string version = 1;
+  // name
+  string name = 2;
+  // commit hash of the service
+  string commit = 3;
+}

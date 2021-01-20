@@ -3,17 +3,16 @@ package messaging
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
-	var wg sync.WaitGroup
 	var consumer EventBusConsumer
 	var publisher EventBusPublisher
 	ctx := context.Background()
@@ -30,57 +29,31 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	publishEvent := func(event storage.Event) {
-		defer GinkgoRecover()
-		defer wg.Done()
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
-		defer cancelFunc()
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	receiveEvent := func(receiveChan <-chan storage.Event, event storage.Event) {
-		defer GinkgoRecover()
-		defer wg.Done()
-		select {
-		case eventFromBus := <-receiveChan:
+	createReceiver := func(event storage.Event, matchers ...EventMatcher) {
+		receiver := func(e storage.Event) (err error) {
+			defer ginkgo.GinkgoRecover()
 			env.Log.Info("Received event.")
-			Expect(eventFromBus).ToNot(BeNil())
-			Expect(eventFromBus).To(Equal(event))
-		case <-time.After(20 * time.Second):
-			env.Log.Info("Timeout when receiving event.")
-			Expect(fmt.Errorf("timeout waiting for receiving event")).ToNot(HaveOccurred())
-		}
-	}
-
-	createReceiver := func(matchers ...EventMatcher) chan storage.Event {
-		receiveChan := make(chan storage.Event)
-		receiver := func(e storage.Event) error {
-			receiveChan <- e
+			Expect(e).ToNot(BeNil())
+			Expect(e).To(Equal(event))
 			return nil
 		}
 
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 20*time.Second)
-		defer cancelFunc()
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
 		Expect(err).ToNot(HaveOccurred())
-
-		return receiveChan
 	}
 
-	testPubSub := func(eventCount int, matchers ...EventMatcher) {
-		recChanA := createReceiver(matchers...)
-		recChanB := createReceiver(matchers...)
-		defer close(recChanA)
-		defer close(recChanB)
-
-		for i := 0; i < eventCount; i++ {
-			event := createEvent()
-			wg.Add(3)
-			go receiveEvent(recChanA, event)
-			go receiveEvent(recChanB, event)
-			go publishEvent(event)
-			wg.Wait()
-		}
+	testPubSub := func(matchers ...EventMatcher) {
+		event := createEvent()
+		createReceiver(event, matchers...)
+		publishEvent(event)
 	}
 
 	BeforeEach(func() {
@@ -116,18 +89,18 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}, 10)
 	It("can publish and receive events", func() {
-		testPubSub(3, consumer.Matcher().Any())
+		testPubSub(consumer.Matcher().Any())
 	})
 	It("can publish and receive an event matching aggregate type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()))
 	})
 	It("can publish and receive an event matching event type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchEventType(event.EventType()))
 	})
 	It("can publish and receive an event matching aggregate type and event type", func() {
 		event := createEvent()
-		testPubSub(1, consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
 	})
 })

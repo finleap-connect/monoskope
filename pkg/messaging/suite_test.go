@@ -32,13 +32,13 @@ var _ = BeforeSuite(func(done Done) {
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
 
-	warumupSeconds := 30
+	warumupSeconds := 25
 	if _, ok := os.LookupEnv("CI"); ok {
 		warumupSeconds = 0 // no warmup necessary in CI
+	} else {
+		err = env.CreateDockerPool()
+		Expect(err).ToNot(HaveOccurred())
 	}
-
-	err = env.CreateDockerPool()
-	Expect(err).ToNot(HaveOccurred())
 
 	if v := os.Getenv("AMQP_URL"); v != "" {
 		env.amqpURL = v // running in ci pipeline

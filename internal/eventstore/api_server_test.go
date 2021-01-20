@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -15,7 +15,12 @@ var (
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := grpcutil.CreateInsecureGrpcConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := grpc.
+			NewGrpcConnectionFactory(testEnv.GetApiAddr()).
+			WithInsecure().
+			WithBlock().
+			Build(ctx)
+
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

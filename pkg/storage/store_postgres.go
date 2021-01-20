@@ -119,6 +119,7 @@ func (b *postgresEventStore) Connect(ctx context.Context) error {
 				return nil
 			}
 		case <-b.shutdown:
+			return ErrCouldNotConnect
 		case <-ctx.Done():
 			return ErrCouldNotConnect
 		}
@@ -359,6 +360,8 @@ func (s *postgresEventStore) handleReconnect(ctx context.Context) {
 
 			select {
 			case <-ctx.Done():
+				s.log.Info("Automatic reconnect stopped.")
+				return
 			case <-s.shutdown:
 				s.log.Info("Automatic reconnect stopped.")
 				return

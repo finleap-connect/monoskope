@@ -7,6 +7,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	_ "go.uber.org/automaxprocs"
 )
 
 type TestEnv struct {

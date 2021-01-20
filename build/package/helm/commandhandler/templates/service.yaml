@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "commandhandler.fullname" . }}
+  labels:
+    {{- include "commandhandler.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.api.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.metrics.port }}
+      targetPort: http-metrics
+      protocol: TCP
+      name: http-metrics
+  selector:
+    {{- include "commandhandler.selectorLabels" . | nindent 4 }}

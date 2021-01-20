@@ -5,14 +5,17 @@ syntax = "proto3";
 
 import "google/protobuf/wrappers.proto";
 
-option objc_class_prefix = "MGT";
-option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/tenant";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/tenant";
 
-package gateway.tenant;
+package commands.tenant;
+
+message CreateTenantCommandResult {
+  // Unique identifier of the tenant created (UUID 128-bit number)
+  string id = 1;
+}
 
 // Request to create a new tenant
-message CreateTenantRequest {
+message CreateTenantCommand {
   // Name of the tenant
   string name = 1; // required
   // Prefix for namespaces and other resources related to the tenant
@@ -20,7 +23,7 @@ message CreateTenantRequest {
 }
 
 // Request to get a single tenant
-message GetTenantRequest {
+message GetTenantCommand {
   oneof find_by {
     string id = 1;
     string name = 2;
@@ -28,25 +31,26 @@ message GetTenantRequest {
 }
 
 // Request to update a single tenant
-message UpdateTenantRequest {
-  // Unique identifier of the tenant to update
+message UpdateTenantCommand {
+  // Unique identifier of the tenant to update (UUID 128-bit number)
   string id = 1; // required
   // The information to update
   Update update = 2; // required
 
   message Update {
     // New name for the tenant
-    google.protobuf.StringValue name = 1; // optional
+    google.protobuf.StringValue name = 1;
   }
 }
 
 // Request to delete a single tenant
-message DeleteTenantRequest {
+message DeleteTenantCommand {
+  // Unique identifier of the tenant to delete (UUID 128-bit number)
   string id = 1; // required
 }
 
 // Request to list all tenants
-message ListTenantsRequest {
+message ListTenantsCommand {
   // Include tenants which have previously been deleted
   bool include_deleted = 1;
 }

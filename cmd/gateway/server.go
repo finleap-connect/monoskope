@@ -4,9 +4,16 @@ import (
 	"net"
 	"os"
 
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	ggrpc "google.golang.org/grpc"
+
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (
@@ -37,6 +44,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		defer apiLis.Close()
+
 		// Setup metrics listener
 		metricsLis, err := net.Listen("tcp", metricsAddr)
 		if err != nil {
@@ -45,15 +53,35 @@ var serverCmd = &cobra.Command{
 		defer metricsLis.Close()
 
 		// Create the server
-		conf := gateway.NewServerConfig()
-		conf.AuthConfig = &authConfig
-
-		s, err := gateway.NewServer(conf)
+		// Create interceptor for auth
+		authHandler, err := auth.NewHandler(&authConfig)
 		if err != nil {
 			return err
 		}
+		authInterceptor, err := auth.NewInterceptor(authHandler)
+		if err != nil {
+			return err
+		}
+
+		// Gateway API server
+		gws := gateway.NewApiServer(&authConfig, authHandler)
+
+		// Create gRPC server and register implementation
+		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
+			[]ggrpc.UnaryServerInterceptor{
+				auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
+			},
+			[]ggrpc.StreamServerInterceptor{
+				auth.StreamServerInterceptor(authInterceptor.EnsureValid),
+			})
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
+			api_gw.RegisterGatewayServer(s, gws)
+			api_gwauth.RegisterAuthServer(s, gws)
+			api_common.RegisterServiceInformationServiceServer(s, gws)
+		})
+
 		// Finally start the server
-		return s.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiLis, metricsLis)
 	},
 }
 

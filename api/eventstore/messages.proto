@@ -8,8 +8,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package =
-    "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore";
 
 package eventstore;
 

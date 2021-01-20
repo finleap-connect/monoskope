@@ -10,7 +10,7 @@ import (
 	"github.com/coreos/go-oidc"
 	"github.com/pkg/errors"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpcutil"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/oauth2"
@@ -164,7 +164,7 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 	}
 
 	if !state.IsValid() {
-		return nil, grpcutil.ErrInvalidArgument(errors.Errorf("callback url invalid"))
+		return nil, grpc.ErrInvalidArgument(errors.Errorf("callback url invalid"))
 	}
 
 	claims, err := getClaims(idToken)

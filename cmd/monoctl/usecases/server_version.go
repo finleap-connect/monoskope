@@ -3,10 +3,11 @@ package usecases
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -28,21 +29,38 @@ func NewServerVersionUseCase(ctx context.Context, config *config.Config) *Server
 	return useCase
 }
 
-func (a *ServerVersionUseCase) Run() (string, error) {
+func (a *ServerVersionUseCase) Run() ([]string, error) {
 	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, &oauth2.Token{AccessToken: a.config.AuthInformation.Token})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer conn.Close()
-	gwc := api_gw.NewGatewayClient(conn)
+	grpcClient := api_common.NewServiceInformationServiceClient(conn)
 
-	serverInfo, err := gwc.GetServerInfo(a.ctx, &emptypb.Empty{})
+	serverInfo, err := grpcClient.GetServiceInformation(a.ctx, &emptypb.Empty{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return fmt.Sprintf(`%s:
+	serviceInfos := make([]string, 0)
+	for {
+		// Read next
+		serverInfo, err := serverInfo.Recv()
+
+		// End of stream
+		if err == io.EOF {
+			break
+		}
+		if err != nil { // Some other error
+			return nil, err
+		}
+
+		// Append
+		serviceInfos = append(serviceInfos, fmt.Sprintf(`%s:
 		version     : %s
 		commit      : %s`,
-		a.config.Server, serverInfo.GetVersion(), serverInfo.GetCommit()), nil
+			serverInfo.GetName(), serverInfo.GetVersion(), serverInfo.GetCommit()))
+	}
+
+	return serviceInfos, nil
 }

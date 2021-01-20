@@ -33,6 +33,9 @@ dependencies: # A list of the chart requirements
   - name: eventstore
     repository: "file://../eventstore"
     condition: eventstore.enabled,global.eventstore.enabled
+  - name: commandhandler
+    repository: "file://../commandhandler"
+    condition: commandhandler.enabled,global.commandhandler.enabled
   - name: cockroachdb
     version: 5.0.2
     repository: https://artifactory.figo.systems/artifactory/virtual_helm
