@@ -8,6 +8,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../commandhandler | commandhandler |  |
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
@@ -101,7 +102,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
-| rabbitmq.auth.password | string | `""` |  |
+| rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
 | rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
