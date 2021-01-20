@@ -22,6 +22,7 @@ var ErrCommandNotRegistered = errors.New("command not registered")
 type CommandRegistry interface {
 	RegisterCommand(factory func() Command) error
 	UnregisterCommand(commandType CommandType) error
+	CreateCommand(commandType CommandType) (Command, error)
 }
 
 type commandRegistry struct {
@@ -30,12 +31,18 @@ type commandRegistry struct {
 	commands map[CommandType]func() Command
 }
 
-// NewCommandRegistry creates a new command registry
-func NewCommandRegistry() CommandRegistry {
+// newCommandRegistry creates a new command registry
+func newCommandRegistry() CommandRegistry {
 	return &commandRegistry{
 		log:      logger.WithName("command-registry"),
 		commands: make(map[CommandType]func() Command),
 	}
+}
+
+var Registry CommandRegistry
+
+func init() {
+	Registry = newCommandRegistry()
 }
 
 // RegisterCommand registers an command factory for a type. The factory is
@@ -60,10 +67,12 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) error {
 	defer r.mutex.Unlock()
 
 	if _, ok := r.commands[commandType]; ok {
-		r.log.Info("registering duplicate types", "commandType", commandType)
+		r.log.Info("attempt to register command already registered", "commandType", commandType)
 		return ErrCommandTypeAlreadyRegistered
 	}
 	r.commands[commandType] = factory
+
+	r.log.Info("command has been registered.", "commandType", commandType)
 
 	return nil
 }
@@ -84,6 +93,8 @@ func (r *commandRegistry) UnregisterCommand(commandType CommandType) error {
 		return ErrCommandNotRegistered
 	}
 	delete(r.commands, commandType)
+
+	r.log.Info("command has been unregistered.", "commandType", commandType)
 
 	return nil
 }

@@ -1,7 +1,7 @@
-package domain
+package domain_events
 
 import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 
 const (
-	UserRoleBinding events.AggregateType = "UserRoleBinding"
+	UserRoleAdded events.EventType = "UserRoleAdded"
 )
