@@ -110,7 +110,6 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		resendsLeft--
 
 		b.FlushConfirms() // Flush all previous publish confirmations
-
 		err := b.publishEvent(event)
 		if err != nil {
 			select {
@@ -344,6 +343,8 @@ func (b *rabbitEventBus) Close() error {
 
 	b.cancel()
 	b.isConnected = false
+
+	b.FlushConfirms() // Flush all previous publish confirmations
 
 	err := b.connection.Close()
 	if err != nil {
