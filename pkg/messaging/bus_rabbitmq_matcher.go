@@ -22,13 +22,13 @@ func (m *rabbitMatcher) Any() EventMatcher {
 
 // MatchEventType matches a specific event type, nil events never match.
 func (m *rabbitMatcher) MatchEventType(eventType events.EventType) EventMatcher {
-	m.eventType = string(eventType)
+	m.eventType = eventType.String()
 	return m
 }
 
 // MatchAggregateType matches a specific aggregate type, nil events never match.
 func (m *rabbitMatcher) MatchAggregateType(aggregateType events.AggregateType) EventMatcher {
-	m.aggregateType = string(aggregateType)
+	m.aggregateType = aggregateType.String()
 	return m
 }
 

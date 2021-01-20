@@ -69,7 +69,7 @@ var _ = Describe("Converters", func() {
 		Expect(q).ToNot(BeNil())
 		Expect(q.AggregateId).To(Equal(&aggregateId))
 
-		pf.ByAggregate = &api_es.EventFilter_AggregateType{AggregateType: wrapperspb.String(string(aggregateType))}
+		pf.ByAggregate = &api_es.EventFilter_AggregateType{AggregateType: wrapperspb.String(aggregateType.String())}
 		q, err = NewStoreQueryFromProto(pf)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(q).ToNot(BeNil())
@@ -118,10 +118,10 @@ var _ = Describe("Converters", func() {
 func checkProtoStorageEventEquality(pe *eventstore.Event, se events.Event) {
 	Expect(pe).ToNot(BeNil())
 	Expect(se).ToNot(BeNil())
-	Expect(pe.Type).To(Equal(string(se.EventType())))
+	Expect(pe.Type).To(Equal(se.EventType().String()))
 	Expect(pe.Timestamp.AsTime()).To(Equal(se.Timestamp()))
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
-	Expect(pe.AggregateType).To(Equal(string(se.AggregateType())))
+	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 
 	eventData := &anypb.Any{}

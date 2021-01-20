@@ -84,9 +84,9 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*storage.StoreQuer
 // NewProtoFromEvent converts events.Event to api_es.Event
 func NewProtoFromEvent(storeEvent events.Event) (*api_es.Event, error) {
 	ev := &api_es.Event{
-		Type:             string(storeEvent.EventType()),
+		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
-		AggregateType:    string(storeEvent.AggregateType()),
+		AggregateType:    storeEvent.AggregateType().String(),
 		AggregateId:      storeEvent.AggregateID().String(),
 		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
 	}
