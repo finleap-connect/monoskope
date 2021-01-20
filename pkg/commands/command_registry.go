@@ -19,6 +19,11 @@ var ErrCommandTypeAlreadyRegistered = errors.New("command type already registere
 // ErrCommandNotRegistered is when no command factory was registered.
 var ErrCommandNotRegistered = errors.New("command not registered")
 
+type CommandRegistry interface {
+	RegisterCommand(factory func() Command) error
+	UnregisterCommand(commandType CommandType) error
+}
+
 type commandRegistry struct {
 	log      logger.Logger
 	mutex    sync.RWMutex
@@ -26,7 +31,7 @@ type commandRegistry struct {
 }
 
 // NewCommandRegistry creates a new command registry
-func NewCommandRegistry() *commandRegistry {
+func NewCommandRegistry() CommandRegistry {
 	return &commandRegistry{
 		log:      logger.WithName("command-registry"),
 		commands: make(map[CommandType]func() Command),
