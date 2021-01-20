@@ -7,7 +7,7 @@ global: {}
 replicaCount: 1
 
 image:
-  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/eventstore
+  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/commandhandler
   pullPolicy: Always
   # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
