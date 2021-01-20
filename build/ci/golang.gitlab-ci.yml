@@ -38,7 +38,7 @@ test:golang:
   extends: .gobase-docker
   services:
     - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-    - gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq:3.8.9
+    - gitlab.figo.systems/platform/dependency_proxy/containers/rabbitmq:3.8.10-alpine
   script:
     - make go-ginkgo-get
     - make go-test
