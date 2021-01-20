@@ -16,11 +16,12 @@ import (
 
 // postgresEventStore implements an EventStore for PostgreSQL.
 type postgresEventStore struct {
-	log      logger.Logger
-	db       *pg.DB
-	conf     *postgresStoreConfig
-	isReady  bool
-	shutdown chan bool
+	log         logger.Logger
+	db          *pg.DB
+	conf        *postgresStoreConfig
+	isConnected bool
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 // eventRecord is the model for entries in the events table in the database.
@@ -101,30 +102,31 @@ func NewPostgresEventStore(config *postgresStoreConfig) (Store, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	s := &postgresEventStore{
-		log:      logger.WithName("postgres-store"),
-		conf:     config,
-		shutdown: make(chan bool),
+		log:    logger.WithName("postgres-store"),
+		conf:   config,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 	return s, nil
 }
 
 // Connect starts automatic reconnect with postgres db
-func (b *postgresEventStore) Connect(ctx context.Context) error {
-	go b.handleReconnect(ctx)
-	for {
+func (s *postgresEventStore) Connect(ctx context.Context) error {
+	go s.handleReconnect(ctx)
+	for !s.isConnected {
 		select {
-		case <-time.After(300 * time.Millisecond):
-			if b.isReady {
-				return nil
-			}
-		case <-b.shutdown:
+		case <-s.ctx.Done():
+			s.log.Info("Connection aborted because of shutdown.")
 			return ErrCouldNotConnect
 		case <-ctx.Done():
+			s.log.Info("Connection aborted because context deadline exceeded.")
 			return ErrCouldNotConnect
+		case <-time.After(300 * time.Millisecond):
 		}
 	}
+	return nil
 }
 
 // Save implements the Save method of the EventStore interface.
@@ -168,7 +170,7 @@ func (s *postgresEventStore) Save(ctx context.Context, events []events.Event) er
 
 	// Append events to the store.
 	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
-		if !s.isReady {
+		if !s.isConnected {
 			return ErrConnectionClosed
 		}
 		_, e = s.db.Model(&eventRecords).Insert()
@@ -224,7 +226,7 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]events.Event, error) {
-	if !s.isReady {
+	if !s.isConnected {
 		return nil, ErrConnectionClosed
 	}
 
@@ -258,13 +260,12 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 func (s *postgresEventStore) Close() error {
 	s.log.Info("Shutting down...")
 
-	s.isReady = false
-	close(s.shutdown)
-
+	s.cancel()
 	err := s.db.Close()
 	if err != nil {
 		return err
 	}
+
 	s.log.Info("Shutdown complete.")
 
 	return nil
@@ -309,7 +310,7 @@ func (s *postgresEventStore) clear(ctx context.Context) error {
 // init will initialize db
 func (s *postgresEventStore) init(ctx context.Context, db *pg.DB) error {
 	err := s.createTables(ctx, db)
-	s.isReady = err == nil
+	s.isConnected = err == nil
 	if err != nil {
 		return err
 	}
@@ -324,7 +325,7 @@ func (s *postgresEventStore) handleReInit(ctx context.Context, db *pg.DB) error 
 			s.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
 			select {
-			case <-s.shutdown:
+			case <-s.ctx.Done():
 				s.log.Info("Aborting init. Shutting down...")
 				return ErrCouldNotConnect
 			case <-time.After(s.conf.ReInitDelay):
@@ -354,17 +355,17 @@ func (s *postgresEventStore) connect(ctx context.Context) (*pg.DB, error) {
 // notifyConnClose, and then continuously attempt to reconnect.
 func (s *postgresEventStore) handleReconnect(ctx context.Context) {
 	for {
-		s.isReady = false
+		s.isConnected = false
 		db, err := s.connect(ctx)
 		if err != nil {
 			s.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
 			select {
 			case <-ctx.Done():
-				s.log.Info("Automatic reconnect stopped.")
+				s.log.Info("Automatic reconnect stopped. Context deadline exceeded.")
 				return
-			case <-s.shutdown:
-				s.log.Info("Automatic reconnect stopped.")
+			case <-s.ctx.Done():
+				s.log.Info("Automatic reconnect stopped. Shutdown.")
 				return
 			case <-time.After(s.conf.ReconnectDelay):
 			}
@@ -377,8 +378,9 @@ func (s *postgresEventStore) handleReconnect(ctx context.Context) {
 		} else {
 			for {
 				if err := db.Ping(ctx); err != nil {
-					s.isReady = false
+					s.isConnected = false
 					s.log.Info("Connection closed. Reconnecting...")
+					break
 				}
 				time.Sleep(s.conf.ReconnectDelay)
 			}
