@@ -151,7 +151,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 				Err: ErrCouldNotPublishEvent,
 			}
 		case <-time.After(b.conf.ResendDelay):
-			b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
+			b.log.Info("Publish failed. Wasn't confirmed within timeout.")
 			return &messageBusError{
 				Err: ErrCouldNotPublishEvent,
 			}
