@@ -8,12 +8,7 @@ import (
 )
 
 // EventData is any additional data for an event.
-type EventData string
-
-// String returns the string representation of EventData.
-func (t EventData) String() string {
-	return string(t)
-}
+type EventData []byte
 
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
