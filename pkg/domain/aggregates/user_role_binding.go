@@ -1,7 +1,7 @@
 package domain_aggregates
 
-import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
+import evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 
 const (
-	UserRoleBinding events.AggregateType = "UserRoleBinding"
+	UserRoleBinding evs.AggregateType = "UserRoleBinding"
 )

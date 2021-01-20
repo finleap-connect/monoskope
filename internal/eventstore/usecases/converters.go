@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,8 +22,8 @@ var ErrCouldNotUnmarshalEventData = errors.New("could not unmarshal event data")
 // ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
 var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
-// NewEventFromProto converts api_es.Event to events.Event
-func NewEventFromProto(protoEvent *api_es.Event) (events.Event, error) {
+// NewEventFromProto converts api_es.Event to evs.Event
+func NewEventFromProto(protoEvent *api_es.Event) (evs.Event, error) {
 	jsonData, err := protojson.Marshal(protoEvent.Data)
 	if err != nil {
 		return nil, ErrCouldNotMarshalEventData
@@ -34,11 +34,11 @@ func NewEventFromProto(protoEvent *api_es.Event) (events.Event, error) {
 		return nil, ErrCouldNotParseAggregateId
 	}
 
-	ev := events.NewEvent(
-		events.EventType(protoEvent.GetType()),
-		events.EventData(jsonData),
+	ev := evs.NewEvent(
+		evs.EventType(protoEvent.GetType()),
+		evs.EventData(jsonData),
 		protoEvent.Timestamp.AsTime(),
-		events.AggregateType(protoEvent.GetAggregateType()),
+		evs.AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
 		protoEvent.GetAggregateVersion().GetValue())
 	return ev, nil
@@ -56,7 +56,7 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*storage.StoreQuer
 		storeQuery.AggregateId = &aId
 	}
 	if val, ok := protoFilter.GetByAggregate().(*api_es.EventFilter_AggregateType); ok {
-		aType := events.AggregateType(val.AggregateType.GetValue())
+		aType := evs.AggregateType(val.AggregateType.GetValue())
 		storeQuery.AggregateType = &aType
 	}
 
@@ -81,8 +81,8 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*storage.StoreQuer
 	return storeQuery, nil
 }
 
-// NewProtoFromEvent converts events.Event to api_es.Event
-func NewProtoFromEvent(storeEvent events.Event) (*api_es.Event, error) {
+// NewProtoFromEvent converts evs.Event to api_es.Event
+func NewProtoFromEvent(storeEvent evs.Event) (*api_es.Event, error) {
 	ev := &api_es.Event{
 		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),

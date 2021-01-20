@@ -7,9 +7,9 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

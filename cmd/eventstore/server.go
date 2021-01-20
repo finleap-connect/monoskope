@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
 )

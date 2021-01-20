@@ -1,7 +1,7 @@
 package domain_events
 
-import "gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
+import evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 
 const (
-	UserRoleAdded events.EventType = "UserRoleAdded"
+	UserRoleAdded evs.EventType = "UserRoleAdded"
 )
