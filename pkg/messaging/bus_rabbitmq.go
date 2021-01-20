@@ -20,9 +20,9 @@ type rabbitEventBus struct {
 	channel         *amqp.Channel
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
-	notifyConfirm   chan amqp.Confirmation
+	notifyPublish   chan amqp.Confirmation
 	isPublisher     bool
-	isReady         bool
+	isConnected     bool
 	ctx             context.Context
 	cancel          context.CancelFunc
 }
@@ -66,7 +66,7 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (EventBusConsumer, er
 // Connect starts automatic reconnect with rabbitmq
 func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 	go b.handleReconnect(b.conf.Url)
-	for !b.isReady {
+	for !b.isConnected {
 		select {
 		case <-b.ctx.Done():
 			b.log.Info("Connection aborted because of shutdown.")
@@ -91,7 +91,6 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 	for resendsLeft > 0 {
 		resendsLeft--
 
-		b.FlushConfirms()
 		err := b.publishEvent(event)
 		if err != nil {
 			select {
@@ -113,7 +112,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 		}
 
 		select {
-		case confirmed := <-b.notifyConfirm:
+		case confirmed := <-b.notifyPublish:
 			if confirmed.Ack {
 				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
@@ -147,7 +146,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // No guarantees are provided for whether the server will
 // recieve the message.
 func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
-	if !b.isReady {
+	if !b.isConnected {
 		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
@@ -183,8 +182,6 @@ func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
 		})
 
 	if err != nil {
-		_ = b.channel.Close()
-		b.isReady = false
 		b.log.Error(err, ErrCouldNotPublishEvent.Error())
 		return &messageBusError{
 			Err:     ErrCouldNotPublishEvent,
@@ -243,7 +240,7 @@ func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver EventReceiver
 
 // addReceiver creates a queue along with bindings for the given matchers
 func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMatcher) *messageBusError {
-	if !b.isReady {
+	if !b.isConnected {
 		return &messageBusError{
 			Err: ErrMessageNotConnected,
 		}
@@ -305,7 +302,7 @@ func (b *rabbitEventBus) addReceiver(receiver EventReceiver, matchers ...EventMa
 			BaseErr: err,
 		}
 	}
-	go b.handle(q.Name, msgs, receiver)
+	go b.handleIncomingMessages(q.Name, msgs, receiver)
 
 	return nil
 }
@@ -323,7 +320,7 @@ func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutting down...")
 
 	b.cancel()
-	b.isReady = false
+	b.isConnected = false
 
 	err := b.connection.Close()
 	if err != nil {
@@ -335,20 +332,22 @@ func (b *rabbitEventBus) Close() error {
 	return nil
 }
 
-// FlushConfirms removes all previous confirmations pending processing.
-func (b *rabbitEventBus) FlushConfirms() {
-	for {
-		if b.connection.IsClosed() {
-			return
-		}
-
-		select {
-		case <-b.notifyConfirm: // Some weird use case where the Channel is being flooded with confirms after connection disrupt
-			return
-		default:
-			return
-		}
+func (b *rabbitEventBus) channelClosed() {
+	b.isConnected = false
+	if b.channel != nil {
+		b.log.Info("Closing previous channel...")
+		_ = b.channel.Close()
 	}
+	b.channel = nil
+}
+
+func (b *rabbitEventBus) connectionClosed() {
+	b.isConnected = false
+	if b.connection != nil {
+		b.log.Info("Closing previous connection...")
+		_ = b.connection.Close()
+	}
+	b.connection = nil
 }
 
 // changeChannel takes a new channel to the queue,
@@ -358,24 +357,17 @@ func (b *rabbitEventBus) changeChannel(channel *amqp.Channel) {
 	b.notifyChanClose = b.channel.NotifyClose(make(chan *amqp.Error))
 
 	if b.isPublisher {
-		b.notifyConfirm = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+		b.notifyPublish = b.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	}
 
-	b.isReady = true
+	b.isConnected = true
 }
 
-// init will initialize channel & declare queue
+// init will initialize channel & declare the exchange
 func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
-	}
-
-	if !b.isPublisher {
-		// Indicate we only want 1 message to acknowledge at a time.
-		if err := ch.Qos(1, 0, true); err != nil {
-			return err
-		}
 	}
 
 	if b.isPublisher {
@@ -383,6 +375,9 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 		if err = ch.Confirm(false); err != nil {
 			return err
 		}
+
+		// Declare the exchange, if it exists this doesn't do anything.
+		// If the exchange exists but is setup differently we will get an error here.
 		err = ch.ExchangeDeclare(
 			b.conf.ExchangeName, // name
 			amqp.ExchangeTopic,  // type
@@ -393,6 +388,11 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 			nil,                 // arguments
 		)
 		if err != nil {
+			return err
+		}
+	} else {
+		// Indicate we only want 1 message to acknowledge at a time.
+		if err := ch.Qos(1, 0, true); err != nil {
 			return err
 		}
 	}
@@ -423,7 +423,7 @@ func (b *rabbitEventBus) connect(addr string) (*amqp.Connection, error) {
 // notifyConnClose, and then continuously attempt to reconnect.
 func (b *rabbitEventBus) handleReconnect(addr string) {
 	for {
-		b.isReady = false
+		b.isConnected = false
 		conn, err := b.connect(addr)
 		if err != nil {
 			b.log.Info("Failed to connect. Retrying...", "error", err.Error())
@@ -436,27 +436,33 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			}
 		}
 
-		if err = b.init(conn); err != nil {
-			b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
+		for {
+			b.isConnected = false
+			if err = b.init(conn); err != nil {
+				b.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
+
+				select {
+				case <-b.ctx.Done():
+					b.log.Info("Aborting init. Shutting down...")
+					return
+				case <-time.After(b.conf.ReInitDelay):
+					continue
+				}
+			}
 
 			select {
-			case <-b.ctx.Done():
-				b.log.Info("Aborting init. Shutting down...")
+			case <-b.notifyConnClose:
+				b.log.Info("Connection closed. Reconnecting...")
+				b.channelClosed()
+				go b.handleReconnect(addr)
 				return
-			case <-time.After(b.conf.ReInitDelay):
+			case <-b.notifyChanClose:
+				b.log.Info("Channel closed. Re-running init...")
+				b.connectionClosed()
 				continue
+			case <-b.ctx.Done():
+				return
 			}
-		}
-
-		select {
-		case <-b.notifyConnClose:
-			b.log.Info("Connection closed. Reconnecting...")
-			continue
-		case <-b.notifyChanClose:
-			b.log.Info("Channel closed. Re-running init...")
-			continue
-		case <-b.ctx.Done():
-			return
 		}
 	}
 }
@@ -466,8 +472,8 @@ func (b *rabbitEventBus) generateRoutingKey(event storage.Event) string {
 	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
-// handle handles the routing of the received messages and ack/nack based on receiver result
-func (b *rabbitEventBus) handle(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
+// handleIncomingMessages handles the routing of the received messages and ack/nack based on receiver result
+func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for {
 		select {
