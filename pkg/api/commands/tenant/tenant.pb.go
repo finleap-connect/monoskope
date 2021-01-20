@@ -320,55 +320,6 @@ func (x *DeleteTenantCommand) GetId() string {
 	return ""
 }
 
-// Request to list all tenants
-type ListTenantsCommand struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Include tenants which have previously been deleted
-	IncludeDeleted bool `protobuf:"varint,1,opt,name=include_deleted,json=includeDeleted,proto3" json:"include_deleted,omitempty"`
-}
-
-func (x *ListTenantsCommand) Reset() {
-	*x = ListTenantsCommand{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_commands_tenant_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListTenantsCommand) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTenantsCommand) ProtoMessage() {}
-
-func (x *ListTenantsCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_api_commands_tenant_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTenantsCommand.ProtoReflect.Descriptor instead.
-func (*ListTenantsCommand) Descriptor() ([]byte, []int) {
-	return file_api_commands_tenant_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListTenantsCommand) GetIncludeDeleted() bool {
-	if x != nil {
-		return x.IncludeDeleted
-	}
-	return false
-}
-
 type UpdateTenantCommand_Update struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -381,7 +332,7 @@ type UpdateTenantCommand_Update struct {
 func (x *UpdateTenantCommand_Update) Reset() {
 	*x = UpdateTenantCommand_Update{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_commands_tenant_proto_msgTypes[6]
+		mi := &file_api_commands_tenant_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -394,7 +345,7 @@ func (x *UpdateTenantCommand_Update) String() string {
 func (*UpdateTenantCommand_Update) ProtoMessage() {}
 
 func (x *UpdateTenantCommand_Update) ProtoReflect() protoreflect.Message {
-	mi := &file_api_commands_tenant_proto_msgTypes[6]
+	mi := &file_api_commands_tenant_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,16 +400,12 @@ var file_api_commands_tenant_proto_rawDesc = []byte{
 	0x67, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x25, 0x0a, 0x13,
 	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x61, 0x6e, 0x74, 0x43, 0x6f, 0x6d, 0x6d,
 	0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x02, 0x69, 0x64, 0x22, 0x3d, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x65, 0x6e, 0x61, 0x6e,
-	0x74, 0x73, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x27, 0x0a, 0x0f, 0x69, 0x6e, 0x63,
-	0x6c, 0x75, 0x64, 0x65, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x0e, 0x69, 0x6e, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x64, 0x42, 0x4a, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x66, 0x69, 0x67,
-	0x6f, 0x2e, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f,
-	0x72, 0x6d, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x6d, 0x6f, 0x6e,
-	0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x63,
-	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x2f, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x74, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x02, 0x69, 0x64, 0x42, 0x4a, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x66, 0x69,
+	0x67, 0x6f, 0x2e, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66,
+	0x6f, 0x72, 0x6d, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x6d, 0x6f,
+	0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x2f, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x74, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -473,20 +420,19 @@ func file_api_commands_tenant_proto_rawDescGZIP() []byte {
 	return file_api_commands_tenant_proto_rawDescData
 }
 
-var file_api_commands_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_commands_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_commands_tenant_proto_goTypes = []interface{}{
 	(*CreateTenantCommandResult)(nil),  // 0: commands.tenant.CreateTenantCommandResult
 	(*CreateTenantCommand)(nil),        // 1: commands.tenant.CreateTenantCommand
 	(*GetTenantCommand)(nil),           // 2: commands.tenant.GetTenantCommand
 	(*UpdateTenantCommand)(nil),        // 3: commands.tenant.UpdateTenantCommand
 	(*DeleteTenantCommand)(nil),        // 4: commands.tenant.DeleteTenantCommand
-	(*ListTenantsCommand)(nil),         // 5: commands.tenant.ListTenantsCommand
-	(*UpdateTenantCommand_Update)(nil), // 6: commands.tenant.UpdateTenantCommand.Update
-	(*wrappers.StringValue)(nil),       // 7: google.protobuf.StringValue
+	(*UpdateTenantCommand_Update)(nil), // 5: commands.tenant.UpdateTenantCommand.Update
+	(*wrappers.StringValue)(nil),       // 6: google.protobuf.StringValue
 }
 var file_api_commands_tenant_proto_depIdxs = []int32{
-	6, // 0: commands.tenant.UpdateTenantCommand.update:type_name -> commands.tenant.UpdateTenantCommand.Update
-	7, // 1: commands.tenant.UpdateTenantCommand.Update.name:type_name -> google.protobuf.StringValue
+	5, // 0: commands.tenant.UpdateTenantCommand.update:type_name -> commands.tenant.UpdateTenantCommand.Update
+	6, // 1: commands.tenant.UpdateTenantCommand.Update.name:type_name -> google.protobuf.StringValue
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -561,18 +507,6 @@ func file_api_commands_tenant_proto_init() {
 			}
 		}
 		file_api_commands_tenant_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListTenantsCommand); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_commands_tenant_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateTenantCommand_Update); i {
 			case 0:
 				return &v.state
@@ -595,7 +529,7 @@ func file_api_commands_tenant_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_commands_tenant_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
