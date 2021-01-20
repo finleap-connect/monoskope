@@ -85,11 +85,31 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 	return nil
 }
 
+// FlushConfirms removes all previous confirmations pending processing.
+func (b *rabbitEventBus) FlushConfirms() {
+
+	for {
+		if b.connection.IsClosed() {
+			return
+		}
+
+		// Some weird use case where the Channel is being flooded with confirms after connection disrupt
+		select {
+		case <-b.notifyPublish:
+			return // did not used to be a return, leaving code as is for future revisit
+		default:
+			return
+		}
+	}
+}
+
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
+
+		b.FlushConfirms() // Flush all previous publish confirmations
 
 		err := b.publishEvent(event)
 		if err != nil {
@@ -132,6 +152,9 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 			}
 		case <-time.After(b.conf.ResendDelay):
 			b.log.Info("Publish wasn't confirmed within timeout. Retrying...", "resends left", resendsLeft)
+			return &messageBusError{
+				Err: ErrCouldNotPublishEvent,
+			}
 		}
 	}
 
