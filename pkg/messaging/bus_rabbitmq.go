@@ -323,7 +323,7 @@ func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutting down...")
 
 	b.cancel()
-
+	go b.flushConfirms()
 	err := b.connection.Close()
 	if err != nil {
 		return err
@@ -466,6 +466,12 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 				return
 			}
 		}
+	}
+}
+
+func (b *rabbitEventBus) flushConfirms() {
+	for range b.notifyPublish {
+		// read channel until closed
 	}
 }
 
