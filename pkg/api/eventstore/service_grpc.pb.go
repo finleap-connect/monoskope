@@ -12,6 +12,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // EventStoreClient is the client API for EventStore service.
@@ -33,7 +34,7 @@ func NewEventStoreClient(cc grpc.ClientConnInterface) EventStoreClient {
 }
 
 func (c *eventStoreClient) Store(ctx context.Context, opts ...grpc.CallOption) (EventStore_StoreClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_EventStore_serviceDesc.Streams[0], "/eventstore.EventStore/Store", opts...)
+	stream, err := c.cc.NewStream(ctx, &EventStore_ServiceDesc.Streams[0], "/eventstore.EventStore/Store", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func (x *eventStoreStoreClient) CloseAndRecv() (*empty.Empty, error) {
 }
 
 func (c *eventStoreClient) Retrieve(ctx context.Context, in *EventFilter, opts ...grpc.CallOption) (EventStore_RetrieveClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_EventStore_serviceDesc.Streams[1], "/eventstore.EventStore/Retrieve", opts...)
+	stream, err := c.cc.NewStream(ctx, &EventStore_ServiceDesc.Streams[1], "/eventstore.EventStore/Retrieve", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +130,7 @@ type UnsafeEventStoreServer interface {
 }
 
 func RegisterEventStoreServer(s grpc.ServiceRegistrar, srv EventStoreServer) {
-	s.RegisterService(&_EventStore_serviceDesc, srv)
+	s.RegisterService(&EventStore_ServiceDesc, srv)
 }
 
 func _EventStore_Store_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -179,7 +180,10 @@ func (x *eventStoreRetrieveServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-var _EventStore_serviceDesc = grpc.ServiceDesc{
+// EventStore_ServiceDesc is the grpc.ServiceDesc for EventStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var EventStore_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "eventstore.EventStore",
 	HandlerType: (*EventStoreServer)(nil),
 	Methods:     []grpc.MethodDesc{},

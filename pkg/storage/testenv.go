@@ -2,14 +2,15 @@ package storage
 
 import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 )
 
 const (
-	testEventCreated      EventType     = "TestEvent:Created"
-	testEventChanged      EventType     = "TestEvent:Changed"
-	testEventDeleted      EventType     = "TestEvent:Deleted"
-	testAggregate         AggregateType = "TestAggregate"
-	testAggregateExtended AggregateType = "TestAggregateExtended"
+	testEventCreated      events.EventType     = "TestEvent:Created"
+	testEventChanged      events.EventType     = "TestEvent:Changed"
+	testEventDeleted      events.EventType     = "TestEvent:Deleted"
+	testAggregate         events.AggregateType = "TestAggregate"
+	testAggregateExtended events.AggregateType = "TestAggregateExtended"
 )
 
 type testEventData struct {

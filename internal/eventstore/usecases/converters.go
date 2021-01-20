@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -21,8 +22,8 @@ var ErrCouldNotUnmarshalEventData = errors.New("could not unmarshal event data")
 // ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
 var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
-// NewEventFromProto converts api_es.Event to storage.Event
-func NewEventFromProto(protoEvent *api_es.Event) (storage.Event, error) {
+// NewEventFromProto converts api_es.Event to events.Event
+func NewEventFromProto(protoEvent *api_es.Event) (events.Event, error) {
 	jsonData, err := protojson.Marshal(protoEvent.Data)
 	if err != nil {
 		return nil, ErrCouldNotMarshalEventData
@@ -33,11 +34,11 @@ func NewEventFromProto(protoEvent *api_es.Event) (storage.Event, error) {
 		return nil, ErrCouldNotParseAggregateId
 	}
 
-	ev := storage.NewEvent(
-		storage.EventType(protoEvent.GetType()),
-		storage.EventData(jsonData),
+	ev := events.NewEvent(
+		events.EventType(protoEvent.GetType()),
+		events.EventData(jsonData),
 		protoEvent.Timestamp.AsTime(),
-		storage.AggregateType(protoEvent.GetAggregateType()),
+		events.AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
 		protoEvent.GetAggregateVersion().GetValue())
 	return ev, nil
@@ -55,7 +56,7 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*storage.StoreQuer
 		storeQuery.AggregateId = &aId
 	}
 	if val, ok := protoFilter.GetByAggregate().(*api_es.EventFilter_AggregateType); ok {
-		aType := storage.AggregateType(val.AggregateType.GetValue())
+		aType := events.AggregateType(val.AggregateType.GetValue())
 		storeQuery.AggregateType = &aType
 	}
 
@@ -80,8 +81,8 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*storage.StoreQuer
 	return storeQuery, nil
 }
 
-// NewProtoFromEvent converts storage.Event to api_es.Event
-func NewProtoFromEvent(storeEvent storage.Event) (*api_es.Event, error) {
+// NewProtoFromEvent converts events.Event to api_es.Event
+func NewProtoFromEvent(storeEvent events.Event) (*api_es.Event, error) {
 	ev := &api_es.Event{
 		Type:             string(storeEvent.EventType()),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),

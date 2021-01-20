@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
@@ -19,24 +19,24 @@ var _ = Describe("messaging/rabbitmq", func() {
 	eventCounter := 0
 	testCount := 0
 
-	createEvent := func() storage.Event {
-		eventType := storage.EventType("TestEvent")
-		aggregateType := storage.AggregateType("TestAggregate")
-		data := storage.EventData(fmt.Sprintf("test-%v", eventCounter))
-		event := storage.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
+	createEvent := func() events.Event {
+		eventType := events.EventType("TestEvent")
+		aggregateType := events.AggregateType("TestAggregate")
+		data := events.EventData(fmt.Sprintf("test-%v", eventCounter))
+		event := events.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
 		eventCounter++
 		return event
 	}
 
-	publishEvent := func(event storage.Event) {
+	publishEvent := func(event events.Event) {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	createReceiver := func(event storage.Event, matchers ...EventMatcher) {
-		receiver := func(e storage.Event) (err error) {
+	createReceiver := func(event events.Event, matchers ...EventMatcher) {
+		receiver := func(e events.Event) (err error) {
 			defer ginkgo.GinkgoRecover()
 			env.Log.Info("Received event.")
 			Expect(e).ToNot(BeNil())

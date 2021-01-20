@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -39,11 +39,11 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		se := storage.NewEvent(
-			storage.EventType("TestType"),
-			storage.EventData("{\"@type\":\"type.googleapis.com/eventstore.TestEventData\",\"hello\":\"world\"}"),
+		se := events.NewEvent(
+			events.EventType("TestType"),
+			events.EventData("{\"@type\":\"type.googleapis.com/eventstore.TestEventData\",\"hello\":\"world\"}"),
 			timestamp,
-			storage.AggregateType("TestAggregateType"),
+			events.AggregateType("TestAggregateType"),
 			aggregateId,
 			0)
 		pe, err := NewProtoFromEvent(se)
@@ -53,7 +53,7 @@ var _ = Describe("Converters", func() {
 	})
 	It("can convert to storage query from proto filter", func() {
 		aggregateId := uuid.New()
-		aggregateType := storage.AggregateType("TestAggregateType")
+		aggregateType := events.AggregateType("TestAggregateType")
 		maxTimestamp := time.Now().UTC()
 		minTimestamp := maxTimestamp.Add(-1 * time.Hour)
 
@@ -101,11 +101,11 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		se := storage.NewEvent(
-			storage.EventType("TestType"),
-			storage.EventData("{\"hello\":\"world\"}"), // illegal event data, missing type
+		se := events.NewEvent(
+			events.EventType("TestType"),
+			events.EventData("{\"hello\":\"world\"}"), // illegal event data, missing type
 			timestamp,
-			storage.AggregateType("TestAggregateType"),
+			events.AggregateType("TestAggregateType"),
 			aggregateId,
 			0)
 		pe, err := NewProtoFromEvent(se)
@@ -115,7 +115,7 @@ var _ = Describe("Converters", func() {
 	})
 })
 
-func checkProtoStorageEventEquality(pe *eventstore.Event, se storage.Event) {
+func checkProtoStorageEventEquality(pe *eventstore.Event, se events.Event) {
 	Expect(pe).ToNot(BeNil())
 	Expect(se).ToNot(BeNil())
 	Expect(pe.Type).To(Equal(string(se.EventType())))

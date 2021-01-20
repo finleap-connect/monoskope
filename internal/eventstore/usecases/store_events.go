@@ -4,6 +4,7 @@ import (
 	"context"
 
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
@@ -34,7 +35,7 @@ func NewStoreEventsUseCase(ctx context.Context, store storage.Store, bus messagi
 
 func (u *StoreEventsUseCase) Run() error {
 	// Convert from proto events to storage events
-	storageEvents := make([]storage.Event, 0)
+	var storageEvents []events.Event
 	for _, v := range u.events {
 		ev, err := NewEventFromProto(v)
 		if err != nil {

@@ -2,16 +2,18 @@ package storage
 
 import (
 	"context"
+
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 )
 
 // InMemoryEventStore implements an EventStore in memory.
 type InMemoryEventStore struct {
-	events []Event
+	events []events.Event
 }
 
 func NewInMemoryEventStore() Store {
 	s := &InMemoryEventStore{
-		events: make([]Event, 0),
+		events: make([]events.Event, 0),
 	}
 	return s
 }
@@ -22,7 +24,7 @@ func (b *InMemoryEventStore) Connect(ctx context.Context) error {
 }
 
 // Save implements the Save method of the EventStore interface.
-func (s *InMemoryEventStore) Save(ctx context.Context, events []Event) error {
+func (s *InMemoryEventStore) Save(ctx context.Context, events []events.Event) error {
 	if len(events) == 0 {
 		return eventStoreError{
 			Err: ErrNoEventsToAppend,
@@ -67,8 +69,8 @@ func (s *InMemoryEventStore) Save(ctx context.Context, events []Event) error {
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *InMemoryEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
-	var events []Event
+func (s *InMemoryEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]events.Event, error) {
+	var events []events.Event
 
 	for _, ev := range s.events {
 		if storeQuery.AggregateId != nil && ev.AggregateID() != *storeQuery.AggregateId {
@@ -105,5 +107,5 @@ func (s *InMemoryEventStore) Close() error {
 
 // Clear clears the event storage. This is only for testing purposes.
 func (s *InMemoryEventStore) clear(ctx context.Context) {
-	s.events = make([]Event, 0)
+	s.events = make([]events.Event, 0)
 }

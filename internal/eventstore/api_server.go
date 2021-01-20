@@ -68,7 +68,7 @@ func (s *apiServer) Shutdown() {
 
 // Store implements the API method for storing events
 func (s *apiServer) Store(stream api.EventStore_StoreServer) error {
-	eventStream := make([]*api.Event, 0)
+	var eventStream []*api.Event
 	for {
 		// Read next event
 		event, err := stream.Recv()

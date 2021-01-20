@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 )
 
 var _ = Describe("storage/inmemory", func() {
@@ -24,18 +25,18 @@ var _ = Describe("storage/inmemory", func() {
 		Expect(es).ToNot(BeNil())
 		return es.(*InMemoryEventStore)
 	}
-	createTestEventData := func(something string) EventData {
+	createTestEventData := func(something string) events.EventData {
 		bytes, err := json.Marshal(&testEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
-		return EventData(bytes)
+		return events.EventData(bytes)
 	}
-	createTestEvents := func() []Event {
+	createTestEvents := func() []events.Event {
 		aggregateId := uuid.New()
 
-		return []Event{
-			NewEvent(EventType(testEventCreated), createTestEventData("create"), now(), AggregateType(testAggregate), aggregateId, 0),
-			NewEvent(EventType(testEventChanged), createTestEventData("change"), now(), AggregateType(testAggregate), aggregateId, 1),
-			NewEvent(EventType(testEventDeleted), createTestEventData("delete"), now(), AggregateType(testAggregate), aggregateId, 2),
+		return []events.Event{
+			events.NewEvent(events.EventType(testEventCreated), createTestEventData("create"), now(), events.AggregateType(testAggregate), aggregateId, 0),
+			events.NewEvent(events.EventType(testEventChanged), createTestEventData("change"), now(), events.AggregateType(testAggregate), aggregateId, 1),
+			events.NewEvent(events.EventType(testEventDeleted), createTestEventData("delete"), now(), events.AggregateType(testAggregate), aggregateId, 2),
 		}
 	}
 
@@ -54,9 +55,9 @@ var _ = Describe("storage/inmemory", func() {
 		defer clearInMemoryEs(es)
 
 		aggregateId := uuid.New()
-		err := es.Save(ctx, []Event{
-			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
+		err := es.Save(ctx, []events.Event{
+			events.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			events.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(eventStoreError{
@@ -68,9 +69,9 @@ var _ = Describe("storage/inmemory", func() {
 		defer clearInMemoryEs(es)
 
 		aggregateId := uuid.New()
-		err := es.Save(ctx, []Event{
-			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
+		err := es.Save(ctx, []events.Event{
+			events.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			events.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(eventStoreError{
@@ -82,14 +83,14 @@ var _ = Describe("storage/inmemory", func() {
 		defer clearInMemoryEs(es)
 
 		aggregateId := uuid.New()
-		err := es.Save(ctx, []Event{
-			NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
+		err := es.Save(ctx, []events.Event{
+			events.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			events.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = es.Save(ctx, []Event{
-			NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
+		err = es.Save(ctx, []events.Event{
+			events.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		esErr := UnwrapEventStoreError(err)
@@ -124,18 +125,18 @@ var _ = Describe("storage/inmemory", func() {
 		es := createInMemoryTestEventStore()
 		defer clearInMemoryEs(es)
 
-		events := createTestEvents()
-		err := es.Save(ctx, events)
+		ev := createTestEvents()
+		err := es.Save(ctx, ev)
 		Expect(err).ToNot(HaveOccurred())
 
-		aggregateType := AggregateType(testAggregate)
+		aggregateType := events.AggregateType(testAggregate)
 		storeEvents, err := es.Load(ctx, &StoreQuery{
 			AggregateType: &aggregateType,
 		})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
-		Expect(len(storeEvents)).To(BeNumerically("==", len(events)))
+		Expect(len(storeEvents)).To(BeNumerically("==", len(ev)))
 	})
 	It("can filter events to load from the store by aggregate version", func() {
 		es := createInMemoryTestEventStore()

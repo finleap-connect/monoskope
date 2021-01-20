@@ -10,6 +10,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -26,14 +27,14 @@ type postgresEventStore struct {
 type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
-	EventID          uuid.UUID       `pg:"event_id,type:uuid,pk"`
-	EventType        EventType       `pg:"event_type,type:varchar(250)"`
-	AggregateID      uuid.UUID       `pg:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType    AggregateType   `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
-	AggregateVersion uint64          `pg:"aggregate_version,unique:aggregate"`
-	Timestamp        time.Time       `pg:""`
-	Context          json.RawMessage `pg:"context,type:jsonb"`
-	RawData          json.RawMessage `pg:"data,type:jsonb"`
+	EventID          uuid.UUID            `pg:"event_id,type:uuid,pk"`
+	EventType        events.EventType     `pg:"event_type,type:varchar(250)"`
+	AggregateID      uuid.UUID            `pg:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType    events.AggregateType `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
+	AggregateVersion uint64               `pg:"aggregate_version,unique:aggregate"`
+	Timestamp        time.Time            `pg:""`
+	Context          json.RawMessage      `pg:"context,type:jsonb"`
+	RawData          json.RawMessage      `pg:"data,type:jsonb"`
 }
 
 var models []interface{}
@@ -63,7 +64,7 @@ func (s *postgresEventStore) createTables(ctx context.Context, db *pg.DB) error 
 }
 
 // newEventRecord returns a new EventRecord for an event.
-func (s *postgresEventStore) newEventRecord(ctx context.Context, event Event) (*eventRecord, error) {
+func (s *postgresEventStore) newEventRecord(ctx context.Context, event events.Event) (*eventRecord, error) {
 	// Marshal event data if there is any.
 	eventData, err := json.Marshal(event.Data())
 	if err != nil {
@@ -127,7 +128,7 @@ func (b *postgresEventStore) Connect(ctx context.Context) error {
 }
 
 // Save implements the Save method of the EventStore interface.
-func (s *postgresEventStore) Save(ctx context.Context, events []Event) error {
+func (s *postgresEventStore) Save(ctx context.Context, events []events.Event) error {
 	if len(events) == 0 {
 		return eventStoreError{
 			Err: ErrNoEventsToAppend,
@@ -222,12 +223,12 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]events.Event, error) {
 	if !s.isReady {
 		return nil, ErrConnectionClosed
 	}
 
-	var events []Event
+	var events []events.Event
 
 	// Basic query to query all events
 	dbQuery := s.db.
@@ -391,13 +392,13 @@ type pgEvent struct {
 }
 
 // EventType implements the EventType method of the Event interface.
-func (e pgEvent) EventType() EventType {
+func (e pgEvent) EventType() events.EventType {
 	return e.eventRecord.EventType
 }
 
 // Data implements the Data method of the Event interface.
-func (e pgEvent) Data() EventData {
-	return EventData(e.RawData)
+func (e pgEvent) Data() events.EventData {
+	return events.EventData(e.RawData)
 }
 
 // Timestamp implements the Timestamp method of the Event interface.
@@ -406,7 +407,7 @@ func (e pgEvent) Timestamp() time.Time {
 }
 
 // AggregateType implements the AggregateType method of the Event interface.
-func (e pgEvent) AggregateType() AggregateType {
+func (e pgEvent) AggregateType() events.AggregateType {
 	return e.eventRecord.AggregateType
 }
 

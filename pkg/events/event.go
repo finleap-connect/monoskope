@@ -1,4 +1,4 @@
-package storage
+package events
 
 import (
 	"fmt"
@@ -10,11 +10,26 @@ import (
 // EventData is any additional data for an event.
 type EventData string
 
+// String returns the string representation of EventData.
+func (t EventData) String() string {
+	return string(t)
+}
+
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
 
+// String returns the string representation of an EventType.
+func (t EventType) String() string {
+	return string(t)
+}
+
 // EventType is the type of an event, used as its unique identifier.
 type AggregateType string
+
+// String returns the string representation of an AggregateType.
+func (t AggregateType) String() string {
+	return string(t)
+}
 
 // Event describes anything that has happened in the system.
 // An event type name should be in past tense and contain the intent
