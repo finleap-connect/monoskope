@@ -85,31 +85,12 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 	return nil
 }
 
-// FlushConfirms removes all previous confirmations pending processing.
-func (b *rabbitEventBus) FlushConfirms() {
-
-	for {
-		if b.connection.IsClosed() {
-			return
-		}
-
-		// Some weird use case where the Channel is being flooded with confirms after connection disrupt
-		select {
-		case <-b.notifyPublish:
-			return // did not used to be a return, leaving code as is for future revisit
-		default:
-			return
-		}
-	}
-}
-
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
 
-		b.FlushConfirms() // Flush all previous publish confirmations
 		err := b.publishEvent(event)
 		if err != nil {
 			select {
@@ -342,9 +323,6 @@ func (b *rabbitEventBus) Close() error {
 	b.log.Info("Shutting down...")
 
 	b.cancel()
-	b.isConnected = false
-
-	b.FlushConfirms() // Flush all previous publish confirmations
 
 	err := b.connection.Close()
 	if err != nil {
@@ -499,29 +477,30 @@ func (b *rabbitEventBus) generateRoutingKey(event storage.Event) string {
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on receiver result
 func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.Delivery, receiver EventReceiver) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
-	for {
-		select {
-		case d := <-msgs:
-			b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
+	for d := range msgs {
+		b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
 
-			re := &rabbitEvent{}
-			err := json.Unmarshal(d.Body, re)
-			if err != nil {
-				b.log.Error(err, "Failed to unmarshal event.", "event", d.Body)
-				_ = d.Nack(false, false)
+		re := &rabbitEvent{}
+		err := json.Unmarshal(d.Body, re)
+		if err != nil {
+			b.log.Error(err, "Failed to unmarshal event.", "event", d.Body)
+			if err := d.Nack(false, false); err != nil {
+				b.log.Error(err, "Failed to NACK event.")
 			}
+		}
 
-			err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
-			if err != nil {
-				_ = d.Nack(false, false)
-			} else {
-				_ = d.Ack(false)
+		err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
+		if err != nil {
+			if err := d.Nack(false, false); err != nil {
+				b.log.Error(err, "Failed to NACK event.")
 			}
-		case <-b.ctx.Done():
-			b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
-			return
+		} else {
+			if err := d.Ack(false); err != nil {
+				b.log.Error(err, "Failed to ACK event.")
+			}
 		}
 	}
+	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
 // rabbitEvent implements the message body transfered via rabbitmq
