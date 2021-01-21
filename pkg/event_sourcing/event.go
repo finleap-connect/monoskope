@@ -1,11 +1,18 @@
 package event_sourcing
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
+
+// ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
+var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
@@ -49,6 +56,37 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 		aggregateID:      aggregateID,
 		aggregateVersion: aggregateVersion,
 	}
+}
+
+// NewEventFromProto converts API Event to Event
+func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
+	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
+	if err != nil {
+		return nil, ErrCouldNotParseAggregateId
+	}
+
+	return NewEvent(
+		EventType(protoEvent.GetType()),
+		protoEvent.GetData(),
+		protoEvent.Timestamp.AsTime(),
+		AggregateType(protoEvent.GetAggregateType()),
+		aggregateId,
+		protoEvent.GetAggregateVersion().GetValue(),
+	), nil
+}
+
+// NewProtoFromEvent converts Event to API Event
+func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
+	ev := &api_es.Event{
+		Type:             storeEvent.EventType().String(),
+		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
+		AggregateType:    storeEvent.AggregateType().String(),
+		AggregateId:      storeEvent.AggregateID().String(),
+		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
+		Data:             storeEvent.Data(),
+	}
+
+	return ev, nil
 }
 
 // event is an internal representation of an event, returned when the aggregate

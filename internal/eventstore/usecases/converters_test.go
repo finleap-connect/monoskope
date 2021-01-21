@@ -27,7 +27,7 @@ var _ = Describe("Converters", func() {
 			AggregateVersion: wrapperspb.UInt64(0),
 			Data:             data,
 		}
-		se, err := NewEventFromProto(pe)
+		se, err := evs.NewEventFromProto(pe)
 		Expect(err).ToNot(HaveOccurred())
 
 		checkProtoStorageEventEquality(pe, se)
@@ -46,7 +46,7 @@ var _ = Describe("Converters", func() {
 			evs.AggregateType("TestAggregateType"),
 			aggregateId,
 			0)
-		pe, err := NewProtoFromEvent(se)
+		pe, err := evs.NewProtoFromEvent(se)
 		Expect(err).ToNot(HaveOccurred())
 
 		checkProtoStorageEventEquality(pe, se)
@@ -92,10 +92,10 @@ var _ = Describe("Converters", func() {
 			AggregateVersion: wrapperspb.UInt64(0),
 			Data:             data,
 		}
-		se, err := NewEventFromProto(pe)
+		se, err := evs.NewEventFromProto(pe)
 		Expect(err).To(HaveOccurred())
 		Expect(se).To(BeNil())
-		Expect(err).To(Equal(ErrCouldNotParseAggregateId))
+		Expect(err).To(Equal(evs.ErrCouldNotParseAggregateId))
 	})
 })
 

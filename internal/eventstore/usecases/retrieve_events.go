@@ -2,6 +2,7 @@ package usecases
 
 import (
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
@@ -46,7 +47,7 @@ func (u *RetrieveEventsUseCase) Run() error {
 	// Send events to client
 	u.log.Info("Sending events to client...")
 	for _, e := range events {
-		protoEvent, err := NewProtoFromEvent(e)
+		protoEvent, err := evs.NewProtoFromEvent(e)
 		if err != nil {
 			return err
 		}

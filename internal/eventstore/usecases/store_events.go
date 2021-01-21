@@ -37,7 +37,7 @@ func (u *StoreEventsUseCase) Run() error {
 	// Convert from proto events to storage events
 	var storageEvents []evs.Event
 	for _, v := range u.events {
-		ev, err := NewEventFromProto(v)
+		ev, err := evs.NewEventFromProto(v)
 		if err != nil {
 			return err
 		}
