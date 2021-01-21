@@ -14,15 +14,15 @@ import (
 
 var _ = Describe("Converters", func() {
 	It("can convert to storage event from proto", func() {
-		data, err := evs.ToEventData(&api_es.TestEventData{Hello: "world"})
+		data, err := evs.MarshalEventData(&testEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		timestamp := time.Now().UTC()
 		pe := &api_es.Event{
-			Type:             "TestEventType",
+			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(timestamp),
 			AggregateId:      uuid.New().String(),
-			AggregateType:    "TestAggregateType",
+			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
 			Data:             data,
 		}
@@ -35,9 +35,12 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
+		ed, err := evs.MarshalEventData(&testEventData{Hello: "world"})
+		Expect(err).ToNot(HaveOccurred())
+
 		se := evs.NewEvent(
 			evs.EventType("TestType"),
-			evs.EventData("{\"hello\":\"world\"}"),
+			ed,
 			timestamp,
 			evs.AggregateType("TestAggregateType"),
 			aggregateId,
@@ -77,14 +80,14 @@ var _ = Describe("Converters", func() {
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
-		data, err := evs.ToEventData(&api_es.TestEventData{Hello: "world"})
+		data, err := evs.MarshalEventData(&testEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		pe := &api_es.Event{
-			Type:             "TestEventType",
+			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(time.Now().UTC()),
 			AggregateId:      "", // invalid id
-			AggregateType:    "TestAggregateType",
+			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
 			Data:             data,
 		}
@@ -103,5 +106,5 @@ func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
 	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
-	Expect(evs.EventData(pe.GetData())).To(Equal(se.Data()))
+	Expect(se.Data()).To(Equal(pe.Data))
 }

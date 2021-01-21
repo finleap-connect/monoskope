@@ -6,8 +6,6 @@ import (
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/events"
-	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/events"
 	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -56,6 +54,14 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 	return nil
 }
 
+type userRoleAddedData struct {
+	UserId  uuid.UUID `json:",omitempty"`
+	Role    string    `json:",omitempty"`
+	Context string    `json:",omitempty"`
+}
+
+func (c *userRoleAddedData) EventType() EventType { return domain.UserRoleAdded }
+
 func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddRoleToUserCommand) (Event, error) {
 	// TODO: Check if user has the right to do this.
 	userId, err := uuid.Parse(cmd.GetUserId())
@@ -63,13 +69,11 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddR
 		return nil, err
 	}
 
-	d := &UserRoleAddedData{
+	ed, err := MarshalEventData(&userRoleAddedData{
 		UserId:  userId,
 		Role:    cmd.GetRole(),
 		Context: cmd.GetContext(),
-	}
-
-	ed, err := ToEventData(d)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +82,8 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddR
 }
 
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
-	data, err := events.UserRoleAddedDataFromEventData(event.Data())
+	data := &userRoleAddedData{}
+	err := UnmarshalEventData(event.Data(), data)
 	if err != nil {
 		return err
 	}
