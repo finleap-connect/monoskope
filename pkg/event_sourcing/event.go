@@ -7,9 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// EventData is any additional data for an event.
-type EventData []byte
-
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
 

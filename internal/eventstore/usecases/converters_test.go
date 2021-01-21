@@ -3,26 +3,22 @@ package usecases
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("Converters", func() {
 	It("can convert to storage event from proto", func() {
-		data, err := ptypes.MarshalAny(&api_es.TestEventData{Hello: "world"})
+		data, err := evs.ToEventData(&api_es.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		timestamp := time.Now().UTC()
-		pe := &eventstore.Event{
+		pe := &api_es.Event{
 			Type:             "TestEventType",
 			Timestamp:        timestamppb.New(timestamp),
 			AggregateId:      uuid.New().String(),
@@ -41,7 +37,7 @@ var _ = Describe("Converters", func() {
 
 		se := evs.NewEvent(
 			evs.EventType("TestType"),
-			evs.EventData("{\"@type\":\"type.googleapis.com/eventstore.TestEventData\",\"hello\":\"world\"}"),
+			evs.EventData("{\"hello\":\"world\"}"),
 			timestamp,
 			evs.AggregateType("TestAggregateType"),
 			aggregateId,
@@ -81,10 +77,10 @@ var _ = Describe("Converters", func() {
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
-		data, err := ptypes.MarshalAny(&api_es.TestEventData{Hello: "world"})
+		data, err := evs.ToEventData(&api_es.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
-		pe := &eventstore.Event{
+		pe := &api_es.Event{
 			Type:             "TestEventType",
 			Timestamp:        timestamppb.New(time.Now().UTC()),
 			AggregateId:      "", // invalid id
@@ -97,25 +93,9 @@ var _ = Describe("Converters", func() {
 		Expect(se).To(BeNil())
 		Expect(err).To(Equal(ErrCouldNotParseAggregateId))
 	})
-	It("fails to convert to proto event from storage with illegal event data", func() {
-		timestamp := time.Now().UTC()
-		aggregateId := uuid.New()
-
-		se := evs.NewEvent(
-			evs.EventType("TestType"),
-			evs.EventData("{\"hello\":\"world\"}"), // illegal event data, missing type
-			timestamp,
-			evs.AggregateType("TestAggregateType"),
-			aggregateId,
-			0)
-		pe, err := NewProtoFromEvent(se)
-		Expect(err).To(HaveOccurred())
-		Expect(pe).To(BeNil())
-		Expect(err).To(Equal(ErrCouldNotUnmarshalEventData))
-	})
 })
 
-func checkProtoStorageEventEquality(pe *eventstore.Event, se evs.Event) {
+func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe).ToNot(BeNil())
 	Expect(se).ToNot(BeNil())
 	Expect(pe.Type).To(Equal(se.EventType().String()))
@@ -123,14 +103,5 @@ func checkProtoStorageEventEquality(pe *eventstore.Event, se evs.Event) {
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
 	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
-
-	eventData := &anypb.Any{}
-	testEventData := &api_es.TestEventData{}
-	err := protojson.Unmarshal([]byte(se.Data()), eventData)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(pe.GetData()).To(Equal(eventData))
-
-	Expect(ptypes.Is(eventData, &api_es.TestEventData{})).To(BeTrue())
-	err = ptypes.UnmarshalAny(eventData, testEventData)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(evs.EventData(pe.GetData())).To(Equal(se.Data()))
 }

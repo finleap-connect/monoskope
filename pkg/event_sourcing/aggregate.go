@@ -31,6 +31,14 @@ type AggregateBase struct {
 	events        []Event
 }
 
+// NewAggregateBase creates an aggregate.
+func NewAggregateBase(t AggregateType, id uuid.UUID) *AggregateBase {
+	return &AggregateBase{
+		id:            id,
+		aggregateType: t,
+	}
+}
+
 // EntityID implements the EntityID method of the eh.Entity and eh.Aggregate interface.
 func (a *AggregateBase) EntityID() uuid.UUID {
 	return a.id
@@ -59,11 +67,11 @@ func (a *AggregateBase) Events() []Event {
 }
 
 // AppendEvent appends an event for later retrieval by Events().
-func (a *AggregateBase) AppendEvent(et EventType, data EventData, timestamp time.Time) Event {
+func (a *AggregateBase) AppendEvent(et EventType, data EventData) Event {
 	newEvent := NewEvent(
 		et,
 		data,
-		timestamp,
+		time.Now().UTC(),
 		a.AggregateType(),
 		a.EntityID(),
 		a.Version()+uint64(len(a.events)+1))

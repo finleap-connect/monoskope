@@ -11,7 +11,7 @@ package commands.user;
 
 message AddRoleToUser {
   // Unique identifier of the user (UUID 128-bit number)
-  string id = 1;
+  string user_id = 1;
   // Name of the role to add
   string role = 2;
   // Context of the role
