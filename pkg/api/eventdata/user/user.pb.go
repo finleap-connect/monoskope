@@ -32,7 +32,7 @@ type UserRoleAddedEventData struct {
 
 	// Unique identifier of the user (UUID 128-bit number)
 	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// Name of the role to add
+	// Name of the role added to the user
 	Role string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	// Context of the role
 	Context string `protobuf:"bytes,3,opt,name=context,proto3" json:"context,omitempty"`

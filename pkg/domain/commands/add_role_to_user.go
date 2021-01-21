@@ -9,10 +9,10 @@ import (
 
 // AddRoleToUser is a command for adding a role to a user.
 type AddRoleToUserCommand struct {
-	AggID uuid.UUID
+	aggregateId uuid.UUID
 	apicmd.AddRoleToUserCommand
 }
 
-func (c *AddRoleToUserCommand) AggregateID() uuid.UUID       { return c.AggID }
+func (c *AddRoleToUserCommand) AggregateID() uuid.UUID       { return c.aggregateId }
 func (c *AddRoleToUserCommand) AggregateType() AggregateType { return domain.UserRoleBinding }
 func (c *AddRoleToUserCommand) CommandType() CommandType     { return domain.AddRoleToUser }

@@ -43,18 +43,6 @@ func (a *UserRoleBindingAggregate) HandleCommand(cmd Command) ([]Event, error) {
 	return nil, fmt.Errorf("couldn't handle command")
 }
 
-// ApplyEvent implements the ApplyEvent method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
-	switch event.EventType() {
-	case domain.UserRoleAdded:
-		err := a.applyUserRoleAddedEvent(event)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddRoleToUserCommand) (Event, error) {
 	// TODO: Check if user has the right to do this.
 	userId, err := uuid.Parse(cmd.GetUserId())
@@ -72,6 +60,18 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddR
 	}
 
 	return a.AppendEvent(domain.UserRoleAdded, ed), nil
+}
+
+// ApplyEvent implements the ApplyEvent method of the Aggregate interface.
+func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
+	switch event.EventType() {
+	case domain.UserRoleAdded:
+		err := a.applyUserRoleAddedEvent(event)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {

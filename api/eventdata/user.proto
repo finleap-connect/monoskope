@@ -12,7 +12,7 @@ package eventdata.user;
 message UserRoleAddedEventData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1;
-  // Name of the role to add
+  // Name of the role added to the user
   string role = 2;
   // Context of the role
   string context = 3;

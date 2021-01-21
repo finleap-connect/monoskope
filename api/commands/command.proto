@@ -3,7 +3,6 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-// import "google/protobuf/wrappers.proto";
 import "google/protobuf/any.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands";
