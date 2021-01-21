@@ -1,7 +1,6 @@
 package event_sourcing
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,9 +18,8 @@ type Aggregate interface {
 	// AggregateType returns the type name of the aggregate.
 	// AggregateType() string
 	AggregateType() AggregateType
-
-	// HandleCommand implements the HandleCommand method of the Aggregate.
-	HandleCommand(context.Context, Command) error
+	// HandleCommand handles a command on the interface
+	HandleCommand(Command) error
 }
 
 type AggregateBase struct {
