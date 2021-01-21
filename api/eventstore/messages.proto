@@ -5,6 +5,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore";
@@ -30,7 +31,7 @@ message Event {
   // Strict monotone counter, per aggregate/aggregate_id relation
   google.protobuf.UInt64Value aggregate_version = 5;
   // Event type specific event data
-  bytes data = 6;
+  google.protobuf.Any data = 6;
 }
 
 // Request to get Events from to the store
@@ -52,5 +53,3 @@ message EventFilter {
   // Filter events with a timestamp <= max_timestamp
   google.protobuf.Timestamp max_timestamp = 8;
 }
-
-message TestEventData { string hello = 1; }

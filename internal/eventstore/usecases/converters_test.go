@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,7 +15,7 @@ import (
 
 var _ = Describe("Converters", func() {
 	It("can convert to storage event from proto", func() {
-		data, err := evs.MarshalEventData(&testEventData{Hello: "world"})
+		data, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		timestamp := time.Now().UTC()
@@ -35,7 +36,7 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		ed, err := evs.MarshalEventData(&testEventData{Hello: "world"})
+		ed, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		se := evs.NewEvent(
@@ -80,7 +81,7 @@ var _ = Describe("Converters", func() {
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
-		data, err := evs.MarshalEventData(&testEventData{Hello: "world"})
+		data, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		pe := &api_es.Event{
@@ -106,5 +107,5 @@ func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
 	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
-	Expect(se.Data()).To(Equal(pe.Data))
+	Expect(se.Data()).To(Equal(evs.EventData(pe.Data)))
 }

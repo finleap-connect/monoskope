@@ -2,12 +2,12 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -32,9 +32,9 @@ var _ = Describe("storage/postgres", func() {
 	}
 
 	createTestEventData := func(something string) evs.EventData {
-		bytes, err := json.Marshal(&testEventData{Hello: something})
+		ed, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
-		return evs.EventData(bytes)
+		return evs.EventData(ed)
 	}
 
 	createTestEvents := func() []evs.Event {

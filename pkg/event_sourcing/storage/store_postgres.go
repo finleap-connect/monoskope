@@ -67,7 +67,7 @@ func (s *postgresEventStore) createTables(ctx context.Context, db *pg.DB) error 
 // newEventRecord returns a new EventRecord for an event.
 func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event) (*eventRecord, error) {
 	// Marshal event data if there is any.
-	eventData, err := json.Marshal(event.Data())
+	eventData, err := evs.MarshalEventData(event.Data())
 	if err != nil {
 		return nil, eventStoreError{
 			BaseErr: err,
@@ -400,7 +400,9 @@ func (e pgEvent) EventType() evs.EventType {
 
 // Data implements the Data method of the Event interface.
 func (e pgEvent) Data() evs.EventData {
-	return evs.EventData(e.RawData)
+	ed := evs.NewEventData()
+	_ = evs.UnmarshalEventData(e.RawData, ed)
+	return ed
 }
 
 // Timestamp implements the Timestamp method of the Event interface.

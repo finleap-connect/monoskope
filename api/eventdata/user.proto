@@ -5,18 +5,9 @@ syntax = "proto3";
 
 // import "google/protobuf/wrappers.proto";
 
-option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user";
 
-package commands.user;
-
-message AddRoleToUserCommand {
-  // Unique identifier of the user (UUID 128-bit number)
-  string user_id = 1;
-  // Name of the role to add
-  string role = 2;
-  // Context of the role
-  string context = 3;
-}
+package eventdata.user;
 
 message UserRoleAddedEventData {
   // Unique identifier of the user (UUID 128-bit number)

@@ -20,7 +20,3 @@ const (
 	testEventType     evs.EventType     = "TestEventType"
 	testAggregateType evs.AggregateType = "TestAggregateType"
 )
-
-type testEventData struct {
-	Hello string
-}

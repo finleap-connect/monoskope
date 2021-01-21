@@ -23,7 +23,7 @@ func NewEventFromProto(protoEvent *api_es.Event) (evs.Event, error) {
 
 	ev := evs.NewEvent(
 		evs.EventType(protoEvent.GetType()),
-		evs.EventData(protoEvent.GetData()),
+		protoEvent.GetData(),
 		protoEvent.Timestamp.AsTime(),
 		evs.AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,

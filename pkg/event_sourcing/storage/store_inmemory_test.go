@@ -28,7 +28,9 @@ var _ = Describe("storage/inmemory", func() {
 	createTestEventData := func(something string) evs.EventData {
 		bytes, err := json.Marshal(&testEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
-		return evs.EventData(bytes)
+		ed := evs.NewEventData()
+		ed.Value = bytes
+		return evs.EventData(ed)
 	}
 	createTestEvents := func() []evs.Event {
 		aggregateId := uuid.New()
