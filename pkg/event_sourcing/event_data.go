@@ -6,17 +6,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// EventData is any additional data for an event.
+// EventData is any additional data for an event. Internally this is represented by protojson.
 type EventData []byte
-
-func (d EventData) ToAny() (*anypb.Any, error) {
-	a := &anypb.Any{}
-	err := protojson.Unmarshal(d, a)
-	if err != nil {
-		return nil, err
-	}
-	return a, nil
-}
 
 // ToEventDataFromAny marshalls a given any to protojson
 func ToEventDataFromAny(a *anypb.Any) (EventData, error) {
@@ -35,6 +26,16 @@ func ToEventDataFromProto(m protoreflect.ProtoMessage) (EventData, error) {
 		return EventData{}, err
 	}
 	return ToEventDataFromAny(a)
+}
+
+// ToAny unmarshalls protojson to an any
+func (d EventData) ToAny() (*anypb.Any, error) {
+	a := &anypb.Any{}
+	err := protojson.Unmarshal(d, a)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
 }
 
 // ToProto umnarshalls protojson to an any and unmarshals the any to the given proto
