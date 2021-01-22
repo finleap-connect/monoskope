@@ -8,15 +8,16 @@ import (
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
 	*AggregateBase
-	userId  uuid.UUID
-	role    string
-	context string
+	userId  uuid.UUID // User to add a role to
+	role    string    // Role to add to the user
+	context string    // Context of the role binding
 }
 
 func (c *UserRoleBindingAggregate) AggregateType() AggregateType { return domain.UserRoleBinding }
@@ -31,20 +32,24 @@ func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.AddRoleToUserCommand:
-		return a.handleAddRoleToUserCommand(cmd)
+		return a.handleAddRoleToUserCommand(ctx, cmd)
 	}
 	return fmt.Errorf("couldn't handle command")
 }
 
-func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddRoleToUserCommand) error {
+func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.AddRoleToUserCommand) error {
 	// TODO: Check if user has the right to do this.
-	userId, err := uuid.Parse(cmd.GetUserId())
+	userId, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail() // user issued the command at gateway
 	if err != nil {
 		return err
 	}
 
+	if userId == cmd.GetUserId() {
+		// Ah he is editing his own roles
+	}
+
 	ed, err := ToEventDataFromProto(&api.UserRoleAddedEventData{
-		UserId:  userId.String(),
+		UserId:  cmd.GetUserId(),
 		Role:    cmd.GetRole(),
 		Context: cmd.GetContext(),
 	})

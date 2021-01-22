@@ -16,3 +16,9 @@ message ServiceInformation {
   // commit hash of the service
   string commit = 3;
 }
+
+message UserMetadata {
+  string subject = 1;
+  string issuer = 2;
+  string email = 3;
+}

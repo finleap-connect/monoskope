@@ -6,9 +6,12 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
+	api_cmdhandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
+	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,8 +24,9 @@ type apiServer struct {
 	// Logger interface
 	log logger.Logger
 	//
-	authConfig  *auth.Config
-	authHandler *auth.Handler
+	authConfig       *auth.Config
+	authHandler      *auth.Handler
+	cmdHandlerClient api_cmdhandler.CommandHandlerClient
 }
 
 func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {
@@ -91,4 +95,20 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.Refresh
 		Token:  token.AccessToken,
 		Expiry: timestamppb.New(token.Expiry),
 	}, nil
+}
+
+// Execute implements the API method Execute
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
+	// TODO: Check user id is not nil or empty
+	userId, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail()
+	if err != nil {
+		return nil, err
+	}
+	// Now we know the email address the user has authenticated with
+
+	// Call command handler to execute
+	return s.cmdHandlerClient.Execute(ctx, &commands.Command{
+		Request: apiCommand,
+		UserId:  userId,
+	})
 }

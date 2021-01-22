@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
@@ -37,14 +36,9 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (
 		return nil, err
 	}
 
-	userId, err := uuid.Parse(apiCommand.GetUserId())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx = metadata.NewMetadataBuilder(ctx).
-		SetUserId(userId).
-		Apply()
+	ctx = metadata.NewDomainMetadataManager(ctx).
+		SetUserEmail(apiCommand.GetUserId()).
+		GetContext()
 
 	err = evs.Registry.HandleCommand(ctx, cmd)
 	if err != nil {
