@@ -9,6 +9,7 @@ import (
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // apiServer is the implementation of the CommandHandler API
@@ -27,6 +28,18 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*commands.CommandResult, error) {
+	cmdDetails := command.GetRequest()
+
+	evsCmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	err = evs.Registry.HandleCommand(ctx, evsCmd)
+	if err != nil {
+		return nil, err
+	}
+
 	panic("not implemented")
 }
 

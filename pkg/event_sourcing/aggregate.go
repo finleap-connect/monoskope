@@ -15,11 +15,8 @@ func (t AggregateType) String() string {
 }
 
 type Aggregate interface {
-	// AggregateType returns the type name of the aggregate.
-	// AggregateType() string
+	// AggregateType returns the type of the aggregate.
 	AggregateType() AggregateType
-	// HandleCommand handles a command on the interface
-	HandleCommand(Command) error
 }
 
 type AggregateBase struct {

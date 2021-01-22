@@ -33,3 +33,5 @@ message CommandResult {
   // Command type specific result data
   google.protobuf.Any data = 2;
 }
+
+message TestCommandData { string test = 1; }

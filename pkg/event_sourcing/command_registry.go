@@ -1,10 +1,12 @@
 package event_sourcing
 
 import (
+	"context"
 	"errors"
 	"sync"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // ErrFactoryInvalid is when a command factory creates nil commands.
@@ -19,10 +21,17 @@ var ErrCommandTypeAlreadyRegistered = errors.New("command type already registere
 // ErrCommandNotRegistered is when no command factory was registered.
 var ErrCommandNotRegistered = errors.New("command not registered")
 
+// ErrHandlerAlreadySet is when a handler is already registered for a command.
+var ErrHandlerAlreadySet = errors.New("handler is already set")
+
+// ErrHandlerNotFound is when no handler can be found.
+var ErrHandlerNotFound = errors.New("no handlers for command")
+
 type commandRegistry struct {
 	log      logger.Logger
 	mutex    sync.RWMutex
 	commands map[CommandType]func() Command
+	handlers map[CommandType]CommandHandler
 }
 
 // newCommandRegistry creates a new command registry
@@ -30,6 +39,7 @@ func newCommandRegistry() *commandRegistry {
 	return &commandRegistry{
 		log:      logger.WithName("command-registry"),
 		commands: make(map[CommandType]func() Command),
+		handlers: make(map[CommandType]CommandHandler),
 	}
 }
 
@@ -95,11 +105,40 @@ func (r *commandRegistry) UnregisterCommand(commandType CommandType) error {
 
 // CreateCommand creates an command of a type with an ID using the factory
 // registered with RegisterCommand.
-func (r *commandRegistry) CreateCommand(commandType CommandType) (Command, error) {
+func (r *commandRegistry) CreateCommand(commandType CommandType, data *anypb.Any) (Command, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	if factory, ok := r.commands[commandType]; ok {
-		return factory(), nil
+		cmd := factory()
+		if err := cmd.SetData(data); err != nil {
+			return nil, err
+		}
+		return cmd, nil
 	}
 	return nil, ErrCommandNotRegistered
+}
+
+// HandleCommand handles a command with a handler capable of handling it.
+func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	if handler, ok := r.handlers[cmd.CommandType()]; ok {
+		return handler.HandleCommand(ctx, cmd)
+	}
+
+	return ErrHandlerNotFound
+}
+
+// SetHandler adds a handler for a specific command.
+func (r *commandRegistry) SetHandler(handler CommandHandler, cmdType CommandType) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if _, ok := r.handlers[cmdType]; ok {
+		return ErrHandlerAlreadySet
+	}
+
+	r.handlers[cmdType] = handler
+	return nil
 }

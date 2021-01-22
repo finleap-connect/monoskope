@@ -3,6 +3,8 @@ package event_sourcing
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var _ = Describe("commands/command_registry", func() {
@@ -28,7 +30,7 @@ var _ = Describe("commands/command_registry", func() {
 		err := Registry.UnregisterCommand(TestCommandType)
 		Expect(err).ToNot(HaveOccurred())
 
-		cmd, err := Registry.CreateCommand(TestCommandType)
+		cmd, err := Registry.CreateCommand(TestCommandType, nil)
 		Expect(err).To(HaveOccurred())
 		Expect(cmd).To(BeNil())
 	})
@@ -36,8 +38,18 @@ var _ = Describe("commands/command_registry", func() {
 		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		cmd, err := Registry.CreateCommand(TestCommandType)
+		proto := &api.TestCommandData{Test: "Hello world!"}
+		any := &anypb.Any{}
+		err = any.MarshalFrom(proto)
+		Expect(err).ToNot(HaveOccurred())
+
+		cmd, err := Registry.CreateCommand(TestCommandType, any)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cmd).ToNot(BeNil())
+
+		testCmd, ok := cmd.(*TestCommand)
+		Expect(ok).To(BeTrue())
+		Expect(testCmd).ToNot(BeNil())
+		Expect(testCmd.Test).To(Equal("Hello world!"))
 	})
 })

@@ -2,6 +2,7 @@ package event_sourcing
 
 import (
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // Command is a domain command that is executed by a CommandHandler.
@@ -21,6 +22,9 @@ type Command interface {
 
 	// CommandType returns the type of the command.
 	CommandType() CommandType
+
+	// SetData sets type specific additional data.
+	SetData(*anypb.Any) error
 }
 
 // CommandType is the type of a command, used as its unique identifier.
