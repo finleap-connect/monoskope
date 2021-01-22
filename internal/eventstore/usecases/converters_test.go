@@ -113,7 +113,17 @@ func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 
-	d, err := evs.ToEventDataFromAny(pe.Data)
+	ed, err := evs.ToEventDataFromAny(pe.Data)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(se.Data()).To(Equal(d))
+	Expect(se.Data()).To(Equal(ed))
+
+	proto := &test.TestEventData{}
+	err = se.Data().ToProto(proto)
+	Expect(err).ToNot(HaveOccurred())
+
+	a := &anypb.Any{}
+	err = a.MarshalFrom(proto)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(pe.Data.TypeUrl).To(Equal(a.TypeUrl))
+	Expect(pe.Data.Value).To(Equal(a.Value))
 }

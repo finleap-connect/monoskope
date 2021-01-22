@@ -63,18 +63,6 @@ func (env *CommandHandlerTestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
 }
 
-func (env *CommandHandlerTestEnv) GetApiClient(ctx context.Context) (api.CommandHandlerClient, error) {
-	conn, err := grpc.
-		NewGrpcConnectionFactory(env.GetApiAddr()).
-		WithInsecure().
-		WithBlock().
-		Build(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return api.NewCommandHandlerClient(conn), nil
-}
-
 func (env *CommandHandlerTestEnv) Shutdown() error {
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
 		return err

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
@@ -43,7 +42,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 
 	createReceiver := func(event evs.Event, matchers ...EventMatcher) {
 		receiver := func(e evs.Event) (err error) {
-			defer ginkgo.GinkgoRecover()
+			defer GinkgoRecover()
 			env.Log.Info("Received event.")
 			Expect(e).ToNot(BeNil())
 			Expect(e).To(Equal(event))
