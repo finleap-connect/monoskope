@@ -2,15 +2,16 @@ package version
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	Name    string = "APP"   // set by args when building, see go.mk
-	Version string = "DEV"   // set by args when building, see go.mk
-	Commit  string = "DEBUG" // set by args when building, see go.mk
+	Name    string = os.Args[0] // set by args
+	Version string = "DEV"      // set by args when building, see go.mk
+	Commit  string = "DEBUG"    // set by args when building, see go.mk
 )
 
 func NewVersionCmd(cmdName string) *cobra.Command {

@@ -36,7 +36,7 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer
 
 func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	err := stream.Send(&api_common.ServiceInformation{
-		Name:    "gateway",
+		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})

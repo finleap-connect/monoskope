@@ -57,7 +57,7 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (
 // GetServiceInformation implements the API method GetServiceInformation
 func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	err := stream.Send(&api_common.ServiceInformation{
-		Name:    "commandhandler",
+		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})
