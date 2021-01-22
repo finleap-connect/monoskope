@@ -28,14 +28,14 @@ type postgresEventStore struct {
 type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
-	EventID          uuid.UUID         `pg:"event_id,type:uuid,pk"`
-	EventType        evs.EventType     `pg:"event_type,type:varchar(250)"`
-	AggregateID      uuid.UUID         `pg:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType    evs.AggregateType `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
-	AggregateVersion uint64            `pg:"aggregate_version,unique:aggregate"`
-	Timestamp        time.Time         `pg:""`
-	Context          json.RawMessage   `pg:"context,type:jsonb"`
-	RawData          json.RawMessage   `pg:"data,type:jsonb"`
+	EventID          uuid.UUID              `pg:"event_id,type:uuid,pk"`
+	EventType        evs.EventType          `pg:"event_type,type:varchar(250)"`
+	AggregateID      uuid.UUID              `pg:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType    evs.AggregateType      `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
+	AggregateVersion uint64                 `pg:"aggregate_version,unique:aggregate"`
+	Timestamp        time.Time              `pg:""`
+	Metadata         map[string]interface{} `pg:"metadata"`
+	RawData          json.RawMessage        `pg:"data,type:jsonb"`
 }
 
 var models []interface{}
@@ -66,15 +66,6 @@ func (s *postgresEventStore) createTables(ctx context.Context, db *pg.DB) error 
 
 // newEventRecord returns a new EventRecord for an event.
 func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event) (*eventRecord, error) {
-	// Marshal event context if there is any.
-	context, err := json.Marshal(ctx)
-	if err != nil {
-		return nil, eventStoreError{
-			BaseErr: err,
-			Err:     ErrCouldNotMarshalEventContext,
-		}
-	}
-
 	return &eventRecord{
 		EventID:          uuid.New(),
 		AggregateID:      event.AggregateID(),
@@ -83,7 +74,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event
 		RawData:          json.RawMessage(event.Data()),
 		Timestamp:        event.Timestamp(),
 		AggregateVersion: event.AggregateVersion(),
-		Context:          context,
+		Metadata:         event.Metadata(),
 	}, nil
 }
 
@@ -412,6 +403,11 @@ func (e pgEvent) AggregateID() uuid.UUID {
 // AggregateVersion implements the AggregateVersion method of the Event interface.
 func (e pgEvent) AggregateVersion() uint64 {
 	return e.eventRecord.AggregateVersion
+}
+
+// AggregateVersion implements the AggregateVersion method of the Event interface.
+func (e pgEvent) Metadata() map[string]interface{} {
+	return e.eventRecord.Metadata
 }
 
 // String implements the String method of the Event interface.

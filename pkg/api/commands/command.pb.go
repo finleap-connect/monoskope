@@ -142,64 +142,6 @@ func (x *Command) GetUserId() string {
 	return ""
 }
 
-// CommandResult is the result of a command executed
-type CommandResult struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Type of the command executed to trigger this result
-	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	// Command type specific result data
-	Data *any.Any `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-}
-
-func (x *CommandResult) Reset() {
-	*x = CommandResult{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_commands_command_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CommandResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommandResult) ProtoMessage() {}
-
-func (x *CommandResult) ProtoReflect() protoreflect.Message {
-	mi := &file_api_commands_command_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommandResult.ProtoReflect.Descriptor instead.
-func (*CommandResult) Descriptor() ([]byte, []int) {
-	return file_api_commands_command_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *CommandResult) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *CommandResult) GetData() *any.Any {
-	if x != nil {
-		return x.Data
-	}
-	return nil
-}
-
 type TestCommandData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -211,7 +153,7 @@ type TestCommandData struct {
 func (x *TestCommandData) Reset() {
 	*x = TestCommandData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_commands_command_proto_msgTypes[3]
+		mi := &file_api_commands_command_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -224,7 +166,7 @@ func (x *TestCommandData) String() string {
 func (*TestCommandData) ProtoMessage() {}
 
 func (x *TestCommandData) ProtoReflect() protoreflect.Message {
-	mi := &file_api_commands_command_proto_msgTypes[3]
+	mi := &file_api_commands_command_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -237,7 +179,7 @@ func (x *TestCommandData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestCommandData.ProtoReflect.Descriptor instead.
 func (*TestCommandData) Descriptor() ([]byte, []int) {
-	return file_api_commands_command_proto_rawDescGZIP(), []int{3}
+	return file_api_commands_command_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TestCommandData) GetTest() string {
@@ -264,19 +206,14 @@ var file_api_commands_command_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x07, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x4d, 0x0a, 0x0d, 0x43, 0x6f, 0x6d,
-	0x6d, 0x61, 0x6e, 0x64, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79,
-	0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x28,
-	0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x41,
-	0x6e, 0x79, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x25, 0x0a, 0x0f, 0x54, 0x65, 0x73, 0x74,
-	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x12, 0x0a, 0x04, 0x74,
-	0x65, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x73, 0x74, 0x42,
-	0x43, 0x5a, 0x41, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x66, 0x69, 0x67, 0x6f, 0x2e, 0x73,
-	0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x2f,
-	0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b,
-	0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x63, 0x6f, 0x6d, 0x6d,
-	0x61, 0x6e, 0x64, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x25, 0x0a, 0x0f, 0x54, 0x65, 0x73,
+	0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x12, 0x0a, 0x04,
+	0x74, 0x65, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x73, 0x74,
+	0x42, 0x43, 0x5a, 0x41, 0x67, 0x69, 0x74, 0x6c, 0x61, 0x62, 0x2e, 0x66, 0x69, 0x67, 0x6f, 0x2e,
+	0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d,
+	0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73,
+	0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x63, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -291,23 +228,21 @@ func file_api_commands_command_proto_rawDescGZIP() []byte {
 	return file_api_commands_command_proto_rawDescData
 }
 
-var file_api_commands_command_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_commands_command_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_api_commands_command_proto_goTypes = []interface{}{
 	(*CommandRequest)(nil),  // 0: commands.CommandRequest
 	(*Command)(nil),         // 1: commands.Command
-	(*CommandResult)(nil),   // 2: commands.CommandResult
-	(*TestCommandData)(nil), // 3: commands.TestCommandData
-	(*any.Any)(nil),         // 4: google.protobuf.Any
+	(*TestCommandData)(nil), // 2: commands.TestCommandData
+	(*any.Any)(nil),         // 3: google.protobuf.Any
 }
 var file_api_commands_command_proto_depIdxs = []int32{
-	4, // 0: commands.CommandRequest.data:type_name -> google.protobuf.Any
+	3, // 0: commands.CommandRequest.data:type_name -> google.protobuf.Any
 	0, // 1: commands.Command.request:type_name -> commands.CommandRequest
-	4, // 2: commands.CommandResult.data:type_name -> google.protobuf.Any
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_commands_command_proto_init() }
@@ -341,18 +276,6 @@ func file_api_commands_command_proto_init() {
 			}
 		}
 		file_api_commands_command_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CommandResult); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_commands_command_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestCommandData); i {
 			case 0:
 				return &v.state
@@ -371,7 +294,7 @@ func file_api_commands_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_commands_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

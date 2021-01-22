@@ -1,6 +1,7 @@
 package aggregates
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) HandleCommand(cmd Command) ([]Event, error) {
+func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) ([]Event, error) {
 	var resultingEvents []Event
 
 	switch cmd := cmd.(type) {

@@ -27,7 +27,7 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*commands.CommandResult, error) {
+func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
 	cmdDetails := command.GetRequest()
 
 	evsCmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
@@ -40,7 +40,7 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*co
 		return nil, err
 	}
 
-	panic("not implemented")
+	return &empty.Empty{}, nil
 }
 
 // GetServiceInformation implements the API method GetServiceInformation

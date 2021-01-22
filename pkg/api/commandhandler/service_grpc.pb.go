@@ -4,6 +4,7 @@ package commandhandler
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -20,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CommandHandlerClient interface {
 	// Executes a command and returns the execution result
-	Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*commands.CommandResult, error)
+	Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type commandHandlerClient struct {
@@ -31,8 +32,8 @@ func NewCommandHandlerClient(cc grpc.ClientConnInterface) CommandHandlerClient {
 	return &commandHandlerClient{cc}
 }
 
-func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*commands.CommandResult, error) {
-	out := new(commands.CommandResult)
+func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/commandhandler.CommandHandler/Execute", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.Command
 // for forward compatibility
 type CommandHandlerServer interface {
 	// Executes a command and returns the execution result
-	Execute(context.Context, *commands.Command) (*commands.CommandResult, error)
+	Execute(context.Context, *commands.Command) (*empty.Empty, error)
 	mustEmbedUnimplementedCommandHandlerServer()
 }
 
@@ -53,7 +54,7 @@ type CommandHandlerServer interface {
 type UnimplementedCommandHandlerServer struct {
 }
 
-func (UnimplementedCommandHandlerServer) Execute(context.Context, *commands.Command) (*commands.CommandResult, error) {
+func (UnimplementedCommandHandlerServer) Execute(context.Context, *commands.Command) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedCommandHandlerServer) mustEmbedUnimplementedCommandHandlerServer() {}

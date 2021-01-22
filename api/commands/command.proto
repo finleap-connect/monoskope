@@ -25,13 +25,4 @@ message Command {
   string user_id = 2;
 }
 
-// CommandResult is the result of a command executed
-message CommandResult {
-  // Type of the command executed to trigger this result
-  string type = 1;
-
-  // Command type specific result data
-  google.protobuf.Any data = 2;
-}
-
 message TestCommandData { string test = 1; }

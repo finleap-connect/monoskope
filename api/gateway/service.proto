@@ -4,6 +4,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "api/commands/command.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";
 
@@ -12,5 +13,5 @@ package gateway;
 // API of the Monoskope Gateway.
 service Gateway {
   // Executes a command and returns the execution result
-  rpc Execute(commands.CommandRequest) returns (commands.CommandResult);
+  rpc Execute(commands.CommandRequest) returns (google.protobuf.Empty);
 }
