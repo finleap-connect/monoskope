@@ -17,6 +17,12 @@ var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
 
+type EventMetadataKey string
+
+const (
+	EventMedataData EventMetadataKey = "EventMedataDataKey"
+)
+
 // String returns the string representation of an EventType.
 func (t EventType) String() string {
 	return string(t)

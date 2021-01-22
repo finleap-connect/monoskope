@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	Name    string = "APP"   // set by args when building, see go.mk
 	Version string = "DEV"   // set by args when building, see go.mk
 	Commit  string = "DEBUG" // set by args when building, see go.mk
 )

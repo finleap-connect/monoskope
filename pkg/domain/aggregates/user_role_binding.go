@@ -11,7 +11,7 @@ import (
 	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
-// UserRoleBindingAggregate is an aggregate for .
+// UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
 	*AggregateBase
 	userId  uuid.UUID
@@ -28,27 +28,19 @@ func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) ([]Event, error) {
-	var resultingEvents []Event
-
+func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.AddRoleToUserCommand:
-		if event, err := a.handleAddRoleToUserCommand(cmd); err == nil {
-			resultingEvents = append(resultingEvents, event)
-		} else {
-			return nil, err
-		}
-		return resultingEvents, nil
+		return a.handleAddRoleToUserCommand(cmd)
 	}
-
-	return nil, fmt.Errorf("couldn't handle command")
+	return fmt.Errorf("couldn't handle command")
 }
 
-func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddRoleToUserCommand) (Event, error) {
+func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddRoleToUserCommand) error {
 	// TODO: Check if user has the right to do this.
 	userId, err := uuid.Parse(cmd.GetUserId())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	ed, err := ToEventDataFromProto(&api.UserRoleAddedEventData{
@@ -57,10 +49,12 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddR
 		Context: cmd.GetContext(),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return a.AppendEvent(domain.UserRoleAdded, ed), nil
+	_ = a.AppendEvent(domain.UserRoleAdded, ed)
+
+	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

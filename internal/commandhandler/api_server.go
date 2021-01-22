@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -27,15 +29,24 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	cmdDetails := command.GetRequest()
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (*empty.Empty, error) {
+	cmdDetails := apiCommand.GetRequest()
 
-	evsCmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
+	cmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	err = evs.Registry.HandleCommand(ctx, evsCmd)
+	userId, err := uuid.Parse(apiCommand.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = metadata.NewMetadataBuilder(ctx).
+		SetUserId(userId).
+		Apply()
+
+	err = evs.Registry.HandleCommand(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
