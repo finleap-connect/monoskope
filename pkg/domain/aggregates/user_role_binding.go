@@ -50,7 +50,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(cmd *commands.AddR
 		return nil, err
 	}
 
-	ed, err := NewEventDataFromProto(&api.UserRoleAddedEventData{
+	ed, err := ToEventData(&api.UserRoleAddedEventData{
 		UserId:  userId.String(),
 		Role:    cmd.GetRole(),
 		Context: cmd.GetContext(),
@@ -76,7 +76,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
 	data := &api.UserRoleAddedEventData{}
-	err := NewProtoFromEventData(event.Data(), data)
+	err := ToType(event.Data(), data)
 	if err != nil {
 		return err
 	}

@@ -65,9 +65,14 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 		return nil, ErrCouldNotParseAggregateId
 	}
 
+	d, err := ToEventDataFromAny(protoEvent.GetData())
+	if err != nil {
+		panic(err)
+	}
+
 	return NewEvent(
 		EventType(protoEvent.GetType()),
-		protoEvent.GetData(),
+		d,
 		protoEvent.Timestamp.AsTime(),
 		AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
@@ -77,13 +82,18 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 
 // NewProtoFromEvent converts Event to API Event
 func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
+	a, err := ToAny(storeEvent.Data())
+	if err != nil {
+		panic(err)
+	}
+
 	ev := &api_es.Event{
 		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
 		AggregateType:    storeEvent.AggregateType().String(),
 		AggregateId:      storeEvent.AggregateID().String(),
 		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
-		Data:             storeEvent.Data(),
+		Data:             a,
 	}
 
 	return ev, nil

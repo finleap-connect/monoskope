@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -19,10 +20,15 @@ var _ = Describe("messaging/rabbitmq", func() {
 	eventCounter := 0
 	testCount := 0
 
+	createTestEventData := func(something string) evs.EventData {
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: something})
+		Expect(err).ToNot(HaveOccurred())
+		return ed
+	}
 	createEvent := func() evs.Event {
 		eventType := evs.EventType("TestEvent")
 		aggregateType := evs.AggregateType("TestAggregate")
-		data := evs.NewEventData()
+		data := createTestEventData("world!")
 		event := evs.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
 		eventCounter++
 		return event

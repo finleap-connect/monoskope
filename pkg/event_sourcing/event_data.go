@@ -1,35 +1,40 @@
 package event_sourcing
 
 import (
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // EventData is any additional data for an event.
-type EventData *anypb.Any
+type EventData []byte
 
-func NewEventData() EventData {
-	return &anypb.Any{}
+func ToAny(d EventData) (*anypb.Any, error) {
+	a := &anypb.Any{}
+	err := protojson.Unmarshal(d, a)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
 }
 
-func NewEventDataFromProto(m protoiface.MessageV1) (EventData, error) {
-	return ptypes.MarshalAny(m)
+func ToEventDataFromAny(a *anypb.Any) (EventData, error) {
+	bytes, err := protojson.Marshal(a)
+	if err != nil {
+		return bytes, err
+	}
+	return bytes, nil
 }
 
-func NewProtoFromEventData(data EventData, m protoiface.MessageV1) error {
-	return ptypes.UnmarshalAny(data, m)
+func ToEventDataFromProto(m protoreflect.ProtoMessage) (EventData, error) {
+	a := &anypb.Any{}
+	err := a.MarshalFrom(m)
+	if err != nil {
+		return EventData{}, err
+	}
+	return ToEventDataFromAny(a)
 }
 
-// MarshalEventData marshals any given object into event data.
-func MarshalEventData(v EventData) ([]byte, error) {
-	var ed *anypb.Any = v
-	return protojson.Marshal(ed)
-}
-
-// UnmarshalEventData unmarshals event data to a given type.
-func UnmarshalEventData(rawData []byte, v EventData) error {
-	var ed *anypb.Any = v
-	return protojson.Unmarshal(rawData, ed)
+func ToType(d EventData, m protoreflect.ProtoMessage) error {
+	return protojson.Unmarshal(d, m)
 }

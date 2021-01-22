@@ -9,15 +9,13 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("Converters", func() {
 	It("can convert to storage event from proto", func() {
-		data, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
-		Expect(err).ToNot(HaveOccurred())
-
 		timestamp := time.Now().UTC()
 		pe := &api_es.Event{
 			Type:             testEventType.String(),
@@ -25,8 +23,13 @@ var _ = Describe("Converters", func() {
 			AggregateId:      uuid.New().String(),
 			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
-			Data:             data,
+			Data:             &anypb.Any{},
 		}
+
+		proto := &test.TestEventData{Hello: "world"}
+		err := pe.Data.MarshalFrom(proto)
+		Expect(err).ToNot(HaveOccurred())
+
 		se, err := evs.NewEventFromProto(pe)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -36,7 +39,7 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		ed, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: "world"})
 		Expect(err).ToNot(HaveOccurred())
 
 		se := evs.NewEvent(
@@ -81,17 +84,19 @@ var _ = Describe("Converters", func() {
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
-		data, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: "world"})
-		Expect(err).ToNot(HaveOccurred())
-
 		pe := &api_es.Event{
 			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(time.Now().UTC()),
 			AggregateId:      "", // invalid id
 			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
-			Data:             data,
+			Data:             &anypb.Any{},
 		}
+
+		proto := &test.TestEventData{Hello: "world"}
+		err := pe.Data.MarshalFrom(proto)
+		Expect(err).ToNot(HaveOccurred())
+
 		se, err := evs.NewEventFromProto(pe)
 		Expect(err).To(HaveOccurred())
 		Expect(se).To(BeNil())
@@ -107,5 +112,8 @@ func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
 	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
-	Expect(se.Data()).To(Equal(evs.EventData(pe.Data)))
+
+	d, err := evs.ToEventDataFromAny(pe.Data)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(se.Data()).To(Equal(d))
 }

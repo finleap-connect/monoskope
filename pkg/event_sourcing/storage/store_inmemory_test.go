@@ -2,12 +2,12 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -26,11 +26,9 @@ var _ = Describe("storage/inmemory", func() {
 		return es.(*InMemoryEventStore)
 	}
 	createTestEventData := func(something string) evs.EventData {
-		bytes, err := json.Marshal(&testEventData{Hello: something})
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
-		ed := evs.NewEventData()
-		ed.Value = bytes
-		return evs.EventData(ed)
+		return ed
 	}
 	createTestEvents := func() []evs.Event {
 		aggregateId := uuid.New()

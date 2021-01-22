@@ -13,10 +13,6 @@ const (
 	testAggregateExtended evs.AggregateType = "TestAggregateExtended"
 )
 
-type testEventData struct {
-	Hello string `json:",omitempty"`
-}
-
 type eventStoreTestEnv struct {
 	*test.TestEnv
 	*postgresStoreConfig

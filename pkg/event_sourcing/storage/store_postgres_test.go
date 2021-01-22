@@ -32,9 +32,9 @@ var _ = Describe("storage/postgres", func() {
 	}
 
 	createTestEventData := func(something string) evs.EventData {
-		ed, err := evs.NewEventDataFromProto(&test.TestEventData{Hello: something})
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
-		return evs.EventData(ed)
+		return ed
 	}
 
 	createTestEvents := func() []evs.Event {
