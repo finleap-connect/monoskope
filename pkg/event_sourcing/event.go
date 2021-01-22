@@ -35,15 +35,15 @@ func (t EventType) String() string {
 // The combination of AggregateType, AggregateID and AggregateVersion is
 // unique.
 type Event interface {
-	// Type of the event.
+	// EventType is the type of the event.
 	EventType() EventType
-	// Type of the aggregate that the event can be applied to.
-	Timestamp() time.Time
-	// Strict monotone counter, per aggregate/aggregate_id relation.
-	AggregateType() AggregateType
-	// ID of the aggregate that the event should be applied to.
-	AggregateID() uuid.UUID
 	// Timestamp of when the event was created.
+	Timestamp() time.Time
+	// AggregateType is the type of the aggregate that the event can be applied to.
+	AggregateType() AggregateType
+	// AggregateID is the id of the aggregate that the event should be applied to.
+	AggregateID() uuid.UUID
+	// AggregateVersion is the version of the aggregate.
 	AggregateVersion() uint64
 	// Event type specific event data.
 	Data() EventData
@@ -53,7 +53,7 @@ type Event interface {
 	String() string
 }
 
-// NewEvent creates a new event with a type and data, setting its timestamp.
+// NewEvent creates a new event.
 func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
 	return event{
@@ -65,6 +65,11 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 		aggregateVersion: aggregateVersion,
 		metadata:         make(map[string]interface{}),
 	}
+}
+
+// NewEventFromAggregate creates a new event.
+func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.Time, aggregate Aggregate) Event {
+	return NewEvent(eventType, data, timestamp, aggregate.AggregateType(), aggregate.AggregateID(), aggregate.AggregateVersion())
 }
 
 // NewEventFromProto converts API Event to Event

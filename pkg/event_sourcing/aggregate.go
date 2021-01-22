@@ -15,8 +15,12 @@ func (t AggregateType) String() string {
 }
 
 type Aggregate interface {
-	// AggregateType returns the type of the aggregate.
+	// AggregateType is the type of the aggregate that the event can be applied to.
 	AggregateType() AggregateType
+	// AggregateID is the id of the aggregate that the event should be applied to.
+	AggregateID() uuid.UUID
+	// AggregateVersion is the version of the aggregate.
+	AggregateVersion() uint64
 }
 
 type AggregateBase struct {
@@ -34,43 +38,30 @@ func NewAggregateBase(t AggregateType, id uuid.UUID) *AggregateBase {
 	}
 }
 
-// EntityID implements the EntityID method of the eh.Entity and eh.Aggregate interface.
-func (a *AggregateBase) EntityID() uuid.UUID {
+// EntityID implements the EntityID method of the Entity and Aggregate interface.
+func (a *AggregateBase) AggregateID() uuid.UUID {
 	return a.id
 }
 
-// AggregateType implements the AggregateType method of the eh.Aggregate interface.
+// AggregateType implements the AggregateType method of the Aggregate interface.
 func (a *AggregateBase) AggregateType() AggregateType {
 	return a.aggregateType
 }
 
 // Version implements the Version method of the Aggregate interface.
-func (a *AggregateBase) Version() uint64 {
+func (a *AggregateBase) AggregateVersion() uint64 {
 	return a.version
-}
-
-// IncrementVersion implements the IncrementVersion method of the Aggregate interface.
-func (a *AggregateBase) IncrementVersion() {
-	a.version++
-}
-
-// Events implements the Events method of the eh.EventSource interface.
-func (a *AggregateBase) Events() []Event {
-	events := a.events
-	a.events = nil
-	return events
 }
 
 // AppendEvent appends an event for later retrieval by Events().
 func (a *AggregateBase) AppendEvent(et EventType, data EventData) Event {
-	newEvent := NewEvent(
+	a.version++
+	newEvent := NewEventFromAggregate(
 		et,
 		data,
 		time.Now().UTC(),
-		a.AggregateType(),
-		a.EntityID(),
-		a.Version()+uint64(len(a.events)+1))
-
+		a)
 	a.events = append(a.events, newEvent)
+
 	return newEvent
 }
