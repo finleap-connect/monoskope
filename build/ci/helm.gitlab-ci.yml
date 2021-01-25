@@ -47,6 +47,7 @@ deliver:chart:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-gateway
     - VERSION=$VERSION make helm-set-version-eventstore
+    - VERSION=$VERSION make helm-set-version-commandhandler
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
     - lint:helm:gateway
