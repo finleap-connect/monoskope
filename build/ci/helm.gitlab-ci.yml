@@ -65,9 +65,6 @@ deploy:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
-  needs:
-    - job: deliver:chart:monoskope
-      artifacts: false
 
 deploy:monoskope:latest_tag:
   stage: deploy
