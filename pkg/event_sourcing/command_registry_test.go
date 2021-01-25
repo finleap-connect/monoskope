@@ -1,6 +1,8 @@
 package event_sourcing
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
@@ -51,5 +53,15 @@ var _ = Describe("command_registry", func() {
 		Expect(ok).To(BeTrue())
 		Expect(testCmd).ToNot(BeNil())
 		Expect(testCmd.Test).To(Equal("Hello world!"))
+	})
+	It("can register handlers", func() {
+		err := Registry.SetHandler(&TestAggregate{}, TestCommandType)
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("can handle commands", func() {
+		err := Registry.HandleCommand(context.Background(), &TestCommand{
+			TestCommandData: api.TestCommandData{Test: "world!"},
+		})
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

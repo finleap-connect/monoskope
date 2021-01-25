@@ -115,6 +115,7 @@ func (r *commandRegistry) CreateCommand(commandType CommandType, data *anypb.Any
 		}
 		return cmd, nil
 	}
+	r.log.Info("trying to create a command of non-registered type", "commandType", commandType)
 	return nil, ErrCommandNotRegistered
 }
 
@@ -127,18 +128,22 @@ func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error 
 		return handler.HandleCommand(ctx, cmd)
 	}
 
+	r.log.Info("trying to handle a command of non-registered type", "commandType", cmd.CommandType())
 	return ErrHandlerNotFound
 }
 
 // SetHandler adds a handler for a specific command.
-func (r *commandRegistry) SetHandler(handler CommandHandler, cmdType CommandType) error {
+func (r *commandRegistry) SetHandler(handler CommandHandler, commandType CommandType) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if _, ok := r.handlers[cmdType]; ok {
+	if _, ok := r.handlers[commandType]; ok {
+		r.log.Info("attempt to register command handler already registered", "commandType", commandType)
 		return ErrHandlerAlreadySet
 	}
 
-	r.handlers[cmdType] = handler
+	r.handlers[commandType] = handler
+	r.log.Info("command handler has been registered.", "commandType", commandType)
+
 	return nil
 }

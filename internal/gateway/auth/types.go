@@ -7,11 +7,6 @@ import (
 	"net/url"
 )
 
-const (
-	AUTH_SUB = "auth.sub"
-	AUTH_SRC = "auth.src"
-)
-
 type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
