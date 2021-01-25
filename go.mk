@@ -124,7 +124,7 @@ build-gateway: $(CMD_GATEWAY)
 
 build-eventstore: $(CMD_EVENTSTORE)
 
-build-eventstore: $(CMD_COMMANDHANDLER)
+build-commandhandler: $(CMD_COMMANDHANDLER)
 
 push-monoctl:
 	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_LINUX) "https://artifactory.figo.systems/artifactory/binaries/linux/monoctl-$(VERSION)"
