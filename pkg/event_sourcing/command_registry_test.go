@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-var _ = Describe("commands/command_registry", func() {
+var _ = Describe("command_registry", func() {
 	It("can register and unregister commands", func() {
 		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
 		Expect(err).ToNot(HaveOccurred())
