@@ -14,6 +14,7 @@ func (t AggregateType) String() string {
 	return string(t)
 }
 
+// Aggregate is the interface definition for all aggregates
 type Aggregate interface {
 	// AggregateType is the type of the aggregate that the event can be applied to.
 	AggregateType() AggregateType
@@ -23,6 +24,7 @@ type Aggregate interface {
 	AggregateVersion() uint64
 }
 
+// AggregateBase is the base implementation for all aggregates
 type AggregateBase struct {
 	id            uuid.UUID
 	aggregateType AggregateType
