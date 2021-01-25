@@ -96,7 +96,7 @@ func NewPostgresEventStore(config *postgresStoreConfig) (Store, error) {
 
 // Connect starts automatic reconnect with postgres db
 func (s *postgresEventStore) Connect(ctx context.Context) error {
-	go s.handleReconnect(ctx)
+	go s.handleReconnect()
 	for !s.isConnected {
 		select {
 		case <-s.ctx.Done():
@@ -290,8 +290,8 @@ func (s *postgresEventStore) clear(ctx context.Context) error {
 }
 
 // init will initialize db
-func (s *postgresEventStore) init(ctx context.Context, db *pg.DB) error {
-	err := s.createTables(ctx, db)
+func (s *postgresEventStore) init(db *pg.DB) error {
+	err := s.createTables(s.ctx, db)
 	s.isConnected = err == nil
 	if err != nil {
 		return err
@@ -300,9 +300,9 @@ func (s *postgresEventStore) init(ctx context.Context, db *pg.DB) error {
 	return nil
 }
 
-func (s *postgresEventStore) handleReInit(ctx context.Context, db *pg.DB) error {
+func (s *postgresEventStore) handleReInit(db *pg.DB) error {
 	for {
-		err := s.init(ctx, db)
+		err := s.init(db)
 		if err != nil {
 			s.log.Info("Failed to initialize channel. Retrying...", "error", err.Error())
 
@@ -319,11 +319,11 @@ func (s *postgresEventStore) handleReInit(ctx context.Context, db *pg.DB) error 
 }
 
 // connect will create a new db connection
-func (s *postgresEventStore) connect(ctx context.Context) (*pg.DB, error) {
+func (s *postgresEventStore) connect() (*pg.DB, error) {
 	s.log.Info("Attempting to connect...")
 
 	db := pg.Connect(s.conf.pgOptions)
-	if err := db.Ping(ctx); err != nil {
+	if err := db.Ping(s.ctx); err != nil {
 		return nil, err
 	}
 
@@ -335,17 +335,14 @@ func (s *postgresEventStore) connect(ctx context.Context) (*pg.DB, error) {
 
 // handleReconnect will wait for a connection error on
 // notifyConnClose, and then continuously attempt to reconnect.
-func (s *postgresEventStore) handleReconnect(ctx context.Context) {
+func (s *postgresEventStore) handleReconnect() {
 	for {
 		s.isConnected = false
-		db, err := s.connect(ctx)
+		db, err := s.connect()
 		if err != nil {
 			s.log.Info("Failed to connect. Retrying...", "error", err.Error())
 
 			select {
-			case <-ctx.Done():
-				s.log.Info("Automatic reconnect stopped. Context deadline exceeded.")
-				return
 			case <-s.ctx.Done():
 				s.log.Info("Automatic reconnect stopped. Shutdown.")
 				return
@@ -354,12 +351,12 @@ func (s *postgresEventStore) handleReconnect(ctx context.Context) {
 			continue
 		}
 
-		err = s.handleReInit(ctx, db)
+		err = s.handleReInit(db)
 		if err != nil {
 			s.log.Info("Failed to init. Retrying...", "error", err.Error())
 		} else {
 			for {
-				if err := db.Ping(ctx); err != nil {
+				if err := db.Ping(s.ctx); err != nil {
 					s.isConnected = false
 					s.log.Info("Connection closed. Reconnecting...")
 					break
