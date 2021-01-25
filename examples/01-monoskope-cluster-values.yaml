@@ -45,6 +45,13 @@ gateway:
   ingress:
     enabled: true
     host: api.monoskope.dev.finleap.cloud
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
 
 eventstore:
   replicaCount: 3
@@ -52,6 +59,24 @@ eventstore:
   config:
     dbTlsSecret: monoskope-crdb-auth-evenstore
     busTlsSecret: monoskope-rabbitmq-auth-evenstore
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+commandhandler:
+  replicaCount: 3
+  enabled: true
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
 
 ingress:
   enabled: true
