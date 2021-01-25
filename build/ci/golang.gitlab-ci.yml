@@ -120,3 +120,18 @@ deliver:eventstore:
     - lint:golang
     - test:golang
     - build:golang:eventstore
+
+deliver:commandhandler:
+  stage: deliver
+  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
+  services:
+    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/commandhandler.Dockerfile -i commandhandler --tag $VERSION
+  dependencies:
+    - lint:golang
+    - test:golang
+    - build:golang:commandhandler
