@@ -18,11 +18,11 @@ const (
 
 // TestCommand is a command for tests.
 type TestCommand struct {
-	AggID uuid.UUID
+	aggregateId uuid.UUID
 	api_cmd.TestCommandData
 }
 
-func (c *TestCommand) AggregateID() uuid.UUID { return c.AggID }
+func (c *TestCommand) AggregateID() uuid.UUID { return c.aggregateId }
 func (c *TestCommand) AggregateType() AggregateType {
 	return TestAggregateType
 }
@@ -32,7 +32,13 @@ func (c *TestCommand) SetData(a *anypb.Any) error {
 }
 
 type TestAggregate struct {
-	AggregateBase
+	*AggregateBase
+}
+
+func NewTestAggregate() *TestAggregate {
+	return &TestAggregate{
+		AggregateBase: NewAggregateBase(TestAggregateType, uuid.New()),
+	}
 }
 
 func (a *TestAggregate) HandleCommand(ctx context.Context, cmd Command) error {

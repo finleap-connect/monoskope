@@ -55,7 +55,7 @@ var _ = Describe("command_registry", func() {
 		Expect(testCmd.Test).To(Equal("Hello world!"))
 	})
 	It("can register handlers", func() {
-		err := Registry.SetHandler(&TestAggregate{}, TestCommandType)
+		err := Registry.SetHandler(NewTestAggregate(), TestCommandType)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can handle commands", func() {
