@@ -20,8 +20,10 @@ type UserRoleBindingAggregate struct {
 	context string    // Context of the role binding
 }
 
+// AggregateType returns the type of the aggregate.
 func (c *UserRoleBindingAggregate) AggregateType() AggregateType { return domain.UserRoleBinding }
 
+// NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 	return &UserRoleBindingAggregate{
 		AggregateBase: NewAggregateBase(domain.UserRoleBinding, id),
@@ -37,15 +39,12 @@ func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Comman
 	return fmt.Errorf("couldn't handle command")
 }
 
+// handleAddRoleToUserCommand handles the command
 func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.AddRoleToUserCommand) error {
 	// TODO: Check if user has the right to do this.
-	userId, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail() // user issued the command at gateway
+	_, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail() // user issued the command at gateway
 	if err != nil {
 		return err
-	}
-
-	if userId == cmd.GetUserId() {
-		// Ah he is editing his own roles
 	}
 
 	ed, err := ToEventDataFromProto(&api.UserRoleAddedEventData{
@@ -74,6 +73,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 	return nil
 }
 
+// applyUserRoleAddedEvent applies the event on the aggregate
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
 	data := &api.UserRoleAddedEventData{}
 	err := event.Data().ToProto(data)
