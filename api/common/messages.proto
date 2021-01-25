@@ -8,6 +8,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/co
 
 package common;
 
+// ServiceInformation are the version and commit hash of a service
 message ServiceInformation {
   // version
   string version = 1;
@@ -17,8 +18,13 @@ message ServiceInformation {
   string commit = 3;
 }
 
+// UserMetadata are the information about a user provided by the identity
+// provider
 message UserMetadata {
+  // identity of the user, called subject in OpenID (sub)
   string subject = 1;
+  // issuing authority (iss)
   string issuer = 2;
   string email = 3;
+  string name = 4;
 }

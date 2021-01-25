@@ -9,9 +9,13 @@ import (
 )
 
 var (
-	ErrMissingMetadata = status.Errorf(codes.InvalidArgument, "missing metadata")
-	ErrInvalidToken    = status.Errorf(codes.Unauthenticated, "invalid token")
+	// ErrInvalidToken is the gRPC error response for invalid auth token
+	ErrInvalidToken = status.Errorf(codes.Unauthenticated, "invalid token")
 )
+
+func ErrInternal(msg string) error {
+	return status.Error(codes.Internal, msg)
+}
 
 func ErrMandatory(fields ...string) error {
 	var msg string

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	userMailKey             evs.EventMetadataKey
+	userInformationKey      evs.EventMetadataKey
 	componentInformationKey evs.EventMetadataKey
 )
 
@@ -17,6 +17,12 @@ type ComponentInformation struct {
 	Name    string
 	Version string
 	Commit  string
+}
+
+type UserInformation struct {
+	Email   string
+	Subject string
+	Issuer  string
 }
 
 type domainMetadataManager struct {
@@ -39,22 +45,22 @@ func (b *domainMetadataManager) SetComponentInformation() *domainMetadataManager
 	return b
 }
 
-func (b *domainMetadataManager) SetUserEmail(userMail string) *domainMetadataManager {
-	b.metadataManager.Set(userMailKey, userMail)
+func (b *domainMetadataManager) SetUserInformation(userInformation *UserInformation) *domainMetadataManager {
+	b.metadataManager.Set(userInformationKey, userInformation)
 	return b
 }
 
-func (b *domainMetadataManager) GetUserEmail() (string, error) {
-	iface, ok := b.metadataManager.Get(userMailKey)
+func (b *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
+	iface, ok := b.metadataManager.Get(userInformationKey)
 	if !ok {
-		return "", fmt.Errorf("not found")
+		return nil, fmt.Errorf("not found")
 	}
 
-	userId, ok := iface.(string)
+	userId, ok := iface.(UserInformation)
 	if !ok {
-		return "", fmt.Errorf("invalid type")
+		return nil, fmt.Errorf("invalid type")
 	}
-	return userId, nil
+	return &userId, nil
 }
 
 func (b *domainMetadataManager) GetContext() context.Context {

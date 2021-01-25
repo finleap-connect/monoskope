@@ -123,11 +123,7 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 	}
 	nonce := util.HashString(encoded + n.config.Nonce)
 
-	scopes := config.Scopes
-	for _, client := range config.Clients {
-		scopes = append(scopes, "audience:server:client_id:"+client)
-	}
-	scopes = append(scopes, oidc.ScopeOpenID, "profile", "email")
+	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email", "federated:id")
 
 	// Construct authCodeURL
 	authCodeURL := ""
@@ -143,7 +139,7 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 	return authCodeURL, encoded, nil
 }
 
-func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*ExtraClaims, error) {
+func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*Claims, error) {
 	if !token.Valid() {
 		return nil, fmt.Errorf("failed to verify ID token")
 	}
@@ -178,7 +174,7 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 }
 
 // authorize verifies a bearer token and pulls user information form the claims.
-func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClaims, error) {
+func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*Claims, error) {
 	idToken, err := n.verifier.Verify(ctx, bearerToken)
 	if err != nil {
 		return nil, err
@@ -194,11 +190,13 @@ func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*ExtraClai
 	return claims, nil
 }
 
-func getClaims(idToken *oidc.IDToken) (*ExtraClaims, error) {
-	claims := &ExtraClaims{}
+func getClaims(idToken *oidc.IDToken) (*Claims, error) {
+	claims := &Claims{}
+
 	if err := idToken.Claims(claims); err != nil {
 		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
+
 	if !claims.EmailVerified {
 		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
 	}

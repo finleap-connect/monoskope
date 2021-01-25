@@ -42,7 +42,7 @@ func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Comman
 // handleAddRoleToUserCommand handles the command
 func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.AddRoleToUserCommand) error {
 	// TODO: Check if user has the right to do this.
-	_, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail() // user issued the command at gateway
+	_, err := metadata.NewDomainMetadataManager(ctx).GetUserInformation() // user issued the command at gateway
 	if err != nil {
 		return err
 	}

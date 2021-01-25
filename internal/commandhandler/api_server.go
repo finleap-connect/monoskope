@@ -37,7 +37,11 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (
 	}
 
 	ctx = metadata.NewDomainMetadataManager(ctx).
-		SetUserEmail(apiCommand.GetUserId()).
+		SetUserInformation(&metadata.UserInformation{
+			Email:   apiCommand.GetUserMetadata().Email,
+			Subject: apiCommand.GetUserMetadata().Subject,
+			Issuer:  apiCommand.GetUserMetadata().Issuer,
+		}).
 		GetContext()
 
 	err = evs.Registry.HandleCommand(ctx, cmd)

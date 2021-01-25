@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
@@ -11,7 +12,6 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -52,8 +52,6 @@ func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.Serv
 
 func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
 	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
-		Scopes:        []string{"offline_access"},
-		Clients:       []string{},
 		OfflineAccess: true,
 	})
 	if err != nil {
@@ -99,16 +97,15 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.Refresh
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
-	// TODO: Check user id is not nil or empty
-	userId, err := metadata.NewDomainMetadataManager(ctx).GetUserEmail()
-	if err != nil {
-		return nil, err
+	// Get the claims of the authenticated user from the context
+	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
+	if !ok {
+		return nil, fmt.Errorf("Some shizzle going on.")
 	}
-	// Now we know the email address the user has authenticated with
 
 	// Call command handler to execute
 	return s.cmdHandlerClient.Execute(ctx, &commands.Command{
-		Request: apiCommand,
-		UserId:  userId,
+		Request:      apiCommand,
+		UserMetadata: claims.ToProto(),
 	})
 }

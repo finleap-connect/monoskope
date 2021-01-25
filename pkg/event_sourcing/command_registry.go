@@ -43,6 +43,7 @@ func newCommandRegistry() *commandRegistry {
 	}
 }
 
+// Global command and command handler registry
 var Registry *commandRegistry
 
 func init() {

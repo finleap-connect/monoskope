@@ -9,7 +9,10 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/co
 
 package commands.user;
 
-message CreateUserCommand { common.UserMetadata user_metadata = 1; }
+message CreateUserCommand {
+  // The user information
+  common.UserMetadata user_metadata = 1;
+}
 
 message AddRoleToUserCommand {
   // Unique identifier of the user (UUID 128-bit number)

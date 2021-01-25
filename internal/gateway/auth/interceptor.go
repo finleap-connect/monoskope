@@ -6,10 +6,8 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
+	m8grpc "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -46,14 +44,10 @@ func (s *AuthServerInterceptor) EnsureValid(ctx context.Context, fullMethodName 
 	// Perform the token validation here.
 	claims, err := s.authHandler.Authorize(ctx, token)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		return nil, m8grpc.ErrInvalidToken
 	}
 
-	metadata.NewDomainMetadataManager(ctx).SetUserEmail(claims.Email)
-
-	newCtx := context.WithValue(ctx, &ExtraClaims{}, claims)
-
-	return newCtx, nil
+	return context.WithValue(ctx, &Claims{}, claims), nil
 }
 
 // AuthFunc is the pluggable function that performs authentication.

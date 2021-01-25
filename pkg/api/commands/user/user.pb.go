@@ -31,6 +31,7 @@ type CreateUserCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The user information
 	UserMetadata *common.UserMetadata `protobuf:"bytes,1,opt,name=user_metadata,json=userMetadata,proto3" json:"user_metadata,omitempty"`
 }
 
