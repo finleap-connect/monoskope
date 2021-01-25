@@ -4,6 +4,7 @@ package gateway
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -12,6 +13,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // GatewayClient is the client API for Gateway service.
@@ -19,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
 	// Executes a command and returns the execution result
-	Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*commands.CommandResult, error)
+	Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type gatewayClient struct {
@@ -30,8 +32,8 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*commands.CommandResult, error) {
-	out := new(commands.CommandResult)
+func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/Execute", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -44,7 +46,7 @@ func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest
 // for forward compatibility
 type GatewayServer interface {
 	// Executes a command and returns the execution result
-	Execute(context.Context, *commands.CommandRequest) (*commands.CommandResult, error)
+	Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -52,7 +54,7 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (UnimplementedGatewayServer) Execute(context.Context, *commands.CommandRequest) (*commands.CommandResult, error) {
+func (UnimplementedGatewayServer) Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
@@ -65,7 +67,7 @@ type UnsafeGatewayServer interface {
 }
 
 func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
-	s.RegisterService(&_Gateway_serviceDesc, srv)
+	s.RegisterService(&Gateway_ServiceDesc, srv)
 }
 
 func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -86,7 +88,10 @@ func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Gateway_serviceDesc = grpc.ServiceDesc{
+// Gateway_ServiceDesc is the grpc.ServiceDesc for Gateway service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Gateway_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gateway.Gateway",
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{

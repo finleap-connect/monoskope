@@ -12,6 +12,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // ServiceInformationServiceClient is the client API for ServiceInformationService service.
@@ -32,7 +33,7 @@ func NewServiceInformationServiceClient(cc grpc.ClientConnInterface) ServiceInfo
 }
 
 func (c *serviceInformationServiceClient) GetServiceInformation(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_ServiceInformationService_serviceDesc.Streams[0], "/common.ServiceInformationService/GetServiceInformation", opts...)
+	stream, err := c.cc.NewStream(ctx, &ServiceInformationService_ServiceDesc.Streams[0], "/common.ServiceInformationService/GetServiceInformation", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ type UnsafeServiceInformationServiceServer interface {
 }
 
 func RegisterServiceInformationServiceServer(s grpc.ServiceRegistrar, srv ServiceInformationServiceServer) {
-	s.RegisterService(&_ServiceInformationService_serviceDesc, srv)
+	s.RegisterService(&ServiceInformationService_ServiceDesc, srv)
 }
 
 func _ServiceInformationService_GetServiceInformation_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -115,7 +116,10 @@ func (x *serviceInformationServiceGetServiceInformationServer) Send(m *ServiceIn
 	return x.ServerStream.SendMsg(m)
 }
 
-var _ServiceInformationService_serviceDesc = grpc.ServiceDesc{
+// ServiceInformationService_ServiceDesc is the grpc.ServiceDesc for ServiceInformationService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ServiceInformationService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "common.ServiceInformationService",
 	HandlerType: (*ServiceInformationServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},

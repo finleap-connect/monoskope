@@ -3,8 +3,8 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-// import "google/protobuf/wrappers.proto";
 import "google/protobuf/any.proto";
+import "api/common/messages.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands";
 
@@ -22,15 +22,8 @@ message CommandRequest {
 message Command {
   // Type of the command
   CommandRequest request = 1;
-  // Unique identifier of the user issuing the command (UUID 128-bit number)
-  string user_id = 2;
+  // Metadata about the issueing user
+  common.UserMetadata user_metadata = 2;
 }
 
-// CommandResult is the result of a command executed
-message CommandResult {
-  // Type of the command executed to trigger this result
-  string type = 1;
-
-  // Command type specific result data
-  google.protobuf.Any data = 2;
-}
+message TestCommandData { string test = 1; }

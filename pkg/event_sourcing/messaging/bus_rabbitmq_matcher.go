@@ -3,7 +3,7 @@ package messaging
 import (
 	"fmt"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // rabbitMatcher implements the EventMatcher interface for rabbitmq
@@ -21,14 +21,14 @@ func (m *rabbitMatcher) Any() EventMatcher {
 }
 
 // MatchEventType matches a specific event type, nil events never match.
-func (m *rabbitMatcher) MatchEventType(eventType storage.EventType) EventMatcher {
-	m.eventType = string(eventType)
+func (m *rabbitMatcher) MatchEventType(eventType evs.EventType) EventMatcher {
+	m.eventType = eventType.String()
 	return m
 }
 
 // MatchAggregateType matches a specific aggregate type, nil events never match.
-func (m *rabbitMatcher) MatchAggregateType(aggregateType storage.AggregateType) EventMatcher {
-	m.aggregateType = string(aggregateType)
+func (m *rabbitMatcher) MatchAggregateType(aggregateType evs.AggregateType) EventMatcher {
+	m.aggregateType = aggregateType.String()
 	return m
 }
 

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
@@ -19,25 +19,30 @@ var _ = Describe("messaging/rabbitmq", func() {
 	eventCounter := 0
 	testCount := 0
 
-	createEvent := func() storage.Event {
-		eventType := storage.EventType("TestEvent")
-		aggregateType := storage.AggregateType("TestAggregate")
-		data := storage.EventData(fmt.Sprintf("test-%v", eventCounter))
-		event := storage.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
+	createTestEventData := func(something string) evs.EventData {
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: something})
+		Expect(err).ToNot(HaveOccurred())
+		return ed
+	}
+	createEvent := func() evs.Event {
+		eventType := evs.EventType("TestEvent")
+		aggregateType := evs.AggregateType("TestAggregate")
+		data := createTestEventData("world!")
+		event := evs.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
 		eventCounter++
 		return event
 	}
 
-	publishEvent := func(event storage.Event) {
+	publishEvent := func(event evs.Event) {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
 		err := publisher.PublishEvent(ctxWithTimeout, event)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	createReceiver := func(event storage.Event, matchers ...EventMatcher) {
-		receiver := func(e storage.Event) (err error) {
-			defer ginkgo.GinkgoRecover()
+	createReceiver := func(event evs.Event, matchers ...EventMatcher) {
+		receiver := func(e evs.Event) (err error) {
+			defer GinkgoRecover()
 			env.Log.Info("Received event.")
 			Expect(e).ToNot(BeNil())
 			Expect(e).To(Equal(event))

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // ErrCouldNotMarshalEvent is when an event could not be marshaled.
@@ -36,7 +36,7 @@ type EventBusPublisher interface {
 	// Connect connects to the bus
 	Connect(context.Context) *messageBusError
 	// PublishEvent publishes the event on the bus.
-	PublishEvent(context.Context, storage.Event) *messageBusError
+	PublishEvent(context.Context, evs.Event) *messageBusError
 	// Close closes the underlying connections
 	Close() error
 }
@@ -58,13 +58,13 @@ type EventMatcher interface {
 	// Any matches any event.
 	Any() EventMatcher
 	// MatchEventType matches a specific event type, nil events never match.
-	MatchEventType(eventType storage.EventType) EventMatcher
+	MatchEventType(eventType evs.EventType) EventMatcher
 	// MatchAggregate matches a specific aggregate type, nil events never match.
-	MatchAggregateType(aggregateType storage.AggregateType) EventMatcher
+	MatchAggregateType(aggregateType evs.AggregateType) EventMatcher
 }
 
 // EventReceiver is the function to call by the consumer on incoming events
-type EventReceiver func(storage.Event) error
+type EventReceiver func(evs.Event) error
 
 // messageBusError is an error from the bus
 type messageBusError struct {

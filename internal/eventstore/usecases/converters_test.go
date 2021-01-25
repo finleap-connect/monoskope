@@ -3,14 +3,12 @@ package usecases
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
-	"google.golang.org/protobuf/encoding/protojson"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -18,19 +16,21 @@ import (
 
 var _ = Describe("Converters", func() {
 	It("can convert to storage event from proto", func() {
-		data, err := ptypes.MarshalAny(&api_es.TestEventData{Hello: "world"})
-		Expect(err).ToNot(HaveOccurred())
-
 		timestamp := time.Now().UTC()
-		pe := &eventstore.Event{
-			Type:             "TestEventType",
+		pe := &api_es.Event{
+			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(timestamp),
 			AggregateId:      uuid.New().String(),
-			AggregateType:    "TestAggregateType",
+			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
-			Data:             data,
+			Data:             &anypb.Any{},
 		}
-		se, err := NewEventFromProto(pe)
+
+		proto := &test.TestEventData{Hello: "world"}
+		err := pe.Data.MarshalFrom(proto)
+		Expect(err).ToNot(HaveOccurred())
+
+		se, err := evs.NewEventFromProto(pe)
 		Expect(err).ToNot(HaveOccurred())
 
 		checkProtoStorageEventEquality(pe, se)
@@ -39,21 +39,24 @@ var _ = Describe("Converters", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		se := storage.NewEvent(
-			storage.EventType("TestType"),
-			storage.EventData("{\"@type\":\"type.googleapis.com/eventstore.TestEventData\",\"hello\":\"world\"}"),
+		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: "world"})
+		Expect(err).ToNot(HaveOccurred())
+
+		se := evs.NewEvent(
+			evs.EventType("TestType"),
+			ed,
 			timestamp,
-			storage.AggregateType("TestAggregateType"),
+			evs.AggregateType("TestAggregateType"),
 			aggregateId,
 			0)
-		pe, err := NewProtoFromEvent(se)
+		pe, err := evs.NewProtoFromEvent(se)
 		Expect(err).ToNot(HaveOccurred())
 
 		checkProtoStorageEventEquality(pe, se)
 	})
 	It("can convert to storage query from proto filter", func() {
 		aggregateId := uuid.New()
-		aggregateType := storage.AggregateType("TestAggregateType")
+		aggregateType := evs.AggregateType("TestAggregateType")
 		maxTimestamp := time.Now().UTC()
 		minTimestamp := maxTimestamp.Add(-1 * time.Hour)
 
@@ -69,7 +72,7 @@ var _ = Describe("Converters", func() {
 		Expect(q).ToNot(BeNil())
 		Expect(q.AggregateId).To(Equal(&aggregateId))
 
-		pf.ByAggregate = &api_es.EventFilter_AggregateType{AggregateType: wrapperspb.String(string(aggregateType))}
+		pf.ByAggregate = &api_es.EventFilter_AggregateType{AggregateType: wrapperspb.String(aggregateType.String())}
 		q, err = NewStoreQueryFromProto(pf)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(q).ToNot(BeNil())
@@ -81,56 +84,46 @@ var _ = Describe("Converters", func() {
 		Expect(q.MaxTimestamp).To(Equal(&maxTimestamp))
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
-		data, err := ptypes.MarshalAny(&api_es.TestEventData{Hello: "world"})
-		Expect(err).ToNot(HaveOccurred())
-
-		pe := &eventstore.Event{
-			Type:             "TestEventType",
+		pe := &api_es.Event{
+			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(time.Now().UTC()),
 			AggregateId:      "", // invalid id
-			AggregateType:    "TestAggregateType",
+			AggregateType:    testAggregateType.String(),
 			AggregateVersion: wrapperspb.UInt64(0),
-			Data:             data,
+			Data:             &anypb.Any{},
 		}
-		se, err := NewEventFromProto(pe)
+
+		proto := &test.TestEventData{Hello: "world"}
+		err := pe.Data.MarshalFrom(proto)
+		Expect(err).ToNot(HaveOccurred())
+
+		se, err := evs.NewEventFromProto(pe)
 		Expect(err).To(HaveOccurred())
 		Expect(se).To(BeNil())
-		Expect(err).To(Equal(ErrCouldNotParseAggregateId))
-	})
-	It("fails to convert to proto event from storage with illegal event data", func() {
-		timestamp := time.Now().UTC()
-		aggregateId := uuid.New()
-
-		se := storage.NewEvent(
-			storage.EventType("TestType"),
-			storage.EventData("{\"hello\":\"world\"}"), // illegal event data, missing type
-			timestamp,
-			storage.AggregateType("TestAggregateType"),
-			aggregateId,
-			0)
-		pe, err := NewProtoFromEvent(se)
-		Expect(err).To(HaveOccurred())
-		Expect(pe).To(BeNil())
-		Expect(err).To(Equal(ErrCouldNotUnmarshalEventData))
+		Expect(err).To(Equal(evs.ErrCouldNotParseAggregateId))
 	})
 })
 
-func checkProtoStorageEventEquality(pe *eventstore.Event, se storage.Event) {
+func checkProtoStorageEventEquality(pe *api_es.Event, se evs.Event) {
 	Expect(pe).ToNot(BeNil())
 	Expect(se).ToNot(BeNil())
-	Expect(pe.Type).To(Equal(string(se.EventType())))
+	Expect(pe.Type).To(Equal(se.EventType().String()))
 	Expect(pe.Timestamp.AsTime()).To(Equal(se.Timestamp()))
 	Expect(pe.AggregateId).To(Equal(se.AggregateID().String()))
-	Expect(pe.AggregateType).To(Equal(string(se.AggregateType())))
+	Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 	Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 
-	eventData := &anypb.Any{}
-	testEventData := &api_es.TestEventData{}
-	err := protojson.Unmarshal([]byte(se.Data()), eventData)
+	ed, err := evs.ToEventDataFromAny(pe.Data)
 	Expect(err).ToNot(HaveOccurred())
-	Expect(pe.GetData()).To(Equal(eventData))
+	Expect(se.Data()).To(Equal(ed))
 
-	Expect(ptypes.Is(eventData, &api_es.TestEventData{})).To(BeTrue())
-	err = ptypes.UnmarshalAny(eventData, testEventData)
+	proto := &test.TestEventData{}
+	err = se.Data().ToProto(proto)
 	Expect(err).ToNot(HaveOccurred())
+
+	a := &anypb.Any{}
+	err = a.MarshalFrom(proto)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(pe.Data.TypeUrl).To(Equal(a.TypeUrl))
+	Expect(pe.Data.Value).To(Equal(a.Value))
 }

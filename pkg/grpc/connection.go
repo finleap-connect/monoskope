@@ -20,18 +20,6 @@ func NewGrpcConnectionFactory(url string) grpcConnectionFactory {
 	}
 }
 
-func NewGrpcConnectionFactoryWithOpts(url string, opts []grpc.DialOption) grpcConnectionFactory {
-	return grpcConnectionFactory{
-		url:  url,
-		opts: opts,
-	}
-}
-
-func (factory grpcConnectionFactory) Url(url string) grpcConnectionFactory {
-	factory.url = url
-	return factory
-}
-
 func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)

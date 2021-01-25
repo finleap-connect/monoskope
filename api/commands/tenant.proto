@@ -48,9 +48,3 @@ message DeleteTenantCommand {
   // Unique identifier of the tenant to delete (UUID 128-bit number)
   string id = 1; // required
 }
-
-// Request to list all tenants
-message ListTenantsCommand {
-  // Include tenants which have previously been deleted
-  bool include_deleted = 1;
-}

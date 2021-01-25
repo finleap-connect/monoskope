@@ -2,10 +2,13 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
+	api_cmdhandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
+	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
@@ -21,8 +24,9 @@ type apiServer struct {
 	// Logger interface
 	log logger.Logger
 	//
-	authConfig  *auth.Config
-	authHandler *auth.Handler
+	authConfig       *auth.Config
+	authHandler      *auth.Handler
+	cmdHandlerClient api_cmdhandler.CommandHandlerClient
 }
 
 func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {
@@ -36,7 +40,7 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer
 
 func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	err := stream.Send(&api_common.ServiceInformation{
-		Name:    "gateway",
+		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})
@@ -48,8 +52,6 @@ func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.Serv
 
 func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
 	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
-		Scopes:        []string{"offline_access"},
-		Clients:       []string{},
 		OfflineAccess: true,
 	})
 	if err != nil {
@@ -91,4 +93,19 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.Refresh
 		Token:  token.AccessToken,
 		Expiry: timestamppb.New(token.Expiry),
 	}, nil
+}
+
+// Execute implements the API method Execute
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
+	// Get the claims of the authenticated user from the context
+	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
+	if !ok {
+		return nil, fmt.Errorf("Some shizzle going on.")
+	}
+
+	// Call command handler to execute
+	return s.cmdHandlerClient.Execute(ctx, &commands.Command{
+		Request:      apiCommand,
+		UserMetadata: claims.ToProto(),
+	})
 }

@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/streadway/amqp"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 // rabbitEventBus implements an EventBus using RabbitMQ.
@@ -86,7 +86,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *messageBusError {
 }
 
 // PublishEvent publishes the event on the bus.
-func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
+func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) *messageBusError {
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
@@ -148,7 +148,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event storage.Event) 
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // recieve the message.
-func (b *rabbitEventBus) publishEvent(event storage.Event) *messageBusError {
+func (b *rabbitEventBus) publishEvent(event evs.Event) *messageBusError {
 	if !b.isConnected {
 		return &messageBusError{
 			Err: ErrMessageNotConnected,
@@ -476,7 +476,7 @@ func (b *rabbitEventBus) flushConfirms() {
 }
 
 // generateRoutingKey generates the routing key for an event.
-func (b *rabbitEventBus) generateRoutingKey(event storage.Event) string {
+func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
@@ -495,7 +495,7 @@ func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.D
 			}
 		}
 
-		err = receiver(storage.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
+		err = receiver(evs.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
 		if err != nil {
 			if err := d.Nack(false, false); err != nil {
 				b.log.Error(err, "Failed to NACK event.")
@@ -511,10 +511,10 @@ func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.D
 
 // rabbitEvent implements the message body transfered via rabbitmq
 type rabbitEvent struct {
-	EventType        storage.EventType
-	Data             storage.EventData
+	EventType        evs.EventType
+	Data             evs.EventData
 	Timestamp        time.Time
-	AggregateType    storage.AggregateType
+	AggregateType    evs.AggregateType
 	AggregateID      uuid.UUID
 	AggregateVersion uint64
 }

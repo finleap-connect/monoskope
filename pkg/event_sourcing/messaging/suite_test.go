@@ -19,8 +19,8 @@ var (
 
 func TestMessageBus(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/messaging-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "messaging", []Reporter{junitReporter})
+	junitReporter := reporters.NewJUnitReporter("../../../reports/event-sourcing-messaging-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "event_sourcing/messaging", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {
@@ -32,7 +32,7 @@ var _ = BeforeSuite(func(done Done) {
 		TestEnv: test.NewTestEnv("TestMessageBus"),
 	}
 
-	warumupSeconds := 25
+	warumupSeconds := 30
 	if _, ok := os.LookupEnv("CI"); ok {
 		warumupSeconds = 0 // no warmup necessary in CI
 	} else {
@@ -53,6 +53,7 @@ var _ = BeforeSuite(func(done Done) {
 			},
 		})
 		Expect(err).ToNot(HaveOccurred())
+
 		// Build connection string
 		env.amqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
 	}

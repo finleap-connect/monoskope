@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // ErrNoEventsToAppend is when no events are available to append.
@@ -41,10 +42,10 @@ type Store interface {
 	Connect(context.Context) error
 
 	// Save appends all events in the event stream to the store.
-	Save(context.Context, []Event) error
+	Save(context.Context, []evs.Event) error
 
 	// Load loads all events for the query from the store.
-	Load(context.Context, *StoreQuery) ([]Event, error)
+	Load(context.Context, *StoreQuery) ([]evs.Event, error)
 
 	// Close closes the underlying connections
 	Close() error
@@ -55,7 +56,7 @@ type StoreQuery struct {
 	// Filter events by aggregate id
 	AggregateId *uuid.UUID
 	// Filter events for a specific aggregate type
-	AggregateType *AggregateType
+	AggregateType *evs.AggregateType
 	// Filter events with a Version >= MinVersion
 	MinVersion *uint64
 	// Filter events with a Version <= MaxVersion

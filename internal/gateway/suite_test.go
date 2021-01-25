@@ -12,7 +12,6 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
-	gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
@@ -40,7 +39,7 @@ var (
 type oAuthTestEnv struct {
 	*test.TestEnv
 	DexWebEndpoint string
-	AuthConfig     *gw_auth.Config
+	AuthConfig     *auth.Config
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -71,7 +70,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 	}
 	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
-	env.AuthConfig = &gw_auth.Config{
+	env.AuthConfig = &auth.Config{
 		IssuerURL:      env.DexWebEndpoint,
 		OfflineAsScope: true,
 		ClientId:       "gateway",

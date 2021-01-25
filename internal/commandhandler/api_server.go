@@ -9,6 +9,8 @@ import (
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // apiServer is the implementation of the CommandHandler API
@@ -26,14 +28,34 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*commands.CommandResult, error) {
-	panic("not implemented")
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (*empty.Empty, error) {
+	cmdDetails := apiCommand.GetRequest()
+
+	cmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = metadata.NewDomainMetadataManager(ctx).
+		SetUserInformation(&metadata.UserInformation{
+			Email:   apiCommand.GetUserMetadata().Email,
+			Subject: apiCommand.GetUserMetadata().Subject,
+			Issuer:  apiCommand.GetUserMetadata().Issuer,
+		}).
+		GetContext()
+
+	err = evs.Registry.HandleCommand(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
 }
 
 // GetServiceInformation implements the API method GetServiceInformation
 func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	err := stream.Send(&api_common.ServiceInformation{
-		Name:    "commandhandler",
+		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})

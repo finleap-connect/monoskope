@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+// import "google/protobuf/wrappers.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user";
+
+package eventdata.user;
+
+message UserRoleAddedEventData {
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 1;
+  // Name of the role added to the user
+  string role = 2;
+  // Context of the role
+  string context = 3;
+}

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "api/common/messages.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user";
+
+package commands.user;
+
+message CreateUserCommand {
+  // The user information
+  common.UserMetadata user_metadata = 1;
+}
+
+message AddRoleToUserCommand {
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 1;
+  // Name of the role to add
+  string role = 2;
+  // Context of the role
+  string context = 3;
+}
+
+message UserRoleAddedEventData {
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 1;
+  // Name of the role to add
+  string role = 2;
+  // Context of the role
+  string context = 3;
+}

@@ -3,7 +3,7 @@ package messaging
 import (
 	"context"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 type mockEventBus struct {
@@ -18,7 +18,7 @@ func (b *mockEventBus) Connect(ctx context.Context) *messageBusError {
 	return nil
 }
 
-func (b *mockEventBus) PublishEvent(ctx context.Context, event storage.Event) *messageBusError {
+func (b *mockEventBus) PublishEvent(ctx context.Context, event evs.Event) *messageBusError {
 	panic("not implemented")
 }
 

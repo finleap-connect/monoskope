@@ -42,7 +42,7 @@ func (a *ServerVersionUseCase) Run() ([]string, error) {
 		return nil, err
 	}
 
-	serviceInfos := make([]string, 0)
+	var serviceInfos []string
 	for {
 		// Read next
 		serverInfo, err := serverInfo.Recv()
