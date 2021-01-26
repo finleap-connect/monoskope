@@ -28,6 +28,8 @@ CMD_EVENTSTORE_SRC = cmd/eventstore/*.go
 CMD_COMMANDHANDLER = $(BUILD_PATH)/commandhandler
 CMD_COMMANDHANDLER_SRC = cmd/commandhandler/*.go
 
+export DEX_CONFIG = $(BUILD_PATH)/config/dex
+
 define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
@@ -50,13 +52,9 @@ lint:
 run-%:
 	$(call go-run,$*)
 
-test:
+test: 
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -r -v -cover pkg/*
-	$(GINKGO) -r -v -cover internal/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
-	$(GINKGO) -r -v -cover internal/monoctl
-	$(GINKGO) -r -v -cover internal/eventstore
-	$(GINKGO) -r -v -cover internal/commandhandler
+	$(GINKGO) -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;

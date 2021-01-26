@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CommandHandlerClient interface {
 	// Executes a command and returns the execution result
-	Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error)
+	Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type commandHandlerClient struct {
@@ -32,7 +32,7 @@ func NewCommandHandlerClient(cc grpc.ClientConnInterface) CommandHandlerClient {
 	return &commandHandlerClient{cc}
 }
 
-func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/commandhandler.CommandHandler/Execute", in, out, opts...)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *commandHandlerClient) Execute(ctx context.Context, in *commands.Command
 // for forward compatibility
 type CommandHandlerServer interface {
 	// Executes a command and returns the execution result
-	Execute(context.Context, *commands.Command) (*empty.Empty, error)
+	Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedCommandHandlerServer()
 }
 
@@ -54,7 +54,7 @@ type CommandHandlerServer interface {
 type UnimplementedCommandHandlerServer struct {
 }
 
-func (UnimplementedCommandHandlerServer) Execute(context.Context, *commands.Command) (*empty.Empty, error) {
+func (UnimplementedCommandHandlerServer) Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedCommandHandlerServer) mustEmbedUnimplementedCommandHandlerServer() {}
@@ -71,7 +71,7 @@ func RegisterCommandHandlerServer(s grpc.ServiceRegistrar, srv CommandHandlerSer
 }
 
 func _CommandHandler_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(commands.Command)
+	in := new(commands.CommandRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func _CommandHandler_Execute_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/commandhandler.CommandHandler/Execute",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommandHandlerServer).Execute(ctx, req.(*commands.Command))
+		return srv.(CommandHandlerServer).Execute(ctx, req.(*commands.CommandRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

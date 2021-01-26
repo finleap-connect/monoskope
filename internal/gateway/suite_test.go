@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -53,6 +54,12 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		return nil, err
 	}
 
+	dexConfigDir := os.Getenv("DEX_CONFIG")
+	if dexConfigDir == "" {
+		return nil, fmt.Errorf("DEX_CONFIG not specified")
+	}
+	env.Log.Info("Config for dex specified.", "DEX_CONFIG", dexConfigDir)
+
 	dexContainer, err := env.Run(&dockertest.RunOptions{
 		Name:       "dex",
 		Repository: "quay.io/dexidp/dex",
@@ -62,8 +69,9 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		},
 		ExposedPorts: []string{"5556", "5000"},
 		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
-		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", test.DexConfigPath)},
+		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", dexConfigDir)},
 	})
+
 	if err != nil {
 		_ = env.Shutdown()
 		return nil, err

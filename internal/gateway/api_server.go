@@ -95,7 +95,7 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.Refresh
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (*empty.Empty, error) {
 	// Get the claims of the authenticated user from the context
 	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
 	if !ok {
@@ -103,8 +103,8 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 	}
 
 	// Call command handler to execute
-	return s.cmdHandlerClient.Execute(ctx, &commands.Command{
-		Request:      apiCommand,
+	return s.cmdHandlerClient.Execute(ctx, &commands.CommandRequest{
+		Command:      apiCommand,
 		UserMetadata: claims.ToProto(),
 	})
 }

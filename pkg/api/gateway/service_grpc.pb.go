@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
 	// Executes a command and returns the execution result
-	Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type gatewayClient struct {
@@ -32,7 +32,7 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *gatewayClient) Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/Execute", in, out, opts...)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *gatewayClient) Execute(ctx context.Context, in *commands.CommandRequest
 // for forward compatibility
 type GatewayServer interface {
 	// Executes a command and returns the execution result
-	Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error)
+	Execute(context.Context, *commands.Command) (*empty.Empty, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -54,7 +54,7 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (UnimplementedGatewayServer) Execute(context.Context, *commands.CommandRequest) (*empty.Empty, error) {
+func (UnimplementedGatewayServer) Execute(context.Context, *commands.Command) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
@@ -71,7 +71,7 @@ func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
 }
 
 func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(commands.CommandRequest)
+	in := new(commands.Command)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/gateway.Gateway/Execute",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Execute(ctx, req.(*commands.CommandRequest))
+		return srv.(GatewayServer).Execute(ctx, req.(*commands.Command))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -28,8 +28,8 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (*empty.Empty, error) {
-	cmdDetails := apiCommand.GetRequest()
+func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
+	cmdDetails := apiCommand.GetCommand()
 
 	cmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
 	if err != nil {
