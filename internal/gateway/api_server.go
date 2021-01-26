@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
@@ -100,7 +99,7 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 	// Get the claims of the authenticated user from the context
 	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
 	if !ok {
-		return nil, fmt.Errorf("Some shizzle going on.")
+		return nil, grpc.ErrInternal("authentication problem")
 	}
 
 	// Call command handler to execute
