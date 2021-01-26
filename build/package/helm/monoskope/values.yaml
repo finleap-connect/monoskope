@@ -93,18 +93,20 @@ dex: # OIDC Provider
     app.kubernetes.io/part-of: *name
 
 gateway:
-  nameOverride: "gateway"
   enabled: true
   replicaCount: 1
   auth:
     issuerURL: *issuer
 
 eventstore:
-  nameOverride: "eventstore"
   enabled: true
   replicaCount: 1
   config:
     existingSecret: monoskope-eventstore-config
+
+commandhandler:
+  enabled: true
+  replicaCount: 1
 
 cockroachdb:
   enabled: true
