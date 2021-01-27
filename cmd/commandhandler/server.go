@@ -30,26 +30,13 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// Create EventStore client
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		conn, err := grpc.
 			NewGrpcConnectionFactory(eventStoreAddr).
-			WithTransportCredentials().
+			WithInsecure().
+			WithRetry().
 			WithBlock().
 			Build(ctx)
 		if err != nil {
@@ -66,6 +53,20 @@ var serverCmd = &cobra.Command{
 			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, commandHandlerApiServer)
 		})
+
+		// Setup grpc listener
+		apiLis, err := net.Listen("tcp", apiAddr)
+		if err != nil {
+			return err
+		}
+		defer apiLis.Close()
+
+		// Setup metrics listener
+		metricsLis, err := net.Listen("tcp", metricsAddr)
+		if err != nil {
+			return err
+		}
+		defer metricsLis.Close()
 
 		// Finally start the server
 		return grpcServer.Serve(apiLis, metricsLis)
