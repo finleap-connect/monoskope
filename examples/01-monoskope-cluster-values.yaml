@@ -70,7 +70,6 @@ eventstore:
 commandhandler:
   replicaCount: 3
   enabled: true
-  eventStoreAddr: ":8081"
   resources:
     limits:
       cpu: 2000m

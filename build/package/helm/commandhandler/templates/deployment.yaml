@@ -71,7 +71,7 @@ spec:
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
-            - {{ (printf "--event-store-api-addr=%s" .Values.eventStoreAddr ) }}
+            - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

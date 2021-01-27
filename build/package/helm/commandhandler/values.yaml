@@ -92,4 +92,8 @@ ports:
 
 keepAlive: false
 
-eventStoreAddr: ":8081"
+# -- API address of the event store
+eventStore:
+  prefix: "" # Defaults to the release name
+  host: "eventstore"
+  port: 8080
