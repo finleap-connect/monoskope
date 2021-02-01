@@ -4,10 +4,8 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
@@ -16,7 +14,6 @@ import (
 // apiServer is the implementation of the CommandHandler API
 type apiServer struct {
 	api.UnimplementedCommandHandlerServer
-	api_common.UnimplementedServiceInformationServiceServer
 	esClient api_es.EventStoreClient
 }
 
@@ -50,17 +47,4 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 	}
 
 	return &empty.Empty{}, nil
-}
-
-// GetServiceInformation implements the API method GetServiceInformation
-func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
-	err := stream.Send(&api_common.ServiceInformation{
-		Name:    version.Name,
-		Version: version.Version,
-		Commit:  version.Commit,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }

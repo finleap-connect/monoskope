@@ -5,15 +5,15 @@ import (
 	"net"
 	"time"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -45,13 +45,15 @@ var serverCmd = &cobra.Command{
 		}
 		esClient := api_es.NewEventStoreClient(conn)
 
-		// Gateway API server
-		commandHandlerApiServer := commandhandler.NewApiServer(esClient)
+		// API server
+		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
+		userServiceServer := queryhandler.NewUserServiceServer(esClient)
 
 		// Create gRPC server and register implementation
-		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
+		grpcServer := grpc.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
+			api.RegisterTenantServiceServer(s, tenantServiceServer)
+			api.RegisterUserServiceServer(s, userServiceServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
