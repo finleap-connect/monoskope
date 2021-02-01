@@ -1,10 +1,8 @@
-package messaging
+package event_sourcing
 
 import (
 	"context"
 	"errors"
-
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // ErrCouldNotMarshalEvent is when an event could not be marshaled.
@@ -34,9 +32,9 @@ var ErrContextDeadlineExceeded = errors.New("context deadline exceeded")
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
 	// Connect connects to the bus
-	Connect(context.Context) *messageBusError
+	Connect(context.Context) *MessageBusError
 	// PublishEvent publishes the event on the bus.
-	PublishEvent(context.Context, evs.Event) *messageBusError
+	PublishEvent(context.Context, Event) *MessageBusError
 	// Close closes the underlying connections
 	Close() error
 }
@@ -44,11 +42,11 @@ type EventBusPublisher interface {
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
 	// Connect connects to the bus
-	Connect(context.Context) *messageBusError
+	Connect(context.Context) *MessageBusError
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(context.Context, EventReceiver, ...EventMatcher) *messageBusError
+	AddReceiver(context.Context, EventReceiver, ...EventMatcher) *MessageBusError
 	// Close closes the underlying connections
 	Close() error
 }
@@ -58,16 +56,16 @@ type EventMatcher interface {
 	// Any matches any event.
 	Any() EventMatcher
 	// MatchEventType matches a specific event type, nil events never match.
-	MatchEventType(eventType evs.EventType) EventMatcher
+	MatchEventType(eventType EventType) EventMatcher
 	// MatchAggregate matches a specific aggregate type, nil events never match.
-	MatchAggregateType(aggregateType evs.AggregateType) EventMatcher
+	MatchAggregateType(aggregateType AggregateType) EventMatcher
 }
 
 // EventReceiver is the function to call by the consumer on incoming events
-type EventReceiver func(evs.Event) error
+type EventReceiver func(Event) error
 
 // messageBusError is an error from the bus
-type messageBusError struct {
+type MessageBusError struct {
 	// Err is the error.
 	Err error
 	// BaseErr is an optional underlying error, for example from the message bus driver.
@@ -75,7 +73,7 @@ type messageBusError struct {
 }
 
 // Error implements the Error method of the errors.Error interface.
-func (e messageBusError) Error() string {
+func (e MessageBusError) Error() string {
 	errStr := e.Err.Error()
 	if e.BaseErr != nil {
 		errStr += ": " + e.BaseErr.Error()
@@ -84,13 +82,13 @@ func (e messageBusError) Error() string {
 }
 
 // Cause returns the cause of this error.
-func (e messageBusError) Cause() error {
+func (e MessageBusError) Cause() error {
 	return e.Err
 }
 
-// UnwraMessageBusError returns the given error as MessageBusError if it is one
-func UnwraMessageBusError(err error) *messageBusError {
-	if esErr, ok := err.(messageBusError); ok {
+// UnwrapMessageBusError returns the given error as MessageBusError if it is one
+func UnwrapMessageBusError(err error) *MessageBusError {
+	if esErr, ok := err.(MessageBusError); ok {
 		return &esErr
 	}
 	return nil

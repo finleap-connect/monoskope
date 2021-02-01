@@ -9,20 +9,20 @@ import (
 type mockEventBus struct {
 }
 
-func NewMockEventBusPublisher() EventBusPublisher {
+func NewMockEventBusPublisher() evs.EventBusPublisher {
 	return &mockEventBus{}
 }
 
-func (b *mockEventBus) Connect(ctx context.Context) *messageBusError {
+func (b *mockEventBus) Connect(ctx context.Context) *evs.MessageBusError {
 	// mock
 	return nil
 }
 
-func (b *mockEventBus) PublishEvent(ctx context.Context, event evs.Event) *messageBusError {
+func (b *mockEventBus) PublishEvent(ctx context.Context, event evs.Event) *evs.MessageBusError {
 	panic("not implemented")
 }
 
-func (b *mockEventBus) Matcher() EventMatcher {
+func (b *mockEventBus) Matcher() evs.EventMatcher {
 	panic("not implemented")
 }
 

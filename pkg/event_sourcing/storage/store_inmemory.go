@@ -11,7 +11,7 @@ type InMemoryEventStore struct {
 	events []evs.Event
 }
 
-func NewInMemoryEventStore() Store {
+func NewInMemoryEventStore() evs.Store {
 	s := &InMemoryEventStore{
 		events: make([]evs.Event, 0),
 	}
@@ -26,9 +26,7 @@ func (b *InMemoryEventStore) Connect(ctx context.Context) error {
 // Save implements the Save method of the EventStore interface.
 func (s *InMemoryEventStore) Save(ctx context.Context, events []evs.Event) error {
 	if len(events) == 0 {
-		return eventStoreError{
-			Err: ErrNoEventsToAppend,
-		}
+		return evs.NewEventStoreError(evs.ErrNoEventsToAppend, nil)
 	}
 
 	// Validate incoming events and create all event records.
@@ -39,23 +37,17 @@ func (s *InMemoryEventStore) Save(ctx context.Context, events []evs.Event) error
 	for _, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return eventStoreError{
-				Err: ErrInvalidAggregateType,
-			}
+			return evs.NewEventStoreError(evs.ErrInvalidAggregateType, nil)
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return eventStoreError{
-				Err: ErrIncorrectAggregateVersion,
-			}
+			return evs.NewEventStoreError(evs.ErrIncorrectAggregateVersion, nil)
 		}
 
 		for _, se := range s.events {
 			if se.AggregateID() == event.AggregateID() && se.AggregateVersion() == event.AggregateVersion() && se.AggregateType() == event.AggregateType() {
-				return eventStoreError{
-					Err: ErrAggregateVersionAlreadyExists,
-				}
+				return evs.NewEventStoreError(evs.ErrAggregateVersionAlreadyExists, nil)
 			}
 		}
 
@@ -69,7 +61,7 @@ func (s *InMemoryEventStore) Save(ctx context.Context, events []evs.Event) error
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *InMemoryEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]evs.Event, error) {
+func (s *InMemoryEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
 	var events []evs.Event
 
 	for _, ev := range s.events {
