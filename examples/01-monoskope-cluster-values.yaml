@@ -78,6 +78,17 @@ commandhandler:
       cpu: 500m
       memory: 64Mi
 
+queryhandler:
+  replicaCount: 3
+  enabled: true
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
 ingress:
   enabled: true
   host: monoskope.dev.finleap.cloud

@@ -38,6 +38,15 @@ lint:helm:commandhandler:
     - make helm-lint-commandhandler
   needs: []
 
+lint:helm:queryhandler:
+  stage: test
+  extends: .helm
+  except:
+    - schedules
+  script:
+    - make helm-lint-queryhandler
+  needs: []
+
 deliver:chart:monoskope:
   stage: deliver
   extends: .helm
@@ -48,11 +57,13 @@ deliver:chart:monoskope:
     - VERSION=$VERSION make helm-set-version-gateway
     - VERSION=$VERSION make helm-set-version-eventstore
     - VERSION=$VERSION make helm-set-version-commandhandler
+    - VERSION=$VERSION make helm-set-version-queryhandler
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
     - lint:helm:gateway
     - lint:helm:eventstore
     - lint:helm:commandhandler
+    - lint:helm:queryhandler
     - lint:helm:monoskope
 
 deploy:monoskope:
