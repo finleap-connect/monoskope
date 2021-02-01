@@ -26,7 +26,7 @@ func NewRootCmd() *cobra.Command {
 	fl := rootCmd.PersistentFlags()
 	fl.AddGoFlagSet(flag.CommandLine)
 	fl.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
-	fl.DurationVar(&util.Timeout, "command-timeout", 120*time.Second, "Timeout for long running commands, defaults to 120s")
+	fl.DurationVar(&util.Timeout, "command-timeout", 120*time.Second, "Timeout for long running commands")
 
 	configManager := config.NewLoaderFromExplicitFile(explicitFile)
 	rootCmd.AddCommand(NewVersionCmd(rootCmd.Name(), configManager))

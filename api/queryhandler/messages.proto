@@ -5,9 +5,9 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler";
 
-package api;
+package queryhandler;
 
 // Tenant within Monoskope
 message Tenant {
@@ -15,25 +15,22 @@ message Tenant {
   string id = 1;
   // Name of the tenant
   string name = 2;
-  // Display name of the tenant.
-  // Can contain blanks and other special characters.
-  string display_name = 3;
   // Prefix for namespaces and other resources related to the tenant.
   // DNS compatibility is ensured on validation. E.g. no more than 12
   // characters.
-  string prefix = 4;
+  string prefix = 3;
   // When tenant has been created
-  google.protobuf.Timestamp Created = 5;
+  google.protobuf.Timestamp Created = 4;
   // By whom the tenant has been created
-  User CreatedBy = 6;
+  User CreatedBy = 5;
   // When tenant has been last modified
-  google.protobuf.Timestamp LastModified = 7;
+  google.protobuf.Timestamp LastModified = 6;
   // By whom the tenant has been last modified
-  User LastModifiedBy = 8;
+  User LastModifiedBy = 7;
   // When tenant has been deleted
-  google.protobuf.Timestamp Deleted = 9;
+  google.protobuf.Timestamp Deleted = 8;
   // By whom the tenant has been deleted
-  User DeletedBy = 10;
+  User DeletedBy = 9;
 }
 
 // User within Monoskope
@@ -42,4 +39,26 @@ message User {
   string id = 1;
   // Name of the user
   string name = 2;
+  // Email address of the user
+  string email = 3;
+}
+
+message UserRoleBinding {
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 1;
+  // Name of the role
+  string role = 2;
+  // Scope of the role
+  string scope = 3;
+  // Target resource of the role
+  string resource = 4;
+}
+
+message AuditEvent {
+  // Unique identifier of the event (UUID 128-bit number)
+  string id = 1;
+  // Timestampt when this event has occured
+  google.protobuf.Timestamp timestamp = 2;
+  // Description of what happened
+  string description = 3;
 }

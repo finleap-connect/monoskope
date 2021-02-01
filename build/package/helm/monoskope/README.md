@@ -11,6 +11,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../commandhandler | commandhandler |  |
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
+| file://../queryhandler | queryhandler |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
 | https://kubism.github.io/charts | dex | 1.0.18 |
@@ -44,6 +45,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.tls.certs.provided | bool | `true` |  |
 | cockroachdb.tls.certs.tlsSecret | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
+| commandhandler.enabled | bool | `true` |  |
+| commandhandler.replicaCount | int | `1` |  |
 | dex.certs.grpc.create | bool | `false` |  |
 | dex.certs.web.create | bool | `false` |  |
 | dex.config.connectors | list | `[]` |  |
@@ -87,12 +90,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.telemetry | bool | `true` |  |
 | eventstore.config.existingSecret | string | `"monoskope-eventstore-config"` |  |
 | eventstore.enabled | bool | `true` |  |
-| eventstore.nameOverride | string | `"eventstore"` |  |
 | eventstore.replicaCount | int | `1` |  |
 | fullnameOverride | string | `""` |  |
 | gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
 | gateway.enabled | bool | `true` |  |
-| gateway.nameOverride | string | `"gateway"` |  |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
@@ -101,6 +102,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
+| queryhandler.enabled | bool | `true` |  |
+| queryhandler.replicaCount | int | `1` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |

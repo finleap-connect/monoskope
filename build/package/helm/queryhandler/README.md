@@ -1,8 +1,8 @@
-# commandhandler
+# queryhandler
 
 ![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.0.1](https://img.shields.io/badge/AppVersion-0.0.1-informational?style=flat-square)
 
-A Helm chart for the Monoskope CommandHandler
+A Helm chart for the Monoskope QueryHandler
 
 ## Values
 
@@ -17,8 +17,8 @@ A Helm chart for the Monoskope CommandHandler
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
-| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/commandhandler"` |  |
-| image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
+| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/queryhandler"` |  |
+| image.tag | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | keepAlive | bool | `false` |  |
 | labels | object | `{}` |  |
@@ -42,9 +42,6 @@ A Helm chart for the Monoskope CommandHandler
 | service.api.port | int | `8080` |  |
 | service.metrics.port | int | `9102` |  |
 | service.type | string | `"ClusterIP"` |  |
-| serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
-| serviceAccount.name | string | `""` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

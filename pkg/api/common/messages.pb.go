@@ -99,12 +99,14 @@ type UserMetadata struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// identity of the user, called subject in OpenID (sub)
+	// Identity of the user, called subject in OpenID (sub)
 	Subject string `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
-	// issuing authority (iss)
+	// Issuing authority (iss)
 	Issuer string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Email  string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Name   string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	// Email address of the user
+	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	// Name of the user
+	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (x *UserMetadata) Reset() {

@@ -98,6 +98,20 @@ build:golang:commandhandler:
     expire_in: 1 day
   needs: []
 
+build:golang:queryhandler:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-queryhandler
+  artifacts:
+    paths:
+      - queryhandler
+    expire_in: 1 day
+  needs: []
+
 deliver:gateway:
   stage: deliver
   extends: .docker-builder
@@ -130,3 +144,14 @@ deliver:commandhandler:
     - lint:golang
     - test:golang
     - build:golang:commandhandler
+
+deliver:queryhandler:
+  stage: deliver
+  extends: .docker-builder
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/queryhandler.Dockerfile -i queryhandler --tag $VERSION
+  dependencies:
+    - lint:golang
+    - test:golang
+    - build:golang:queryhandler

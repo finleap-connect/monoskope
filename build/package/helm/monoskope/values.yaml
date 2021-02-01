@@ -108,6 +108,10 @@ commandhandler:
   enabled: true
   replicaCount: 1
 
+queryhandler:
+  enabled: true
+  replicaCount: 1
+
 cockroachdb:
   enabled: true
   image:
