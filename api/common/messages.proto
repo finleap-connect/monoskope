@@ -21,10 +21,12 @@ message ServiceInformation {
 // UserMetadata are the information about a user provided by the identity
 // provider
 message UserMetadata {
-  // identity of the user, called subject in OpenID (sub)
+  // Identity of the user, called subject in OpenID (sub)
   string subject = 1;
-  // issuing authority (iss)
+  // Issuing authority (iss)
   string issuer = 2;
+  // Email address of the user
   string email = 3;
+  // Name of the user
   string name = 4;
 }
