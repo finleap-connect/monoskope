@@ -8,19 +8,19 @@ import (
 
 // ReadOnlyRepository is a repository for reading projections.
 type ReadOnlyRepository interface {
-	// Find returns an entity for an ID.
-	Find(context.Context, uuid.UUID) (Projection, error)
+	// ById returns a projection for an ID.
+	ById(context.Context, uuid.UUID) (Projection, error)
 
-	// FindAll returns all entities in the repository.
-	FindAll(context.Context) ([]Projection, error)
+	// All returns all projections in the repository.
+	All(context.Context) ([]Projection, error)
 }
 
 // WriteOnlyRepository is a repository for writing projections.
 type WriteOnlyRepository interface {
-	// Save saves a entity in the storage.
-	Save(context.Context, Projection) error
+	// Upsert saves a projection in the storage or replaces an existing one.
+	Upsert(context.Context, Projection) error
 
-	// Remove removes a entity by ID from the storage.
+	// Remove removes a projection by ID from the storage.
 	Remove(context.Context, uuid.UUID) error
 }
 

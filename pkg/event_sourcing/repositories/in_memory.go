@@ -18,30 +18,30 @@ func NewInMemoryRepository() es.Repository {
 	}
 }
 
-// Find returns an entity for an ID.
-func (r *inMemoryRepository) Find(ctx context.Context, id uuid.UUID) (es.Projection, error) {
+// ById returns a projection for an ID.
+func (r *inMemoryRepository) ById(ctx context.Context, id uuid.UUID) (es.Projection, error) {
 	if val, ok := r.store[id]; ok {
 		return val, nil
 	}
 	return nil, fmt.Errorf("not found")
 }
 
-// FindAll returns all entities in the repository.
-func (r *inMemoryRepository) FindAll(context.Context) ([]es.Projection, error) {
-	var all []es.Projection
+// All returns all projections in the repository.
+func (r *inMemoryRepository) All(context.Context) ([]es.Projection, error) {
+	all := make([]es.Projection, 0)
 	for _, v := range r.store {
 		all = append(all, v)
 	}
 	return all, nil
 }
 
-// Save saves a entity in the storage.
-func (r *inMemoryRepository) Save(ctx context.Context, p es.Projection) error {
+// Upsert saves a projection in the storage or replaces an existing one.
+func (r *inMemoryRepository) Upsert(ctx context.Context, p es.Projection) error {
 	r.store[p.ID()] = p
 	return nil
 }
 
-// Remove removes a entity by ID from the storage.
+// Remove removes a projection by ID from the storage.
 func (r *inMemoryRepository) Remove(ctx context.Context, id uuid.UUID) error {
 	delete(r.store, id)
 	return nil
