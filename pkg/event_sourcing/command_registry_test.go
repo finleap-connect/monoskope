@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("command_registry", func() {
 	It("can register and unregister commands", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		err := Registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
 		err = Registry.UnregisterCommand(TestCommandType)
@@ -22,10 +22,10 @@ var _ = Describe("command_registry", func() {
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't register the same command twice", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		err := Registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		err = Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		err = Registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't create commands which are not registered", func() {
@@ -37,7 +37,7 @@ var _ = Describe("command_registry", func() {
 		Expect(cmd).To(BeNil())
 	})
 	It("can create commands which are registered", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		err := Registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
 		proto := &api.TestCommandData{Test: "Hello world!"}
@@ -49,7 +49,7 @@ var _ = Describe("command_registry", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cmd).ToNot(BeNil())
 
-		testCmd, ok := cmd.(*TestCommand)
+		testCmd, ok := cmd.(*testCommand)
 		Expect(ok).To(BeTrue())
 		Expect(testCmd).ToNot(BeNil())
 		Expect(testCmd.Test).To(Equal("Hello world!"))
@@ -59,7 +59,7 @@ var _ = Describe("command_registry", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can handle commands", func() {
-		err := Registry.HandleCommand(context.Background(), &TestCommand{
+		err := Registry.HandleCommand(context.Background(), &testCommand{
 			TestCommandData: api.TestCommandData{Test: "world!"},
 		})
 		Expect(err).ToNot(HaveOccurred())

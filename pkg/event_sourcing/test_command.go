@@ -16,18 +16,18 @@ const (
 	TestEventType     EventType     = "TestEventType"
 )
 
-// TestCommand is a command for tests.
-type TestCommand struct {
+// testCommand is a command for tests.
+type testCommand struct {
 	aggregateId uuid.UUID
 	api_cmd.TestCommandData
 }
 
-func (c *TestCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *TestCommand) AggregateType() AggregateType {
+func (c *testCommand) AggregateID() uuid.UUID { return c.aggregateId }
+func (c *testCommand) AggregateType() AggregateType {
 	return TestAggregateType
 }
-func (c *TestCommand) CommandType() CommandType { return TestCommandType }
-func (c *TestCommand) SetData(a *anypb.Any) error {
+func (c *testCommand) CommandType() CommandType { return TestCommandType }
+func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }
 
@@ -43,7 +43,7 @@ func NewTestAggregate() *TestAggregate {
 
 func (a *TestAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	switch cmd := cmd.(type) {
-	case *TestCommand:
+	case *testCommand:
 		ed, err := ToEventDataFromProto(&api_ev.TestEventData{
 			Hello: cmd.TestCommandData.GetTest(),
 		})
