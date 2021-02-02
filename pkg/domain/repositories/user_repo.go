@@ -16,6 +16,7 @@ type userRepository struct {
 type UserRepository interface {
 	es.Repository
 
+	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
 }
 

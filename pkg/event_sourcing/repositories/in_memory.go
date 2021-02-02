@@ -8,10 +8,12 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
+// inMemoryRepository is a repository which stores projections in memory.
 type inMemoryRepository struct {
 	store map[uuid.UUID]es.Projection
 }
 
+// NewInMemoryRepository creates a new repository which stores projections in memory.
 func NewInMemoryRepository() es.Repository {
 	return &inMemoryRepository{
 		store: make(map[uuid.UUID]es.Projection),
