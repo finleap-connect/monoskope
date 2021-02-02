@@ -5,6 +5,9 @@ import (
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/user"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
+
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	ggrpc "google.golang.org/grpc"
 
@@ -35,11 +38,14 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
+	inMemoryRepo := es_repos.NewInMemoryRepository()
+	userRepo := user.NewUserRepository(inMemoryRepo)
+
 	// Create server
 	env.grpcServer = grpc.NewServer("query_handler_grpc", false)
 
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServiceServer(s, NewUserServiceServer(esClient))
+		api.RegisterUserServiceServer(s, NewUserServiceServer(esClient, userRepo))
 		api.RegisterTenantServiceServer(s, NewTenantServiceServer(esClient))
 	})
 

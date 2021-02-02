@@ -8,21 +8,46 @@ import (
 )
 
 type userRepository struct {
-	es.Repository
+	es.ReadOnlyRepository
+	es.WriteOnlyRepository
 }
 
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
-	es.Repository
+	ReadOnlyUserRepository
+	WriteOnlyUserRepository
+}
+
+// ReadOnlyUserRepository is a repository for reading user projections.
+type ReadOnlyUserRepository interface {
+	es.ReadOnlyRepository
 
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*User, error)
 }
 
+// WriteOnlyUserRepository is a repository for reading user projections.
+type WriteOnlyUserRepository interface {
+	es.WriteOnlyRepository
+}
+
 // NewUserRepository creates a repository for reading and writing user projections.
 func NewUserRepository(base es.Repository) UserRepository {
 	return &userRepository{
-		Repository: base,
+		ReadOnlyRepository:  base,
+		WriteOnlyRepository: base,
+	}
+}
+
+func NewReadOnlyUserRepository(base es.ReadOnlyRepository) ReadOnlyUserRepository {
+	return &userRepository{
+		ReadOnlyRepository: base,
+	}
+}
+
+func NewWriteOnlyUserRepository(base es.WriteOnlyRepository) WriteOnlyUserRepository {
+	return &userRepository{
+		WriteOnlyRepository: base,
 	}
 }
 

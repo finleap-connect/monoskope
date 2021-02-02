@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"net"
+	"os"
 	"time"
 
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/user"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
@@ -22,6 +26,8 @@ var (
 	metricsAddr    string
 	keepAlive      bool
 	eventStoreAddr string
+	msgbusPrefix   string
+	msgbusUrl      string
 )
 
 var serverCmd = &cobra.Command{
@@ -30,6 +36,11 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+
+		// Some options can be provided by env variables
+		if v := os.Getenv("BUS_URL"); v != "" {
+			msgbusUrl = v
+		}
 
 		// Create EventStore client
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -45,9 +56,29 @@ var serverCmd = &cobra.Command{
 		}
 		esClient := api_es.NewEventStoreClient(conn)
 
+		// init message bus consumer
+		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
+		if msgbusPrefix != "" {
+			rabbitConf.RoutingKeyPrefix = msgbusPrefix
+		}
+
+		err = rabbitConf.ConfigureTLS()
+		if err != nil {
+			return err
+		}
+		_, err = messaging.NewRabbitEventBusConsumer(rabbitConf)
+		if err != nil {
+			return err
+		}
+
+		// TODO: Setup the whole ES stuff somehow
+
 		// API server
 		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
-		userServiceServer := queryhandler.NewUserServiceServer(esClient)
+
+		inMemoryRepo := es_repos.NewInMemoryRepository()
+		userRepo := user.NewReadOnlyUserRepository(inMemoryRepo)
+		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("queryhandler-grpc", keepAlive)
@@ -84,4 +115,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
+	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 }
