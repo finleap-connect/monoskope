@@ -14,8 +14,12 @@ type Projection interface {
 
 // Projector is the interface for projectors.
 type Projector interface {
-	// Matchers returns the matchers for events the implementation handles.
-	Matchers() []*EventMatcher
+	// EvenTypes returns the EvenTypes for which events should be projected.
+	EvenTypes() []EventType
+
+	// AggregateTypes returns the AggregateTypes for which events should be projected.
+	AggregateTypes() []AggregateType
+
 	// Project updates the state of the projection occording to the given event.
 	Project(context.Context, Event, Projection) (Projection, error)
 }

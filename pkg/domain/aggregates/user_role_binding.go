@@ -33,14 +33,14 @@ func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	switch cmd := cmd.(type) {
-	case *commands.AddRoleToUserCommand:
+	case *commands.CreateUserRoleBindingCommand:
 		return a.handleAddRoleToUserCommand(ctx, cmd)
 	}
 	return fmt.Errorf("couldn't handle command")
 }
 
 // handleAddRoleToUserCommand handles the command
-func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.AddRoleToUserCommand) error {
+func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
 	// TODO: Check if user has the right to do this.
 	_, err := metadata.NewDomainMetadataManager(ctx).GetUserInformation() // user issued the command at gateway
 	if err != nil {
@@ -56,7 +56,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 		return err
 	}
 
-	_ = a.AppendEvent(domain.UserRoleAdded, ed)
+	_ = a.AppendEvent(domain.UserRoleBindingCreated, ed)
 
 	return nil
 }
@@ -64,7 +64,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 	switch event.EventType() {
-	case domain.UserRoleAdded:
+	case domain.UserRoleBindingCreated:
 		err := a.applyUserRoleAddedEvent(event)
 		if err != nil {
 			return err
