@@ -13,7 +13,7 @@ import (
 
 func TestEventSourcing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/event-sourcing-junit.xml")
+	junitReporter := reporters.NewJUnitReporter("../../reports/event-sourcing-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "TestEventSourcing", []Reporter{junitReporter})
 }
 
