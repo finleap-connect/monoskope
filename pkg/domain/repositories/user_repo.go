@@ -12,16 +12,21 @@ type userRepository struct {
 	es.Repository
 }
 
+// Repository is a repository for reading and writing user projections.
 type UserRepository interface {
+	es.Repository
+
 	ByEmail(context.Context, string) (*projections.User, error)
 }
 
+// NewUserRepository creates a repository for reading and writing user projections.
 func NewUserRepository(base es.Repository) UserRepository {
 	return &userRepository{
 		Repository: base,
 	}
 }
 
+// ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
 	ps, err := r.All(ctx)
 	if err != nil {
