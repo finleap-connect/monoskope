@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	cmd_api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
-	cmd_data "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
+	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -21,13 +21,12 @@ const (
 // AddRoleToUser is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
 	aggregateId uuid.UUID
-	cmd_api.AddRoleToUserCommand
+	cmd.AddRoleToUserCommand
 }
 
 func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID       { return c.aggregateId }
 func (c *CreateUserRoleBindingCommand) AggregateType() AggregateType { return UserRoleBindingType }
 func (c *CreateUserRoleBindingCommand) CommandType() CommandType     { return CreateUserRoleBindingType }
-
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.AddRoleToUserCommand)
 }
@@ -67,7 +66,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 		return err
 	}
 
-	ed, err := ToEventDataFromProto(&cmd_data.UserRoleAddedEventData{
+	ed, err := ToEventDataFromProto(&ed.UserRoleAddedEventData{
 		UserId:  cmd.GetUserId(),
 		Role:    cmd.GetRole(),
 		Context: cmd.GetContext(),
@@ -95,7 +94,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 
 // applyUserRoleAddedEvent applies the event on the aggregate
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
-	data := &cmd_data.UserRoleAddedEventData{}
+	data := &ed.UserRoleAddedEventData{}
 	err := event.Data().ToProto(data)
 	if err != nil {
 		return err
