@@ -42,7 +42,7 @@ type Event interface {
 	// Event type specific event data.
 	Data() EventData
 	// Metadata is app-specific metadata originating user etc.
-	Metadata() map[string]interface{}
+	Metadata() map[EventMetadataKey]interface{}
 	// A string representation of the event.
 	String() string
 }
@@ -57,7 +57,6 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 		aggregateType:    aggregateType,
 		aggregateID:      aggregateID,
 		aggregateVersion: aggregateVersion,
-		metadata:         make(map[string]interface{}),
 	}
 }
 
@@ -117,7 +116,7 @@ type event struct {
 	aggregateType    AggregateType
 	aggregateID      uuid.UUID
 	aggregateVersion uint64
-	metadata         map[string]interface{}
+	metadata         map[EventMetadataKey]interface{}
 }
 
 // EventType implements the EventType method of the Event interface.
@@ -151,7 +150,7 @@ func (e event) AggregateVersion() uint64 {
 }
 
 // Metadata implements the Metadata method of the Event interface.
-func (e event) Metadata() map[string]interface{} {
+func (e event) Metadata() map[EventMetadataKey]interface{} {
 	return e.metadata
 }
 

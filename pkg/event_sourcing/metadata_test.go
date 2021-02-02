@@ -14,13 +14,13 @@ var _ = Describe("MetadataManager", func() {
 	var existingKey EventMetadataKey
 
 	It("can't get not existing", func() {
-		manager := NewMetadataManager(ctx)
+		manager := NewMetadataManagerFromContext(ctx)
 		val, ok := manager.Get(notExistingKey)
 		Expect(val).To(BeNil())
 		Expect(ok).To(BeFalse())
 	})
 	It("can set a value", func() {
-		manager := NewMetadataManager(ctx)
+		manager := NewMetadataManagerFromContext(ctx)
 		val, err := manager.
 			Set(existingKey, true).
 			GetBool(existingKey)
@@ -29,13 +29,13 @@ var _ = Describe("MetadataManager", func() {
 		Expect(val).To(BeTrue())
 	})
 	It("can get from existing context", func() {
-		manager := NewMetadataManager(ctx)
+		manager := NewMetadataManagerFromContext(ctx)
 		nuCtx := manager.
 			Set(existingKey, "test").
 			GetContext()
 		Expect(nuCtx).To(Not(BeNil()))
 
-		nuManager := NewMetadataManager(nuCtx)
+		nuManager := NewMetadataManagerFromContext(nuCtx)
 
 		val, err := nuManager.
 			Set(existingKey, "test").

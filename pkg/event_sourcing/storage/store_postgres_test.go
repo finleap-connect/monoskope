@@ -12,7 +12,9 @@ import (
 )
 
 var _ = Describe("storage/postgres", func() {
-	ctx := context.Background()
+	var userInformationKey evs.EventMetadataKey
+
+	ctx := evs.NewMetadataManagerFromContext(context.Background()).Set(userInformationKey, "admin").GetContext()
 	var es *postgresEventStore
 
 	clearEs := func(es *postgresEventStore) {
@@ -118,6 +120,8 @@ var _ = Describe("storage/postgres", func() {
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
+
+		Expect(evs.NewMetadataManagerFromContext(context.Background()).SetMetadata(storeEvents[0].Metadata()).GetString(userInformationKey)).To(Equal("admin"))
 	})
 	It("can filter events to load from the store by aggregate type", func() {
 		ev := createTestEvents()

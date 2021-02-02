@@ -35,7 +35,7 @@ type domainMetadataManager struct {
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
 func NewDomainMetadataManager(ctx context.Context) *domainMetadataManager {
 	m := &domainMetadataManager{
-		evs.NewMetadataManager(ctx),
+		evs.NewMetadataManagerFromContext(ctx),
 	}
 	return m.SetComponentInformation()
 }
