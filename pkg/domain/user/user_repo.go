@@ -1,10 +1,9 @@
-package repositories
+package user
 
 import (
 	"context"
 	"fmt"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -17,7 +16,7 @@ type UserRepository interface {
 	es.Repository
 
 	// ByEmail searches for the a user projection by it's email address.
-	ByEmail(context.Context, string) (*projections.User, error)
+	ByEmail(context.Context, string) (*User, error)
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.
@@ -28,14 +27,14 @@ func NewUserRepository(base es.Repository) UserRepository {
 }
 
 // ByEmail searches for the a user projection by it's email address.
-func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
+func (r *userRepository) ByEmail(ctx context.Context, email string) (*User, error) {
 	ps, err := r.All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, p := range ps {
-		if u, ok := p.(*projections.User); ok {
+		if u, ok := p.(*User); ok {
 			if u.Email == email {
 				return u, nil
 			}

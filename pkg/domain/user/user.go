@@ -1,19 +1,14 @@
-package projections
+package user
 
 import (
 	"context"
 
 	"github.com/google/uuid"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 type User struct {
 	Email string
-}
-
-func NewUser() *User {
-	return &User{}
 }
 
 func (u *User) ID() uuid.UUID {
@@ -34,8 +29,8 @@ func (u *userProjector) EvenTypes() []es.EventType {
 // AggregateTypes returns the AggregateTypes for which events should be projected.
 func (u *userProjector) AggregateTypes() []es.AggregateType {
 	return []es.AggregateType{
-		domain.User,
-		domain.UserRoleBinding,
+		UserType,
+		UserRoleBindingType,
 	}
 }
 
