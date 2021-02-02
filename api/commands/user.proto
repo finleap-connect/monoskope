@@ -22,12 +22,3 @@ message AddRoleToUserCommand {
   // Context of the role
   string context = 3;
 }
-
-message UserRoleAddedEventData {
-  // Unique identifier of the user (UUID 128-bit number)
-  string user_id = 1;
-  // Name of the role to add
-  string role = 2;
-  // Context of the role
-  string context = 3;
-}

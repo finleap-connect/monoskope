@@ -9,6 +9,13 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/ev
 
 package eventdata.user;
 
+message UserCreatedEventData {
+  // Email address of the user
+  string email = 1;
+  // Name of the user
+  string name = 2;
+}
+
 message UserRoleAddedEventData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1;

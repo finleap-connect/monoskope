@@ -5,10 +5,32 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	cmd_api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	cmd_data "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"google.golang.org/protobuf/types/known/anypb"
 )
+
+const (
+	UserRoleBindingType        AggregateType = "UserRoleBinding"
+	CreateUserRoleBindingType  CommandType   = "CreateUserRoleBinding"
+	UserRoleBindingCreatedType EventType     = "UserRoleBindingCreated"
+)
+
+// AddRoleToUser is a command for adding a role to a user.
+type CreateUserRoleBindingCommand struct {
+	aggregateId uuid.UUID
+	cmd_api.AddRoleToUserCommand
+}
+
+func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID       { return c.aggregateId }
+func (c *CreateUserRoleBindingCommand) AggregateType() AggregateType { return UserRoleBindingType }
+func (c *CreateUserRoleBindingCommand) CommandType() CommandType     { return CreateUserRoleBindingType }
+
+func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
+	return a.UnmarshalTo(&c.AddRoleToUserCommand)
+}
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
@@ -45,7 +67,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 		return err
 	}
 
-	ed, err := ToEventDataFromProto(&api.UserRoleAddedEventData{
+	ed, err := ToEventDataFromProto(&cmd_data.UserRoleAddedEventData{
 		UserId:  cmd.GetUserId(),
 		Role:    cmd.GetRole(),
 		Context: cmd.GetContext(),
@@ -73,7 +95,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 
 // applyUserRoleAddedEvent applies the event on the aggregate
 func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
-	data := &api.UserRoleAddedEventData{}
+	data := &cmd_data.UserRoleAddedEventData{}
 	err := event.Data().ToProto(data)
 	if err != nil {
 		return err
