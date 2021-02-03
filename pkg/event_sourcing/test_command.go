@@ -28,8 +28,8 @@ func (c *testCommand) CommandType() CommandType { return TestCommandType }
 func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }
-func (c *testCommand) IsAuthorized(ctx context.Context, role Role, scope Scope, resource string) bool {
-	return true
+func (c *testCommand) Authorization(ctx context.Context) []MetaRole {
+	return []MetaRole{}
 }
 
 // type testAggregate struct {

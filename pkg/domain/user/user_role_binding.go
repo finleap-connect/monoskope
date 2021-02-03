@@ -31,21 +31,11 @@ func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType     { return
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.AddRoleToUserCommand)
 }
-func (c *CreateUserRoleBindingCommand) IsAuthorized(ctx context.Context, role es.Role, scope es.Scope, resource string) bool {
-	if authz.Admin == role {
-		if authz.System == scope {
-			// User is admin of system
-			return true
-		}
-		if authz.Tenant == scope {
-			if resource == c.AddRoleToUserCommand.Resource {
-				// User is admin of tenant
-				return true
-			}
-		}
-
+func (c *CreateUserRoleBindingCommand) Authorization(ctx context.Context) []es.MetaRole {
+	return []es.MetaRole{
+		{Role: authz.Admin, Scope: authz.System},                                            // System admin
+		{Role: authz.Admin, Scope: authz.Tenant, Resource: c.AddRoleToUserCommand.Resource}, // Tenant admin
 	}
-	return false
 }
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
