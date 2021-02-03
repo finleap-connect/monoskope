@@ -73,7 +73,7 @@ var _ = Describe("storage/postgres", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(evs.UnwrapEventStoreError(err).Err).To(Equal(evs.ErrInvalidAggregateType))
+		Expect(err).To(Equal(evs.ErrInvalidAggregateType))
 	})
 	It("fails to append new events to the store when they are not in the right aggregate version order", func() {
 		aggregateId := uuid.New()
@@ -82,7 +82,7 @@ var _ = Describe("storage/postgres", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(evs.UnwrapEventStoreError(err).Err).To(Equal(evs.ErrIncorrectAggregateVersion))
+		Expect(err).To(Equal(evs.ErrIncorrectAggregateVersion))
 	})
 	It("fails to append new events to the store when the aggregate version does already exist", func() {
 		aggregateId := uuid.New()
@@ -96,9 +96,7 @@ var _ = Describe("storage/postgres", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		esErr := evs.UnwrapEventStoreError(err)
-		Expect(esErr).ToNot(BeNil())
-		Expect(esErr.Cause()).To(Equal(evs.ErrAggregateVersionAlreadyExists))
+		Expect(err).To(Equal(evs.ErrAggregateVersionAlreadyExists))
 	})
 	It("can load events from the store", func() {
 		// append some events to load later

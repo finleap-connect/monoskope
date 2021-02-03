@@ -114,7 +114,7 @@ func (s *postgresEventStore) Connect(ctx context.Context) error {
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
 	if len(events) == 0 {
-		return evs.NewEventStoreError(evs.ErrNoEventsToAppend, nil)
+		return evs.ErrNoEventsToAppend
 	}
 
 	// Validate incoming events and create all event records.
@@ -125,12 +125,12 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	for i, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return evs.NewEventStoreError(evs.ErrInvalidAggregateType, nil)
+			return evs.ErrInvalidAggregateType
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return evs.NewEventStoreError(evs.ErrIncorrectAggregateVersion, nil)
+			return evs.ErrIncorrectAggregateVersion
 		}
 
 		// Create the event record for the DB.
@@ -147,7 +147,7 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	// Append events to the store.
 	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
 		if !s.isConnected {
-			return evs.NewEventStoreError(evs.ErrConnectionClosed, nil)
+			return evs.ErrConnectionClosed
 		}
 		_, e = s.db.Model(&eventRecords).Insert()
 		return e
@@ -162,12 +162,12 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
 			s.log.Info(evs.ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
-			return evs.NewEventStoreError(evs.ErrAggregateVersionAlreadyExists, err)
+			return evs.ErrAggregateVersionAlreadyExists
 		}
 	}
 	if err != nil {
 		s.log.Error(err, evs.ErrCouldNotSaveEvents.Error())
-		return evs.NewEventStoreError(evs.ErrCouldNotSaveEvents, err)
+		return evs.ErrCouldNotSaveEvents
 	}
 
 	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
@@ -197,7 +197,7 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
 	if !s.isConnected {
-		return nil, evs.NewEventStoreError(evs.ErrConnectionClosed, nil)
+		return nil, evs.ErrConnectionClosed
 	}
 
 	var events []evs.Event
@@ -218,7 +218,7 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuer
 		return nil
 	})
 	if err != nil {
-		return nil, evs.NewEventStoreError(nil, err)
+		return nil, err
 	}
 
 	return events, nil
