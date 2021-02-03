@@ -14,11 +14,15 @@ import (
 )
 
 var _ = Describe("domain", func() {
+	adminUser := &user.User{Email: "admin@monoskope.io", Name: "admin"}
+
 	It("can be set up", func() {
-		err := es.Registry.RegisterCommand(func() es.Command { return &user.CreateUserCommand{} })
+		registry := es.NewCommandRegistry()
+
+		err := registry.RegisterCommand(func() es.Command { return &user.CreateUserCommand{} })
 		Expect(err).NotTo(HaveOccurred())
 
-		err = es.Registry.SetHandler(user.NewUserAggregate(uuid.New()), user.CreateUserType)
+		err = registry.SetHandler(user.NewUserAggregate(uuid.New()), user.CreateUserType)
 		Expect(err).NotTo(HaveOccurred())
 
 		cmd := &cmd_api.CreateUserCommand{
@@ -29,10 +33,10 @@ var _ = Describe("domain", func() {
 		}
 		any := &anypb.Any{}
 		Expect(any.MarshalFrom(cmd)).NotTo(HaveOccurred())
-		esCmd, err := es.Registry.CreateCommand(user.CreateUserType, any)
+		esCmd, err := registry.CreateCommand(user.CreateUserType, any)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = es.Registry.HandleCommand(context.Background(), esCmd)
+		err = registry.HandleCommand(context.Background(), esCmd)
 		Expect(err).NotTo(HaveOccurred())
 	})
 })

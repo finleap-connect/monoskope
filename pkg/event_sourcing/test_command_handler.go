@@ -18,3 +18,7 @@ func (c *testCommandHandler) HandleCommand(ctx context.Context, cmd Command) err
 	}
 	return fmt.Errorf("couldn't handle command")
 }
+
+func newTestCommandHandler() *testCommandHandler {
+	return &testCommandHandler{}
+}

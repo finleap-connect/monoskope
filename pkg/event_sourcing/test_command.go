@@ -1,12 +1,8 @@
 package event_sourcing
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/google/uuid"
 	api_cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
-	api_ev "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -31,27 +27,27 @@ func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }
 
-type TestAggregate struct {
-	*BaseAggregate
-}
+// type testAggregate struct {
+// 	*BaseAggregate
+// }
 
-func NewTestAggregate() *TestAggregate {
-	return &TestAggregate{
-		BaseAggregate: NewBaseAggregate(TestAggregateType, uuid.New()),
-	}
-}
+// func newTestAggregate() *testAggregate {
+// 	return &testAggregate{
+// 		BaseAggregate: NewBaseAggregate(TestAggregateType, uuid.New()),
+// 	}
+// }
 
-func (a *TestAggregate) HandleCommand(ctx context.Context, cmd Command) error {
-	switch cmd := cmd.(type) {
-	case *testCommand:
-		ed, err := ToEventDataFromProto(&api_ev.TestEventData{
-			Hello: cmd.TestCommandData.GetTest(),
-		})
-		if err != nil {
-			return err
-		}
-		_ = a.AppendEvent(TestEventType, ed)
-		return nil
-	}
-	return fmt.Errorf("couldn't handle command")
-}
+// func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
+// 	switch cmd := cmd.(type) {
+// 	case *testCommand:
+// 		ed, err := ToEventDataFromProto(&api_ev.TestEventData{
+// 			Hello: cmd.TestCommandData.GetTest(),
+// 		})
+// 		if err != nil {
+// 			return err
+// 		}
+// 		_ = a.AppendEvent(TestEventType, ed)
+// 		return nil
+// 	}
+// 	return fmt.Errorf("couldn't handle command")
+// }
