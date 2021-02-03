@@ -32,12 +32,12 @@ func (c *testCommand) SetData(a *anypb.Any) error {
 }
 
 type TestAggregate struct {
-	*AggregateBase
+	*BaseAggregate
 }
 
 func NewTestAggregate() *TestAggregate {
 	return &TestAggregate{
-		AggregateBase: NewAggregateBase(TestAggregateType, uuid.New()),
+		BaseAggregate: NewBaseAggregate(TestAggregateType, uuid.New()),
 	}
 }
 

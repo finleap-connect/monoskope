@@ -62,7 +62,7 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 
 // NewEventFromAggregate creates a new event.
 func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.Time, aggregate Aggregate) Event {
-	return NewEvent(eventType, data, timestamp, aggregate.AggregateType(), aggregate.AggregateID(), aggregate.AggregateVersion())
+	return NewEvent(eventType, data, timestamp, aggregate.Type(), aggregate.ID(), aggregate.Version())
 }
 
 // NewEventFromProto converts API Event to Event

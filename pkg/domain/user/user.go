@@ -34,7 +34,7 @@ func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
-	*es.AggregateBase
+	*es.BaseAggregate
 	email string
 	name  string
 }
@@ -42,9 +42,9 @@ type UserAggregate struct {
 func (c *UserAggregate) AggregateType() es.AggregateType { return UserType }
 
 // NewUserAggregate creates a new UserAggregate
-func NewUserAggregate() *UserAggregate {
+func NewUserAggregate(id uuid.UUID) *UserAggregate {
 	return &UserAggregate{
-		AggregateBase: es.NewAggregateBase(UserType, uuid.New()),
+		BaseAggregate: es.NewBaseAggregate(UserType, id),
 	}
 }
 

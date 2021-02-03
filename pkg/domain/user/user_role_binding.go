@@ -33,7 +33,7 @@ func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
-	*AggregateBase
+	*BaseAggregate
 	userId  uuid.UUID // User to add a role to
 	role    string    // Role to add to the user
 	context string    // Context of the role binding
@@ -45,7 +45,7 @@ func (c *UserRoleBindingAggregate) AggregateType() AggregateType { return UserRo
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 	return &UserRoleBindingAggregate{
-		AggregateBase: NewAggregateBase(UserRoleBindingType, id),
+		BaseAggregate: NewBaseAggregate(UserRoleBindingType, id),
 	}
 }
 
