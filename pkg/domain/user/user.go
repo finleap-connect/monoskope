@@ -31,8 +31,8 @@ func (c *CreateUserCommand) CommandType() es.CommandType     { return CreateUser
 func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserCommand)
 }
-func (c *CreateUserCommand) Authorization(ctx context.Context) []es.MetaRole {
-	return []es.MetaRole{
+func (c *CreateUserCommand) Policies(ctx context.Context) []es.Policy {
+	return []es.Policy{
 		{Subject: c.GetUserMetadata().GetEmail()}, // Allows user to create themselfes
 	}
 }

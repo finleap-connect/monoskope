@@ -28,8 +28,8 @@ type Command interface {
 	// SetData sets type specific additional data.
 	SetData(*anypb.Any) error
 
-	// Authorization returns the Role/Scope/Resource combination allowed to execute.
-	Authorization(ctx context.Context) []MetaRole
+	// Policies returns the Role/Scope/Resource combination allowed to execute.
+	Policies(ctx context.Context) []Policy
 }
 
 // CommandType is the type of a command, used as its unique identifier.

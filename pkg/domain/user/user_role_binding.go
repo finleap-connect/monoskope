@@ -31,8 +31,8 @@ func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType     { return
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.AddRoleToUserCommand)
 }
-func (c *CreateUserRoleBindingCommand) Authorization(ctx context.Context) []es.MetaRole {
-	return []es.MetaRole{
+func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
+	return []es.Policy{
 		{Role: authz.Admin, Scope: authz.System},                                            // System admin
 		{Role: authz.Admin, Scope: authz.Tenant, Resource: c.AddRoleToUserCommand.Resource}, // Tenant admin
 	}
