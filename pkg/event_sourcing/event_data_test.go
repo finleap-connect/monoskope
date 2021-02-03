@@ -27,13 +27,13 @@ var _ = Describe("EventData", func() {
 		err := any.MarshalFrom(proto)
 		Expect(err).To(Not(HaveOccurred()))
 
-		eventData, err := ToEventDataFromAny(&any)
+		eventData, err := toEventDataFromAny(&any)
 		Expect(err).To(Not(HaveOccurred()))
 		Expect(eventData).To(Not(BeNil()))
 	})
 	It("can unmarshall to any", func() {
 		eventData := eventDataFromProto()
-		any, err := eventData.ToAny()
+		any, err := eventData.toAny()
 		Expect(err).To(Not(HaveOccurred()))
 		Expect(any).To(Not(BeNil()))
 	})

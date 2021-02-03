@@ -9,8 +9,8 @@ import (
 // EventData is any additional data for an event. Internally this is represented by protojson.
 type EventData []byte
 
-// ToEventDataFromAny marshalls a given any to protojson
-func ToEventDataFromAny(a *anypb.Any) (EventData, error) {
+// toEventDataFromAny marshalls a given any to protojson
+func toEventDataFromAny(a *anypb.Any) (EventData, error) {
 	bytes, err := protojson.Marshal(a)
 	if err != nil {
 		return bytes, err
@@ -18,18 +18,18 @@ func ToEventDataFromAny(a *anypb.Any) (EventData, error) {
 	return bytes, nil
 }
 
-// ToEventDataFromProto marshalls a given proto to an any and marshalls the any to protojson
+// ToEventDataFromProto marshalls m into EventData.
 func ToEventDataFromProto(m protoreflect.ProtoMessage) (EventData, error) {
 	a := &anypb.Any{}
 	err := a.MarshalFrom(m)
 	if err != nil {
 		return EventData{}, err
 	}
-	return ToEventDataFromAny(a)
+	return toEventDataFromAny(a)
 }
 
-// ToAny unmarshalls protojson to an any
-func (d EventData) ToAny() (*anypb.Any, error) {
+// toAny unmarshalls protojson to an any
+func (d EventData) toAny() (*anypb.Any, error) {
 	a := &anypb.Any{}
 	err := protojson.Unmarshal(d, a)
 	if err != nil {
@@ -38,9 +38,9 @@ func (d EventData) ToAny() (*anypb.Any, error) {
 	return a, nil
 }
 
-// ToProto umnarshalls protojson to an any and unmarshals the any to the given proto
+// ToProto the contents the EventData into m.
 func (d EventData) ToProto(m protoreflect.ProtoMessage) error {
-	a, err := d.ToAny()
+	a, err := d.toAny()
 	if err != nil {
 		return err
 	}

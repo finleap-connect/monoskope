@@ -68,7 +68,7 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 		return nil, ErrCouldNotParseAggregateId
 	}
 
-	eventData, err := ToEventDataFromAny(protoEvent.GetData())
+	eventData, err := toEventDataFromAny(protoEvent.GetData())
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +85,7 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 
 // NewProtoFromEvent converts Event to proto events
 func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
-	a, err := storeEvent.Data().ToAny()
+	a, err := storeEvent.Data().toAny()
 	if err != nil {
 		panic(err)
 	}

@@ -28,7 +28,7 @@ var _ = Describe("EventData", func() {
 		Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 		Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 
-		ed, err := ToEventDataFromAny(pe.Data)
+		ed, err := toEventDataFromAny(pe.Data)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(se.Data()).To(Equal(ed))
 
