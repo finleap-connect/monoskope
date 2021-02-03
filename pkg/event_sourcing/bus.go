@@ -32,9 +32,9 @@ var ErrContextDeadlineExceeded = errors.New("context deadline exceeded")
 // EventBusPublisher publishes events on the underlying message bus.
 type EventBusPublisher interface {
 	// Connect connects to the bus
-	Connect(context.Context) *MessageBusError
+	Connect(context.Context) error
 	// PublishEvent publishes the event on the bus.
-	PublishEvent(context.Context, Event) *MessageBusError
+	PublishEvent(context.Context, Event) error
 	// Close closes the underlying connections
 	Close() error
 }
@@ -42,11 +42,11 @@ type EventBusPublisher interface {
 // EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
 	// Connect connects to the bus
-	Connect(context.Context) *MessageBusError
+	Connect(context.Context) error
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(context.Context, EventReceiver, ...EventMatcher) *MessageBusError
+	AddReceiver(context.Context, EventReceiver, ...EventMatcher) error
 	// Close closes the underlying connections
 	Close() error
 }
@@ -63,33 +63,3 @@ type EventMatcher interface {
 
 // EventReceiver is the function to call by the consumer on incoming events
 type EventReceiver func(Event) error
-
-// messageBusError is an error from the bus
-type MessageBusError struct {
-	// Err is the error.
-	Err error
-	// BaseErr is an optional underlying error, for example from the message bus driver.
-	BaseErr error
-}
-
-// Error implements the Error method of the errors.Error interface.
-func (e MessageBusError) Error() string {
-	errStr := e.Err.Error()
-	if e.BaseErr != nil {
-		errStr += ": " + e.BaseErr.Error()
-	}
-	return errStr
-}
-
-// Cause returns the cause of this error.
-func (e MessageBusError) Cause() error {
-	return e.Err
-}
-
-// UnwrapMessageBusError returns the given error as MessageBusError if it is one
-func UnwrapMessageBusError(err error) *MessageBusError {
-	if esErr, ok := err.(MessageBusError); ok {
-		return &esErr
-	}
-	return nil
-}

@@ -64,21 +64,16 @@ func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (evs.EventBusConsumer
 }
 
 // Connect starts automatic reconnect with rabbitmq
-func (b *rabbitEventBus) Connect(ctx context.Context) *evs.MessageBusError {
+func (b *rabbitEventBus) Connect(ctx context.Context) error {
 	go b.handleReconnect(b.conf.Url)
 	for !b.isConnected {
 		select {
 		case <-b.ctx.Done():
 			b.log.Info("Connection aborted because of shutdown.")
-			return &evs.MessageBusError{
-				Err:     evs.ErrContextDeadlineExceeded,
-				BaseErr: ctx.Err(),
-			}
+			return evs.ErrContextDeadlineExceeded
 		case <-ctx.Done():
 			b.log.Info("Connection aborted because context deadline exceeded.")
-			return &evs.MessageBusError{
-				Err: evs.ErrMessageNotConnected,
-			}
+			return evs.ErrMessageNotConnected
 		case <-time.After(300 * time.Millisecond):
 		}
 	}
@@ -86,7 +81,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) *evs.MessageBusError {
 }
 
 // PublishEvent publishes the event on the bus.
-func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) *evs.MessageBusError {
+func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) error {
 	resendsLeft := b.conf.MaxResends
 	for resendsLeft > 0 {
 		resendsLeft--
@@ -96,15 +91,10 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) *evs
 			select {
 			case <-b.ctx.Done():
 				b.log.Info("Publish failed because of shutdown.")
-				return &evs.MessageBusError{
-					Err: evs.ErrCouldNotPublishEvent,
-				}
+				return evs.ErrCouldNotPublishEvent
 			case <-ctx.Done():
 				b.log.Info("Publish failed because context deadline exceeded.")
-				return &evs.MessageBusError{
-					Err:     evs.ErrContextDeadlineExceeded,
-					BaseErr: ctx.Err(),
-				}
+				return evs.ErrContextDeadlineExceeded
 			case <-time.After(b.conf.ResendDelay):
 				b.log.Error(err, "Publish failed. Retrying...")
 				continue
@@ -121,38 +111,27 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) *evs
 			}
 		case <-ctx.Done():
 			b.log.Info("Publish failed because context deadline exceeded.")
-			return &evs.MessageBusError{
-				Err:     evs.ErrContextDeadlineExceeded,
-				BaseErr: ctx.Err(),
-			}
+			return evs.ErrContextDeadlineExceeded
 		case <-b.ctx.Done():
 			b.log.Info("Publish failed because of shutdown.")
-			return &evs.MessageBusError{
-				Err: evs.ErrCouldNotPublishEvent,
-			}
+			return evs.ErrCouldNotPublishEvent
 		case <-time.After(b.conf.ResendDelay):
 			b.log.Info("Publish failed. Wasn't confirmed within timeout.")
-			return &evs.MessageBusError{
-				Err: evs.ErrCouldNotPublishEvent,
-			}
+			return evs.ErrCouldNotPublishEvent
 		}
 	}
 
 	b.log.Info("Publish failed.")
-	return &evs.MessageBusError{
-		Err: evs.ErrCouldNotPublishEvent,
-	}
+	return evs.ErrCouldNotPublishEvent
 }
 
 // publishEvent will push to the queue without checking for
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // recieve the message.
-func (b *rabbitEventBus) publishEvent(event evs.Event) *evs.MessageBusError {
+func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 	if !b.isConnected {
-		return &evs.MessageBusError{
-			Err: evs.ErrMessageNotConnected,
-		}
+		return evs.ErrMessageNotConnected
 	}
 
 	re := &rabbitEvent{
@@ -167,10 +146,7 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) *evs.MessageBusError {
 	bytes, err := json.Marshal(re)
 	if err != nil {
 		b.log.Error(err, evs.ErrCouldNotMarshalEvent.Error())
-		return &evs.MessageBusError{
-			Err:     evs.ErrCouldNotMarshalEvent,
-			BaseErr: err,
-		}
+		return evs.ErrCouldNotMarshalEvent
 	}
 
 	err = b.channel.Publish(
@@ -186,52 +162,39 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) *evs.MessageBusError {
 
 	if err != nil {
 		b.log.Error(err, evs.ErrCouldNotPublishEvent.Error())
-		return &evs.MessageBusError{
-			Err:     evs.ErrCouldNotPublishEvent,
-			BaseErr: err,
-		}
+		return evs.ErrCouldNotPublishEvent
 	}
 	return nil
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver evs.EventReceiver, matchers ...evs.EventMatcher) *evs.MessageBusError {
+func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver evs.EventReceiver, matchers ...evs.EventMatcher) error {
 	if matchers == nil {
 		b.log.Error(evs.ErrMatcherMustNotBeNil, evs.ErrMatcherMustNotBeNil.Error())
-		return &evs.MessageBusError{
-			Err: evs.ErrMatcherMustNotBeNil,
-		}
+		return evs.ErrMatcherMustNotBeNil
 	}
 	if receiver == nil {
 		b.log.Error(evs.ErrReceiverMustNotBeNil, evs.ErrReceiverMustNotBeNil.Error())
-		return &evs.MessageBusError{
-			Err: evs.ErrReceiverMustNotBeNil,
-		}
+		return evs.ErrReceiverMustNotBeNil
 	}
 
 	resendsLeft := b.conf.MaxResends
 	for {
 		err := b.addReceiver(receiver, matchers...)
 		if err != nil {
-			b.log.Info("Adding receiver failed. Retrying...", "error", err.Cause().Error())
+			b.log.Info("Adding receiver failed. Retrying...", "error", err.Error())
 			select {
 			case <-b.ctx.Done():
-				return &evs.MessageBusError{
-					Err: evs.ErrCouldNotAddReceiver,
-				}
+				return evs.ErrCouldNotAddReceiver
 			case <-ctx.Done():
-				return &evs.MessageBusError{
-					Err: evs.ErrContextDeadlineExceeded,
-				}
+				return evs.ErrContextDeadlineExceeded
 			case <-time.After(b.conf.ResendDelay):
 				if resendsLeft > 0 {
 					resendsLeft--
 					continue
 				} else {
 					b.log.Info("Adding receiver failed.")
-					return &evs.MessageBusError{
-						Err: evs.ErrCouldNotPublishEvent,
-					}
+					return evs.ErrCouldNotPublishEvent
 				}
 			}
 		}
@@ -242,11 +205,9 @@ func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver evs.EventRece
 }
 
 // addReceiver creates a queue along with bindings for the given matchers
-func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs.EventMatcher) *evs.MessageBusError {
+func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs.EventMatcher) error {
 	if !b.isConnected {
-		return &evs.MessageBusError{
-			Err: evs.ErrMessageNotConnected,
-		}
+		return evs.ErrMessageNotConnected
 	}
 
 	q, err := b.channel.QueueDeclare(
@@ -258,10 +219,7 @@ func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs
 		nil,   // arguments
 	)
 	if err != nil {
-		return &evs.MessageBusError{
-			Err:     evs.ErrMessageBusConnection,
-			BaseErr: err,
-		}
+		return evs.ErrMessageBusConnection
 	}
 	b.log.Info(fmt.Sprintf("Queue declared '%s'.", q.Name))
 
@@ -269,9 +227,7 @@ func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs
 		rabbitMatcher, ok := matcher.(*rabbitMatcher)
 		if !ok {
 			b.log.Error(evs.ErrMatcherMustNotBeNil, evs.ErrMatcherMustNotBeNil.Error())
-			return &evs.MessageBusError{
-				Err: evs.ErrMatcherMustNotBeNil,
-			}
+			return evs.ErrMatcherMustNotBeNil
 		}
 
 		routingKey := rabbitMatcher.generateRoutingKey()
@@ -282,10 +238,7 @@ func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs
 			false,               // no wait
 			nil)
 		if err != nil {
-			return &evs.MessageBusError{
-				Err:     evs.ErrMessageBusConnection,
-				BaseErr: err,
-			}
+			return evs.ErrMessageBusConnection
 		}
 		b.log.Info(fmt.Sprintf("Routing key '%s' bound for queue '%s'...", routingKey, q.Name))
 	}
@@ -300,10 +253,7 @@ func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs
 		nil,   // args
 	)
 	if err != nil {
-		return &evs.MessageBusError{
-			Err:     evs.ErrMessageBusConnection,
-			BaseErr: err,
-		}
+		return evs.ErrMessageBusConnection
 	}
 	go b.handleIncomingMessages(q.Name, msgs, receiver)
 

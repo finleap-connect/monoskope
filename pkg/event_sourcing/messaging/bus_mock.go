@@ -13,12 +13,12 @@ func NewMockEventBusPublisher() evs.EventBusPublisher {
 	return &mockEventBus{}
 }
 
-func (b *mockEventBus) Connect(ctx context.Context) *evs.MessageBusError {
+func (b *mockEventBus) Connect(ctx context.Context) error {
 	// mock
 	return nil
 }
 
-func (b *mockEventBus) PublishEvent(ctx context.Context, event evs.Event) *evs.MessageBusError {
+func (b *mockEventBus) PublishEvent(ctx context.Context, event evs.Event) error {
 	panic("not implemented")
 }
 

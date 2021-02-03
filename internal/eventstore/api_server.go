@@ -35,7 +35,7 @@ func NewApiServer(store evs.Store, bus evs.EventBusPublisher) (*apiServer, error
 	msgbusErr := s.bus.Connect(ctx)
 	if msgbusErr != nil {
 		s.log.Error(msgbusErr, "failed connecting the message bus")
-		return nil, msgbusErr.Cause()
+		return nil, msgbusErr
 	}
 
 	s.log.Info("connecting to the storage backend")
