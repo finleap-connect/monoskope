@@ -8,7 +8,7 @@ import (
 
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/authz"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -32,9 +32,17 @@ func (c *CreateUserCommand) CommandType() es.CommandType     { return CreateUser
 func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserCommand)
 }
-func (c *CreateUserCommand) IsAuthorized(role es.Role, scope es.Scope, resource string) bool {
-	isAdmin := role == authz.Admin
-	return isAdmin
+func (c *CreateUserCommand) IsAuthorized(ctx context.Context, role es.Role, scope es.Scope, resource string) bool {
+	userInfo, err := metadata.
+		NewDomainMetadataManager(ctx).
+		GetUserInformation()
+
+	if err != nil {
+		return false
+	}
+
+	// Current user is the user to be created
+	return c.GetUserMetadata().GetEmail() == userInfo.Email
 }
 
 // UserAggregate is an aggregate for Users.

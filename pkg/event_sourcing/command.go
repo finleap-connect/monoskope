@@ -1,6 +1,8 @@
 package event_sourcing
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -27,7 +29,7 @@ type Command interface {
 	SetData(*anypb.Any) error
 
 	// IsAuthorized checks if the given role/scope/resource allow execution.
-	IsAuthorized(role Role, scope Scope, resource string) bool
+	IsAuthorized(ctx context.Context, role Role, scope Scope, resource string) bool
 }
 
 // CommandType is the type of a command, used as its unique identifier.

@@ -1,6 +1,8 @@
 package event_sourcing
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	api_cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -26,7 +28,7 @@ func (c *testCommand) CommandType() CommandType { return TestCommandType }
 func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }
-func (c *testCommand) IsAuthorized(role Role, scope Scope, resource string) bool {
+func (c *testCommand) IsAuthorized(ctx context.Context, role Role, scope Scope, resource string) bool {
 	return true
 }
 

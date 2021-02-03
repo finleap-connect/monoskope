@@ -31,17 +31,30 @@ func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType     { return
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.AddRoleToUserCommand)
 }
-func (c *CreateUserRoleBindingCommand) IsAuthorized(role es.Role, scope es.Scope, resource string) bool {
-	isAdmin := role == authz.Admin
-	return isAdmin
+func (c *CreateUserRoleBindingCommand) IsAuthorized(ctx context.Context, role es.Role, scope es.Scope, resource string) bool {
+	if authz.Admin == role {
+		if authz.System == scope {
+			// User is admin of system
+			return true
+		}
+		if authz.Tenant == scope {
+			if resource == c.AddRoleToUserCommand.Resource {
+				// User is admin of tenant
+				return true
+			}
+		}
+
+	}
+	return false
 }
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
 	*es.BaseAggregate
-	userId  uuid.UUID // User to add a role to
-	role    string    // Role to add to the user
-	context string    // Context of the role binding
+	userId   uuid.UUID // User to add a role to
+	role     es.Role   // Role to add to the user
+	scope    es.Scope  // Scope of the role binding
+	resource string    // Resource of the role binding
 }
 
 // AggregateType returns the type of the aggregate.
@@ -72,9 +85,10 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 	}
 
 	ed, err := es.ToEventDataFromProto(&ed.UserRoleAddedEventData{
-		UserId:  cmd.GetUserId(),
-		Role:    cmd.GetRole(),
-		Context: cmd.GetContext(),
+		UserId:   cmd.GetUserId(),
+		Role:     cmd.GetRole(),
+		Scope:    cmd.GetScope(),
+		Resource: cmd.GetResource(),
 	})
 	if err != nil {
 		return err
@@ -111,8 +125,9 @@ func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event es.Event) error
 	}
 
 	a.userId = userId
-	a.role = data.Role
-	a.context = data.Context
+	a.role = es.Role(data.Role)
+	a.scope = es.Scope(data.Scope)
+	a.resource = data.Resource
 
 	return nil
 }
