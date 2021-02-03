@@ -37,7 +37,7 @@ type Event interface {
 	AggregateVersion() uint64
 	// Event type specific event data.
 	Data() EventData
-	// Metadata is app-specific metadata originating user etc.
+	// Metadata is app-specific metadata originating user etc. when this event has been stored.
 	Metadata() map[EventMetadataKey]interface{}
 	// A string representation of the event.
 	String() string
