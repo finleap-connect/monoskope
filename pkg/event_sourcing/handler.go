@@ -25,7 +25,7 @@ func (c *commandHandlerChain) HandleCommand(ctx context.Context, cmd Command) er
 	return nil
 }
 
-// ChainCommandHandler wraps a CommandHandler in one or more middleware.
+// ChainCommandHandler builds up a chain of CommandHandler's which are executed left-to-right.
 func ChainCommandHandler(handlers ...CommandHandler) CommandHandler {
 	return &commandHandlerChain{
 		handlers: handlers,

@@ -34,7 +34,8 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 		return nil, err
 	}
 
-	ctx = metadata.NewDomainMetadataManager(ctx).
+	ctx = metadata.
+		NewDomainMetadataManager(ctx).
 		SetUserInformation(&metadata.UserInformation{
 			Email:   apiCommand.GetUserMetadata().Email,
 			Subject: apiCommand.GetUserMetadata().Subject,
