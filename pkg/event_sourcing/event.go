@@ -1,7 +1,6 @@
 package event_sourcing
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,9 +9,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
-
-// ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
-var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
 // EventType is the type of an event, used as its unique identifier.
 type EventType string
@@ -65,7 +61,7 @@ func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.T
 	return NewEvent(eventType, data, timestamp, aggregate.Type(), aggregate.ID(), aggregate.Version())
 }
 
-// NewEventFromProto converts API Event to Event
+// NewEventFromProto converts proto events to Event
 func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
 	if err != nil {
@@ -87,7 +83,7 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 	), nil
 }
 
-// NewProtoFromEvent converts Event to API Event
+// NewProtoFromEvent converts Event to proto events
 func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
 	a, err := storeEvent.Data().ToAny()
 	if err != nil {
@@ -106,9 +102,7 @@ func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
 	return ev, nil
 }
 
-// event is an internal representation of an event, returned when the aggregate
-// uses NewEvent to create a new event. The events loaded from the db is
-// represented by each DBs internal event type, implementing Event.
+// event is an internal representation of an event.
 type event struct {
 	eventType        EventType
 	data             EventData

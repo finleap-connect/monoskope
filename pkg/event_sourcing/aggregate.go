@@ -1,10 +1,14 @@
 package event_sourcing
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+// ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
+var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
 // AggregateType is the type of an aggregate, used as its unique identifier.
 type AggregateType string
@@ -16,12 +20,14 @@ func (t AggregateType) String() string {
 
 // Aggregate is the interface definition for all aggregates
 type Aggregate interface {
-	// AggregateType is the type of the aggregate that the event can be applied to.
+	// Type is the type of the aggregate that the event can be applied to.
 	Type() AggregateType
-	// AggregateID is the id of the aggregate that the event should be applied to.
+	// ID is the id of the aggregate that the event should be applied to.
 	ID() uuid.UUID
-	// AggregateVersion is the version of the aggregate.
+	// Version is the version of the aggregate.
 	Version() uint64
+	// Events returns the events that built up the aggregate.
+	Events() []Event
 }
 
 // BaseAggregate is the base implementation for all aggregates
@@ -55,15 +61,19 @@ func (a *BaseAggregate) Version() uint64 {
 	return a.version
 }
 
+// Events implements the Events method of the Aggregate interface.
+func (a *BaseAggregate) Events() []Event {
+	return a.events
+}
+
 // AppendEvent appends an event to the events the aggregate was build upon.
-func (a *BaseAggregate) AppendEvent(et EventType, data EventData) Event {
+func (a *BaseAggregate) AppendEvent(eventType EventType, eventData EventData) Event {
 	a.version++
 	newEvent := NewEventFromAggregate(
-		et,
-		data,
+		eventType,
+		eventData,
 		time.Now().UTC(),
 		a)
 	a.events = append(a.events, newEvent)
-
 	return newEvent
 }
