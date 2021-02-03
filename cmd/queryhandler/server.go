@@ -77,7 +77,7 @@ var serverCmd = &cobra.Command{
 		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
 
 		inMemoryRepo := es_repos.NewInMemoryRepository()
-		userRepo := user.NewReadOnlyUserRepository(inMemoryRepo)
+		userRepo := user.NewUserRepository(inMemoryRepo)
 		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
 
 		// Create gRPC server and register implementation

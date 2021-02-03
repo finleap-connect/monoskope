@@ -26,6 +26,9 @@ func (c *testCommand) CommandType() CommandType { return TestCommandType }
 func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }
+func (c *testCommand) IsAuthorized(role Role, scope Scope, resource string) bool {
+	return true
+}
 
 // type testAggregate struct {
 // 	*BaseAggregate

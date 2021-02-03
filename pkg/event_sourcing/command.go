@@ -25,6 +25,9 @@ type Command interface {
 
 	// SetData sets type specific additional data.
 	SetData(*anypb.Any) error
+
+	// IsAuthorized checks if the given role/scope/resource allow execution.
+	IsAuthorized(role Role, scope Scope, resource string) bool
 }
 
 // CommandType is the type of a command, used as its unique identifier.

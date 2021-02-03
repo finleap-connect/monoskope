@@ -21,6 +21,8 @@ message UserRoleAddedEventData {
   string user_id = 1;
   // Name of the role added to the user
   string role = 2;
-  // Context of the role
-  string context = 3;
+  // Scope of the role
+  string scope = 3;
+  // Affected resource within scope
+  string resource = 4;
 }

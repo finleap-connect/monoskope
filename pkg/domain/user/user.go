@@ -8,6 +8,7 @@ import (
 
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/authz"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -30,6 +31,10 @@ func (c *CreateUserCommand) AggregateType() es.AggregateType { return UserType }
 func (c *CreateUserCommand) CommandType() es.CommandType     { return CreateUserType }
 func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserCommand)
+}
+func (c *CreateUserCommand) IsAuthorized(role es.Role, scope es.Scope, resource string) bool {
+	isAdmin := role == authz.Admin
+	return isAdmin
 }
 
 // UserAggregate is an aggregate for Users.

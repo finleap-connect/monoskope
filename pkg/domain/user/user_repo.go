@@ -8,8 +8,7 @@ import (
 )
 
 type userRepository struct {
-	es.ReadOnlyRepository
-	es.WriteOnlyRepository
+	es.Repository
 }
 
 // Repository is a repository for reading and writing user projections.
@@ -34,20 +33,7 @@ type WriteOnlyUserRepository interface {
 // NewUserRepository creates a repository for reading and writing user projections.
 func NewUserRepository(base es.Repository) UserRepository {
 	return &userRepository{
-		ReadOnlyRepository:  base,
-		WriteOnlyRepository: base,
-	}
-}
-
-func NewReadOnlyUserRepository(base es.ReadOnlyRepository) ReadOnlyUserRepository {
-	return &userRepository{
-		ReadOnlyRepository: base,
-	}
-}
-
-func NewWriteOnlyUserRepository(base es.WriteOnlyRepository) WriteOnlyUserRepository {
-	return &userRepository{
-		WriteOnlyRepository: base,
+		Repository: base,
 	}
 }
 
