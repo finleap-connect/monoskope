@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	TestCommandType   CommandType   = "TestCommandType"
-	TestAggregateType AggregateType = "TestAggregateType"
-	TestEventType     EventType     = "TestEventType"
+	testCommandType   CommandType   = "TestCommandType"
+	testAggregateType AggregateType = "TestAggregateType"
+	testEventType     EventType     = "TestEventType"
 )
 
 // testCommand is a command for tests.
@@ -22,9 +22,9 @@ type testCommand struct {
 
 func (c *testCommand) AggregateID() uuid.UUID { return c.aggregateId }
 func (c *testCommand) AggregateType() AggregateType {
-	return TestAggregateType
+	return testAggregateType
 }
-func (c *testCommand) CommandType() CommandType { return TestCommandType }
+func (c *testCommand) CommandType() CommandType { return testCommandType }
 func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
 }

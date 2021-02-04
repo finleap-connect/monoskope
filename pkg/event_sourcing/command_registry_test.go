@@ -15,12 +15,12 @@ var _ = Describe("command_registry", func() {
 		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		err = registry.UnregisterCommand(TestCommandType)
+		err = registry.UnregisterCommand(testCommandType)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can't unregister commands which are not registered", func() {
 		registry := NewCommandRegistry()
-		err := registry.UnregisterCommand(TestCommandType)
+		err := registry.UnregisterCommand(testCommandType)
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't register the same command twice", func() {
@@ -33,7 +33,7 @@ var _ = Describe("command_registry", func() {
 	})
 	It("can't create commands which are not registered", func() {
 		registry := NewCommandRegistry()
-		cmd, err := registry.CreateCommand(TestCommandType, nil)
+		cmd, err := registry.CreateCommand(testCommandType, nil)
 		Expect(err).To(HaveOccurred())
 		Expect(cmd).To(BeNil())
 	})
@@ -47,7 +47,7 @@ var _ = Describe("command_registry", func() {
 		err = any.MarshalFrom(proto)
 		Expect(err).ToNot(HaveOccurred())
 
-		cmd, err := registry.CreateCommand(TestCommandType, any)
+		cmd, err := registry.CreateCommand(testCommandType, any)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cmd).ToNot(BeNil())
 
@@ -58,13 +58,13 @@ var _ = Describe("command_registry", func() {
 	})
 	It("can register handlers", func() {
 		registry := NewCommandRegistry()
-		err := registry.SetHandler(newTestCommandHandler(), TestCommandType)
+		err := registry.SetHandler(newTestCommandHandler(), testCommandType)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can handle commands", func() {
 		registry := NewCommandRegistry()
 
-		err := registry.SetHandler(newTestCommandHandler(), TestCommandType)
+		err := registry.SetHandler(newTestCommandHandler(), testCommandType)
 		Expect(err).ToNot(HaveOccurred())
 
 		err = registry.HandleCommand(context.Background(), &testCommand{
