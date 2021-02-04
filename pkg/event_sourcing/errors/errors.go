@@ -92,4 +92,7 @@ var (
 var (
 	// ErrInvalidProjectionType is when a projection is invalid.
 	ErrInvalidProjectionType = errors.New("mismatching projection type")
+
+	// ErrProjectionOutdated is when the an event received leads to the conclusion that one or more events have not been received.
+	ErrProjectionOutdated = errors.New("projection version outdated")
 )

@@ -39,7 +39,7 @@ func (h *ProjectionEventHandler) HandleEvent(ctx context.Context, event es.Event
 	}
 	if projection.AggregateVersion()+1 != event.AggregateVersion() {
 		// Version of event is not exactly one higher than the projection.
-		return errors.ErrIncorrectAggregateVersion
+		return errors.ErrProjectionOutdated
 	}
 
 	// Apply event on projection.
