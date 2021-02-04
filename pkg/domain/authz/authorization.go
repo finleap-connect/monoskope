@@ -3,6 +3,7 @@ package authz
 import (
 	"context"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/aggregates"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -16,8 +17,13 @@ func NewAuthorizationHandler() es.CommandHandler {
 func (h *authorizationCommandHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
 	// TODO:
 	// Get current users rolebindings from ctx
-	// if !cmd.IsAuthorized(Admin, System, "") {
-	// 	return fmt.Errorf("unauthorized")
-	// }
+	roleBindings := []aggregates.UserRoleBindingAggregate{}
+	for _, policy := range cmd.Policies(ctx) {
+		for _, roleBinding := range roleBindings {
+			if policy.Role == roleBinding.Role() {
+				return nil
+			}
+		}
+	}
 	return nil
 }

@@ -1,11 +1,12 @@
-package authz
+package constants
 
 import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 
+// Scopes
 const (
-	Admin es.Role = "admin"
-	User  es.Role = "user"
-
+	// System scope
 	System es.Scope = "system"
+
+	// Tenant scope
 	Tenant es.Scope = "tenant"
 )

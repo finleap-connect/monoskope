@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/user"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
@@ -39,7 +39,7 @@ func NewTestEnv() (*TestEnv, error) {
 	}
 
 	inMemoryRepo := es_repos.NewInMemoryRepository()
-	userRepo := user.NewUserRepository(inMemoryRepo)
+	userRepo := repositories.NewUserRepository(inMemoryRepo)
 
 	// Create server
 	env.grpcServer = grpc.NewServer("query_handler_grpc", false)

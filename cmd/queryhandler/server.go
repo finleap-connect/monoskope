@@ -9,7 +9,7 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/user"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -77,7 +77,7 @@ var serverCmd = &cobra.Command{
 		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
 
 		inMemoryRepo := es_repos.NewInMemoryRepository()
-		userRepo := user.NewUserRepository(inMemoryRepo)
+		userRepo := repositories.NewUserRepository(inMemoryRepo)
 		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
 
 		// Create gRPC server and register implementation
