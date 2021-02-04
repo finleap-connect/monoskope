@@ -14,14 +14,6 @@ var _ = Describe("command_registry", func() {
 		registry := NewCommandRegistry()
 		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
-
-		err = registry.UnregisterCommand(testCommandType)
-		Expect(err).ToNot(HaveOccurred())
-	})
-	It("can't unregister commands which are not registered", func() {
-		registry := NewCommandRegistry()
-		err := registry.UnregisterCommand(testCommandType)
-		Expect(err).To(HaveOccurred())
 	})
 	It("can't register the same command twice", func() {
 		registry := NewCommandRegistry()

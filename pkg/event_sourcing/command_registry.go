@@ -30,7 +30,6 @@ var ErrHandlerNotFound = errors.New("no handlers for command")
 type CommandRegistry interface {
 	CommandHandler
 	RegisterCommand(func() Command) error
-	UnregisterCommand(commandType CommandType) error
 	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
 	SetHandler(handler CommandHandler, commandType CommandType) error
 }
@@ -79,28 +78,6 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) error {
 	r.commands[commandType] = factory
 
 	r.log.Info("command has been registered.", "commandType", commandType)
-
-	return nil
-}
-
-// UnregisterCommand removes the registration of the command factory for
-// a type. This is mainly useful in mainenance situations where the command type
-// needs to be switched at runtime.
-func (r *commandRegistry) UnregisterCommand(commandType CommandType) error {
-	if commandType == CommandType("") {
-		r.log.Info("attempt to register empty command type")
-		return ErrEmptyCommandType
-	}
-
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	if _, ok := r.commands[commandType]; !ok {
-		r.log.Info("unregister of non-registered type", "commandType", commandType)
-		return ErrCommandNotRegistered
-	}
-	delete(r.commands, commandType)
-
-	r.log.Info("command has been unregistered.", "commandType", commandType)
 
 	return nil
 }
