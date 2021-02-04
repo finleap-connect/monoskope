@@ -12,6 +12,18 @@ import (
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
+type testEventHandler struct {
+	event evs.Event
+}
+
+func (t testEventHandler) HandleEvent(ctx context.Context, e evs.Event) error {
+	defer GinkgoRecover()
+	env.Log.Info("Received event.")
+	Expect(e).ToNot(BeNil())
+	Expect(e).To(Equal(t.event))
+	return nil
+}
+
 var _ = Describe("messaging/rabbitmq", func() {
 	var consumer evs.EventBusConsumer
 	var publisher evs.EventBusPublisher
@@ -41,14 +53,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	}
 
 	createReceiver := func(event evs.Event, matchers ...evs.EventMatcher) {
-		receiver := func(e evs.Event) (err error) {
-			defer GinkgoRecover()
-			env.Log.Info("Received event.")
-			Expect(e).ToNot(BeNil())
-			Expect(e).To(Equal(event))
-			return nil
-		}
-
+		receiver := &testEventHandler{event: event}
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
 		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)

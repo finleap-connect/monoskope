@@ -46,7 +46,7 @@ type EventBusConsumer interface {
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
 	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(context.Context, EventReceiver, ...EventMatcher) error
+	AddReceiver(context.Context, EventHandler, ...EventMatcher) error
 	// Close closes the underlying connections
 	Close() error
 }
@@ -60,6 +60,3 @@ type EventMatcher interface {
 	// MatchAggregate matches a specific aggregate type, nil events never match.
 	MatchAggregateType(aggregateType AggregateType) EventMatcher
 }
-
-// EventReceiver is the function to call by the consumer on incoming events
-type EventReceiver func(Event) error

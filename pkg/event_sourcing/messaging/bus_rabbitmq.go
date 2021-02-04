@@ -168,19 +168,19 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 }
 
 // AddReceiver adds a receiver for event matching the EventFilter.
-func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver evs.EventReceiver, matchers ...evs.EventMatcher) error {
+func (b *rabbitEventBus) AddReceiver(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
 	if matchers == nil {
 		b.log.Error(evs.ErrMatcherMustNotBeNil, evs.ErrMatcherMustNotBeNil.Error())
 		return evs.ErrMatcherMustNotBeNil
 	}
-	if receiver == nil {
+	if handler == nil {
 		b.log.Error(evs.ErrReceiverMustNotBeNil, evs.ErrReceiverMustNotBeNil.Error())
 		return evs.ErrReceiverMustNotBeNil
 	}
 
 	resendsLeft := b.conf.MaxResends
 	for {
-		err := b.addReceiver(receiver, matchers...)
+		err := b.addReceiver(ctx, handler, matchers...)
 		if err != nil {
 			b.log.Info("Adding receiver failed. Retrying...", "error", err.Error())
 			select {
@@ -205,7 +205,7 @@ func (b *rabbitEventBus) AddReceiver(ctx context.Context, receiver evs.EventRece
 }
 
 // addReceiver creates a queue along with bindings for the given matchers
-func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs.EventMatcher) error {
+func (b *rabbitEventBus) addReceiver(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
 	if !b.isConnected {
 		return evs.ErrMessageNotConnected
 	}
@@ -255,7 +255,7 @@ func (b *rabbitEventBus) addReceiver(receiver evs.EventReceiver, matchers ...evs
 	if err != nil {
 		return evs.ErrMessageBusConnection
 	}
-	go b.handleIncomingMessages(q.Name, msgs, receiver)
+	go b.handleIncomingMessages(ctx, q.Name, msgs, handler)
 
 	return nil
 }
@@ -431,7 +431,7 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 }
 
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on receiver result
-func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.Delivery, receiver evs.EventReceiver) {
+func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName string, msgs <-chan amqp.Delivery, handler evs.EventHandler) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for d := range msgs {
 		b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
@@ -445,7 +445,7 @@ func (b *rabbitEventBus) handleIncomingMessages(qName string, msgs <-chan amqp.D
 			}
 		}
 
-		err = receiver(evs.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
+		err = handler.HandleEvent(ctx, evs.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
 		if err != nil {
 			if err := d.Nack(false, false); err != nil {
 				b.log.Error(err, "Failed to NACK event.")
