@@ -1,4 +1,4 @@
-package authz
+package command_handler
 
 import (
 	"context"
