@@ -167,25 +167,25 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 	return nil
 }
 
-// AddReceiver adds a receiver for event matching the EventFilter.
-func (b *rabbitEventBus) AddReceiver(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
+// AddHandler adds a handler for event matching the EventFilter.
+func (b *rabbitEventBus) AddHandler(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
 	if matchers == nil {
 		b.log.Error(evs.ErrMatcherMustNotBeNil, evs.ErrMatcherMustNotBeNil.Error())
 		return evs.ErrMatcherMustNotBeNil
 	}
 	if handler == nil {
-		b.log.Error(evs.ErrReceiverMustNotBeNil, evs.ErrReceiverMustNotBeNil.Error())
-		return evs.ErrReceiverMustNotBeNil
+		b.log.Error(evs.ErrHandlerMustNotBeNil, evs.ErrHandlerMustNotBeNil.Error())
+		return evs.ErrHandlerMustNotBeNil
 	}
 
 	resendsLeft := b.conf.MaxResends
 	for {
-		err := b.addReceiver(ctx, handler, matchers...)
+		err := b.addHandler(ctx, handler, matchers...)
 		if err != nil {
-			b.log.Info("Adding receiver failed. Retrying...", "error", err.Error())
+			b.log.Info("Adding handler failed. Retrying...", "error", err.Error())
 			select {
 			case <-b.ctx.Done():
-				return evs.ErrCouldNotAddReceiver
+				return evs.ErrCouldNotAddHandler
 			case <-ctx.Done():
 				return evs.ErrContextDeadlineExceeded
 			case <-time.After(b.conf.ResendDelay):
@@ -193,19 +193,19 @@ func (b *rabbitEventBus) AddReceiver(ctx context.Context, handler evs.EventHandl
 					resendsLeft--
 					continue
 				} else {
-					b.log.Info("Adding receiver failed.")
+					b.log.Info("Adding handler failed.")
 					return evs.ErrCouldNotPublishEvent
 				}
 			}
 		}
 
-		b.log.Info("Receiver added.")
+		b.log.Info("Handler added.")
 		return nil
 	}
 }
 
-// addReceiver creates a queue along with bindings for the given matchers
-func (b *rabbitEventBus) addReceiver(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
+// addHandler creates a queue along with bindings for the given matchers
+func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandler, matchers ...evs.EventMatcher) error {
 	if !b.isConnected {
 		return evs.ErrMessageNotConnected
 	}
@@ -430,7 +430,7 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
-// handleIncomingMessages handles the routing of the received messages and ack/nack based on receiver result
+// handleIncomingMessages handles the routing of the received messages and ack/nack based on handler result
 func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName string, msgs <-chan amqp.Delivery, handler evs.EventHandler) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for d := range msgs {

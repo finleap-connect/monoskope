@@ -52,17 +52,17 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	createReceiver := func(event evs.Event, matchers ...evs.EventMatcher) {
-		receiver := &testEventHandler{event: event}
+	createHandler := func(event evs.Event, matchers ...evs.EventMatcher) {
+		handler := &testEventHandler{event: event}
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
-		err := consumer.AddReceiver(ctxWithTimeout, receiver, matchers...)
+		err := consumer.AddHandler(ctxWithTimeout, handler, matchers...)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
 	testPubSub := func(matchers ...evs.EventMatcher) {
 		event := createEvent()
-		createReceiver(event, matchers...)
+		createHandler(event, matchers...)
 		publishEvent(event)
 	}
 

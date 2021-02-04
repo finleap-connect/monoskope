@@ -14,8 +14,8 @@ var ErrCouldNotPublishEvent = errors.New("could not publish event")
 // ErrMatcherMustNotBeNil is when an empty matcher has been provided
 var ErrMatcherMustNotBeNil = errors.New("matcher must not be nil")
 
-// ErrReceiverMustNotBeNil is when an empty receiver has been provided
-var ErrReceiverMustNotBeNil = errors.New("receiver must not be nil")
+// ErrHandlerMustNotBeNil is when an empty handler has been provided
+var ErrHandlerMustNotBeNil = errors.New("handler must not be nil")
 
 // ErrMessageNotConnected is when there is no connection
 var ErrMessageNotConnected = errors.New("message bus not connected")
@@ -23,8 +23,8 @@ var ErrMessageNotConnected = errors.New("message bus not connected")
 // ErrMessageBusConnection is when an unexpected error on message bus occured
 var ErrMessageBusConnection = errors.New("unexpected error on message bus occured")
 
-// ErrCouldNotAddReceiver is when an receiver could not be added
-var ErrCouldNotAddReceiver = errors.New("could not add receiver")
+// ErrCouldNotAddHandler is when an handler could not be added
+var ErrCouldNotAddHandler = errors.New("could not add handler")
 
 // ErrContextDeadlineExceeded is when execution has been aborted since the context deadline has been exceeded
 var ErrContextDeadlineExceeded = errors.New("context deadline exceeded")
@@ -39,14 +39,14 @@ type EventBusPublisher interface {
 	Close() error
 }
 
-// EventBusConsumer notifies registered receivers on incoming events on the underlying message bus.
+// EventBusConsumer notifies registered handlers on incoming events on the underlying message bus.
 type EventBusConsumer interface {
 	// Connect connects to the bus
 	Connect(context.Context) error
 	// Matcher returns a new implementation specific matcher.
 	Matcher() EventMatcher
-	// AddReceiver adds a receiver for events matching one of the given EventMatcher.
-	AddReceiver(context.Context, EventHandler, ...EventMatcher) error
+	// AddHandler adds a handler for events matching one of the given EventMatcher.
+	AddHandler(context.Context, EventHandler, ...EventMatcher) error
 	// Close closes the underlying connections
 	Close() error
 }
