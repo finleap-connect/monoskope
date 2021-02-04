@@ -28,14 +28,14 @@ type postgresEventStore struct {
 type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
-	EventID          uuid.UUID              `pg:"event_id,type:uuid,pk"`
-	EventType        evs.EventType          `pg:"event_type,type:varchar(250)"`
-	AggregateID      uuid.UUID              `pg:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType    evs.AggregateType      `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
-	AggregateVersion uint64                 `pg:"aggregate_version,unique:aggregate"`
-	Timestamp        time.Time              `pg:""`
-	Metadata         map[string]interface{} `pg:"metadata"`
-	RawData          json.RawMessage        `pg:"data,type:jsonb"`
+	EventID          uuid.UUID                            `pg:"event_id,type:uuid,pk"`
+	EventType        evs.EventType                        `pg:"event_type,type:varchar(250)"`
+	AggregateID      uuid.UUID                            `pg:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType    evs.AggregateType                    `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
+	AggregateVersion uint64                               `pg:"aggregate_version,unique:aggregate"`
+	Timestamp        time.Time                            `pg:""`
+	Metadata         map[evs.EventMetadataKey]interface{} `pg:"metadata"`
+	RawData          json.RawMessage                      `pg:"data,type:jsonb"`
 }
 
 var models []interface{}
@@ -74,12 +74,12 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event
 		RawData:          json.RawMessage(event.Data()),
 		Timestamp:        event.Timestamp(),
 		AggregateVersion: event.AggregateVersion(),
-		Metadata:         event.Metadata(),
+		Metadata:         evs.NewMetadataManagerFromContext(ctx).GetMetadata(),
 	}, nil
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(config *postgresStoreConfig) (Store, error) {
+func NewPostgresEventStore(config *postgresStoreConfig) (evs.Store, error) {
 	err := config.Validate()
 	if err != nil {
 		return nil, err
@@ -101,10 +101,10 @@ func (s *postgresEventStore) Connect(ctx context.Context) error {
 		select {
 		case <-s.ctx.Done():
 			s.log.Info("Connection aborted because of shutdown.")
-			return ErrCouldNotConnect
+			return evs.ErrCouldNotConnect
 		case <-ctx.Done():
 			s.log.Info("Connection aborted because context deadline exceeded.")
-			return ErrCouldNotConnect
+			return evs.ErrCouldNotConnect
 		case <-time.After(300 * time.Millisecond):
 		}
 	}
@@ -114,9 +114,7 @@ func (s *postgresEventStore) Connect(ctx context.Context) error {
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
 	if len(events) == 0 {
-		return eventStoreError{
-			Err: ErrNoEventsToAppend,
-		}
+		return evs.ErrNoEventsToAppend
 	}
 
 	// Validate incoming events and create all event records.
@@ -127,16 +125,12 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	for i, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return eventStoreError{
-				Err: ErrInvalidAggregateType,
-			}
+			return evs.ErrInvalidAggregateType
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return eventStoreError{
-				Err: ErrIncorrectAggregateVersion,
-			}
+			return evs.ErrIncorrectAggregateVersion
 		}
 
 		// Create the event record for the DB.
@@ -153,7 +147,7 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	// Append events to the store.
 	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
 		if !s.isConnected {
-			return ErrConnectionClosed
+			return evs.ErrConnectionClosed
 		}
 		_, e = s.db.Model(&eventRecords).Insert()
 		return e
@@ -167,19 +161,13 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	})
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
-			s.log.Info(ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
-			return eventStoreError{
-				BaseErr: err,
-				Err:     ErrAggregateVersionAlreadyExists,
-			}
+			s.log.Info(evs.ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
+			return evs.ErrAggregateVersionAlreadyExists
 		}
 	}
 	if err != nil {
-		s.log.Error(err, ErrCouldNotSaveEvents.Error())
-		return eventStoreError{
-			BaseErr: err,
-			Err:     ErrCouldNotSaveEvents,
-		}
+		s.log.Error(err, evs.ErrCouldNotSaveEvents.Error())
+		return evs.ErrCouldNotSaveEvents
 	}
 
 	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
@@ -207,9 +195,9 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) ([]evs.Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
 	if !s.isConnected {
-		return nil, ErrConnectionClosed
+		return nil, evs.ErrConnectionClosed
 	}
 
 	var events []evs.Event
@@ -230,10 +218,7 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *StoreQuery) (
 		return nil
 	})
 	if err != nil {
-		return nil, eventStoreError{
-			BaseErr: err,
-			Err:     err,
-		}
+		return nil, err
 	}
 
 	return events, nil
@@ -254,7 +239,7 @@ func (s *postgresEventStore) Close() error {
 }
 
 // mapStoreQuery maps the generic query struct to a postgress orm query
-func mapStoreQuery(storeQuery *StoreQuery, dbQuery *orm.Query) {
+func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 	if storeQuery == nil {
 		return
 	}
@@ -309,7 +294,7 @@ func (s *postgresEventStore) handleReInit(db *pg.DB) error {
 			select {
 			case <-s.ctx.Done():
 				s.log.Info("Aborting init. Shutting down...")
-				return ErrCouldNotConnect
+				return evs.ErrCouldNotConnect
 			case <-time.After(s.conf.ReInitDelay):
 				continue
 			}
@@ -403,7 +388,7 @@ func (e pgEvent) AggregateVersion() uint64 {
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e pgEvent) Metadata() map[string]interface{} {
+func (e pgEvent) Metadata() map[evs.EventMetadataKey]interface{} {
 	return e.eventRecord.Metadata
 }
 

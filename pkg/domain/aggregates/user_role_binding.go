@@ -5,66 +5,79 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	. "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
-	*AggregateBase
-	userId  uuid.UUID // User to add a role to
-	role    string    // Role to add to the user
-	context string    // Context of the role binding
+	*es.BaseAggregate
+	userId   uuid.UUID // User to add a role to
+	role     es.Role   // Role to add to the user
+	scope    es.Scope  // Scope of the role binding
+	resource string    // Resource of the role binding
 }
 
 // AggregateType returns the type of the aggregate.
-func (c *UserRoleBindingAggregate) AggregateType() AggregateType { return domain.UserRoleBinding }
+func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType {
+	return aggregates.UserRoleBinding
+}
+
+// Role returns the Role of the UserRoleBindingAggregate.
+func (a *UserRoleBindingAggregate) Role() es.Role {
+	return a.role
+}
+
+// Scope returns the Scope of the UserRoleBindingAggregate.
+func (a *UserRoleBindingAggregate) Scope() es.Scope {
+	return a.scope
+}
+
+// Resource returns the Resource of the UserRoleBindingAggregate.
+func (a *UserRoleBindingAggregate) Resource() string {
+	return a.resource
+}
 
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 	return &UserRoleBindingAggregate{
-		AggregateBase: NewAggregateBase(domain.UserRoleBinding, id),
+		BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding, id),
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd Command) error {
+func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
-	case *commands.AddRoleToUserCommand:
+	case *commands.CreateUserRoleBindingCommand:
 		return a.handleAddRoleToUserCommand(ctx, cmd)
 	}
 	return fmt.Errorf("couldn't handle command")
 }
 
 // handleAddRoleToUserCommand handles the command
-func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.AddRoleToUserCommand) error {
-	// TODO: Check if user has the right to do this.
-	_, err := metadata.NewDomainMetadataManager(ctx).GetUserInformation() // user issued the command at gateway
-	if err != nil {
-		return err
-	}
-
-	ed, err := ToEventDataFromProto(&api.UserRoleAddedEventData{
-		UserId:  cmd.GetUserId(),
-		Role:    cmd.GetRole(),
-		Context: cmd.GetContext(),
+func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
+	ed, err := es.ToEventDataFromProto(&ed.UserRoleAddedEventData{
+		UserId:   cmd.GetUserId(),
+		Role:     cmd.GetRole(),
+		Scope:    cmd.GetScope(),
+		Resource: cmd.GetResource(),
 	})
 	if err != nil {
 		return err
 	}
 
-	_ = a.AppendEvent(domain.UserRoleAdded, ed)
+	_ = a.AppendEvent(events.UserRoleBindingCreated, ed)
 
 	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
+func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
-	case domain.UserRoleAdded:
+	case events.UserRoleBindingCreated:
 		err := a.applyUserRoleAddedEvent(event)
 		if err != nil {
 			return err
@@ -74,8 +87,8 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event Event) error {
 }
 
 // applyUserRoleAddedEvent applies the event on the aggregate
-func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
-	data := &api.UserRoleAddedEventData{}
+func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event es.Event) error {
+	data := &ed.UserRoleAddedEventData{}
 	err := event.Data().ToProto(data)
 	if err != nil {
 		return err
@@ -87,8 +100,9 @@ func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event Event) error {
 	}
 
 	a.userId = userId
-	a.role = data.Role
-	a.context = data.Context
+	a.role = es.Role(data.Role)
+	a.scope = es.Scope(data.Scope)
+	a.resource = data.Resource
 
 	return nil
 }

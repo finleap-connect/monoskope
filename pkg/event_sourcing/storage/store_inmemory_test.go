@@ -60,9 +60,7 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(eventStoreError{
-			Err: ErrInvalidAggregateType,
-		}))
+		Expect(err).To(Equal(evs.ErrInvalidAggregateType))
 	})
 	It("fails to append new events to the store when they are not in the right aggregate version order", func() {
 		es := createInMemoryTestEventStore()
@@ -74,9 +72,8 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(eventStoreError{
-			Err: ErrIncorrectAggregateVersion,
-		}))
+		Expect(err).To(Equal(evs.ErrIncorrectAggregateVersion))
+
 	})
 	It("fails to append new events to the store when the aggregate version does already exist", func() {
 		es := createInMemoryTestEventStore()
@@ -93,9 +90,7 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		esErr := UnwrapEventStoreError(err)
-		Expect(esErr).ToNot(BeNil())
-		Expect(esErr.Cause()).To(Equal(ErrAggregateVersionAlreadyExists))
+		Expect(err).To(Equal(evs.ErrAggregateVersionAlreadyExists))
 	})
 	It("can load events from the store", func() {
 		es := createInMemoryTestEventStore()
@@ -113,7 +108,7 @@ var _ = Describe("storage/inmemory", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		aggregateId := events[0].AggregateID()
-		storeEvents, err := es.Load(ctx, &StoreQuery{
+		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
 			AggregateId: &aggregateId,
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -130,7 +125,7 @@ var _ = Describe("storage/inmemory", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		aggregateType := evs.AggregateType(testAggregate)
-		storeEvents, err := es.Load(ctx, &StoreQuery{
+		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
 			AggregateType: &aggregateType,
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -148,7 +143,7 @@ var _ = Describe("storage/inmemory", func() {
 
 		minVersion := uint64(1)
 		maxVersion := uint64(1)
-		storeEvents, err := es.Load(ctx, &StoreQuery{
+		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
 			MinVersion: &minVersion,
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -159,7 +154,7 @@ var _ = Describe("storage/inmemory", func() {
 			Expect(ev.AggregateVersion()).To(BeNumerically(">=", 1))
 		}
 
-		storeEvents, err = es.Load(ctx, &StoreQuery{
+		storeEvents, err = es.Load(ctx, &evs.StoreQuery{
 			MaxVersion: &maxVersion,
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -170,7 +165,7 @@ var _ = Describe("storage/inmemory", func() {
 			Expect(ev.AggregateVersion()).To(BeNumerically("<=", 1))
 		}
 
-		storeEvents, err = es.Load(ctx, &StoreQuery{
+		storeEvents, err = es.Load(ctx, &evs.StoreQuery{
 			MinVersion: &minVersion,
 			MaxVersion: &maxVersion,
 		})

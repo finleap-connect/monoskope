@@ -11,33 +11,35 @@ import (
 
 var _ = Describe("command_registry", func() {
 	It("can register and unregister commands", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		registry := NewCommandRegistry()
+		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		err = Registry.UnregisterCommand(TestCommandType)
+		err = registry.UnregisterCommand(TestCommandType)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can't unregister commands which are not registered", func() {
-		err := Registry.UnregisterCommand(TestCommandType)
+		registry := NewCommandRegistry()
+		err := registry.UnregisterCommand(TestCommandType)
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't register the same command twice", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		registry := NewCommandRegistry()
+		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		err = Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		err = registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't create commands which are not registered", func() {
-		err := Registry.UnregisterCommand(TestCommandType)
-		Expect(err).ToNot(HaveOccurred())
-
-		cmd, err := Registry.CreateCommand(TestCommandType, nil)
+		registry := NewCommandRegistry()
+		cmd, err := registry.CreateCommand(TestCommandType, nil)
 		Expect(err).To(HaveOccurred())
 		Expect(cmd).To(BeNil())
 	})
 	It("can create commands which are registered", func() {
-		err := Registry.RegisterCommand(func() Command { return &TestCommand{} })
+		registry := NewCommandRegistry()
+		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
 		proto := &api.TestCommandData{Test: "Hello world!"}
@@ -45,21 +47,27 @@ var _ = Describe("command_registry", func() {
 		err = any.MarshalFrom(proto)
 		Expect(err).ToNot(HaveOccurred())
 
-		cmd, err := Registry.CreateCommand(TestCommandType, any)
+		cmd, err := registry.CreateCommand(TestCommandType, any)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cmd).ToNot(BeNil())
 
-		testCmd, ok := cmd.(*TestCommand)
+		testCmd, ok := cmd.(*testCommand)
 		Expect(ok).To(BeTrue())
 		Expect(testCmd).ToNot(BeNil())
 		Expect(testCmd.Test).To(Equal("Hello world!"))
 	})
 	It("can register handlers", func() {
-		err := Registry.SetHandler(NewTestAggregate(), TestCommandType)
+		registry := NewCommandRegistry()
+		err := registry.SetHandler(newTestCommandHandler(), TestCommandType)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can handle commands", func() {
-		err := Registry.HandleCommand(context.Background(), &TestCommand{
+		registry := NewCommandRegistry()
+
+		err := registry.SetHandler(newTestCommandHandler(), TestCommandType)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = registry.HandleCommand(context.Background(), &testCommand{
 			TestCommandData: api.TestCommandData{Test: "world!"},
 		})
 		Expect(err).ToNot(HaveOccurred())

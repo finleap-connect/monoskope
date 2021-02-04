@@ -5,17 +5,33 @@ import (
 	"fmt"
 )
 
+// EventMetadataKey is the base key type for metadata.
 type EventMetadataKey int
 
+// metadataKey is the key type for metadata stored in context.
 var metadataKey EventMetadataKey
 
+/*
+ MetadataManager is an interface for a storage of metadata.
+ It can be used to easily store any metadata in the context of a call.
+*/
 type MetadataManager interface {
+	// GetContext returns a new context enriched with the metadata of this manager based on the .
 	GetContext() context.Context
 
+	// GetMetadata returns the metadata of this manager.
+	GetMetadata() map[EventMetadataKey]interface{}
+	// SetMetadata sets the metadata of this manager.
+	SetMetadata(map[EventMetadataKey]interface{}) MetadataManager
+
+	// Get returns the information stored for the key.
 	Get(EventMetadataKey) (interface{}, bool)
+	// Get returns the information stored for the key as bool.
 	GetBool(EventMetadataKey) (bool, error)
+	// Get returns the information stored for the key as string.
 	GetString(EventMetadataKey) (string, error)
 
+	// Set stores information for the key.
 	Set(EventMetadataKey, interface{}) MetadataManager
 }
 
@@ -24,32 +40,50 @@ type metadataManager struct {
 	data map[EventMetadataKey]interface{}
 }
 
-func NewMetadataManager(ctx context.Context) MetadataManager {
-	b := &metadataManager{
-		ctx:  ctx,
+func newMetadataManager() *metadataManager {
+	return &metadataManager{
+		ctx:  context.Background(),
 		data: make(map[EventMetadataKey]interface{}),
 	}
+}
+
+func NewMetadataManager() MetadataManager {
+	return newMetadataManager()
+}
+
+func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
+	m := newMetadataManager()
+	m.ctx = ctx
 
 	d, ok := ctx.Value(metadataKey).(map[EventMetadataKey]interface{})
 	if ok {
-		b.data = d
+		m.data = d
 	}
 
-	return b
+	return m
 }
 
-func (b *metadataManager) Get(key EventMetadataKey) (interface{}, bool) {
-	v, ok := b.data[key]
+func (m *metadataManager) GetMetadata() map[EventMetadataKey]interface{} {
+	return m.data
+}
+
+func (m *metadataManager) SetMetadata(metadata map[EventMetadataKey]interface{}) MetadataManager {
+	m.data = metadata
+	return m
+}
+
+func (m *metadataManager) Get(key EventMetadataKey) (interface{}, bool) {
+	v, ok := m.data[key]
 	return v, ok
 }
 
-func (b *metadataManager) Set(key EventMetadataKey, value interface{}) MetadataManager {
-	b.data[key] = value
-	return b
+func (m *metadataManager) Set(key EventMetadataKey, value interface{}) MetadataManager {
+	m.data[key] = value
+	return m
 }
 
-func (b *metadataManager) GetString(key EventMetadataKey) (string, error) {
-	iface, ok := b.Get(key)
+func (m *metadataManager) GetString(key EventMetadataKey) (string, error) {
+	iface, ok := m.Get(key)
 	if !ok {
 		return "", fmt.Errorf("not found")
 	}
@@ -61,8 +95,8 @@ func (b *metadataManager) GetString(key EventMetadataKey) (string, error) {
 	return stringValue, nil
 }
 
-func (b *metadataManager) GetBool(key EventMetadataKey) (bool, error) {
-	iface, ok := b.Get(key)
+func (m *metadataManager) GetBool(key EventMetadataKey) (bool, error) {
+	iface, ok := m.Get(key)
 	if !ok {
 		return false, fmt.Errorf("not found")
 	}
@@ -74,6 +108,7 @@ func (b *metadataManager) GetBool(key EventMetadataKey) (bool, error) {
 	return boolValue, nil
 }
 
-func (b *metadataManager) GetContext() context.Context {
-	return context.WithValue(b.ctx, metadataKey, b.data)
+// GetContext returns a new context enriched with the metadata of this manager.
+func (m *metadataManager) GetContext() context.Context {
+	return context.WithValue(m.ctx, metadataKey, m.data)
 }

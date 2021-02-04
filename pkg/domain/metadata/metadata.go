@@ -13,45 +13,52 @@ var (
 	componentInformationKey evs.EventMetadataKey
 )
 
+// ComponentInformation are information about a service/component.
 type ComponentInformation struct {
 	Name    string
 	Version string
 	Commit  string
 }
 
+// UserInformation are identifying information about a user.
 type UserInformation struct {
 	Email   string
 	Subject string
 	Issuer  string
 }
 
+// domainMetadataManager is a domain specific metadata manager.
 type domainMetadataManager struct {
-	metadataManager evs.MetadataManager
+	evs.MetadataManager
 }
 
+// NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
 func NewDomainMetadataManager(ctx context.Context) *domainMetadataManager {
-	b := &domainMetadataManager{
-		metadataManager: evs.NewMetadataManager(ctx),
+	m := &domainMetadataManager{
+		evs.NewMetadataManagerFromContext(ctx),
 	}
-	return b.SetComponentInformation()
+	return m.SetComponentInformation()
 }
 
-func (b *domainMetadataManager) SetComponentInformation() *domainMetadataManager {
-	b.metadataManager.Set(evs.EventMetadataKey(componentInformationKey), &ComponentInformation{
+// SetComponentInformation sets the ComponentInformation about the currently executing service/component.
+func (m *domainMetadataManager) SetComponentInformation() *domainMetadataManager {
+	m.Set(evs.EventMetadataKey(componentInformationKey), &ComponentInformation{
 		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})
-	return b
+	return m
 }
 
-func (b *domainMetadataManager) SetUserInformation(userInformation *UserInformation) *domainMetadataManager {
-	b.metadataManager.Set(userInformationKey, userInformation)
-	return b
+// SetUserInformation sets the UserInformation in the metadata.
+func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) *domainMetadataManager {
+	m.Set(userInformationKey, userInformation)
+	return m
 }
 
-func (b *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
-	iface, ok := b.metadataManager.Get(userInformationKey)
+// GetUserInformation returns the UserInformation stored in the metadata.
+func (m *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
+	iface, ok := m.Get(userInformationKey)
 	if !ok {
 		return nil, fmt.Errorf("not found")
 	}
@@ -61,8 +68,4 @@ func (b *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
 		return nil, fmt.Errorf("invalid type")
 	}
 	return &userId, nil
-}
-
-func (b *domainMetadataManager) GetContext() context.Context {
-	return b.metadataManager.GetContext()
 }

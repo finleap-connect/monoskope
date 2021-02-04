@@ -26,4 +26,7 @@ message CommandRequest {
   common.UserMetadata user_metadata = 2;
 }
 
-message TestCommandData { string test = 1; }
+message TestCommandData {
+  string test = 1;
+  int32 test_count = 2;
+}

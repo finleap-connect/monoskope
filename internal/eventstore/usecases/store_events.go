@@ -5,22 +5,20 @@ import (
 
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type StoreEventsUseCase struct {
 	UseCaseBase
 
-	store  storage.Store
-	bus    messaging.EventBusPublisher
+	store  evs.Store
+	bus    evs.EventBusPublisher
 	events []*api_es.Event
 }
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(ctx context.Context, store storage.Store, bus messaging.EventBusPublisher, events []*api_es.Event) UseCase {
+func NewStoreEventsUseCase(ctx context.Context, store evs.Store, bus evs.EventBusPublisher, events []*api_es.Event) UseCase {
 	useCase := &StoreEventsUseCase{
 		UseCaseBase: UseCaseBase{
 			log: logger.WithName("store-events-use-case"),

@@ -13,8 +13,8 @@ import (
 )
 
 var _ = Describe("messaging/rabbitmq", func() {
-	var consumer EventBusConsumer
-	var publisher EventBusPublisher
+	var consumer evs.EventBusConsumer
+	var publisher evs.EventBusPublisher
 	ctx := context.Background()
 	eventCounter := 0
 	testCount := 0
@@ -40,7 +40,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	createReceiver := func(event evs.Event, matchers ...EventMatcher) {
+	createReceiver := func(event evs.Event, matchers ...evs.EventMatcher) {
 		receiver := func(e evs.Event) (err error) {
 			defer GinkgoRecover()
 			env.Log.Info("Received event.")
@@ -55,7 +55,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 	}
 
-	testPubSub := func(matchers ...EventMatcher) {
+	testPubSub := func(matchers ...evs.EventMatcher) {
 		event := createEvent()
 		createReceiver(event, matchers...)
 		publishEvent(event)

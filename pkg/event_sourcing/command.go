@@ -1,6 +1,8 @@
 package event_sourcing
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -25,6 +27,9 @@ type Command interface {
 
 	// SetData sets type specific additional data.
 	SetData(*anypb.Any) error
+
+	// Policies returns the Role/Scope/Resource combination allowed to execute.
+	Policies(ctx context.Context) []Policy
 }
 
 // CommandType is the type of a command, used as its unique identifier.

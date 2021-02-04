@@ -14,7 +14,8 @@ import (
 // apiServer is the implementation of the CommandHandler API
 type apiServer struct {
 	api.UnimplementedCommandHandlerServer
-	esClient api_es.EventStoreClient
+	esClient    api_es.EventStoreClient
+	cmdRegistry evs.CommandRegistry
 }
 
 // NewApiServer returns a new configured instance of apiServer
@@ -28,12 +29,13 @@ func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
 func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandRequest) (*empty.Empty, error) {
 	cmdDetails := apiCommand.GetCommand()
 
-	cmd, err := evs.Registry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
+	cmd, err := s.cmdRegistry.CreateCommand(evs.CommandType(cmdDetails.Type), cmdDetails.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx = metadata.NewDomainMetadataManager(ctx).
+	ctx = metadata.
+		NewDomainMetadataManager(ctx).
 		SetUserInformation(&metadata.UserInformation{
 			Email:   apiCommand.GetUserMetadata().Email,
 			Subject: apiCommand.GetUserMetadata().Subject,
@@ -41,7 +43,7 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 		}).
 		GetContext()
 
-	err = evs.Registry.HandleCommand(ctx, cmd)
+	err = s.cmdRegistry.HandleCommand(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}

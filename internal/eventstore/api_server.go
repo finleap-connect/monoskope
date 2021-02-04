@@ -7,8 +7,7 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -18,12 +17,12 @@ type apiServer struct {
 	api.UnimplementedEventStoreServer
 	// Logger interface
 	log   logger.Logger
-	store storage.Store
-	bus   messaging.EventBusPublisher
+	store evs.Store
+	bus   evs.EventBusPublisher
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer(store storage.Store, bus messaging.EventBusPublisher) (*apiServer, error) {
+func NewApiServer(store evs.Store, bus evs.EventBusPublisher) (*apiServer, error) {
 	s := &apiServer{
 		log:   logger.WithName("server"),
 		store: store,
@@ -36,7 +35,7 @@ func NewApiServer(store storage.Store, bus messaging.EventBusPublisher) (*apiSer
 	msgbusErr := s.bus.Connect(ctx)
 	if msgbusErr != nil {
 		s.log.Error(msgbusErr, "failed connecting the message bus")
-		return nil, msgbusErr.Cause()
+		return nil, msgbusErr
 	}
 
 	s.log.Info("connecting to the storage backend")

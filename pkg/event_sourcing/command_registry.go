@@ -27,6 +27,14 @@ var ErrHandlerAlreadySet = errors.New("handler is already set")
 // ErrHandlerNotFound is when no handler can be found.
 var ErrHandlerNotFound = errors.New("no handlers for command")
 
+type CommandRegistry interface {
+	CommandHandler
+	RegisterCommand(func() Command) error
+	UnregisterCommand(commandType CommandType) error
+	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
+	SetHandler(handler CommandHandler, commandType CommandType) error
+}
+
 type commandRegistry struct {
 	log      logger.Logger
 	mutex    sync.RWMutex
@@ -35,19 +43,12 @@ type commandRegistry struct {
 }
 
 // newCommandRegistry creates a new command registry
-func newCommandRegistry() *commandRegistry {
+func NewCommandRegistry() CommandRegistry {
 	return &commandRegistry{
 		log:      logger.WithName("command-registry"),
 		commands: make(map[CommandType]func() Command),
 		handlers: make(map[CommandType]CommandHandler),
 	}
-}
-
-// Global command and command handler registry
-var Registry *commandRegistry
-
-func init() {
-	Registry = newCommandRegistry()
 }
 
 // RegisterCommand registers an command factory for a type. The factory is

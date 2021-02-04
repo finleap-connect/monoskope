@@ -14,20 +14,20 @@ type rabbitMatcher struct {
 }
 
 // Any matches any event.
-func (m *rabbitMatcher) Any() EventMatcher {
+func (m *rabbitMatcher) Any() evs.EventMatcher {
 	m.eventType = "*"
 	m.aggregateType = "*"
 	return m
 }
 
 // MatchEventType matches a specific event type, nil events never match.
-func (m *rabbitMatcher) MatchEventType(eventType evs.EventType) EventMatcher {
+func (m *rabbitMatcher) MatchEventType(eventType evs.EventType) evs.EventMatcher {
 	m.eventType = eventType.String()
 	return m
 }
 
 // MatchAggregateType matches a specific aggregate type, nil events never match.
-func (m *rabbitMatcher) MatchAggregateType(aggregateType evs.AggregateType) EventMatcher {
+func (m *rabbitMatcher) MatchAggregateType(aggregateType evs.AggregateType) evs.EventMatcher {
 	m.aggregateType = aggregateType.String()
 	return m
 }
