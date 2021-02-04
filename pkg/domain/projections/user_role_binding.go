@@ -7,7 +7,6 @@ import (
 
 type UserRoleBinding struct {
 	id       uuid.UUID
-	userId   uuid.UUID
 	role     es.Role
 	scope    es.Scope
 	resource string
