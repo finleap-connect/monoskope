@@ -17,10 +17,6 @@ func (u *UserRoleBinding) ID() uuid.UUID {
 	return u.id
 }
 
-func (u *UserRoleBinding) UserId() uuid.UUID {
-	return u.userId
-}
-
 func (u *UserRoleBinding) Role() es.Role {
 	return u.role
 }
@@ -31,4 +27,8 @@ func (u *UserRoleBinding) Scope() es.Scope {
 
 func (u *UserRoleBinding) Resource() string {
 	return u.resource
+}
+
+func NewUserRoleBinding(id uuid.UUID, role es.Role, scope es.Scope, resource string) *UserRoleBinding {
+	return &UserRoleBinding{id: id, role: role, scope: scope, resource: resource}
 }

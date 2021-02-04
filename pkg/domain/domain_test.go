@@ -10,6 +10,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
 	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
@@ -17,7 +18,9 @@ import (
 )
 
 var _ = Describe("domain", func() {
-	adminUser := &projections.User{Email: "admin@monoskope.io", Name: "admin"}
+	adminUser := projections.NewUser(uuid.New(), "admin", "admin@monoskope.io", []*projections.UserRoleBinding{
+		projections.NewUserRoleBinding(uuid.New(), constants.Admin, constants.System, ""),
+	})
 
 	It("can be set up", func() {
 		registry := es.NewCommandRegistry()
@@ -30,8 +33,8 @@ var _ = Describe("domain", func() {
 
 		cmd := &cmd_api.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
-				Email: adminUser.Email,
-				Name:  adminUser.Name,
+				Email: adminUser.Email(),
+				Name:  adminUser.Name(),
 			},
 		}
 		any := &anypb.Any{}

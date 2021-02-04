@@ -47,7 +47,7 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 
 	for _, p := range ps {
 		if u, ok := p.(*projections.User); ok {
-			if u.Email == email {
+			if email == u.Email() {
 				return u, nil
 			}
 		}
