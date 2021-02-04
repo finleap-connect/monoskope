@@ -7,6 +7,7 @@ import (
 
 type UserRoleBinding struct {
 	id       uuid.UUID
+	userId   uuid.UUID
 	role     es.Role
 	scope    es.Scope
 	resource string
@@ -14,6 +15,10 @@ type UserRoleBinding struct {
 
 func (u *UserRoleBinding) ID() uuid.UUID {
 	return u.id
+}
+
+func (u *UserRoleBinding) UserId() uuid.UUID {
+	return u.userId
 }
 
 func (u *UserRoleBinding) Role() es.Role {

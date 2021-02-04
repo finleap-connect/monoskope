@@ -14,7 +14,7 @@ message CreateUserCommand {
   common.UserMetadata user_metadata = 1;
 }
 
-message AddRoleToUserCommand {
+message CreateUserRoleBindingCommand {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1;
   // Name of the role to add
