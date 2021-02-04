@@ -33,9 +33,13 @@ func (h *ProjectionEventHandler) HandleEvent(ctx context.Context, event es.Event
 	}
 
 	// Check version.
-	err = h.projector.ValidateVersion(ctx, event, projection)
-	if err != nil {
-		return err
+	if projection.AggregateVersion() >= event.AggregateVersion() {
+		// Ignore old/duplicate events.
+		return nil
+	}
+	if projection.AggregateVersion()+1 != event.AggregateVersion() {
+		// Version of event is not exactly one higher than the projection.
+		return errors.ErrIncorrectAggregateVersion
 	}
 
 	// Apply event on projection.
@@ -44,11 +48,17 @@ func (h *ProjectionEventHandler) HandleEvent(ctx context.Context, event es.Event
 		return err
 	}
 
-	// Update projection in repo.
-	err = h.repository.Upsert(ctx, projection)
-	if err != nil {
-		return err
+	// Check version again.
+	if projection.AggregateVersion() != event.AggregateVersion() {
+		// Project version and Event version do not match after projection.
+		return errors.ErrIncorrectAggregateVersion
 	}
 
-	return nil
+	if projection == nil {
+		// Remove projection from repo.
+		return h.repository.Remove(ctx, event.AggregateID())
+	} else {
+		// Upsert projection in repo.
+		return h.repository.Upsert(ctx, projection)
+	}
 }

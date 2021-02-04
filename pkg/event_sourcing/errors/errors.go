@@ -88,3 +88,8 @@ var (
 	// ErrProjectionNotFound is when the requested Projection was not found in the repository.
 	ErrProjectionNotFound = errors.New("not found")
 )
+
+var (
+	// ErrInvalidProjectionType is when a projection is invalid.
+	ErrInvalidProjectionType = errors.New("mismatching projection type")
+)

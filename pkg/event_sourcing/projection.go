@@ -23,10 +23,10 @@ func NewBaseProjection(id uuid.UUID) BaseProjection {
 	}
 }
 
-func (p *BaseProjection) ID() uuid.UUID {
+func (p BaseProjection) ID() uuid.UUID {
 	return p.id
 }
 
-func (p *BaseProjection) AggregateVersion() uint64 {
+func (p BaseProjection) AggregateVersion() uint64 {
 	return p.version
 }

@@ -6,6 +6,7 @@ import (
 )
 
 type UserRoleBinding struct {
+	es.BaseProjection
 	id       uuid.UUID
 	userId   uuid.UUID
 	role     es.Role
@@ -34,5 +35,5 @@ func (u *UserRoleBinding) Resource() string {
 }
 
 func NewUserRoleBinding(id, userId uuid.UUID, role es.Role, scope es.Scope, resource string) *UserRoleBinding {
-	return &UserRoleBinding{id: id, userId: userId, role: role, scope: scope, resource: resource}
+	return &UserRoleBinding{BaseProjection: es.NewBaseProjection(id), userId: userId, role: role, scope: scope, resource: resource}
 }
