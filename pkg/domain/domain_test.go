@@ -10,8 +10,9 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
-	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
+	command_types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -19,7 +20,7 @@ import (
 
 var _ = Describe("domain", func() {
 	adminUser := projections.NewUser(uuid.New(), "admin", "admin@monoskope.io", []*projections.UserRoleBinding{
-		projections.NewUserRoleBinding(uuid.New(), constants.Admin, constants.System, ""),
+		projections.NewUserRoleBinding(uuid.New(), roles.Admin, scopes.System, ""),
 	})
 
 	It("can be set up", func() {
@@ -28,7 +29,7 @@ var _ = Describe("domain", func() {
 		err := registry.RegisterCommand(func() es.Command { return &commands.CreateUserCommand{} })
 		Expect(err).NotTo(HaveOccurred())
 
-		err = registry.SetHandler(aggregates.NewUserAggregate(uuid.New()), types.CreateUserType)
+		err = registry.SetHandler(aggregates.NewUserAggregate(uuid.New()), command_types.CreateUser)
 		Expect(err).NotTo(HaveOccurred())
 
 		cmd := &cmd_api.CreateUserCommand{
@@ -39,7 +40,7 @@ var _ = Describe("domain", func() {
 		}
 		any := &anypb.Any{}
 		Expect(any.MarshalFrom(cmd)).NotTo(HaveOccurred())
-		esCmd, err := registry.CreateCommand(types.CreateUserType, any)
+		esCmd, err := registry.CreateCommand(command_types.CreateUser, any)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = registry.HandleCommand(context.Background(), esCmd)

@@ -7,7 +7,8 @@ import (
 
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
 
-	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -19,8 +20,8 @@ type CreateUserCommand struct {
 }
 
 func (c *CreateUserCommand) AggregateID() uuid.UUID          { return c.aggregateId }
-func (c *CreateUserCommand) AggregateType() es.AggregateType { return types.UserType }
-func (c *CreateUserCommand) CommandType() es.CommandType     { return types.CreateUserType }
+func (c *CreateUserCommand) AggregateType() es.AggregateType { return aggregates.User }
+func (c *CreateUserCommand) CommandType() es.CommandType     { return commands.CreateUser }
 func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserCommand)
 }

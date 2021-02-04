@@ -3,7 +3,7 @@ package projectors
 import (
 	"context"
 
-	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
+	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -21,8 +21,8 @@ func (u *userProjector) EvenTypes() []es.EventType {
 // AggregateTypes returns the AggregateTypes for which events should be projected.
 func (u *userProjector) AggregateTypes() []es.AggregateType {
 	return []es.AggregateType{
-		types.UserType,
-		types.UserRoleBindingType,
+		aggregates.User,
+		aggregates.UserRoleBinding,
 	}
 }
 

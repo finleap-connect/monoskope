@@ -5,7 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
-	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -18,17 +21,17 @@ type CreateUserRoleBindingCommand struct {
 
 func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
 func (c *CreateUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return types.UserRoleBindingType
+	return aggregates.UserRoleBinding
 }
 func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType {
-	return types.CreateUserRoleBindingType
+	return commands.CreateUserRoleBinding
 }
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserRoleBindingCommand)
 }
 func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		{Role: types.Admin, Scope: types.System},                                                    // System admin
-		{Role: types.Admin, Scope: types.Tenant, Resource: c.CreateUserRoleBindingCommand.Resource}, // Tenant admin
+		{Role: roles.Admin, Scope: scopes.System},                                                    // System admin
+		{Role: roles.Admin, Scope: scopes.Tenant, Resource: c.CreateUserRoleBindingCommand.Resource}, // Tenant admin
 	}
 }

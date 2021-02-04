@@ -1,4 +1,4 @@
-package constants
+package scopes
 
 import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 

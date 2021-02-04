@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
+	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -21,7 +22,9 @@ type UserRoleBindingAggregate struct {
 }
 
 // AggregateType returns the type of the aggregate.
-func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType { return types.UserRoleBindingType }
+func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType {
+	return aggregates.UserRoleBinding
+}
 
 // Role returns the Role of the UserRoleBindingAggregate.
 func (a *UserRoleBindingAggregate) Role() es.Role {
@@ -41,7 +44,7 @@ func (a *UserRoleBindingAggregate) Resource() string {
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 	return &UserRoleBindingAggregate{
-		BaseAggregate: es.NewBaseAggregate(types.UserRoleBindingType, id),
+		BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding, id),
 	}
 }
 
@@ -66,7 +69,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 		return err
 	}
 
-	_ = a.AppendEvent(types.UserRoleBindingCreatedType, ed)
+	_ = a.AppendEvent(events.UserRoleBindingCreated, ed)
 
 	return nil
 }
@@ -74,7 +77,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
-	case types.UserRoleBindingCreatedType:
+	case events.UserRoleBindingCreated:
 		err := a.applyUserRoleAddedEvent(event)
 		if err != nil {
 			return err
