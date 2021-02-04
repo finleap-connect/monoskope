@@ -8,7 +8,6 @@ import (
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	types "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
@@ -23,12 +22,18 @@ type UserRoleBindingAggregate struct {
 
 // AggregateType returns the type of the aggregate.
 func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType { return types.UserRoleBindingType }
+
+// Role returns the Role of the UserRoleBindingAggregate.
 func (a *UserRoleBindingAggregate) Role() es.Role {
 	return a.role
 }
+
+// Scope returns the Scope of the UserRoleBindingAggregate.
 func (a *UserRoleBindingAggregate) Scope() es.Scope {
 	return a.scope
 }
+
+// Resource returns the Resource of the UserRoleBindingAggregate.
 func (a *UserRoleBindingAggregate) Resource() string {
 	return a.resource
 }
@@ -51,12 +56,6 @@ func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Com
 
 // handleAddRoleToUserCommand handles the command
 func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
-	// TODO: Check if user has the right to do this.
-	_, err := metadata.NewDomainMetadataManager(ctx).GetUserInformation() // user issued the command at gateway
-	if err != nil {
-		return err
-	}
-
 	ed, err := es.ToEventDataFromProto(&ed.UserRoleAddedEventData{
 		UserId:   cmd.GetUserId(),
 		Role:     cmd.GetRole(),

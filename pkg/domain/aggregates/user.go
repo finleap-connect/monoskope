@@ -18,6 +18,7 @@ type UserAggregate struct {
 	name  string
 }
 
+// AggregateType returns the type of the aggregate.
 func (c *UserAggregate) AggregateType() es.AggregateType { return types.UserType }
 
 // NewUserAggregate creates a new UserAggregate

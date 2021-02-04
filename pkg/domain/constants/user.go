@@ -4,12 +4,12 @@ import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 
 // User
 const (
-	// Type for the User aggregate
+	// Type for the UserAggregate
 	UserType es.AggregateType = "User"
 
-	// Command to create a new user
+	// Command to create a new User
 	CreateUserType es.CommandType = "CreateUser"
 
-	// Event emitted when a user has been created
+	// Event emitted when a User has been created
 	UserCreatedType es.EventType = "UserCreated"
 )
