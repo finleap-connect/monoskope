@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -99,6 +100,6 @@ var _ = Describe("EventData", func() {
 		se, err := NewEventFromProto(pe)
 		Expect(err).To(HaveOccurred())
 		Expect(se).To(BeNil())
-		Expect(err).To(Equal(ErrCouldNotParseAggregateId))
+		Expect(err).To(Equal(errors.ErrCouldNotParseAggregateId))
 	})
 })

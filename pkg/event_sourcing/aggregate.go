@@ -1,14 +1,10 @@
 package event_sourcing
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-// ErrCouldNotParseAggregateId is when an aggregate id could not be parsed as uuid
-var ErrCouldNotParseAggregateId = errors.New("could not parse aggregate id")
 
 // AggregateType is the type of an aggregate, used as its unique identifier.
 type AggregateType string

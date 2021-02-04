@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 )
 
 var _ = Describe("storage/inmemory", func() {
@@ -60,7 +61,7 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(evs.ErrInvalidAggregateType))
+		Expect(err).To(Equal(errors.ErrInvalidAggregateType))
 	})
 	It("fails to append new events to the store when they are not in the right aggregate version order", func() {
 		es := createInMemoryTestEventStore()
@@ -72,7 +73,7 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(evs.ErrIncorrectAggregateVersion))
+		Expect(err).To(Equal(errors.ErrIncorrectAggregateVersion))
 
 	})
 	It("fails to append new events to the store when the aggregate version does already exist", func() {
@@ -90,7 +91,7 @@ var _ = Describe("storage/inmemory", func() {
 			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(evs.ErrAggregateVersionAlreadyExists))
+		Expect(err).To(Equal(errors.ErrAggregateVersionAlreadyExists))
 	})
 	It("can load events from the store", func() {
 		es := createInMemoryTestEventStore()

@@ -2,11 +2,11 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 )
 
 // inMemoryRepository is a repository which stores projections in memory.
@@ -30,7 +30,7 @@ func (r *inMemoryRepository) ById(ctx context.Context, id uuid.UUID) (es.Project
 	if val, ok := r.store[id]; ok {
 		return val, nil
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, errors.ErrProjectionNotFound
 }
 
 // All returns all projections in the repository.

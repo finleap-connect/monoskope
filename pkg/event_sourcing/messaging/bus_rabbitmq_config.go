@@ -3,11 +3,11 @@ package messaging
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"io/ioutil"
 	"time"
 
 	"github.com/streadway/amqp"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 )
 
 const (
@@ -30,12 +30,6 @@ type rabbitEventBusConfig struct {
 	ReInitDelay      time.Duration // When setting up the channel after a channel exception
 	amqpConfig       *amqp.Config
 }
-
-// ErrConfigNameRequired is when the config doesn't include a name.
-var ErrConfigNameRequired = errors.New("name must not be empty")
-
-// ErrConfigUrlRequired is when the config doesn't include a name.
-var ErrConfigUrlRequired = errors.New("url must not be empty")
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
 func NewRabbitEventBusConfig(name, url string) *rabbitEventBusConfig {
@@ -79,10 +73,10 @@ func (conf *rabbitEventBusConfig) ConfigureTLS() error {
 // Validate validates the configuration
 func (conf *rabbitEventBusConfig) Validate() error {
 	if conf.Name == "" {
-		return ErrConfigNameRequired
+		return errors.ErrConfigNameRequired
 	}
 	if conf.Url == "" {
-		return ErrConfigUrlRequired
+		return errors.ErrConfigUrlRequired
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 )
 
 type ProjectionEventHandler struct {
@@ -24,10 +25,18 @@ func (h *ProjectionEventHandler) HandleEvent(ctx context.Context, event es.Event
 
 	// If error is not found create new projection.
 	if err != nil {
-		return err
+		if err == errors.ErrProjectionNotFound {
+			projection = h.projector.NewProjection()
+		} else {
+			return err
+		}
 	}
 
-	// Check that the projection is one version behind the event.
+	// Check version.
+	err = h.projector.ValidateVersion(ctx, event, projection)
+	if err != nil {
+		return err
+	}
 
 	// Apply event on projection.
 	projection, err = h.projector.Project(ctx, event, projection)

@@ -13,8 +13,9 @@ import (
 )
 
 var _ = Describe("domain/user_repo", func() {
-	adminUser := projections.NewUser(uuid.New(), "admin", "admin@monoskope.io", []*projections.UserRoleBinding{
-		projections.NewUserRoleBinding(uuid.New(), roles.Admin, scopes.System, ""),
+	userId := uuid.New()
+	adminUser := projections.NewUser(userId, "admin", "admin@monoskope.io", []*projections.UserRoleBinding{
+		projections.NewUserRoleBinding(uuid.New(), userId, roles.Admin, scopes.System, ""),
 	})
 
 	It("can read/write projections", func() {

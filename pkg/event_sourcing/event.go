@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -65,7 +66,7 @@ func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.T
 func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
 	if err != nil {
-		return nil, ErrCouldNotParseAggregateId
+		return nil, errors.ErrCouldNotParseAggregateId
 	}
 
 	eventData, err := toEventDataFromAny(protoEvent.GetData())

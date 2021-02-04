@@ -2,30 +2,12 @@ package event_sourcing
 
 import (
 	"context"
-	"errors"
 	"sync"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/anypb"
 )
-
-// ErrFactoryInvalid is when a command factory creates nil commands.
-var ErrFactoryInvalid = errors.New("factory does not create commands")
-
-// ErrEmptyCommandType is when a command type given is empty.
-var ErrEmptyCommandType = errors.New("command type must not be empty")
-
-// ErrCommandTypeAlreadyRegistered is when a command was already registered.
-var ErrCommandTypeAlreadyRegistered = errors.New("command type already registered")
-
-// ErrCommandNotRegistered is when no command factory was registered.
-var ErrCommandNotRegistered = errors.New("command not registered")
-
-// ErrHandlerAlreadySet is when a handler is already registered for a command.
-var ErrHandlerAlreadySet = errors.New("handler is already set")
-
-// ErrHandlerNotFound is when no handler can be found.
-var ErrHandlerNotFound = errors.New("no handlers for command")
 
 type CommandRegistry interface {
 	CommandHandler
@@ -59,13 +41,13 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) error {
 	cmd := factory()
 	if cmd == nil {
 		r.log.Info("factory does not create commands")
-		return ErrFactoryInvalid
+		return errors.ErrFactoryInvalid
 	}
 
 	commandType := cmd.CommandType()
 	if commandType.String() == "" {
 		r.log.Info("attempt to register empty command type")
-		return ErrEmptyCommandType
+		return errors.ErrEmptyCommandType
 	}
 
 	r.mutex.Lock()
@@ -73,7 +55,7 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) error {
 
 	if _, ok := r.commands[commandType]; ok {
 		r.log.Info("attempt to register command already registered", "commandType", commandType)
-		return ErrCommandTypeAlreadyRegistered
+		return errors.ErrCommandTypeAlreadyRegistered
 	}
 	r.commands[commandType] = factory
 
@@ -95,7 +77,7 @@ func (r *commandRegistry) CreateCommand(commandType CommandType, data *anypb.Any
 		return cmd, nil
 	}
 	r.log.Info("trying to create a command of non-registered type", "commandType", commandType)
-	return nil, ErrCommandNotRegistered
+	return nil, errors.ErrCommandNotRegistered
 }
 
 // HandleCommand handles a command with a handler capable of handling it.
@@ -108,7 +90,7 @@ func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error 
 	}
 
 	r.log.Info("trying to handle a command of non-registered type", "commandType", cmd.CommandType())
-	return ErrHandlerNotFound
+	return errors.ErrHandlerNotFound
 }
 
 // SetHandler adds a handler for a specific command.
@@ -118,7 +100,7 @@ func (r *commandRegistry) SetHandler(handler CommandHandler, commandType Command
 
 	if _, ok := r.handlers[commandType]; ok {
 		r.log.Info("attempt to register command handler already registered", "commandType", commandType)
-		return ErrHandlerAlreadySet
+		return errors.ErrHandlerAlreadySet
 	}
 
 	r.handlers[commandType] = handler

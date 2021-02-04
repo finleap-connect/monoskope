@@ -11,6 +11,7 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
@@ -101,10 +102,10 @@ func (s *postgresEventStore) Connect(ctx context.Context) error {
 		select {
 		case <-s.ctx.Done():
 			s.log.Info("Connection aborted because of shutdown.")
-			return evs.ErrCouldNotConnect
+			return errors.ErrCouldNotConnect
 		case <-ctx.Done():
 			s.log.Info("Connection aborted because context deadline exceeded.")
-			return evs.ErrCouldNotConnect
+			return errors.ErrCouldNotConnect
 		case <-time.After(300 * time.Millisecond):
 		}
 	}
@@ -114,7 +115,7 @@ func (s *postgresEventStore) Connect(ctx context.Context) error {
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
 	if len(events) == 0 {
-		return evs.ErrNoEventsToAppend
+		return errors.ErrNoEventsToAppend
 	}
 
 	// Validate incoming events and create all event records.
@@ -125,12 +126,12 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	for i, event := range events {
 		// Only accept events belonging to the same aggregate.
 		if event.AggregateID() != aggregateID || event.AggregateType() != aggregateType {
-			return evs.ErrInvalidAggregateType
+			return errors.ErrInvalidAggregateType
 		}
 
 		// Only accept events that apply to the correct aggregate version.
 		if event.AggregateVersion() != nextVersion {
-			return evs.ErrIncorrectAggregateVersion
+			return errors.ErrIncorrectAggregateVersion
 		}
 
 		// Create the event record for the DB.
@@ -147,7 +148,7 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	// Append events to the store.
 	err := retryWithExponentialBackoff(5, 500*time.Millisecond, func() (e error) {
 		if !s.isConnected {
-			return evs.ErrConnectionClosed
+			return errors.ErrConnectionClosed
 		}
 		_, e = s.db.Model(&eventRecords).Insert()
 		return e
@@ -161,13 +162,13 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 	})
 	if pgErr, ok := err.(pg.Error); ok {
 		if pgErr.IntegrityViolation() {
-			s.log.Info(evs.ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
-			return evs.ErrAggregateVersionAlreadyExists
+			s.log.Info(errors.ErrAggregateVersionAlreadyExists.Error(), "error", pgErr)
+			return errors.ErrAggregateVersionAlreadyExists
 		}
 	}
 	if err != nil {
-		s.log.Error(err, evs.ErrCouldNotSaveEvents.Error())
-		return evs.ErrCouldNotSaveEvents
+		s.log.Error(err, errors.ErrCouldNotSaveEvents.Error())
+		return errors.ErrCouldNotSaveEvents
 	}
 
 	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
@@ -197,7 +198,7 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
 	if !s.isConnected {
-		return nil, evs.ErrConnectionClosed
+		return nil, errors.ErrConnectionClosed
 	}
 
 	var events []evs.Event
@@ -294,7 +295,7 @@ func (s *postgresEventStore) handleReInit(db *pg.DB) error {
 			select {
 			case <-s.ctx.Done():
 				s.log.Info("Aborting init. Shutting down...")
-				return evs.ErrCouldNotConnect
+				return errors.ErrCouldNotConnect
 			case <-time.After(s.conf.ReInitDelay):
 				continue
 			}
