@@ -81,7 +81,26 @@ func (s *Server) RegisterOnShutdown(f func()) {
 }
 
 // Serve starts the api listeners of the Server
-func (s *Server) Serve(apiLis net.Listener, metricsLis net.Listener) error {
+func (s *Server) Serve(apiAddr, metricsAddr string) error {
+	// Setup grpc listener
+	apiLis, err := net.Listen("tcp", apiAddr)
+	if err != nil {
+		return err
+	}
+	defer apiLis.Close()
+
+	// Setup metrics listener
+	metricsLis, err := net.Listen("tcp", metricsAddr)
+	if err != nil {
+		return err
+	}
+	defer metricsLis.Close()
+
+	return s.ServeFromListener(apiLis, metricsLis)
+}
+
+// ServeFromListener starts the api listeners of the Server
+func (s *Server) ServeFromListener(apiLis net.Listener, metricsLis net.Listener) error {
 	shutdown := s.shutdown
 
 	if metricsLis != nil {

@@ -1,13 +1,8 @@
 package main
 
 import (
-	"context"
-	"net"
-	"time"
-
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
@@ -36,24 +31,18 @@ var serverCmd = &cobra.Command{
 		var err error
 
 		// Create EventStore client
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		conn, err := grpcUtil.
-			NewGrpcConnectionFactory(eventStoreAddr).
-			WithInsecure().
-			WithRetry().
-			WithBlock().
-			Build(ctx)
+		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
-		esClient := esApi.NewEventStoreClient(conn)
+		defer conn.Close()
 
 		// init message bus consumer
-		_, err = util.NewEventBusConsumer("queryhandler", msgbusPrefix)
+		consumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
+		defer consumer.Close()
 
 		// TODO: Setup the whole ES stuff somehow
 
@@ -75,22 +64,8 @@ var serverCmd = &cobra.Command{
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

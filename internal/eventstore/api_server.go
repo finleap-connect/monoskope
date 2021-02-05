@@ -1,9 +1,7 @@
 package eventstore
 
 import (
-	"context"
 	"io"
-	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
@@ -22,47 +20,14 @@ type apiServer struct {
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer(store evs.Store, bus evs.EventBusPublisher) (*apiServer, error) {
+func NewApiServer(store evs.Store, bus evs.EventBusPublisher) *apiServer {
 	s := &apiServer{
 		log:   logger.WithName("server"),
 		store: store,
 		bus:   bus,
 	}
 
-	s.log.Info("connecting to the message bus")
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancelFunc()
-	msgbusErr := s.bus.Connect(ctx)
-	if msgbusErr != nil {
-		s.log.Error(msgbusErr, "failed connecting the message bus")
-		return nil, msgbusErr
-	}
-
-	s.log.Info("connecting to the storage backend")
-	ctx, cancelFunc = context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancelFunc()
-	err := s.store.Connect(ctx)
-	if err != nil {
-		s.log.Error(err, "failed connecting to the storage backend")
-		return nil, err
-	}
-
-	return s, nil
-}
-
-// Shutdown closes all underyling connections
-func (s *apiServer) Shutdown() {
-	// And the bus
-	s.log.Info("closing connection to message bus gracefully")
-	if err := s.bus.Close(); err != nil {
-		s.log.Error(err, "message bzs shutdown problem")
-	}
-
-	// And the store
-	s.log.Info("closing connection to store gracefully")
-	if err := s.store.Close(); err != nil {
-		s.log.Error(err, "store shutdown problem")
-	}
+	return s
 }
 
 // Store implements the API method for storing events

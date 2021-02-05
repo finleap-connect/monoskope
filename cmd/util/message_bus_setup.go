@@ -1,7 +1,9 @@
 package util
 
 import (
+	"context"
 	"os"
+	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
@@ -37,6 +39,13 @@ func NewEventBusConsumer(name, msgbusPrefix string) (eventsourcing.EventBusConsu
 		return nil, err
 	}
 
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelFunc()
+	err = consumer.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return consumer, nil
 }
 
@@ -47,6 +56,13 @@ func NewEventBusPublisher(name, msgbusPrefix string) (eventsourcing.EventBusPubl
 	}
 
 	publisher, err := esMessaging.NewRabbitEventBusPublisher(rabbitConf)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelFunc()
+	err = publisher.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}

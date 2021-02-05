@@ -1,13 +1,9 @@
 package main
 
 import (
-	"context"
-	"net"
-	"time"
-
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
@@ -32,45 +28,22 @@ var serverCmd = &cobra.Command{
 		var err error
 
 		// Create EventStore client
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		conn, err := grpc.
-			NewGrpcConnectionFactory(eventStoreAddr).
-			WithInsecure().
-			WithRetry().
-			WithBlock().
-			Build(ctx)
+		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
-		esClient := api_es.NewEventStoreClient(conn)
-
-		// Gateway API server
-		commandHandlerApiServer := commandhandler.NewApiServer(esClient)
+		defer conn.Close()
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
+
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
+			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(esClient))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

@@ -28,16 +28,13 @@ func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
 	// Create server
 	env.grpcServer = grpc.NewServer("event_store_grpc", false)
 
-	eventStore, err := NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
+	eventStore := NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
 	if err != nil {
 		return nil, err
 	}
 
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterEventStoreServer(s, eventStore)
-	})
-	env.grpcServer.RegisterOnShutdown(func() {
-		eventStore.Shutdown()
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -47,7 +44,7 @@ func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
 
 	// Start server
 	go func() {
-		err := env.grpcServer.Serve(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
 		if err != nil {
 			panic(err)
 		}

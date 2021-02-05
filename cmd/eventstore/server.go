@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net"
-
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
@@ -28,49 +26,29 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// init event store
 		store, err := util.NewEventStore()
 		if err != nil {
 			return err
 		}
+		defer store.Close()
 
 		// init message bus publisher
 		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
 		}
+		defer publisher.Close()
 
 		// Create the server
-		eventStore, err := eventstore.NewApiServer(store, publisher)
-		if err != nil {
-			return err
-		}
-
 		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterEventStoreServer(s, eventStore)
+			api.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
-		})
-		grpcServer.RegisterOnShutdown(func() {
-			eventStore.Shutdown()
 		})
 
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

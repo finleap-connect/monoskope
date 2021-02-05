@@ -50,7 +50,7 @@ func NewCommandHandlerTestEnv() (*CommandHandlerTestEnv, error) {
 
 	// Start server
 	go func() {
-		err := env.grpcServer.Serve(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
