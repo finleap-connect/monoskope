@@ -1,7 +1,6 @@
 package queryhandler
 
 import (
-	"context"
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
@@ -33,11 +32,6 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	esClient, err := env.eventStoreTestEnv.GetApiClient(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
 	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 
@@ -48,8 +42,8 @@ func NewTestEnv() (*TestEnv, error) {
 	env.grpcServer = grpc.NewServer("query_handler_grpc", false)
 
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServiceServer(s, NewUserServiceServer(esClient, userRepo))
-		api.RegisterTenantServiceServer(s, NewTenantServiceServer(esClient))
+		api.RegisterUserServiceServer(s, NewUserServiceServer(userRepo))
+		api.RegisterTenantServiceServer(s, NewTenantServiceServer())
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

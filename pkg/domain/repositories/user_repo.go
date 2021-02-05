@@ -10,12 +10,13 @@ import (
 )
 
 type userRepository struct {
-	userRepo        es.Repository
+	es.Repository
 	roleBindingRepo UserRoleBindingRepository
 }
 
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
+	es.Repository
 	ReadOnlyUserRepository
 	WriteOnlyUserRepository
 }
@@ -33,14 +34,14 @@ type WriteOnlyUserRepository interface {
 // NewUserRepository creates a repository for reading and writing user projections.
 func NewUserRepository(userRepo es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
 	return &userRepository{
-		userRepo:        userRepo,
+		Repository:      userRepo,
 		roleBindingRepo: roleBindingRepo,
 	}
 }
 
 // ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
-	ps, err := r.userRepo.All(ctx)
+	ps, err := r.All(ctx)
 	if err != nil {
 		return nil, err
 	}

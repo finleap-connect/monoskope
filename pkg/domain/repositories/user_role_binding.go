@@ -14,6 +14,7 @@ type userRoleBindingRepository struct {
 
 // Repository is a repository for reading and writing UserRoleBinding projections.
 type UserRoleBindingRepository interface {
+	es.Repository
 	ReadOnlyUserRoleBindingRepository
 	WriteOnlyUserRoleBindingRepository
 }

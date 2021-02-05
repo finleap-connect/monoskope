@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
+
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
 	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	eh "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
 	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
@@ -29,6 +34,7 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		ctx := context.Background()
 
 		// Create EventStore client
 		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
@@ -44,23 +50,45 @@ var serverCmd = &cobra.Command{
 		}
 		defer consumer.Close()
 
-		// TODO: Setup the whole ES stuff somehow
+		// Setup event sourcing
+		userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
+		userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
 
-		// API server
-		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
+		userProjector := projectors.NewUserProjector()
+		err = consumer.AddHandler(ctx,
+			es.UseEventHandlerMiddleware(
+				eh.NewProjectionRepositoryEventHandler(
+					userProjector,
+					userRepo,
+				),
+				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
+			),
+			consumer.Matcher().MatchAggregateType(userProjector.AggregateType()),
+		)
+		if err != nil {
+			return err
+		}
 
-		inMemoryUserRoleBindingRepo := esRepos.NewInMemoryRepository()
-		userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
+		roleBindingProjector := projectors.NewUserRoleBindingProjector()
+		err = consumer.AddHandler(ctx,
+			es.UseEventHandlerMiddleware(
+				eh.NewProjectionRepositoryEventHandler(
+					roleBindingProjector,
+					userRoleBindingRepo,
+				),
+				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
+			),
+			consumer.Matcher().MatchAggregateType(roleBindingProjector.AggregateType()),
+		)
+		if err != nil {
+			return err
+		}
 
-		inMemoryUserRepo := esRepos.NewInMemoryRepository()
-		userRepo := domainRepos.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
-		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
-
-		// Create gRPC server and register implementation
+		// Create gRPC server and register implementation+
 		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
-			qhApi.RegisterTenantServiceServer(s, tenantServiceServer)
-			qhApi.RegisterUserServiceServer(s, userServiceServer)
+			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer())
+			qhApi.RegisterUserServiceServer(s, queryhandler.NewUserServiceServer(userRepo))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
