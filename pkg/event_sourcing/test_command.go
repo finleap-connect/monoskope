@@ -11,7 +11,6 @@ import (
 const (
 	testCommandType   CommandType   = "TestCommandType"
 	testAggregateType AggregateType = "TestAggregateType"
-	testEventType     EventType     = "TestEventType"
 )
 
 // testCommand is a command for tests.
