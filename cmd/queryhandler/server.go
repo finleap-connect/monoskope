@@ -10,8 +10,8 @@ import (
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 

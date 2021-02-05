@@ -1,6 +1,6 @@
 package commands
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 const (
 	// Event emitted when a User has been created

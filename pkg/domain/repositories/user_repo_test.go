@@ -9,7 +9,7 @@ import (
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
 var _ = Describe("domain/user_repo", func() {

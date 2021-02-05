@@ -8,8 +8,8 @@ import (
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 

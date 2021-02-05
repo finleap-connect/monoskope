@@ -1,6 +1,6 @@
 package roles
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 // Roles
 const (

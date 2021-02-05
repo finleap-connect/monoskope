@@ -11,7 +11,7 @@ import (
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 var _ = Describe("domain/user_repo", func() {
@@ -25,9 +25,9 @@ var _ = Describe("domain/user_repo", func() {
 			Name:  adminUser.Name,
 			Email: adminUser.Email,
 		}
-		eventData, err := event_sourcing.ToEventDataFromProto(protoEventData)
+		eventData, err := eventsourcing.ToEventDataFromProto(protoEventData)
 		Expect(err).NotTo(HaveOccurred())
-		userProjection, err = userProjector.Project(context.Background(), event_sourcing.NewEvent(events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
+		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.GetAggregateVersion()).To(Equal(uint64(1)))
 	})

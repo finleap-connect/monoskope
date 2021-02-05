@@ -6,7 +6,7 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	ggrpc "google.golang.org/grpc"

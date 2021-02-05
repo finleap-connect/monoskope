@@ -7,8 +7,8 @@ import (
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 type userProjector struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 type userRepository struct {
