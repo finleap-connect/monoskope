@@ -1,4 +1,4 @@
-package event_sourcing
+package repositories
 
 import "github.com/google/uuid"
 
@@ -7,7 +7,7 @@ type testProjection struct {
 	Version uint64
 }
 
-func NewTestProjection(id uuid.UUID) *testProjection {
+func newTestProjection(id uuid.UUID) *testProjection {
 	return &testProjection{
 		Id: id.String(),
 	}

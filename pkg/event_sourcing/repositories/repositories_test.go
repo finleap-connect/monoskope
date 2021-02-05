@@ -9,9 +9,9 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
-var (
-	testProjection = es.NewTestProjection(uuid.New())
-	testReadWrite  = func(repo es.Repository) {
+var _ = Describe("repositories/in_memory", func() {
+	testProjection := newTestProjection(uuid.New())
+	testReadWrite := func(repo es.Repository) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -28,7 +28,7 @@ var (
 		Expect(len(projections)).To(BeNumerically("==", 1))
 		Expect(projections[0]).To(Equal(testProjection))
 	}
-	testRemove = func(repo es.Repository) {
+	testRemove := func(repo es.Repository) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -40,9 +40,7 @@ var (
 		Expect(projections).ToNot(BeNil())
 		Expect(len(projections)).To(BeNumerically("==", 0))
 	}
-)
 
-var _ = Describe("repositories/in_memory", func() {
 	It("can read/write projections", func() {
 		testReadWrite(NewInMemoryRepository())
 	})
