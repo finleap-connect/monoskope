@@ -3,10 +3,12 @@ package projectors
 import (
 	"context"
 
-	"github.com/google/uuid"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/errors"
 )
 
 type userProjector struct {
@@ -22,10 +24,31 @@ func (u *userProjector) AggregateType() es.AggregateType {
 }
 
 func (u *userProjector) NewProjection() es.Projection {
-	return projections.NewUser(uuid.Nil, "", "", []*projections.UserRoleBinding{})
+	return &projections.User{}
 }
 
 // Project updates the state of the projection occording to the given event.
 func (u *userProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	return projection, nil
+	// Get the actual projection type
+	i, ok := projection.(*projections.User)
+	if !ok {
+		return nil, errors.ErrInvalidProjectionType
+	}
+
+	// Apply the changes for the event.
+	switch event.EventType() {
+	case events.UserCreated:
+		data := &ed.UserCreatedEventData{}
+		if err := event.Data().ToProto(data); err != nil {
+			return projection, err
+		}
+
+		i.Email = data.GetEmail()
+		i.Name = data.GetName()
+	default:
+		return nil, errors.ErrInvalidEventType
+	}
+
+	i.AggregateVersion++
+	return i, nil
 }

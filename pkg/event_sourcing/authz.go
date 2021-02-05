@@ -3,8 +3,16 @@ package event_sourcing
 // Role is the name of a user's role.
 type Role string
 
+func (r Role) String() string {
+	return string(r)
+}
+
 // Scope is the scope of a role.
 type Scope string
+
+func (s Scope) String() string {
+	return string(s)
+}
 
 // Policy describes which Role/Scope/Resource combination is allowed to execute a certain Command.
 type Policy struct {

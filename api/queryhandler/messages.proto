@@ -37,21 +37,29 @@ message Tenant {
 message User {
   // Unique identifier of the user (UUID 128-bit number)
   string id = 1;
+  // Strict monotone counter
+  uint64 aggregate_version = 2;
   // Name of the user
-  string name = 2;
+  string name = 3;
   // Email address of the user
-  string email = 3;
+  string email = 4;
+  // Roles of the user
+  repeated UserRoleBinding roles = 5;
 }
 
 message UserRoleBinding {
+  // Unique identifier of the user role binding (UUID 128-bit number)
+  string id = 1;
+  // Strict monotone counter
+  uint64 aggregate_version = 2;
   // Unique identifier of the user (UUID 128-bit number)
-  string user_id = 1;
+  string user_id = 3;
   // Name of the role
-  string role = 2;
+  string role = 4;
   // Scope of the role
-  string scope = 3;
+  string scope = 5;
   // Target resource of the role
-  string resource = 4;
+  string resource = 6;
 }
 
 message AuditEvent {

@@ -3,13 +3,14 @@ package repositories
 import (
 	"context"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
 )
 
 var (
-	testProjection = es.NewTestProjection()
+	testProjection = es.NewTestProjection(uuid.New())
 	testReadWrite  = func(repo es.Repository) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
@@ -17,7 +18,7 @@ var (
 		err = repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
-		projection, err := repo.ById(context.Background(), testProjection.ID())
+		projection, err := repo.ById(context.Background(), testProjection.GetId())
 		Expect(err).NotTo(HaveOccurred())
 		Expect(projection).To(Equal(testProjection))
 
@@ -31,7 +32,7 @@ var (
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = repo.Remove(context.Background(), testProjection.ID())
+		err = repo.Remove(context.Background(), testProjection.GetId())
 		Expect(err).NotTo(HaveOccurred())
 
 		projections, err := repo.All(context.Background())

@@ -90,6 +90,9 @@ var (
 )
 
 var (
+	// ErrInvalidEventType is when a projection received an event for a different type.
+	ErrInvalidEventType = errors.New("mismatching event type")
+
 	// ErrInvalidProjectionType is when a projection is invalid.
 	ErrInvalidProjectionType = errors.New("mismatching projection type")
 

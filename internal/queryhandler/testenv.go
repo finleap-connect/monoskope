@@ -38,8 +38,11 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	inMemoryRepo := es_repos.NewInMemoryRepository()
-	userRepo := repositories.NewUserRepository(inMemoryRepo)
+	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
+	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
+
+	inMemoryUserRepo := es_repos.NewInMemoryRepository()
+	userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
 	// Create server
 	env.grpcServer = grpc.NewServer("query_handler_grpc", false)
