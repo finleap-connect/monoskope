@@ -2,15 +2,13 @@ package main
 
 import (
 	"net"
-	"os"
 
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
@@ -20,9 +18,7 @@ var (
 	apiAddr      string
 	metricsAddr  string
 	keepAlive    bool
-	dbUrl        string
 	msgbusPrefix string
-	msgbusUrl    string
 )
 
 var serverCmd = &cobra.Command{
@@ -31,14 +27,6 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-
-		// Some options can be provided by env variables
-		if v := os.Getenv("DB_URL"); v != "" {
-			dbUrl = v
-		}
-		if v := os.Getenv("BUS_URL"); v != "" {
-			msgbusUrl = v
-		}
 
 		// Setup grpc listener
 		apiLis, err := net.Listen("tcp", apiAddr)
@@ -55,30 +43,13 @@ var serverCmd = &cobra.Command{
 		defer metricsLis.Close()
 
 		// init event store
-		conf, err := storage.NewPostgresStoreConfig(dbUrl)
-		if err != nil {
-			return err
-		}
-		err = conf.ConfigureTLS()
-		if err != nil {
-			return err
-		}
-		store, err := storage.NewPostgresEventStore(conf)
+		store, err := util.NewEventStore()
 		if err != nil {
 			return err
 		}
 
 		// init message bus publisher
-		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
-		if msgbusPrefix != "" {
-			rabbitConf.RoutingKeyPrefix = msgbusPrefix
-		}
-
-		err = rabbitConf.ConfigureTLS()
-		if err != nil {
-			return err
-		}
-		publisher, err := messaging.NewRabbitEventBusPublisher(rabbitConf)
+		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
 		}

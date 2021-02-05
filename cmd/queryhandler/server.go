@@ -3,17 +3,16 @@ package main
 import (
 	"context"
 	"net"
-	"os"
 	"time"
 
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
-	ggrpc "google.golang.org/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
+	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
+	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
@@ -27,7 +26,6 @@ var (
 	keepAlive      bool
 	eventStoreAddr string
 	msgbusPrefix   string
-	msgbusUrl      string
 )
 
 var serverCmd = &cobra.Command{
@@ -37,15 +35,10 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
-		// Some options can be provided by env variables
-		if v := os.Getenv("BUS_URL"); v != "" {
-			msgbusUrl = v
-		}
-
 		// Create EventStore client
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		conn, err := grpc.
+		conn, err := grpcUtil.
 			NewGrpcConnectionFactory(eventStoreAddr).
 			WithInsecure().
 			WithRetry().
@@ -54,19 +47,10 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		esClient := api_es.NewEventStoreClient(conn)
+		esClient := esApi.NewEventStoreClient(conn)
 
 		// init message bus consumer
-		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
-		if msgbusPrefix != "" {
-			rabbitConf.RoutingKeyPrefix = msgbusPrefix
-		}
-
-		err = rabbitConf.ConfigureTLS()
-		if err != nil {
-			return err
-		}
-		_, err = messaging.NewRabbitEventBusConsumer(rabbitConf)
+		_, err = util.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
@@ -76,19 +60,19 @@ var serverCmd = &cobra.Command{
 		// API server
 		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
 
-		inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
-		userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
+		inMemoryUserRoleBindingRepo := esRepos.NewInMemoryRepository()
+		userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 
-		inMemoryUserRepo := es_repos.NewInMemoryRepository()
-		userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
+		inMemoryUserRepo := esRepos.NewInMemoryRepository()
+		userRepo := domainRepos.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
 
 		// Create gRPC server and register implementation
-		grpcServer := grpc.NewServer("queryhandler-grpc", keepAlive)
-		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterTenantServiceServer(s, tenantServiceServer)
-			api.RegisterUserServiceServer(s, userServiceServer)
-			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
+		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+			qhApi.RegisterTenantServiceServer(s, tenantServiceServer)
+			qhApi.RegisterUserServiceServer(s, userServiceServer)
+			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
 		// Setup grpc listener

@@ -16,7 +16,7 @@ import (
 // rabbitEventBus implements an EventBus using RabbitMQ.
 type rabbitEventBus struct {
 	log             logger.Logger
-	conf            *rabbitEventBusConfig
+	conf            *RabbitEventBusConfig
 	connection      *amqp.Connection
 	channel         *amqp.Channel
 	notifyConnClose chan *amqp.Error
@@ -28,7 +28,7 @@ type rabbitEventBus struct {
 	cancel          context.CancelFunc
 }
 
-func newRabbitEventBus(conf *rabbitEventBusConfig) *rabbitEventBus {
+func newRabbitEventBus(conf *RabbitEventBusConfig) *rabbitEventBus {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &rabbitEventBus{
@@ -39,34 +39,34 @@ func newRabbitEventBus(conf *rabbitEventBusConfig) *rabbitEventBus {
 }
 
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
-func NewRabbitEventBusPublisher(conf *rabbitEventBusConfig) (evs.EventBusPublisher, error) {
+func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublisher, error) {
 	err := conf.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	b := newRabbitEventBus(conf)
-	b.log = logger.WithName("publisher").WithValues("name", conf.Name)
+	b.log = logger.WithName("publisher").WithValues("name", conf.name)
 	b.isPublisher = true
 
 	return b, nil
 }
 
 // NewRabbitEventBusConsumer creates a new EventBusConsumer for rabbitmq.
-func NewRabbitEventBusConsumer(conf *rabbitEventBusConfig) (evs.EventBusConsumer, error) {
+func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer, error) {
 	err := conf.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	b := newRabbitEventBus(conf)
-	b.log = logger.WithName("consumer").WithValues("name", conf.Name)
+	b.log = logger.WithName("consumer").WithValues("name", conf.name)
 	return b, nil
 }
 
 // Connect starts automatic reconnect with rabbitmq
 func (b *rabbitEventBus) Connect(ctx context.Context) error {
-	go b.handleReconnect(b.conf.Url)
+	go b.handleReconnect(b.conf.url)
 	for !b.isConnected {
 		select {
 		case <-b.ctx.Done():
@@ -83,7 +83,7 @@ func (b *rabbitEventBus) Connect(ctx context.Context) error {
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) error {
-	resendsLeft := b.conf.MaxResends
+	resendsLeft := b.conf.maxResends
 	for resendsLeft > 0 {
 		resendsLeft--
 
@@ -96,7 +96,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 			case <-ctx.Done():
 				b.log.Info("Publish failed because context deadline exceeded.")
 				return errors.ErrContextDeadlineExceeded
-			case <-time.After(b.conf.ResendDelay):
+			case <-time.After(b.conf.resendDelay):
 				b.log.Error(err, "Publish failed. Retrying...")
 				continue
 			}
@@ -116,7 +116,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 		case <-b.ctx.Done():
 			b.log.Info("Publish failed because of shutdown.")
 			return errors.ErrCouldNotPublishEvent
-		case <-time.After(b.conf.ResendDelay):
+		case <-time.After(b.conf.resendDelay):
 			b.log.Info("Publish failed. Wasn't confirmed within timeout.")
 			return errors.ErrCouldNotPublishEvent
 		}
@@ -151,7 +151,7 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 	}
 
 	err = b.channel.Publish(
-		b.conf.ExchangeName,         // exchange
+		b.conf.exchangeName,         // exchange
 		b.generateRoutingKey(event), // routingKey
 		false,                       // mandatory
 		false,                       // immediate
@@ -179,7 +179,7 @@ func (b *rabbitEventBus) AddHandler(ctx context.Context, handler evs.EventHandle
 		return errors.ErrHandlerMustNotBeNil
 	}
 
-	resendsLeft := b.conf.MaxResends
+	resendsLeft := b.conf.maxResends
 	for {
 		err := b.addHandler(ctx, handler, matchers...)
 		if err != nil {
@@ -189,7 +189,7 @@ func (b *rabbitEventBus) AddHandler(ctx context.Context, handler evs.EventHandle
 				return errors.ErrCouldNotAddHandler
 			case <-ctx.Done():
 				return errors.ErrContextDeadlineExceeded
-			case <-time.After(b.conf.ResendDelay):
+			case <-time.After(b.conf.resendDelay):
 				if resendsLeft > 0 {
 					resendsLeft--
 					continue
@@ -235,7 +235,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 		err = b.channel.QueueBind(
 			q.Name,              // queue name
 			routingKey,          // routing key
-			b.conf.ExchangeName, // exchange
+			b.conf.exchangeName, // exchange
 			false,               // no wait
 			nil)
 		if err != nil {
@@ -246,7 +246,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 
 	msgs, err := b.channel.Consume(
 		q.Name, // queue
-		fmt.Sprintf("%s-%s", q.Name, b.conf.Name), // consumer
+		fmt.Sprintf("%s-%s", q.Name, b.conf.name), // consumer
 		false, // auto ack
 		true,  // exclusive
 		false, // no local
@@ -264,7 +264,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 // Matcher returns a new EventMatcher of type RabbitMatcher
 func (b *rabbitEventBus) Matcher() evs.EventMatcher {
 	matcher := &rabbitMatcher{
-		routingKeyPrefix: b.conf.RoutingKeyPrefix,
+		routingKeyPrefix: b.conf.routingKeyPrefix,
 	}
 	return matcher.Any()
 }
@@ -332,7 +332,7 @@ func (b *rabbitEventBus) init(conn *amqp.Connection) error {
 		// Declare the exchange, if it exists this doesn't do anything.
 		// If the exchange exists but is setup differently we will get an error here.
 		err = ch.ExchangeDeclare(
-			b.conf.ExchangeName, // name
+			b.conf.exchangeName, // name
 			amqp.ExchangeTopic,  // type
 			true,                // durable
 			false,               // auto-deleted
@@ -384,7 +384,7 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 			select {
 			case <-b.ctx.Done():
 				return
-			case <-time.After(b.conf.ReconnectDelay):
+			case <-time.After(b.conf.reconnectDelay):
 				continue
 			}
 		}
@@ -398,7 +398,7 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 				case <-b.ctx.Done():
 					b.log.Info("Aborting init. Shutting down...")
 					return
-				case <-time.After(b.conf.ReInitDelay):
+				case <-time.After(b.conf.reInitDelay):
 					continue
 				}
 			}
@@ -428,7 +428,7 @@ func (b *rabbitEventBus) flushConfirms() {
 
 // generateRoutingKey generates the routing key for an event.
 func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
-	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
+	return fmt.Sprintf("%s.%s.%s", b.conf.routingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on handler result
