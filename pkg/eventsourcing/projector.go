@@ -6,9 +6,6 @@ import (
 
 // Projector is the interface for projectors.
 type Projector interface {
-	// AggregateType returns the AggregateType for which events should be projected.
-	AggregateType() AggregateType
-
 	// NewProjection creates a new Projection of the type the Projector projects.
 	NewProjection() Projection
 

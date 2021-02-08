@@ -6,7 +6,6 @@ import (
 
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -16,11 +15,6 @@ type userRoleBindingProjector struct {
 
 func NewUserRoleBindingProjector() es.Projector {
 	return &userRoleBindingProjector{}
-}
-
-// AggregateType returns the AggregateType for which events should be projected.
-func (u *userRoleBindingProjector) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
 }
 
 func (u *userRoleBindingProjector) NewProjection() es.Projection {

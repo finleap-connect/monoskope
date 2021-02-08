@@ -6,6 +6,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
 	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -37,48 +38,46 @@ var serverCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Create EventStore client
-		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
+		esConnection, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer esConnection.Close()
 
 		// init message bus consumer
-		consumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
+		ebConsumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		defer consumer.Close()
+		defer ebConsumer.Close()
 
 		// Setup event sourcing
 		userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
 		userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
 
-		userProjector := projectors.NewUserProjector()
-		err = consumer.AddHandler(ctx,
+		err = ebConsumer.AddHandler(ctx,
 			es.UseEventHandlerMiddleware(
 				eh.NewProjectionRepositoryEventHandler(
-					userProjector,
+					projectors.NewUserProjector(),
 					userRepo,
 				),
 				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
 			),
-			consumer.Matcher().MatchAggregateType(userProjector.AggregateType()),
+			ebConsumer.Matcher().MatchAggregateType(aggregates.User),
 		)
 		if err != nil {
 			return err
 		}
 
-		roleBindingProjector := projectors.NewUserRoleBindingProjector()
-		err = consumer.AddHandler(ctx,
+		err = ebConsumer.AddHandler(ctx,
 			es.UseEventHandlerMiddleware(
 				eh.NewProjectionRepositoryEventHandler(
-					roleBindingProjector,
+					projectors.NewUserRoleBindingProjector(),
 					userRoleBindingRepo,
 				),
 				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
 			),
-			consumer.Matcher().MatchAggregateType(roleBindingProjector.AggregateType()),
+			ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
 		)
 		if err != nil {
 			return err
