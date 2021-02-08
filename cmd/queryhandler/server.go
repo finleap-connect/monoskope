@@ -3,21 +3,15 @@ package main
 import (
 	"context"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
-	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	eh "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
-	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -51,34 +45,8 @@ var serverCmd = &cobra.Command{
 		}
 		defer ebConsumer.Close()
 
-		// Setup event sourcing
-		userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
-		userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
-
-		err = ebConsumer.AddHandler(ctx,
-			es.UseEventHandlerMiddleware(
-				eh.NewProjectionRepositoryEventHandler(
-					projectors.NewUserProjector(),
-					userRepo,
-				),
-				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
-			),
-			ebConsumer.Matcher().MatchAggregateType(aggregates.User),
-		)
-		if err != nil {
-			return err
-		}
-
-		err = ebConsumer.AddHandler(ctx,
-			es.UseEventHandlerMiddleware(
-				eh.NewProjectionRepositoryEventHandler(
-					projectors.NewUserRoleBindingProjector(),
-					userRoleBindingRepo,
-				),
-				eh.NewEventStoreReplayMiddleware(esClient).Middleware,
-			),
-			ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
-		)
+		// Setup domain
+		userRepo, err := util.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}

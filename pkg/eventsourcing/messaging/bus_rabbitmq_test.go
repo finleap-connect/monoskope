@@ -69,7 +69,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	BeforeEach(func() {
 		var err error
 
-		conf := NewRabbitEventBusConfig(fmt.Sprintf("test-%v", testCount), env.amqpURL, "")
+		conf := NewRabbitEventBusConfig(fmt.Sprintf("test-%v", testCount), env.AmqpURL, "")
 
 		// init publisher
 		publisher, err = NewRabbitEventBusPublisher(conf)

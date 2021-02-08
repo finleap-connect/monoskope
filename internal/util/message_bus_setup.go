@@ -17,23 +17,28 @@ func getMsgBusUrl() string {
 	return msgbusUrl
 }
 
-func getRabbitConf(name, msgbusPrefix string) (*esMessaging.RabbitEventBusConfig, error) {
+func getRabbitConf(name, msgbusPrefix string, useTLS bool) (*esMessaging.RabbitEventBusConfig, error) {
 	rabbitConf := esMessaging.NewRabbitEventBusConfig(name, getMsgBusUrl(), msgbusPrefix)
 
-	err := rabbitConf.ConfigureTLS()
-	if err != nil {
-		return nil, err
+	if useTLS {
+		err := rabbitConf.ConfigureTLS()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return rabbitConf, nil
 }
 
 func NewEventBusConsumer(name, msgbusPrefix string) (eventsourcing.EventBusConsumer, error) {
-	rabbitConf, err := getRabbitConf(name, msgbusPrefix)
+	rabbitConf, err := getRabbitConf(name, msgbusPrefix, true)
 	if err != nil {
 		return nil, err
 	}
+	return NewEventBusConsumerFromConfig(rabbitConf)
+}
 
+func NewEventBusConsumerFromConfig(rabbitConf *esMessaging.RabbitEventBusConfig) (eventsourcing.EventBusConsumer, error) {
 	consumer, err := esMessaging.NewRabbitEventBusConsumer(rabbitConf)
 	if err != nil {
 		return nil, err
@@ -50,7 +55,7 @@ func NewEventBusConsumer(name, msgbusPrefix string) (eventsourcing.EventBusConsu
 }
 
 func NewEventBusPublisher(name, msgbusPrefix string) (eventsourcing.EventBusPublisher, error) {
-	rabbitConf, err := getRabbitConf(name, msgbusPrefix)
+	rabbitConf, err := getRabbitConf(name, msgbusPrefix, true)
 	if err != nil {
 		return nil, err
 	}

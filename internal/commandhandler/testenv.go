@@ -1,14 +1,15 @@
 package commandhandler
 
 import (
-	"context"
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 
@@ -16,7 +17,9 @@ type CommandHandlerTestEnv struct {
 	*test.TestEnv
 	apiListener       net.Listener
 	grpcServer        *grpc.Server
-	eventStoreTestEnv *eventstore.EventStoreTestEnv
+	eventStoreTestEnv *eventstore.TestEnv
+	esConn            *ggrpc.ClientConn
+	esClient          esApi.EventStoreClient
 }
 
 func NewCommandHandlerTestEnv() (*CommandHandlerTestEnv, error) {
@@ -25,20 +28,20 @@ func NewCommandHandlerTestEnv() (*CommandHandlerTestEnv, error) {
 		TestEnv: test.NewTestEnv("CommandHandlerTestEnv"),
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewEventStoreTestEnv()
+	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
 	if err != nil {
 		return nil, err
 	}
 
-	esClient, err := env.eventStoreTestEnv.GetApiClient(context.Background())
+	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
 
 	// Create server
-	env.grpcServer = grpc.NewServer("command_handler_grpc", false)
+	env.grpcServer = grpc.NewServer("commandhandler_grpc", false)
 
-	commandHandler := NewApiServer(esClient)
+	commandHandler := NewApiServer(env.esClient)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterCommandHandlerServer(s, commandHandler)
 	})
@@ -64,9 +67,14 @@ func (env *CommandHandlerTestEnv) GetApiAddr() string {
 }
 
 func (env *CommandHandlerTestEnv) Shutdown() error {
+	if err := env.esConn.Close(); err != nil {
+		return err
+	}
+
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
 		return err
 	}
+
 	// Shutdown server
 	env.grpcServer.Shutdown()
 	if err := env.apiListener.Close(); err != nil {

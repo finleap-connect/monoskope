@@ -21,9 +21,9 @@ func TestCommandHandler(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
-	var err error
 
 	By("bootstrapping test env")
+	var err error
 	testEnv, err = NewCommandHandlerTestEnv()
 	Expect(err).To(Not(HaveOccurred()))
 }, 60)

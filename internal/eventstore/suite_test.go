@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	testEnv *EventStoreTestEnv
+	testEnv *TestEnv
 )
 
 func TestEventStore(t *testing.T) {
@@ -24,7 +24,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 	var err error
-	testEnv, err = NewEventStoreTestEnv()
+	testEnv, err = NewTestEnv()
 	Expect(err).To(Not(HaveOccurred()))
 }, 60)
 

@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"

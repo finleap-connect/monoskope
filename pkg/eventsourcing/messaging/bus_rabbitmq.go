@@ -399,7 +399,9 @@ func (b *rabbitEventBus) handleReconnect(addr string) {
 					b.log.Info("Aborting init. Shutting down...")
 					return
 				case <-time.After(b.conf.reInitDelay):
-					continue
+					b.channelClosed()
+					go b.handleReconnect(addr)
+					return
 				}
 			}
 

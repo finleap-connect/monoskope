@@ -13,16 +13,16 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 
-type EventStoreTestEnv struct {
+type TestEnv struct {
 	*test.TestEnv
 	apiListener net.Listener
 	grpcServer  *grpc.Server
 }
 
-func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
+func NewTestEnv() (*TestEnv, error) {
 	var err error
-	env := &EventStoreTestEnv{
-		TestEnv: test.NewTestEnv("TestEventStoreEnv"),
+	env := &TestEnv{
+		TestEnv: test.NewTestEnv("EventStoreTestEnv"),
 	}
 
 	// Create server
@@ -53,11 +53,11 @@ func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
 	return env, nil
 }
 
-func (env *EventStoreTestEnv) GetApiAddr() string {
+func (env *TestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
 }
 
-func (env *EventStoreTestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
+func (env *TestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
 	conn, err := grpc.
 		NewGrpcConnectionFactory(env.GetApiAddr()).
 		WithInsecure().
@@ -69,7 +69,7 @@ func (env *EventStoreTestEnv) GetApiClient(ctx context.Context) (api.EventStoreC
 	return api.NewEventStoreClient(conn), nil
 }
 
-func (env *EventStoreTestEnv) Shutdown() error {
+func (env *TestEnv) Shutdown() error {
 	// Shutdown server
 	env.grpcServer.Shutdown()
 	if err := env.apiListener.Close(); err != nil {

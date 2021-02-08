@@ -1,7 +1,6 @@
 package main
 
 import (
-	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/util"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -10,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	_ "go.uber.org/automaxprocs"
 )
 
