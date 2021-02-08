@@ -1,6 +1,6 @@
 package aggregates
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 const (
 	// Type for the UserAggregate

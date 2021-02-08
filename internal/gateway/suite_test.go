@@ -147,7 +147,7 @@ var _ = BeforeSuite(func(done Done) {
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := grpcServer.Serve(apiListener, nil)
+		err := grpcServer.ServeFromListener(apiListener, nil)
 		if err != nil {
 			panic(err)
 		}

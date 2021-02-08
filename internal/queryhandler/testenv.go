@@ -5,10 +5,12 @@ import (
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -19,34 +21,42 @@ type TestEnv struct {
 	*test.TestEnv
 	apiListener       net.Listener
 	grpcServer        *grpc.Server
-	eventStoreTestEnv *eventstore.EventStoreTestEnv
+	eventStoreTestEnv *eventstore.TestEnv
+	ebConsumer        es.EventBusConsumer
+	esConn            *ggrpc.ClientConn
+	esClient          esApi.EventStoreClient
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("QueryHandlerTestEnv"),
+		TestEnv:           test.NewTestEnv("QueryHandlerTestEnv"),
+		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewEventStoreTestEnv()
+	rabbitConf := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
+	env.ebConsumer, err = util.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return nil, err
 	}
 
-	esClient, err := env.eventStoreTestEnv.GetApiClient(context.Background())
+	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
 
-	inMemoryRepo := es_repos.NewInMemoryRepository()
-	userRepo := repositories.NewUserRepository(inMemoryRepo)
+	// Setup domain
+	userRepo, err := util.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create server
-	env.grpcServer = grpc.NewServer("query_handler_grpc", false)
-
-	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServiceServer(s, NewUserServiceServer(esClient, userRepo))
-		api.RegisterTenantServiceServer(s, NewTenantServiceServer(esClient))
+	grpcServer := grpc.NewServer("queryhandler_grpc", false)
+	env.grpcServer = grpcServer
+	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
+		api.RegisterUserServiceServer(s, NewUserServiceServer(userRepo))
+		api.RegisterTenantServiceServer(s, NewTenantServiceServer())
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -56,7 +66,7 @@ func NewTestEnv() (*TestEnv, error) {
 
 	// Start server
 	go func() {
-		err := env.grpcServer.Serve(env.apiListener, nil)
+		err := grpcServer.ServeFromListener(env.apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -70,9 +80,14 @@ func (env *TestEnv) GetApiAddr() string {
 }
 
 func (env *TestEnv) Shutdown() error {
-	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
+	if err := env.esConn.Close(); err != nil {
 		return err
 	}
+
+	if err := env.ebConsumer.Close(); err != nil {
+		return err
+	}
+
 	// Shutdown server
 	env.grpcServer.Shutdown()
 	if err := env.apiListener.Close(); err != nil {

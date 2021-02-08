@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,7 +25,10 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("bootstrapping test env")
-	testEnv, err = NewTestEnv()
+	eventStoreTestEnv, err := eventstore.NewTestEnv()
+	Expect(err).To(Not(HaveOccurred()))
+
+	testEnv, err = NewTestEnv(eventStoreTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 }, 60)
 
@@ -33,5 +37,8 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 
 	err = testEnv.Shutdown()
+	Expect(err).To(Not(HaveOccurred()))
+
+	err = testEnv.eventStoreTestEnv.Shutdown()
 	Expect(err).To(Not(HaveOccurred()))
 })

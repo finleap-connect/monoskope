@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 var (

@@ -81,7 +81,7 @@ var serverCmd = &cobra.Command{
 		})
 
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

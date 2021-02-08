@@ -4,7 +4,7 @@ import (
 	"context"
 
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 

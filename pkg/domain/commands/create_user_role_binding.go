@@ -9,7 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

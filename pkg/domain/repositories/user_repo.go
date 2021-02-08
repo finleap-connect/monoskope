@@ -4,37 +4,38 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	"github.com/google/uuid"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 type userRepository struct {
 	es.Repository
+	roleBindingRepo UserRoleBindingRepository
 }
 
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
+	es.Repository
 	ReadOnlyUserRepository
 	WriteOnlyUserRepository
 }
 
 // ReadOnlyUserRepository is a repository for reading user projections.
 type ReadOnlyUserRepository interface {
-	es.ReadOnlyRepository
-
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
 }
 
 // WriteOnlyUserRepository is a repository for reading user projections.
 type WriteOnlyUserRepository interface {
-	es.WriteOnlyRepository
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.
-func NewUserRepository(base es.Repository) UserRepository {
+func NewUserRepository(userRepo es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
 	return &userRepository{
-		Repository: base,
+		Repository:      userRepo,
+		roleBindingRepo: roleBindingRepo,
 	}
 }
 
@@ -47,7 +48,13 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 
 	for _, p := range ps {
 		if u, ok := p.(*projections.User); ok {
-			if email == u.Email() {
+			if email == u.Email {
+				roles, err := r.roleBindingRepo.ByUserId(ctx, uuid.MustParse(u.GetId()))
+				if err != nil {
+					return nil, err
+				}
+
+				u.Roles = roles
 				return u, nil
 			}
 		}

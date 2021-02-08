@@ -1,16 +1,12 @@
 package main
 
 import (
-	"net"
-	"os"
-
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
@@ -20,9 +16,7 @@ var (
 	apiAddr      string
 	metricsAddr  string
 	keepAlive    bool
-	dbUrl        string
 	msgbusPrefix string
-	msgbusUrl    string
 )
 
 var serverCmd = &cobra.Command{
@@ -32,74 +26,29 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
-		// Some options can be provided by env variables
-		if v := os.Getenv("DB_URL"); v != "" {
-			dbUrl = v
-		}
-		if v := os.Getenv("BUS_URL"); v != "" {
-			msgbusUrl = v
-		}
-
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// init event store
-		conf, err := storage.NewPostgresStoreConfig(dbUrl)
+		store, err := util.NewEventStore()
 		if err != nil {
 			return err
 		}
-		err = conf.ConfigureTLS()
-		if err != nil {
-			return err
-		}
-		store, err := storage.NewPostgresEventStore(conf)
-		if err != nil {
-			return err
-		}
+		defer store.Close()
 
 		// init message bus publisher
-		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
-		if msgbusPrefix != "" {
-			rabbitConf.RoutingKeyPrefix = msgbusPrefix
-		}
-
-		err = rabbitConf.ConfigureTLS()
+		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		publisher, err := messaging.NewRabbitEventBusPublisher(rabbitConf)
-		if err != nil {
-			return err
-		}
+		defer publisher.Close()
 
 		// Create the server
-		eventStore, err := eventstore.NewApiServer(store, publisher)
-		if err != nil {
-			return err
-		}
-
 		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterEventStoreServer(s, eventStore)
+			api.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
-		})
-		grpcServer.RegisterOnShutdown(func() {
-			eventStore.Shutdown()
 		})
 
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

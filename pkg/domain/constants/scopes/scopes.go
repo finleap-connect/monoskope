@@ -1,6 +1,6 @@
 package scopes
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 // Scopes
 const (

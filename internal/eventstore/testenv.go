@@ -8,36 +8,66 @@ import (
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/storage"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/storage"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 
-type EventStoreTestEnv struct {
+type TestEnv struct {
 	*test.TestEnv
-	apiListener net.Listener
-	grpcServer  *grpc.Server
+	apiListener      net.Listener
+	grpcServer       *grpc.Server
+	messagingTestEnv *messaging.TestEnv
+	storageTestEnv   *storage.TestEnv
+	publisher        es.EventBusPublisher
+	store            es.Store
 }
 
-func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
+func (t *TestEnv) GetMessagingTestEnv() *messaging.TestEnv {
+	return t.messagingTestEnv
+}
+
+func NewTestEnv() (*TestEnv, error) {
 	var err error
-	env := &EventStoreTestEnv{
-		TestEnv: test.NewTestEnv("TestEventStoreEnv"),
+	env := &TestEnv{
+		TestEnv: test.NewTestEnv("EventStoreTestEnv"),
 	}
 
-	// Create server
-	env.grpcServer = grpc.NewServer("event_store_grpc", false)
-
-	eventStore, err := NewApiServer(storage.NewInMemoryEventStore(), messaging.NewMockEventBusPublisher())
+	env.messagingTestEnv, err = messaging.NewTestEnv()
 	if err != nil {
 		return nil, err
 	}
 
+	conf := messaging.NewRabbitEventBusConfig("eventstore", env.messagingTestEnv.AmqpURL, "")
+	env.publisher, err = messaging.NewRabbitEventBusPublisher(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	err = env.publisher.Connect(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	env.storageTestEnv, err = storage.NewTestEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	env.store, err = storage.NewPostgresEventStore(env.storageTestEnv.GetStoreConfig())
+	if err != nil {
+		return nil, err
+	}
+	err = env.store.Connect(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	// Create server
+	env.grpcServer = grpc.NewServer("eventstore_grpc", false)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterEventStoreServer(s, eventStore)
-	})
-	env.grpcServer.RegisterOnShutdown(func() {
-		eventStore.Shutdown()
+		api.RegisterEventStoreServer(s, NewApiServer(env.store, env.publisher))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -47,7 +77,7 @@ func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
 
 	// Start server
 	go func() {
-		err := env.grpcServer.Serve(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -56,11 +86,11 @@ func NewEventStoreTestEnv() (*EventStoreTestEnv, error) {
 	return env, nil
 }
 
-func (env *EventStoreTestEnv) GetApiAddr() string {
+func (env *TestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
 }
 
-func (env *EventStoreTestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
+func (env *TestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
 	conn, err := grpc.
 		NewGrpcConnectionFactory(env.GetApiAddr()).
 		WithInsecure().
@@ -72,7 +102,23 @@ func (env *EventStoreTestEnv) GetApiClient(ctx context.Context) (api.EventStoreC
 	return api.NewEventStoreClient(conn), nil
 }
 
-func (env *EventStoreTestEnv) Shutdown() error {
+func (env *TestEnv) Shutdown() error {
+	if err := env.publisher.Close(); err != nil {
+		return err
+	}
+
+	if err := env.store.Close(); err != nil {
+		return err
+	}
+
+	if err := env.messagingTestEnv.Shutdown(); err != nil {
+		return err
+	}
+
+	if err := env.storageTestEnv.Shutdown(); err != nil {
+		return err
+	}
+
 	// Shutdown server
 	env.grpcServer.Shutdown()
 	if err := env.apiListener.Close(); err != nil {

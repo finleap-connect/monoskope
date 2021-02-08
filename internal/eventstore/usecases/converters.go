@@ -3,7 +3,8 @@ package usecases
 import (
 	"github.com/google/uuid"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 // NewStoreQueryFromProto converts proto api_es.EventFilter to storage.StoreQuery
@@ -13,7 +14,7 @@ func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*evs.StoreQuery, e
 	if val, ok := protoFilter.GetByAggregate().(*api_es.EventFilter_AggregateId); ok {
 		aId, err := uuid.Parse(val.AggregateId.GetValue())
 		if err != nil {
-			return nil, evs.ErrCouldNotParseAggregateId
+			return nil, errors.ErrCouldNotParseAggregateId
 		}
 		storeQuery.AggregateId = &aId
 	}

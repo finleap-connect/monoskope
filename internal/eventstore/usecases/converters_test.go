@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

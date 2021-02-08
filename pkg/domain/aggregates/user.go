@@ -9,7 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // UserAggregate is an aggregate for Users.

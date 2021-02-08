@@ -2,22 +2,16 @@ package main
 
 import (
 	"context"
-	"net"
-	"os"
-	"time"
 
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/messaging"
-	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing/repositories"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
-	ggrpc "google.golang.org/grpc"
+	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -27,7 +21,6 @@ var (
 	keepAlive      bool
 	eventStoreAddr string
 	msgbusPrefix   string
-	msgbusUrl      string
 )
 
 var serverCmd = &cobra.Command{
@@ -36,74 +29,38 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-
-		// Some options can be provided by env variables
-		if v := os.Getenv("BUS_URL"); v != "" {
-			msgbusUrl = v
-		}
+		ctx := context.Background()
 
 		// Create EventStore client
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		conn, err := grpc.
-			NewGrpcConnectionFactory(eventStoreAddr).
-			WithInsecure().
-			WithRetry().
-			WithBlock().
-			Build(ctx)
+		esConnection, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
-		esClient := api_es.NewEventStoreClient(conn)
+		defer esConnection.Close()
 
 		// init message bus consumer
-		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
-		if msgbusPrefix != "" {
-			rabbitConf.RoutingKeyPrefix = msgbusPrefix
-		}
-
-		err = rabbitConf.ConfigureTLS()
+		ebConsumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		_, err = messaging.NewRabbitEventBusConsumer(rabbitConf)
+		defer ebConsumer.Close()
+
+		// Setup domain
+		userRepo, err := util.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}
 
-		// TODO: Setup the whole ES stuff somehow
-
-		// API server
-		tenantServiceServer := queryhandler.NewTenantServiceServer(esClient)
-
-		inMemoryRepo := es_repos.NewInMemoryRepository()
-		userRepo := repositories.NewUserRepository(inMemoryRepo)
-		userServiceServer := queryhandler.NewUserServiceServer(esClient, userRepo)
-
-		// Create gRPC server and register implementation
-		grpcServer := grpc.NewServer("queryhandler-grpc", keepAlive)
-		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterTenantServiceServer(s, tenantServiceServer)
-			api.RegisterUserServiceServer(s, userServiceServer)
-			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+		// Create gRPC server and register implementation+
+		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
+		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer())
+			qhApi.RegisterUserServiceServer(s, queryhandler.NewUserServiceServer(userRepo))
+			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// Finally start the server
-		return grpcServer.Serve(apiLis, metricsLis)
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

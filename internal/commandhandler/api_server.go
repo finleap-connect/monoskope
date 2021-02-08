@@ -8,7 +8,7 @@ import (
 	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/event_sourcing"
+	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // apiServer is the implementation of the CommandHandler API
