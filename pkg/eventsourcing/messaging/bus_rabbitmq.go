@@ -195,7 +195,7 @@ func (b *rabbitEventBus) AddHandler(ctx context.Context, handler evs.EventHandle
 					continue
 				} else {
 					b.log.Info("Adding handler failed.")
-					return errors.ErrCouldNotPublishEvent
+					return errors.ErrCouldNotAddHandler
 				}
 			}
 		}
