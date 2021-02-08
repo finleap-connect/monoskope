@@ -22,35 +22,25 @@ type TestEnv struct {
 	apiListener       net.Listener
 	grpcServer        *grpc.Server
 	eventStoreTestEnv *eventstore.TestEnv
-	messagingTestEnv  *esMessaging.TestEnv
 	ebConsumer        es.EventBusConsumer
 	esConn            *ggrpc.ClientConn
 	esClient          esApi.EventStoreClient
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("QueryHandlerTestEnv"),
+		TestEnv:           test.NewTestEnv("QueryHandlerTestEnv"),
+		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
+	rabbitConf := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
+	env.ebConsumer, err = util.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return nil, err
 	}
 
 	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
-	if err != nil {
-		return nil, err
-	}
-
-	env.messagingTestEnv, err = esMessaging.NewTestEnv()
-	if err != nil {
-		return nil, err
-	}
-
-	rabbitConf := esMessaging.NewRabbitEventBusConfig("queryhandler", env.messagingTestEnv.AmqpURL, "")
-	env.ebConsumer, err = util.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return nil, err
 	}
@@ -95,14 +85,6 @@ func (env *TestEnv) Shutdown() error {
 	}
 
 	if err := env.ebConsumer.Close(); err != nil {
-		return err
-	}
-
-	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
-		return err
-	}
-
-	if err := env.messagingTestEnv.Shutdown(); err != nil {
 		return err
 	}
 

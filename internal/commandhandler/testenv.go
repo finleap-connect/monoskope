@@ -13,7 +13,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 
-type CommandHandlerTestEnv struct {
+type TestEnv struct {
 	*test.TestEnv
 	apiListener       net.Listener
 	grpcServer        *grpc.Server
@@ -22,15 +22,11 @@ type CommandHandlerTestEnv struct {
 	esClient          esApi.EventStoreClient
 }
 
-func NewCommandHandlerTestEnv() (*CommandHandlerTestEnv, error) {
+func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
-	env := &CommandHandlerTestEnv{
-		TestEnv: test.NewTestEnv("CommandHandlerTestEnv"),
-	}
-
-	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
-	if err != nil {
-		return nil, err
+	env := &TestEnv{
+		TestEnv:           test.NewTestEnv("CommandHandlerTestEnv"),
+		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
 	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
@@ -62,16 +58,12 @@ func NewCommandHandlerTestEnv() (*CommandHandlerTestEnv, error) {
 	return env, nil
 }
 
-func (env *CommandHandlerTestEnv) GetApiAddr() string {
+func (env *TestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
 }
 
-func (env *CommandHandlerTestEnv) Shutdown() error {
+func (env *TestEnv) Shutdown() error {
 	if err := env.esConn.Close(); err != nil {
-		return err
-	}
-
-	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
 		return err
 	}
 
