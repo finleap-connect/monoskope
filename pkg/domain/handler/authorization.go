@@ -14,12 +14,14 @@ type authorizationCommandHandler struct {
 	userRepo repositories.ReadOnlyUserRepository
 }
 
+// NewAuthorizationHandler creates a new CommandHandler which handles authorization.
 func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) es.CommandHandler {
 	return &authorizationCommandHandler{
 		userRepo: userRepo,
 	}
 }
 
+// HandleCommand implements the CommandHandler interface
 func (h *authorizationCommandHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
 	metadataMngr := metadata.NewDomainMetadataManager(ctx)
 	userInfo, err := metadataMngr.GetUserInformation()
@@ -40,8 +42,8 @@ func (h *authorizationCommandHandler) HandleCommand(ctx context.Context, cmd es.
 	return errors.ErrUnauthorized
 }
 
+// policyAccepts validates the policy against a user
 func policyAccepts(user *projections.User, policy es.Policy) bool {
-	// Check if policy accepts any rolebinding of user
 	for _, roleBinding := range user.GetRoles() {
 		if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
 			policy.AcceptsScope(es.Scope(roleBinding.Scope)) &&
