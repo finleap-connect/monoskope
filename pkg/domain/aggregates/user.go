@@ -34,7 +34,6 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
 		// TODO: check if user already exists
-		// TODO: check if user is allowed to do this
 		if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.UserMetadata.Email, Name: cmd.UserMetadata.Name}); err != nil {
 			return err
 		} else if err = a.ApplyEvent(a.AppendEvent(events.UserCreated, ed)); err != nil {

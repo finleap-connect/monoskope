@@ -10,19 +10,19 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
-type authorizationCommandHandler struct {
+type authorizationHandler struct {
 	userRepo repositories.ReadOnlyUserRepository
 }
 
 // NewAuthorizationHandler creates a new CommandHandler which handles authorization.
 func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) es.CommandHandler {
-	return &authorizationCommandHandler{
+	return &authorizationHandler{
 		userRepo: userRepo,
 	}
 }
 
 // HandleCommand implements the CommandHandler interface
-func (h *authorizationCommandHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
 	metadataMngr := metadata.NewDomainMetadataManager(ctx)
 	userInfo, err := metadataMngr.GetUserInformation()
 	if err != nil {
