@@ -2,15 +2,15 @@ package domain
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 var (
-	userInformationKey      evs.EventMetadataKey
-	componentInformationKey evs.EventMetadataKey
+	userInformationKey      evs.EventMetadataKey = evs.EventMetadataKey("userInformationKey")
+	componentInformationKey evs.EventMetadataKey = evs.EventMetadataKey("componentInformationKey")
 )
 
 // ComponentInformation are information about a service/component.
@@ -42,7 +42,7 @@ func NewDomainMetadataManager(ctx context.Context) *domainMetadataManager {
 
 // SetComponentInformation sets the ComponentInformation about the currently executing service/component.
 func (m *domainMetadataManager) SetComponentInformation() *domainMetadataManager {
-	m.Set(evs.EventMetadataKey(componentInformationKey), &ComponentInformation{
+	m.Set(componentInformationKey, &ComponentInformation{
 		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
@@ -60,12 +60,12 @@ func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformat
 func (m *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
 	iface, ok := m.Get(userInformationKey)
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, esErrors.ErrMetadataNotFound
 	}
 
-	userId, ok := iface.(UserInformation)
+	userId, ok := iface.(*UserInformation)
 	if !ok {
-		return nil, fmt.Errorf("invalid type")
+		return nil, esErrors.ErrMetadataInvalidType
 	}
-	return &userId, nil
+	return userId, nil
 }

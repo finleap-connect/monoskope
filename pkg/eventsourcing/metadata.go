@@ -6,10 +6,10 @@ import (
 )
 
 // EventMetadataKey is the base key type for metadata.
-type EventMetadataKey int
+type EventMetadataKey string
 
 // metadataKey is the key type for metadata stored in context.
-var metadataKey EventMetadataKey
+var metadataKey EventMetadataKey = "metadataKey"
 
 /*
  MetadataManager is an interface for a storage of metadata.

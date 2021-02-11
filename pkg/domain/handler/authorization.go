@@ -33,15 +33,23 @@ func (h *authorizationCommandHandler) HandleCommand(ctx context.Context, cmd es.
 	}
 
 	for _, policy := range cmd.Policies(ctx) {
-		for _, roleBinding := range user.GetRoles() {
-			if isAuthrozied(roleBinding, policy) {
-				return nil
-			}
+		if policyAccepts(user, policy) {
+			return nil
 		}
 	}
 	return errors.ErrUnauthorized
 }
 
-func isAuthrozied(roleBinding *projections.UserRoleBinding, policy es.Policy) bool {
+func policyAccepts(user *projections.User, policy es.Policy) bool {
+	// Check if policy accepts any rolebinding of user
+	for _, roleBinding := range user.GetRoles() {
+		if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
+			policy.AcceptsScope(es.Scope(roleBinding.Scope)) &&
+			policy.AcceptsResource(roleBinding.Resource) &&
+			policy.AcceptsSubject(user.Email) {
+			return true
+		}
+	}
+
 	return false
 }
