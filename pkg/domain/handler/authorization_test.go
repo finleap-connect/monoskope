@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -17,35 +19,76 @@ import (
 )
 
 var _ = Describe("domain/handler", func() {
-	userId := uuid.New()
-	adminUser := &projections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
+	adminUser := &projections.User{Id: uuid.New().String(), Name: "admin", Email: "admin@monoskope.io"}
+	someUser := &projections.User{Id: uuid.New().String(), Name: "jane.doe", Email: "jane@monoskope.io"}
+
 	adminRoleBinding := &projections.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String(), Resource: ""}
-	ctx := metadata.NewDomainMetadataManager(context.Background()).
-		SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
 
-	It("can handle events", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
-		err := inMemoryRoleRepo.Upsert(ctx, adminRoleBinding)
-		Expect(err).NotTo(HaveOccurred())
+	inMemoryRoleRepo := es_repos.NewInMemoryRepository()
+	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
+	Expect(err).NotTo(HaveOccurred())
 
-		userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryRoleRepo)
+	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryRoleRepo)
 
-		inMemoryUserRepo := es_repos.NewInMemoryRepository()
-		userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
+	inMemoryUserRepo := es_repos.NewInMemoryRepository()
+	userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
-		err = inMemoryUserRepo.Upsert(ctx, adminUser)
-		Expect(err).NotTo(HaveOccurred())
+	err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
+	Expect(err).NotTo(HaveOccurred())
 
-		user, err := userRepo.ByEmail(ctx, adminUser.Email)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(user).To(Equal(adminUser))
-		Expect(user.Roles).ToNot(BeNil())
-		Expect(len(user.Roles)).To(BeNumerically("==", 1))
-		Expect(user.Roles[0]).To(Equal(adminRoleBinding))
+	err = inMemoryUserRepo.Upsert(context.Background(), someUser)
+	Expect(err).NotTo(HaveOccurred())
 
-		handler := NewAuthorizationHandler(userRepo)
-		err = handler.HandleCommand(ctx, &commands.CreateUserCommand{})
+	handler := NewAuthorizationHandler(userRepo)
+
+	It("user can't create other users", func() {
+		ctx := metadata.NewDomainMetadataManager(context.Background()).
+			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+
+		err = handler.HandleCommand(ctx, &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+			UserMetadata: &common.UserMetadata{
+				Email: someUser.Email,
+			},
+		}})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrUnauthorized))
+	})
+	It("user can create himself", func() {
+		ctx := metadata.NewDomainMetadataManager(context.Background()).
+			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+
+		err = handler.HandleCommand(ctx, &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+			UserMetadata: &common.UserMetadata{
+				Email: adminUser.Email,
+			},
+		}})
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("user can't make themselfes admin", func() {
+		ctx := metadata.NewDomainMetadataManager(context.Background()).
+			SetUserInformation(&metadata.UserInformation{Email: someUser.Email}).GetContext()
+
+		err = handler.HandleCommand(ctx, &commands.CreateUserRoleBindingCommand{
+			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
+				UserId: someUser.Id,
+				Role:   roles.Admin.String(),
+				Scope:  scopes.System.String(),
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(Equal(errors.ErrUnauthorized))
+	})
+	It("admin can create rolebinding for any user", func() {
+		ctx := metadata.NewDomainMetadataManager(context.Background()).
+			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+
+		err = handler.HandleCommand(ctx, &commands.CreateUserRoleBindingCommand{
+			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
+				UserId: someUser.Id,
+				Role:   roles.Admin.String(),
+				Scope:  scopes.System.String(),
+			},
+		})
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
