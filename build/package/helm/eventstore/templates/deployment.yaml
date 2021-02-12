@@ -120,7 +120,7 @@ spec:
         {{- if .Values.storeDatabase.tlsSecret }}
         - name: dbcerts
           secret:
-            secretName: {{ .Values.messageBus.tlsSecret }}
+            secretName: {{ .Values.storeDatabase.tlsSecret }}
             items:
               - key: ca.crt
                 path: ca.crt
@@ -129,7 +129,7 @@ spec:
               - key: tls.key
                 path: tls.key
         {{- end }}
-        {{- if .Values.storeDatabase.tlsSecret }}
+        {{- if .Values.messageBus.tlsSecret }}
         - name: buscerts
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
