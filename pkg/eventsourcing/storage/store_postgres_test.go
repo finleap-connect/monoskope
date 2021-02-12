@@ -13,7 +13,7 @@ import (
 )
 
 var _ = Describe("storage/postgres", func() {
-	var userInformationKey evs.EventMetadataKey
+	var userInformationKey = "userInformationKey"
 
 	ctx := evs.NewMetadataManagerFromContext(context.Background()).Set(userInformationKey, "admin").GetContext()
 	var es *postgresEventStore

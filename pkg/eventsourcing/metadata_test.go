@@ -10,8 +10,8 @@ import (
 var _ = Describe("MetadataManager", func() {
 	ctx := context.Background()
 
-	var notExistingKey EventMetadataKey
-	var existingKey EventMetadataKey
+	var notExistingKey = "notExistingKey"
+	var existingKey = "existingKey"
 
 	It("can't get not existing", func() {
 		manager := NewMetadataManagerFromContext(ctx)

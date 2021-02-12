@@ -32,6 +32,8 @@ message Event {
   google.protobuf.UInt64Value aggregate_version = 5;
   // Event type specific event data
   google.protobuf.Any data = 6;
+  // Event meta data
+  map<string, google.protobuf.Any> metadata = 7;
 }
 
 // Request to get Events from to the store

@@ -8,9 +8,9 @@ import (
 	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
-var (
-	userInformationKey      evs.EventMetadataKey = evs.EventMetadataKey("userInformationKey")
-	componentInformationKey evs.EventMetadataKey = evs.EventMetadataKey("componentInformationKey")
+const (
+	userInformationKey      = "userInformationKey"
+	componentInformationKey = "componentInformationKey"
 )
 
 // ComponentInformation are information about a service/component.

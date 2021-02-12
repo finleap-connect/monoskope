@@ -29,14 +29,14 @@ type postgresEventStore struct {
 type eventRecord struct {
 	tableName struct{} `sql:"events"`
 
-	EventID          uuid.UUID                            `pg:"event_id,type:uuid,pk"`
-	EventType        evs.EventType                        `pg:"event_type,type:varchar(250)"`
-	AggregateID      uuid.UUID                            `pg:"aggregate_id,type:uuid,unique:aggregate"`
-	AggregateType    evs.AggregateType                    `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
-	AggregateVersion uint64                               `pg:"aggregate_version,unique:aggregate"`
-	Timestamp        time.Time                            `pg:""`
-	Metadata         map[evs.EventMetadataKey]interface{} `pg:"metadata"`
-	RawData          json.RawMessage                      `pg:"data,type:jsonb"`
+	EventID          uuid.UUID              `pg:"event_id,type:uuid,pk"`
+	EventType        evs.EventType          `pg:"event_type,type:varchar(250)"`
+	AggregateID      uuid.UUID              `pg:"aggregate_id,type:uuid,unique:aggregate"`
+	AggregateType    evs.AggregateType      `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
+	AggregateVersion uint64                 `pg:"aggregate_version,unique:aggregate"`
+	Timestamp        time.Time              `pg:""`
+	Metadata         map[string]interface{} `pg:"metadata"`
+	RawData          json.RawMessage        `pg:"data,type:jsonb"`
 }
 
 var models []interface{}
@@ -389,7 +389,7 @@ func (e pgEvent) AggregateVersion() uint64 {
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e pgEvent) Metadata() map[evs.EventMetadataKey]interface{} {
+func (e pgEvent) Metadata() map[string]interface{} {
 	return e.eventRecord.Metadata
 }
 

@@ -20,7 +20,9 @@ func (t testEventHandler) HandleEvent(ctx context.Context, e evs.Event) error {
 	defer GinkgoRecover()
 	env.Log.Info("Received event.")
 	Expect(e).ToNot(BeNil())
-	Expect(e).To(Equal(t.event))
+	Expect(e.AggregateID()).To(BeEquivalentTo(t.event.AggregateID()))
+	Expect(e.AggregateType()).To(BeEquivalentTo(t.event.AggregateType()))
+	Expect(e.AggregateVersion()).To(BeEquivalentTo(t.event.AggregateVersion()))
 	return nil
 }
 
