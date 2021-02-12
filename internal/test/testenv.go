@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
@@ -11,12 +12,22 @@ import (
 )
 
 type TestEnv struct {
-	pool      *dockertest.Pool
-	resources map[string]*dockertest.Resource
-	Log       logger.Logger
+	pool        *dockertest.Pool
+	resources   map[string]*dockertest.Resource
+	Log         logger.Logger
+	runninginCi bool
+}
+
+func (t *TestEnv) IsRunningInCI() bool {
+	return t.runninginCi
 }
 
 func (t *TestEnv) CreateDockerPool() error {
+	// Running in CI, no docker necessary
+	if t.runninginCi {
+		return nil
+	}
+
 	t.Log.Info("Creating docker pool...")
 
 	pool, err := dockertest.NewPool("")
@@ -68,10 +79,13 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 }
 
 func NewTestEnv(envName string) *TestEnv {
+	_, runningInCi := os.LookupEnv("CI")
+
 	log := logger.WithName(envName)
 	env := &TestEnv{
-		Log:       log,
-		resources: make(map[string]*dockertest.Resource),
+		Log:         log,
+		resources:   make(map[string]*dockertest.Resource),
+		runninginCi: runningInCi,
 	}
 	log.Info("Setting up testenv...")
 	return env

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/ory/dockertest/v3"
@@ -35,41 +36,49 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	// Start single node crdb
-	container, err := env.Run(&dockertest.RunOptions{
-		Name:       "cockroach",
-		Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
-		Tag:        "v20.2.2",
-		Cmd: []string{
-			"start-single-node", "--insecure",
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// create test db
-	err = env.Retry(func() error {
-		testDb := pg.Connect(&pg.Options{
-			Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
-			Database: "",
-			User:     "root",
-			Password: "",
+	if v := os.Getenv("DB_URL"); v != "" {
+		conf, err := NewPostgresStoreConfig(v)
+		if err != nil {
+			return nil, err
+		}
+		env.postgresStoreConfig = conf
+	} else {
+		// Start single node crdb
+		container, err := env.Run(&dockertest.RunOptions{
+			Name:       "cockroach",
+			Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
+			Tag:        "v20.2.2",
+			Cmd: []string{
+				"start-single-node", "--insecure",
+			},
 		})
-		_, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
-		return err
-	})
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		// create test db
+		err = env.Retry(func() error {
+			testDb := pg.Connect(&pg.Options{
+				Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
+				Database: "",
+				User:     "root",
+				Password: "",
+			})
+			_, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
+			return err
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
+		if err != nil {
+			return nil, err
+		}
+		env.postgresStoreConfig = conf
 	}
 
-	conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
-	if err != nil {
-		return nil, err
-	}
-	env.postgresStoreConfig = conf
-
-	return env, err
+	return env, nil
 }
 
 func (env *TestEnv) Shutdown() error {

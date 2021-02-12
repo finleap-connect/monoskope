@@ -54,36 +54,38 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		return nil, err
 	}
 
-	dexConfigDir := os.Getenv("DEX_CONFIG")
-	if dexConfigDir == "" {
-		return nil, fmt.Errorf("DEX_CONFIG not specified")
-	}
-	env.Log.Info("Config for dex specified.", "DEX_CONFIG", dexConfigDir)
+	if !env.IsRunningInCI() {
+		dexConfigDir := os.Getenv("DEX_CONFIG")
+		if dexConfigDir == "" {
+			return nil, fmt.Errorf("DEX_CONFIG not specified")
+		}
+		env.Log.Info("Config for dex specified.", "DEX_CONFIG", dexConfigDir)
 
-	dexContainer, err := env.Run(&dockertest.RunOptions{
-		Name:       "dex",
-		Repository: "quay.io/dexidp/dex",
-		Tag:        "v2.25.0",
-		PortBindings: map[dc.Port][]dc.PortBinding{
-			"5556": {{HostPort: "5556"}},
-		},
-		ExposedPorts: []string{"5556", "5000"},
-		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
-		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", dexConfigDir)},
-	})
+		dexContainer, err := env.Run(&dockertest.RunOptions{
+			Name:       "dex",
+			Repository: "dexidp/dex",
+			Tag:        "v2.27.0",
+			PortBindings: map[dc.Port][]dc.PortBinding{
+				"5556": {{HostPort: "5556"}},
+			},
+			ExposedPorts: []string{"5556", "5000"},
+			Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
+			Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", dexConfigDir)},
+		})
 
-	if err != nil {
-		_ = env.Shutdown()
-		return nil, err
-	}
-	env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
+		if err != nil {
+			_ = env.Shutdown()
+			return nil, err
+		}
+		env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
-	env.AuthConfig = &auth.Config{
-		IssuerURL:      env.DexWebEndpoint,
-		OfflineAsScope: true,
-		ClientId:       "gateway",
-		ClientSecret:   "app-secret",
-		Nonce:          "secret-nonce",
+		env.AuthConfig = &auth.Config{
+			IssuerURL:      env.DexWebEndpoint,
+			OfflineAsScope: true,
+			ClientId:       "gateway",
+			ClientSecret:   "app-secret",
+			Nonce:          "secret-nonce",
+		}
 	}
 
 	return env, nil
