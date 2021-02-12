@@ -42,10 +42,13 @@ var _ = Describe("domain/handler", func() {
 	handler := NewAuthorizationHandler(userRepo)
 
 	It("user can't create other users", func() {
-		ctx := metadata.NewDomainMetadataManager(context.Background()).
-			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(ctx, &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: someUser.Email,
 			},
@@ -54,10 +57,13 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).To(Equal(errors.ErrUnauthorized))
 	})
 	It("user can create himself", func() {
-		ctx := metadata.NewDomainMetadataManager(context.Background()).
-			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(ctx, &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: adminUser.Email,
 			},
@@ -65,10 +71,13 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("user can't make themselfes admin", func() {
-		ctx := metadata.NewDomainMetadataManager(context.Background()).
-			SetUserInformation(&metadata.UserInformation{Email: someUser.Email}).GetContext()
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(ctx, &commands.CreateUserRoleBindingCommand{
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserRoleBindingCommand{
 			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
@@ -79,10 +88,13 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).To(Equal(errors.ErrUnauthorized))
 	})
 	It("admin can create rolebinding for any user", func() {
-		ctx := metadata.NewDomainMetadataManager(context.Background()).
-			SetUserInformation(&metadata.UserInformation{Email: adminUser.Email}).GetContext()
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(ctx, &commands.CreateUserRoleBindingCommand{
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserRoleBindingCommand{
 			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),

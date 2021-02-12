@@ -39,7 +39,7 @@ type Event interface {
 	// Event type specific event data.
 	Data() EventData
 	// Metadata is app-specific metadata originating user etc. when this event has been stored.
-	Metadata() map[string]interface{}
+	Metadata() map[string][]byte
 	// A string representation of the event.
 	String() string
 }
@@ -59,7 +59,7 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 
 // NewEvent creates a new event with metadata attached.
 func NewEventWithMetadata(eventType EventType, data EventData, timestamp time.Time,
-	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64, metadata map[string]interface{}) Event {
+	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64, metadata map[string][]byte) Event {
 	return event{
 		eventType:        eventType,
 		data:             data,
@@ -125,7 +125,7 @@ type event struct {
 	aggregateType    AggregateType
 	aggregateID      uuid.UUID
 	aggregateVersion uint64
-	metadata         map[string]interface{}
+	metadata         map[string][]byte
 }
 
 // EventType implements the EventType method of the Event interface.
@@ -159,7 +159,7 @@ func (e event) AggregateVersion() uint64 {
 }
 
 // Metadata implements the Metadata method of the Event interface.
-func (e event) Metadata() map[string]interface{} {
+func (e event) Metadata() map[string][]byte {
 	return e.metadata
 }
 

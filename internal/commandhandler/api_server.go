@@ -34,16 +34,21 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.CommandReq
 		return nil, err
 	}
 
-	ctx = metadata.
-		NewDomainMetadataManager(ctx).
-		SetUserInformation(&metadata.UserInformation{
-			Email:   apiCommand.GetUserMetadata().Email,
-			Subject: apiCommand.GetUserMetadata().Subject,
-			Issuer:  apiCommand.GetUserMetadata().Issuer,
-		}).
-		GetContext()
+	manager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err = s.cmdRegistry.HandleCommand(ctx, cmd)
+	err = manager.SetUserInformation(&metadata.UserInformation{
+		Email:   apiCommand.GetUserMetadata().Email,
+		Subject: apiCommand.GetUserMetadata().Subject,
+		Issuer:  apiCommand.GetUserMetadata().Issuer,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.cmdRegistry.HandleCommand(manager.GetContext(), cmd)
 	if err != nil {
 		return nil, err
 	}

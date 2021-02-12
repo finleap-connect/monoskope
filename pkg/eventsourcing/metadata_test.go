@@ -7,6 +7,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+type metadataVal struct {
+	val string
+}
+
 var _ = Describe("MetadataManager", func() {
 	ctx := context.Background()
 
@@ -21,28 +25,37 @@ var _ = Describe("MetadataManager", func() {
 	})
 	It("can set a value", func() {
 		manager := NewMetadataManagerFromContext(ctx)
-		val, err := manager.
-			Set(existingKey, true).
-			GetBool(existingKey)
 
+		val := &metadataVal{
+			val: "hello",
+		}
+		err := manager.SetObject(existingKey, val)
 		Expect(err).To(Not(HaveOccurred()))
-		Expect(val).To(BeTrue())
+
+		valResult := &metadataVal{}
+		err = manager.GetObject(existingKey, valResult)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(valResult.val).To(Equal(valResult.val))
 	})
 	It("can get from existing context", func() {
 		manager := NewMetadataManagerFromContext(ctx)
-		nuCtx := manager.
-			Set(existingKey, "test").
-			GetContext()
+
+		val := &metadataVal{
+			val: "hello",
+		}
+		err := manager.SetObject(existingKey, val)
+		Expect(err).To(Not(HaveOccurred()))
+
+		nuCtx := manager.GetContext()
 		Expect(nuCtx).To(Not(BeNil()))
 
 		nuManager := NewMetadataManagerFromContext(nuCtx)
-
-		val, err := nuManager.
-			Set(existingKey, "test").
-			GetString(existingKey)
-
+		err = nuManager.SetObject(existingKey, val)
 		Expect(err).To(Not(HaveOccurred()))
-		Expect(val).To(Not(BeNil()))
-		Expect(val).To(Equal("test"))
+
+		valResult := &metadataVal{}
+		err = nuManager.GetObject(existingKey, valResult)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(valResult.val).To(Equal(valResult.val))
 	})
 })

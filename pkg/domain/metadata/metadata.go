@@ -5,7 +5,6 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 const (
@@ -33,39 +32,36 @@ type domainMetadataManager struct {
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
-func NewDomainMetadataManager(ctx context.Context) *domainMetadataManager {
+func NewDomainMetadataManager(ctx context.Context) (*domainMetadataManager, error) {
 	m := &domainMetadataManager{
 		evs.NewMetadataManagerFromContext(ctx),
 	}
-	return m.SetComponentInformation()
+	if err := m.SetComponentInformation(); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // SetComponentInformation sets the ComponentInformation about the currently executing service/component.
-func (m *domainMetadataManager) SetComponentInformation() *domainMetadataManager {
-	m.Set(componentInformationKey, &ComponentInformation{
+func (m *domainMetadataManager) SetComponentInformation() error {
+	return m.SetObject(componentInformationKey, &ComponentInformation{
 		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
 	})
-	return m
 }
 
 // SetUserInformation sets the UserInformation in the metadata.
-func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) *domainMetadataManager {
-	m.Set(userInformationKey, userInformation)
-	return m
+func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) error {
+	return m.SetObject(userInformationKey, userInformation)
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
 func (m *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
-	iface, ok := m.Get(userInformationKey)
-	if !ok {
-		return nil, esErrors.ErrMetadataNotFound
+	userInfo := &UserInformation{}
+	err := m.GetObject(userInformationKey, userInfo)
+	if err != nil {
+		return nil, err
 	}
-
-	userId, ok := iface.(*UserInformation)
-	if !ok {
-		return nil, esErrors.ErrMetadataInvalidType
-	}
-	return userId, nil
+	return userInfo, err
 }

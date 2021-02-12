@@ -23,7 +23,11 @@ func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) es.Co
 
 // HandleCommand implements the CommandHandler interface
 func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
-	metadataMngr := metadata.NewDomainMetadataManager(ctx)
+	metadataMngr, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return err
+	}
+
 	userInfo, err := metadataMngr.GetUserInformation()
 	if err != nil {
 		return err

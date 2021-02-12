@@ -12,10 +12,18 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
+type metadataVal struct {
+	val string
+}
+
 var _ = Describe("storage/postgres", func() {
 	var userInformationKey = "userInformationKey"
 
-	ctx := evs.NewMetadataManagerFromContext(context.Background()).Set(userInformationKey, "admin").GetContext()
+	manager := evs.NewMetadataManagerFromContext(context.Background())
+	err := manager.SetObject(userInformationKey, &metadataVal{val: "admin"})
+	Expect(err).ToNot(HaveOccurred())
+	ctx := manager.GetContext()
+
 	var es *postgresEventStore
 
 	clearEs := func(es *postgresEventStore) {
@@ -120,7 +128,10 @@ var _ = Describe("storage/postgres", func() {
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
 
-		Expect(evs.NewMetadataManagerFromContext(context.Background()).SetMetadata(storeEvents[0].Metadata()).GetString(userInformationKey)).To(Equal("admin"))
+		valResult := &metadataVal{}
+		err = evs.NewMetadataManagerFromContext(context.Background()).SetMetadata(storeEvents[0].Metadata()).GetObject(userInformationKey, valResult)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(valResult.val).To(Equal("admin"))
 	})
 	It("can filter events to load from the store by aggregate type", func() {
 		ev := createTestEvents()
