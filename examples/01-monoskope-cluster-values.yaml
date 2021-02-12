@@ -57,7 +57,7 @@ eventstore:
   replicaCount: 3
   enabled: true
   messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-evenstore
+    tlsSecret: monoskope-rabbitmq-auth-admin
   storeDatabase:
     tlsSecret: monoskope-crdb-auth-evenstore
   resources:
@@ -90,7 +90,7 @@ queryhandler:
       cpu: 500m
       memory: 64Mi
   messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-queryhandler
+    tlsSecret: monoskope-rabbitmq-auth-admin
 
 ingress:
   enabled: true
