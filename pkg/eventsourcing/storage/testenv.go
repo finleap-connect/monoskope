@@ -38,15 +38,13 @@ func NewTestEnv() (*TestEnv, error) {
 
 	if v := os.Getenv("DB_URL"); v != "" {
 		// create test db
-		err := env.Retry(func() error {
-			options, err := pg.ParseURL(v)
-			if err != nil {
-				return err
-			}
-			testDb := pg.Connect(options)
-			_, err = testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
-			return err
-		})
+		options, err := pg.ParseURL(v)
+		if err != nil {
+			return nil, err
+		}
+
+		testDb := pg.Connect(options)
+		_, err = testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
 		if err != nil {
 			return nil, err
 		}
