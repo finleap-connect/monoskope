@@ -7,44 +7,12 @@ lint:helm:monoskope:
   except:
     - schedules
   script:
+    - make helm-lint-gateway
+    - make helm-lint-eventstore
+    - make helm-lint-commandhandler
+    - make helm-lint-queryhandler
     - make helm-dep-monoskope
     - make helm-lint-monoskope
-  needs: []
-
-lint:helm:gateway:
-  stage: test
-  extends: .helm
-  except:
-    - schedules
-  script:
-    - make helm-lint-gateway
-  needs: []
-
-lint:helm:eventstore:
-  stage: test
-  extends: .helm
-  except:
-    - schedules
-  script:
-    - make helm-lint-eventstore
-  needs: []
-
-lint:helm:commandhandler:
-  stage: test
-  extends: .helm
-  except:
-    - schedules
-  script:
-    - make helm-lint-commandhandler
-  needs: []
-
-lint:helm:queryhandler:
-  stage: test
-  extends: .helm
-  except:
-    - schedules
-  script:
-    - make helm-lint-queryhandler
   needs: []
 
 deliver:chart:monoskope:
@@ -54,16 +22,9 @@ deliver:chart:monoskope:
     - tags
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make helm-set-version-gateway
-    - VERSION=$VERSION make helm-set-version-eventstore
-    - VERSION=$VERSION make helm-set-version-commandhandler
-    - VERSION=$VERSION make helm-set-version-queryhandler
+    - VERSION=$VERSION make helm-set-version-all
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
-    - lint:helm:gateway
-    - lint:helm:eventstore
-    - lint:helm:commandhandler
-    - lint:helm:queryhandler
     - lint:helm:monoskope
 
 deploy:monoskope:

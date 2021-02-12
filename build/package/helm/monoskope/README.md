@@ -88,9 +88,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | dex.resources.requests.memory | string | `"50Mi"` |  |
 | dex.serviceAccount.create | bool | `false` |  |
 | dex.telemetry | bool | `true` |  |
-| eventstore.config.existingSecret | string | `"monoskope-eventstore-config"` |  |
 | eventstore.enabled | bool | `true` |  |
+| eventstore.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | eventstore.replicaCount | int | `1` |  |
+| eventstore.storeDatabase.existingSecret | string | `"m8-eventstore-db-config"` |  |
 | fullnameOverride | string | `""` |  |
 | gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
 | gateway.enabled | bool | `true` |  |
@@ -99,10 +100,13 @@ Monoskope implements the management and operation of tenants, users and their ro
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | ingress.enabled | bool | `false` |  |
 | ingress.host | string | `"monoskope.io"` |  |
+| messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
+| messageBus.routingKeyPrefix | string | `"m8"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | queryhandler.enabled | bool | `true` |  |
+| queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | queryhandler.replicaCount | int | `1` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |

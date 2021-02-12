@@ -54,5 +54,11 @@ set-app-version-latest-%:
 	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(LATEST_TAG)" --inplace
 	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(LATEST_TAG)" --inplace
 
+set-version-all:
+	@$(MAKE) helm-set-version-gateway
+	@$(MAKE) helm-set-version-eventstore
+	@$(MAKE) helm-set-version-commandhandler
+	@$(MAKE) helm-set-version-queryhandler
+
 docs:
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
