@@ -1,7 +1,7 @@
 .helm:
   image: registry.gitlab.figo.systems/platform/helm-builder:1.14.3-rc1
 
-lint:helm:monoskope:
+lint:helm:
   stage: test
   extends: .helm
   except:
@@ -15,7 +15,7 @@ lint:helm:monoskope:
     - make helm-lint-monoskope
   needs: []
 
-deliver:chart:monoskope:
+deliver:chart:
   stage: deliver
   extends: .helm
   only:
@@ -25,7 +25,7 @@ deliver:chart:monoskope:
     - VERSION=$VERSION make helm-set-version-all
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
   needs:
-    - lint:helm:monoskope
+    - lint:helm
 
 deploy:monoskope:
   stage: deploy
