@@ -35,10 +35,6 @@ var _ = Describe("Gateway", func() {
 		return info, nil
 	}
 	It("declines invalid bearer token", func() {
-		if env.IsRunningInCI() {
-			return
-		}
-
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), invalidToken())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
@@ -47,10 +43,6 @@ var _ = Describe("Gateway", func() {
 		Expect(info).To(BeNil())
 	})
 	It("can retrieve auth url", func() {
-		if env.IsRunningInCI() {
-			return
-		}
-
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
@@ -62,10 +54,6 @@ var _ = Describe("Gateway", func() {
 		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		if env.IsRunningInCI() {
-			return
-		}
-
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()

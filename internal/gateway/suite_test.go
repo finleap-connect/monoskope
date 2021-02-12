@@ -54,7 +54,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		return nil, err
 	}
 
-	if !env.IsRunningInCI() {
+	if !test.IsRunningInCI() {
 		dexConfigDir := os.Getenv("DEX_CONFIG")
 		if dexConfigDir == "" {
 			return nil, fmt.Errorf("DEX_CONFIG not specified")
@@ -111,6 +111,9 @@ func (env *oAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth
 }
 
 func TestGateway(t *testing.T) {
+	if test.IsRunningInCI() {
+		return
+	}
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../reports/gateway-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "gateway/integration", []Reporter{junitReporter})

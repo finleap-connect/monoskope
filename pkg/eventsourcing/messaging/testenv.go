@@ -28,7 +28,7 @@ func NewTestEnv() (*TestEnv, error) {
 	}
 
 	warumupSeconds := 30
-	if env.IsRunningInCI() {
+	if test.IsRunningInCI() {
 		warumupSeconds = 0 // no warmup necessary in CI
 	}
 
