@@ -11,6 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+messageBus:
+  routingKeyPrefix: "m8"
+  clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
+
 monitoring:
   tenant: &tenant finleap-cloud
 
@@ -101,8 +105,10 @@ gateway:
 eventstore:
   enabled: true
   replicaCount: 1
-  config:
-    existingSecret: monoskope-eventstore-config
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName
+  storeDatabase:
+    existingSecret: m8-eventstore-db-config
 
 commandhandler:
   enabled: true
@@ -111,6 +117,8 @@ commandhandler:
 queryhandler:
   enabled: true
   replicaCount: 1
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName
 
 cockroachdb:
   enabled: true

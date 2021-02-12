@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net"
 	"os"
 
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
@@ -37,20 +36,6 @@ var serverCmd = &cobra.Command{
 		if v := os.Getenv("OIDC_NONCE"); v != "test" {
 			authConfig.Nonce = v
 		}
-
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
 
 		// Create the server
 		// Create interceptor for auth

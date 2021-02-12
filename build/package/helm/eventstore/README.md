@@ -13,12 +13,6 @@ A Helm chart for the Monoskope EventStore
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| config.busTlsSecret | string | `""` | Name of the secret containing the bus tls configuration |
-| config.busUrl | string | `"amqps://127.0.0.1:5672/"` |  |
-| config.dbTlsSecret | string | `""` | Name of the secret containing the db tls configuration |
-| config.dbUrl | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
-| config.existingSecret | string | `""` | Name of the secret containing the config for the eventstore |
-| config.routingKeyPrefix | string | `"m8"` |  |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
@@ -31,6 +25,10 @@ A Helm chart for the Monoskope EventStore
 | livenessProbe.failureThreshold | int | `10` |  |
 | livenessProbe.initialDelaySeconds | int | `10` |  |
 | livenessProbe.periodSeconds | int | `5` |  |
+| messageBus.existingSecret | string | `""` | Name of the configmap containing the config for the eventstore messagebus |
+| messageBus.routingKeyPrefix | string | `"m8"` | Prefix for routing messages via message bus |
+| messageBus.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
+| messageBus.url | string | `"amqps://127.0.0.1:5672/"` | URL of the bus |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
@@ -47,6 +45,9 @@ A Helm chart for the Monoskope EventStore
 | service.api.port | int | `8080` |  |
 | service.metrics.port | int | `9102` |  |
 | service.type | string | `"ClusterIP"` |  |
+| storeDatabase.existingSecret | string | `""` | Name of the secret containing the config for the eventstore database |
+| storeDatabase.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
+| storeDatabase.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

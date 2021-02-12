@@ -79,10 +79,16 @@ spec:
   - {{.Release.Name}}-cockroachdb-public
   - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}
   - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local
+  - "*.{{.Release.Name}}-cockroachdb-public"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local"
   - {{.Release.Name}}-cockroachdb
   - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}
   - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local
-
+  - "*.{{.Release.Name}}-cockroachdb"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local"
+  
   usages:
   - client auth
   - server auth

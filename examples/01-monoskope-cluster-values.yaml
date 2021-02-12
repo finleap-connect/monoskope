@@ -56,9 +56,10 @@ gateway:
 eventstore:
   replicaCount: 3
   enabled: true
-  config:
-    dbTlsSecret: monoskope-crdb-auth-evenstore
-    busTlsSecret: monoskope-rabbitmq-auth-evenstore
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
+  storeDatabase:
+    tlsSecret: monoskope-crdb-auth-evenstore
   resources:
     limits:
       cpu: 2000m
@@ -88,6 +89,8 @@ queryhandler:
     requests:
       cpu: 500m
       memory: 64Mi
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
 
 ingress:
   enabled: true

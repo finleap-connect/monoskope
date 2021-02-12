@@ -83,13 +83,19 @@ ports:
 
 keepAlive: false
 
-config:
+messageBus:
+  # -- Prefix for routing messages via message bus
   routingKeyPrefix: m8
-  dbUrl: postgres://root@127.0.0.1:26257/test?sslmode=disable
-  busUrl: amqps://127.0.0.1:5672/
-  # -- Name of the secret containing the config for the eventstore
+  # -- URL of the bus
+  url: amqps://127.0.0.1:5672/
+  # -- Name of the configmap containing the config for the eventstore messagebus
   existingSecret: ""
-  # -- Name of the secret containing the db tls configuration
-  dbTlsSecret: ""
-  # -- Name of the secret containing the bus tls configuration
-  busTlsSecret: ""
+  # -- Name of the secret containing the tls certificates/keys
+  tlsSecret: ""
+
+storeDatabase:
+  url: postgres://root@127.0.0.1:26257/test?sslmode=disable
+  # -- Name of the secret containing the config for the eventstore database
+  existingSecret: ""
+  # -- Name of the secret containing the tls certificates/keys
+  tlsSecret: ""

@@ -64,6 +64,9 @@ spec:
             containerPort: {{ .Values.ports.api }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
           args:
             - /queryhandler
             - server
@@ -71,6 +74,7 @@ spec:
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
+            - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -89,6 +93,11 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.messageBus.tlsSecret }}
+          volumeMounts:
+            - name: buscerts
+              mountPath: /etc/eventstore/certs/bus
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -100,4 +109,17 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.messageBus.tlsSecret }}
+      volumes:
+        - name: buscerts
+          secret:
+            secretName: {{ .Values.messageBus.tlsSecret }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
       {{- end }}
