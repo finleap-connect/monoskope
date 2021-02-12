@@ -73,7 +73,7 @@ spec:
           args:
             - /eventstore
             - server
-            - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}.Values.messageBus.routingKeyPrefix
+            - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--msgbus-routing-key-prefix=$ROUTING_KEY_PREFIX" ) }}
