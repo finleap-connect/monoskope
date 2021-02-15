@@ -36,6 +36,6 @@ var _ = Describe("domain/user_repo", func() {
 		Expect(user).To(Equal(adminUser))
 		Expect(user.Roles).ToNot(BeNil())
 		Expect(len(user.Roles)).To(BeNumerically("==", 1))
-		Expect(user.Roles[0]).To(Equal(adminRoleBinding))
+		Expect(user.Roles[0]).To(Equal(adminRoleBinding.Proto()))
 	})
 })
