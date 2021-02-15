@@ -71,11 +71,6 @@ func NewEventWithMetadata(eventType EventType, data EventData, timestamp time.Ti
 	}
 }
 
-// NewEventFromAggregate creates a new event.
-func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.Time, aggregate Aggregate) Event {
-	return NewEvent(eventType, data, timestamp, aggregate.Type(), aggregate.ID(), aggregate.Version())
-}
-
 // NewEventFromProto converts proto events to Event
 func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
