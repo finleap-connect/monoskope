@@ -38,13 +38,13 @@ var _ = Describe("domain/handler", func() {
 		Scope:  scopes.System.String(),
 	}}
 
-	inMemoryRoleRepo := es_repos.NewInMemoryProjectionRepository()
+	inMemoryRoleRepo := es_repos.NewInMemoryRepository()
 	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
 	Expect(err).NotTo(HaveOccurred())
 
 	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryRoleRepo)
 
-	inMemoryUserRepo := es_repos.NewInMemoryProjectionRepository()
+	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
 	err = inMemoryUserRepo.Upsert(context.Background(), adminUser)

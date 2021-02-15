@@ -9,21 +9,21 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
-// inMemoryProjectionRepository is a repository which stores projections in memory.
-type inMemoryProjectionRepository struct {
+// inMemoryRepository is a repository which stores projections in memory.
+type inMemoryRepository struct {
 	store map[uuid.UUID]es.Projection
 	mutex sync.RWMutex
 }
 
-// NewInMemoryProjectionRepository creates a new repository which stores projections in memory.
-func NewInMemoryProjectionRepository() es.ProjectionRepository {
-	return &inMemoryProjectionRepository{
+// NewInMemoryRepository creates a new repository which stores projections in memory.
+func NewInMemoryRepository() es.ProjectionRepository {
+	return &inMemoryRepository{
 		store: make(map[uuid.UUID]es.Projection),
 	}
 }
 
 // ById returns a projection for an ID.
-func (r *inMemoryProjectionRepository) ById(ctx context.Context, id uuid.UUID) (es.Projection, error) {
+func (r *inMemoryRepository) ById(ctx context.Context, id uuid.UUID) (es.Projection, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -34,7 +34,7 @@ func (r *inMemoryProjectionRepository) ById(ctx context.Context, id uuid.UUID) (
 }
 
 // All returns all projections in the repository.
-func (r *inMemoryProjectionRepository) All(context.Context) ([]es.Projection, error) {
+func (r *inMemoryRepository) All(context.Context) ([]es.Projection, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -46,7 +46,7 @@ func (r *inMemoryProjectionRepository) All(context.Context) ([]es.Projection, er
 }
 
 // Upsert saves a projection in the storage or replaces an existing one.
-func (r *inMemoryProjectionRepository) Upsert(ctx context.Context, p es.Projection) error {
+func (r *inMemoryRepository) Upsert(ctx context.Context, p es.Projection) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -55,7 +55,7 @@ func (r *inMemoryProjectionRepository) Upsert(ctx context.Context, p es.Projecti
 }
 
 // Remove removes a projection by ID from the storage.
-func (r *inMemoryProjectionRepository) Remove(ctx context.Context, id uuid.UUID) error {
+func (r *inMemoryRepository) Remove(ctx context.Context, id uuid.UUID) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 

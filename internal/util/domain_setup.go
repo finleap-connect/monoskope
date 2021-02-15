@@ -15,8 +15,8 @@ import (
 // SetupQueryHandlerDomain sets up the necessary handlers/projectors/repositories for the query side of es/cqrs.
 func SetupQueryHandlerDomain(ctx context.Context, ebConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (domainRepos.UserRepository, error) {
 	// Setup event sourcing
-	userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryProjectionRepository())
-	userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryProjectionRepository(), userRoleBindingRepo)
+	userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
+	userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
 
 	err := ebConsumer.AddHandler(ctx,
 		es.UseEventHandlerMiddleware(

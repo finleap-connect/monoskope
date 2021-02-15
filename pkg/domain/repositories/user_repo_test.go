@@ -19,13 +19,13 @@ var _ = Describe("domain/user_repo", func() {
 	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String()}}
 
 	It("can read/write projections", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryProjectionRepository()
+		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
 		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
 		Expect(err).NotTo(HaveOccurred())
 
 		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
 
-		inMemoryUserRepo := es_repos.NewInMemoryProjectionRepository()
+		inMemoryUserRepo := es_repos.NewInMemoryRepository()
 		userRepo := NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
 		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
