@@ -45,18 +45,18 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
-				Email: someUser.Email,
+				Email: "janedoe@monoskope.io",
 			},
 		}})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrUnauthorized))
 	})
-	It("user can create himself", func() {
+	It("user can create themselves", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -66,6 +66,20 @@ var _ = Describe("domain/handler", func() {
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: adminUser.Email,
+			},
+		}})
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("system admin can create users", func() {
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
+
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+			UserMetadata: &common.UserMetadata{
+				Email: someUser.Email,
 			},
 		}})
 		Expect(err).ToNot(HaveOccurred())

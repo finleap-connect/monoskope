@@ -9,6 +9,8 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -27,6 +29,7 @@ func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 }
 func (c *CreateUserCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithSubject(c.GetUserMetadata().GetEmail()), // Allows user to create themselfes
+		es.NewPolicy().WithSubject(c.GetUserMetadata().GetEmail()),    // Allows user to create themselfes
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows user to create themselfes
 	}
 }
