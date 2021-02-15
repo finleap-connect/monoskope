@@ -6,10 +6,10 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
 	ggrpc "google.golang.org/grpc"
 

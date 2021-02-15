@@ -5,8 +5,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
@@ -43,7 +43,7 @@ var serverCmd = &cobra.Command{
 		// Create the server
 		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
+			api_es.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

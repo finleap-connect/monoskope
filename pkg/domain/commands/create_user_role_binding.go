@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	commandsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -16,7 +16,7 @@ import (
 // AddRoleToUser is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
 	aggregateId uuid.UUID
-	cmd.CreateUserRoleBindingCommand
+	commandsApi.CreateUserRoleBindingCommand
 }
 
 func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }

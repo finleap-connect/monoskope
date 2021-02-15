@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 

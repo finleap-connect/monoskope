@@ -4,23 +4,23 @@ import (
 	"io"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // apiServer is the implementation of the EventStore API
 type apiServer struct {
-	api.UnimplementedEventStoreServer
+	esApi.UnimplementedEventStoreServer
 	// Logger interface
 	log   logger.Logger
-	store evs.Store
-	bus   evs.EventBusPublisher
+	store es.Store
+	bus   es.EventBusPublisher
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer(store evs.Store, bus evs.EventBusPublisher) *apiServer {
+func NewApiServer(store es.Store, bus es.EventBusPublisher) *apiServer {
 	s := &apiServer{
 		log:   logger.WithName("server"),
 		store: store,
@@ -31,8 +31,8 @@ func NewApiServer(store evs.Store, bus evs.EventBusPublisher) *apiServer {
 }
 
 // Store implements the API method for storing events
-func (s *apiServer) Store(stream api.EventStore_StoreServer) error {
-	var eventStream []*api.Event
+func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
+	var eventStream []*esApi.Event
 	for {
 		// Read next event
 		event, err := stream.Recv()
@@ -59,7 +59,7 @@ func (s *apiServer) Store(stream api.EventStore_StoreServer) error {
 }
 
 // Retrieve implements the API method for retrieving events from the store
-func (s *apiServer) Retrieve(filter *api.EventFilter, stream api.EventStore_RetrieveServer) error {
+func (s *apiServer) Retrieve(filter *esApi.EventFilter, stream esApi.EventStore_RetrieveServer) error {
 	// Perform the use case for storing events
 	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter).Run()
 	if err != nil {

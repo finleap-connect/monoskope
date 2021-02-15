@@ -5,7 +5,7 @@ package gateway
 import (
 	context "context"
 	empty "github.com/golang/protobuf/ptypes/empty"
-	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
+	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"

@@ -4,19 +4,19 @@ import (
 	"context"
 	"io"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type eventStoreReplayMiddleware struct {
-	esClient api.EventStoreClient
+	esClient apiEs.EventStoreClient
 	handler  es.EventHandler
 }
 
 // NewEventStoreReplayMiddleware creates an EventHandler which automates querying the EventStore in case of gaps in AggregateVersion found in other EventHandlers later in the chain of EventHandlers.
-func NewEventStoreReplayMiddleware(esClient api.EventStoreClient) *eventStoreReplayMiddleware {
+func NewEventStoreReplayMiddleware(esClient apiEs.EventStoreClient) *eventStoreReplayMiddleware {
 	return &eventStoreReplayMiddleware{
 		esClient: esClient,
 	}
@@ -44,8 +44,8 @@ func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.E
 
 func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event) error {
 	// Retrieve events from store
-	eventStream, err := m.esClient.Retrieve(ctx, &api.EventFilter{
-		ByAggregate: &api.EventFilter_AggregateType{
+	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
+		ByAggregate: &apiEs.EventFilter_AggregateType{
 			AggregateType: wrapperspb.String(event.AggregateID().String()),
 		},
 	})

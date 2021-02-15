@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/storage"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"

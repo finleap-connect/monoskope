@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 

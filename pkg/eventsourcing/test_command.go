@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	api_cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
+	cmdApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -16,7 +16,7 @@ const (
 // testCommand is a command for tests.
 type testCommand struct {
 	aggregateId uuid.UUID
-	api_cmd.TestCommandData
+	cmdApi.TestCommandData
 }
 
 func (c *testCommand) AggregateID() uuid.UUID { return c.aggregateId }

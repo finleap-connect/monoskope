@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
 

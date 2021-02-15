@@ -3,7 +3,7 @@ package util
 import (
 	"context"
 
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
 	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"

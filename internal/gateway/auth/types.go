@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 )
 
 type Config struct {

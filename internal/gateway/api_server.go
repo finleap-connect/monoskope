@@ -6,9 +6,9 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
-	api_cmdhandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
-	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -25,7 +25,7 @@ type apiServer struct {
 	//
 	authConfig       *auth.Config
 	authHandler      *auth.Handler
-	cmdHandlerClient api_cmdhandler.CommandHandlerClient
+	cmdHandlerClient api.CommandHandlerClient
 }
 
 func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {

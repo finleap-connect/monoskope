@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
-	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -14,12 +13,12 @@ import (
 // apiServer is the implementation of the CommandHandler API
 type apiServer struct {
 	api.UnimplementedCommandHandlerServer
-	esClient    api_es.EventStoreClient
+	esClient    api.EventStoreClient
 	cmdRegistry evs.CommandRegistry
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer(esClient api_es.EventStoreClient) *apiServer {
+func NewApiServer(esClient api.EventStoreClient) *apiServer {
 	return &apiServer{
 		esClient: esClient,
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"

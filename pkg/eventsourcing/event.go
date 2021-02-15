@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -72,7 +72,7 @@ func NewEventWithMetadata(eventType EventType, data EventData, timestamp time.Ti
 }
 
 // NewEventFromProto converts proto events to Event
-func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
+func NewEventFromProto(protoEvent *esApi.Event) (Event, error) {
 	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
 	if err != nil {
 		return nil, errors.ErrCouldNotParseAggregateId
@@ -94,13 +94,13 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 }
 
 // NewProtoFromEvent converts Event to proto events
-func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
+func NewProtoFromEvent(storeEvent Event) (*esApi.Event, error) {
 	a, err := storeEvent.Data().toAny()
 	if err != nil {
 		panic(err)
 	}
 
-	ev := &api_es.Event{
+	ev := &esApi.Event{
 		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
 		AggregateType:    storeEvent.AggregateType().String(),

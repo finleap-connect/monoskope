@@ -3,9 +3,9 @@ package projectors
 import (
 	"context"
 
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"

@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	commandsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
@@ -48,7 +48,7 @@ var _ = Describe("domain/handler", func() {
 		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: "janedoe@monoskope.io",
 			},
@@ -63,7 +63,7 @@ var _ = Describe("domain/handler", func() {
 		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: adminUser.Email,
 			},
@@ -77,7 +77,7 @@ var _ = Describe("domain/handler", func() {
 		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: cmd.CreateUserCommand{
+		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
 			UserMetadata: &common.UserMetadata{
 				Email: someUser.Email,
 			},
@@ -92,7 +92,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserRoleBindingCommand{
-			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
+			CreateUserRoleBindingCommand: commandsApi.CreateUserRoleBindingCommand{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
 				Scope:  scopes.System.String(),
@@ -109,7 +109,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserRoleBindingCommand{
-			CreateUserRoleBindingCommand: cmd.CreateUserRoleBindingCommand{
+			CreateUserRoleBindingCommand: commandsApi.CreateUserRoleBindingCommand{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
 				Scope:  scopes.System.String(),

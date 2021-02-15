@@ -15,7 +15,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"

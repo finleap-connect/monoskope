@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"

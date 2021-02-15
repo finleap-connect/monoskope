@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )

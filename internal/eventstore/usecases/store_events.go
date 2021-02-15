@@ -3,22 +3,22 @@ package usecases
 import (
 	"context"
 
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type StoreEventsUseCase struct {
 	UseCaseBase
 
-	store  evs.Store
-	bus    evs.EventBusPublisher
-	events []*api_es.Event
+	store  es.Store
+	bus    es.EventBusPublisher
+	events []*esApi.Event
 }
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(ctx context.Context, store evs.Store, bus evs.EventBusPublisher, events []*api_es.Event) UseCase {
+func NewStoreEventsUseCase(ctx context.Context, store es.Store, bus es.EventBusPublisher, events []*esApi.Event) UseCase {
 	useCase := &StoreEventsUseCase{
 		UseCaseBase: UseCaseBase{
 			log: logger.WithName("store-events-use-case"),
@@ -33,9 +33,9 @@ func NewStoreEventsUseCase(ctx context.Context, store evs.Store, bus evs.EventBu
 
 func (u *StoreEventsUseCase) Run() error {
 	// Convert from proto events to storage events
-	var storageEvents []evs.Event
+	var storageEvents []es.Event
 	for _, v := range u.events {
-		ev, err := evs.NewEventFromProto(v)
+		ev, err := es.NewEventFromProto(v)
 		if err != nil {
 			return err
 		}

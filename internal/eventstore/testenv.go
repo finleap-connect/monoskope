@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"

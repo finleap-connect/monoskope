@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/test"
+	testEd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/eventdata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -34,7 +34,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	testCount := 0
 
 	createTestEventData := func(something string) evs.EventData {
-		ed, err := evs.ToEventDataFromProto(&test.TestEventData{Hello: something})
+		ed, err := evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
 		Expect(err).ToNot(HaveOccurred())
 		return ed
 	}

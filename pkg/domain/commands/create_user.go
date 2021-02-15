@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands/user"
+	commandsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -18,7 +18,7 @@ import (
 // CreateUserCommand is a command for creating a user.
 type CreateUserCommand struct {
 	aggregateId uuid.UUID
-	cmd.CreateUserCommand
+	commandsApi.CreateUserCommand
 }
 
 func (c *CreateUserCommand) AggregateID() uuid.UUID          { return c.aggregateId }

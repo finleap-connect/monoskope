@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
+	cmdApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -34,7 +34,7 @@ var _ = Describe("command_registry", func() {
 		err := registry.RegisterCommand(func() Command { return &testCommand{} })
 		Expect(err).ToNot(HaveOccurred())
 
-		proto := &api.TestCommandData{Test: "Hello world!"}
+		proto := &cmdApi.TestCommandData{Test: "Hello world!"}
 		any := &anypb.Any{}
 		err = any.MarshalFrom(proto)
 		Expect(err).ToNot(HaveOccurred())
@@ -60,7 +60,7 @@ var _ = Describe("command_registry", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = registry.HandleCommand(context.Background(), &testCommand{
-			TestCommandData: api.TestCommandData{Test: "world!"},
+			TestCommandData: cmdApi.TestCommandData{Test: "world!"},
 		})
 		Expect(err).ToNot(HaveOccurred())
 	})

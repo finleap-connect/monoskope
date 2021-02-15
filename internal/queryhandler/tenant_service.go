@@ -1,7 +1,7 @@
 package queryhandler
 
 import (
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 )
 
 // tenantServiceServer is the implementation of the TenantService API
