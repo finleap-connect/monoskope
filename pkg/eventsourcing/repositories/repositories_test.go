@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("repositories/in_memory", func() {
 	testProjection := newTestProjection(uuid.New())
-	testReadWrite := func(repo es.Repository) {
+	testReadWrite := func(repo es.ProjectionRepository) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -28,7 +28,7 @@ var _ = Describe("repositories/in_memory", func() {
 		Expect(len(projections)).To(BeNumerically("==", 1))
 		Expect(projections[0]).To(Equal(testProjection))
 	}
-	testRemove := func(repo es.Repository) {
+	testRemove := func(repo es.ProjectionRepository) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 

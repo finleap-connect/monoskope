@@ -9,11 +9,11 @@ import (
 
 type projectionRepoEventHandler struct {
 	projector  es.Projector
-	repository es.Repository
+	repository es.ProjectionRepository
 }
 
 // NewProjectionRepositoryEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
-func NewProjectionRepositoryEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
+func NewProjectionRepositoryEventHandler(projector es.Projector, repository es.ProjectionRepository) es.EventHandler {
 	return &projectionRepoEventHandler{
 		projector:  projector,
 		repository: repository,

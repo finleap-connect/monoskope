@@ -16,7 +16,7 @@ type remoteEventBus struct {
 	conn             *grpc.ClientConn
 }
 
-func NewMockEventBusPublisher(eventStoreAddr string) es.EventBusPublisher {
+func NewRemoteEventBus(eventStoreAddr string) es.EventBusPublisher {
 	return &remoteEventBus{
 		eventStoreAddr: eventStoreAddr,
 	}

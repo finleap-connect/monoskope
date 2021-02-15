@@ -28,6 +28,8 @@ var serverCmd = &cobra.Command{
 		var err error
 
 		// Create EventStore client
+		// remoteBusPublisher := messaging.NewRemoteEventBus(eventStoreAddr)
+
 		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err

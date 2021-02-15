@@ -15,7 +15,7 @@ type inMemoryRepository struct {
 }
 
 // NewInMemoryRepository creates a new repository which stores projections in memory.
-func NewInMemoryRepository() es.Repository {
+func NewInMemoryRepository() es.ProjectionRepository {
 	return &inMemoryRepository{
 		store: make(map[string]es.Projection),
 	}
