@@ -8,21 +8,35 @@ import (
 	. "github.com/onsi/gomega"
 	commandsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
 var _ = Describe("domain/handler", func() {
-	adminUser := &projections.User{Id: uuid.New().String(), Name: "admin", Email: "admin@monoskope.io"}
-	someUser := &projections.User{Id: uuid.New().String(), Name: "jane.doe", Email: "jane@monoskope.io"}
+	adminUser := &projections.User{User: projectionsApi.User{
+		Id:    uuid.New().String(),
+		Name:  "admin",
+		Email: "admin@monoskope.io",
+	}}
+	someUser := &projections.User{User: projectionsApi.User{
+		Id:    uuid.New().String(),
+		Name:  "some.user",
+		Email: "some.user@monoskope.io",
+	}}
 
-	adminRoleBinding := &projections.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String(), Resource: ""}
+	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{
+		Id:     uuid.New().String(),
+		UserId: adminUser.Id,
+		Role:   roles.Admin.String(),
+		Scope:  scopes.System.String(),
+	}}
 
 	inMemoryRoleRepo := es_repos.NewInMemoryProjectionRepository()
 	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)

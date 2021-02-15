@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -47,6 +47,7 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 		return nil, errors.New("could not handle event: " + event.String())
 	}
 
-	i.AggregateVersion++
+	i.IncrementVersion()
+
 	return i, nil
 }

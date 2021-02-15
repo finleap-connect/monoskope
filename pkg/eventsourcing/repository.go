@@ -9,7 +9,7 @@ import (
 // ReadOnlyProjectionRepository is a repository for reading projections.
 type ReadOnlyProjectionRepository interface {
 	// ById returns a projection for an ID.
-	ById(context.Context, string) (Projection, error)
+	ById(context.Context, uuid.UUID) (Projection, error)
 
 	// All returns all projections in the repository.
 	All(context.Context) ([]Projection, error)
@@ -21,7 +21,7 @@ type WriteOnlyProjectionRepository interface {
 	Upsert(context.Context, Projection) error
 
 	// Remove removes a projection by ID from the storage.
-	Remove(context.Context, string) error
+	Remove(context.Context, uuid.UUID) error
 }
 
 // ProjectionRepository is a repository for reading and writing projections.

@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -54,10 +55,18 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 					return nil, err
 				}
 
-				u.Roles = roles
+				u.Roles = toProtoRoles(roles)
 				return u, nil
 			}
 		}
 	}
 	return nil, fmt.Errorf("not found")
+}
+
+func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRoleBinding {
+	var mapped []*projectionsApi.UserRoleBinding
+	for _, role := range roles {
+		mapped = append(mapped, role.Proto())
+	}
+	return mapped
 }

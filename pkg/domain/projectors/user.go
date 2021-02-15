@@ -4,9 +4,9 @@ import (
 	"context"
 
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
@@ -49,6 +49,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 		return nil, errors.ErrInvalidEventType
 	}
 
-	i.AggregateVersion++
+	i.IncrementVersion()
+
 	return i, nil
 }

@@ -29,6 +29,6 @@ var _ = Describe("domain/user_repo", func() {
 		Expect(err).NotTo(HaveOccurred())
 		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(userProjection.GetAggregateVersion()).To(Equal(uint64(1)))
+		Expect(userProjection.Version()).To(Equal(uint64(1)))
 	})
 })

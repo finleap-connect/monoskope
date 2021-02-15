@@ -6,16 +6,17 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
 var _ = Describe("domain/user_repo", func() {
 	userId := uuid.New()
-	adminUser := &projections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
-	adminRoleBinding := &projections.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String(), Resource: ""}
+	adminUser := &projections.User{User: projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
+	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String()}}
 
 	It("can read/write projections", func() {
 		inMemoryRoleRepo := es_repos.NewInMemoryProjectionRepository()

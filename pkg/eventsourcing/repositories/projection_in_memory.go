@@ -4,25 +4,26 @@ import (
 	"context"
 	"sync"
 
+	"github.com/google/uuid"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 // inMemoryProjectionRepository is a repository which stores projections in memory.
 type inMemoryProjectionRepository struct {
-	store map[string]es.Projection
+	store map[uuid.UUID]es.Projection
 	mutex sync.RWMutex
 }
 
 // NewInMemoryProjectionRepository creates a new repository which stores projections in memory.
 func NewInMemoryProjectionRepository() es.ProjectionRepository {
 	return &inMemoryProjectionRepository{
-		store: make(map[string]es.Projection),
+		store: make(map[uuid.UUID]es.Projection),
 	}
 }
 
 // ById returns a projection for an ID.
-func (r *inMemoryProjectionRepository) ById(ctx context.Context, id string) (es.Projection, error) {
+func (r *inMemoryProjectionRepository) ById(ctx context.Context, id uuid.UUID) (es.Projection, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -49,12 +50,12 @@ func (r *inMemoryProjectionRepository) Upsert(ctx context.Context, p es.Projecti
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	r.store[p.GetId()] = p
+	r.store[p.ID()] = p
 	return nil
 }
 
 // Remove removes a projection by ID from the storage.
-func (r *inMemoryProjectionRepository) Remove(ctx context.Context, id string) error {
+func (r *inMemoryProjectionRepository) Remove(ctx context.Context, id uuid.UUID) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
