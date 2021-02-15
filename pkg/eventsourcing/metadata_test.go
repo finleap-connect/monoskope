@@ -8,7 +8,7 @@ import (
 )
 
 type metadataVal struct {
-	val string
+	Val string
 }
 
 var _ = Describe("MetadataManager", func() {
@@ -27,7 +27,7 @@ var _ = Describe("MetadataManager", func() {
 		manager := NewMetadataManagerFromContext(ctx)
 
 		val := &metadataVal{
-			val: "hello",
+			Val: "hello",
 		}
 		err := manager.SetObject(existingKey, val)
 		Expect(err).To(Not(HaveOccurred()))
@@ -35,13 +35,13 @@ var _ = Describe("MetadataManager", func() {
 		valResult := &metadataVal{}
 		err = manager.GetObject(existingKey, valResult)
 		Expect(err).To(Not(HaveOccurred()))
-		Expect(valResult.val).To(Equal(valResult.val))
+		Expect(valResult.Val).To(Equal(valResult.Val))
 	})
 	It("can get from existing context", func() {
 		manager := NewMetadataManagerFromContext(ctx)
 
 		val := &metadataVal{
-			val: "hello",
+			Val: "hello",
 		}
 		err := manager.SetObject(existingKey, val)
 		Expect(err).To(Not(HaveOccurred()))
@@ -56,6 +56,6 @@ var _ = Describe("MetadataManager", func() {
 		valResult := &metadataVal{}
 		err = nuManager.GetObject(existingKey, valResult)
 		Expect(err).To(Not(HaveOccurred()))
-		Expect(valResult.val).To(Equal(valResult.val))
+		Expect(valResult.Val).To(Equal(valResult.Val))
 	})
 })

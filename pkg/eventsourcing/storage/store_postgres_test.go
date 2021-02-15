@@ -13,14 +13,14 @@ import (
 )
 
 type metadataVal struct {
-	val string
+	Val string
 }
 
 var _ = Describe("storage/postgres", func() {
 	var userInformationKey = "userInformationKey"
 
 	manager := evs.NewMetadataManagerFromContext(context.Background())
-	err := manager.SetObject(userInformationKey, &metadataVal{val: "admin"})
+	err := manager.SetObject(userInformationKey, &metadataVal{Val: "admin"})
 	Expect(err).ToNot(HaveOccurred())
 	ctx := manager.GetContext()
 
@@ -131,7 +131,7 @@ var _ = Describe("storage/postgres", func() {
 		valResult := &metadataVal{}
 		err = evs.NewMetadataManagerFromContext(context.Background()).SetMetadata(storeEvents[0].Metadata()).GetObject(userInformationKey, valResult)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(valResult.val).To(Equal("admin"))
+		Expect(valResult.Val).To(Equal("admin"))
 	})
 	It("can filter events to load from the store by aggregate type", func() {
 		ev := createTestEvents()
