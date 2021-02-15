@@ -42,9 +42,9 @@ var _ = Describe("repositories/in_memory", func() {
 	}
 
 	It("can read/write projections", func() {
-		testReadWrite(NewInMemoryRepository())
+		testReadWrite(NewInMemoryProjectionRepository())
 	})
 	It("can remove projections", func() {
-		testRemove(NewInMemoryRepository())
+		testRemove(NewInMemoryProjectionRepository())
 	})
 })

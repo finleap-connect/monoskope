@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -26,15 +28,20 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		ctx := context.Background()
 
 		// Create EventStore client
-		// remoteBusPublisher := messaging.NewRemoteEventBus(eventStoreAddr)
-
 		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
+
+		// Setup domain
+		_, err = util.SetupCommandHandlerDomain(ctx)
+		if err != nil {
+			return err
+		}
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
