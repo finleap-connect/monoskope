@@ -11,16 +11,16 @@ import (
 func NewStoreQueryFromProto(protoFilter *esApi.EventFilter) (*es.StoreQuery, error) {
 	storeQuery := &es.StoreQuery{}
 
-	if val, ok := protoFilter.GetByAggregate().(*esApi.EventFilter_AggregateId); ok {
-		aId, err := uuid.Parse(val.AggregateId.GetValue())
+	if protoFilter.GetAggregateId() != nil {
+		aId, err := uuid.Parse(protoFilter.GetAggregateId().GetValue())
 		if err != nil {
 			return nil, errors.ErrCouldNotParseAggregateId
 		}
 		storeQuery.AggregateId = &aId
 	}
-	if val, ok := protoFilter.GetByAggregate().(*esApi.EventFilter_AggregateType); ok {
-		aType := es.AggregateType(val.AggregateType.GetValue())
-		storeQuery.AggregateType = &aType
+	if protoFilter.GetAggregateType() != nil {
+		aggregateType := es.AggregateType(protoFilter.GetAggregateType().GetValue())
+		storeQuery.AggregateType = &aggregateType
 	}
 
 	if protoFilter.GetMinVersion() != nil {

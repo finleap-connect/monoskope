@@ -20,23 +20,19 @@ var _ = Describe("Converters", func() {
 		minTimestamp := maxTimestamp.Add(-1 * time.Hour)
 
 		pf := &esApi.EventFilter{
-			ByAggregate:  &esApi.EventFilter_AggregateId{AggregateId: wrapperspb.String(aggregateId.String())},
-			MinVersion:   wrapperspb.UInt64(1),
-			MaxVersion:   wrapperspb.UInt64(4),
-			MinTimestamp: timestamppb.New(minTimestamp),
-			MaxTimestamp: timestamppb.New(maxTimestamp),
+			AggregateId:   wrapperspb.String(aggregateId.String()),
+			AggregateType: wrapperspb.String(aggregateType.String()),
+			MinVersion:    wrapperspb.UInt64(1),
+			MaxVersion:    wrapperspb.UInt64(4),
+			MinTimestamp:  timestamppb.New(minTimestamp),
+			MaxTimestamp:  timestamppb.New(maxTimestamp),
 		}
+
 		q, err := NewStoreQueryFromProto(pf)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(q).ToNot(BeNil())
-		Expect(q.AggregateId).To(Equal(&aggregateId))
-
-		pf.ByAggregate = &esApi.EventFilter_AggregateType{AggregateType: wrapperspb.String(aggregateType.String())}
-		q, err = NewStoreQueryFromProto(pf)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(q).ToNot(BeNil())
-		Expect(q.AggregateId).To(BeNil())
-		Expect(q.AggregateType).To(Equal(&aggregateType))
+		Expect(*q.AggregateId).To(Equal(aggregateId))
+		Expect(*q.AggregateType).To(Equal(aggregateType))
 		Expect(*q.MinVersion).To(Equal(pf.MinVersion.GetValue()))
 		Expect(*q.MaxVersion).To(Equal(pf.MaxVersion.GetValue()))
 		Expect(q.MinTimestamp).To(Equal(&minTimestamp))

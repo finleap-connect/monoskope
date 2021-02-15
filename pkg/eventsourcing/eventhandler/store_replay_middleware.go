@@ -45,9 +45,7 @@ func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.E
 func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event) error {
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		ByAggregate: &apiEs.EventFilter_AggregateType{
-			AggregateType: wrapperspb.String(event.AggregateID().String()),
-		},
+		AggregateType: wrapperspb.String(event.AggregateID().String()),
 	})
 	if err != nil {
 		return err

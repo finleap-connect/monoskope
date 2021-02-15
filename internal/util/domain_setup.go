@@ -36,7 +36,7 @@ func SetupQueryHandlerDomain(ctx context.Context, ebConsumer es.EventBusConsumer
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context) (es.AggregateRepository, error) {
+func SetupCommandHandlerDomain(ctx context.Context) (es.AggregateHandler, error) {
 	// ch.NewStoringAggregateHandler()
 	return nil, nil
 }

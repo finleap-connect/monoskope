@@ -38,12 +38,10 @@ message Event {
 
 // Request to get Events from to the store
 message EventFilter {
-  oneof by_aggregate {
-    // Filter events by aggregate_id
-    google.protobuf.StringValue aggregate_id = 1;
-    // Filter events for a specific aggregate type
-    google.protobuf.StringValue aggregate_type = 2;
-  }
+  // Filter events by aggregate_id
+  google.protobuf.StringValue aggregate_id = 1;
+  // Filter events for a specific aggregate type
+  google.protobuf.StringValue aggregate_type = 2;
 
   // Filter events with a version >= min_version
   google.protobuf.UInt64Value min_version = 3;
