@@ -30,11 +30,11 @@ type ProjectionRepository interface {
 	WriteOnlyProjectionRepository
 }
 
-// AggregateStore is responsible for loading and saving aggregates.
+// AggregateRepository is a repository for reading and writing aggregates.
 type AggregateRepository interface {
-	// Load loads the most recent version of an aggregate with a type and id.
+	// Load returns the most recent version of an aggregate.
 	Load(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
 
-	// Save stores all unsaved events for an aggregate.
+	// Save stores all in-flight events for an aggregate.
 	Save(context.Context, Aggregate) error
 }
