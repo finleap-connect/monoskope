@@ -90,18 +90,6 @@ func (env *TestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
 }
 
-func (env *TestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
-	conn, err := grpc.
-		NewGrpcConnectionFactory(env.GetApiAddr()).
-		WithInsecure().
-		WithBlock().
-		Build(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return api.NewEventStoreClient(conn), nil
-}
-
 func (env *TestEnv) Shutdown() error {
 	if err := env.publisher.Close(); err != nil {
 		return err

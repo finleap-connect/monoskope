@@ -9,14 +9,13 @@ import (
 )
 
 type userRoleBindingRepository struct {
-	es.ProjectionRepository
+	es.Repository
 }
 
 // Repository is a repository for reading and writing UserRoleBinding projections.
 type UserRoleBindingRepository interface {
-	es.ProjectionRepository
+	es.Repository
 	ReadOnlyUserRoleBindingRepository
-	WriteOnlyUserRoleBindingRepository
 }
 
 // ReadOnlyUserRepository is a repository for reading UserRoleBinding projections.
@@ -25,14 +24,10 @@ type ReadOnlyUserRoleBindingRepository interface {
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
 }
 
-// WriteOnlyUserRepository is a repository for reading UserRoleBinding projections.
-type WriteOnlyUserRoleBindingRepository interface {
-}
-
 // NewUserRepository creates a repository for reading and writing UserRoleBinding projections.
-func NewUserRoleBindingRepository(repository es.ProjectionRepository) UserRoleBindingRepository {
+func NewUserRoleBindingRepository(repository es.Repository) UserRoleBindingRepository {
 	return &userRoleBindingRepository{
-		ProjectionRepository: repository,
+		Repository: repository,
 	}
 }
 

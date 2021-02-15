@@ -11,13 +11,13 @@ import (
 )
 
 type userRepository struct {
-	es.ProjectionRepository
+	es.Repository
 	roleBindingRepo UserRoleBindingRepository
 }
 
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
-	es.ProjectionRepository
+	es.Repository
 	ReadOnlyUserRepository
 	WriteOnlyUserRepository
 }
@@ -33,10 +33,10 @@ type WriteOnlyUserRepository interface {
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.
-func NewUserRepository(userRepo es.ProjectionRepository, roleBindingRepo UserRoleBindingRepository) UserRepository {
+func NewUserRepository(userRepo es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
 	return &userRepository{
-		ProjectionRepository: userRepo,
-		roleBindingRepo:      roleBindingRepo,
+		Repository:      userRepo,
+		roleBindingRepo: roleBindingRepo,
 	}
 }
 
@@ -47,19 +47,27 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 		return nil, err
 	}
 
+	var user *projections.User
 	for _, p := range ps {
 		if u, ok := p.(*projections.User); ok {
 			if email == u.Email {
-				roles, err := r.roleBindingRepo.ByUserId(ctx, uuid.MustParse(u.GetId()))
-				if err != nil {
-					return nil, err
-				}
-
-				u.Roles = toProtoRoles(roles)
-				return u, nil
+				// User found
+				user = u
 			}
 		}
 	}
+
+	if user != nil {
+		// Find roles of user
+		roles, err := r.roleBindingRepo.ByUserId(ctx, uuid.MustParse(user.GetId()))
+		if err != nil {
+			return nil, err
+		}
+
+		user.Roles = toProtoRoles(roles)
+		return user, nil
+	}
+
 	return nil, fmt.Errorf("not found")
 }
 

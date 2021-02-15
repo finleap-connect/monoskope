@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// ReadOnlyProjectionRepository is a repository for reading projections.
-type ReadOnlyProjectionRepository interface {
+// ReadOnlyRepository is a repository for reading projections.
+type ReadOnlyRepository interface {
 	// ById returns a projection for an ID.
 	ById(context.Context, uuid.UUID) (Projection, error)
 
@@ -15,8 +15,8 @@ type ReadOnlyProjectionRepository interface {
 	All(context.Context) ([]Projection, error)
 }
 
-// WriteOnlyProjectionRepository is a repository for writing projections.
-type WriteOnlyProjectionRepository interface {
+// WriteOnlyRepository is a repository for writing projections.
+type WriteOnlyRepository interface {
 	// Upsert saves a projection in the storage or replaces an existing one.
 	Upsert(context.Context, Projection) error
 
@@ -24,10 +24,10 @@ type WriteOnlyProjectionRepository interface {
 	Remove(context.Context, uuid.UUID) error
 }
 
-// ProjectionRepository is a repository for reading and writing projections.
-type ProjectionRepository interface {
-	ReadOnlyProjectionRepository
-	WriteOnlyProjectionRepository
+// Repository is a repository for reading and writing projections.
+type Repository interface {
+	ReadOnlyRepository
+	WriteOnlyRepository
 }
 
 // AggregateRepository is a repository for reading and writing aggregates.
