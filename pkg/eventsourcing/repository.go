@@ -32,9 +32,9 @@ type ProjectionRepository interface {
 
 // AggregateRepository is a repository for reading and writing aggregates.
 type AggregateRepository interface {
-	// Load returns the most recent version of an aggregate.
-	Load(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
+	// Get returns the most recent version of an aggregate.
+	Get(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
 
-	// Save stores all in-flight events for an aggregate.
-	Save(context.Context, Aggregate) error
+	// Update stores all in-flight events for an aggregate.
+	Update(context.Context, Aggregate) error
 }

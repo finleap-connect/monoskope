@@ -25,7 +25,7 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 	var aggregate es.Aggregate
 
 	// Load the aggregate from the store
-	if aggregate, err := h.aggregateStore.Load(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
+	if aggregate, err := h.aggregateStore.Get(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
 		return err
 	} else if aggregate == nil {
 		return errors.ErrAggregateNotFound
@@ -37,5 +37,5 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 	}
 
 	// Store any emitted events
-	return h.aggregateStore.Save(ctx, aggregate)
+	return h.aggregateStore.Update(ctx, aggregate)
 }
