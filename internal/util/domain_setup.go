@@ -32,19 +32,5 @@ func SetupQueryHandlerDomain(ctx context.Context, ebConsumer es.EventBusConsumer
 		return nil, err
 	}
 
-	err = ebConsumer.AddHandler(ctx,
-		es.UseEventHandlerMiddleware(
-			eh.NewProjectionRepositoryEventHandler(
-				projectors.NewUserRoleBindingProjector(),
-				userRoleBindingRepo,
-			),
-			eh.NewEventStoreReplayMiddleware(esClient).Middleware,
-		),
-		ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return userRepo, nil
 }
