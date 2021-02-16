@@ -38,3 +38,7 @@ func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	}
 	return fmt.Errorf("couldn't handle command")
 }
+
+func (a *testAggregate) ApplyEvent(ev Event) error {
+	return nil
+}

@@ -82,7 +82,10 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("couldn't handle event")
 	}
+
 	return nil
 }
 

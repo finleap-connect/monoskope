@@ -54,6 +54,8 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		}
 		a.email = data.Email
 		a.name = data.Name
+	default:
+		return fmt.Errorf("couldn't handle event")
 	}
 	return nil
 }

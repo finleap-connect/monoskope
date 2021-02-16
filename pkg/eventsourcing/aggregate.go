@@ -25,6 +25,10 @@ type Aggregate interface {
 	Version() uint64
 	// Events returns the events that built up the aggregate.
 	Events() []Event
+	// ApplyEvent applies an Event on the aggregate.
+	ApplyEvent(Event) error
+	// IncrementVersion increments the version of the Aggregate.
+	IncrementVersion()
 }
 
 // BaseAggregate is the base implementation for all aggregates
@@ -60,6 +64,9 @@ func (a *BaseAggregate) Version() uint64 {
 
 // Events implements the Events method of the Aggregate interface.
 func (a *BaseAggregate) Events() []Event {
+	defer func() {
+		a.events = nil
+	}()
 	return a.events
 }
 
@@ -75,4 +82,9 @@ func (a *BaseAggregate) AppendEvent(eventType EventType, eventData EventData) Ev
 		a.Version())
 	a.events = append(a.events, newEvent)
 	return newEvent
+}
+
+// IncrementVersion implements the IncrementVersion method of the Aggregate interface.
+func (a *BaseAggregate) IncrementVersion() {
+	a.version++
 }
