@@ -46,10 +46,6 @@ func newMetadataManager() *metadataManager {
 	}
 }
 
-func NewMetadataManager() MetadataManager {
-	return newMetadataManager()
-}
-
 func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
 	m := newMetadataManager()
 	m.ctx = ctx
