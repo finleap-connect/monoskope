@@ -83,13 +83,14 @@ func NewEventFromProto(protoEvent *esApi.Event) (Event, error) {
 		panic(err)
 	}
 
-	return NewEvent(
+	return NewEventWithMetadata(
 		EventType(protoEvent.GetType()),
 		eventData,
 		protoEvent.Timestamp.AsTime(),
 		AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
 		protoEvent.GetAggregateVersion().GetValue(),
+		protoEvent.Metadata,
 	), nil
 }
 
@@ -107,6 +108,7 @@ func NewProtoFromEvent(storeEvent Event) (*esApi.Event, error) {
 		AggregateId:      storeEvent.AggregateID().String(),
 		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
 		Data:             a,
+		Metadata:         storeEvent.Metadata(),
 	}
 
 	return ev, nil
