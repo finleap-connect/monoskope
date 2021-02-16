@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	apiAddr        string
-	metricsAddr    string
-	keepAlive      bool
-	eventStoreAddr string
+	apiAddr          string
+	metricsAddr      string
+	keepAlive        bool
+	eventStoreAddr   string
+	queryHandlerAddr string
 )
 
 var serverCmd = &cobra.Command{
@@ -37,8 +38,15 @@ var serverCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
+		// Create UserService client
+		conn, userSvcClient, err := util.NewUserServiceClient(queryHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
 		// Setup domain
-		_, err = util.SetupCommandHandlerDomain(ctx)
+		err = util.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 		if err != nil {
 			return err
 		}
@@ -64,4 +72,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
+	flags.StringVar(&eventStoreAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 }

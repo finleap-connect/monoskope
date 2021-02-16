@@ -11,14 +11,20 @@ import (
 )
 
 type authorizationHandler struct {
-	userRepo repositories.ReadOnlyUserRepository
+	userRepo           repositories.ReadOnlyUserRepository
+	nextHandlerInChain es.CommandHandler
 }
 
 // NewAuthorizationHandler creates a new CommandHandler which handles authorization.
-func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) es.CommandHandler {
+func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *authorizationHandler {
 	return &authorizationHandler{
 		userRepo: userRepo,
 	}
+}
+
+func (m *authorizationHandler) Middleware(h es.CommandHandler) es.CommandHandler {
+	m.nextHandlerInChain = h
+	return m
 }
 
 // HandleCommand implements the CommandHandler interface
@@ -40,7 +46,11 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 
 	for _, policy := range cmd.Policies(ctx) {
 		if policyAccepts(user, policy) {
-			return nil
+			if h.nextHandlerInChain != nil {
+				return h.nextHandlerInChain.HandleCommand(ctx, cmd)
+			} else {
+				return nil
+			}
 		}
 	}
 	return errors.ErrUnauthorized

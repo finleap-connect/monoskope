@@ -11,9 +11,9 @@ import (
 
 type CommandRegistry interface {
 	CommandHandler
-	RegisterCommand(func() Command) error
+	RegisterCommand(func() Command)
 	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
-	SetHandler(handler CommandHandler, commandType CommandType) error
+	SetHandler(handler CommandHandler, commandType CommandType)
 }
 
 type commandRegistry struct {
@@ -37,17 +37,17 @@ func NewCommandRegistry() CommandRegistry {
 //
 // An example would be:
 //     RegisterCommand(func() Command { return &MyCommand{} })
-func (r *commandRegistry) RegisterCommand(factory func() Command) error {
+func (r *commandRegistry) RegisterCommand(factory func() Command) {
 	cmd := factory()
 	if cmd == nil {
 		r.log.Info("factory does not create commands")
-		return errors.ErrFactoryInvalid
+		panic(errors.ErrFactoryInvalid)
 	}
 
 	commandType := cmd.CommandType()
 	if commandType.String() == "" {
 		r.log.Info("attempt to register empty command type")
-		return errors.ErrEmptyCommandType
+		panic(errors.ErrEmptyCommandType)
 	}
 
 	r.mutex.Lock()
@@ -55,13 +55,11 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) error {
 
 	if _, ok := r.commands[commandType]; ok {
 		r.log.Info("attempt to register command already registered", "commandType", commandType)
-		return errors.ErrCommandTypeAlreadyRegistered
+		panic(errors.ErrCommandTypeAlreadyRegistered)
 	}
 	r.commands[commandType] = factory
 
 	r.log.Info("command has been registered.", "commandType", commandType)
-
-	return nil
 }
 
 // CreateCommand creates an command of a type with an ID using the factory
@@ -94,17 +92,15 @@ func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error 
 }
 
 // SetHandler adds a handler for a specific command.
-func (r *commandRegistry) SetHandler(handler CommandHandler, commandType CommandType) error {
+func (r *commandRegistry) SetHandler(handler CommandHandler, commandType CommandType) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	if _, ok := r.handlers[commandType]; ok {
 		r.log.Info("attempt to register command handler already registered", "commandType", commandType)
-		return errors.ErrHandlerAlreadySet
+		panic(errors.ErrHandlerAlreadySet)
 	}
 
 	r.handlers[commandType] = handler
 	r.log.Info("command handler has been registered.", "commandType", commandType)
-
-	return nil
 }

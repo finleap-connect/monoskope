@@ -12,9 +12,9 @@ type storingAggregateHandler struct {
 }
 
 // NewAggregateHandler creates a new CommandHandler which handles aggregates.
-func NewAggregateHandler(aggregateStore es.AggregateManager) es.CommandHandler {
+func NewAggregateHandler(aggregateManager es.AggregateManager) es.CommandHandler {
 	return &storingAggregateHandler{
-		aggregateManager: aggregateStore,
+		aggregateManager: aggregateManager,
 	}
 }
 
