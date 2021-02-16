@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -18,7 +19,9 @@ func NewUserRoleBindingProjector() es.Projector {
 }
 
 func (u *userRoleBindingProjector) NewProjection() es.Projection {
-	return &projections.UserRoleBinding{}
+	return &projections.UserRoleBinding{
+		UserRoleBinding: projectionsApi.UserRoleBinding{},
+	}
 }
 
 // Project updates the state of the projection occording to the given event.

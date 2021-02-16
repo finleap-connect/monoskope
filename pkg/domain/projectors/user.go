@@ -4,9 +4,10 @@ import (
 	"context"
 
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
@@ -24,7 +25,9 @@ func (u *userProjector) AggregateType() es.AggregateType {
 }
 
 func (u *userProjector) NewProjection() es.Projection {
-	return &projections.User{}
+	return &projections.User{
+		User: &projectionsApi.User{},
+	}
 }
 
 // Project updates the state of the projection occording to the given event.
