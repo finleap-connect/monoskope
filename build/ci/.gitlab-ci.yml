@@ -11,7 +11,7 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 
 .docker-builder:
-  image: registry.gitlab.figo.systems/platform/docker-builder:1.6.1
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.1
   only:
     - tags
 
