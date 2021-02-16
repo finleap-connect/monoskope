@@ -8,15 +8,13 @@ import (
 )
 
 type storingAggregateHandler struct {
-	aggregateType    es.AggregateType
-	aggregateHandler es.AggregateHandler
+	aggregateManager es.AggregateManager
 }
 
-// NewStoringAggregateHandler creates a new CommandHandler which handles aggregates.
-func NewStoringAggregateHandler(aggregateType es.AggregateType, aggregateStore es.AggregateHandler) es.CommandHandler {
+// NewAggregateHandler creates a new CommandHandler which handles aggregates.
+func NewAggregateHandler(aggregateStore es.AggregateManager) es.CommandHandler {
 	return &storingAggregateHandler{
-		aggregateType:    aggregateType,
-		aggregateHandler: aggregateStore,
+		aggregateManager: aggregateStore,
 	}
 }
 
@@ -25,7 +23,7 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 	var aggregate es.Aggregate
 
 	// Load the aggregate from the store
-	if aggregate, err := h.aggregateHandler.Get(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
+	if aggregate, err := h.aggregateManager.Get(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
 		return err
 	} else if aggregate == nil {
 		return errors.ErrAggregateNotFound
@@ -37,5 +35,5 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 	}
 
 	// Store any emitted events
-	return h.aggregateHandler.Update(ctx, aggregate)
+	return h.aggregateManager.Update(ctx, aggregate)
 }

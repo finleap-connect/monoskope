@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	testCommandType   CommandType   = "TestCommandType"
-	testAggregateType AggregateType = "TestAggregateType"
+	testCommandType CommandType = "TestCommandType"
 )
 
 // testCommand is a command for tests.
@@ -30,28 +29,3 @@ func (c *testCommand) SetData(a *anypb.Any) error {
 func (c *testCommand) Policies(ctx context.Context) []Policy {
 	return []Policy{}
 }
-
-// type testAggregate struct {
-// 	*BaseAggregate
-// }
-
-// func newTestAggregate() *testAggregate {
-// 	return &testAggregate{
-// 		BaseAggregate: NewBaseAggregate(TestAggregateType, uuid.New()),
-// 	}
-// }
-
-// func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
-// 	switch cmd := cmd.(type) {
-// 	case *testCommand:
-// 		ed, err := ToEventDataFromProto(&api_ev.TestEventData{
-// 			Hello: cmd.TestCommandData.GetTest(),
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-// 		_ = a.AppendEvent(TestEventType, ed)
-// 		return nil
-// 	}
-// 	return fmt.Errorf("couldn't handle command")
-// }

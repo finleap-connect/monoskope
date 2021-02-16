@@ -109,3 +109,15 @@ var (
 	// ErrMetadataInvalidType is when the data found in metadata for given key are of the wrong type.
 	ErrMetadataInvalidType = errors.New("metadata invalid type")
 )
+
+// Aggregate Registry Errors
+var (
+	// ErrEmptyAggregateType is when a aggregate type given is empty.
+	ErrEmptyAggregateType = errors.New("aggregate type must not be empty")
+
+	// ErrAggregateTypeAlreadyRegistered is when a aggregate was already registered.
+	ErrAggregateTypeAlreadyRegistered = errors.New("aggregate type already registered")
+
+	// ErrAggregateNotRegistered is when no aggregate factory was registered.
+	ErrAggregateNotRegistered = errors.New("aggregate not registered")
+)

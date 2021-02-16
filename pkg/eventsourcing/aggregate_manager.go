@@ -7,7 +7,7 @@ import (
 )
 
 // AggregateStore handles storing and loading Aggregates.
-type AggregateHandler interface {
+type AggregateManager interface {
 	// Get returns the most recent version of an aggregate.
 	Get(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
 

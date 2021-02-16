@@ -10,20 +10,20 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-// aggregateHandler handles storing and loading aggregates in memory.
-type aggregateHandler struct {
+// aggregateManager handles storing and loading aggregates in memory.
+type aggregateManager struct {
 	eventStoreClient esApi.EventStoreClient
 }
 
-// NewAggregateHandler creates a new AggregateHandler which loads/updates Aggregates with the given EventStore.
-func NewAggregateHandler(eventStoreClient esApi.EventStoreClient) es.AggregateHandler {
-	return &aggregateHandler{
+// NewAggregateManager creates a new AggregateHandler which loads/updates Aggregates with the given EventStore.
+func NewAggregateManager(eventStoreClient esApi.EventStoreClient) es.AggregateManager {
+	return &aggregateManager{
 		eventStoreClient: eventStoreClient,
 	}
 }
 
 // Get returns the most recent version of an aggregate.
-func (r *aggregateHandler) Get(ctx context.Context, aggregateType es.AggregateType, id uuid.UUID) (es.Aggregate, error) {
+func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateType, id uuid.UUID) (es.Aggregate, error) {
 	stream, err := r.eventStoreClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateId:   wrapperspb.String(id.String()),
 		AggregateType: wrapperspb.String(aggregateType.String()),
@@ -53,6 +53,6 @@ func (r *aggregateHandler) Get(ctx context.Context, aggregateType es.AggregateTy
 }
 
 // Update stores all in-flight events for an aggregate.
-func (r *aggregateHandler) Update(context.Context, es.Aggregate) error {
+func (r *aggregateManager) Update(context.Context, es.Aggregate) error {
 	panic("not implemented")
 }
