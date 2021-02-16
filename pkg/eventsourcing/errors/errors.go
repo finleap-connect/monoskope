@@ -102,14 +102,6 @@ var (
 	ErrProjectionOutdated = errors.New("projection version outdated")
 )
 
-// Metadata
-var (
-	// ErrMetadataNotFound is when not data found in metadata for given key.
-	ErrMetadataNotFound = errors.New("metadata not found")
-	// ErrMetadataInvalidType is when the data found in metadata for given key are of the wrong type.
-	ErrMetadataInvalidType = errors.New("metadata invalid type")
-)
-
 // Aggregate Registry Errors
 var (
 	// ErrEmptyAggregateType is when a aggregate type given is empty.

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 const (
@@ -28,13 +28,13 @@ type UserInformation struct {
 
 // domainMetadataManager is a domain specific metadata manager.
 type domainMetadataManager struct {
-	evs.MetadataManager
+	es.MetadataManager
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
 func NewDomainMetadataManager(ctx context.Context) (*domainMetadataManager, error) {
 	m := &domainMetadataManager{
-		evs.NewMetadataManagerFromContext(ctx),
+		es.NewMetadataManagerFromContext(ctx),
 	}
 	if err := m.SetComponentInformation(); err != nil {
 		return nil, err
