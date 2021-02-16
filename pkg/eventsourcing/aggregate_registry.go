@@ -18,7 +18,7 @@ type aggregateRegistry struct {
 	aggregates map[AggregateType]func() Aggregate
 }
 
-// newAggregateRegistry creates a new aggregate registry
+// NewAggregateRegistry creates a new aggregate registry
 func NewAggregateRegistry() AggregateRegistry {
 	return &aggregateRegistry{
 		log:        logger.WithName("aggregate-registry"),

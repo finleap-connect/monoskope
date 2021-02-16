@@ -43,11 +43,17 @@ func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
 func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) error {
-	userRepo := domainRepos.NewRemoteUserRepository(userService)
-	domainMiddleware := domainHandlers.NewAuthorizationHandler(userRepo)
-	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateManager := esManager.NewAggregateManager(aggregateRegistry, esClient)
-	handler := es.UseCommandHandlerMiddleware(esCommandHandler.NewAggregateHandler(aggregateManager), domainMiddleware.Middleware)
+	handler := es.UseCommandHandlerMiddleware(
+		esCommandHandler.NewAggregateHandler(
+			esManager.NewAggregateManager(
+				es.NewAggregateRegistry(),
+				esClient,
+			),
+		),
+		domainHandlers.NewAuthorizationHandler(
+			domainRepos.NewRemoteUserRepository(userService),
+		).Middleware,
+	)
 
 	commandRegistry := es.NewCommandRegistry()
 	commandRegistry.RegisterCommand(func() es.Command { return &commands.CreateUserCommand{} })

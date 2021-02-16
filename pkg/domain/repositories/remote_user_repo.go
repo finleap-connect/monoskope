@@ -13,7 +13,7 @@ type remoteUserRepository struct {
 	userService api.UserServiceClient
 }
 
-// NewUserRepository creates a repository for reading and writing user projections.
+// NewRemoteUserRepository creates a repository for reading user projections.
 func NewRemoteUserRepository(userService api.UserServiceClient) ReadOnlyUserRepository {
 	return &remoteUserRepository{
 		userService: userService,
