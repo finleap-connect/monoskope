@@ -247,7 +247,8 @@ func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 
 	if storeQuery.AggregateId != nil {
 		_ = dbQuery.Where("aggregate_id = ?", storeQuery.AggregateId)
-	} else if storeQuery.AggregateType != nil {
+	}
+	if storeQuery.AggregateType != nil {
 		_ = dbQuery.Where("aggregate_type = ?", storeQuery.AggregateType)
 	}
 
