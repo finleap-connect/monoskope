@@ -3,10 +3,12 @@ package util
 import (
 	"context"
 
+	"github.com/google/uuid"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	domainHandlers "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
@@ -32,7 +34,7 @@ func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer
 			),
 			esMiddleware.NewEventStoreReplayMiddleware(esClient).Middleware,
 		),
-		esConsumer.Matcher().MatchAggregateType(aggregates.User),
+		esConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
 	)
 	if err != nil {
 		return nil, err
@@ -43,10 +45,14 @@ func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
 func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) error {
+	aggregateRegistry := es.NewAggregateRegistry()
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id) })
+
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
 			esManager.NewAggregateManager(
-				es.NewAggregateRegistry(),
+				aggregateRegistry,
 				esClient,
 			),
 		),

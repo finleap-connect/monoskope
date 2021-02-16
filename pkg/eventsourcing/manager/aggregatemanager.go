@@ -66,7 +66,7 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 
 		if aggregate, ok := aggregates[event.AggregateID()]; !ok {
 			// Create new empty aggregate of type.
-			aggregate, err = r.registry.CreateAggregate(aggregateType)
+			aggregate, err = r.registry.CreateAggregate(aggregateType, event.AggregateID())
 			if err != nil {
 				return nil, err
 			}
@@ -126,7 +126,7 @@ func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateTy
 	}
 
 	// Create new empty aggregate of type.
-	aggregate, err := r.registry.CreateAggregate(aggregateType)
+	aggregate, err := r.registry.CreateAggregate(aggregateType, id)
 	if err != nil {
 		return nil, err
 	}
