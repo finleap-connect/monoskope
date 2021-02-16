@@ -21,6 +21,13 @@ type CreateUserCommand struct {
 	commandsApi.CreateUserCommand
 }
 
+func NewCreateUserCommand() *CreateUserCommand {
+	return &CreateUserCommand{
+		aggregateId:       uuid.New(),
+		CreateUserCommand: commandsApi.CreateUserCommand{},
+	}
+}
+
 func (c *CreateUserCommand) AggregateID() uuid.UUID          { return c.aggregateId }
 func (c *CreateUserCommand) AggregateType() es.AggregateType { return aggregates.User }
 func (c *CreateUserCommand) CommandType() es.CommandType     { return commands.CreateUser }

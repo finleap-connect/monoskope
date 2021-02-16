@@ -19,6 +19,13 @@ type CreateUserRoleBindingCommand struct {
 	commandsApi.CreateUserRoleBindingCommand
 }
 
+func NewCreateUserRoleBindingCommand() *CreateUserRoleBindingCommand {
+	return &CreateUserRoleBindingCommand{
+		aggregateId:                  uuid.New(),
+		CreateUserRoleBindingCommand: commandsApi.CreateUserRoleBindingCommand{},
+	}
+}
+
 func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
 func (c *CreateUserRoleBindingCommand) AggregateType() es.AggregateType {
 	return aggregates.UserRoleBinding
