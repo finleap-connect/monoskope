@@ -15,8 +15,8 @@ import (
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
 	*es.BaseAggregate
-	email string
-	name  string
+	Email string
+	Name  string
 }
 
 // AggregateType returns the type of the aggregate.
@@ -52,8 +52,8 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.email = data.Email
-		a.name = data.Name
+		a.Email = data.Email
+		a.Name = data.Name
 	default:
 		return fmt.Errorf("couldn't handle event")
 	}

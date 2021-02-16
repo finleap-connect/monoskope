@@ -26,6 +26,11 @@ func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType {
 	return aggregates.UserRoleBinding
 }
 
+// UserId returns the UserId of the UserRoleBindingAggregate.
+func (a *UserRoleBindingAggregate) UserId() uuid.UUID {
+	return a.userId
+}
+
 // Role returns the Role of the UserRoleBindingAggregate.
 func (a *UserRoleBindingAggregate) Role() es.Role {
 	return a.role

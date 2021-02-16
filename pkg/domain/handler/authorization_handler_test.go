@@ -20,12 +20,12 @@ import (
 )
 
 var _ = Describe("domain/handler", func() {
-	adminUser := &projections.User{User: projectionsApi.User{
+	adminUser := &projections.User{User: &projectionsApi.User{
 		Id:    uuid.New().String(),
 		Name:  "admin",
 		Email: "admin@monoskope.io",
 	}}
-	someUser := &projections.User{User: projectionsApi.User{
+	someUser := &projections.User{User: &projectionsApi.User{
 		Id:    uuid.New().String(),
 		Name:  "some.user",
 		Email: "some.user@monoskope.io",

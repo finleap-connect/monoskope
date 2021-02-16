@@ -33,9 +33,9 @@ type WriteOnlyUserRepository interface {
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.
-func NewUserRepository(userRepo es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
+func NewUserRepository(repository es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
 	return &userRepository{
-		Repository:      userRepo,
+		Repository:      repository,
 		roleBindingRepo: roleBindingRepo,
 	}
 }

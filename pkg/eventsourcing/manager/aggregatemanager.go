@@ -1,4 +1,4 @@
-package aggregatehandler
+package manager
 
 import (
 	"context"
@@ -23,6 +23,73 @@ func NewAggregateManager(aggregateRegistry es.AggregateRegistry, eventStoreClien
 		esClient: eventStoreClient,
 		registry: aggregateRegistry,
 	}
+}
+
+// Get returns the most recent version of an aggregate.
+func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateType) ([]es.Aggregate, error) {
+	// Retrieve events from store
+	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
+		AggregateType: wrapperspb.String(aggregateType.String()),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var eventStream []es.Event
+	for {
+		// Read next event
+		protoEvent, err := stream.Recv()
+
+		// End of stream
+		if err == io.EOF {
+			break
+		}
+		if err != nil { // Some other error
+			return nil, err
+		}
+
+		event, err := es.NewEventFromProto(protoEvent)
+		if err != nil { // Error converting
+			return nil, err
+		}
+
+		// Append events to the stream
+		eventStream = append(eventStream, event)
+	}
+
+	// Apply all events gathered from store on aggregate.
+	aggregates := make(map[uuid.UUID]es.Aggregate)
+	for _, event := range eventStream {
+		if event.AggregateType() != aggregateType {
+			return nil, errors.ErrInvalidAggregateType
+		}
+
+		if aggregate, ok := aggregates[event.AggregateID()]; !ok {
+			// Create new empty aggregate of type.
+			aggregate, err = r.registry.CreateAggregate(aggregateType)
+			if err != nil {
+				return nil, err
+			}
+			aggregates[event.AggregateID()] = aggregate
+		} else {
+
+			if err := aggregate.ApplyEvent(event); err != nil {
+				return nil, err
+			}
+
+			aggregate.IncrementVersion()
+		}
+	}
+
+	return toAggregateArray(aggregates), nil
+}
+
+func toAggregateArray(aggregateMap map[uuid.UUID]es.Aggregate) []es.Aggregate {
+	var aggregates []es.Aggregate
+	for _, aggregate := range aggregateMap {
+		aggregates = append(aggregates, aggregate)
+	}
+	return aggregates
 }
 
 // Get returns the most recent version of an aggregate.

@@ -8,6 +8,9 @@ import (
 
 // AggregateStore handles storing and loading Aggregates.
 type AggregateManager interface {
+	// Get returns the most recent version of all aggregate of a given type.
+	All(context.Context, AggregateType) ([]Aggregate, error)
+
 	// Get returns the most recent version of an aggregate.
 	Get(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
 

@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	projections.User
+	*projections.User
 	version uint64
 }
 
@@ -27,5 +27,5 @@ func (p *User) IncrementVersion() {
 
 // Proto gets the underlying proto representation.
 func (p *User) Proto() *projections.User {
-	return &p.User
+	return p.User
 }
