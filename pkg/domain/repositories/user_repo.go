@@ -8,6 +8,7 @@ import (
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 type userRepository struct {
@@ -24,6 +25,8 @@ type UserRepository interface {
 
 // ReadOnlyUserRepository is a repository for reading user projections.
 type ReadOnlyUserRepository interface {
+	// ById searches for the a user projection by it's id.
+	ByUserId(context.Context, string) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
 }
@@ -37,6 +40,49 @@ func NewUserRepository(repository es.Repository, roleBindingRepo UserRoleBinding
 	return &userRepository{
 		Repository:      repository,
 		roleBindingRepo: roleBindingRepo,
+	}
+}
+
+func (r *userRepository) addRolesToUser(ctx context.Context, user *projections.User) error {
+	// Find roles of user
+	roles, err := r.roleBindingRepo.ByUserId(ctx, user.ID())
+	if err != nil {
+		return err
+	}
+	user.Roles = toProtoRoles(roles)
+	return nil
+}
+
+func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRoleBinding {
+	var mapped []*projectionsApi.UserRoleBinding
+	for _, role := range roles {
+		mapped = append(mapped, role.Proto())
+	}
+	return mapped
+}
+
+// ById searches for the a user projection by it's id.
+func (r *userRepository) ByUserId(ctx context.Context, id string) (*projections.User, error) {
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	projection, err := r.ById(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	if user, ok := projection.(*projections.User); !ok {
+		return nil, errors.ErrInvalidProjectionType
+	} else {
+		// Find roles of user
+		err = r.addRolesToUser(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+
+		return user, nil
 	}
 }
 
@@ -59,22 +105,12 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 
 	if user != nil {
 		// Find roles of user
-		roles, err := r.roleBindingRepo.ByUserId(ctx, uuid.MustParse(user.GetId()))
+		err = r.addRolesToUser(ctx, user)
 		if err != nil {
 			return nil, err
 		}
-
-		user.Roles = toProtoRoles(roles)
 		return user, nil
 	}
 
 	return nil, fmt.Errorf("not found")
-}
-
-func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRoleBinding {
-	var mapped []*projectionsApi.UserRoleBinding
-	for _, role := range roles {
-		mapped = append(mapped, role.Proto())
-	}
-	return mapped
 }
