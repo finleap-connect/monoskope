@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -39,7 +39,7 @@ type Event interface {
 	// Event type specific event data.
 	Data() EventData
 	// Metadata is app-specific metadata originating user etc. when this event has been stored.
-	Metadata() map[EventMetadataKey]interface{}
+	Metadata() map[string][]byte
 	// A string representation of the event.
 	String() string
 }
@@ -57,13 +57,22 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 	}
 }
 
-// NewEventFromAggregate creates a new event.
-func NewEventFromAggregate(eventType EventType, data EventData, timestamp time.Time, aggregate Aggregate) Event {
-	return NewEvent(eventType, data, timestamp, aggregate.Type(), aggregate.ID(), aggregate.Version())
+// NewEvent creates a new event with metadata attached.
+func NewEventWithMetadata(eventType EventType, data EventData, timestamp time.Time,
+	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64, metadata map[string][]byte) Event {
+	return event{
+		eventType:        eventType,
+		data:             data,
+		timestamp:        timestamp,
+		aggregateType:    aggregateType,
+		aggregateID:      aggregateID,
+		aggregateVersion: aggregateVersion,
+		metadata:         metadata,
+	}
 }
 
 // NewEventFromProto converts proto events to Event
-func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
+func NewEventFromProto(protoEvent *esApi.Event) (Event, error) {
 	aggregateId, err := uuid.Parse(protoEvent.GetAggregateId())
 	if err != nil {
 		return nil, errors.ErrCouldNotParseAggregateId
@@ -74,30 +83,32 @@ func NewEventFromProto(protoEvent *api_es.Event) (Event, error) {
 		panic(err)
 	}
 
-	return NewEvent(
+	return NewEventWithMetadata(
 		EventType(protoEvent.GetType()),
 		eventData,
 		protoEvent.Timestamp.AsTime(),
 		AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
 		protoEvent.GetAggregateVersion().GetValue(),
+		protoEvent.Metadata,
 	), nil
 }
 
 // NewProtoFromEvent converts Event to proto events
-func NewProtoFromEvent(storeEvent Event) (*api_es.Event, error) {
+func NewProtoFromEvent(storeEvent Event) (*esApi.Event, error) {
 	a, err := storeEvent.Data().toAny()
 	if err != nil {
 		panic(err)
 	}
 
-	ev := &api_es.Event{
+	ev := &esApi.Event{
 		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
 		AggregateType:    storeEvent.AggregateType().String(),
 		AggregateId:      storeEvent.AggregateID().String(),
 		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
 		Data:             a,
+		Metadata:         storeEvent.Metadata(),
 	}
 
 	return ev, nil
@@ -111,7 +122,7 @@ type event struct {
 	aggregateType    AggregateType
 	aggregateID      uuid.UUID
 	aggregateVersion uint64
-	metadata         map[EventMetadataKey]interface{}
+	metadata         map[string][]byte
 }
 
 // EventType implements the EventType method of the Event interface.
@@ -145,7 +156,7 @@ func (e event) AggregateVersion() uint64 {
 }
 
 // Metadata implements the Metadata method of the Event interface.
-func (e event) Metadata() map[EventMetadataKey]interface{} {
+func (e event) Metadata() map[string][]byte {
 	return e.metadata
 }
 

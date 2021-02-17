@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -88,18 +88,6 @@ func NewTestEnv() (*TestEnv, error) {
 
 func (env *TestEnv) GetApiAddr() string {
 	return env.apiListener.Addr().String()
-}
-
-func (env *TestEnv) GetApiClient(ctx context.Context) (api.EventStoreClient, error) {
-	conn, err := grpc.
-		NewGrpcConnectionFactory(env.GetApiAddr()).
-		WithInsecure().
-		WithBlock().
-		Build(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return api.NewEventStoreClient(conn), nil
 }
 
 func (env *TestEnv) Shutdown() error {

@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 
-	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
@@ -29,9 +30,11 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		log := logger.WithName("server-cmd")
 		ctx := context.Background()
 
 		// Create EventStore client
+		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
 		esConnection, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
@@ -39,6 +42,7 @@ var serverCmd = &cobra.Command{
 		defer esConnection.Close()
 
 		// init message bus consumer
+		log.Info("Setting up message bus consumer...")
 		ebConsumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
@@ -46,12 +50,14 @@ var serverCmd = &cobra.Command{
 		defer ebConsumer.Close()
 
 		// Setup domain
+		log.Info("Seting up es/cqrs...")
 		userRepo, err := util.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}
 
 		// Create gRPC server and register implementation+
+		log.Info("Creating gRPC server...")
 		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
 			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer())
@@ -60,6 +66,7 @@ var serverCmd = &cobra.Command{
 		})
 
 		// Finally start the server
+		log.Info("gRPC server start serving...")
 		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }

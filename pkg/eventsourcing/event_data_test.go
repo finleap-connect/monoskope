@@ -3,13 +3,13 @@ package eventsourcing
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commands"
+	cmdApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var _ = Describe("EventData", func() {
-	getProto := func() *api.TestCommandData {
-		return &api.TestCommandData{Test: "Hello world!"}
+	getProto := func() *cmdApi.TestCommandData {
+		return &cmdApi.TestCommandData{Test: "Hello world!"}
 	}
 	eventDataFromProto := func() EventData {
 		eventData, err := ToEventDataFromProto(getProto())
@@ -39,7 +39,7 @@ var _ = Describe("EventData", func() {
 	})
 	It("can unmarshall to proto", func() {
 		eventData := eventDataFromProto()
-		proto := &api.TestCommandData{}
+		proto := &cmdApi.TestCommandData{}
 		err := eventData.ToProto(proto)
 		Expect(err).To(Not(HaveOccurred()))
 		Expect(proto.GetTest()).To(Equal(getProto().GetTest()))

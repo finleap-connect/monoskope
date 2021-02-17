@@ -16,6 +16,7 @@ func (t AggregateType) String() string {
 
 // Aggregate is the interface definition for all aggregates
 type Aggregate interface {
+	CommandHandler
 	// Type is the type of the aggregate that the event can be applied to.
 	Type() AggregateType
 	// ID is the id of the aggregate that the event should be applied to.
@@ -24,6 +25,10 @@ type Aggregate interface {
 	Version() uint64
 	// Events returns the events that built up the aggregate.
 	Events() []Event
+	// ApplyEvent applies an Event on the aggregate.
+	ApplyEvent(Event) error
+	// IncrementVersion increments the version of the Aggregate.
+	IncrementVersion()
 }
 
 // BaseAggregate is the base implementation for all aggregates
@@ -59,17 +64,27 @@ func (a *BaseAggregate) Version() uint64 {
 
 // Events implements the Events method of the Aggregate interface.
 func (a *BaseAggregate) Events() []Event {
+	defer func() {
+		a.events = nil
+	}()
 	return a.events
 }
 
 // AppendEvent appends an event to the events the aggregate was build upon.
 func (a *BaseAggregate) AppendEvent(eventType EventType, eventData EventData) Event {
 	a.version++
-	newEvent := NewEventFromAggregate(
+	newEvent := NewEvent(
 		eventType,
 		eventData,
 		time.Now().UTC(),
-		a)
+		a.Type(),
+		a.ID(),
+		a.Version())
 	a.events = append(a.events, newEvent)
 	return newEvent
+}
+
+// IncrementVersion implements the IncrementVersion method of the Aggregate interface.
+func (a *BaseAggregate) IncrementVersion() {
+	a.version++
 }

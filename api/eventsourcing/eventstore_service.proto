@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+import "api/eventsourcing/messages.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing";
+
+package eventsourcing;
+
+// API of the Monoskope EventStore.
+service EventStore {
+  // Stream events to the store.
+  rpc Store(stream Event) returns (google.protobuf.Empty);
+  // Get a stream of Events
+  rpc Retrieve(EventFilter) returns (stream Event);
+}

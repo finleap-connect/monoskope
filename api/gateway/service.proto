@@ -3,7 +3,7 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "api/commands/command.proto";
+import "api/eventsourcing/commands/command.proto";
 import "google/protobuf/empty.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";

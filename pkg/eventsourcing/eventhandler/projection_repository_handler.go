@@ -22,7 +22,7 @@ func NewProjectionRepositoryEventHandler(projector es.Projector, repository es.R
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
-	projection, err := h.repository.ById(ctx, event.AggregateID().String())
+	projection, err := h.repository.ById(ctx, event.AggregateID())
 
 	// If error is not found create new projection.
 	if err != nil {
@@ -34,11 +34,11 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	}
 
 	// Check version.
-	if projection.GetAggregateVersion() >= event.AggregateVersion() {
+	if projection.Version() >= event.AggregateVersion() {
 		// Ignore old/duplicate events.
 		return nil
 	}
-	if projection.GetAggregateVersion()+1 != event.AggregateVersion() {
+	if projection.Version()+1 != event.AggregateVersion() {
 		// Version of event is not exactly one higher than the projection.
 		return errors.ErrProjectionOutdated
 	}
@@ -50,14 +50,14 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	}
 
 	// Check version again.
-	if projection.GetAggregateVersion() != event.AggregateVersion() {
+	if projection.Version() != event.AggregateVersion() {
 		// Project version and Event version do not match after projection.
 		return errors.ErrIncorrectAggregateVersion
 	}
 
 	if projection == nil {
 		// Remove projection from repo.
-		return h.repository.Remove(ctx, event.AggregateID().String())
+		return h.repository.Remove(ctx, event.AggregateID())
 	} else {
 		// Upsert projection in repo.
 		return h.repository.Upsert(ctx, projection)

@@ -87,6 +87,8 @@ var (
 var (
 	// ErrProjectionNotFound is when the requested Projection was not found in the repository.
 	ErrProjectionNotFound = errors.New("not found")
+	// ErrAggregateNotFound is when the requested Aggregate was not found in the repository.
+	ErrAggregateNotFound = errors.New("not found")
 )
 
 var (
@@ -98,4 +100,16 @@ var (
 
 	// ErrProjectionOutdated is when the an event received leads to the conclusion that one or more events have not been received.
 	ErrProjectionOutdated = errors.New("projection version outdated")
+)
+
+// Aggregate Registry Errors
+var (
+	// ErrEmptyAggregateType is when a aggregate type given is empty.
+	ErrEmptyAggregateType = errors.New("aggregate type must not be empty")
+
+	// ErrAggregateTypeAlreadyRegistered is when a aggregate was already registered.
+	ErrAggregateTypeAlreadyRegistered = errors.New("aggregate type already registered")
+
+	// ErrAggregateNotRegistered is when no aggregate factory was registered.
+	ErrAggregateNotRegistered = errors.New("aggregate not registered")
 )

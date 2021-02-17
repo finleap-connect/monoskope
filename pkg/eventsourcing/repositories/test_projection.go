@@ -3,20 +3,24 @@ package repositories
 import "github.com/google/uuid"
 
 type testProjection struct {
-	Id      string
-	Version uint64
+	id      uuid.UUID
+	version uint64
 }
 
 func newTestProjection(id uuid.UUID) *testProjection {
 	return &testProjection{
-		Id: id.String(),
+		id: id,
 	}
 }
 
-func (t testProjection) GetId() string {
-	return t.Id
+func (t testProjection) ID() uuid.UUID {
+	return t.id
 }
 
-func (t testProjection) GetAggregateVersion() uint64 {
-	return t.Version
+func (t testProjection) Version() uint64 {
+	return t.version
+}
+
+func (t testProjection) IncrementVersion() {
+	t.version++
 }

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+import "api/domain/common/messages.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common";
+
+package common;
+
+// API for retrieving version information about a component.
+service ServiceInformationService {
+  // Get information about the service. This can include information for other
+  // services additionally.
+  rpc GetServiceInformation(google.protobuf.Empty)
+      returns (stream ServiceInformation);
+}

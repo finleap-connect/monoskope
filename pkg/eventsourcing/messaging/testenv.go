@@ -23,13 +23,13 @@ func NewTestEnv() (*TestEnv, error) {
 		TestEnv: test.NewTestEnv("MessagingTestEnv"),
 	}
 
+	if err := env.CreateDockerPool(); err != nil {
+		return nil, err
+	}
+
 	warumupSeconds := 30
-	if _, ok := os.LookupEnv("CI"); ok {
+	if test.IsRunningInCI() {
 		warumupSeconds = 0 // no warmup necessary in CI
-	} else {
-		if err := env.CreateDockerPool(); err != nil {
-			return nil, err
-		}
 	}
 
 	if v := os.Getenv("AMQP_URL"); v != "" {

@@ -2,14 +2,15 @@ package eventsourcing
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 )
 
-// EventMetadataKey is the base key type for metadata.
-type EventMetadataKey int
-
 // metadataKey is the key type for metadata stored in context.
-var metadataKey EventMetadataKey
+type metadataKeyType struct {
+}
+
+var metadataKey metadataKeyType
 
 /*
  MetadataManager is an interface for a storage of metadata.
@@ -20,42 +21,36 @@ type MetadataManager interface {
 	GetContext() context.Context
 
 	// GetMetadata returns the metadata of this manager.
-	GetMetadata() map[EventMetadataKey]interface{}
+	GetMetadata() map[string][]byte
 	// SetMetadata sets the metadata of this manager.
-	SetMetadata(map[EventMetadataKey]interface{}) MetadataManager
+	SetMetadata(map[string][]byte) MetadataManager
 
 	// Get returns the information stored for the key.
-	Get(EventMetadataKey) (interface{}, bool)
-	// Get returns the information stored for the key as bool.
-	GetBool(EventMetadataKey) (bool, error)
-	// Get returns the information stored for the key as string.
-	GetString(EventMetadataKey) (string, error)
+	Get(string) ([]byte, bool)
+	GetObject(string, interface{}) error
 
 	// Set stores information for the key.
-	Set(EventMetadataKey, interface{}) MetadataManager
+	Set(string, []byte) MetadataManager
+	SetObject(string, interface{}) error
 }
 
 type metadataManager struct {
 	ctx  context.Context
-	data map[EventMetadataKey]interface{}
+	data map[string][]byte
 }
 
 func newMetadataManager() *metadataManager {
 	return &metadataManager{
 		ctx:  context.Background(),
-		data: make(map[EventMetadataKey]interface{}),
+		data: make(map[string][]byte),
 	}
-}
-
-func NewMetadataManager() MetadataManager {
-	return newMetadataManager()
 }
 
 func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
 	m := newMetadataManager()
 	m.ctx = ctx
 
-	d, ok := ctx.Value(metadataKey).(map[EventMetadataKey]interface{})
+	d, ok := ctx.Value(metadataKey).(map[string][]byte)
 	if ok {
 		m.data = d
 	}
@@ -63,49 +58,40 @@ func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
 	return m
 }
 
-func (m *metadataManager) GetMetadata() map[EventMetadataKey]interface{} {
+func (m *metadataManager) GetMetadata() map[string][]byte {
 	return m.data
 }
 
-func (m *metadataManager) SetMetadata(metadata map[EventMetadataKey]interface{}) MetadataManager {
+func (m *metadataManager) SetMetadata(metadata map[string][]byte) MetadataManager {
 	m.data = metadata
 	return m
 }
 
-func (m *metadataManager) Get(key EventMetadataKey) (interface{}, bool) {
+func (m *metadataManager) Get(key string) ([]byte, bool) {
 	v, ok := m.data[key]
 	return v, ok
 }
 
-func (m *metadataManager) Set(key EventMetadataKey, value interface{}) MetadataManager {
+func (m *metadataManager) Set(key string, value []byte) MetadataManager {
 	m.data[key] = value
 	return m
 }
 
-func (m *metadataManager) GetString(key EventMetadataKey) (string, error) {
-	iface, ok := m.Get(key)
-	if !ok {
-		return "", fmt.Errorf("not found")
+func (m *metadataManager) SetObject(key string, v interface{}) error {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		return err
 	}
-
-	stringValue, ok := iface.(string)
-	if !ok {
-		return "", fmt.Errorf("invalid type")
-	}
-	return stringValue, nil
+	m.Set(key, bytes)
+	return nil
 }
 
-func (m *metadataManager) GetBool(key EventMetadataKey) (bool, error) {
-	iface, ok := m.Get(key)
-	if !ok {
-		return false, fmt.Errorf("not found")
+func (m *metadataManager) GetObject(key string, v interface{}) error {
+	bytes, found := m.Get(key)
+	if !found {
+		return fmt.Errorf("not found")
 	}
-
-	boolValue, ok := iface.(bool)
-	if !ok {
-		return false, fmt.Errorf("invalid type")
-	}
-	return boolValue, nil
+	return json.Unmarshal(bytes, v)
 }
 
 // GetContext returns a new context enriched with the metadata of this manager.

@@ -5,11 +5,10 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 )
 
@@ -19,7 +18,7 @@ type TestEnv struct {
 	grpcServer        *grpc.Server
 	eventStoreTestEnv *eventstore.TestEnv
 	esConn            *ggrpc.ClientConn
-	esClient          esApi.EventStoreClient
+	esClient          api.EventStoreClient
 }
 
 func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {

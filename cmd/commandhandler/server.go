@@ -1,9 +1,12 @@
 package main
 
 import (
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/commandhandler"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
+	"context"
+
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
@@ -14,10 +17,11 @@ import (
 )
 
 var (
-	apiAddr        string
-	metricsAddr    string
-	keepAlive      bool
-	eventStoreAddr string
+	apiAddr          string
+	metricsAddr      string
+	keepAlive        bool
+	eventStoreAddr   string
+	queryHandlerAddr string
 )
 
 var serverCmd = &cobra.Command{
@@ -26,15 +30,34 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		ctx := context.Background()
+		log := logger.WithName("server-cmd")
 
 		// Create EventStore client
+		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
 		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
+		// Create UserService client
+		log.Info("Connectin query handler...", "queryHandlerAddr", queryHandlerAddr)
+		conn, userSvcClient, err := util.NewUserServiceClient(queryHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		// Setup domain
+		log.Info("Seting up es/cqrs...")
+		err = util.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		if err != nil {
+			return err
+		}
+
 		// Create gRPC server and register implementation
+		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
@@ -43,6 +66,7 @@ var serverCmd = &cobra.Command{
 		})
 
 		// Finally start the server
+		log.Info("gRPC server start serving...")
 		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
@@ -55,4 +79,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
+	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 }

@@ -1,0 +1,32 @@
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common";
+
+package common;
+
+// ServiceInformation are the version and commit hash of a service
+message ServiceInformation {
+  // version
+  string version = 1;
+  // name
+  string name = 2;
+  // commit hash of the service
+  string commit = 3;
+}
+
+// UserMetadata are the information about a user provided by the identity
+// provider
+message UserMetadata {
+  // Identity of the user, called subject in OpenID (sub)
+  string subject = 1;
+  // Issuing authority (iss)
+  string issuer = 2;
+  // Email address of the user
+  string email = 3;
+  // Name of the user
+  string name = 4;
+}

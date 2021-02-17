@@ -5,9 +5,10 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/common"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
 )
@@ -25,8 +26,10 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
+		log := logger.WithName("server-cmd")
 
 		// init event store
+		log.Info("Setting up event store...")
 		store, err := util.NewEventStore()
 		if err != nil {
 			return err
@@ -34,6 +37,7 @@ var serverCmd = &cobra.Command{
 		defer store.Close()
 
 		// init message bus publisher
+		log.Info("Setting up message bus publisher...")
 		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
@@ -41,13 +45,15 @@ var serverCmd = &cobra.Command{
 		defer publisher.Close()
 
 		// Create the server
+		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
+			api_es.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
 		// Finally start the server
+		log.Info("gRPC server start serving...")
 		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }

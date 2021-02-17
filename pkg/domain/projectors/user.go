@@ -3,10 +3,11 @@ package projectors
 import (
 	"context"
 
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
-	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
@@ -24,7 +25,9 @@ func (u *userProjector) AggregateType() es.AggregateType {
 }
 
 func (u *userProjector) NewProjection() es.Projection {
-	return &projections.User{}
+	return &projections.User{
+		User: &projectionsApi.User{},
+	}
 }
 
 // Project updates the state of the projection occording to the given event.
@@ -49,6 +52,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 		return nil, errors.ErrInvalidEventType
 	}
 
-	i.AggregateVersion++
+	i.IncrementVersion()
+
 	return i, nil
 }

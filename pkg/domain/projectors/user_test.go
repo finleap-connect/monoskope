@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -29,6 +29,6 @@ var _ = Describe("domain/user_repo", func() {
 		Expect(err).NotTo(HaveOccurred())
 		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(userProjection.GetAggregateVersion()).To(Equal(uint64(1)))
+		Expect(userProjection.Version()).To(Equal(uint64(1)))
 	})
 })

@@ -47,10 +47,6 @@ func NewTestEnv() (*TestEnv, error) {
 	return env, nil
 }
 
-func (env *TestEnv) GetApiAddr() string {
-	return env.apiListener.Addr().String()
-}
-
 func (env *TestEnv) Shutdown() error {
 	if err := env.queryHandlerTestEnv.Shutdown(); err != nil {
 		return err

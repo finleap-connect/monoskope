@@ -135,13 +135,14 @@ func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 		return errors.ErrMessageNotConnected
 	}
 
-	re := &rabbitEvent{
+	re := &rabbitMessage{
 		EventType:        event.EventType(),
 		Data:             event.Data(),
 		Timestamp:        event.Timestamp(),
 		AggregateType:    event.AggregateType(),
 		AggregateID:      event.AggregateID(),
 		AggregateVersion: event.AggregateVersion(),
+		Metadata:         event.Metadata(),
 	}
 
 	bytes, err := json.Marshal(re)
@@ -448,7 +449,7 @@ func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName strin
 			}
 		}
 
-		err = handler.HandleEvent(ctx, evs.NewEvent(re.EventType, re.Data, re.Timestamp, re.AggregateType, re.AggregateID, re.AggregateVersion))
+		err = handler.HandleEvent(ctx, re)
 		if err != nil {
 			if err := d.Nack(false, false); err != nil {
 				b.log.Error(err, "Failed to NACK event.")
@@ -463,11 +464,57 @@ func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName strin
 }
 
 // rabbitEvent implements the message body transfered via rabbitmq
-type rabbitEvent struct {
+type rabbitMessage struct {
 	EventType        evs.EventType
 	Data             evs.EventData
 	Timestamp        time.Time
 	AggregateType    evs.AggregateType
 	AggregateID      uuid.UUID
 	AggregateVersion uint64
+	Metadata         map[string][]byte
+}
+
+// rabbitEvent is the private implementation of the Event interface for a rabbitmq message bus.
+type rabbitEvent struct {
+	rabbitMessage
+}
+
+// EventType implements the EventType method of the Event interface.
+func (e rabbitEvent) EventType() evs.EventType {
+	return e.rabbitMessage.EventType
+}
+
+// Data implements the Data method of the Event interface.
+func (e rabbitEvent) Data() evs.EventData {
+	return e.rabbitMessage.Data
+}
+
+// Timestamp implements the Timestamp method of the Event interface.
+func (e rabbitEvent) Timestamp() time.Time {
+	return e.rabbitMessage.Timestamp
+}
+
+// AggregateType implements the AggregateType method of the Event interface.
+func (e rabbitEvent) AggregateType() evs.AggregateType {
+	return e.rabbitMessage.AggregateType
+}
+
+// AggrgateID implements the AggrgateID method of the Event interface.
+func (e rabbitEvent) AggregateID() uuid.UUID {
+	return e.rabbitMessage.AggregateID
+}
+
+// AggregateVersion implements the AggregateVersion method of the Event interface.
+func (e rabbitEvent) AggregateVersion() uint64 {
+	return e.rabbitMessage.AggregateVersion
+}
+
+// AggregateVersion implements the AggregateVersion method of the Event interface.
+func (e rabbitEvent) Metadata() map[string][]byte {
+	return e.rabbitMessage.Metadata
+}
+
+// String implements the String method of the Event interface.
+func (e rabbitEvent) String() string {
+	return fmt.Sprintf("%s@%d", e.rabbitMessage.EventType, e.rabbitMessage.AggregateVersion)
 }

@@ -2,25 +2,25 @@ package usecases
 
 import (
 	"github.com/google/uuid"
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
-// NewStoreQueryFromProto converts proto api_es.EventFilter to storage.StoreQuery
-func NewStoreQueryFromProto(protoFilter *api_es.EventFilter) (*evs.StoreQuery, error) {
-	storeQuery := &evs.StoreQuery{}
+// NewStoreQueryFromProto converts proto esApi.EventFilter to storage.StoreQuery
+func NewStoreQueryFromProto(protoFilter *esApi.EventFilter) (*es.StoreQuery, error) {
+	storeQuery := &es.StoreQuery{}
 
-	if val, ok := protoFilter.GetByAggregate().(*api_es.EventFilter_AggregateId); ok {
-		aId, err := uuid.Parse(val.AggregateId.GetValue())
+	if protoFilter.GetAggregateId() != nil {
+		aId, err := uuid.Parse(protoFilter.GetAggregateId().GetValue())
 		if err != nil {
 			return nil, errors.ErrCouldNotParseAggregateId
 		}
 		storeQuery.AggregateId = &aId
 	}
-	if val, ok := protoFilter.GetByAggregate().(*api_es.EventFilter_AggregateType); ok {
-		aType := evs.AggregateType(val.AggregateType.GetValue())
-		storeQuery.AggregateType = &aType
+	if protoFilter.GetAggregateType() != nil {
+		aggregateType := es.AggregateType(protoFilter.GetAggregateType().GetValue())
+		storeQuery.AggregateType = &aggregateType
 	}
 
 	if protoFilter.GetMinVersion() != nil {

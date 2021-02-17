@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -15,8 +15,8 @@ import (
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
 	*es.BaseAggregate
-	email string
-	name  string
+	Email string
+	Name  string
 }
 
 // AggregateType returns the type of the aggregate.
@@ -34,7 +34,6 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
 		// TODO: check if user already exists
-		// TODO: check if user is allowed to do this
 		if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.UserMetadata.Email, Name: cmd.UserMetadata.Name}); err != nil {
 			return err
 		} else if err = a.ApplyEvent(a.AppendEvent(events.UserCreated, ed)); err != nil {
@@ -53,8 +52,10 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.email = data.Email
-		a.name = data.Name
+		a.Email = data.Email
+		a.Name = data.Name
+	default:
+		return fmt.Errorf("couldn't handle event")
 	}
 	return nil
 }

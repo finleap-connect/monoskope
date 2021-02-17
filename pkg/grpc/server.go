@@ -28,8 +28,7 @@ type Server struct {
 	// Logger interface
 	log logger.Logger
 	//
-	shutdown   *util.ShutdownWaitGroup
-	onShutdown func()
+	shutdown *util.ShutdownWaitGroup
 }
 
 // NewServer returns a new configured instance of Server
@@ -74,10 +73,6 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 // RegisterService registers your gRPC service implementation with the server
 func (s *Server) RegisterService(f func(grpc.ServiceRegistrar)) {
 	f(s.grpc)
-}
-
-func (s *Server) RegisterOnShutdown(f func()) {
-	s.onShutdown = f
 }
 
 // Serve starts the api listeners of the Server
@@ -136,10 +131,6 @@ func (s *Server) ServeFromListener(apiLis net.Listener, metricsLis net.Listener)
 	s.log.Info("starting to serve grpc", "addr", apiLis.Addr())
 	err := s.grpc.Serve(apiLis)
 	s.log.Info("grpc server stopped")
-
-	if s.onShutdown != nil {
-		s.onShutdown()
-	}
 
 	// Check if we are expecting shutdown
 	if !shutdown.IsExpected() {

@@ -3,48 +3,75 @@ package util
 import (
 	"context"
 
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"github.com/google/uuid"
+	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	domainHandlers "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
-	domainRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	eh "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
+	esCommandHandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/commandhandler"
+	esm "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
+	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
 // SetupQueryHandlerDomain sets up the necessary handlers/projectors/repositories for the query side of es/cqrs.
-func SetupQueryHandlerDomain(ctx context.Context, ebConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (domainRepos.UserRepository, error) {
-	// Setup event sourcing
-	userRoleBindingRepo := domainRepos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
-	userRepo := domainRepos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
+func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (repos.UserRepository, error) {
+	// Setup repositories
+	userRepo := repos.NewUserRepository(
+		esRepos.NewInMemoryRepository(),
+		repos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository()),
+	)
 
-	err := ebConsumer.AddHandler(ctx,
+	// Setup event handler and middleware
+	err := esConsumer.AddHandler(ctx,
 		es.UseEventHandlerMiddleware(
-			eh.NewProjectionRepositoryEventHandler(
+			esm.NewProjectionRepositoryEventHandler(
 				projectors.NewUserProjector(),
 				userRepo,
 			),
-			eh.NewEventStoreReplayMiddleware(esClient).Middleware,
+			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
 		),
-		ebConsumer.Matcher().MatchAggregateType(aggregates.User),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ebConsumer.AddHandler(ctx,
-		es.UseEventHandlerMiddleware(
-			eh.NewProjectionRepositoryEventHandler(
-				projectors.NewUserRoleBindingProjector(),
-				userRoleBindingRepo,
-			),
-			eh.NewEventStoreReplayMiddleware(esClient).Middleware,
-		),
-		ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
+		esConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return userRepo, nil
+}
+
+// SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
+func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) error {
+	// Register aggregates
+	aggregateRegistry := es.NewAggregateRegistry()
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id) })
+
+	// Register command handler and middleware
+	handler := es.UseCommandHandlerMiddleware(
+		esCommandHandler.NewAggregateHandler(
+			esManager.NewAggregateManager(
+				aggregateRegistry,
+				esClient,
+			),
+		),
+		domainHandlers.NewAuthorizationHandler(
+			repos.NewRemoteUserRepository(userService),
+		).Middleware,
+	)
+
+	// Register commands
+	commandRegistry := es.NewCommandRegistry()
+	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserCommand() })
+	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserRoleBindingCommand() })
+	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
+	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
+
+	return nil
 }

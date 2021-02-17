@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+import "api/domain/projections/messages.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
+
+package domain;
+
+// UserService is a service to query users.
+service UserService {
+  // GetAll returns all users.
+  rpc GetAll(google.protobuf.Empty) returns (stream projections.User);
+  // GetById returns the user found by the given id.
+  rpc GetById(google.protobuf.StringValue) returns (projections.User);
+  // GetByEmail returns the user found by the given email address.
+  rpc GetByEmail(google.protobuf.StringValue) returns (projections.User);
+  // GetRoleBindingsById returns all role bindings related to the given user id.
+  rpc GetRoleBindingsById(google.protobuf.StringValue)
+      returns (stream projections.UserRoleBinding);
+  // GetAuditTrailById returns a stream of all events related to the given id
+  rpc GetAuditTrailById(google.protobuf.StringValue)
+      returns (stream projections.AuditEvent);
+}
+
+// TenantService is a service to query tenants.
+service TenantService {
+  // GetAll returns all tenants.
+  rpc GetAll(google.protobuf.Empty) returns (stream projections.Tenant);
+  // GetById returns the tenant found by the given id.
+  rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetAuditTrailById returns a stream of all events related to the given id
+  rpc GetAuditTrailById(google.protobuf.StringValue)
+      returns (stream projections.AuditEvent);
+}

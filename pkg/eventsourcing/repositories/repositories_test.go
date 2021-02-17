@@ -18,7 +18,7 @@ var _ = Describe("repositories/in_memory", func() {
 		err = repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
-		projection, err := repo.ById(context.Background(), testProjection.GetId())
+		projection, err := repo.ById(context.Background(), testProjection.ID())
 		Expect(err).NotTo(HaveOccurred())
 		Expect(projection).To(Equal(testProjection))
 
@@ -32,7 +32,7 @@ var _ = Describe("repositories/in_memory", func() {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = repo.Remove(context.Background(), testProjection.GetId())
+		err = repo.Remove(context.Background(), testProjection.ID())
 		Expect(err).NotTo(HaveOccurred())
 
 		projections, err := repo.All(context.Background())

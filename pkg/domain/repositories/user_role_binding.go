@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/queryhandler"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -16,17 +16,12 @@ type userRoleBindingRepository struct {
 type UserRoleBindingRepository interface {
 	es.Repository
 	ReadOnlyUserRoleBindingRepository
-	WriteOnlyUserRoleBindingRepository
 }
 
 // ReadOnlyUserRepository is a repository for reading UserRoleBinding projections.
 type ReadOnlyUserRoleBindingRepository interface {
 	// ByUserId searches for all UserRoleBinding projection's by the a user id.
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
-}
-
-// WriteOnlyUserRepository is a repository for reading UserRoleBinding projections.
-type WriteOnlyUserRoleBindingRepository interface {
 }
 
 // NewUserRepository creates a repository for reading and writing UserRoleBinding projections.

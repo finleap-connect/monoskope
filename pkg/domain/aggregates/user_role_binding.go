@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventdata/user"
+	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -24,6 +24,11 @@ type UserRoleBindingAggregate struct {
 // AggregateType returns the type of the aggregate.
 func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType {
 	return aggregates.UserRoleBinding
+}
+
+// UserId returns the UserId of the UserRoleBindingAggregate.
+func (a *UserRoleBindingAggregate) UserId() uuid.UUID {
+	return a.userId
 }
 
 // Role returns the Role of the UserRoleBindingAggregate.
@@ -82,7 +87,10 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("couldn't handle event")
 	}
+
 	return nil
 }
 
