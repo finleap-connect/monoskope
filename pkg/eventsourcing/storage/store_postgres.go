@@ -75,7 +75,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event
 		RawData:          json.RawMessage(event.Data()),
 		Timestamp:        event.Timestamp(),
 		AggregateVersion: event.AggregateVersion(),
-		Metadata:         evs.NewMetadataManagerFromContext(ctx).GetMetadata(),
+		Metadata:         event.Metadata(),
 	}, nil
 }
 

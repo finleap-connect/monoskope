@@ -36,7 +36,7 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 		// TODO: check if user already exists
 		if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.GetEmail(), Name: cmd.GetName()}); err != nil {
 			return err
-		} else if err = a.ApplyEvent(a.AppendEvent(events.UserCreated, ed)); err != nil {
+		} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.UserCreated, ed)); err != nil {
 			return err
 		}
 		return nil

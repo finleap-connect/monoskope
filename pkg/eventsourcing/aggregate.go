@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -71,9 +72,10 @@ func (a *BaseAggregate) Events() []Event {
 }
 
 // AppendEvent appends an event to the events the aggregate was build upon.
-func (a *BaseAggregate) AppendEvent(eventType EventType, eventData EventData) Event {
+func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, eventData EventData) Event {
 	a.version++
 	newEvent := NewEvent(
+		ctx,
 		eventType,
 		eventData,
 		time.Now().UTC(),

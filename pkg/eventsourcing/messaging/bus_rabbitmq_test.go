@@ -42,7 +42,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		eventType := evs.EventType("TestEvent")
 		aggregateType := evs.AggregateType("TestAggregate")
 		data := createTestEventData("world!")
-		event := evs.NewEvent(eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
+		event := evs.NewEvent(ctx, eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
 		eventCounter++
 		return event
 	}

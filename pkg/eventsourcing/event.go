@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,8 +46,9 @@ type Event interface {
 }
 
 // NewEvent creates a new event.
-func NewEvent(eventType EventType, data EventData, timestamp time.Time,
+func NewEvent(ctx context.Context, eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
+
 	return event{
 		eventType:        eventType,
 		data:             data,
@@ -54,6 +56,7 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 		aggregateType:    aggregateType,
 		aggregateID:      aggregateID,
 		aggregateVersion: aggregateVersion,
+		metadata:         NewMetadataManagerFromContext(ctx).GetMetadata(),
 	}
 }
 

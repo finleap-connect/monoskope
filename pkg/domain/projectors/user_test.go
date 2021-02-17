@@ -15,6 +15,7 @@ import (
 )
 
 var _ = Describe("domain/user_repo", func() {
+	ctx := context.Background()
 	userId := uuid.New()
 	adminUser := &projections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
 
@@ -27,7 +28,7 @@ var _ = Describe("domain/user_repo", func() {
 		}
 		eventData, err := eventsourcing.ToEventDataFromProto(protoEventData)
 		Expect(err).NotTo(HaveOccurred())
-		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
+		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.Version()).To(Equal(uint64(1)))
 	})

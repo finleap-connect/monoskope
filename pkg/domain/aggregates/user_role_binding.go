@@ -74,7 +74,7 @@ func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Contex
 		return err
 	}
 
-	_ = a.AppendEvent(events.UserRoleBindingCreated, ed)
+	_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, ed)
 
 	return nil
 }
