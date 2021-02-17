@@ -5,6 +5,7 @@ import (
 
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc"
@@ -51,7 +52,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		userRepo, err := util.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
+		userRepo, err := domain.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}

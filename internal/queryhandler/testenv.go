@@ -10,6 +10,7 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
 	ggrpc "google.golang.org/grpc"
 
@@ -46,7 +47,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup domain
-	userRepo, err := util.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	userRepo, err := domain.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}
