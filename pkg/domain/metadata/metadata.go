@@ -31,8 +31,15 @@ type domainMetadataManager struct {
 	es.MetadataManager
 }
 
+type DomainMetadataManager interface {
+	es.MetadataManager
+	SetComponentInformation() error
+	SetUserInformation(userInformation *UserInformation) error
+	GetUserInformation() (*UserInformation, error)
+}
+
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
-func NewDomainMetadataManager(ctx context.Context) (*domainMetadataManager, error) {
+func NewDomainMetadataManager(ctx context.Context) (DomainMetadataManager, error) {
 	m := &domainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
 	}

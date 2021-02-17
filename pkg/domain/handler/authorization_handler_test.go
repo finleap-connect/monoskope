@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	commandsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -63,9 +62,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
-			UserMetadata: &common.UserMetadata{
-				Email: "janedoe@monoskope.io",
-			},
+			Email: "janedoe@monoskope.io",
 		}})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrUnauthorized))
@@ -78,9 +75,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
-			UserMetadata: &common.UserMetadata{
-				Email: adminUser.Email,
-			},
+			Email: adminUser.Email,
 		}})
 		Expect(err).ToNot(HaveOccurred())
 	})
@@ -92,9 +87,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = handler.HandleCommand(manager.GetContext(), &commands.CreateUserCommand{CreateUserCommand: commandsApi.CreateUserCommand{
-			UserMetadata: &common.UserMetadata{
-				Email: someUser.Email,
-			},
+			Email: someUser.Email,
 		}})
 		Expect(err).ToNot(HaveOccurred())
 	})

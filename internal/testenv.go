@@ -29,12 +29,12 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnv(env.eventStoreTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnv(env.eventStoreTestEnv)
+	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.queryHandlerTestEnv)
 	if err != nil {
 		return nil, err
 	}

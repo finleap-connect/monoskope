@@ -39,19 +39,14 @@ type metadataManager struct {
 	data map[string][]byte
 }
 
-func newMetadataManager() *metadataManager {
-	return &metadataManager{
-		ctx:  context.Background(),
+func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
+	m := &metadataManager{
+		ctx:  ctx,
 		data: make(map[string][]byte),
 	}
-}
-
-func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
-	m := newMetadataManager()
-	m.ctx = ctx
 
 	d, ok := ctx.Value(metadataKey).(map[string][]byte)
-	if ok {
+	if ok && d != nil {
 		m.data = d
 	}
 

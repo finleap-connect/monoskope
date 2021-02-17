@@ -11,6 +11,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -102,9 +103,23 @@ func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (
 		return nil, grpc.ErrInternal("authentication problem")
 	}
 
+	manager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = manager.SetUserInformation(&metadata.UserInformation{
+		Email:   claims.Email,
+		Subject: claims.Subject,
+		Issuer:  claims.Issuer,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// Call command handler to execute
 	return s.cmdHandlerClient.Execute(ctx, &commands.CommandRequest{
-		Command:      apiCommand,
-		UserMetadata: claims.ToProto(),
+		Command:  apiCommand,
+		Metadata: manager.GetMetadata(),
 	})
 }

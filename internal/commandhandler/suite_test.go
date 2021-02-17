@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo/reporters"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,7 +30,10 @@ var _ = BeforeSuite(func(done Done) {
 	eventStoreTestEnv, err := eventstore.NewTestEnv()
 	Expect(err).To(Not(HaveOccurred()))
 
-	testEnv, err = NewTestEnv(eventStoreTestEnv)
+	queryHandlerTestEnv, err := queryhandler.NewTestEnv(eventStoreTestEnv)
+	Expect(err).To(Not(HaveOccurred()))
+
+	testEnv, err = NewTestEnv(eventStoreTestEnv, queryHandlerTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 }, 60)
 
@@ -38,6 +42,9 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 
 	err = testEnv.Shutdown()
+	Expect(err).To(Not(HaveOccurred()))
+
+	err = testEnv.queryHandlerTestEnv.Shutdown()
 	Expect(err).To(Not(HaveOccurred()))
 
 	err = testEnv.eventStoreTestEnv.Shutdown()

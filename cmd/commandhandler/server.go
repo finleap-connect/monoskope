@@ -53,7 +53,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ var serverCmd = &cobra.Command{
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(esClient))
+			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(cmdRegistry))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
