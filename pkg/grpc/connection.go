@@ -23,7 +23,6 @@ func NewGrpcConnectionFactory(url string) grpcConnectionFactory {
 func NewGrpcConnectionFactoryWithDefaults(url string) grpcConnectionFactory {
 	return NewGrpcConnectionFactory(url).
 		WithInsecure().
-		WithRetry().
 		WithBlock()
 }
 

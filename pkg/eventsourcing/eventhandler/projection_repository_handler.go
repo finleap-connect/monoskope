@@ -27,7 +27,7 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	// If error is not found create new projection.
 	if err != nil {
 		if err == errors.ErrProjectionNotFound {
-			projection = h.projector.NewProjection()
+			projection = h.projector.NewProjection(event.AggregateID())
 		} else {
 			return err
 		}

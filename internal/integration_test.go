@@ -60,7 +60,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		event, err := stream.Recv()
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).To(BeNil())
 		Expect(event).ToNot(BeNil())
 	})
 })

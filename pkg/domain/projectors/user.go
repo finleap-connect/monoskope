@@ -3,6 +3,7 @@ package projectors
 import (
 	"context"
 
+	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
@@ -24,9 +25,11 @@ func (u *userProjector) AggregateType() es.AggregateType {
 	return aggregates.User
 }
 
-func (u *userProjector) NewProjection() es.Projection {
+func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {
 	return &projections.User{
-		User: &projectionsApi.User{},
+		User: &projectionsApi.User{
+			Id: id.String(),
+		},
 	}
 }
 

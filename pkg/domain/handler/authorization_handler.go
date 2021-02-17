@@ -2,9 +2,10 @@ package handler
 
 import (
 	"context"
+	"errors"
 
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
+	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -40,7 +41,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil && err != errors.ErrUserNotFound {
+	if err != nil && errors.Is(err, domainErrors.ErrUserNotFound) {
 		return err
 	}
 
@@ -58,7 +59,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 			}
 		}
 	}
-	return errors.ErrUnauthorized
+	return domainErrors.ErrUnauthorized
 }
 
 // policyAccepts validates the policy against a user

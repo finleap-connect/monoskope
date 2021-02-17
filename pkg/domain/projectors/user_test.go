@@ -20,7 +20,7 @@ var _ = Describe("domain/user_repo", func() {
 
 	It("can handle events", func() {
 		userProjector := NewUserProjector()
-		userProjection := userProjector.NewProjection()
+		userProjection := userProjector.NewProjection(uuid.New())
 		protoEventData := &ed.UserCreatedEventData{
 			Name:  adminUser.Name,
 			Email: adminUser.Email,
