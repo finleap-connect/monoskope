@@ -1,22 +1,22 @@
 package usecases
 
 import (
-	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventstore"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
 )
 
 type RetrieveEventsUseCase struct {
 	UseCaseBase
 
-	store  storage.Store
-	filter *api_es.EventFilter
-	stream api_es.EventStore_RetrieveServer
+	store  es.Store
+	filter *esApi.EventFilter
+	stream esApi.EventStore_RetrieveServer
 }
 
 // NewRetrieveEventsUseCase creates a new usecase which retrieves all events
 // from the store which match the filter
-func NewRetrieveEventsUseCase(stream api_es.EventStore_RetrieveServer, store storage.Store, filter *api_es.EventFilter) UseCase {
+func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.Store, filter *esApi.EventFilter) UseCase {
 	useCase := &RetrieveEventsUseCase{
 		UseCaseBase: UseCaseBase{
 			log: logger.WithName("retrieve-events-use-case"),
@@ -46,7 +46,7 @@ func (u *RetrieveEventsUseCase) Run() error {
 	// Send events to client
 	u.log.Info("Sending events to client...")
 	for _, e := range events {
-		protoEvent, err := NewProtoFromEvent(e)
+		protoEvent, err := es.NewProtoFromEvent(e)
 		if err != nil {
 			return err
 		}

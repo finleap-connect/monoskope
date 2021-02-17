@@ -7,7 +7,7 @@ GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.14.2
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
-LINTER_VERSION ?= v1.34.1
+LINTER_VERSION ?= v1.36.0
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
@@ -24,6 +24,14 @@ CMD_GATEWAY_SRC = cmd/gateway/*.go
 
 CMD_EVENTSTORE = $(BUILD_PATH)/eventstore
 CMD_EVENTSTORE_SRC = cmd/eventstore/*.go
+
+CMD_COMMANDHANDLER = $(BUILD_PATH)/commandhandler
+CMD_COMMANDHANDLER_SRC = cmd/commandhandler/*.go
+
+CMD_QUERYHANDLER = $(BUILD_PATH)/queryhandler
+CMD_QUERYHANDLER_SRC = cmd/queryhandler/*.go
+
+export DEX_CONFIG = $(BUILD_PATH)/config/dex
 
 define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
@@ -47,12 +55,9 @@ lint:
 run-%:
 	$(call go-run,$*)
 
-test:
+test: 
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -r -v -cover pkg/*
-	$(GINKGO) -r -v -cover internal/gateway -- --dex-conf-path "$(BUILD_PATH)/config/dex"
-	$(GINKGO) -r -v -cover internal/monoctl
-	$(GINKGO) -r -v -cover internal/eventstore
+	$(GINKGO) -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
@@ -94,6 +99,12 @@ $(CMD_GATEWAY):
 $(CMD_EVENTSTORE):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_EVENTSTORE_SRC)
 
+$(CMD_COMMANDHANDLER):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_COMMANDHANDLER_SRC)
+
+$(CMD_QUERYHANDLER):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
+
 $(CMD_MONOCTL_LINUX):
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" -o $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_SRC)
 
@@ -105,6 +116,8 @@ $(CMD_MONOCTL_WIN):
 
 build-clean: 
 	rm -Rf $(CMD_GATEWAY)
+	rm -Rf $(CMD_EVENTSTORE)
+	rm -Rf $(CMD_COMMANDHANDLER)
 	rm -Rf $(CMD_MONOCTL_LINUX)
 	rm -Rf $(CMD_MONOCTL_OSX)
 	rm -Rf $(CMD_MONOCTL_WIN)
@@ -114,6 +127,10 @@ build-monoctl: $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_OSX) $(CMD_MONOCTL_WIN)
 build-gateway: $(CMD_GATEWAY)
 
 build-eventstore: $(CMD_EVENTSTORE)
+
+build-commandhandler: $(CMD_COMMANDHANDLER)
+
+build-queryhandler: $(CMD_QUERYHANDLER)
 
 push-monoctl:
 	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_LINUX) "https://artifactory.figo.systems/artifactory/binaries/linux/monoctl-$(VERSION)"

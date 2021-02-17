@@ -1,22 +1,23 @@
 package main
 
 import (
-	"net"
-	"os"
-
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/messaging"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/storage"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	_ "go.uber.org/automaxprocs"
+	ggrpc "google.golang.org/grpc"
 )
 
 var (
 	apiAddr      string
 	metricsAddr  string
 	keepAlive    bool
-	dbUrl        string
 	msgbusPrefix string
-	msgbusUrl    string
 )
 
 var serverCmd = &cobra.Command{
@@ -25,71 +26,35 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-
-		// Some options can be provided by env variables
-		if v := os.Getenv("DB_URL"); v != "" {
-			dbUrl = v
-		}
-		if v := os.Getenv("BUS_URL"); v != "" {
-			msgbusUrl = v
-		}
-
-		// Setup grpc listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
+		log := logger.WithName("server-cmd")
 
 		// init event store
-		conf, err := storage.NewPostgresStoreConfig(dbUrl)
+		log.Info("Setting up event store...")
+		store, err := util.NewEventStore()
 		if err != nil {
 			return err
 		}
-		err = conf.ConfigureTLS()
-		if err != nil {
-			return err
-		}
-		store, err := storage.NewPostgresEventStore(conf)
-		if err != nil {
-			return err
-		}
+		defer store.Close()
 
 		// init message bus publisher
-		rabbitConf := messaging.NewRabbitEventBusConfig("event-store", msgbusUrl)
-		if msgbusPrefix != "" {
-			rabbitConf.RoutingKeyPrefix = msgbusPrefix
-		}
-
-		err = rabbitConf.ConfigureTLS()
+		log.Info("Setting up message bus publisher...")
+		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		publisher, err := messaging.NewRabbitEventBusPublisher(rabbitConf)
-		if err != nil {
-			return err
-		}
+		defer publisher.Close()
 
 		// Create the server
-		serverConfig := eventstore.NewServerConfig()
-		serverConfig.KeepAlive = keepAlive
-		serverConfig.Store = store
-		serverConfig.Bus = publisher
-
-		s, err := eventstore.NewServer(serverConfig)
-		if err != nil {
-			return err
-		}
+		log.Info("Creating gRPC server...")
+		grpcServer := grpc.NewServer("event-store-grpc", keepAlive)
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
+			api_es.RegisterEventStoreServer(s, eventstore.NewApiServer(store, publisher))
+			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+		})
 
 		// Finally start the server
-		return s.Serve(apiLis, metricsLis)
+		log.Info("gRPC server start serving...")
+		return grpcServer.Serve(apiAddr, metricsAddr)
 	},
 }
 

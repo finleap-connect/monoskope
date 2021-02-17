@@ -2,6 +2,7 @@ variables:
   RABBITMQ_DEFAULT_USER: guest
   RABBITMQ_DEFAULT_PASS: guest
   AMQP_URL: "amqp://guest:guest@127.0.0.1:5672"
+  DB_URL: "postgres://root@127.0.0.1:26257/test?sslmode=disable"
 
 .gobase:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
@@ -21,27 +22,26 @@ variables:
   cache:
     policy: pull
 
-.gobase-docker:
-  extends: .gobase
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-
 lint:golang:
   stage: test
-  extends: .gobase-docker
+  extends: .gobase
   script:
     - make go-golangci-lint-get
     - make -j go-vet go-lint
 
 test:golang:
   stage: test
-  extends: .gobase-docker
+  extends: .gobase
   services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-    - gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq:3.8.9
+    - name: gitlab.figo.systems/platform/dependency_proxy/containers/rabbitmq:3.8.10-alpine
+      alias: rabbitmq
+    - name: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach:v20.2.2
+      alias: cockroachdb
+      command: ["start-single-node", "--insecure"]
   script:
     - make go-ginkgo-get
     - make go-test
+    - make go-coverage
   artifacts:
     name: "Go Tests"
     when: always
@@ -76,13 +76,37 @@ build:golang:eventstore:
     expire_in: 1 day
   needs: []
 
-deliver:gateway:
-  stage: deliver
-  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+build:golang:commandhandler:
+  stage: build
+  extends: .gobase-no-push
   only:
     - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-commandhandler
+  artifacts:
+    paths:
+      - commandhandler
+    expire_in: 1 day
+  needs: []
+
+build:golang:queryhandler:
+  stage: build
+  extends: .gobase-no-push
+  only:
+    - tags
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - VERSION=$VERSION make go-build-queryhandler
+  artifacts:
+    paths:
+      - queryhandler
+    expire_in: 1 day
+  needs: []
+
+deliver:gateway:
+  stage: deliver
+  extends: .docker-builder
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
@@ -93,11 +117,7 @@ deliver:gateway:
 
 deliver:eventstore:
   stage: deliver
-  image: registry.gitlab.figo.systems/platform/docker-builder:1.4.2
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
-  only:
-    - tags
+  extends: .docker-builder
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - build-image --file build/package/eventstore.Dockerfile -i eventstore --tag $VERSION
@@ -105,3 +125,25 @@ deliver:eventstore:
     - lint:golang
     - test:golang
     - build:golang:eventstore
+
+deliver:commandhandler:
+  stage: deliver
+  extends: .docker-builder
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/commandhandler.Dockerfile -i commandhandler --tag $VERSION
+  dependencies:
+    - lint:golang
+    - test:golang
+    - build:golang:commandhandler
+
+deliver:queryhandler:
+  stage: deliver
+  extends: .docker-builder
+  script:
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - build-image --file build/package/queryhandler.Dockerfile -i queryhandler --tag $VERSION
+  dependencies:
+    - lint:golang
+    - test:golang
+    - build:golang:queryhandler

@@ -1,0 +1,55 @@
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing";
+
+package eventsourcing;
+
+// Event describes anything that has happened in the system.
+// An event type name should be in past tense and contain the intent
+// (TenantUpdated). The event should contain all the data needed when
+// applying/handling it.
+// The combination of aggregate_type, aggregate_id and version is
+// unique.
+message Event {
+  // Type of the event
+  string type = 1;
+  // Timestamp of when the event was created
+  google.protobuf.Timestamp timestamp = 2;
+  // ID of the aggregate that the event should be applied to (UUID 128-bit
+  // number)
+  string aggregate_id = 3;
+  // Type of the aggregate that the event can be applied to
+  string aggregate_type = 4;
+  // Strict monotone counter, per aggregate/aggregate_id relation
+  google.protobuf.UInt64Value aggregate_version = 5;
+  // Event type specific event data
+  google.protobuf.Any data = 6;
+  // Event meta data
+  map<string, bytes> metadata = 7;
+}
+
+// Request to get Events from to the store
+message EventFilter {
+  // Filter events by aggregate_id
+  google.protobuf.StringValue aggregate_id = 1;
+  // Filter events for a specific aggregate type
+  google.protobuf.StringValue aggregate_type = 2;
+
+  // Filter events with a version >= min_version
+  google.protobuf.UInt64Value min_version = 3;
+  // Filter events with a version <= max_version
+  google.protobuf.UInt64Value max_version = 4;
+
+  // Filter events with a timestamp >= min_timestamp
+  google.protobuf.Timestamp min_timestamp = 7;
+  // Filter events with a timestamp <= max_timestamp
+  google.protobuf.Timestamp max_timestamp = 8;
+}

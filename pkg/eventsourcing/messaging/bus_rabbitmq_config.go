@@ -1,0 +1,98 @@
+package messaging
+
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"time"
+
+	"github.com/streadway/amqp"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
+)
+
+const (
+	DefaultExchangeName   = "m8_events" // name of the monoskope exchange
+	DefaultHeartbeat      = 10 * time.Second
+	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
+	DefaultReInitDelay    = 5 * time.Second  // When setting up the channel after a channel exception
+	DefaultResendDelay    = 5 * time.Second  // When resending messages the server didn't confirm
+	DefaultMaxResends     = 5                // How many times resending messages the server didn't confirm
+)
+
+type RabbitEventBusConfig struct {
+	name             string        // Name of the client, required
+	url              string        // Connection string, required
+	routingKeyPrefix string        // Prefix for routing of messages
+	exchangeName     string        // Name of the exchange to initialize/use
+	reconnectDelay   time.Duration // When reconnecting to the server after connection failure
+	resendDelay      time.Duration // When resending messages the server didn't confirm
+	maxResends       int           // How many times resending messages the server didn't confirm
+	reInitDelay      time.Duration // When setting up the channel after a channel exception
+	amqpConfig       *amqp.Config
+}
+
+// NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
+func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) *RabbitEventBusConfig {
+	if routingKeyPrefix == "" {
+		routingKeyPrefix = "m8"
+	}
+
+	return &RabbitEventBusConfig{
+		name:             name,
+		url:              url,
+		routingKeyPrefix: routingKeyPrefix,
+		exchangeName:     DefaultExchangeName,
+		reconnectDelay:   DefaultReconnectDelay,
+		resendDelay:      DefaultResendDelay,
+		maxResends:       DefaultMaxResends,
+		reInitDelay:      DefaultReInitDelay,
+		amqpConfig:       &amqp.Config{},
+	}
+}
+
+// ConfigureTLS adds the configuration for TLS secured connection/auth
+func (conf *RabbitEventBusConfig) ConfigureTLS() error {
+	cfg := &tls.Config{
+		RootCAs: x509.NewCertPool(),
+	}
+	if ca, err := ioutil.ReadFile("/etc/eventstore/certs/bus/ca.crt"); err != nil {
+		return err
+	} else {
+		cfg.RootCAs.AppendCertsFromPEM(ca)
+	}
+
+	if cert, err := tls.LoadX509KeyPair("/etc/eventstore/certs/bus/tls.crt", "/etc/eventstore/certs/bus/tls.key"); err != nil {
+		return err
+	} else {
+		cfg.Certificates = append(cfg.Certificates, cert)
+	}
+
+	conf.amqpConfig.Heartbeat = DefaultHeartbeat
+	conf.amqpConfig.TLSClientConfig = cfg
+	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+
+	return nil
+}
+
+// Validate validates the configuration
+func (conf *RabbitEventBusConfig) Validate() error {
+	if conf.name == "" {
+		return errors.ErrConfigNameRequired
+	}
+	if conf.url == "" {
+		return errors.ErrConfigUrlRequired
+	}
+	return nil
+}
+
+// CertAuth for RabbitMQ-auth-mechanism-ssl.
+type CertAuth struct {
+}
+
+func (me *CertAuth) Mechanism() string {
+	return "EXTERNAL"
+}
+
+func (me *CertAuth) Response() string {
+	return "\000*\000*"
+}

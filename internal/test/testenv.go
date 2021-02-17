@@ -3,10 +3,12 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	_ "go.uber.org/automaxprocs"
 )
 
 type TestEnv struct {
@@ -15,7 +17,17 @@ type TestEnv struct {
 	Log       logger.Logger
 }
 
+func IsRunningInCI() bool {
+	_, runningInCi := os.LookupEnv("CI")
+	return runningInCi
+}
+
 func (t *TestEnv) CreateDockerPool() error {
+	// Running in CI, no docker necessary
+	if IsRunningInCI() {
+		return nil
+	}
+
 	t.Log.Info("Creating docker pool...")
 
 	pool, err := dockertest.NewPool("")

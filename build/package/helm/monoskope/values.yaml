@@ -11,6 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+messageBus:
+  routingKeyPrefix: "m8"
+  clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
+
 monitoring:
   tenant: &tenant finleap-cloud
 
@@ -93,19 +97,28 @@ dex: # OIDC Provider
     app.kubernetes.io/part-of: *name
 
 gateway:
-  nameOverride: "gateway"
   enabled: true
   replicaCount: 1
   auth:
-    allowRootToken: false
     issuerURL: *issuer
 
 eventstore:
-  nameOverride: "eventstore"
   enabled: true
   replicaCount: 1
-  config:
-    existingSecret: monoskope-eventstore-config
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName
+  storeDatabase:
+    existingSecret: m8-eventstore-db-config
+
+commandhandler:
+  enabled: true
+  replicaCount: 1
+
+queryhandler:
+  enabled: true
+  replicaCount: 1
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName
 
 cockroachdb:
   enabled: true

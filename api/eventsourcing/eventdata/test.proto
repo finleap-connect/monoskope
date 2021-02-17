@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+// import "google/protobuf/wrappers.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/eventdata";
+
+package eventdata;
+
+message TestEventData { string hello = 1; }

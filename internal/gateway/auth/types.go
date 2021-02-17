@@ -5,26 +5,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 )
 
 type Config struct {
 	IssuerURL      string
 	OfflineAsScope bool
-	RootToken      *string
 	Nonce          string
 	ClientId       string
 	ClientSecret   string
 }
 
-type ExtraClaims struct {
-	Email         string   `json:"email"`
-	EmailVerified bool     `json:"email_verified"`
-	Groups        []string `json:"groups"`
+type Claims struct {
+	Subject       string `json:"sub"`
+	Name          string `json:"name"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Issuer        string `json:"iss"`
+}
+
+// Converts the claims provided by the IDP to proto
+func (c *Claims) ToProto() *api_common.UserMetadata {
+	return &api_common.UserMetadata{
+		Subject: c.Subject,
+		Issuer:  c.Issuer,
+		Email:   c.Email,
+	}
 }
 
 type AuthCodeURLConfig struct {
 	Scopes        []string
-	Clients       []string
 	OfflineAccess bool
 }
 

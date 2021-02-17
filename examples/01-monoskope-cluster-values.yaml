@@ -41,18 +41,56 @@ rabbitmq:
 gateway:
   replicaCount: 3
   auth:
-    allowRootToken: true
     issuerURL: *issuer
   ingress:
     enabled: true
     host: api.monoskope.dev.finleap.cloud
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
 
 eventstore:
   replicaCount: 3
   enabled: true
-  config:
-    dbTlsSecret: monoskope-crdb-auth-evenstore
-    busTlsSecret: monoskope-rabbitmq-auth-evenstore
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
+  storeDatabase:
+    tlsSecret: monoskope-crdb-auth-evenstore
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+commandhandler:
+  replicaCount: 3
+  enabled: true
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+queryhandler:
+  replicaCount: 3
+  enabled: true
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
 
 ingress:
   enabled: true

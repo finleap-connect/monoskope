@@ -1,4 +1,4 @@
-{{- if and .Values.rabbitmq.auth.tls.enabled .Values.eventstore.config.busTlsSecret }}
+{{- if and .Values.rabbitmq.auth.tls.enabled .Values.eventstore.messageBus.tlsSecret }}
 {{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "rabbitmq") -}}
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ .Values.eventstore.config.busTlsSecret }}
+  secretName: {{ .Values.eventstore.messageBus.tlsSecret }}
   issuerRef:
     name: {{ $fullname }}-issuer
     kind: Issuer
