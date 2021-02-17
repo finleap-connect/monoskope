@@ -20,6 +20,13 @@ func NewGrpcConnectionFactory(url string) grpcConnectionFactory {
 	}
 }
 
+func NewGrpcConnectionFactoryWithDefaults(url string) grpcConnectionFactory {
+	return NewGrpcConnectionFactory(url).
+		WithInsecure().
+		WithRetry().
+		WithBlock()
+}
+
 func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)
@@ -69,6 +76,12 @@ func (factory grpcConnectionFactory) WithRetry() grpcConnectionFactory {
 	return factory
 }
 
-func (factory grpcConnectionFactory) Build(ctx context.Context) (*grpc.ClientConn, error) {
+func (factory grpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientConn, error) {
 	return grpc.DialContext(ctx, factory.url, factory.opts...)
+}
+
+func (factory grpcConnectionFactory) ConnectWithTimeout(ctx context.Context, timeout time.Duration) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return factory.Connect(ctx)
 }

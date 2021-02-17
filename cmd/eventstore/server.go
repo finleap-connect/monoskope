@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -30,7 +30,7 @@ var serverCmd = &cobra.Command{
 
 		// init event store
 		log.Info("Setting up event store...")
-		store, err := util.NewEventStore()
+		store, err := eventstore.NewEventStore()
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ var serverCmd = &cobra.Command{
 
 		// init message bus publisher
 		log.Info("Setting up message bus publisher...")
-		publisher, err := util.NewEventBusPublisher("eventstore", msgbusPrefix)
+		publisher, err := messagebus.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
 			return err
 		}

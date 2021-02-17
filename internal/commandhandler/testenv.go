@@ -1,10 +1,10 @@
 package commandhandler
 
 import (
+	"context"
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
@@ -23,12 +23,14 @@ type TestEnv struct {
 
 func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
+	ctx := context.Background()
+
 	env := &TestEnv{
 		TestEnv:           test.NewTestEnv("CommandHandlerTestEnv"),
 		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
-	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
+	env.esConn, env.esClient, err = eventstore.NewEventStoreClient(ctx, env.eventStoreTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}

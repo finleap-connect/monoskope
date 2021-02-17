@@ -2,11 +2,14 @@ package queryhandler
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"google.golang.org/grpc"
 )
 
 // userServiceServer is the implementation of the TenantService API
@@ -21,6 +24,17 @@ func NewUserServiceServer(userRepo repositories.ReadOnlyUserRepository) *userSer
 	return &userServiceServer{
 		repo: userRepo,
 	}
+}
+
+func NewUserServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.UserServiceClient, error) {
+	conn, err := grpcUtil.
+		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn, api.NewUserServiceClient(conn), nil
 }
 
 // GetById returns the user found by the given id.

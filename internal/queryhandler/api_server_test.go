@@ -19,7 +19,7 @@ var _ = Describe("HealthCheck", func() {
 			NewGrpcConnectionFactory(testEnv.GetApiAddr()).
 			WithInsecure().
 			WithBlock().
-			Build(ctx)
+			Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

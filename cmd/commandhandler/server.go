@@ -13,7 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -36,7 +37,7 @@ var serverCmd = &cobra.Command{
 
 		// Create EventStore client
 		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
-		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
+		conn, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
 		}
@@ -44,7 +45,7 @@ var serverCmd = &cobra.Command{
 
 		// Create UserService client
 		log.Info("Connectin query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := util.NewUserServiceClient(queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}

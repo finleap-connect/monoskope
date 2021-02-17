@@ -21,7 +21,7 @@ type TestEnv struct {
 func NewTestEnv() (*TestEnv, error) {
 	var err error
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("QueryHandlerTestEnv"),
+		TestEnv: test.NewTestEnv("IntegrationTestEnv"),
 	}
 
 	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
