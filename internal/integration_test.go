@@ -12,6 +12,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -30,11 +31,22 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer eventStoreConn.Close()
 
+		manager, err := metadata.NewDomainMetadataManager(ctx)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = manager.SetUserInformation(&metadata.UserInformation{
+			Email:   "admin@monoskope.io",
+			Subject: "admin",
+			Issuer:  "monoskope",
+		})
+		Expect(err).ToNot(HaveOccurred())
+
 		request := &commands.CommandRequest{
 			Command: &commands.Command{
 				Type: commandTypes.CreateUser.String(),
 				Data: &anypb.Any{},
 			},
+			Metadata: manager.GetMetadata(),
 		}
 		err = request.Command.Data.MarshalFrom(&domainCommands.CreateUserCommand{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())

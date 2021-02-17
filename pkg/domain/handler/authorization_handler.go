@@ -3,9 +3,9 @@ package handler
 import (
 	"context"
 
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -40,12 +40,17 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil {
+	if err != nil && err != errors.ErrUserNotFound {
 		return err
 	}
 
+	var userRoles []*projectionsApi.UserRoleBinding
+	if user != nil {
+		userRoles = user.GetRoles()
+	}
+
 	for _, policy := range cmd.Policies(ctx) {
-		if policyAccepts(user, policy) {
+		if policyAccepts(userInfo.Email, userRoles, policy) {
 			if h.nextHandlerInChain != nil {
 				return h.nextHandlerInChain.HandleCommand(ctx, cmd)
 			} else {
@@ -57,14 +62,18 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 }
 
 // policyAccepts validates the policy against a user
-func policyAccepts(user *projections.User, policy es.Policy) bool {
-	for _, roleBinding := range user.GetRoles() {
-		if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
-			policy.AcceptsScope(es.Scope(roleBinding.Scope)) &&
-			policy.AcceptsResource(roleBinding.Resource) &&
-			policy.AcceptsSubject(user.Email) {
-			return true
+func policyAccepts(userEmail string, userRoleBindings []*projectionsApi.UserRoleBinding, policy es.Policy) bool {
+	if userRoleBindings != nil {
+		for _, roleBinding := range userRoleBindings {
+			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
+				policy.AcceptsScope(es.Scope(roleBinding.Scope)) &&
+				policy.AcceptsResource(roleBinding.Resource) &&
+				policy.AcceptsSubject(userEmail) {
+				return true
+			}
 		}
+	} else if policy.AcceptsSubject(userEmail) {
+		return true
 	}
 
 	return false

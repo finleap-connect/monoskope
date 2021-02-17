@@ -84,7 +84,7 @@ func (m *metadataManager) SetObject(key string, v interface{}) error {
 func (m *metadataManager) GetObject(key string, v interface{}) error {
 	bytes, found := m.Get(key)
 	if !found {
-		return fmt.Errorf("not found")
+		return fmt.Errorf("metadata for key %s not found", key)
 	}
 	return json.Unmarshal(bytes, v)
 }
