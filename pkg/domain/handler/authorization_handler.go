@@ -73,7 +73,7 @@ func policyAccepts(userEmail string, userRoleBindings []*projectionsApi.UserRole
 				return true
 			}
 		}
-	} else if policy.AcceptsSubject(userEmail) {
+	} else if policy.MustBeSubject(userEmail) {
 		return true
 	}
 
