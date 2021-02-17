@@ -32,6 +32,7 @@ A Helm chart for the Monoskope CommandHandler
 | podSecurityContext | object | `{}` |  |
 | ports.api | int | `8080` |  |
 | ports.metrics | int | `9102` |  |
+| queryHandler | object | `{"host":"queryhandler","port":8080,"prefix":""}` | API address of the query handler |
 | readinessProbe.enabled | bool | `true` |  |
 | readinessProbe.failureThreshold | int | `5` |  |
 | readinessProbe.initialDelaySeconds | int | `5` |  |
