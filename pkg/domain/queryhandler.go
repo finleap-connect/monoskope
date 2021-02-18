@@ -35,5 +35,20 @@ func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer
 		return nil, err
 	}
 
+	// Setup event handler and middleware
+	err = esConsumer.AddHandler(ctx,
+		es.UseEventHandlerMiddleware(
+			esm.NewProjectionRepositoryEventHandler(
+				projectors.NewUserRoleBindingProjector(),
+				userRepo,
+			),
+			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+		),
+		esConsumer.Matcher().MatchAggregateType(aggregateTypes.UserRoleBinding),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return userRepo, nil
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -18,11 +17,6 @@ type userProjector struct {
 
 func NewUserProjector() es.Projector {
 	return &userProjector{}
-}
-
-// AggregateType returns the AggregateType for which events should be projected.
-func (u *userProjector) AggregateType() es.AggregateType {
-	return aggregates.User
 }
 
 func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {

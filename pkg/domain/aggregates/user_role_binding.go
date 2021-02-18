@@ -21,31 +21,6 @@ type UserRoleBindingAggregate struct {
 	resource string    // Resource of the role binding
 }
 
-// AggregateType returns the type of the aggregate.
-func (a *UserRoleBindingAggregate) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-
-// UserId returns the UserId of the UserRoleBindingAggregate.
-func (a *UserRoleBindingAggregate) UserId() uuid.UUID {
-	return a.userId
-}
-
-// Role returns the Role of the UserRoleBindingAggregate.
-func (a *UserRoleBindingAggregate) Role() es.Role {
-	return a.role
-}
-
-// Scope returns the Scope of the UserRoleBindingAggregate.
-func (a *UserRoleBindingAggregate) Scope() es.Scope {
-	return a.scope
-}
-
-// Resource returns the Resource of the UserRoleBindingAggregate.
-func (a *UserRoleBindingAggregate) Resource() string {
-	return a.resource
-}
-
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID) *UserRoleBindingAggregate {
 	return &UserRoleBindingAggregate{
