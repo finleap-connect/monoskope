@@ -20,7 +20,7 @@ var _ = Describe("MetadataManager", func() {
 	It("can't get not existing", func() {
 		manager := NewMetadataManagerFromContext(ctx)
 		val, ok := manager.Get(notExistingKey)
-		Expect(val).To(BeNil())
+		Expect(val).To(BeEmpty())
 		Expect(ok).To(BeFalse())
 	})
 	It("can set a value", func() {
