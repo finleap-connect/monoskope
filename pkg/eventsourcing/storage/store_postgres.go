@@ -35,7 +35,7 @@ type eventRecord struct {
 	AggregateType    evs.AggregateType `pg:"aggregate_type,type:varchar(250),unique:aggregate"`
 	AggregateVersion uint64            `pg:"aggregate_version,unique:aggregate"`
 	Timestamp        time.Time         `pg:""`
-	Metadata         map[string][]byte `pg:"metadata,type:jsonb"`
+	Metadata         map[string]string `pg:"metadata,type:jsonb"`
 	RawData          json.RawMessage   `pg:"data,type:jsonb"`
 }
 
@@ -390,7 +390,7 @@ func (e pgEvent) AggregateVersion() uint64 {
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e pgEvent) Metadata() map[string][]byte {
+func (e pgEvent) Metadata() map[string]string {
 	return e.eventRecord.Metadata
 }
 

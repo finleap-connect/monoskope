@@ -3,18 +3,18 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands";
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata";
 
-package commands;
+package commanddata;
 
-message CreateUserCommand {
+message CreateUserCommandData {
   // Email address of the user
   string email = 1;
   // Name of the user
   string name = 2;
 }
 
-message CreateUserRoleBindingCommand {
+message CreateUserRoleBindingCommandData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1;
   // Name of the role to add

@@ -17,14 +17,6 @@ message Command {
   google.protobuf.Any data = 2;
 }
 
-// CommandRequest is a request to execute a Command by Monoskope
-message CommandRequest {
-  // The command to execute
-  Command command = 1;
-  // Command meta data
-  map<string, bytes> metadata = 2;
-}
-
 message TestCommandData {
   string test = 1;
   int32 test_count = 2;

@@ -5,15 +5,14 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	domainCommands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
+	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
+	est "gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -21,40 +20,33 @@ var _ = Describe("integration", func() {
 	ctx := context.Background()
 
 	It("create a user", func() {
-		commandHandlerAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		commandHandlerConn, commandHandlerClient, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
+		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
+		chConn, chClient, err := ch.NewServiceClient(ctx, chAddr)
 		Expect(err).ToNot(HaveOccurred())
-		defer commandHandlerConn.Close()
+		defer chConn.Close()
 
-		eventStoreAddr := testEnv.eventStoreTestEnv.GetApiAddr()
-		eventStoreConn, eventStoreClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
+		esAddr := testEnv.eventStoreTestEnv.GetApiAddr()
+		esConn, esClient, err := est.NewEventStoreClient(ctx, esAddr)
 		Expect(err).ToNot(HaveOccurred())
-		defer eventStoreConn.Close()
+		defer esConn.Close()
 
-		manager, err := metadata.NewDomainMetadataManager(ctx)
+		metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{
+		err = metadataMgr.SetUserInformation(&metadata.UserInformation{
 			Email:   "admin@monoskope.io",
 			Subject: "admin",
 			Issuer:  "monoskope",
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		request := &commands.CommandRequest{
-			Command: &commands.Command{
-				Type: commandTypes.CreateUser.String(),
-				Data: &anypb.Any{},
-			},
-			Metadata: manager.GetMetadata(),
-		}
-		err = request.Command.Data.MarshalFrom(&domainCommands.CreateUserCommand{Name: "admin", Email: "admin@monoskope.io"})
+		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient.Execute(ctx, request)
+		_, err = chClient.Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		stream, err := eventStoreClient.Retrieve(ctx, &eventsourcing.EventFilter{
+		stream, err := esClient.Retrieve(ctx, &es.EventFilter{
 			AggregateType: wrapperspb.String(aggregateTypes.User.String()),
 		})
 		Expect(err).ToNot(HaveOccurred())

@@ -10,7 +10,9 @@ import (
 type metadataKeyType struct {
 }
 
-var metadataKey metadataKeyType
+type metadata struct {
+	data map[string]string
+}
 
 /*
  MetadataManager is an interface for a storage of metadata.
@@ -21,53 +23,53 @@ type MetadataManager interface {
 	GetContext() context.Context
 
 	// GetMetadata returns the metadata of this manager.
-	GetMetadata() map[string][]byte
+	GetMetadata() map[string]string
 	// SetMetadata sets the metadata of this manager.
-	SetMetadata(map[string][]byte) MetadataManager
+	SetMetadata(map[string]string) MetadataManager
 
 	// Get returns the information stored for the key.
-	Get(string) ([]byte, bool)
+	Get(string) (string, bool)
 	GetObject(string, interface{}) error
 
 	// Set stores information for the key.
-	Set(string, []byte) MetadataManager
+	Set(string, string) MetadataManager
 	SetObject(string, interface{}) error
 }
 
 type metadataManager struct {
 	ctx  context.Context
-	data map[string][]byte
+	data map[string]string
 }
 
 func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
 	m := &metadataManager{
 		ctx:  ctx,
-		data: make(map[string][]byte),
+		data: make(map[string]string),
 	}
 
-	d, ok := ctx.Value(metadataKey).(map[string][]byte)
-	if ok && d != nil {
-		m.data = d
+	d, ok := ctx.Value(metadataKeyType{}).(metadata)
+	if ok {
+		m.data = d.data
 	}
 
 	return m
 }
 
-func (m *metadataManager) GetMetadata() map[string][]byte {
+func (m *metadataManager) GetMetadata() map[string]string {
 	return m.data
 }
 
-func (m *metadataManager) SetMetadata(metadata map[string][]byte) MetadataManager {
+func (m *metadataManager) SetMetadata(metadata map[string]string) MetadataManager {
 	m.data = metadata
 	return m
 }
 
-func (m *metadataManager) Get(key string) ([]byte, bool) {
+func (m *metadataManager) Get(key string) (string, bool) {
 	v, ok := m.data[key]
 	return v, ok
 }
 
-func (m *metadataManager) Set(key string, value []byte) MetadataManager {
+func (m *metadataManager) Set(key string, value string) MetadataManager {
 	m.data[key] = value
 	return m
 }
@@ -77,19 +79,19 @@ func (m *metadataManager) SetObject(key string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	m.Set(key, bytes)
+	m.Set(key, string(bytes))
 	return nil
 }
 
 func (m *metadataManager) GetObject(key string, v interface{}) error {
-	bytes, found := m.Get(key)
+	jsonString, found := m.Get(key)
 	if !found {
 		return fmt.Errorf("metadata for key %s not found", key)
 	}
-	return json.Unmarshal(bytes, v)
+	return json.Unmarshal([]byte(jsonString), v)
 }
 
 // GetContext returns a new context enriched with the metadata of this manager.
 func (m *metadataManager) GetContext() context.Context {
-	return context.WithValue(m.ctx, metadataKey, m.data)
+	return context.WithValue(m.ctx, metadataKeyType{}, metadata{data: m.data})
 }

@@ -5,11 +5,12 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
-	userInformationKey      = "userInformationKey"
-	componentInformationKey = "componentInformationKey"
+	userInformationKey      = "user_information"
+	componentInformationKey = "component_information"
 )
 
 // ComponentInformation are information about a service/component.
@@ -36,6 +37,7 @@ type DomainMetadataManager interface {
 	SetComponentInformation() error
 	SetUserInformation(userInformation *UserInformation) error
 	GetUserInformation() (*UserInformation, error)
+	GetOutgoingGrpcContext() context.Context
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
@@ -43,9 +45,21 @@ func NewDomainMetadataManager(ctx context.Context) (DomainMetadataManager, error
 	m := &domainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
 	}
-	if err := m.SetComponentInformation(); err != nil {
-		return nil, err
+
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		data := make(map[string]string)
+		for k, v := range md {
+			data[k] = v[0]
+		}
+		m.SetMetadata(data)
 	}
+
+	if _, exists := m.Get(componentInformationKey); !exists {
+		if err := m.SetComponentInformation(); err != nil {
+			return nil, err
+		}
+	}
+
 	return m, nil
 }
 
@@ -71,4 +85,9 @@ func (m *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
 		return nil, err
 	}
 	return userInfo, err
+}
+
+// GetOutgoingGrpcContext returns a new context enriched with the metadata of this manager.
+func (m *domainMetadataManager) GetOutgoingGrpcContext() context.Context {
+	return metadata.NewOutgoingContext(m.MetadataManager.GetContext(), metadata.New(m.GetMetadata()))
 }

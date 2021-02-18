@@ -13,5 +13,5 @@ package eventsourcing;
 // API of the Monoskope CommandHandler.
 service CommandHandler {
   // Execute executes a command.
-  rpc Execute(commands.CommandRequest) returns (google.protobuf.Empty);
+  rpc Execute(commands.Command) returns (google.protobuf.Empty);
 }
