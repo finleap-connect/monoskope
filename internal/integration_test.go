@@ -19,39 +19,43 @@ import (
 var _ = Describe("integration", func() {
 	ctx := context.Background()
 
-	It("create a user", func() {
+	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = metadataMgr.SetUserInformation(&metadata.UserInformation{
+		Email:   "admin@monoskope.io",
+		Subject: "admin",
+		Issuer:  "monoskope",
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	commandHandlerClient := func() es.CommandHandlerClient {
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		chConn, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
 		Expect(err).ToNot(HaveOccurred())
-		defer chConn.Close()
+		return chClient
+	}
 
+	eventStoreClient := func() es.EventStoreClient {
 		esAddr := testEnv.eventStoreTestEnv.GetApiAddr()
-		esConn, esClient, err := est.NewEventStoreClient(ctx, esAddr)
+		_, esClient, err := est.NewEventStoreClient(ctx, esAddr)
 		Expect(err).ToNot(HaveOccurred())
-		defer esConn.Close()
+		return esClient
+	}
 
-		metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
-		Expect(err).ToNot(HaveOccurred())
-
-		err = metadataMgr.SetUserInformation(&metadata.UserInformation{
-			Email:   "admin@monoskope.io",
-			Subject: "admin",
-			Issuer:  "monoskope",
-		})
-		Expect(err).ToNot(HaveOccurred())
-
+	It("create a user", func() {
 		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = chClient.Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		stream, err := esClient.Retrieve(ctx, &es.EventFilter{
+		eventStream, err := eventStoreClient().Retrieve(ctx, &es.EventFilter{
 			AggregateType: wrapperspb.String(aggregateTypes.User.String()),
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		event, err := stream.Recv()
+		event, err := eventStream.Recv()
 		Expect(err).To(BeNil())
 		Expect(event).ToNot(BeNil())
 	})
