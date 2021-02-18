@@ -68,8 +68,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(event).ToNot(BeNil())
 
-		usClient := userServiceClient()
-		user, err := usClient.GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())
 		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
