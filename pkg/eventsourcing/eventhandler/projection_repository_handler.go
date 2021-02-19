@@ -12,8 +12,8 @@ type projectionRepoEventHandler struct {
 	repository es.Repository
 }
 
-// NewProjectionRepositoryEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
-func NewProjectionRepositoryEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
+// NewProjectingEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
+func NewProjectingEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
 	return &projectionRepoEventHandler{
 		projector:  projector,
 		repository: repository,

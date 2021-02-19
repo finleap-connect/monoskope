@@ -13,38 +13,36 @@ import (
 )
 
 // SetupQueryHandlerDomain sets up the necessary handlers/projectors/repositories for the query side of es/cqrs.
-func SetupQueryHandlerDomain(ctx context.Context, esConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (repos.UserRepository, error) {
+func SetupQueryHandlerDomain(ctx context.Context, messageBusConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (repos.UserRepository, error) {
 	// Setup repositories
-	userRepo := repos.NewUserRepository(
-		esRepos.NewInMemoryRepository(),
-		repos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository()),
-	)
+	userRoleBindingRepo := repos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
+	userRepo := repos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
 
 	// Setup event handler and middleware
-	err := esConsumer.AddHandler(ctx,
+	err := messageBusConsumer.AddHandler(ctx,
 		es.UseEventHandlerMiddleware(
-			esm.NewProjectionRepositoryEventHandler(
+			esm.NewProjectingEventHandler(
 				projectors.NewUserProjector(),
 				userRepo,
 			),
 			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
 		),
-		esConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
+		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Setup event handler and middleware
-	err = esConsumer.AddHandler(ctx,
+	err = messageBusConsumer.AddHandler(ctx,
 		es.UseEventHandlerMiddleware(
-			esm.NewProjectionRepositoryEventHandler(
+			esm.NewProjectingEventHandler(
 				projectors.NewUserRoleBindingProjector(),
-				userRepo,
+				userRoleBindingRepo,
 			),
 			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
 		),
-		esConsumer.Matcher().MatchAggregateType(aggregateTypes.UserRoleBinding),
+		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.UserRoleBinding),
 	)
 	if err != nil {
 		return nil, err
