@@ -238,15 +238,11 @@ oathkeeper:
       deny:
         enabled: true
     authenticators:
-      unauthorized:
-        enabled: true      
-      anonymous:
+      noop:
         enabled: true
-        config:
-          subject: guest
-    access_rules:
-      repositories:
-        - file:///etc/rules/access-rules.json
+    unauthorized:
+      noop:
+        enabled: true      
     serve:
       api:
         port: 4456
@@ -254,7 +250,7 @@ oathkeeper:
     proxy:
       enabled: false
   maester:
-    enabled: false
+    enabled: true
 
 ambassador:
   enabled: true
