@@ -10,7 +10,7 @@ RUN wget -qOgrpc-health-probe https://github.com/grpc-ecosystem/grpc-health-prob
 # Ca-certificates is required to call HTTPS endpoints.
 RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
 
-FROM scratch
+FROM gitlab.figo.systems/platform/dependency_proxy/containers/scratch
 
 # Import from builder.
 COPY --from=builder /tmp/build/grpc-health-probe /bin/grpc-health-probe
