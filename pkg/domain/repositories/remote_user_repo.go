@@ -5,6 +5,7 @@ import (
 	"io"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -24,7 +25,7 @@ func NewRemoteUserRepository(userService api.UserServiceClient) ReadOnlyUserRepo
 func (r *remoteUserRepository) ByUserId(ctx context.Context, id string) (*projections.User, error) {
 	userProto, err := r.userService.GetById(ctx, wrapperspb.String(id))
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateFromGrpcError(err)
 	}
 
 	user := &projections.User{User: userProto}
@@ -32,7 +33,7 @@ func (r *remoteUserRepository) ByUserId(ctx context.Context, id string) (*projec
 	// Find roles of user
 	stream, err := r.userService.GetRoleBindingsById(ctx, wrapperspb.String(user.Id))
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateFromGrpcError(err)
 	}
 
 	for {
@@ -44,7 +45,7 @@ func (r *remoteUserRepository) ByUserId(ctx context.Context, id string) (*projec
 			break
 		}
 		if err != nil { // Some other error
-			return nil, err
+			return nil, errors.TranslateFromGrpcError(err)
 		}
 
 		user.Roles = append(user.Roles, proto)
@@ -57,7 +58,7 @@ func (r *remoteUserRepository) ByUserId(ctx context.Context, id string) (*projec
 func (r *remoteUserRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
 	userProto, err := r.userService.GetByEmail(ctx, wrapperspb.String(email))
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateFromGrpcError(err)
 	}
 
 	user := &projections.User{User: userProto}
@@ -65,7 +66,7 @@ func (r *remoteUserRepository) ByEmail(ctx context.Context, email string) (*proj
 	// Find roles of user
 	stream, err := r.userService.GetRoleBindingsById(ctx, wrapperspb.String(user.Id))
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateFromGrpcError(err)
 	}
 
 	for {
@@ -77,7 +78,7 @@ func (r *remoteUserRepository) ByEmail(ctx context.Context, email string) (*proj
 			break
 		}
 		if err != nil { // Some other error
-			return nil, err
+			return nil, errors.TranslateFromGrpcError(err)
 		}
 
 		user.Roles = append(user.Roles, proto)

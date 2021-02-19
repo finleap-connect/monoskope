@@ -14,6 +14,7 @@ import (
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -72,5 +73,13 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())
 		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
+	})
+	It("fail to create a user which already exists", func() {
+		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).To(HaveOccurred())
+		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
 })

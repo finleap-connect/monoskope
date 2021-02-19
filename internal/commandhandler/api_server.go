@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -41,17 +42,17 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
 	cmd, err := s.cmdRegistry.CreateCommand(evs.CommandType(command.Type), command.Data)
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateToGrpcError(err)
 	}
 
 	m, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateToGrpcError(err)
 	}
 
 	err = s.cmdRegistry.HandleCommand(m.GetContext(), cmd)
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateToGrpcError(err)
 	}
 
 	return &empty.Empty{}, nil

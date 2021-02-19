@@ -18,9 +18,12 @@ import (
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
 func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
+	// Setup repositories
+	userRepo := repos.NewRemoteUserRepository(userService)
+
 	// Register aggregates
 	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, userRepo) })
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id) })
 
 	// Register command handler and middleware
@@ -31,9 +34,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 				esClient,
 			),
 		),
-		domainHandlers.NewAuthorizationHandler(
-			repos.NewRemoteUserRepository(userService),
-		).Middleware,
+		domainHandlers.NewAuthorizationHandler(userRepo).Middleware,
 	)
 
 	// Register commands

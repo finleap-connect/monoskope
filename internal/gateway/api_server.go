@@ -14,6 +14,8 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -55,7 +57,7 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.Au
 		OfflineAccess: true,
 	})
 	if err != nil {
-		return nil, grpc.ErrInvalidArgument(err)
+		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
 
 	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil

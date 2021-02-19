@@ -41,8 +41,8 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil && errors.Is(err, domainErrors.ErrUserNotFound) {
-		return err
+	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
+		return domainErrors.ErrUnauthorized
 	}
 
 	var userRoles []*projectionsApi.UserRoleBinding
