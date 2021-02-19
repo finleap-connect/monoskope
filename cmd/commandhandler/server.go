@@ -5,6 +5,7 @@ import (
 
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
@@ -12,7 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -35,7 +37,7 @@ var serverCmd = &cobra.Command{
 
 		// Create EventStore client
 		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
-		conn, esClient, err := util.NewEventStoreClient(eventStoreAddr)
+		conn, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
 		}
@@ -43,7 +45,7 @@ var serverCmd = &cobra.Command{
 
 		// Create UserService client
 		log.Info("Connectin query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := util.NewUserServiceClient(queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
@@ -51,7 +53,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		err = util.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 		if err != nil {
 			return err
 		}
@@ -61,7 +63,7 @@ var serverCmd = &cobra.Command{
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(esClient))
+			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(cmdRegistry))
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

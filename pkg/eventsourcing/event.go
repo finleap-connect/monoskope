@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -39,14 +40,15 @@ type Event interface {
 	// Event type specific event data.
 	Data() EventData
 	// Metadata is app-specific metadata originating user etc. when this event has been stored.
-	Metadata() map[string][]byte
+	Metadata() map[string]string
 	// A string representation of the event.
 	String() string
 }
 
 // NewEvent creates a new event.
-func NewEvent(eventType EventType, data EventData, timestamp time.Time,
+func NewEvent(ctx context.Context, eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
+
 	return event{
 		eventType:        eventType,
 		data:             data,
@@ -54,12 +56,13 @@ func NewEvent(eventType EventType, data EventData, timestamp time.Time,
 		aggregateType:    aggregateType,
 		aggregateID:      aggregateID,
 		aggregateVersion: aggregateVersion,
+		metadata:         NewMetadataManagerFromContext(ctx).GetMetadata(),
 	}
 }
 
 // NewEvent creates a new event with metadata attached.
 func NewEventWithMetadata(eventType EventType, data EventData, timestamp time.Time,
-	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64, metadata map[string][]byte) Event {
+	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64, metadata map[string]string) Event {
 	return event{
 		eventType:        eventType,
 		data:             data,
@@ -122,7 +125,7 @@ type event struct {
 	aggregateType    AggregateType
 	aggregateID      uuid.UUID
 	aggregateVersion uint64
-	metadata         map[string][]byte
+	metadata         map[string]string
 }
 
 // EventType implements the EventType method of the Event interface.
@@ -156,7 +159,7 @@ func (e event) AggregateVersion() uint64 {
 }
 
 // Metadata implements the Metadata method of the Event interface.
-func (e event) Metadata() map[string][]byte {
+func (e event) Metadata() map[string]string {
 	return e.metadata
 }
 

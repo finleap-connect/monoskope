@@ -4,7 +4,6 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/any.proto";
-import "api/domain/common/messages.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands";
 
@@ -16,14 +15,6 @@ message Command {
   string type = 1;
   // Command type specific data
   google.protobuf.Any data = 2;
-}
-
-// CommandRequest is a request to execute a Command by Monoskope
-message CommandRequest {
-  // The command to execute
-  Command command = 1;
-  // Metadata about the issueing user
-  common.UserMetadata user_metadata = 2;
 }
 
 message TestCommandData {

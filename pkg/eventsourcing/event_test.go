@@ -1,6 +1,7 @@
 package eventsourcing
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,6 +73,7 @@ var _ = Describe("EventData", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		se := NewEvent(
+			context.Background(),
 			EventType("TestType"),
 			ed,
 			timestamp,

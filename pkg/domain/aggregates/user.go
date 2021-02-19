@@ -2,6 +2,7 @@ package aggregates
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -9,23 +10,24 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
+	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
 	*es.BaseAggregate
-	Email string
-	Name  string
+	userRepo repos.ReadOnlyUserRepository
+	Email    string
+	Name     string
 }
 
-// AggregateType returns the type of the aggregate.
-func (c *UserAggregate) AggregateType() es.AggregateType { return aggregates.User }
-
 // NewUserAggregate creates a new UserAggregate
-func NewUserAggregate(id uuid.UUID) *UserAggregate {
+func NewUserAggregate(id uuid.UUID, userRepo repos.ReadOnlyUserRepository) *UserAggregate {
 	return &UserAggregate{
 		BaseAggregate: es.NewBaseAggregate(aggregates.User, id),
+		userRepo:      userRepo,
 	}
 }
 
@@ -33,13 +35,17 @@ func NewUserAggregate(id uuid.UUID) *UserAggregate {
 func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
-		// TODO: check if user already exists
-		if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.UserMetadata.Email, Name: cmd.UserMetadata.Name}); err != nil {
-			return err
-		} else if err = a.ApplyEvent(a.AppendEvent(events.UserCreated, ed)); err != nil {
-			return err
+		_, err := a.userRepo.ByEmail(ctx, cmd.GetEmail())
+		if err != nil && errors.Is(err, domainErrors.ErrUserNotFound) {
+			if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.GetEmail(), Name: cmd.GetName()}); err != nil {
+				return err
+			} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.UserCreated, ed)); err != nil {
+				return err
+			}
+			return nil
+		} else {
+			return domainErrors.ErrUserAlreadyExists
 		}
-		return nil
 	}
 	return fmt.Errorf("couldn't handle command")
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -18,9 +19,11 @@ func NewUserRoleBindingProjector() es.Projector {
 	return &userRoleBindingProjector{}
 }
 
-func (u *userRoleBindingProjector) NewProjection() es.Projection {
+func (u *userRoleBindingProjector) NewProjection(id uuid.UUID) es.Projection {
 	return &projections.UserRoleBinding{
-		UserRoleBinding: projectionsApi.UserRoleBinding{},
+		UserRoleBinding: projectionsApi.UserRoleBinding{
+			Id: id.String(),
+		},
 	}
 }
 

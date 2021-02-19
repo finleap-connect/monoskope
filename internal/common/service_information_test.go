@@ -22,7 +22,7 @@ var _ = Describe("ServiceInformation", func() {
 			NewGrpcConnectionFactory(testEnv.GetApiAddr()).
 			WithInsecure().
 			WithBlock().
-			Build(ctx)
+			Connect(ctx)
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

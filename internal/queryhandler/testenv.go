@@ -5,11 +5,12 @@ import (
 	"net"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
 	ggrpc "google.golang.org/grpc"
 
@@ -29,24 +30,26 @@ type TestEnv struct {
 
 func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
+	ctx := context.Background()
+
 	env := &TestEnv{
 		TestEnv:           test.NewTestEnv("QueryHandlerTestEnv"),
 		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
 	rabbitConf := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
-	env.ebConsumer, err = util.NewEventBusConsumerFromConfig(rabbitConf)
+	env.ebConsumer, err = messagebus.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return nil, err
 	}
 
-	env.esConn, env.esClient, err = util.NewEventStoreClient(env.eventStoreTestEnv.GetApiAddr())
+	env.esConn, env.esClient, err = eventstore.NewEventStoreClient(ctx, env.eventStoreTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
 
 	// Setup domain
-	userRepo, err := util.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	userRepo, err := domain.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}
