@@ -1,0 +1,28 @@
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: commandhandler-mapping
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  prefix: /commandhandler/
+  service: {{.Release.Name}}-commandhandler:8080
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: queryhandler-mapping
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  prefix: /queryhandler/
+  service: {{.Release.Name}}-queryhandler:8080
+---
+apiVersion: getambassador.io/v1
+kind: AuthService
+metadata:
+  name: ory-oathkeeper-authservice
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  auth_service: {{.Release.Name}}-oathkeeper:{{.Values.oathkeeper.config.serve.api.port}}

@@ -1,0 +1,17 @@
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: ory-oathkeeper-rule-commandhandler
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  match:
+    url: <.*>
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
+  authenticators:
+  - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+  - handler: noop
+    config: {}

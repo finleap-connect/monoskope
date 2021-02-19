@@ -225,3 +225,49 @@ rabbitmq:
       additionalLabels:
         tenant: *tenant
         app.kubernetes.io/part-of: *name
+
+# Configure ORY Oathkeeper
+oathkeeper:
+  enabled: true
+  # The ORY Oathkeeper configuration. For a full list of available settings, check:
+  #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
+  config:
+    authorizers:
+      allow:
+        enabled: true
+      deny:
+        enabled: true
+    authenticators:
+      unauthorized:
+        enabled: true      
+      anonymous:
+        enabled: true
+        config:
+          subject: guest
+    access_rules:
+      repositories:
+        - file:///etc/rules/access-rules.json
+    serve:
+      proxy:
+        port: 4455
+      api:
+        port: 4456
+
+ambassador:
+  enabled: true
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
+  enableAES: false
+  rbac:
+    create: false
+  serviceAccount:
+    create: false
+  scope:
+    singleNamespace: true
+  resources:
+    limits:
+      cpu: 2
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
