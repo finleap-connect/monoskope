@@ -248,10 +248,11 @@ oathkeeper:
       repositories:
         - file:///etc/rules/access-rules.json
     serve:
-      proxy:
-        port: 4455
       api:
         port: 4456
+  service:
+    proxy:
+      enabled: false
   maester:
     enabled: false
 
