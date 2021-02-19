@@ -4,7 +4,6 @@ import (
 	"context"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 type storingAggregateHandler struct {
@@ -20,13 +19,12 @@ func NewAggregateHandler(aggregateManager es.AggregateManager) es.CommandHandler
 
 // HandleCommand implements the CommandHandler interface
 func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
+	var err error
 	var aggregate es.Aggregate
 
 	// Load the aggregate from the store
-	if aggregate, err := h.aggregateManager.Get(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
+	if aggregate, err = h.aggregateManager.Get(ctx, cmd.AggregateType(), cmd.AggregateID()); err != nil {
 		return err
-	} else if aggregate == nil {
-		return errors.ErrAggregateNotFound
 	}
 
 	// Apply the command to the aggregate

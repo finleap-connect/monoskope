@@ -11,8 +11,11 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -54,7 +57,7 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.Au
 		OfflineAccess: true,
 	})
 	if err != nil {
-		return nil, grpc.ErrInvalidArgument(err)
+		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
 
 	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
@@ -95,16 +98,27 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.Refresh
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, apiCommand *commands.Command) (*empty.Empty, error) {
+func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
 	// Get the claims of the authenticated user from the context
 	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
 	if !ok {
 		return nil, grpc.ErrInternal("authentication problem")
 	}
 
-	// Call command handler to execute
-	return s.cmdHandlerClient.Execute(ctx, &commands.CommandRequest{
-		Command:      apiCommand,
-		UserMetadata: claims.ToProto(),
+	manager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = manager.SetUserInformation(&metadata.UserInformation{
+		Email:   claims.Email,
+		Subject: claims.Subject,
+		Issuer:  claims.Issuer,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Call command handler to execute
+	return s.cmdHandlerClient.Execute(ctx, command)
 }

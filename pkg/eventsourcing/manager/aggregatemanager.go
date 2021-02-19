@@ -181,6 +181,6 @@ func (r *aggregateManager) Update(ctx context.Context, aggregate es.Aggregate) e
 			return err
 		}
 	}
-
-	return nil
+	_, err = stream.CloseAndRecv()
+	return err
 }

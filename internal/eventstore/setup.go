@@ -1,4 +1,4 @@
-package util
+package eventstore
 
 import (
 	"context"
@@ -44,17 +44,10 @@ func NewEventStore() (eventsourcing.Store, error) {
 	return store, nil
 }
 
-func NewEventStoreClient(eventStoreAddr string) (*grpc.ClientConn, esApi.EventStoreClient, error) {
-	// Create EventStore client
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func NewEventStoreClient(ctx context.Context, eventStoreAddr string) (*grpc.ClientConn, esApi.EventStoreClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactory(eventStoreAddr).
-		WithInsecure().
-		WithRetry().
-		WithBlock().
-		Build(ctx)
+		NewGrpcConnectionFactoryWithDefaults(eventStoreAddr).
+		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err
 	}

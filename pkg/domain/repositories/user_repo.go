@@ -2,13 +2,13 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
+	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 type userRepository struct {
@@ -74,7 +74,7 @@ func (r *userRepository) ByUserId(ctx context.Context, id string) (*projections.
 	}
 
 	if user, ok := projection.(*projections.User); !ok {
-		return nil, errors.ErrInvalidProjectionType
+		return nil, esErrors.ErrInvalidProjectionType
 	} else {
 		// Find roles of user
 		err = r.addRolesToUser(ctx, user)
@@ -112,5 +112,5 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 		return user, nil
 	}
 
-	return nil, fmt.Errorf("not found")
+	return nil, errors.ErrUserNotFound
 }

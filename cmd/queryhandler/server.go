@@ -5,14 +5,16 @@ import (
 
 	qhApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	commonApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/util"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -35,7 +37,7 @@ var serverCmd = &cobra.Command{
 
 		// Create EventStore client
 		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
-		esConnection, esClient, err := util.NewEventStoreClient(eventStoreAddr)
+		esConnection, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
 		}
@@ -43,7 +45,7 @@ var serverCmd = &cobra.Command{
 
 		// init message bus consumer
 		log.Info("Setting up message bus consumer...")
-		ebConsumer, err := util.NewEventBusConsumer("queryhandler", msgbusPrefix)
+		ebConsumer, err := messagebus.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
@@ -51,7 +53,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		userRepo, err := util.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
+		userRepo, err := domain.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}

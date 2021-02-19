@@ -33,7 +33,7 @@ func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 		if err != nil {
 			return err
 		}
-		_ = a.AppendEvent(testEventType, ed)
+		_ = a.AppendEvent(ctx, testEventType, ed)
 		return nil
 	}
 	return fmt.Errorf("couldn't handle command")

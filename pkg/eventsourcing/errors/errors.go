@@ -86,9 +86,7 @@ var (
 // Repository Errors
 var (
 	// ErrProjectionNotFound is when the requested Projection was not found in the repository.
-	ErrProjectionNotFound = errors.New("not found")
-	// ErrAggregateNotFound is when the requested Aggregate was not found in the repository.
-	ErrAggregateNotFound = errors.New("not found")
+	ErrProjectionNotFound = errors.New("projection not found")
 )
 
 var (

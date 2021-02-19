@@ -6,8 +6,9 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	m8grpc "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -44,7 +45,7 @@ func (s *AuthServerInterceptor) EnsureValid(ctx context.Context, fullMethodName 
 	// Perform the token validation here.
 	claims, err := s.authHandler.Authorize(ctx, token)
 	if err != nil {
-		return nil, m8grpc.ErrInvalidToken
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	return context.WithValue(ctx, &Claims{}, claims), nil

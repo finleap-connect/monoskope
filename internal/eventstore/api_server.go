@@ -5,6 +5,7 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/usecases"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -42,7 +43,7 @@ func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
 			break
 		}
 		if err != nil { // Some other error
-			return err
+			return errors.TranslateToGrpcError(err)
 		}
 
 		// Append events to the stream
@@ -52,7 +53,7 @@ func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
 	// Perform the use case for storing events
 	err := usecases.NewStoreEventsUseCase(stream.Context(), s.store, s.bus, eventStream).Run()
 	if err != nil {
-		return err
+		return errors.TranslateToGrpcError(err)
 	}
 
 	return stream.SendAndClose(&emptypb.Empty{})
@@ -63,7 +64,7 @@ func (s *apiServer) Retrieve(filter *esApi.EventFilter, stream esApi.EventStore_
 	// Perform the use case for storing events
 	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter).Run()
 	if err != nil {
-		return err
+		return errors.TranslateToGrpcError(err)
 	}
 	return nil
 }

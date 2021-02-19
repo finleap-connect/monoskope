@@ -35,9 +35,9 @@ var _ = Describe("storage/inmemory", func() {
 		aggregateId := uuid.New()
 
 		return []evs.Event{
-			evs.NewEvent(evs.EventType(testEventCreated), createTestEventData("create"), now(), evs.AggregateType(testAggregate), aggregateId, 0),
-			evs.NewEvent(evs.EventType(testEventChanged), createTestEventData("change"), now(), evs.AggregateType(testAggregate), aggregateId, 1),
-			evs.NewEvent(evs.EventType(testEventDeleted), createTestEventData("delete"), now(), evs.AggregateType(testAggregate), aggregateId, 2),
+			evs.NewEvent(ctx, evs.EventType(testEventCreated), createTestEventData("create"), now(), evs.AggregateType(testAggregate), aggregateId, 0),
+			evs.NewEvent(ctx, evs.EventType(testEventChanged), createTestEventData("change"), now(), evs.AggregateType(testAggregate), aggregateId, 1),
+			evs.NewEvent(ctx, evs.EventType(testEventDeleted), createTestEventData("delete"), now(), evs.AggregateType(testAggregate), aggregateId, 2),
 		}
 	}
 
@@ -57,8 +57,8 @@ var _ = Describe("storage/inmemory", func() {
 
 		aggregateId := uuid.New()
 		err := es.Save(ctx, []evs.Event{
-			evs.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
+			evs.NewEvent(ctx, testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			evs.NewEvent(ctx, testEventChanged, createTestEventData("change"), now(), testAggregateExtended, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrInvalidAggregateType))
@@ -69,8 +69,8 @@ var _ = Describe("storage/inmemory", func() {
 
 		aggregateId := uuid.New()
 		err := es.Save(ctx, []evs.Event{
-			evs.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
+			evs.NewEvent(ctx, testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			evs.NewEvent(ctx, testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 2),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrIncorrectAggregateVersion))
@@ -82,13 +82,13 @@ var _ = Describe("storage/inmemory", func() {
 
 		aggregateId := uuid.New()
 		err := es.Save(ctx, []evs.Event{
-			evs.NewEvent(testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
-			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
+			evs.NewEvent(ctx, testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			evs.NewEvent(ctx, testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).ToNot(HaveOccurred())
 
 		err = es.Save(ctx, []evs.Event{
-			evs.NewEvent(testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
+			evs.NewEvent(ctx, testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrAggregateVersionAlreadyExists))

@@ -50,6 +50,8 @@ type Policy interface {
 	AcceptsResource(string) bool
 	// AcceptsSubject checks if the policy accepts the given subject.
 	AcceptsSubject(string) bool
+	// MustBeSubject checks if the policy enforces the given subject.
+	MustBeSubject(string) bool
 }
 
 // Policy describes which Role/Scope/Resource combination is allowed to execute a certain Command.
@@ -137,6 +139,11 @@ func (p *policy) AcceptsResource(resource string) bool {
 // AcceptsSubject checks if the policy accepts the given subject.
 func (p *policy) AcceptsSubject(subject string) bool {
 	return p.subject == AnySubject || p.subject == subject
+}
+
+// MustBeSubject checks if the policy enforces the given subject.
+func (p *policy) MustBeSubject(subject string) bool {
+	return p.subject == subject
 }
 
 // String returns a string representation of the policy.

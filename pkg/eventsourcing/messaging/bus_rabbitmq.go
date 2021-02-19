@@ -471,7 +471,7 @@ type rabbitMessage struct {
 	AggregateType    evs.AggregateType
 	AggregateID      uuid.UUID
 	AggregateVersion uint64
-	Metadata         map[string][]byte
+	Metadata         map[string]string
 }
 
 // rabbitEvent is the private implementation of the Event interface for a rabbitmq message bus.
@@ -510,7 +510,7 @@ func (e rabbitEvent) AggregateVersion() uint64 {
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e rabbitEvent) Metadata() map[string][]byte {
+func (e rabbitEvent) Metadata() map[string]string {
 	return e.rabbitMessage.Metadata
 }
 
