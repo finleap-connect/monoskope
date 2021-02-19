@@ -252,12 +252,17 @@ oathkeeper:
         port: 4455
       api:
         port: 4456
+  maester:
+    enabled: false
 
 ambassador:
   enabled: true
+  replicaCount: 3
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
   enableAES: false
+  crds:
+    create: false
   rbac:
     create: false
   serviceAccount:
