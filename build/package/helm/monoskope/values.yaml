@@ -232,6 +232,11 @@ oathkeeper:
   # The ORY Oathkeeper configuration. For a full list of available settings, check:
   #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
   oathkeeper:
+    image:
+      # ORY Oathkeeper image
+      repository: gitlab.figo.systems/platform/dependency_proxy/containers/oryd/oathkeeper
+      # ORY Oathkeeper version
+      tag: v0.38.6-beta.1
     config:
       authorizers:
         allow:
@@ -249,10 +254,10 @@ oathkeeper:
               - email
               - profile
               - read_user
-            target_audience:
-              - http://127.0.0.1:8080/
+            target_audience: []
             trusted_issuers:
               - https://gitlab.figo.systems
+              - https://monoskope.dev.finleap.cloud/dex
             allowed_algorithms:
               - RS256
             token_from:
