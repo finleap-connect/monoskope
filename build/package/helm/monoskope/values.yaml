@@ -234,13 +234,29 @@ oathkeeper:
   oathkeeper:
     config:
       authorizers:
-        deny:
+        allow:
           enabled: true
       authenticators:
-        anonymous:
+        oauth2_introspection:
+          # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
           enabled: true
           config:
-            subject: guest
+            introspection_url: "https://gitlab.figo.systems/oauth/introspect"
+            scope_strategy: none
+            required_scope:
+              - openid
+              - email
+              - profile
+              - read_user
+            pre_authorization:
+              enabled: false
+            token_from:
+              header: authorization
+            introspection_request_headers:
+              x-forwarded-proto: https
+            cache:
+              enabled: true
+              ttl: 60s
       mutators:
         noop:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
