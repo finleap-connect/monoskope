@@ -237,26 +237,26 @@ oathkeeper:
         allow:
           enabled: true
       authenticators:
-        oauth2_introspection:
+        jwt:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
           enabled: true
           config:
-            introspection_url: "https://gitlab.figo.systems/oauth/introspect"
+            jwks_urls:
+              - "https://gitlab.figo.systems/oauth/discovery/keys"
             scope_strategy: none
             required_scope:
               - openid
               - email
               - profile
               - read_user
-            pre_authorization:
-              enabled: false
+            target_audience:
+              - http://127.0.0.1:8080/
+            trusted_issuers:
+              - https://gitlab.figo.systems
+            allowed_algorithms:
+              - RS256
             token_from:
               header: authorization
-            introspection_request_headers:
-              x-forwarded-proto: https
-            cache:
-              enabled: true
-              ttl: 60s
       mutators:
         noop:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.

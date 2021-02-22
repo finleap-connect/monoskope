@@ -12,7 +12,7 @@ spec:
     url: <.*>
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
   authenticators:
-  - handler: oauth2_introspection
+  - handler: jwt
   authorizer:
     handler: allow
   mutators:
