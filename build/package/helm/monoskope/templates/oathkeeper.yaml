@@ -6,12 +6,14 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   upstream:
-    url: "http://abc.ef" # Required but not used since proxy isn't used
+    url: "http://google.de" # Required but not used since proxy isn't used
     preserveHost: false
   match:
     url: <.*>
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
   authenticators:
-  - handler: noop
+  - handler: anonymous
   authorizer:
-    handler: allow
+    handler: deny
+  mutators:
+  - handler: noop

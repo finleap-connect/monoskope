@@ -17,5 +17,5 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  auth_service: {{.Release.Name}}-oathkeeper-api:{{.Values.oathkeeper.config.serve.api.port}}
+  auth_service: {{.Release.Name}}-oathkeeper-api:{{.Values.oathkeeper.oathkeeper.config.serve.api.port}}
   path_prefix: /decisions

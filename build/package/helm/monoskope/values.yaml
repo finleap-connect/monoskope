@@ -231,21 +231,23 @@ oathkeeper:
   enabled: true
   # The ORY Oathkeeper configuration. For a full list of available settings, check:
   #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
-  config:
-    authorizers:
-      allow:
-        enabled: true
-      deny:
-        enabled: true
-    authenticators:
-      noop:
-        enabled: true
-    unauthorized:
-      noop:
-        enabled: true      
-    serve:
-      api:
-        port: 4456
+  oathkeeper:
+    config:
+      authorizers:
+        deny:
+          enabled: true
+      authenticators:
+        anonymous:
+          enabled: true
+          config:
+            subject: guest
+      mutators:
+        noop:
+          # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
+          enabled: true
+      serve:
+        api:
+          port: 4456
   service:
     proxy:
       enabled: false
