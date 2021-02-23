@@ -13,9 +13,6 @@ gateway:
 eventstore:
   enabled: false
 
-ingress:
-  enabled: true
-
 commandhandler:
   enabled: false
 

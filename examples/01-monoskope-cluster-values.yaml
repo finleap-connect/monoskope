@@ -20,14 +20,9 @@ rabbitmq:
   replicaCount: 5
 
 gateway:
-  replicaCount: 3
+  replicaCount: 2
   auth:
     issuerURL: https://gitlab.figo.systems
-    clientID: "{{ .gitlabClientId }}"
-    clientSecret: "{{ .gitlabClientSecret }}"
-  ingress:
-    enabled: true
-    host: api.monoskope.dev.finleap.cloud
   resources:
     limits:
       cpu: 2000m
@@ -37,7 +32,7 @@ gateway:
       memory: 64Mi
 
 eventstore:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   messageBus:
     tlsSecret: monoskope-rabbitmq-auth-admin
@@ -52,7 +47,7 @@ eventstore:
       memory: 64Mi
 
 commandhandler:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   resources:
     limits:
@@ -63,7 +58,7 @@ commandhandler:
       memory: 64Mi
 
 queryhandler:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   resources:
     limits:
@@ -75,6 +70,30 @@ queryhandler:
   messageBus:
     tlsSecret: monoskope-rabbitmq-auth-admin
 
-ingress:
+ambassador:
   enabled: true
-  host: monoskope.dev.finleap.cloud
+  replicaCount: 3
+  baseURL: https://monoskope.io
+
+# Configure ORY Oathkeeper
+oathkeeper:
+  enabled: true
+  oathkeeper:
+    config:
+      authorizers:
+        allow:
+          enabled: true
+      authenticators:
+        jwt:
+          enabled: true
+          config:
+            jwks_urls:
+              - https://monoskope.dev.finleap.cloud/dex/keys
+            scope_strategy: none
+            trusted_issuers:
+              - https://monoskope.dev.finleap.cloud/dex
+            allowed_algorithms:
+              - RS256
+      mutators:
+        noop:
+          enabled: true

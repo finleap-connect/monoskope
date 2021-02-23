@@ -1,15 +1,37 @@
 apiVersion: oathkeeper.ory.sh/v1alpha1
 kind: Rule
 metadata:
-  name: ory-oathkeeper-rule-commandhandler
+  name: {{ include "monoskope.fullname" . }}-oathk-rule-cmdhndlr
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   upstream:
-    url: "http://google.de" # Required but not used since proxy isn't used
+    url: {{ .Values.ambassador.baseURL }} # Required but not used since proxy isn't used
     preserveHost: false
   match:
-    url: <.*>
+    url: {{ .Values.ambassador.baseURL }}/eventsourcing.CommandHandler/<.*>
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
+  authenticators:
+  - handler: jwt
+  authorizer:
+    handler: allow
+  mutators:
+  - handler: noop
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: {{ include "monoskope.fullname" . }}-oathk-rule-qryhndlr
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  upstream:
+    url: {{ .Values.ambassador.baseURL }} # Required but not used since proxy isn't used
+    preserveHost: false
+  match:
+    url: {{ .Values.ambassador.baseURL }}/domain.<.*>
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
   authenticators:
   - handler: jwt

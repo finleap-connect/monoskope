@@ -18,10 +18,6 @@ messageBus:
 monitoring:
   tenant: &tenant finleap-cloud
 
-ingress:
-  enabled: false
-  host: monoskope.io
-
 #     issuer: https://monoskope.io/bla
 #     staticClients:
 #       - id: gateway
@@ -35,7 +31,7 @@ gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: https://monoskope.io/auth
+    issuerURL: https://your-idp.com
 
 eventstore:
   enabled: true
@@ -177,17 +173,9 @@ oathkeeper:
         allow:
           enabled: true
       authenticators:
-        jwt:
+        noop:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
           enabled: true
-          config:
-            jwks_urls:
-              - https://monoskope.dev.finleap.cloud/dex/keys
-            scope_strategy: none
-            trusted_issuers:
-              - https://monoskope.dev.finleap.cloud/dex
-            allowed_algorithms:
-              - RS256
       mutators:
         noop:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
@@ -222,3 +210,4 @@ ambassador:
     requests:
       cpu: 100m
       memory: 256Mi
+  baseURL: https://monoskope.io

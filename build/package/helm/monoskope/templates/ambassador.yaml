@@ -1,19 +1,60 @@
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
-  name: commandhandler-mapping
+  name: {{ include "monoskope.fullname" . }}-gateway-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  prefix: /gateway.Gateway/
+  rewrite: /gateway.Gateway/
+  service: {{.Release.Name}}-gateway:8080
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-version-mapping
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
-  service: {{.Release.Name}}-gateway.platform-monoskope-monoskope:8080
+  service: {{.Release.Name}}-gateway:8080
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  prefix: /eventsourcing.CommandHandler/
+  rewrite: /eventsourcing.CommandHandler/
+  service: {{.Release.Name}}-commandhandler:8080
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-usersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  prefix: /domain.UserService/
+  rewrite: /domain.UserService/
+  service: {{.Release.Name}}-commandhandler:8080
 ---
 apiVersion: getambassador.io/v1
 kind: AuthService
 metadata:
-  name: ory-oathkeeper-authservice
+  name: {{ include "monoskope.fullname" . }}-ory-oathkeeper-authservice
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
