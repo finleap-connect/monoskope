@@ -87,9 +87,6 @@ auth:
   # -- The URL of the issuer to use for OIDC
   issuerURL: http://localhost:5555
 
-ingress:
-  enabled: false
-  host: api.monoskope.io
 
 # The secret where the gateway finds the oidc secrets.
 secret:

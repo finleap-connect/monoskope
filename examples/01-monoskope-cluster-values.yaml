@@ -7,25 +7,6 @@ global:
   imagePullSecrets:
     - name: gitlab-registry
 
-dex:
-  enabled: true
-  replicas: 3
-  config:
-    issuer: &issuer https://monoskope.dev.finleap.cloud/dex
-    enablePasswordDB: false
-    connectors:
-      - type: gitlab
-        id: gitlab-dev
-        name: GitLab DEV
-        config:
-          baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ .gitlabClientId }}"
-          clientSecret: "{{ .gitlabClientSecret }}"
-          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
-          groups:
-            - "wolke7"
-          use_login_as_id: false
-
 cockroachdb:
   enabled: true
   statefulset:
@@ -41,7 +22,9 @@ rabbitmq:
 gateway:
   replicaCount: 3
   auth:
-    issuerURL: *issuer
+    issuerURL: https://gitlab.figo.systems
+    clientID: "{{ .gitlabClientId }}"
+    clientSecret: "{{ .gitlabClientSecret }}"
   ingress:
     enabled: true
     host: api.monoskope.dev.finleap.cloud

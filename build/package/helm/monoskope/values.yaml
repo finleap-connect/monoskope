@@ -22,85 +22,20 @@ ingress:
   enabled: false
   host: monoskope.io
 
-dex: # OIDC Provider
-  enabled: false
-  replicas: 1
-  image: ghcr.io/dexidp/dex
-  imageTag: "v2.27.0"
-  imagePullPolicy: "Always"
-  config:
-    # -- Name of the secret containing the dex config
-    existingSecret: monoskope-dex-config
-    # -- Domain of the issuer (dex)
-    issuer: &issuer https://monoskope.io/dex
-    storage:
-      type: postgres
-      config:
-        port: 26257
-        database: dex_db
-        user: dex
-        # -- Secret containing the certificates to communicate with the storage backend
-        secret: monoskope-crdb-client-dex
-        ssl:
-          mode: verify-ca
-          caFile: /etc/dex/certs/ca.crt
-          certFile: /etc/dex/certs/client.crt
-          keyFile: /etc/dex/certs/client.key
-    logger:
-      level: debug
-    web:
-      address: 0.0.0.0
-    oauth2:
-      alwaysShowLoginScreen: false
-      skipApprovalScreen: true
-    enablePasswordDB: false
-    connectors: []
-    staticClients:
-      - id: gateway
-        secret: "{{ .gatewayAppSecret }}"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "http://localhost:8000" # callback from dex to monoctl
-          - "http://localhost:18000"
-  https: false
-  ports:
-    web:
-      containerPort: 5556
-  grpc: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 100Mi
-    requests:
-      cpu: 100m
-      memory: 50Mi
-  telemetry: true
-  certs:
-    web:
-      create: false
-    grpc:
-      create: false
-  rbac:
-    # Specifies whether RBAC resources should be created
-    create: false
-  crd:
-    # Specifies whether dex's CRDs are already present (if not cluster role and cluster role binding will be created
-    # to enable dex to create them). Depends on rbac.create
-    present: true
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
-    create: false
-    # The name of the ServiceAccount to use.
-  # frontend:
-  #   logoURL: https://example.com/yourlogo.png
-  labels:
-    app.kubernetes.io/part-of: *name
+#     issuer: https://monoskope.io/bla
+#     staticClients:
+#       - id: gateway
+#         secret: "{{ .gatewayAppSecret }}"
+#         name: "Monoskope Gateway"
+#         redirectURIs:
+#           - "http://localhost:8000"
+#           - "http://localhost:18000"
 
 gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: *issuer
+    issuerURL: https://monoskope.io/auth
 
 eventstore:
   enabled: true
