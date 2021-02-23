@@ -39,8 +39,8 @@ var (
 
 type oAuthTestEnv struct {
 	*test.TestEnv
-	DexWebEndpoint string
-	AuthConfig     *auth.Config
+	IssuerURL  string
+	AuthConfig *auth.Config
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -77,10 +77,10 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 			_ = env.Shutdown()
 			return nil, err
 		}
-		env.DexWebEndpoint = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
+		env.IssuerURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
 		env.AuthConfig = &auth.Config{
-			IssuerURL:      env.DexWebEndpoint,
+			IssuerURL:      env.IssuerURL,
 			OfflineAsScope: true,
 			ClientId:       "gateway",
 			ClientSecret:   "app-secret",

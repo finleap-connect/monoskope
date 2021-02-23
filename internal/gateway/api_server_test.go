@@ -76,7 +76,7 @@ var _ = Describe("Gateway", func() {
 		Expect(err).NotTo(HaveOccurred())
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
-		formAction := fmt.Sprintf("%s%s", env.DexWebEndpoint, path)
+		formAction := fmt.Sprintf("%s%s", env.IssuerURL, path)
 
 		var authCode string
 		var statusCode int
