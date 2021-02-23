@@ -247,21 +247,12 @@ oathkeeper:
           enabled: true
           config:
             jwks_urls:
-              - "https://gitlab.figo.systems/oauth/discovery/keys"
+              - https://monoskope.dev.finleap.cloud/dex/keys
             scope_strategy: none
-            required_scope:
-              - openid
-              - email
-              - profile
-              - read_user
-            target_audience: []
             trusted_issuers:
-              - https://gitlab.figo.systems
               - https://monoskope.dev.finleap.cloud/dex
             allowed_algorithms:
               - RS256
-            token_from:
-              header: authorization
       mutators:
         noop:
           # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
