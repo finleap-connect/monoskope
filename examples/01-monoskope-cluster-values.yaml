@@ -83,6 +83,7 @@ ambassador:
 # Configure ORY Oathkeeper
 oathkeeper:
   enabled: true
+  replicaCount: 2
   oathkeeper:
     config:
       authorizers:

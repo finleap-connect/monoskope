@@ -101,7 +101,7 @@ cockroachdb:
 
 rabbitmq:
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   persistence:
     enabled: false
   image:
@@ -155,6 +155,7 @@ rabbitmq:
 # Configure ORY Oathkeeper
 oathkeeper:
   enabled: true
+  replicaCount: 2
   # The ORY Oathkeeper configuration. For a full list of available settings, check:
   #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
   oathkeeper:
@@ -182,7 +183,7 @@ oathkeeper:
     proxy:
       enabled: false
   maester:
-    enabled: true
+    enabled: false
 
 ambassador:
   enabled: true
