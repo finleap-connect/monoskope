@@ -30,10 +30,13 @@ var serverCmd = &cobra.Command{
 		var err error
 
 		// Some options can be provided by env variables
-		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "test" {
+		if v := os.Getenv("OIDC_CLIENT_ID"); v != "" {
+			authConfig.ClientId = v
+		}
+		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "" {
 			authConfig.ClientSecret = v
 		}
-		if v := os.Getenv("OIDC_NONCE"); v != "test" {
+		if v := os.Getenv("OIDC_NONCE"); v != "" {
 			authConfig.Nonce = v
 		}
 
@@ -43,22 +46,12 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		authInterceptor, err := auth.NewInterceptor(authHandler)
-		if err != nil {
-			return err
-		}
 
 		// Gateway API server
 		gws := gateway.NewApiServer(&authConfig, authHandler)
 
 		// Create gRPC server and register implementation
-		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
-			[]ggrpc.UnaryServerInterceptor{
-				auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
-			},
-			[]ggrpc.StreamServerInterceptor{
-				auth.StreamServerInterceptor(authInterceptor.EnsureValid),
-			})
+		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api_gw.RegisterGatewayServer(s, gws)
 			api_gwauth.RegisterAuthServer(s, gws)
@@ -78,5 +71,4 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
-	flags.StringVar(&authConfig.ClientId, "oidc-client-id", "gateway", "Client id for oidc")
 }

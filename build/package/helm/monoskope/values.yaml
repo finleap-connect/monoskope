@@ -11,6 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+hosting:
+  issuer: ""
+  domain: &domain monoskope.io
+
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
@@ -18,89 +22,11 @@ messageBus:
 monitoring:
   tenant: &tenant finleap-cloud
 
-ingress:
-  enabled: false
-  host: monoskope.io
-
-dex: # OIDC Provider
-  enabled: false
-  replicas: 1
-  image: ghcr.io/dexidp/dex
-  imageTag: "v2.27.0"
-  imagePullPolicy: "Always"
-  config:
-    # -- Name of the secret containing the dex config
-    existingSecret: monoskope-dex-config
-    # -- Domain of the issuer (dex)
-    issuer: &issuer https://monoskope.io/dex
-    storage:
-      type: postgres
-      config:
-        port: 26257
-        database: dex_db
-        user: dex
-        # -- Secret containing the certificates to communicate with the storage backend
-        secret: monoskope-crdb-client-dex
-        ssl:
-          mode: verify-ca
-          caFile: /etc/dex/certs/ca.crt
-          certFile: /etc/dex/certs/client.crt
-          keyFile: /etc/dex/certs/client.key
-    logger:
-      level: debug
-    web:
-      address: 0.0.0.0
-    oauth2:
-      alwaysShowLoginScreen: false
-      skipApprovalScreen: true
-    enablePasswordDB: false
-    connectors: []
-    staticClients:
-      - id: gateway
-        secret: "{{ .gatewayAppSecret }}"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "http://localhost:8000" # callback from dex to monoctl
-          - "http://localhost:18000"
-  https: false
-  ports:
-    web:
-      containerPort: 5556
-  grpc: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 100Mi
-    requests:
-      cpu: 100m
-      memory: 50Mi
-  telemetry: true
-  certs:
-    web:
-      create: false
-    grpc:
-      create: false
-  rbac:
-    # Specifies whether RBAC resources should be created
-    create: false
-  crd:
-    # Specifies whether dex's CRDs are already present (if not cluster role and cluster role binding will be created
-    # to enable dex to create them). Depends on rbac.create
-    present: true
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
-    create: false
-    # The name of the ServiceAccount to use.
-  # frontend:
-  #   logoURL: https://example.com/yourlogo.png
-  labels:
-    app.kubernetes.io/part-of: *name
-
 gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: *issuer
+    issuerURL: https://your-idp.com
 
 eventstore:
   enabled: true
@@ -175,7 +101,7 @@ cockroachdb:
 
 rabbitmq:
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   persistence:
     enabled: false
   image:
@@ -225,3 +151,89 @@ rabbitmq:
       additionalLabels:
         tenant: *tenant
         app.kubernetes.io/part-of: *name
+
+# Configure ORY Oathkeeper
+oathkeeper:
+  enabled: true
+  replicaCount: 2
+  # The ORY Oathkeeper configuration. For a full list of available settings, check:
+  #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
+  oathkeeper:
+    image:
+      # ORY Oathkeeper image
+      repository: gitlab.figo.systems/platform/dependency_proxy/containers/oryd/oathkeeper
+      # ORY Oathkeeper version
+      tag: v0.38.6-beta.1
+    config:
+      authorizers:
+        allow:
+          enabled: true
+      authenticators:
+        noop:
+          # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
+          enabled: true
+      mutators:
+        noop:
+          # Set enabled to true if the authenticator should be enabled and false to disable the authenticator. Defaults to false.
+          enabled: true
+      serve:
+        api:
+          port: 4456
+  service:
+    proxy:
+      enabled: false
+  maester:
+    enabled: false
+  accessRulesYaml:
+  - id: commandhandler-rule
+    match:
+      url: <.*>/eventsourcing.CommandHandler/<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: jwt
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+  - id: queryhandler-rule
+    match:
+      url: <.*>/domain.<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: jwt
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+  - id: gateway-rule
+    match:
+      url: <.*>/<common.ServiceInformationService|gateway.>/<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: noop
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+
+ambassador:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
+  enableAES: false
+  crds:
+    create: false
+  rbac:
+    create: false
+  serviceAccount:
+    create: false
+  scope:
+    singleNamespace: true
+  resources:
+    limits:
+      cpu: 4
+      memory: 1000Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi

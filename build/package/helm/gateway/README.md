@@ -20,8 +20,6 @@ Monoskope Gateway
 | image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway"` |  |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` |  |
-| ingress.enabled | bool | `false` |  |
-| ingress.host | string | `"api.monoskope.io"` |  |
 | keepAlive | bool | `false` |  |
 | labels | object | `{}` |  |
 | livenessProbe.enabled | bool | `true` |  |
