@@ -211,6 +211,10 @@ oathkeeper:
       methods: ["POST"]
     authenticators:
     - handler: noop
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
 ambassador:
   enabled: true
   replicaCount: 3
