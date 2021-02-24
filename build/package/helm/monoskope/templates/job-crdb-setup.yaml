@@ -1,4 +1,4 @@
-{{ if and .Values.cockroachdb.enabled (eq .Values.dex.config.storage.type "postgres") }}
+{{ if .Values.cockroachdb.enabled }}
 {{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-setup") -}}
 {{- $crdbName := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
 {{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
@@ -25,9 +25,6 @@ spec:
       - args:
         - sql
         - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
-        - --execute=CREATE USER IF NOT EXISTS {{ .Values.dex.config.storage.config.user }};
-        - --execute=CREATE DATABASE IF NOT EXISTS {{ .Values.dex.config.storage.config.database }};
-        - --execute=GRANT ALL ON DATABASE {{ .Values.dex.config.storage.config.database }} TO {{ .Values.dex.config.storage.config.user }};
         - --execute=CREATE USER IF NOT EXISTS eventstore;
         - --execute=CREATE DATABASE IF NOT EXISTS eventstore;
         - --execute=GRANT ALL ON DATABASE eventstore TO eventstore;

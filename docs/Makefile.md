@@ -19,10 +19,8 @@ wrote tmp/monoskope/charts/cockroachdb/templates/role.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/rolebinding.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/service.discovery.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/service.public.yaml
-wrote tmp/monoskope/charts/dex/templates/service.yaml
 wrote tmp/monoskope/charts/monoskope-gateway/templates/service.yaml
 wrote tmp/monoskope/templates/service-crdb-metrics.yaml
-wrote tmp/monoskope/charts/dex/templates/deployment.yaml
 wrote tmp/monoskope/charts/monoskope-gateway/templates/deployment.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/statefulset.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/job.init.yaml
@@ -34,7 +32,6 @@ wrote tmp/monoskope/templates/cert-crdb.yaml
 wrote tmp/monoskope/templates/cert-crdb.yaml
 wrote tmp/monoskope/templates/servicemonitor-crdb-metrics.yaml
 wrote tmp/monoskope/charts/monoskope-gateway/templates/vaultsecret.yaml
-wrote tmp/monoskope/templates/vaultsecret-dex.yaml
 wrote tmp/monoskope/charts/cockroachdb/templates/tests/client.yaml
 
 ATTENTION:

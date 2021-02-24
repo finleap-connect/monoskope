@@ -67,11 +67,21 @@ spec:
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
           env:
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  key: oidc-clientid
             - name: OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
                   key: oidc-clientsecret
+            - name: OIDC_NONCE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  key: oidc-nonce
           args:
             - /gateway
             - server

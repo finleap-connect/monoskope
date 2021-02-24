@@ -2,20 +2,16 @@ sequenceDiagram
     participant U as User
     participant M as monoctl
     participant G as Gateway
-    participant D as Dex
     participant I as Identity Provider
     U-->>+M: monoctl auth login
     M-->>+G: calls GetAuthInformation
     G-->>-M: returns AuthInformation
     M-->>M: opens browser
-    M-->>D: navigate browser to AuthCodeURL from AuthInformation
-    D-->>+I: redirect to IdP
+    M-->>+I: navigate browser to AuthCodeURL from AuthInformation
     I-->>I: determines user’s identity
     I-->>-M: redirect with auth_code
     M-->>+G: calls ExchangeAuthCode
-    G-->>+D: exchange auth_code
-    D-->>+I: exchange auth_code
-    I-->>-D: returns id_token
-    D-->>-G: returns id_token
+    G-->>+I: exchange auth_code
+    I-->>-G: returns id_token
     G-->>-M: returns id_token
     M-->>-U: Output login success

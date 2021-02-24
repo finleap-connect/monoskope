@@ -5,32 +5,22 @@ fullnameOverride: ""
 
 global:
   imagePullSecrets:
-    - gitlab-registry
+    - name: gitlab-registry
 
-dex:
-  enabled: true
-  replicas: 1
-  config:
-    storage:
-      type: sqlite3
-      config:
-        file: /tmp/dex.db
-    enablePasswordDB: true
-    staticPasswords:
-      - email: "admin@example.com"
-        # bcrypt hash of the string "password"
-        hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-        username: "admin"
-        userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+gateway:
+  enabled: false
 
-monoskope-gateway:
-  replicaCount: 1
+eventstore:
+  enabled: false
 
-ingress:
-  enabled: true
+commandhandler:
+  enabled: false
+
+queryhandler:
+  enabled: false
 
 rabbitmq:
-  enabled: true
+  enabled: false
   replicaCount: 3
   persistence:
     enabled: false
@@ -51,3 +41,9 @@ rabbitmq:
       existingSecret: rabbitmq-leaf
   podAnnotations:
     linkerd.io/inject: disabled
+
+cockroachdb:
+  enabled: false
+
+ambassador:
+  replicaCount: 1

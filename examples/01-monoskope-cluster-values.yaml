@@ -7,24 +7,9 @@ global:
   imagePullSecrets:
     - name: gitlab-registry
 
-dex:
-  enabled: true
-  replicas: 3
-  config:
-    issuer: &issuer https://monoskope.dev.finleap.cloud/dex
-    enablePasswordDB: false
-    connectors:
-      - type: gitlab
-        id: gitlab-dev
-        name: GitLab DEV
-        config:
-          baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ .gitlabClientId }}"
-          clientSecret: "{{ .gitlabClientSecret }}"
-          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
-          groups:
-            - "wolke7"
-          use_login_as_id: false
+hosting:
+  issuer: letsencrypt-production
+  domain: &domain monoskope.dev.finleap.cloud
 
 cockroachdb:
   enabled: true
@@ -39,12 +24,9 @@ rabbitmq:
   replicaCount: 5
 
 gateway:
-  replicaCount: 3
+  replicaCount: 2
   auth:
-    issuerURL: *issuer
-  ingress:
-    enabled: true
-    host: api.monoskope.dev.finleap.cloud
+    issuerURL: https://gitlab.figo.systems
   resources:
     limits:
       cpu: 2000m
@@ -54,7 +36,7 @@ gateway:
       memory: 64Mi
 
 eventstore:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   messageBus:
     tlsSecret: monoskope-rabbitmq-auth-admin
@@ -69,7 +51,7 @@ eventstore:
       memory: 64Mi
 
 commandhandler:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   resources:
     limits:
@@ -80,7 +62,7 @@ commandhandler:
       memory: 64Mi
 
 queryhandler:
-  replicaCount: 3
+  replicaCount: 2
   enabled: true
   resources:
     limits:
@@ -92,6 +74,34 @@ queryhandler:
   messageBus:
     tlsSecret: monoskope-rabbitmq-auth-admin
 
-ingress:
+ambassador:
   enabled: true
-  host: monoskope.dev.finleap.cloud
+  replicaCount: 3
+  service:
+    loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+
+# Configure ORY Oathkeeper
+oathkeeper:
+  enabled: true
+  replicaCount: 2
+  oathkeeper:
+    config:
+      authenticators:
+        noop:
+          enabled: true
+        jwt:
+          enabled: true
+          config:
+            jwks_urls:
+              - https://gitlab.figo.systems/oauth/discovery/keys
+            scope_strategy: none
+            trusted_issuers:
+              - https://gitlab.figo.systems
+            allowed_algorithms:
+              - RS256
+      authorizers:
+        allow:
+          enabled: true
+      mutators:
+        noop:
+          enabled: true
