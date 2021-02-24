@@ -7,6 +7,9 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
+  timeout_ms: 20000
+  headers:
+    :authority: {{ .Values.hosting.domain }}
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:8080
@@ -20,6 +23,9 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
+  timeout_ms: 20000
+  headers:
+    :authority: {{ .Values.hosting.domain }}
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
   service: {{.Release.Name}}-gateway:8080
@@ -33,6 +39,9 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
+  timeout_ms: 20000
+  headers:
+    :authority: {{ .Values.hosting.domain }}
   prefix: /eventsourcing.CommandHandler/
   rewrite: /eventsourcing.CommandHandler/
   service: {{.Release.Name}}-commandhandler:8080
@@ -46,6 +55,9 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
+  timeout_ms: 20000
+  headers:
+    :authority: {{ .Values.hosting.domain }}
   prefix: /domain.UserService/
   rewrite: /domain.UserService/
-  service: {{.Release.Name}}-commandhandler:8080
+  service: {{.Release.Name}}-queryhandler:8080

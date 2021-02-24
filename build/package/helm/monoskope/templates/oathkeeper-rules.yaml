@@ -7,10 +7,10 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   upstream:
-    url: {{ .Values.ambassador.baseURL }} # Required but not used since proxy isn't used
+    url: {{ .Values.hosting.domain }} # Required but not used since proxy isn't used
     preserveHost: false
   match:
-    url: {{ .Values.ambassador.baseURL }}/eventsourcing.CommandHandler/<.*>
+    url: {{ .Values.hosting.domain }}/eventsourcing.CommandHandler/<.*>
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
   authenticators:
   - handler: jwt

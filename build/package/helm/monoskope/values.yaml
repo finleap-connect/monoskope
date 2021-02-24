@@ -12,8 +12,8 @@ global:
     app.kubernetes.io/part-of: *name
 
 hosting:
-  issuer: letsencrypt-production
-  domain: &domain monoskope.io
+  issuer: ""
+  domain: monoskope.io
 
 messageBus:
   routingKeyPrefix: "m8"
@@ -21,15 +21,6 @@ messageBus:
 
 monitoring:
   tenant: &tenant finleap-cloud
-
-#     issuer: https://monoskope.io/bla
-#     staticClients:
-#       - id: gateway
-#         secret: "{{ .gatewayAppSecret }}"
-#         name: "Monoskope Gateway"
-#         redirectURIs:
-#           - "http://localhost:8000"
-#           - "http://localhost:18000"
 
 gateway:
   enabled: true
