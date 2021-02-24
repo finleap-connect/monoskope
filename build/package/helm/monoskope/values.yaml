@@ -13,7 +13,7 @@ global:
 
 hosting:
   issuer: ""
-  domain: monoskope.io
+  domain: &domain monoskope.io
 
 messageBus:
   routingKeyPrefix: "m8"
@@ -184,7 +184,33 @@ oathkeeper:
       enabled: false
   maester:
     enabled: false
-
+  accessRulesYaml:
+  - id: commandhandler-rule
+    match:
+      url: <.*>/eventsourcing.CommandHandler/<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: jwt
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+  - id: queryhandler-rule
+    match:
+      url: <.*>/domain.<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: jwt
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+  - id: gateway-rule
+    match:
+      url: <.*>/<common.ServiceInformationService|gateway.Gateway>/<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: noop
 ambassador:
   enabled: true
   replicaCount: 3

@@ -1,58 +1,12 @@
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: {{ include "monoskope.fullname" . }}-oathk-rule-cmdhndlr
+  name: {{ .Release.Name }}-oathkeeper-rules
+  {{- if .Release.Namespace }}
   namespace: {{ .Release.Namespace }}
+  {{- end }}
   labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  upstream:
-    url: {{ .Values.hosting.domain }} # Required but not used since proxy isn't used
-    preserveHost: false
-  match:
-    url: {{ .Values.hosting.domain }}/eventsourcing.CommandHandler/<.*>
-    methods: ["POST"]
-  authenticators:
-  - handler: jwt
-  authorizer:
-    handler: allow
-  mutators:
-  - handler: noop
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: {{ include "monoskope.fullname" . }}-oathk-rule-qryhndlr
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  upstream:
-    url: {{ .Values.hosting.domain }} # Required but not used since proxy isn't used
-    preserveHost: false
-  match:
-    url: {{ .Values.hosting.domain }}/domain.<.*>
-    methods: ["POST"]
-  authenticators:
-  - handler: jwt
-  authorizer:
-    handler: allow
-  mutators:
-  - handler: noop
----
-apiVersion: oathkeeper.ory.sh/v1alpha1
-kind: Rule
-metadata:
-  name: {{ include "monoskope.fullname" . }}-oathk-rule-gateway
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  upstream:
-    url: {{ .Values.hosting.domain }} # Required but not used since proxy isn't used
-    preserveHost: false
-  match:
-    url: {{ .Values.hosting.domain }}/<common.ServiceInformationService|gateway.Gateway>/<.*>
-    methods: ["POST"]
-  authenticators:
-  - handler: noop
+{{ include "oathkeeper.labels" . | indent 4 }}
+data:
+  "access-rules.json": |-
+{{ .Values.oathkeeper.accessRulesYaml | toJson | indent 4 }}
