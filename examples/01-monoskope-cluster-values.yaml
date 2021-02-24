@@ -86,10 +86,9 @@ oathkeeper:
   replicaCount: 2
   oathkeeper:
     config:
-      authorizers:
-        allow:
-          enabled: true
       authenticators:
+        noop:
+          enabled: true
         jwt:
           enabled: true
           config:
@@ -100,6 +99,9 @@ oathkeeper:
               - https://gitlab.figo.systems
             allowed_algorithms:
               - RS256
+      authorizers:
+        allow:
+          enabled: true
       mutators:
         noop:
           enabled: true
