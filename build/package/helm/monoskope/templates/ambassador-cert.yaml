@@ -1,0 +1,31 @@
+{{- if ne .Values.hosting.domain "" }}
+{{- $name := .Values.hosting.domain | replace "." "-" }}
+{{- $tlsSecretName := printf "%s-%s" .Release.Name "ambassador-tls-cert" }}
+---
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: {{ include "monoskope.fullname" . }}-{{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  hostname: {{ .Values.hosting.domain }}
+  acmeProvider:
+    authority: none
+  tlsSecret:
+    name: {{ $tlsSecretName }}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ $tlsSecretName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ $tlsSecretName }}
+  issuerRef:
+    name: {{ .Values.hosting.issuer }}
+    kind: ClusterIssuer
+  dnsNames:
+  - {{ .Values.hosting.domain }}
+{{- end }}

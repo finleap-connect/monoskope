@@ -73,7 +73,8 @@ queryhandler:
 ambassador:
   enabled: true
   replicaCount: 3
-  baseURL: https://monoskope.io
+  service:
+    loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
 
 # Configure ORY Oathkeeper
 oathkeeper:

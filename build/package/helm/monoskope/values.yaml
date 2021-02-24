@@ -11,6 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+hosting:
+  issuer: letsencrypt-production
+  domain: &domain monoskope.io
+
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
@@ -205,9 +209,8 @@ ambassador:
     singleNamespace: true
   resources:
     limits:
-      cpu: 2
-      memory: 512Mi
+      cpu: 4
+      memory: 1000Mi
     requests:
       cpu: 100m
-      memory: 256Mi
-  baseURL: https://monoskope.io
+      memory: 512Mi
