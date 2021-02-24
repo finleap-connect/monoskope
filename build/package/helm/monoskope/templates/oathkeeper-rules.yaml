@@ -11,7 +11,7 @@ spec:
     preserveHost: false
   match:
     url: {{ .Values.hosting.domain }}/eventsourcing.CommandHandler/<.*>
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
+    methods: ["POST"]
   authenticators:
   - handler: jwt
   authorizer:
@@ -32,10 +32,27 @@ spec:
     preserveHost: false
   match:
     url: {{ .Values.hosting.domain }}/domain.<.*>
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"]
+    methods: ["POST"]
   authenticators:
   - handler: jwt
   authorizer:
     handler: allow
   mutators:
+  - handler: noop
+---
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: {{ include "monoskope.fullname" . }}-oathk-rule-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  upstream:
+    url: {{ .Values.hosting.domain }} # Required but not used since proxy isn't used
+    preserveHost: false
+  match:
+    url: {{ .Values.hosting.domain }}/<common.ServiceInformationService|gateway.Gateway>/<.*>
+    methods: ["POST"]
+  authenticators:
   - handler: noop
