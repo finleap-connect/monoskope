@@ -207,7 +207,7 @@ oathkeeper:
     - handler: noop
   - id: gateway-rule
     match:
-      url: <.*>/<common.ServiceInformationService|gateway.Gateway>/<.*>
+      url: <.*>/<common.ServiceInformationService|gateway.>/<.*>
       methods: ["POST"]
     authenticators:
     - handler: noop
@@ -215,6 +215,7 @@ oathkeeper:
       handler: allow
     mutators:
     - handler: noop
+
 ambassador:
   enabled: true
   replicaCount: 3

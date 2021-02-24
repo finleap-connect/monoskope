@@ -46,22 +46,12 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		authInterceptor, err := auth.NewInterceptor(authHandler)
-		if err != nil {
-			return err
-		}
 
 		// Gateway API server
 		gws := gateway.NewApiServer(&authConfig, authHandler)
 
 		// Create gRPC server and register implementation
-		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
-			[]ggrpc.UnaryServerInterceptor{
-				auth.UnaryServerInterceptor(authInterceptor.EnsureValid),
-			},
-			[]ggrpc.StreamServerInterceptor{
-				auth.StreamServerInterceptor(authInterceptor.EnsureValid),
-			})
+		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api_gw.RegisterGatewayServer(s, gws)
 			api_gwauth.RegisterAuthServer(s, gws)

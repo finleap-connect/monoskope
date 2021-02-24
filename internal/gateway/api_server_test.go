@@ -9,12 +9,9 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -22,26 +19,6 @@ var (
 )
 
 var _ = Describe("Gateway", func() {
-	checkServerVersion := func(conn *grpc.ClientConn) (*api_common.ServiceInformation, error) {
-		gwc := api_common.NewServiceInformationServiceClient(conn)
-		serverInfo, err := gwc.GetServiceInformation(context.Background(), &emptypb.Empty{})
-		if err != nil {
-			return nil, err
-		}
-		info, err := serverInfo.Recv()
-		if err != nil {
-			return nil, err
-		}
-		return info, nil
-	}
-	It("declines invalid bearer token", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), invalidToken())
-		Expect(err).ToNot(HaveOccurred())
-		defer conn.Close()
-		info, err := checkServerVersion(conn)
-		Expect(err).To(HaveOccurred())
-		Expect(info).To(BeNil())
-	})
 	It("can retrieve auth url", func() {
 		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
 		Expect(err).ToNot(HaveOccurred())
@@ -114,19 +91,9 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
-		info, err := checkServerVersion(conn)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(info).ToNot(BeNil())
-
 		accessToken, err := gwcAuth.RefreshAuth(ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: authResponse.GetRefreshToken()})
-
-		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(accessToken.GetToken()))
 		Expect(err).ToNot(HaveOccurred())
-		defer conn.Close()
-
-		info, err = checkServerVersion(conn)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(info).ToNot(BeNil())
+		Expect(accessToken).ToNot(BeNil())
 	})
 })
 
