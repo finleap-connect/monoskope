@@ -10,6 +10,8 @@ type EventStoreMetrics struct {
 	TransmittedTotalCounter *prom.CounterVec
 	StoredTotalCounter      *prom.CounterVec
 	RetrievedTotalCounter   *prom.CounterVec
+	StoredHistogram         *prom.HistogramVec
+	RetrievedHistogram      *prom.HistogramVec
 }
 
 // NewEventStoreMetrics returns a ServerMetrics object. Use a new instance of
@@ -38,11 +40,29 @@ func NewEventStoreMetrics() *EventStoreMetrics {
 			Help: "Total number of events retrieved.",
 		}, labels,
 	)
+	m.StoredHistogram = prom.NewHistogramVec(
+		prom.HistogramOpts{
+			Name:    "eventstore_stored_seconds",
+			Help:    "Histogram of response latency (seconds) of events that had been stored by the EventStore.",
+			Buckets: prom.DefBuckets,
+		},
+		labels,
+	)
+	m.RetrievedHistogram = prom.NewHistogramVec(
+		prom.HistogramOpts{
+			Name:    "eventstore_retrieved_seconds",
+			Help:    "Histogram of response latency (seconds) of events that had been retrieved from the EventStore.",
+			Buckets: prom.DefBuckets,
+		},
+		labels,
+	)
 
 	return m.
 		register(m.TransmittedTotalCounter.MetricVec).
 		register(m.StoredTotalCounter.MetricVec).
-		register(m.RetrievedTotalCounter.MetricVec)
+		register(m.RetrievedTotalCounter.MetricVec).
+		register(m.StoredHistogram.MetricVec).
+		register(m.RetrievedHistogram.MetricVec)
 }
 
 // Registers all metrics with prometheus default registerer

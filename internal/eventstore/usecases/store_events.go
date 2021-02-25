@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"io"
+	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
@@ -38,6 +39,8 @@ func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.Store, 
 
 func (u *StoreEventsUseCase) Run() error {
 	for {
+		startTime := time.Now()
+
 		// Read next event
 		event, err := u.stream.Recv()
 
@@ -73,6 +76,7 @@ func (u *StoreEventsUseCase) Run() error {
 		if err := u.bus.PublishEvent(u.ctx, ev); err != nil {
 			return err
 		}
+		u.metrics.StoredHistogram.WithLabelValues(event.Type, event.AggregateType).Observe(time.Since(startTime).Seconds())
 	}
 
 	return u.stream.SendAndClose(&emptypb.Empty{})
