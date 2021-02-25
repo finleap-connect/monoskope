@@ -9,9 +9,11 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type authorizationHandler struct {
+	log                logger.Logger
 	userRepo           repositories.ReadOnlyUserRepository
 	nextHandlerInChain es.CommandHandler
 }
@@ -19,6 +21,7 @@ type authorizationHandler struct {
 // NewAuthorizationHandler creates a new CommandHandler which handles authorization.
 func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *authorizationHandler {
 	return &authorizationHandler{
+		log:      logger.WithName("authorization-middleware"),
 		userRepo: userRepo,
 	}
 }
@@ -50,8 +53,10 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		userRoles = user.GetRoles()
 	}
 
+	h.log.Info("Checking command authorization...", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 	for _, policy := range cmd.Policies(ctx) {
 		if policyAccepts(userInfo.Email, userRoles, policy) {
+			h.log.Info("User is authorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			if h.nextHandlerInChain != nil {
 				return h.nextHandlerInChain.HandleCommand(ctx, cmd)
 			} else {
@@ -59,6 +64,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 			}
 		}
 	}
+	h.log.Info("User is unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 	return domainErrors.ErrUnauthorized
 }
 

@@ -2,11 +2,11 @@ package eventhandler
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -29,12 +29,10 @@ func (m *eventStoreReplayMiddleware) Middleware(h es.EventHandler) es.EventHandl
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.Event) error {
-	err := m.handler.HandleEvent(ctx, event)
-
-	// If the next handler in the chain tells that the projection is outdated
-	if err == errors.ErrProjectionOutdated {
-		err = m.applyEventsFromStore(ctx, event)
-		if err != nil {
+	var outdatedError *ProjectionOutdatedError
+	if err := m.handler.HandleEvent(ctx, event); errors.As(err, &outdatedError) {
+		// If the next handler in the chain tells that the projection is outdated
+		if err := m.applyEventsFromStore(ctx, event, outdatedError.ProjectionVersion); err != nil {
 			return err
 		}
 	}
@@ -42,10 +40,12 @@ func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.E
 	return m.handler.HandleEvent(ctx, event)
 }
 
-func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event) error {
+func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event, projectionVersion uint64) error {
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
 		AggregateType: wrapperspb.String(event.AggregateID().String()),
+		MaxVersion:    wrapperspb.UInt64(event.AggregateVersion()),
+		MinVersion:    wrapperspb.UInt64(projectionVersion),
 	})
 	if err != nil {
 		return err
