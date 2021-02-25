@@ -62,8 +62,11 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
+
 	// Register the metric interceptors with prometheus
 	grpc_prometheus.Register(s.grpc)
+	grpc_prometheus.EnableHandlingTimeHistogram()
+
 	// Enable reflection API
 	reflection.Register(s.grpc)
 

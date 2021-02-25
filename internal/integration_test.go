@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -81,5 +83,14 @@ var _ = Describe("integration", func() {
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
+	})
+})
+
+var _ = Describe("PrometheusMetrics", func() {
+	It("can scrape event store metrics", func() {
+		res, err := http.Get(fmt.Sprintf("http://%s/metrics", testEnv.eventStoreTestEnv.MetricsListener.Addr()))
+		Expect(err).ToNot(HaveOccurred())
+		defer res.Body.Close()
+		Expect(res.StatusCode).To(Equal(200))
 	})
 })

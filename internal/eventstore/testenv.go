@@ -17,6 +17,7 @@ import (
 type TestEnv struct {
 	*test.TestEnv
 	apiListener      net.Listener
+	MetricsListener  net.Listener
 	grpcServer       *grpc.Server
 	messagingTestEnv *messaging.TestEnv
 	storageTestEnv   *storage.TestEnv
@@ -75,9 +76,14 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
+	env.MetricsListener, err = net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return nil, err
+	}
+
 	// Start server
 	go func() {
-		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, env.MetricsListener)
 		if err != nil {
 			panic(err)
 		}
