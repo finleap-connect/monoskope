@@ -24,8 +24,6 @@ deliver:chart:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
-  needs:
-    - lint:helm
 
 deploy:monoskope:
   stage: deploy
