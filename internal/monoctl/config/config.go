@@ -16,9 +16,9 @@ var (
 // Config holds the information needed to build connect to remote monoskope instance as a given user
 type Config struct {
 	// Server is the address of the Monoskope gateway (https://hostname:port).
-	Server string `json:"server"`
+	Server string `yaml:"server"`
 	// AuthInformation contains information to authenticate against monoskope
-	AuthInformation *AuthInformation `json:"auth-information,omitempty"`
+	AuthInformation *AuthInformation `yaml:"auth-information,omitempty"`
 }
 
 // NewConfig is a convenience function that returns a new Config object with defaults
@@ -49,10 +49,10 @@ func (c *Config) HasAuthInformation() bool {
 
 type AuthInformation struct {
 	// Token is the bearer token for authentication to the Monoskope gateway.
-	Token        string    `json:"auth_token,omitempty"`
-	RefreshToken string    `json:"refresh_token,omitempty"`
-	Subject      string    `json:"subject,omitempty"`
-	Expiry       time.Time `json:"expiry,omitempty"`
+	Token        string    `yaml:"auth_token,omitempty"`
+	RefreshToken string    `yaml:"refresh_token,omitempty"`
+	Subject      string    `yaml:"subject,omitempty"`
+	Expiry       time.Time `yaml:"expiry,omitempty"`
 }
 
 // IsValid checks that Token is not empty and is not expired
