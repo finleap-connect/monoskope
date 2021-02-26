@@ -18,7 +18,6 @@ import (
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
-	"golang.org/x/oauth2"
 	ggrpc "google.golang.org/grpc"
 )
 
@@ -163,9 +162,3 @@ var _ = AfterSuite(func() {
 	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })
-
-func toToken(token string) *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: token,
-	}
-}

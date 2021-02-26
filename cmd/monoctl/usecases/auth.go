@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/browser"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
-	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
+	monoctlAuth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -39,12 +39,12 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 	defer conn.Close()
-	gwc := api.NewGatewayClient(conn)
+	gatewayClient := api.NewGatewayClient(conn)
 
 	ready := make(chan string, 1)
 	defer close(ready)
 
-	serverConf := &monoctl_auth.Config{
+	callbackServer, err := monoctlAuth.NewServer(&monoctlAuth.Config{
 		LocalServerBindAddress: []string{
 			"localhost:8000",
 			"localhost:18000",
@@ -52,15 +52,14 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		RedirectURLHostname:    "localhost",
 		LocalServerSuccessHTML: DefaultLocalServerSuccessHTML,
 		LocalServerReadyChan:   ready,
-	}
-	server, err := monoctl_auth.NewServer(serverConf)
+	})
 	if err != nil {
 		return err
 	}
-	defer server.Close()
+	defer callbackServer.Close()
 
-	authState := &api.AuthState{CallbackURL: server.RedirectURI}
-	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
+	authState := &api.AuthState{CallbackURL: callbackServer.RedirectURI}
+	authInfo, err := gatewayClient.GetAuthInformation(a.ctx, authState)
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 	})
 	eg.Go(func() error {
 		var innerErr error
-		authCode, innerErr = server.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
+		authCode, innerErr = callbackServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
 		return innerErr
 	})
 	if err := eg.Wait(); err != nil {
@@ -90,7 +89,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 
-	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &api.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
+	authResponse, err := gatewayClient.ExchangeAuthCode(a.ctx, &api.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: callbackServer.RedirectURI})
 	if err != nil {
 		return err
 	}

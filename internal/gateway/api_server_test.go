@@ -20,7 +20,7 @@ var (
 
 var _ = Describe("Gateway", func() {
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
@@ -31,7 +31,7 @@ var _ = Describe("Gateway", func() {
 		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwcAuth := api.NewGatewayClient(conn)
@@ -87,7 +87,7 @@ var _ = Describe("Gateway", func() {
 		Expect(authResponse.GetRefreshToken()).ToNot(Equal(""))
 		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
 
-		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
+		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
@@ -99,7 +99,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
