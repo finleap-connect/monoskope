@@ -122,7 +122,7 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig
 	}
 	nonce := util.HashString(encoded + n.config.Nonce)
 
-	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email", "federated:id")
+	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email")
 
 	// Construct authCodeURL
 	authCodeURL := ""
