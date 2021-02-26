@@ -79,7 +79,7 @@ func (n *Handler) setupOIDC() error {
 		}()
 	}
 
-	n.log.Info("connected to auth provider", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "claims", scopes.Supported)
+	n.log.Info("connected to auth provider", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "SupportedScopes", scopes.Supported)
 
 	return nil
 }
