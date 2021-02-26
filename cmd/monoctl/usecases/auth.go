@@ -63,7 +63,7 @@ func (a *AuthUseCase) RunAuthenticationFlow(ctx context.Context) error {
 	}
 
 	var authCode string
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, _ := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		select {
 		case url := <-ready:

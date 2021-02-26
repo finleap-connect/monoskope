@@ -55,6 +55,8 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState
 }
 
 func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
+	s.log.Info("Authenticating user...")
+
 	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
 	if err != nil {
 		return nil, err
@@ -73,14 +75,21 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*
 		RefreshToken: token.RefreshToken,
 		Email:        claims.Email,
 	}
+
+	s.log.Info("User authenticated sucessfully.", "User", userInfo.Email, "Expiry", token.Expiry.String())
+
 	return userInfo, nil
 }
 
 func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthRequest) (*api.AccessToken, error) {
+	s.log.Info("Refreshing authentication of user...")
+
 	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
 	if err != nil {
 		return nil, err
 	}
+
+	s.log.Info("Refreshed authentication sucessfully.", "Expiry", token.Expiry.String())
 
 	return &api.AccessToken{
 		Token:  token.AccessToken,

@@ -29,6 +29,9 @@ func NewHandler(config *Config) (*Handler, error) {
 		httpClient: http.DefaultClient,
 		log:        logger.WithName("auth"),
 	}
+
+	n.log.Info("Setting up auth provider...", "IssuerURL", config.IssuerURL)
+
 	// Setup OIDC
 	err := n.setupOIDC()
 	if err != nil {
@@ -79,7 +82,7 @@ func (n *Handler) setupOIDC() error {
 		}()
 	}
 
-	n.log.Info("connected to auth provider", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "SupportedScopes", scopes.Supported)
+	n.log.Info("Connected to auth provider successful.", "IssuerURL", n.config.IssuerURL, "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 
 	return nil
 }
@@ -99,6 +102,8 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 }
 
 func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	n.log.Info("Refreshing token...")
+
 	// Generate a new token with a refresht token and the expiry of the access token set to golang zero date.
 	// Setting the access token expired will force the token source to automatically use the refresh token to issue a new token.
 	t := &oauth2.Token{
@@ -110,6 +115,7 @@ func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Tok
 
 // Exchange converts an authorization code into a token.
 func (n *Handler) Exchange(ctx context.Context, code, redirectURL string) (*oauth2.Token, error) {
+	n.log.Info("Exchanging auth code for token...")
 	return n.getOauth2Config(nil, redirectURL).Exchange(n.clientContext(ctx), code)
 }
 
@@ -137,6 +143,8 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig
 }
 
 func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*Claims, error) {
+	n.log.Info("Verifying state and claims...")
+
 	if !token.Valid() {
 		return nil, fmt.Errorf("failed to verify ID token")
 	}
@@ -165,7 +173,7 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 		return nil, err
 	}
 
-	n.log.Info("verified bearer token", "user", claims.Email)
+	n.log.Info("Token verified successfully.", "User", claims.Email, "TokenType", token.TokenType)
 
 	return claims, nil
 }
