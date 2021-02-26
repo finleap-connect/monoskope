@@ -16,25 +16,23 @@ import (
 // AuthUseCase provides the internal use-case of authentication.
 type AuthUseCase struct {
 	log          logger.Logger
-	ctx          context.Context
 	config       *config.Config
 	configLoader *config.ClientConfigManager
 }
 
-func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigManager) *AuthUseCase {
+func NewAuthUsecase(configLoader *config.ClientConfigManager, force bool) *AuthUseCase {
 	useCase := &AuthUseCase{
 		log:          logger.WithName("auth-use-case"),
 		config:       configLoader.GetConfig(),
 		configLoader: configLoader,
-		ctx:          ctx,
 	}
 	return useCase
 }
 
-func (a *AuthUseCase) RunAuthenticationFlow() error {
+func (a *AuthUseCase) RunAuthenticationFlow(ctx context.Context) error {
 	a.log.Info("starting authentication")
 
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server)
+	conn, err := gateway.CreateGatewayConnecton(ctx, a.config.Server)
 	if err != nil {
 		return err
 	}
@@ -59,13 +57,13 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 	defer callbackServer.Close()
 
 	authState := &api.AuthState{CallbackURL: callbackServer.RedirectURI}
-	authInfo, err := gatewayClient.GetAuthInformation(a.ctx, authState)
+	authInfo, err := gatewayClient.GetAuthInformation(ctx, authState)
 	if err != nil {
 		return err
 	}
 
 	var authCode string
-	eg, ctx := errgroup.WithContext(a.ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		select {
 		case url := <-ready:
@@ -89,7 +87,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 
-	authResponse, err := gatewayClient.ExchangeAuthCode(a.ctx, &api.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: callbackServer.RedirectURI})
+	authResponse, err := gatewayClient.ExchangeAuthCode(ctx, &api.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: callbackServer.RedirectURI})
 	if err != nil {
 		return err
 	}
@@ -104,16 +102,16 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 	return a.configLoader.SaveConfig()
 }
 
-func (a *AuthUseCase) RunRefreshFlow() error {
+func (a *AuthUseCase) RunRefreshFlow(ctx context.Context) error {
 	a.log.Info("refreshing the token")
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server)
+	conn, err := gateway.CreateGatewayConnecton(ctx, a.config.Server)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 	gwc := api.NewGatewayClient(conn)
 
-	accessToken, err := gwc.RefreshAuth(a.ctx, &api.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
+	accessToken, err := gwc.RefreshAuth(ctx, &api.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
 	if err != nil {
 		return err
 	}
@@ -123,26 +121,26 @@ func (a *AuthUseCase) RunRefreshFlow() error {
 	return a.configLoader.SaveConfig()
 }
 
-func (a *AuthUseCase) Run() error {
+func (a *AuthUseCase) Run(ctx context.Context) error {
 	// Check if already authenticated
 	if a.config.HasAuthInformation() {
 		a.log.Info("checking expiration of existing token")
 		authInfo := a.config.AuthInformation
 		if authInfo.IsValid() {
-			a.log.Info("you already have a valid token", "expiry", authInfo.Expiry)
+			a.log.Info("you have a valid auth token", "expiry", authInfo.Expiry)
 			return nil
 		}
-		a.log.Info("your token has expired", "expiry", authInfo.Expiry)
+		a.log.Info("your auth token has expired", "expiry", authInfo.Expiry)
 
 		if authInfo.HasRefreshToken() {
-			err := a.RunRefreshFlow()
+			err := a.RunRefreshFlow(ctx)
 			if err == nil {
 				return nil
 			}
 			a.log.Error(err, "Failed to do refresh flow")
 		}
 	}
-	return a.RunAuthenticationFlow()
+	return a.RunAuthenticationFlow(ctx)
 }
 
 // DefaultLocalServerSuccessHTML is a default response body on authorization success.

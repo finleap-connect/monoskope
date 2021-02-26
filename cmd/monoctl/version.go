@@ -19,7 +19,7 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version.PrintVersion(cmdName)
 
-			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, util.Timeout); err != nil {
+			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, util.Timeout, false); err != nil {
 				return fmt.Errorf("init failed: %w", err)
 			}
 

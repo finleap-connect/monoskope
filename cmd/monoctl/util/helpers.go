@@ -16,12 +16,12 @@ func LoadConfig(configManager *config.ClientConfigManager) error {
 	return nil
 }
 
-func LoadConfigAndAuth(ctx context.Context, configManager *config.ClientConfigManager, timeout time.Duration) error {
+func LoadConfigAndAuth(ctx context.Context, configManager *config.ClientConfigManager, timeout time.Duration, force bool) error {
 	if err := LoadConfig(configManager); err != nil {
 		return err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	return usecases.NewAuthUsecase(ctx, configManager).Run()
+	return usecases.NewAuthUsecase(configManager, force).Run(ctx)
 }
