@@ -72,5 +72,5 @@ func (a *AuthInformation) HasRefreshToken() bool {
 
 // IsTokenExpired checks if the auth token is expired
 func (a *AuthInformation) IsTokenExpired() bool {
-	return a.Expiry.Before(time.Now().UTC().Add(5 * time.Minute)) // check if token is valid for at least five more minutes
+	return !a.Expiry.IsZero() && a.Expiry.Before(time.Now().UTC().Add(5*time.Minute)) // check if token is valid for at least five more minutes
 }
