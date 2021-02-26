@@ -207,7 +207,7 @@ oathkeeper:
     - handler: noop
   - id: gateway-rule
     match:
-      url: <.*>/gateway.<.*>
+      url: <.*>/<common.|gateway.><.*>
       methods: ["POST"]
     authenticators:
     - handler: noop
