@@ -207,10 +207,20 @@ oathkeeper:
     - handler: noop
   - id: gateway-rule
     match:
-      url: <.*>/<common.|gateway.><.*>
+      url: <.*>/gateway.<.*>
       methods: ["POST"]
     authenticators:
     - handler: noop
+    authorizer:
+      handler: allow
+    mutators:
+    - handler: noop
+  - id: gateway-version-rule
+    match:
+      url: <.*>/common.<.*>
+      methods: ["POST"]
+    authenticators:
+    - handler: jwt
     authorizer:
       handler: allow
     mutators:
