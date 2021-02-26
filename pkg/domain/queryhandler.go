@@ -20,16 +20,17 @@ func SetupQueryHandlerDomain(ctx context.Context, messageBusConsumer es.EventBus
 	userRepo := repos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
 
 	// Setup event handler and middleware
-	userRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.User)
-	err := messageBusConsumer.AddHandler(ctx,
-		es.UseEventHandlerMiddleware(
-			esm.NewProjectingEventHandler(
-				projectors.NewUserProjector(),
-				userRepo,
-			),
-			userRepoWarming.Middleware,
-			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+	userEventHandler := es.UseEventHandlerMiddleware(
+		esm.NewProjectingEventHandler(
+			projectors.NewUserProjector(),
+			userRepo,
 		),
+		esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+	)
+
+	// Register event handler with message bus
+	err := messageBusConsumer.AddHandler(ctx,
+		userEventHandler,
 		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
 	)
 	if err != nil {
@@ -37,16 +38,17 @@ func SetupQueryHandlerDomain(ctx context.Context, messageBusConsumer es.EventBus
 	}
 
 	// Setup event handler and middleware
-	userRoleBindingRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.UserRoleBinding)
-	err = messageBusConsumer.AddHandler(ctx,
-		es.UseEventHandlerMiddleware(
-			esm.NewProjectingEventHandler(
-				projectors.NewUserRoleBindingProjector(),
-				userRoleBindingRepo,
-			),
-			userRoleBindingRepoWarming.Middleware,
-			esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+	userRoleBindingEventHandler := es.UseEventHandlerMiddleware(
+		esm.NewProjectingEventHandler(
+			projectors.NewUserRoleBindingProjector(),
+			userRoleBindingRepo,
 		),
+		esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+	)
+
+	// Register event handler with message bus
+	err = messageBusConsumer.AddHandler(ctx,
+		userRoleBindingEventHandler,
 		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.UserRoleBinding),
 	)
 	if err != nil {
@@ -54,9 +56,11 @@ func SetupQueryHandlerDomain(ctx context.Context, messageBusConsumer es.EventBus
 	}
 
 	// Start repo warming
+	userRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.User, userEventHandler)
 	if err := userRepoWarming.WarmUp(ctx); err != nil {
 		return nil, err
 	}
+	userRoleBindingRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.UserRoleBinding, userRoleBindingEventHandler)
 	if err := userRoleBindingRepoWarming.WarmUp(ctx); err != nil {
 		return nil, err
 	}

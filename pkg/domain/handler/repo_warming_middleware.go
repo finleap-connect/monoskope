@@ -11,24 +11,20 @@ import (
 )
 
 type repoWarmingReplayMiddleware struct {
-	log                logger.Logger
-	esClient           apiEs.EventStoreClient
-	aggregateType      es.AggregateType
-	nextHandlerInChain es.EventHandler
+	log           logger.Logger
+	esClient      apiEs.EventStoreClient
+	aggregateType es.AggregateType
+	eventHandler  es.EventHandler
 }
 
 // NewRepoWarmingMiddleware creates an EventHandler which queryies the EventStore to warm up the repository initially.
-func NewRepoWarmingMiddleware(esClient apiEs.EventStoreClient, aggregateType es.AggregateType) *repoWarmingReplayMiddleware {
+func NewRepoWarmingMiddleware(esClient apiEs.EventStoreClient, aggregateType es.AggregateType, eventHandler es.EventHandler) *repoWarmingReplayMiddleware {
 	return &repoWarmingReplayMiddleware{
 		log:           logger.WithName("repository-warming-middleware").WithValues("aggregateType", aggregateType),
 		esClient:      esClient,
 		aggregateType: aggregateType,
+		eventHandler:  eventHandler,
 	}
-}
-
-func (m *repoWarmingReplayMiddleware) Middleware(h es.EventHandler) es.EventHandler {
-	m.nextHandlerInChain = h
-	return m
 }
 
 func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
@@ -63,7 +59,7 @@ func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
 		}
 
 		// Let the next handler in the chain handle the event
-		err = m.nextHandlerInChain.HandleEvent(ctx, esEvent)
+		err = m.eventHandler.HandleEvent(ctx, esEvent)
 		if err != nil {
 			return err
 		}
@@ -74,9 +70,4 @@ func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
 	m.log.Info("Warmup finished.", "eventsApplied", appliedEvents)
 
 	return nil
-}
-
-// HandleEvent implements the HandleEvent method of the es.EventHandler interface.
-func (m *repoWarmingReplayMiddleware) HandleEvent(ctx context.Context, event es.Event) error {
-	return m.nextHandlerInChain.HandleEvent(ctx, event)
 }
