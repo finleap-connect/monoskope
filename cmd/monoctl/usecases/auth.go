@@ -8,7 +8,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
-	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/sync/errgroup"
 )
@@ -39,7 +39,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 	defer conn.Close()
-	gwc := api_gw_auth.NewAuthClient(conn)
+	gwc := api.NewGatewayClient(conn)
 
 	ready := make(chan string, 1)
 	defer close(ready)
@@ -59,7 +59,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 	}
 	defer server.Close()
 
-	authState := &api_gw_auth.AuthState{CallbackURL: server.RedirectURI}
+	authState := &api.AuthState{CallbackURL: server.RedirectURI}
 	authInfo, err := gwc.GetAuthInformation(a.ctx, authState)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 		return err
 	}
 
-	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &api_gw_auth.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
+	authResponse, err := gwc.ExchangeAuthCode(a.ctx, &api.AuthCode{Code: authCode, State: authInfo.State, CallbackURL: server.RedirectURI})
 	if err != nil {
 		return err
 	}
@@ -112,9 +112,9 @@ func (a *AuthUseCase) RunRefreshFlow() error {
 		return err
 	}
 	defer conn.Close()
-	gwc := api_gw_auth.NewAuthClient(conn)
+	gwc := api.NewGatewayClient(conn)
 
-	accessToken, err := gwc.RefreshAuth(a.ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
+	accessToken, err := gwc.RefreshAuth(a.ctx, &api.RefreshAuthRequest{RefreshToken: a.config.AuthInformation.RefreshToken})
 	if err != nil {
 		return err
 	}

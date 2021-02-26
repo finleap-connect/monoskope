@@ -3,9 +3,8 @@ package main
 import (
 	"os"
 
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
@@ -53,9 +52,8 @@ var serverCmd = &cobra.Command{
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api_gw.RegisterGatewayServer(s, gws)
-			api_gwauth.RegisterAuthServer(s, gws)
-			api_common.RegisterServiceInformationServiceServer(s, gws)
+			api.RegisterGatewayServer(s, gws)
+			apiCommon.RegisterServiceInformationServiceServer(s, gws)
 		})
 
 		// Finally start the server

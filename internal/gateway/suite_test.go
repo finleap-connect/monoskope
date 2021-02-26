@@ -16,8 +16,7 @@ import (
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"golang.org/x/oauth2"
 	ggrpc "google.golang.org/grpc"
@@ -136,8 +135,7 @@ var _ = BeforeSuite(func(done Done) {
 	// Create gRPC server and register implementation
 	grpcServer = grpc.NewServer("gateway-grpc", false)
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api_gw.RegisterGatewayServer(s, gatewayApiServer)
-		api_gwauth.RegisterAuthServer(s, gatewayApiServer)
+		api.RegisterGatewayServer(s, gatewayApiServer)
 		api_common.RegisterServiceInformationServiceServer(s, gatewayApiServer)
 	})
 

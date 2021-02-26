@@ -8,7 +8,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -114,7 +114,7 @@ func (n *Handler) Exchange(ctx context.Context, code, redirectURL string) (*oaut
 }
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeURLConfig) (string, string, error) {
+func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig) (string, string, error) {
 	// Encode state and calculate nonce
 	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
 	if err != nil {
