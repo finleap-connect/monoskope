@@ -7,11 +7,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,9 +20,8 @@ type apiServer struct {
 	// Logger interface
 	log logger.Logger
 	//
-	authConfig       *auth.Config
-	authHandler      *auth.Handler
-	cmdHandlerClient apiEs.CommandHandlerClient
+	authConfig  *auth.Config
+	authHandler *auth.Handler
 }
 
 func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {
@@ -93,30 +88,4 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthReq
 		Token:  token.AccessToken,
 		Expiry: timestamppb.New(token.Expiry),
 	}, nil
-}
-
-// Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	// Get the claims of the authenticated user from the context
-	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
-	if !ok {
-		return nil, grpc.ErrInternal("authentication problem")
-	}
-
-	manager, err := metadata.NewDomainMetadataManager(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = manager.SetUserInformation(&metadata.UserInformation{
-		Email:   claims.Email,
-		Subject: claims.Subject,
-		Issuer:  claims.Issuer,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Call command handler to execute
-	return s.cmdHandlerClient.Execute(ctx, command)
 }

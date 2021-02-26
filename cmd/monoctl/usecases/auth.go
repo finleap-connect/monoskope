@@ -34,7 +34,7 @@ func NewAuthUsecase(ctx context.Context, configLoader *config.ClientConfigManage
 func (a *AuthUseCase) RunAuthenticationFlow() error {
 	a.log.Info("starting authentication")
 
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
+	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (a *AuthUseCase) RunAuthenticationFlow() error {
 
 func (a *AuthUseCase) RunRefreshFlow() error {
 	a.log.Info("refreshing the token")
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server, nil)
+	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server)
 	if err != nil {
 		return err
 	}
