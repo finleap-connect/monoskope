@@ -126,7 +126,7 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig
 
 	// Construct authCodeURL
 	authCodeURL := ""
-	if config.OfflineAccess || n.config.OfflineAsScope {
+	if n.config.OfflineAsScope {
 		scopes = append(scopes, oidc.ScopeOfflineAccess)
 		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else {

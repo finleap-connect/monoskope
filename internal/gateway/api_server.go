@@ -46,9 +46,7 @@ func (s *apiServer) GetServiceInformation(e *empty.Empty, stream apiCommon.Servi
 }
 
 func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
-	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
-		OfflineAccess: true,
-	})
+	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
