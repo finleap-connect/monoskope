@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -30,6 +32,14 @@ func (c *Config) Validate() error {
 		return ErrEmptyServer
 	}
 	return nil
+}
+
+func (c *Config) String() (string, error) {
+	bytes, err := yaml.Marshal(c)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 // HasToken checks if the the config contains AuthInformation

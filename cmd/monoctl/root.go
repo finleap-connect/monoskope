@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/auth"
+	conf "gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/config"
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 )
@@ -28,10 +29,10 @@ func NewRootCmd() *cobra.Command {
 	fl.StringVar(&explicitFile, "monoconfig", "", "Path to the monoskope config file to use for CLI requests")
 	fl.DurationVar(&util.Timeout, "command-timeout", 120*time.Second, "Timeout for long running commands")
 
-	configManager := config.NewLoaderFromExplicitFile(explicitFile)
-	rootCmd.AddCommand(NewVersionCmd(rootCmd.Name(), configManager))
-	rootCmd.AddCommand(NewInitCmd(configManager))
-	rootCmd.AddCommand(auth.NewAuthCmd(configManager))
+	confLoader := config.NewLoaderFromExplicitFile(explicitFile)
+	rootCmd.AddCommand(NewVersionCmd(rootCmd.Name(), confLoader))
+	rootCmd.AddCommand(conf.NewConfigCmd(confLoader))
+	rootCmd.AddCommand(auth.NewAuthCmd(confLoader))
 
 	return rootCmd
 }

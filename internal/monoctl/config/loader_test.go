@@ -61,7 +61,7 @@ var _ = Describe("client config loader", func() {
 
 		loader := NewLoaderFromExplicitFile(tempFile.Path)
 		os.Remove(tempFile.Path)
-		err = loader.InitConifg(conf)
+		err = loader.InitConifg(conf, false)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())
@@ -77,7 +77,7 @@ var _ = Describe("client config loader", func() {
 
 		os.Setenv(RecommendedConfigPathEnvVar, tempFile.Path)
 		os.Remove(tempFile.Path)
-		err = loader.InitConifg(conf)
+		err = loader.InitConifg(conf, false)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(loader.config).ToNot(BeNil())

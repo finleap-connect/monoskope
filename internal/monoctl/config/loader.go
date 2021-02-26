@@ -45,12 +45,12 @@ func NewLoaderFromExplicitFile(explicitFile string) *ClientConfigManager {
 }
 
 // loadAndStoreConfig checks if the given file exists and loads it's contents
-func (l *ClientConfigManager) saveAndStoreConfig(filename string, config *Config) error {
+func (l *ClientConfigManager) saveAndStoreConfig(filename string, force bool, config *Config) error {
 	exists, err := util.FileExists(filename)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if exists && !force {
 		return ErrAlreadyInitialized
 	}
 	l.config = config
@@ -73,17 +73,22 @@ func (l *ClientConfigManager) GetConfig() *Config {
 	return l.config
 }
 
-func (l *ClientConfigManager) InitConifg(config *Config) error {
+// GetConfigLocation returns the location of the previously loaded config
+func (l *ClientConfigManager) GetConfigLocation() string {
+	return l.configPath
+}
+
+func (l *ClientConfigManager) InitConifg(config *Config, force bool) error {
 	if l.explicitFile != "" {
-		return l.saveAndStoreConfig(l.explicitFile, config)
+		return l.saveAndStoreConfig(l.explicitFile, force, config)
 	}
 
 	envVarFile := os.Getenv(RecommendedConfigPathEnvVar)
 	if len(envVarFile) != 0 {
-		return l.saveAndStoreConfig(envVarFile, config)
+		return l.saveAndStoreConfig(envVarFile, force, config)
 	}
 
-	return l.saveAndStoreConfig(RecommendedHomeFile, config)
+	return l.saveAndStoreConfig(RecommendedHomeFile, force, config)
 }
 
 func (l *ClientConfigManager) SaveConfig() error {
