@@ -26,7 +26,6 @@ var serverCmd = &cobra.Command{
 	Short: "Starts the server",
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var err error
 
 		// Some options can be provided by env variables
 		if v := os.Getenv("OIDC_CLIENT_ID"); v != "" {
@@ -39,10 +38,11 @@ var serverCmd = &cobra.Command{
 			authConfig.Nonce = v
 		}
 
-		// Create the server
 		// Create interceptor for auth
-		authHandler, err := auth.NewHandler(&authConfig)
-		if err != nil {
+		authHandler := auth.NewHandler(&authConfig)
+
+		// Setup OIDC
+		if err := authHandler.SetupOIDC(cmd.Context()); err != nil {
 			return err
 		}
 

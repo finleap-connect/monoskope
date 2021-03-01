@@ -23,27 +23,19 @@ type Handler struct {
 	log        logger.Logger
 }
 
-func NewHandler(config *Config) (*Handler, error) {
+func NewHandler(config *Config) *Handler {
 	n := &Handler{
 		config:     config,
 		httpClient: http.DefaultClient,
 		log:        logger.WithName("auth"),
 	}
-
-	n.log.Info("Setting up auth provider...", "IssuerURL", config.IssuerURL)
-
-	// Setup OIDC
-	err := n.setupOIDC()
-	if err != nil {
-		return nil, err
-	}
-	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
-
-	return n, nil
+	return n
 }
 
-func (n *Handler) setupOIDC() error {
-	ctx := oidc.ClientContext(context.Background(), n.httpClient)
+func (n *Handler) SetupOIDC(ctx context.Context) error {
+	ctx = oidc.ClientContext(ctx, n.httpClient)
+
+	n.log.Info("Setting up auth provider...", "IssuerURL", n.config.IssuerURL)
 
 	// Using an exponantial backoff to avoid issues in development environments
 	backoffParams := backoff.NewExponentialBackOff()
@@ -81,6 +73,8 @@ func (n *Handler) setupOIDC() error {
 			return false
 		}()
 	}
+
+	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
 
 	n.log.Info("Connected to auth provider successful.", "IssuerURL", n.config.IssuerURL, "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 

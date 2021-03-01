@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -120,13 +121,18 @@ func TestGateway(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
+	ctx := context.Background()
 
 	By("bootstrapping test env")
 	env, err = SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
-	authHandler, err := auth.NewHandler(env.AuthConfig)
+	authHandler := auth.NewHandler(env.AuthConfig)
+	Expect(err).ToNot(HaveOccurred())
+
+	// Setup OIDC
+	err = authHandler.SetupOIDC(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler)
