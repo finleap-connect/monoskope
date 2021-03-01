@@ -9,6 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -29,7 +30,7 @@ func NewServerVersionUseCase(ctx context.Context, config *config.Config) *Server
 }
 
 func (a *ServerVersionUseCase) Run() ([]string, error) {
-	conn, err := gateway.CreateGatewayConnecton(a.ctx, a.config.Server)
+	conn, err := gateway.CreateGatewayConnectonAuthenticated(a.ctx, a.config.Server, &oauth2.Token{AccessToken: a.config.AuthInformation.Token})
 	if err != nil {
 		return nil, err
 	}
