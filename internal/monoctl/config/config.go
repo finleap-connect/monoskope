@@ -49,10 +49,10 @@ func (c *Config) HasAuthInformation() bool {
 
 type AuthInformation struct {
 	// Token is the bearer token for authentication to the Monoskope gateway.
-	Token        string    `yaml:"auth_token,omitempty"`
-	RefreshToken string    `yaml:"refresh_token,omitempty"`
-	Subject      string    `yaml:"subject,omitempty"`
-	Expiry       time.Time `yaml:"expiry,omitempty"`
+	Token        string     `yaml:"auth_token,omitempty"`
+	RefreshToken string     `yaml:"refresh_token,omitempty"`
+	Subject      string     `yaml:"subject,omitempty"`
+	Expiry       *time.Time `yaml:"expiry,omitempty"`
 }
 
 // IsValid checks that Token is not empty and is not expired
@@ -72,5 +72,5 @@ func (a *AuthInformation) HasRefreshToken() bool {
 
 // IsTokenExpired checks if the auth token is expired
 func (a *AuthInformation) IsTokenExpired() bool {
-	return !a.Expiry.IsZero() && a.Expiry.Before(time.Now().UTC().Add(5*time.Minute)) // check if token is valid for at least five more minutes
+	return a.Expiry != nil && !a.Expiry.IsZero() && a.Expiry.Before(time.Now().UTC().Add(5*time.Minute)) // check if token is valid for at least five more minutes
 }

@@ -97,9 +97,14 @@ func (a *AuthUseCase) RunAuthenticationFlow(ctx context.Context) error {
 	accessToken := authResponse.GetAccessToken()
 	a.config.AuthInformation = &config.AuthInformation{
 		Token:        accessToken.GetToken(),
-		Expiry:       accessToken.GetExpiry().AsTime(),
 		RefreshToken: authResponse.GetRefreshToken(),
 		Subject:      authResponse.GetEmail(),
+	}
+	if accessToken.Expiry != nil {
+		expiry := accessToken.GetExpiry().AsTime()
+		a.config.AuthInformation.Expiry = &expiry
+	} else {
+		a.config.AuthInformation.Expiry = nil
 	}
 	return a.configLoader.SaveConfig()
 }
@@ -119,7 +124,13 @@ func (a *AuthUseCase) RunRefreshFlow(ctx context.Context) error {
 	}
 
 	a.config.AuthInformation.Token = accessToken.GetToken()
-	a.config.AuthInformation.Expiry = accessToken.GetExpiry().AsTime()
+	if accessToken.Expiry != nil {
+		expiry := accessToken.GetExpiry().AsTime()
+		a.config.AuthInformation.Expiry = &expiry
+	} else {
+		a.config.AuthInformation.Expiry = nil
+	}
+
 	return a.configLoader.SaveConfig()
 }
 
