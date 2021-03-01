@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -9,6 +10,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/cmd/monoctl/util"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/config"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *cobra.Command {
@@ -19,24 +22,34 @@ func NewVersionCmd(cmdName string, configManager *config.ClientConfigManager) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version.PrintVersion(cmdName)
 
-			if err := util.LoadConfigAndAuth(cmd.Context(), configManager, util.Timeout, false); err != nil {
-				return fmt.Errorf("init failed: %w", err)
+			if err := checkVersion(cmd.Context(), configManager, false); err != nil {
+				if status, ok := status.FromError(errors.Unwrap(err)); ok && status.Code() == codes.Unauthenticated {
+					return checkVersion(cmd.Context(), configManager, true)
+				}
+				return err
 			}
-
-			ctx, cancel := context.WithTimeout(cmd.Context(), util.Timeout)
-			defer cancel()
-
-			result, err := usecases.NewServerVersionUseCase(ctx, configManager.GetConfig()).Run()
-			if err != nil {
-				return fmt.Errorf("failed to retrieve server version: %w", err)
-			}
-
-			for _, version := range result {
-				fmt.Print(version)
-				fmt.Println()
-			}
-
 			return nil
 		},
 	}
+}
+
+func checkVersion(ctx context.Context, configManager *config.ClientConfigManager, forceAuth bool) error {
+	if err := util.LoadConfigAndAuth(ctx, configManager, util.Timeout, forceAuth); err != nil {
+		return fmt.Errorf("init failed: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, util.Timeout)
+	defer cancel()
+
+	result, err := usecases.NewServerVersionUseCase(ctx, configManager.GetConfig()).Run()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve server version: %w", err)
+	}
+
+	for _, version := range result {
+		fmt.Print(version)
+		fmt.Println()
+	}
+
+	return nil
 }

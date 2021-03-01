@@ -29,7 +29,7 @@ func NewAuthLoginCmd(configManager *config.ClientConfigManager) *cobra.Command {
 	}
 
 	flags := loginCmd.Flags()
-	flags.BoolP("force", "f", force, "Force login even if already authenticated.")
+	flags.BoolVarP(&force, "force", "f", false, "Force login even if already authenticated.")
 
 	return loginCmd
 }

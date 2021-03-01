@@ -18,6 +18,7 @@ type AuthUseCase struct {
 	log          logger.Logger
 	config       *config.Config
 	configLoader *config.ClientConfigManager
+	force        bool
 }
 
 func NewAuthUsecase(configLoader *config.ClientConfigManager, force bool) *AuthUseCase {
@@ -25,6 +26,7 @@ func NewAuthUsecase(configLoader *config.ClientConfigManager, force bool) *AuthU
 		log:          logger.WithName("auth-use-case"),
 		config:       configLoader.GetConfig(),
 		configLoader: configLoader,
+		force:        force,
 	}
 	return useCase
 }
@@ -123,7 +125,7 @@ func (a *AuthUseCase) RunRefreshFlow(ctx context.Context) error {
 
 func (a *AuthUseCase) Run(ctx context.Context) error {
 	// Check if already authenticated
-	if a.config.HasAuthInformation() {
+	if !a.force && a.config.HasAuthInformation() {
 		a.log.Info("checking expiration of existing token")
 		authInfo := a.config.AuthInformation
 		if authInfo.IsValid() {
