@@ -127,13 +127,15 @@ var _ = Describe("client config loader", func() {
 		Expect(conf.AuthInformation.HasRefreshToken()).To(BeTrue())
 		Expect(conf.AuthInformation.IsValid()).To(BeTrue())
 
-		conf.AuthInformation.Expiry = time.Now().Add(1 * time.Hour)
+		expiry := time.Now().Add(1 * time.Hour)
+		conf.AuthInformation.Expiry = &expiry
 		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
 		Expect(conf.AuthInformation.HasRefreshToken()).To(BeTrue())
 		Expect(conf.AuthInformation.IsTokenExpired()).To(BeFalse())
 		Expect(conf.AuthInformation.IsValid()).To(BeTrue())
 
-		conf.AuthInformation.Expiry = time.Now().Add(-1 * time.Hour)
+		expiry = time.Now().Add(-1 * time.Hour)
+		conf.AuthInformation.Expiry = &expiry
 		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
 		Expect(conf.AuthInformation.HasRefreshToken()).To(BeTrue())
 		Expect(conf.AuthInformation.IsTokenExpired()).To(BeTrue())
