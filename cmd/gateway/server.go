@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"os"
 
 	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
@@ -12,6 +13,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	_ "go.uber.org/automaxprocs"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -26,7 +28,6 @@ var serverCmd = &cobra.Command{
 	Short: "Starts the server",
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		// Some options can be provided by env variables
 		if v := os.Getenv("OIDC_CLIENT_ID"); v != "" {
 			authConfig.ClientId = v
@@ -46,6 +47,20 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
+		// Setup api listener
+		apiLis, err := net.Listen("tcp", apiAddr)
+		if err != nil {
+			return err
+		}
+		defer apiLis.Close()
+
+		// Setup metrics listener
+		metricsLis, err := net.Listen("tcp", metricsAddr)
+		if err != nil {
+			return err
+		}
+		defer metricsLis.Close()
+
 		// Gateway API server
 		gws := gateway.NewApiServer(&authConfig, authHandler)
 
@@ -56,8 +71,17 @@ var serverCmd = &cobra.Command{
 			apiCommon.RegisterServiceInformationServiceServer(s, gws)
 		})
 
-		// Finally start the server
-		return grpcServer.Serve(apiAddr, metricsAddr)
+		authServer := gateway.NewAuthServer(authHandler)
+
+		// Finally start the servers
+		eg, _ := errgroup.WithContext(cmd.Context())
+		eg.Go(func() error {
+			return grpcServer.ServeFromListener(apiLis, metricsLis)
+		})
+		eg.Go(func() error {
+			return authServer.Serve(apiLis)
+		})
+		return eg.Wait()
 	},
 }
 

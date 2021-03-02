@@ -42,7 +42,7 @@ func NewAuthServer(authHandler *auth.Handler) *authServer {
 	return s
 }
 
-func (s *authServer) Serve(apiLis net.Listener, metricsLis net.Listener) error {
+func (s *authServer) Serve(apiLis net.Listener) error {
 	shutdown := s.shutdown
 	// Start routine waiting for signals
 	shutdown.RegisterSignalHandler(func() {
