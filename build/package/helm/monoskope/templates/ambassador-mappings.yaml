@@ -10,7 +10,7 @@ spec:
   timeout_ms: 20000
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
-  service: {{.Release.Name}}-gateway:8080
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.api}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -24,7 +24,7 @@ spec:
   timeout_ms: 20000
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
-  service: {{.Release.Name}}-gateway:8080
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.api}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -38,7 +38,7 @@ spec:
   timeout_ms: 20000
   prefix: /eventsourcing.CommandHandler/
   rewrite: /eventsourcing.CommandHandler/
-  service: {{.Release.Name}}-commandhandler:8080
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -52,4 +52,4 @@ spec:
   timeout_ms: 20000
   prefix: /domain.UserService/
   rewrite: /domain.UserService/
-  service: {{.Release.Name}}-queryhandler:8080
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
