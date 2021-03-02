@@ -154,7 +154,7 @@ rabbitmq:
 
 # Configure ORY Oathkeeper
 oathkeeper:
-  enabled: true
+  enabled: false
   replicaCount: 2
   # The ORY Oathkeeper configuration. For a full list of available settings, check:
   #   https://github.com/ory/oathkeeper/blob/master/docs/config.yaml
@@ -190,7 +190,7 @@ oathkeeper:
       url: <.*>/eventsourcing.CommandHandler/<.*>
       methods: ["POST"]
     authenticators:
-    - handler: jwt
+    - handler: oauth2_introspection
     authorizer:
       handler: allow
     mutators:
@@ -200,7 +200,7 @@ oathkeeper:
       url: <.*>/domain.<.*>
       methods: ["POST"]
     authenticators:
-    - handler: jwt
+    - handler: oauth2_introspection
     authorizer:
       handler: allow
     mutators:
@@ -220,11 +220,15 @@ oathkeeper:
       url: <.*>/common.<.*>
       methods: ["POST"]
     authenticators:
-    - handler: jwt
+    - handler: oauth2_introspection
     authorizer:
       handler: allow
     mutators:
     - handler: noop
+    # - handler: header
+    #   config:
+    #     headers:
+    #       authorization: 'bearer {{ print .authorization }}'
 
 ambassador:
   enabled: true
