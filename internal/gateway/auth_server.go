@@ -101,6 +101,12 @@ func (s *authServer) ensureValid(ctx context.Context, token string) (*auth.Claim
 
 func (s *authServer) authN(c *gin.Context) {
 	route := c.Param("route")
+	if strings.HasPrefix(route, "/gateway.Gateway/") {
+		s.log.Info("Allowing anonymous access.", "Route", route)
+		c.Writer.WriteHeader(http.StatusOK)
+		return
+	}
+
 	s.log.Info("Token validation requested...", "Route", route)
 
 	token := defaultBearerTokenFromRequest(c.Request)
