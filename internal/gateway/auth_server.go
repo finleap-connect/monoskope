@@ -75,7 +75,7 @@ func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
-	r.POST("/auth/*", s.authN)
+	r.POST("/auth/*route", s.authN)
 }
 
 func (s *authServer) ensureValid(ctx context.Context, token string) (*auth.Claims, error) {
@@ -89,19 +89,24 @@ func (s *authServer) ensureValid(ctx context.Context, token string) (*auth.Claim
 }
 
 func (s *authServer) authN(c *gin.Context) {
-	s.log.Info("Token validation requested...")
+	route := c.Param("route")
+	s.log.Info("Token validation requested...", "Route", route)
+
 	token := defaultBearerTokenFromRequest(c.Request)
+	var claims *auth.Claims
 
 	for k := range c.Request.Header {
 		s.log.Info("Request header.", "Key", k, "Value", c.Request.Header.Get(k))
 		c.Writer.Header().Set(k, c.Request.Header.Get(k))
 	}
 
-	if _, err := s.ensureValid(c.Request.Context(), token); err != nil {
+	var err error
+	if claims, err = s.ensureValid(c.Request.Context(), token); err != nil {
 		s.log.Error(err, "Token validation failed.")
 		c.String(http.StatusUnauthorized, fmt.Sprintf("error validating token: %v", err.Error()))
 		return
 	}
+	s.log.Info("Token validation successful.", "Route", route, "User", claims.Email)
 
 	for k := range c.Request.Header {
 		// Avoid copying the original Content-Length header from the client
@@ -109,11 +114,8 @@ func (s *authServer) authN(c *gin.Context) {
 			continue
 		}
 
-		s.log.Info("Request header.", "Key", k, "Value", c.Request.Header.Get(k))
 		c.Writer.Header().Set(k, c.Request.Header.Get(k))
 	}
-
-	s.log.Info("Token validation successful.")
 	c.Writer.WriteHeader(http.StatusOK)
 }
 
