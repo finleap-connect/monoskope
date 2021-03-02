@@ -32,10 +32,9 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  api:
-    port: 8080
-  metrics:
-    port: 9102
+  grpcApiPort: 8080
+  httpApiPort: 8081
+  metricsPort: 9102
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
