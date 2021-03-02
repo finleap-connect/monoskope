@@ -29,6 +29,11 @@ var _ = Describe("domain/handler", func() {
 		Name:  "some.user",
 		Email: "some.user@monoskope.io",
 	}}
+	someOtherUser := &projections.User{User: &projectionsApi.User{
+		Id:    uuid.New().String(),
+		Name:  "some-other.user",
+		Email: "some-other.user@monoskope.io",
+	}}
 
 	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{
 		Id:     uuid.New().String(),
@@ -50,6 +55,9 @@ var _ = Describe("domain/handler", func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = inMemoryUserRepo.Upsert(context.Background(), someUser)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = inMemoryUserRepo.Upsert(context.Background(), someOtherUser)
 	Expect(err).NotTo(HaveOccurred())
 
 	handler := NewAuthorizationHandler(userRepo)
@@ -91,7 +99,7 @@ var _ = Describe("domain/handler", func() {
 		}})
 		Expect(err).ToNot(HaveOccurred())
 	})
-	It("user can't make themselfes admin", func() {
+	It("user can't make themselves admin", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -124,4 +132,23 @@ var _ = Describe("domain/handler", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 	})
+	It("superuser can create admin rolebinding for any user", func() {
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
+
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		command := &cmd.CreateUserRoleBindingCommand{
+			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
+				UserId: someOtherUser.Id,
+				Role:   roles.Admin.String(),
+				Scope:  scopes.System.String(),
+			},
+		}
+		command.DeclareSuperusers([]string{someUser.Email})
+		err = handler.HandleCommand(manager.GetContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
 })
