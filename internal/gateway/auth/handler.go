@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -172,10 +173,27 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 	return claims, nil
 }
 
+// getIDToken extracts an IDToken stored in the `Extra` fields of an
+// oauth2.Token
+func getIDToken(token *oauth2.Token) string {
+	idToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		return ""
+	}
+	return idToken
+}
+
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*Claims, error) {
 	token := &oauth2.Token{AccessToken: bearerToken}
-	rawIDToken := token.Extra("id_token").(string)
+	if !token.Valid() {
+		return nil, fmt.Errorf("failed to verify ID token")
+	}
+
+	rawIDToken := getIDToken(token)
+	if strings.TrimSpace(rawIDToken) == "" {
+		return nil, fmt.Errorf("id_token missing")
+	}
 
 	idToken, err := n.verifier.Verify(ctx, rawIDToken)
 	if err != nil {
