@@ -23,7 +23,6 @@ func NewAuthStatusCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 			fmt.Printf("Authenticated: %v\n", authenticated)
 			if authenticated {
 				fmt.Printf("Server: %v\n", conf.Server)
-				fmt.Printf("User: %v\n", conf.AuthInformation.Subject)
 				fmt.Printf("Token expiry: %v\n", conf.AuthInformation.Expiry)
 				fmt.Printf("Token expired: %v\n", conf.AuthInformation.IsTokenExpired())
 				fmt.Printf("Refresh possible: %v\n", conf.AuthInformation.HasRefreshToken())

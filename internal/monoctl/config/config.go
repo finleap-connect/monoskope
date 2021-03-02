@@ -48,10 +48,9 @@ func (c *Config) HasAuthInformation() bool {
 }
 
 type AuthInformation struct {
-	// Token is the bearer token for authentication to the Monoskope gateway.
-	Token        string     `yaml:"auth_token,omitempty"`
+	AccessToken  string     `yaml:"auth_token,omitempty"`
+	IdToken      string     `yaml:"id_token,omitempty"`
 	RefreshToken string     `yaml:"refresh_token,omitempty"`
-	Subject      string     `yaml:"subject,omitempty"`
 	Expiry       *time.Time `yaml:"expiry,omitempty"`
 }
 
@@ -62,7 +61,17 @@ func (a *AuthInformation) IsValid() bool {
 
 // HasToken checks that Token is not empty
 func (a *AuthInformation) HasToken() bool {
-	return a.Token != ""
+	return a.AccessToken != "" || a.IdToken != ""
+}
+
+func (a *AuthInformation) GetToken() string {
+	if a.IdToken != "" {
+		return a.IdToken
+	}
+	if a.AccessToken != "" {
+		return a.AccessToken
+	}
+	return ""
 }
 
 // HasRefreshToken checks that RefreshToken is not empty

@@ -68,23 +68,20 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*
 	}
 
 	userInfo := &api.AuthResponse{
-		AccessToken: &api.AccessToken{
-			Token: token.AccessToken,
-		},
+		AccessToken:  token.AccessToken,
+		IdToken:      auth.GetIDToken(token),
 		RefreshToken: token.RefreshToken,
-		Email:        claims.Email,
 	}
 
 	if !token.Expiry.IsZero() {
-		userInfo.AccessToken.Expiry = timestamppb.New(token.Expiry)
+		userInfo.Expiry = timestamppb.New(token.Expiry)
 	}
 
-	s.log.Info("User authenticated sucessfully.", "User", userInfo.Email, "Expiry", token.Expiry.String())
-
+	s.log.Info("User authenticated sucessfully.", "User", claims.Email, "Expiry", token.Expiry.String())
 	return userInfo, nil
 }
 
-func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthRequest) (*api.AccessToken, error) {
+func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthRequest) (*api.AuthResponse, error) {
 	s.log.Info("Refreshing authentication of user...")
 
 	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
@@ -93,8 +90,10 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthReq
 	}
 
 	s.log.Info("Refreshed authentication sucessfully.", "Expiry", token.Expiry.String())
-	accessToken := &api.AccessToken{
-		Token: token.AccessToken,
+	accessToken := &api.AuthResponse{
+		AccessToken:  token.AccessToken,
+		IdToken:      auth.GetIDToken(token),
+		RefreshToken: token.RefreshToken,
 	}
 	if !token.Expiry.IsZero() {
 		accessToken.Expiry = timestamppb.New(token.Expiry)

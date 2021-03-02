@@ -30,7 +30,7 @@ func NewServerVersionUseCase(ctx context.Context, config *config.Config) *Server
 }
 
 func (a *ServerVersionUseCase) Run() ([]string, error) {
-	conn, err := gateway.CreateGatewayConnectonAuthenticated(a.ctx, a.config.Server, &oauth2.Token{AccessToken: a.config.AuthInformation.Token})
+	conn, err := gateway.CreateGatewayConnectonAuthenticated(a.ctx, a.config.Server, &oauth2.Token{AccessToken: a.config.AuthInformation.GetToken()})
 	if err != nil {
 		return nil, err
 	}

@@ -22,7 +22,7 @@ func NewAuthLoginCmd(configManager *config.ClientConfigManager) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to authenticate: %w", err)
 			} else {
-				fmt.Printf("Successfully authenticated as %s!\n", configManager.GetConfig().AuthInformation.Subject)
+				fmt.Printf("Successfully authenticated!\n")
 			}
 			return nil
 		},

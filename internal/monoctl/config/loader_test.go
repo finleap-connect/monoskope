@@ -117,7 +117,7 @@ var _ = Describe("client config loader", func() {
 		Expect(conf.AuthInformation.HasRefreshToken()).To(BeFalse())
 		Expect(conf.AuthInformation.IsValid()).To(BeFalse())
 
-		conf.AuthInformation.Token = "test"
+		conf.AuthInformation.AccessToken = "test"
 		Expect(conf.AuthInformation.HasToken()).To(BeTrue())
 		Expect(conf.AuthInformation.HasRefreshToken()).To(BeFalse())
 		Expect(conf.AuthInformation.IsValid()).To(BeTrue())

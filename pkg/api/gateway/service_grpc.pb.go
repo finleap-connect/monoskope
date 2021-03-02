@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type GatewayClient interface {
 	GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error)
 	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error)
-	RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AccessToken, error)
+	RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type gatewayClient struct {
@@ -49,8 +49,8 @@ func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts
 	return out, nil
 }
 
-func (c *gatewayClient) RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AccessToken, error) {
-	out := new(AccessToken)
+func (c *gatewayClient) RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/RefreshAuth", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (c *gatewayClient) RefreshAuth(ctx context.Context, in *RefreshAuthRequest,
 type GatewayServer interface {
 	GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error)
 	ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error)
-	RefreshAuth(context.Context, *RefreshAuthRequest) (*AccessToken, error)
+	RefreshAuth(context.Context, *RefreshAuthRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -78,7 +78,7 @@ func (UnimplementedGatewayServer) GetAuthInformation(context.Context, *AuthState
 func (UnimplementedGatewayServer) ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
 }
-func (UnimplementedGatewayServer) RefreshAuth(context.Context, *RefreshAuthRequest) (*AccessToken, error) {
+func (UnimplementedGatewayServer) RefreshAuth(context.Context, *RefreshAuthRequest) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshAuth not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}

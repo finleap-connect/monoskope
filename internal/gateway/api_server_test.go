@@ -82,10 +82,9 @@ var _ = Describe("Gateway", func() {
 		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authResponse).ToNot(BeNil())
-		Expect(authResponse.GetEmail()).To(Equal("admin@example.com"))
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
 		Expect(authResponse.GetRefreshToken()).ToNot(Equal(""))
-		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
+		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetExpiry().AsTime())
 
 		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
