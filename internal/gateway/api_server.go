@@ -69,7 +69,6 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*
 
 	userInfo := &api.AuthResponse{
 		AccessToken:  token.AccessToken,
-		IdToken:      auth.GetIDToken(token),
 		RefreshToken: token.RefreshToken,
 	}
 
@@ -92,7 +91,6 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthReq
 	s.log.Info("Refreshed authentication sucessfully.", "Expiry", token.Expiry.String())
 	accessToken := &api.AuthResponse{
 		AccessToken:  token.AccessToken,
-		IdToken:      auth.GetIDToken(token),
 		RefreshToken: token.RefreshToken,
 	}
 	if !token.Expiry.IsZero() {

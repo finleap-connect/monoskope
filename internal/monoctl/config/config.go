@@ -49,7 +49,6 @@ func (c *Config) HasAuthInformation() bool {
 
 type AuthInformation struct {
 	AccessToken  string     `yaml:"auth_token,omitempty"`
-	IdToken      string     `yaml:"id_token,omitempty"`
 	RefreshToken string     `yaml:"refresh_token,omitempty"`
 	Expiry       *time.Time `yaml:"expiry,omitempty"`
 }
@@ -61,13 +60,10 @@ func (a *AuthInformation) IsValid() bool {
 
 // HasToken checks that Token is not empty
 func (a *AuthInformation) HasToken() bool {
-	return a.AccessToken != "" || a.IdToken != ""
+	return a.AccessToken != ""
 }
 
 func (a *AuthInformation) GetToken() string {
-	if a.IdToken != "" {
-		return a.IdToken
-	}
 	if a.AccessToken != "" {
 		return a.AccessToken
 	}

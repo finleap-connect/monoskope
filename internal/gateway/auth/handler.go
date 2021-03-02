@@ -171,16 +171,6 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 	return claims, nil
 }
 
-// getIDToken extracts an IDToken stored in the `Extra` fields of an
-// oauth2.Token
-func GetIDToken(token *oauth2.Token) string {
-	idToken, ok := token.Extra("id_token").(string)
-	if !ok {
-		return ""
-	}
-	return idToken
-}
-
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, token string) (*Claims, error) {
 	userInfo, err := n.Provider.UserInfo(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
