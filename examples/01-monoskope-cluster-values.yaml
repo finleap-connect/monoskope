@@ -76,32 +76,6 @@ queryhandler:
 
 ambassador:
   enabled: true
-  replicaCount: 3
+  replicaCount: 2
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
-
-# Configure ORY Oathkeeper
-oathkeeper:
-  enabled: false
-  replicaCount: 2
-  oathkeeper:
-    config:
-      authenticators:
-        noop:
-          enabled: true
-        jwt:
-          enabled: true
-          config:
-            jwks_urls:
-              - https://gitlab.figo.systems/oauth/discovery/keys
-            scope_strategy: none
-            trusted_issuers:
-              - https://gitlab.figo.systems
-            allowed_algorithms:
-              - RS256
-      authorizers:
-        allow:
-          enabled: true
-      mutators:
-        noop:
-          enabled: true

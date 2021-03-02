@@ -14,7 +14,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../queryhandler | queryhandler |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://k8s.ory.sh/helm/charts | oathkeeper | 0.5.3 |
 | https://www.getambassador.io | ambassador | 6.5.18 |
 
 ## Values
@@ -77,34 +76,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
-| oathkeeper.accessRulesYaml[0].authenticators[0].handler | string | `"jwt"` |  |
-| oathkeeper.accessRulesYaml[0].authorizer.handler | string | `"allow"` |  |
-| oathkeeper.accessRulesYaml[0].id | string | `"commandhandler-rule"` |  |
-| oathkeeper.accessRulesYaml[0].match.methods[0] | string | `"POST"` |  |
-| oathkeeper.accessRulesYaml[0].match.url | string | `"<.*>/eventsourcing.CommandHandler/<.*>"` |  |
-| oathkeeper.accessRulesYaml[0].mutators[0].handler | string | `"noop"` |  |
-| oathkeeper.accessRulesYaml[1].authenticators[0].handler | string | `"jwt"` |  |
-| oathkeeper.accessRulesYaml[1].authorizer.handler | string | `"allow"` |  |
-| oathkeeper.accessRulesYaml[1].id | string | `"queryhandler-rule"` |  |
-| oathkeeper.accessRulesYaml[1].match.methods[0] | string | `"POST"` |  |
-| oathkeeper.accessRulesYaml[1].match.url | string | `"<.*>/domain.<.*>"` |  |
-| oathkeeper.accessRulesYaml[1].mutators[0].handler | string | `"noop"` |  |
-| oathkeeper.accessRulesYaml[2].authenticators[0].handler | string | `"noop"` |  |
-| oathkeeper.accessRulesYaml[2].authorizer.handler | string | `"allow"` |  |
-| oathkeeper.accessRulesYaml[2].id | string | `"gateway-rule"` |  |
-| oathkeeper.accessRulesYaml[2].match.methods[0] | string | `"POST"` |  |
-| oathkeeper.accessRulesYaml[2].match.url | string | `"<.*>/<common.ServiceInformationService|gateway.>/<.*>"` |  |
-| oathkeeper.accessRulesYaml[2].mutators[0].handler | string | `"noop"` |  |
-| oathkeeper.enabled | bool | `true` |  |
-| oathkeeper.maester.enabled | bool | `false` |  |
-| oathkeeper.oathkeeper.config.authenticators.noop.enabled | bool | `true` |  |
-| oathkeeper.oathkeeper.config.authorizers.allow.enabled | bool | `true` |  |
-| oathkeeper.oathkeeper.config.mutators.noop.enabled | bool | `true` |  |
-| oathkeeper.oathkeeper.config.serve.api.port | int | `4456` |  |
-| oathkeeper.oathkeeper.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/oryd/oathkeeper"` |  |
-| oathkeeper.oathkeeper.image.tag | string | `"v0.38.6-beta.1"` |  |
-| oathkeeper.replicaCount | int | `2` |  |
-| oathkeeper.service.proxy.enabled | bool | `false` |  |
 | queryhandler.enabled | bool | `true` |  |
 | queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | queryhandler.replicaCount | int | `1` |  |
