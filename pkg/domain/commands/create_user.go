@@ -36,7 +36,7 @@ func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 }
 func (c *CreateUserCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithSubject(c.GetEmail()),                      // Allows user to create themselfes
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows user to create themselfes
+		es.NewPolicy().WithSubject(c.GetEmail()),                      // Allows user to create themselves
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows user to create themselves
 	}
 }

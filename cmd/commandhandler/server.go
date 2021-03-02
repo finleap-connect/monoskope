@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
 
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
@@ -24,6 +28,7 @@ var (
 	keepAlive        bool
 	eventStoreAddr   string
 	queryHandlerAddr string
+	enableSuperusers bool
 )
 
 var serverCmd = &cobra.Command{
@@ -36,7 +41,7 @@ var serverCmd = &cobra.Command{
 		log := logger.WithName("server-cmd")
 
 		// Create EventStore client
-		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
+		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
 		conn, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
@@ -44,7 +49,7 @@ var serverCmd = &cobra.Command{
 		defer conn.Close()
 
 		// Create UserService client
-		log.Info("Connectin query handler...", "queryHandlerAddr", queryHandlerAddr)
+		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
 		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
@@ -52,10 +57,22 @@ var serverCmd = &cobra.Command{
 		defer conn.Close()
 
 		// Setup domain
+		var cmdRegistry es.CommandRegistry
 		log.Info("Seting up es/cqrs...")
-		cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
-		if err != nil {
-			return err
+		if enableSuperusers {
+			if u := strings.Split(os.Getenv("SUPERUSERS"), ","); len(u) != 0 {
+				cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient, u...)
+				if err != nil {
+					return err
+				}
+			} else {
+				return fmt.Errorf("no valid list of superusers provided")
+			}
+		} else {
+			cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Create gRPC server and register implementation
@@ -82,4 +99,5 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
+	flags.BoolVar(&enableSuperusers, "enable-superusers", false, "Enable superuser functionality for initial system admin creation")
 }

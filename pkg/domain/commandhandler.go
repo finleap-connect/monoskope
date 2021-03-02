@@ -17,7 +17,7 @@ import (
 )
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
+func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient, superusers ...string) (es.CommandRegistry, error) {
 	// Setup repositories
 	userRepo := repos.NewRemoteUserRepository(userService)
 
@@ -40,7 +40,11 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	// Register commands
 	commandRegistry := es.NewCommandRegistry()
 	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserCommand() })
-	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserRoleBindingCommand() })
+	commandRegistry.RegisterCommand(func() es.Command {
+		cmd := commands.NewCreateUserRoleBindingCommand()
+		cmd.DeclareSuperusers(superusers)
+		return cmd
+	})
 	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
 

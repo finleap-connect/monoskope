@@ -73,6 +73,15 @@ spec:
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
+            - {{ (printf "--enable-superusers=%v" .Values.superusers.enabled) }}
+          {{- if .Values.superusers.enabled }}
+          env:
+            - name: SUPERUSERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "commandhandler.fullname" . }}-superusers
+                  key: emails
+          {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
