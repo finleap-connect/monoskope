@@ -96,6 +96,7 @@ func (a *AuthUseCase) RunAuthenticationFlow(ctx context.Context) error {
 
 	a.config.AuthInformation = &config.AuthInformation{
 		AccessToken:  authResponse.GetAccessToken(),
+		IdToken:      authResponse.GetIdToken(),
 		RefreshToken: authResponse.GetRefreshToken(),
 	}
 	if authResponse.Expiry != nil {
