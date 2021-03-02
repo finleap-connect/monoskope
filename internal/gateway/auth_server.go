@@ -89,36 +89,21 @@ func (s *authServer) registerViews(r *gin.Engine) {
 	r.POST("/auth/*route", s.authN)
 }
 
-func (s *authServer) ensureValid(ctx context.Context, token string) (*auth.Claims, error) {
-	// Perform the token validation here.
-	claims, err := s.authHandler.Authorize(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	return claims, nil
-}
-
 func (s *authServer) authN(c *gin.Context) {
 	route := c.Param("route")
+
+	// Allow access to the Gateway in general
 	if strings.HasPrefix(route, "/gateway.Gateway/") {
 		s.log.Info("Allowing anonymous access.", "Route", route)
 		c.Writer.WriteHeader(http.StatusOK)
 		return
 	}
 
+	var claims *auth.Claims
+	var err error
 	s.log.Info("Token validation requested...", "Route", route)
 
-	token := defaultBearerTokenFromRequest(c.Request)
-	var claims *auth.Claims
-
-	for k := range c.Request.Header {
-		s.log.Info("Request header.", "Key", k, "Value", c.Request.Header.Get(k))
-		c.Writer.Header().Set(k, c.Request.Header.Get(k))
-	}
-
-	var err error
-	if claims, err = s.ensureValid(c.Request.Context(), token); err != nil {
+	if claims, err = s.authHandler.Authorize(c.Request.Context(), defaultBearerTokenFromRequest(c.Request)); err != nil {
 		s.log.Error(err, "Token validation failed.")
 		c.String(http.StatusUnauthorized, fmt.Sprintf("error validating token: %v", err.Error()))
 		return
@@ -130,7 +115,6 @@ func (s *authServer) authN(c *gin.Context) {
 		if strings.ToLower(k) == "content-length" {
 			continue
 		}
-
 		c.Writer.Header().Set(k, c.Request.Header.Get(k))
 	}
 	c.Writer.WriteHeader(http.StatusOK)

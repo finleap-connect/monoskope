@@ -138,7 +138,6 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig
 
 func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*Claims, error) {
 	n.log.Info("Verifying state and claims...")
-
 	if !token.Valid() {
 		return nil, fmt.Errorf("failed to verify ID token")
 	}
@@ -184,17 +183,15 @@ func GetIDToken(token *oauth2.Token) string {
 
 // authorize verifies a bearer token and pulls user information form the claims.
 func (n *Handler) Authorize(ctx context.Context, token string) (*Claims, error) {
-	idToken, err := n.verifier.Verify(ctx, token)
+	userInfo, err := n.Provider.UserInfo(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to access userinfo")
 	}
 
-	claims, err := getClaims(idToken)
-	if err != nil {
-		return nil, err
+	claims := &Claims{}
+	if err := userInfo.Claims(claims); err != nil {
+		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
-
-	n.log.Info("user authenticated via token", "user", claims.Email)
 
 	return claims, nil
 }
