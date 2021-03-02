@@ -96,7 +96,7 @@ spec:
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
           {{- end }}
@@ -104,7 +104,7 @@ spec:
           readinessProbe:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
           {{- end }}
