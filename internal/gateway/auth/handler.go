@@ -173,8 +173,11 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 }
 
 // authorize verifies a bearer token and pulls user information form the claims.
-func (n *Handler) Authorize(ctx context.Context, token string) (*Claims, error) {
-	idToken, err := n.verifier.Verify(ctx, token)
+func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*Claims, error) {
+	token := &oauth2.Token{AccessToken: bearerToken}
+	rawIDToken := token.Extra("id_token").(string)
+
+	idToken, err := n.verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, err
 	}
