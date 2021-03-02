@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net"
 	"os"
 
 	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
@@ -17,7 +16,8 @@ import (
 )
 
 var (
-	apiAddr     string
+	grpcApiAddr string
+	httpApiAddr string
 	metricsAddr string
 	keepAlive   bool
 	authConfig  = auth.Config{}
@@ -47,20 +47,6 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// Setup api listener
-		apiLis, err := net.Listen("tcp", apiAddr)
-		if err != nil {
-			return err
-		}
-		defer apiLis.Close()
-
-		// Setup metrics listener
-		metricsLis, err := net.Listen("tcp", metricsAddr)
-		if err != nil {
-			return err
-		}
-		defer metricsLis.Close()
-
 		// Gateway API server
 		gws := gateway.NewApiServer(&authConfig, authHandler)
 
@@ -76,10 +62,10 @@ var serverCmd = &cobra.Command{
 		// Finally start the servers
 		eg, _ := errgroup.WithContext(cmd.Context())
 		eg.Go(func() error {
-			return grpcServer.ServeFromListener(apiLis, metricsLis)
+			return grpcServer.Serve(grpcApiAddr, metricsAddr)
 		})
 		eg.Go(func() error {
-			return authServer.Serve(apiLis)
+			return authServer.Serve(httpApiAddr)
 		})
 		return eg.Wait()
 	},
@@ -90,7 +76,8 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
-	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
+	flags.StringVarP(&grpcApiAddr, "grpc-api-addr", "a", ":8080", "Address the gRPC service will listen on")
+	flags.StringVarP(&httpApiAddr, "http-api-addr", "a", ":8081", "Address the HTTP service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
 }

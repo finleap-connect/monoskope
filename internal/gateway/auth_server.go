@@ -42,12 +42,23 @@ func NewAuthServer(authHandler *auth.Handler) *authServer {
 	return s
 }
 
-func (s *authServer) Serve(apiLis net.Listener) error {
+func (s *authServer) Serve(apiAddr string) error {
+	// Setup grpc listener
+	apiLis, err := net.Listen("tcp", apiAddr)
+	if err != nil {
+		return err
+	}
+	defer apiLis.Close()
+
+	return s.ServeFromListener(apiLis)
+}
+
+func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	shutdown := s.shutdown
 	// Start routine waiting for signals
 	shutdown.RegisterSignalHandler(func() {
 		// Stop the HTTP servers
-		s.log.Info("metrics server shutting down")
+		s.log.Info("api server shutting down")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := s.api.Shutdown(ctx); err != nil {

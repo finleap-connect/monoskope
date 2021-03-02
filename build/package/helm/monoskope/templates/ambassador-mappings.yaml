@@ -10,7 +10,7 @@ spec:
   timeout_ms: 20000
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.api}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -24,7 +24,7 @@ spec:
   timeout_ms: 20000
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.api}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
