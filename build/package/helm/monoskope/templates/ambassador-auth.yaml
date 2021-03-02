@@ -7,4 +7,4 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.api}}
-  path_prefix: /authn
+  path_prefix: /auth

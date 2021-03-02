@@ -75,8 +75,7 @@ func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
-	r.POST("/authn", s.authN)
-	r.POST("/authz", s.authZ)
+	r.POST("/auth/*", s.authN)
 }
 
 func (s *authServer) ensureValid(ctx context.Context, token string) (*auth.Claims, error) {
@@ -116,19 +115,6 @@ func (s *authServer) authN(c *gin.Context) {
 
 	s.log.Info("Token validation successful.")
 	c.Writer.WriteHeader(http.StatusOK)
-}
-
-func (s *authServer) authZ(c *gin.Context) {
-	for k := range c.Request.Header {
-		// Avoid copying the original Content-Length header from the client
-		if strings.ToLower(k) == "content-length" {
-			continue
-		}
-
-		c.Writer.Header().Set(k, c.Request.Header.Get(k))
-	}
-
-	c.Writer.WriteHeader(http.StatusUnauthorized)
 }
 
 func defaultBearerTokenFromRequest(r *http.Request) string {
