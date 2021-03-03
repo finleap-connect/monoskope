@@ -1,0 +1,8 @@
+{{- if .Values.superusers.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "commandhandler.fullname" . }}-superusers
+data:
+  emails: {{ join "," .Values.superusers.emails | quote }}
+{{- end }}
