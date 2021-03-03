@@ -1,10 +1,14 @@
 apiVersion: getambassador.io/v1
 kind: AuthService
 metadata:
-  name: {{ include "monoskope.fullname" . }}-ory-oathkeeper-authservice
+  name: {{ include "monoskope.fullname" . }}-gateway-authservice
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  auth_service: {{.Release.Name}}-oathkeeper-api:{{.Values.oathkeeper.oathkeeper.config.serve.api.port}}
-  path_prefix: /decisions
+  auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+  path_prefix: /auth
+  allowed_authorization_headers:
+    - "x-auth-name"
+    - "x-auth-email"
+    - "x-auth-issuer"

@@ -6,13 +6,8 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
-	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,15 +15,13 @@ import (
 )
 
 type apiServer struct {
-	api_gw.UnimplementedGatewayServer
-	api_gwauth.UnimplementedAuthServer
-	api_common.UnimplementedServiceInformationServiceServer
+	api.UnimplementedGatewayServer
+	apiCommon.UnimplementedServiceInformationServiceServer
 	// Logger interface
 	log logger.Logger
 	//
-	authConfig       *auth.Config
-	authHandler      *auth.Handler
-	cmdHandlerClient api.CommandHandlerClient
+	authConfig  *auth.Config
+	authHandler *auth.Handler
 }
 
 func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {
@@ -40,8 +33,8 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer
 	return s
 }
 
-func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
-	err := stream.Send(&api_common.ServiceInformation{
+func (s *apiServer) GetServiceInformation(e *empty.Empty, stream apiCommon.ServiceInformationService_GetServiceInformationServer) error {
+	err := stream.Send(&apiCommon.ServiceInformation{
 		Name:    version.Name,
 		Version: version.Version,
 		Commit:  version.Commit,
@@ -52,18 +45,18 @@ func (s *apiServer) GetServiceInformation(e *empty.Empty, stream api_common.Serv
 	return nil
 }
 
-func (s *apiServer) GetAuthInformation(ctx context.Context, state *api_gwauth.AuthState) (*api_gwauth.AuthInformation, error) {
-	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{
-		OfflineAccess: true,
-	})
+func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
+	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
 
-	return &api_gwauth.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
+	return &api.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
 }
 
-func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthCode) (*api_gwauth.AuthResponse, error) {
+func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
+	s.log.Info("Authenticating user...")
+
 	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
 	if err != nil {
 		return nil, err
@@ -74,51 +67,34 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api_gwauth.AuthC
 		return nil, err
 	}
 
-	userInfo := &api_gwauth.AuthResponse{
-		AccessToken: &api_gwauth.AccessToken{
-			Token:  token.AccessToken,
-			Expiry: timestamppb.New(token.Expiry),
-		},
+	userInfo := &api.AuthResponse{
+		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
-		Email:        claims.Email,
 	}
+
+	if !token.Expiry.IsZero() {
+		userInfo.Expiry = timestamppb.New(token.Expiry)
+	}
+
+	s.log.Info("User authenticated sucessfully.", "User", claims.Email, "Expiry", token.Expiry.String())
 	return userInfo, nil
 }
 
-func (s *apiServer) RefreshAuth(ctx context.Context, request *api_gwauth.RefreshAuthRequest) (*api_gwauth.AccessToken, error) {
+func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthRequest) (*api.AuthResponse, error) {
+	s.log.Info("Refreshing authentication of user...")
+
 	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
 	if err != nil {
 		return nil, err
 	}
 
-	return &api_gwauth.AccessToken{
-		Token:  token.AccessToken,
-		Expiry: timestamppb.New(token.Expiry),
-	}, nil
-}
-
-// Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	// Get the claims of the authenticated user from the context
-	claims, ok := ctx.Value(&auth.Claims{}).(auth.Claims)
-	if !ok {
-		return nil, grpc.ErrInternal("authentication problem")
+	s.log.Info("Refreshed authentication sucessfully.", "Expiry", token.Expiry.String())
+	accessToken := &api.AuthResponse{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
 	}
-
-	manager, err := metadata.NewDomainMetadataManager(ctx)
-	if err != nil {
-		return nil, err
+	if !token.Expiry.IsZero() {
+		accessToken.Expiry = timestamppb.New(token.Expiry)
 	}
-
-	err = manager.SetUserInformation(&metadata.UserInformation{
-		Email:   claims.Email,
-		Subject: claims.Subject,
-		Issuer:  claims.Issuer,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Call command handler to execute
-	return s.cmdHandlerClient.Execute(ctx, command)
+	return accessToken, nil
 }

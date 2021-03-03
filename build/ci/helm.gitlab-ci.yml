@@ -24,8 +24,6 @@ deliver:chart:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
-  needs:
-    - lint:helm
 
 deploy:monoskope:
   stage: deploy
@@ -38,6 +36,8 @@ deploy:monoskope:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
+  needs:
+    - deliver:chart
 
 deploy:monoskope:latest_tag:
   stage: deploy

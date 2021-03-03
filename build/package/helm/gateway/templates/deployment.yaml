@@ -62,11 +62,15 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
+          - name: grpc
+            containerPort: {{ .Values.ports.grpcApi }}
           - name: http
-            containerPort: {{ .Values.ports.api }}
+            containerPort: {{ .Values.ports.httpApi }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
           env:
+            - name: GIN_MODE
+              value: release
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -86,14 +90,15 @@ spec:
             - /gateway
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
-            - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
+            - {{ (printf "--grpc-api-addr=:%v" .Values.ports.grpcApi) }}
+            - {{ (printf "--http-api-addr=:%v" .Values.ports.httpApi) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
           {{- end }}
@@ -101,7 +106,7 @@ spec:
           readinessProbe:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
           {{- end }}

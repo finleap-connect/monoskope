@@ -3,13 +3,13 @@ package domain
 import (
 	"context"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/grpc/metadata"
 )
 
 const (
-	userInformationKey      = "user_information"
 	componentInformationKey = "component_information"
 )
 
@@ -22,9 +22,9 @@ type ComponentInformation struct {
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Email   string
-	Subject string
-	Issuer  string
+	Name   string
+	Email  string
+	Issuer string
 }
 
 // domainMetadataManager is a domain specific metadata manager.
@@ -35,8 +35,8 @@ type domainMetadataManager struct {
 type DomainMetadataManager interface {
 	es.MetadataManager
 	SetComponentInformation() error
-	SetUserInformation(userInformation *UserInformation) error
-	GetUserInformation() (*UserInformation, error)
+	SetUserInformation(userInformation *UserInformation)
+	GetUserInformation() *UserInformation
 	GetOutgoingGrpcContext() context.Context
 }
 
@@ -46,10 +46,11 @@ func NewDomainMetadataManager(ctx context.Context) (DomainMetadataManager, error
 		es.NewMetadataManagerFromContext(ctx),
 	}
 
+	// Get the grpc metadata from incoming context
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		data := make(map[string]string)
 		for k, v := range md {
-			data[k] = v[0]
+			data[k] = v[0] // typically only the first and only value of that is relevant
 		}
 		m.SetMetadata(data)
 	}
@@ -73,18 +74,25 @@ func (m *domainMetadataManager) SetComponentInformation() error {
 }
 
 // SetUserInformation sets the UserInformation in the metadata.
-func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) error {
-	return m.SetObject(userInformationKey, userInformation)
+func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) {
+	m.Set(gateway.HeaderAuthName, userInformation.Name)
+	m.Set(gateway.HeaderAuthEmail, userInformation.Email)
+	m.Set(gateway.HeaderAuthIssuer, userInformation.Issuer)
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
-func (m *domainMetadataManager) GetUserInformation() (*UserInformation, error) {
+func (m *domainMetadataManager) GetUserInformation() *UserInformation {
 	userInfo := &UserInformation{}
-	err := m.GetObject(userInformationKey, userInfo)
-	if err != nil {
-		return nil, err
+	if header, ok := m.Get(gateway.HeaderAuthName); ok {
+		userInfo.Name = header
 	}
-	return userInfo, err
+	if header, ok := m.Get(gateway.HeaderAuthEmail); ok {
+		userInfo.Email = header
+	}
+	if header, ok := m.Get(gateway.HeaderAuthIssuer); ok {
+		userInfo.Issuer = header
+	}
+	return userInfo
 }
 
 // GetOutgoingGrpcContext returns a new context enriched with the metadata of this manager.

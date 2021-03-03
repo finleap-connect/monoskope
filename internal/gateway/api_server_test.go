@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	api_gw_auth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"golang.org/x/sync/errgroup"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -20,21 +20,21 @@ var (
 
 var _ = Describe("Gateway", func() {
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwc := api_gw_auth.NewAuthClient(conn)
+		gwc := api.NewGatewayClient(conn)
 
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &api_gw_auth.AuthState{CallbackURL: "http://localhost:8000"})
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &api.AuthState{CallbackURL: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
 		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwcAuth := api_gw_auth.NewAuthClient(conn)
+		gwcAuth := api.NewGatewayClient(conn)
 
 		ready := make(chan string, 1)
 		oidcClientServer, err := env.NewOidcClientServer(ready)
@@ -42,7 +42,7 @@ var _ = Describe("Gateway", func() {
 		defer oidcClientServer.Close()
 
 		env.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
-		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api_gw_auth.AuthState{CallbackURL: oidcClientServer.RedirectURI})
+		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api.AuthState{CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
 
@@ -79,19 +79,18 @@ var _ = Describe("Gateway", func() {
 		Expect(eg.Wait()).NotTo(HaveOccurred())
 		Expect(statusCode).To(Equal(http.StatusOK))
 
-		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api_gw_auth.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
+		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authResponse).ToNot(BeNil())
-		Expect(authResponse.GetEmail()).To(Equal("admin@example.com"))
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
 		Expect(authResponse.GetRefreshToken()).ToNot(Equal(""))
-		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetAccessToken().GetExpiry().AsTime())
+		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetExpiry().AsTime())
 
-		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), toToken(authResponse.GetAccessToken().GetToken()))
+		conn, err = CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 
-		accessToken, err := gwcAuth.RefreshAuth(ctx, &api_gw_auth.RefreshAuthRequest{RefreshToken: authResponse.GetRefreshToken()})
+		accessToken, err := gwcAuth.RefreshAuth(ctx, &api.RefreshAuthRequest{RefreshToken: authResponse.GetRefreshToken()})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(accessToken).ToNot(BeNil())
 	})
@@ -99,7 +98,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String(), nil)
+		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

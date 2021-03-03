@@ -8,7 +8,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
@@ -23,24 +23,19 @@ type Handler struct {
 	log        logger.Logger
 }
 
-func NewHandler(config *Config) (*Handler, error) {
+func NewHandler(config *Config) *Handler {
 	n := &Handler{
 		config:     config,
 		httpClient: http.DefaultClient,
 		log:        logger.WithName("auth"),
 	}
-	// Setup OIDC
-	err := n.setupOIDC()
-	if err != nil {
-		return nil, err
-	}
-	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
-
-	return n, nil
+	return n
 }
 
-func (n *Handler) setupOIDC() error {
-	ctx := oidc.ClientContext(context.Background(), n.httpClient)
+func (n *Handler) SetupOIDC(ctx context.Context) error {
+	ctx = oidc.ClientContext(ctx, n.httpClient)
+
+	n.log.Info("Setting up auth provider...", "IssuerURL", n.config.IssuerURL)
 
 	// Using an exponantial backoff to avoid issues in development environments
 	backoffParams := backoff.NewExponentialBackOff()
@@ -79,7 +74,9 @@ func (n *Handler) setupOIDC() error {
 		}()
 	}
 
-	n.log.Info("connected to auth provider", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "claims", scopes.Supported)
+	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
+
+	n.log.Info("Connected to auth provider successful.", "IssuerURL", n.config.IssuerURL, "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 
 	return nil
 }
@@ -99,6 +96,8 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 }
 
 func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	n.log.Info("Refreshing token...")
+
 	// Generate a new token with a refresht token and the expiry of the access token set to golang zero date.
 	// Setting the access token expired will force the token source to automatically use the refresh token to issue a new token.
 	t := &oauth2.Token{
@@ -110,11 +109,12 @@ func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Tok
 
 // Exchange converts an authorization code into a token.
 func (n *Handler) Exchange(ctx context.Context, code, redirectURL string) (*oauth2.Token, error) {
+	n.log.Info("Exchanging auth code for token...")
 	return n.getOauth2Config(nil, redirectURL).Exchange(n.clientContext(ctx), code)
 }
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeURLConfig) (string, string, error) {
+func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig) (string, string, error) {
 	// Encode state and calculate nonce
 	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
 	if err != nil {
@@ -122,11 +122,11 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 	}
 	nonce := util.HashString(encoded + n.config.Nonce)
 
-	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email", "federated:id")
+	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email")
 
 	// Construct authCodeURL
 	authCodeURL := ""
-	if config.OfflineAccess || n.config.OfflineAsScope {
+	if n.config.OfflineAsScope {
 		scopes = append(scopes, oidc.ScopeOfflineAccess)
 		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else {
@@ -137,6 +137,7 @@ func (n *Handler) GetAuthCodeURL(state *api_gwauth.AuthState, config *AuthCodeUR
 }
 
 func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*Claims, error) {
+	n.log.Info("Verifying state and claims...")
 	if !token.Valid() {
 		return nil, fmt.Errorf("failed to verify ID token")
 	}
@@ -165,24 +166,22 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 		return nil, err
 	}
 
-	n.log.Info("verified bearer token", "user", claims.Email)
+	n.log.Info("Token verified successfully.", "User", claims.Email, "TokenType", token.TokenType)
 
 	return claims, nil
 }
 
 // authorize verifies a bearer token and pulls user information form the claims.
-func (n *Handler) Authorize(ctx context.Context, bearerToken string) (*Claims, error) {
-	idToken, err := n.verifier.Verify(ctx, bearerToken)
+func (n *Handler) Authorize(ctx context.Context, token string) (*Claims, error) {
+	userInfo, err := n.Provider.UserInfo(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to access userinfo")
 	}
 
-	claims, err := getClaims(idToken)
-	if err != nil {
-		return nil, err
+	claims := &Claims{}
+	if err := userInfo.Claims(claims); err != nil {
+		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
-
-	n.log.Info("user authenticated via bearer token", "user", claims.Email)
 
 	return claims, nil
 }

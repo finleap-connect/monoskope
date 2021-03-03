@@ -66,8 +66,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
-		Expect(err).ToNot(HaveOccurred())
+		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
 			Email: "janedoe@monoskope.io",
@@ -79,9 +78,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		Expect(err).ToNot(HaveOccurred())
-
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
 			Email: adminUser.Email,
 		}})
@@ -91,9 +88,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		Expect(err).ToNot(HaveOccurred())
-
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
 			Email: someUser.Email,
 		}})
@@ -103,9 +98,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
-		Expect(err).ToNot(HaveOccurred())
-
+		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
@@ -120,9 +113,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		Expect(err).ToNot(HaveOccurred())
-
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
@@ -136,9 +127,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
-		Expect(err).ToNot(HaveOccurred())
-
+		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		command := &cmd.CreateUserRoleBindingCommand{
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someOtherUser.Id,

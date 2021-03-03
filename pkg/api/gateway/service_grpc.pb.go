@@ -4,8 +4,6 @@ package gateway
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
-	commands "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,8 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
-	// Executes a command and returns the execution result
-	Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error)
+	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error)
+	RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type gatewayClient struct {
@@ -32,9 +31,27 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) Execute(ctx context.Context, in *commands.Command, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Execute", in, out, opts...)
+func (c *gatewayClient) GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error) {
+	out := new(AuthInformation)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetAuthInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/ExchangeAuthCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) RefreshAuth(ctx context.Context, in *RefreshAuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/RefreshAuth", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +62,9 @@ func (c *gatewayClient) Execute(ctx context.Context, in *commands.Command, opts 
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
-	// Executes a command and returns the execution result
-	Execute(context.Context, *commands.Command) (*empty.Empty, error)
+	GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error)
+	ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error)
+	RefreshAuth(context.Context, *RefreshAuthRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -54,8 +72,14 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (UnimplementedGatewayServer) Execute(context.Context, *commands.Command) (*empty.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Execute not implemented")
+func (UnimplementedGatewayServer) GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAuthInformation not implemented")
+}
+func (UnimplementedGatewayServer) ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
+}
+func (UnimplementedGatewayServer) RefreshAuth(context.Context, *RefreshAuthRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshAuth not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
 
@@ -70,20 +94,56 @@ func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
 	s.RegisterService(&Gateway_ServiceDesc, srv)
 }
 
-func _Gateway_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(commands.Command)
+func _Gateway_GetAuthInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthState)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).Execute(ctx, in)
+		return srv.(GatewayServer).GetAuthInformation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gateway.Gateway/Execute",
+		FullMethod: "/gateway.Gateway/GetAuthInformation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Execute(ctx, req.(*commands.Command))
+		return srv.(GatewayServer).GetAuthInformation(ctx, req.(*AuthState))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_ExchangeAuthCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthCode)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).ExchangeAuthCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.Gateway/ExchangeAuthCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).ExchangeAuthCode(ctx, req.(*AuthCode))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_RefreshAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).RefreshAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.Gateway/RefreshAuth",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).RefreshAuth(ctx, req.(*RefreshAuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +156,16 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Execute",
-			Handler:    _Gateway_Execute_Handler,
+			MethodName: "GetAuthInformation",
+			Handler:    _Gateway_GetAuthInformation_Handler,
+		},
+		{
+			MethodName: "ExchangeAuthCode",
+			Handler:    _Gateway_ExchangeAuthCode_Handler,
+		},
+		{
+			MethodName: "RefreshAuth",
+			Handler:    _Gateway_RefreshAuth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

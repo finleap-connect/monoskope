@@ -24,8 +24,7 @@ type Claims struct {
 }
 
 type AuthCodeURLConfig struct {
-	Scopes        []string
-	OfflineAccess bool
+	Scopes []string
 }
 
 type State struct {

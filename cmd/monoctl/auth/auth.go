@@ -10,7 +10,7 @@ func NewAuthCmd(configLoader *config.ClientConfigManager) *cobra.Command {
 		Use:                   "auth",
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
-		Short:                 "Handle monoskope authorization",
+		Short:                 "Handle authorization",
 		Long:                  `Authenticate with remote Monoskope instance, check status and more.`,
 	}
 

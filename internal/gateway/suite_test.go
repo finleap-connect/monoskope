@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,10 +17,8 @@ import (
 	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
-	api_gw "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
-	api_gwauth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway/auth"
+	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
-	"golang.org/x/oauth2"
 	ggrpc "google.golang.org/grpc"
 )
 
@@ -122,13 +121,18 @@ func TestGateway(t *testing.T) {
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
+	ctx := context.Background()
 
 	By("bootstrapping test env")
 	env, err = SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
-	authHandler, err := auth.NewHandler(env.AuthConfig)
+	authHandler := auth.NewHandler(env.AuthConfig)
+	Expect(err).ToNot(HaveOccurred())
+
+	// Setup OIDC
+	err = authHandler.SetupOIDC(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler)
@@ -136,8 +140,7 @@ var _ = BeforeSuite(func(done Done) {
 	// Create gRPC server and register implementation
 	grpcServer = grpc.NewServer("gateway-grpc", false)
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api_gw.RegisterGatewayServer(s, gatewayApiServer)
-		api_gwauth.RegisterAuthServer(s, gatewayApiServer)
+		api.RegisterGatewayServer(s, gatewayApiServer)
 		api_common.RegisterServiceInformationServiceServer(s, gatewayApiServer)
 	})
 
@@ -165,9 +168,3 @@ var _ = AfterSuite(func() {
 	err = apiListener.Close()
 	Expect(err).To(BeNil())
 })
-
-func toToken(token string) *oauth2.Token {
-	return &oauth2.Token{
-		AccessToken: token,
-	}
-}
