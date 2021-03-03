@@ -18,6 +18,10 @@ import (
 
 const (
 	defaultAuthorizationHeader = "Authorization"
+
+	HeaderAuthName   = "x-auth-name"
+	HeaderAuthEmail  = "x-auth-email"
+	HeaderAuthIssuer = "x-auth-issuer"
 )
 
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
@@ -122,6 +126,12 @@ func (s *authServer) auth(c *gin.Context) {
 		}
 		c.Writer.Header().Set(k, c.Request.Header.Get(k))
 	}
+
+	// Set headers with auth info
+	c.Writer.Header().Set(HeaderAuthName, claims.Name)
+	c.Writer.Header().Set(HeaderAuthEmail, claims.Email)
+	c.Writer.Header().Set(HeaderAuthIssuer, claims.Issuer)
+
 	c.Writer.WriteHeader(http.StatusOK)
 }
 
