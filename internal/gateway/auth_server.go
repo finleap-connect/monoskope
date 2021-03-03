@@ -20,6 +20,7 @@ const (
 	defaultAuthorizationHeader = "Authorization"
 )
 
+// authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	api         *http.Server
 	engine      *gin.Engine
@@ -28,6 +29,7 @@ type authServer struct {
 	authHandler *auth.Handler
 }
 
+// NewAuthServer creates a new instance of gateway.authServer.
 func NewAuthServer(authHandler *auth.Handler) *authServer {
 	engine := gin.Default()
 	s := &authServer{
@@ -42,6 +44,7 @@ func NewAuthServer(authHandler *auth.Handler) *authServer {
 	return s
 }
 
+// Serve tells the server to start listening on the specified address.
 func (s *authServer) Serve(apiAddr string) error {
 	// Setup grpc listener
 	apiLis, err := net.Listen("tcp", apiAddr)
@@ -53,6 +56,7 @@ func (s *authServer) Serve(apiAddr string) error {
 	return s.ServeFromListener(apiLis)
 }
 
+// Serve tells the server to start listening on given listener.
 func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	shutdown := s.shutdown
 	// Start routine waiting for signals
@@ -82,14 +86,16 @@ func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	return nil
 }
 
+// registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
-	r.POST("/auth/*route", s.authN)
+	r.POST("/auth/*route", s.auth)
 }
 
-func (s *authServer) authN(c *gin.Context) {
+// auth serves as handler for the auth route of the server.
+func (s *authServer) auth(c *gin.Context) {
 	route := c.Param("route")
 
 	// Allow access to the Gateway in general
@@ -99,10 +105,9 @@ func (s *authServer) authN(c *gin.Context) {
 		return
 	}
 
+	s.log.Info("Token validation requested...", "Route", route)
 	var claims *auth.Claims
 	var err error
-	s.log.Info("Token validation requested...", "Route", route)
-
 	if claims, err = s.authHandler.Authorize(c.Request.Context(), defaultBearerTokenFromRequest(c.Request)); err != nil {
 		s.log.Error(err, "Token validation failed.")
 		c.String(http.StatusUnauthorized, fmt.Sprintf("error validating token: %v", err.Error()))
@@ -120,6 +125,7 @@ func (s *authServer) authN(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
 }
 
+// defaultBearerTokenFromRequest extracts the token from header
 func defaultBearerTokenFromRequest(r *http.Request) string {
 	token := r.Header.Get(defaultAuthorizationHeader)
 	split := strings.SplitN(token, " ", 2)
