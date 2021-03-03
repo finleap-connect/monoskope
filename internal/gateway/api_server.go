@@ -10,6 +10,7 @@ import (
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -34,6 +35,15 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer
 }
 
 func (s *apiServer) GetServiceInformation(e *empty.Empty, stream apiCommon.ServiceInformationService_GetServiceInformationServer) error {
+	// Output metadata
+	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
+		for k, m := range md {
+			for _, v := range m {
+				s.log.Info("Metadata", "k", k, "value", v)
+			}
+		}
+	}
+
 	err := stream.Send(&apiCommon.ServiceInformation{
 		Name:    version.Name,
 		Version: version.Version,
