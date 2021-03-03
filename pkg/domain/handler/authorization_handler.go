@@ -38,11 +38,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		return err
 	}
 
-	userInfo, err := metadataMngr.GetUserInformation()
-	if err != nil {
-		return err
-	}
-
+	userInfo := metadataMngr.GetUserInformation()
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
 		return domainErrors.ErrUnauthorized

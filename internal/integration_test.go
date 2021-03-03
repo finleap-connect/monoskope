@@ -27,12 +27,11 @@ var _ = Describe("integration", func() {
 	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
-	err = metadataMgr.SetUserInformation(&metadata.UserInformation{
-		Email:   "admin@monoskope.io",
-		Subject: "admin",
-		Issuer:  "monoskope",
+	metadataMgr.SetUserInformation(&metadata.UserInformation{
+		Name:   "admin",
+		Email:  "admin@monoskope.io",
+		Issuer: "monoskope",
 	})
-	Expect(err).ToNot(HaveOccurred())
 
 	commandHandlerClient := func() es.CommandHandlerClient {
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
