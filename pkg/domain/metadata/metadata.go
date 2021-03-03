@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	userInformationKey      = "user_information"
 	componentInformationKey = "component_information"
 )
 
