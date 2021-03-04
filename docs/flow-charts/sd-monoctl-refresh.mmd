@@ -1,18 +1,28 @@
 sequenceDiagram
     participant U as User
     participant M as monoctl
+    participant A as ambassador
     participant G as Gateway
     participant I as Identity Provider
-    U-->>+M: monoctl command needing auth
-    M-->>+G: calls API
-    G-->>G: validates bearer token
-    G-->>-M: returns that token has expired
+    participant C as CommandHandler
+    U-->>+M: monoctl tenant create
+    M-->>+A: calls API
+    A-->>+G: authenticate request
+    G-->>+I: get user info with token
+    I-->>-G: returns unauthorized
+    G-->>-A: returns unauthorized
+    A-->>-M: returns unauthorized
     M-->>+G: calls RefreshAuth
     G-->>+I: get new id_token
     I-->>I: validates refresh_token
     I-->>-G: returns new id_token
     G-->>-M: returns id_token
-    M-->>+G: calls API
-    G-->>G: validates bearer token
-    G-->>-M: returns API response
+    M-->>+A: calls API
+    A-->>+G: authenticate request
+    G-->>+I: get user info with token
+    I-->>-G: returns authorized
+    G-->>-A: returns authorized
+    A-->>+C: calls API
+    C-->>-A: returns command response
+    A-->>-M: returns command response
     M-->>-U: Output command response

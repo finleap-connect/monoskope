@@ -1,6 +1,7 @@
 sequenceDiagram
     participant U as User
     participant M as monoctl
+    participant A as ambassador
     participant G as Gateway
     participant I as Identity Provider
     U-->>+M: monoctl auth login
@@ -13,5 +14,5 @@ sequenceDiagram
     M-->>+G: calls ExchangeAuthCode
     G-->>+I: exchange auth_code
     I-->>-G: returns id_token
-    G-->>-M: returns id_token
-    M-->>-U: Output login success
+    G-->>-M: returns access_token, refresh_token, expiry
+    M-->>-U: output login success
