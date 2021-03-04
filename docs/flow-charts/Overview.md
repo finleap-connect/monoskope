@@ -12,4 +12,10 @@
 
 ## Cluster login
 
+### get-credentials
+
 ![image](images/sd-monoctl-cluster-get-credentials.mmd.png)
+
+### validate credentials
+
+![image](images/sd-monoctl-cluster-validate-credentials.mmd.png)
