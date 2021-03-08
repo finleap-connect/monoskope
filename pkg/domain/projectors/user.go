@@ -43,6 +43,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 			return projection, err
 		}
 
+		i.Id = event.AggregateID().String()
 		i.Email = data.GetEmail()
 		i.Name = data.GetName()
 	default:
