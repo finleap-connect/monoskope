@@ -14,7 +14,6 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
-	monoctl_auth "gitlab.figo.systems/platform/monoskope/monoskope/internal/monoctl/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
@@ -92,21 +91,6 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 
 func (env *oAuthTestEnv) Shutdown() error {
 	return env.TestEnv.Shutdown()
-}
-
-func (env *oAuthTestEnv) NewOidcClientServer(ready chan<- string) (*monoctl_auth.Server, error) {
-	serverConf := &monoctl_auth.Config{
-		LocalServerBindAddress: []string{
-			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),
-		},
-		RedirectURLHostname:  RedirectURLHostname,
-		LocalServerReadyChan: ready,
-	}
-	server, err := monoctl_auth.NewServer(serverConf)
-	if err != nil {
-		return nil, err
-	}
-	return server, nil
 }
 
 func TestGateway(t *testing.T) {

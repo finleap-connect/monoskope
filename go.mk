@@ -14,11 +14,6 @@ LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MO
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 PROTOC     	   ?= protoc
 
-CMD_MONOCTL_LINUX = $(BUILD_PATH)/monoctl-linux-amd64
-CMD_MONOCTL_OSX = $(BUILD_PATH)/monoctl-osx-amd64
-CMD_MONOCTL_WIN = $(BUILD_PATH)/monoctl-win-amd64
-CMD_MONOCTL_SRC = cmd/monoctl/*.go
-
 CMD_GATEWAY = $(BUILD_PATH)/gateway
 CMD_GATEWAY_SRC = cmd/gateway/*.go
 
@@ -105,24 +100,10 @@ $(CMD_COMMANDHANDLER):
 $(CMD_QUERYHANDLER):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
 
-$(CMD_MONOCTL_LINUX):
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" -o $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_SRC)
-
-$(CMD_MONOCTL_OSX):
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" -o $(CMD_MONOCTL_OSX) $(CMD_MONOCTL_SRC)
-
-$(CMD_MONOCTL_WIN):
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" -o $(CMD_MONOCTL_WIN) $(CMD_MONOCTL_SRC)
-
 build-clean: 
 	rm -Rf $(CMD_GATEWAY)
 	rm -Rf $(CMD_EVENTSTORE)
 	rm -Rf $(CMD_COMMANDHANDLER)
-	rm -Rf $(CMD_MONOCTL_LINUX)
-	rm -Rf $(CMD_MONOCTL_OSX)
-	rm -Rf $(CMD_MONOCTL_WIN)
-
-build-monoctl: $(CMD_MONOCTL_LINUX) $(CMD_MONOCTL_OSX) $(CMD_MONOCTL_WIN)
 
 build-gateway: $(CMD_GATEWAY)
 
@@ -131,8 +112,3 @@ build-eventstore: $(CMD_EVENTSTORE)
 build-commandhandler: $(CMD_COMMANDHANDLER)
 
 build-queryhandler: $(CMD_QUERYHANDLER)
-
-push-monoctl:
-	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_LINUX) "https://artifactory.figo.systems/artifactory/binaries/linux/monoctl-$(VERSION)"
-	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_OSX) "https://artifactory.figo.systems/artifactory/binaries/osx/monoctl-$(VERSION)"
-	@curl -u$(ARTIFACTORY_BINARY_USER):$(ARTIFACTORY_BINARY_PW) -T $(CMD_MONOCTL_WIN) "https://artifactory.figo.systems/artifactory/binaries/win/monoctl-$(VERSION)"
