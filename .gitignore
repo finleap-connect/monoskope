@@ -23,7 +23,6 @@ project.dict
 !/tools/goget-wrapper
 *.coverprofile
 
-/monoctl
 /gateway
 
 build/package/helm/monoskope/Chart.lock
