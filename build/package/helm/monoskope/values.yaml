@@ -94,10 +94,13 @@ cockroachdb:
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
     enabled: true
-    labels: {}
+    labels:
+      tenant: *tenant
+      release: monitoring
+      app.kubernetes.io/part-of: *name
     annotations: {}
-    interval: 30s
-    # scrapeTimeout: 10s
+    interval: 1m
+    scrapeTimeout: 10s
 
 rabbitmq:
   enabled: true
