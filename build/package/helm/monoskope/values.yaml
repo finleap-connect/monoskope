@@ -14,6 +14,9 @@ global:
 hosting:
   issuer: ""
   domain: &domain monoskope.io
+  mtls:
+    enabled: true
+    subdomain: mtls
 
 messageBus:
   routingKeyPrefix: "m8"
@@ -182,3 +185,5 @@ ambassador:
       selector:
         tenant: *tenant
         release: monitoring
+  mtls:
+    secretName: "ambassador-mtls-secret"

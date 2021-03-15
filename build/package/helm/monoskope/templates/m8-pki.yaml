@@ -1,0 +1,41 @@
+{{- if .Values.hosting.mtls.enabled }}
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.pkiName" . }}-selfsigning-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.caSecretName" . }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "monoskope.caSecretName" . }}
+  commonName: Monoskope CA
+  organization:
+    - Monoskope
+  isCA: true
+  issuerRef:
+    name: {{ include "monoskope.pkiName" . }}-selfsigning-issuer
+    kind: Issuer
+  usages:
+    - client auth
+    - server auth
+    - digital signature
+    - key encipherment
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.pkiName" . }}-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "monoskope.caSecretName" . }}
+{{- end }}

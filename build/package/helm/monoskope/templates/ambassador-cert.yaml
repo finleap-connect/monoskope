@@ -1,7 +1,5 @@
 {{- if ne .Values.hosting.domain "" }}
 {{- $name := .Values.hosting.domain | replace "." "-" }}
-{{- $tlsSecretName := printf "%s-%s" .Release.Name "ambassador-tls-cert" }}
----
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
@@ -10,22 +8,69 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ .Values.hosting.domain }}
+  hostname: {{ include "monoskope.domain" . }}
   acmeProvider:
     authority: none
   tlsSecret:
-    name: {{ $tlsSecretName }}
+    name: {{ include "monoskope.tlsSecretName" . }}
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ $tlsSecretName }}
+  name: {{ include "monoskope.tlsSecretName" . }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ $tlsSecretName }}
+  secretName: {{ include "monoskope.tlsSecretName" . }}
   issuerRef:
     name: {{ .Values.hosting.issuer }}
     kind: ClusterIssuer
   dnsNames:
-  - {{ .Values.hosting.domain }}
+  - {{ include "monoskope.domain" . }}
+---
+{{- if .Values.hosting.mtls.enabled }}
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: {{ include "monoskope.fullname" . }}-{{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  hostname: {{ include "monoskope.mtlsDomain" . }}
+  acmeProvider:
+    authority: none
+  tlsSecret:
+    name: {{ include "monoskope.mtlsSecretName" . }}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.mtlsSecretName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "monoskope.mtlsSecretName" . }}
+  issuerRef:
+    name: {{ include "monoskope.pkiName" . }}-issuer
+    kind: Issuer
+  dnsNames:
+  - {{ include "monoskope.mtlsDomain" . }}
+  usages:
+  - client auth
+  - server auth
+---
+apiVersion: getambassador.io/v2
+kind: TLSContext
+metadata:
+  name: {{ $name }}-context-mtls
+spec:
+  hosts:
+  - {{ include "monoskope.mtlsDomain" . }}
+  secret: {{ include "monoskope.mtlsSecretName" . }}
+  ca_secret: {{ include "monoskope.caSecretName" . }}
+  cert_required: true
+{{- end }}
 {{- end }}

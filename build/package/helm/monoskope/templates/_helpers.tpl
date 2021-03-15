@@ -77,3 +77,27 @@ Usage:
 {{- end }}
 {{- include $template (dict "Chart" (dict "Name" (last $subchart)) "Values" $values "Release" $dot.Release "Capabilities" $dot.Capabilities) }}
 {{- end }}
+
+{{- define "monoskope.pkiName" -}}
+{{- printf "%s-%s" (include "monoskope.fullname" .) "pki" -}}
+{{- end }}
+
+{{- define "monoskope.tlsSecretName" -}}
+{{- printf "%s-tls-cert" .Release.Name }}
+{{- end }}
+
+{{- define "monoskope.mtlsSecretName" -}}
+{{- printf "%s-mtls-cert" .Release.Name }}
+{{- end }}
+
+{{- define "monoskope.caSecretName" -}}
+{{- printf "%s-ca-cert" .Release.Name }}
+{{- end }}
+
+{{- define "monoskope.domain" -}}
+{{- .Values.hosting.domain }}
+{{- end }}
+
+{{- define "monoskope.mtlsDomain" -}}
+{{- printf "%s.%s" .Values.hosting.mtls.subdomain .Values.hosting.domain }}
+{{- end }}
