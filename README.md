@@ -19,6 +19,18 @@
 * [Flow charts](docs/flow-charts/Overview.md) of certain parts of `monoskope`
 * Docs on the almighty [Makefile](docs/Makefile.md)
 
+### Prerequisites
+
+The following things must be set up in your target K8s Cluster:
+
+* [cert-manager](https://cert-manager.io/docs/) used to generate certificates for
+  * Ambassador
+  * RabbitMQ
+  * CockroachDB
+* [vault-operator](https://gitlab.figo.systems/platform/vault-operator) to generate/gather secrets for
+  * RabbitMQ
+  * Gateway
+
 ### Helm Charts
 
 * `gateway` helm chart [readme](build/package/helm/gateway/README.md)
