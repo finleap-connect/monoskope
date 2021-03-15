@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}-ambassador-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus-operator
+    release: monitoring
+    tenant: {{ .Values.monitoring.tenant }}
+    namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+  - name: {{ .Release.Namespace }}.rules
+    rules:
+    - alert: CertificateExpiringSoon
+      expr: min(envoy_server_days_until_first_cert_expiring{namespace="{{ .Release.Namespace }}"}) <= 20
+      for: 1m
+      labels:
+        installed_by: {{ .Release.Namespace }}
+        severity: critical
+      annotations:
+        description: The ambassador cert in namespace {{ .Release.Namespace }} is expiring in <=20 days.
+        summary:  The ambassador cert in namespace {{ .Release.Namespace }} is expiring in <=20 days.
