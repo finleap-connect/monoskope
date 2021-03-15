@@ -173,3 +173,9 @@ ambassador:
     requests:
       cpu: 100m
       memory: 512Mi
+  metrics:
+    serviceMonitor:
+      enabled: true
+      selector:
+        tenant: *tenant
+        release: monitoring
