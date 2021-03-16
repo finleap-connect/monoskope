@@ -54,6 +54,13 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
+	tenantServiceClient := func() domainApi.TenantServiceClient {
+		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
+		_, client, err := queryhandler.NewTenantServiceClient(ctx, addr)
+		Expect(err).ToNot(HaveOccurred())
+		return client
+	}
+
 	It("create a user", func() {
 		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
@@ -91,10 +98,10 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(event).ToNot(BeNil())
 
-		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Dieter"))
 		Expect(err).ToNot(HaveOccurred())
-		Expect(user).ToNot(BeNil())
-		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
+		Expect(tenant).ToNot(BeNil())
+		Expect(tenant.GetName()).To(Equal("Dieter"))
 	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
