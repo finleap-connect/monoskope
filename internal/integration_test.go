@@ -83,7 +83,24 @@ var _ = Describe("integration", func() {
 		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
 	})
 	It("create a tenant", func() {
-		command, err := cmd.CreateCommand(commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
+		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		Expect(user.GetId()).To(Equal("1"))
+
+		command, err := cmd.CreateCommand(commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{
+			UserId: user.GetId(),
+			Role:   "admin",
+			Scope:  "system",
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+
+		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		fmt.Println(user.GetRoles())
+		Expect(user.GetRoles()).ToNot(BeNil())
+
+		command, err = cmd.CreateCommand(commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
