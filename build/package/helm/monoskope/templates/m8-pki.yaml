@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.pkiName" . }}-selfsigning-issuer
+  name: {{ include "monoskope.pkiIssuer" . }}-selfsigning
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
@@ -21,7 +21,7 @@ spec:
     - Monoskope
   isCA: true
   issuerRef:
-    name: {{ include "monoskope.pkiName" . }}-selfsigning-issuer
+    name: {{ include "monoskope.pkiIssuer" . }}-selfsigning
     kind: Issuer
   usages:
     - client auth
@@ -32,7 +32,7 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.pkiName" . }}-issuer
+  name: {{ include "monoskope.pkiIssuer" . }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:

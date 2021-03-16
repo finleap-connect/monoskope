@@ -58,7 +58,7 @@ metadata:
 spec:
   secretName: {{ $mtlsSecretName }}
   issuerRef:
-    name: {{ include "monoskope.pkiName" . }}-issuer
+    name: {{ include "monoskope.pkiIssuer" . }}
     kind: Issuer
   dnsNames:
   - {{ $mtlsDomain }}

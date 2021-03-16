@@ -78,8 +78,8 @@ Usage:
 {{- include $template (dict "Chart" (dict "Name" (last $subchart)) "Values" $values "Release" $dot.Release "Capabilities" $dot.Capabilities) }}
 {{- end }}
 
-{{- define "monoskope.pkiName" -}}
-{{- printf "%s-%s" (include "monoskope.fullname" .) "pki" -}}
+{{- define "monoskope.pkiIssuer" -}}
+{{- printf "%s-pki-issuer" (include "monoskope.fullname" .) -}}
 {{- end }}
 
 {{- define "monoskope.tlsSecretName" -}}
