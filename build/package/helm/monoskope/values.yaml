@@ -63,7 +63,7 @@ cockroachdb:
         cpu: 500m
         memory: 1Gi
       limits:
-        cpu: 1
+        cpu: 2
         memory: 2Gi
     annotations:
       linkerd.io/inject: disabled
@@ -72,7 +72,7 @@ cockroachdb:
       linkerd.io/inject: disabled
   storage:
     persistentVolume:
-      size: "20Gi" # ATTENTION: Increase for PROD according to your use-case
+      size: "1Gi" # ATTENTION: Increase for PROD according to your use-case
   conf:
     # Total size in bytes for caches, shared evenly if there are multiple
     # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
@@ -185,5 +185,3 @@ ambassador:
       selector:
         tenant: *tenant
         release: monitoring
-  mtls:
-    secretName: "ambassador-mtls-secret"
