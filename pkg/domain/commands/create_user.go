@@ -3,10 +3,7 @@ package commands
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
-
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -17,26 +14,23 @@ import (
 
 // CreateUserCommand is a command for creating a user.
 type CreateUserCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 	cmdData.CreateUserCommandData
 }
 
 func NewCreateUserCommand() *CreateUserCommand {
 	return &CreateUserCommand{
-		aggregateId:           uuid.New(),
-		CreateUserCommandData: cmdData.CreateUserCommandData{},
+		BaseCommand: es.NewBaseCommand(aggregates.User, commands.CreateUser),
 	}
 }
 
-func (c *CreateUserCommand) AggregateID() uuid.UUID          { return c.aggregateId }
-func (c *CreateUserCommand) AggregateType() es.AggregateType { return aggregates.User }
-func (c *CreateUserCommand) CommandType() es.CommandType     { return commands.CreateUser }
 func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserCommandData)
 }
+
 func (c *CreateUserCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
 		es.NewPolicy().WithSubject(c.GetEmail()),                      // Allows user to create themselves
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows user to create themselves
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins to create any users
 	}
 }

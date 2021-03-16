@@ -10,12 +10,15 @@ import (
 var (
 	// ErrUnauthorized is when a requested command can not be executed because the current user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
-
 	// ErrUserNotFound is when a user is not known to the system.
 	ErrUserNotFound = errors.New("user not found")
-
 	// ErrUserAlreadyExists is when a user does already exist.
 	ErrUserAlreadyExists = errors.New("user already exists")
+
+	// ErrTenantNotFound is when a tenant is not known to the system.
+	ErrTenantNotFound = errors.New("tenant not found")
+	// ErrTenantAlreadyExists is when a tenant does already exist.
+	ErrTenantAlreadyExists = errors.New("tenant already exists")
 )
 
 var (

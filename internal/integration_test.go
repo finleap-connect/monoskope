@@ -75,6 +75,27 @@ var _ = Describe("integration", func() {
 		Expect(user).ToNot(BeNil())
 		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
 	})
+	It("create a tenant", func() {
+		command, err := cmd.CreateCommand(commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+
+		eventStream, err := eventStoreClient().Retrieve(ctx, &es.EventFilter{
+			AggregateType: wrapperspb.String(aggregateTypes.Tenant.String()),
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		event, err := eventStream.Recv()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(event).ToNot(BeNil())
+
+		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(user).ToNot(BeNil())
+		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
+	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())

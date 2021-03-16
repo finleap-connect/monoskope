@@ -31,7 +31,7 @@ type ReadOnlyUserRepository interface {
 	ByEmail(context.Context, string) (*projections.User, error)
 }
 
-// WriteOnlyUserRepository is a repository for reading user projections.
+// WriteOnlyUserRepository is a repository for writing user projections.
 type WriteOnlyUserRepository interface {
 }
 

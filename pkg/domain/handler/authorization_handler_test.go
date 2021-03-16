@@ -9,12 +9,15 @@ import (
 	cmddata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
@@ -60,6 +63,10 @@ var _ = Describe("domain/handler", func() {
 	err = inMemoryUserRepo.Upsert(context.Background(), someOtherUser)
 	Expect(err).NotTo(HaveOccurred())
 
+	userBase := es.NewBaseCommand(aggregates.User, commands.CreateUser)
+	tenantBase := es.NewBaseCommand(aggregates.Tenant, commands.CreateTenant)
+	roleBindingBase := es.NewBaseCommand(aggregates.UserRoleBinding, commands.CreateUserRoleBinding)
+
 	handler := NewAuthorizationHandler(userRepo)
 
 	It("user can't create other users", func() {
@@ -68,9 +75,10 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: "janedoe@monoskope.io",
-		}})
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
+			BaseCommand:           userBase,
+			CreateUserCommandData: cmddata.CreateUserCommandData{Email: "janedoe@monoskope.io"},
+		})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(Equal(errors.ErrUnauthorized))
 	})
@@ -79,9 +87,11 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: adminUser.Email,
-		}})
+
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
+			BaseCommand:           userBase,
+			CreateUserCommandData: cmddata.CreateUserCommandData{Email: adminUser.Email},
+		})
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("system admin can create users", func() {
@@ -89,9 +99,24 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: someUser.Email,
-		}})
+
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
+			BaseCommand:           userBase,
+			CreateUserCommandData: cmddata.CreateUserCommandData{Email: someUser.Email},
+		})
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("system admin can create tenants", func() {
+		manager, err := metadata.NewDomainMetadataManager(context.Background())
+		Expect(err).ToNot(HaveOccurred())
+
+		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+		Expect(err).ToNot(HaveOccurred())
+
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateTenantCommand{
+			BaseCommand:             tenantBase,
+			CreateTenantCommandData: cmddata.CreateTenantCommandData{Name: "dieter", Prefix: "dt"},
+		})
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("user can't make themselves admin", func() {
@@ -100,6 +125,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
+			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
@@ -115,6 +141,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
+			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
@@ -129,6 +156,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
 		command := &cmd.CreateUserRoleBindingCommand{
+			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someOtherUser.Id,
 				Role:   roles.Admin.String(),

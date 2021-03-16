@@ -25,6 +25,8 @@ type TestEnv struct {
 	esClient            esApi.EventStoreClient
 	userServiceConn     *ggrpc.ClientConn
 	userSvcClient       domainApi.UserServiceClient
+	tenantServiceConn   *ggrpc.ClientConn
+	tenantSvcClient     domainApi.TenantServiceClient
 }
 
 func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *queryhandler.TestEnv) (*TestEnv, error) {
@@ -47,7 +49,12 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
+	env.tenantServiceConn, env.tenantSvcClient, err = queryhandler.NewTenantServiceClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	if err != nil {
+		return nil, err
+	}
+
+	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.tenantSvcClient, env.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +93,10 @@ func (env *TestEnv) Shutdown() error {
 	}
 
 	if err := env.userServiceConn.Close(); err != nil {
+		return err
+	}
+
+	if err := env.tenantServiceConn.Close(); err != nil {
 		return err
 	}
 

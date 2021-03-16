@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/wrappers.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata";
+
+package eventdata;
+
+message TenantCreatedEventData {
+  // Name of the tenant
+  string name = 1;
+  // Prefix of the tenant
+  string prefix = 2;
+}
+
+message TenantUpdatedEventData {
+  // Unique identifier of the updated tenant (UUID 128-bit number)
+  string id = 1;
+  // The updated information
+  Update update = 2; // required
+
+  message Update {
+    // New name for the tenant
+    google.protobuf.StringValue name = 1;
+  }
+}
+
+message TenantDeletedEventData {
+  // Unique identifier of the updated tenant (UUID 128-bit number)
+  string id = 1;
+}

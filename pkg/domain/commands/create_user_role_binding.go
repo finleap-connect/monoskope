@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 
-	"github.com/google/uuid"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -15,26 +14,18 @@ import (
 
 // AddRoleToUser is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 	cmdData.CreateUserRoleBindingCommandData
 	superuserPolicies []es.Policy
 }
 
 func NewCreateUserRoleBindingCommand() *CreateUserRoleBindingCommand {
 	return &CreateUserRoleBindingCommand{
-		aggregateId:                      uuid.New(),
-		CreateUserRoleBindingCommandData: cmdData.CreateUserRoleBindingCommandData{},
-		superuserPolicies:                []es.Policy{},
+		BaseCommand:       es.NewBaseCommand(aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
+		superuserPolicies: []es.Policy{},
 	}
 }
 
-func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *CreateUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType {
-	return commands.CreateUserRoleBinding
-}
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserRoleBindingCommandData)
 }

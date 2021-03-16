@@ -44,6 +44,13 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		return domainErrors.ErrUnauthorized
 	}
 
+	if user != nil {
+		err = metadataMngr.SetUserId(user.ID().String())
+		if err != nil {
+			return err
+		}
+	}
+
 	var userRoles []*projectionsApi.UserRoleBinding
 	if user != nil {
 		userRoles = user.GetRoles()
@@ -54,7 +61,8 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		if policyAccepts(userInfo.Email, userRoles, policy) {
 			h.log.Info("User is authorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			if h.nextHandlerInChain != nil {
-				return h.nextHandlerInChain.HandleCommand(ctx, cmd)
+				h.log.Info("User is authorized.", "context", metadataMngr.GetOutgoingGrpcContext(), "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+				return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
 			} else {
 				return nil
 			}

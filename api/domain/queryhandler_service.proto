@@ -33,6 +33,8 @@ service TenantService {
   rpc GetAll(google.protobuf.Empty) returns (stream projections.Tenant);
   // GetById returns the tenant found by the given id.
   rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetByName returns the tenant found by the given name
+  rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
   // GetAuditTrailById returns a stream of all events related to the given id
   rpc GetAuditTrailById(google.protobuf.StringValue)
       returns (stream projections.AuditEvent);

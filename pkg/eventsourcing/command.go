@@ -7,6 +7,14 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+// CommandType is the type of a command, used as its unique identifier.
+type CommandType string
+
+// String returns the string representation of a command type.
+func (c CommandType) String() string {
+	return string(c)
+}
+
 // Command is a domain command that is executed by a CommandHandler.
 //
 // A command name should 1) be in present tense and 2) contain the intent
@@ -32,10 +40,29 @@ type Command interface {
 	Policies(ctx context.Context) []Policy
 }
 
-// CommandType is the type of a command, used as its unique identifier.
-type CommandType string
-
-// String returns the string representation of a command type.
-func (c CommandType) String() string {
-	return string(c)
+// BaseCommand is the base implementation for all commands
+type BaseCommand struct {
+	aggregateID   uuid.UUID
+	aggregateType AggregateType
+	commandType   CommandType
 }
+
+// NewBaseCommand creates a command.
+func NewBaseCommand(aggregateType AggregateType, commandType CommandType) *BaseCommand {
+	return &BaseCommand{
+		aggregateID:   uuid.New(),
+		aggregateType: aggregateType,
+		commandType:   commandType,
+	}
+}
+
+// AggregateID returns the ID of the aggregate that the command should be
+// handled by.
+func (c *BaseCommand) AggregateID() uuid.UUID { return c.aggregateID }
+
+// AggregateType returns the type of the aggregate that the command can be
+// handled by.
+func (c *BaseCommand) AggregateType() AggregateType { return c.aggregateType }
+
+// CommandType returns the type of the command.
+func (c *BaseCommand) CommandType() CommandType { return c.commandType }
