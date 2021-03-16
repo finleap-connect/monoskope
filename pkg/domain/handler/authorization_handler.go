@@ -58,7 +58,6 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		if policyAccepts(userInfo.Email, userRoles, policy) {
 			h.log.Info("User is authorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			if h.nextHandlerInChain != nil {
-				h.log.Info("User is authorized.", "context", metadataMngr.GetOutgoingGrpcContext(), "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 				return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
 			} else {
 				return nil

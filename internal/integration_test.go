@@ -84,7 +84,7 @@ var _ = Describe("integration", func() {
 	})
 	It("create a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-		Expect(user.GetId()).To(Equal("1"))
+		Expect(err).ToNot(HaveOccurred())
 
 		command, err := cmd.CreateCommand(commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{
 			UserId: user.GetId(),
@@ -97,6 +97,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
 		fmt.Println(user.GetRoles())
 		Expect(user.GetRoles()).ToNot(BeNil())
 

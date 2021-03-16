@@ -38,7 +38,7 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 	switch event.EventType() {
 	case events.UserRoleBindingCreated:
 		switch event.EventType() {
-		case events.UserCreated:
+		case events.UserRoleBindingCreated:
 			data := &ed.UserRoleAddedEventData{}
 			if err := event.Data().ToProto(data); err != nil {
 				return projection, err

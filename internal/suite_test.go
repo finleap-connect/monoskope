@@ -26,7 +26,7 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test env")
 	testEnv, err = NewTestEnv()
 	Expect(err).To(Not(HaveOccurred()))
-}, 60)
+}, 120)
 
 var _ = AfterSuite(func() {
 	var err error
