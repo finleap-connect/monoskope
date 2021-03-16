@@ -18,7 +18,7 @@ spec:
   tlsSecret:
     name: {{ $tlsSecretName }}
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
   name: {{ $tlsSecretName }}
@@ -34,7 +34,7 @@ spec:
   - {{ $domain }}
 ---
 {{- if .Values.hosting.mtls.enabled }}
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
   name: {{ $mtlsSecretName }}
@@ -46,10 +46,12 @@ spec:
   issuerRef:
     name: {{ include "monoskope.pkiIssuer" . }}
     kind: Issuer
+  subject:
+    organizations:
+      - Monoskope
   dnsNames:
   - {{ $mtlsDomain }}
   usages:
-  - client auth
   - server auth
 ---
 apiVersion: getambassador.io/v2
