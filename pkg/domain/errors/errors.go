@@ -22,18 +22,20 @@ var (
 )
 
 var (
-	errorMap = map[codes.Code]error{
-		codes.NotFound:         ErrUserNotFound,
-		codes.PermissionDenied: ErrUnauthorized,
-		codes.AlreadyExists:    ErrUserAlreadyExists,
+	errorMap = map[codes.Code][]error{
+		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound},
+		codes.PermissionDenied: {ErrUnauthorized},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )
 
-func reverseMap(m map[codes.Code]error) map[error]codes.Code {
+func reverseMap(m map[codes.Code][]error) map[error]codes.Code {
 	n := make(map[error]codes.Code)
 	for k, v := range m {
-		n[v] = k
+		for _, e := range v {
+			n[e] = k
+		}
 	}
 	return n
 }
@@ -47,7 +49,11 @@ func TranslateFromGrpcError(err error) error {
 	}
 
 	if mappedErr, ok := errorMap[s.Code()]; ok {
-		return mappedErr
+		for _, e := range mappedErr {
+			if TranslateToGrpcError(e).Error() == err.Error() {
+				return e
+			}
+		}
 	}
 
 	return err
