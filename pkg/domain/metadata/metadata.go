@@ -22,10 +22,10 @@ type ComponentInformation struct {
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id      string
-	Email   string
-	Subject string
-	Issuer  string
+	Id     string
+	Name   string
+	Email  string
+	Issuer string
 }
 
 // domainMetadataManager is a domain specific metadata manager.
@@ -39,7 +39,7 @@ type DomainMetadataManager interface {
 	SetUserInformation(userInformation *UserInformation)
 	GetUserInformation() *UserInformation
 	GetOutgoingGrpcContext() context.Context
-	SetUserId(string) error
+	SetUserId(string)
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
@@ -82,17 +82,10 @@ func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformat
 	m.Set(gateway.HeaderAuthIssuer, userInformation.Issuer)
 }
 
-func (m *domainMetadataManager) SetUserId(id string) error {
-	userInfo, err := m.GetUserInformation()
-	if err != nil {
-		return err
-	}
+func (m *domainMetadataManager) SetUserId(id string) {
+	userInfo := m.GetUserInformation()
 	userInfo.Id = id
-	err = m.SetUserInformation(userInfo)
-	if err != nil {
-		return err
-	}
-	return nil
+	m.SetUserInformation(userInfo)
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.

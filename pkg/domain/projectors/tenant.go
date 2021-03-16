@@ -41,10 +41,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 	if err != nil {
 		return nil, err
 	}
-	userInfo, err := metadataMngr.GetUserInformation()
-	if err != nil {
-		return nil, err
-	}
+	userInfo := metadataMngr.GetUserInformation()
 	userId := userInfo.Id
 
 	// Apply the changes for the event.

@@ -110,8 +110,7 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		err = manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		Expect(err).ToNot(HaveOccurred())
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateTenantCommand{
 			BaseCommand:             tenantBase,

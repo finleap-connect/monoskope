@@ -45,10 +45,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 
 	if user != nil {
-		err = metadataMngr.SetUserId(user.ID().String())
-		if err != nil {
-			return err
-		}
+		metadataMngr.SetUserId(user.ID().String())
 	}
 
 	var userRoles []*projectionsApi.UserRoleBinding
