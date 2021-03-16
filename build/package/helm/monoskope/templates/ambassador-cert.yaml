@@ -7,7 +7,7 @@
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: {{ .Release.Name }}-tls
+  name: {{ include "monoskope.fullname" . }}-tls
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
@@ -55,7 +55,7 @@ spec:
 apiVersion: getambassador.io/v2
 kind: TLSContext
 metadata:
-  name: {{ .Release.Name }}-mtls-ctx
+  name: {{ include "monoskope.fullname" . }}-mtls
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}

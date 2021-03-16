@@ -38,4 +38,21 @@ metadata:
 spec:
   ca:
     secretName: {{ include "monoskope.caSecretName" . }}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-mtls-operator-auth
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
+  issuerRef:
+    name: {{ include "monoskope.pkiIssuer" . }}
+    kind: Issuer
+  commonName: m8-operator
+  organization:
+    - Monoskope
+  usages:
+    - client auth
 {{- end }}

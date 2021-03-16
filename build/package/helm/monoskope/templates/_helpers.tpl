@@ -83,15 +83,15 @@ Usage:
 {{- end }}
 
 {{- define "monoskope.tlsSecretName" -}}
-{{- printf "%s-tls-cert" .Release.Name }}
+{{- printf "%s-tls-cert" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.mtlsSecretName" -}}
-{{- printf "%s-mtls-cert" .Release.Name }}
+{{- printf "%s-mtls-cert" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.caSecretName" -}}
-{{- printf "%s-ca-cert" .Release.Name }}
+{{- printf "%s-ca-cert" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.domain" -}}
