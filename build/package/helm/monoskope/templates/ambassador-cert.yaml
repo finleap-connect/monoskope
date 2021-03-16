@@ -1,63 +1,67 @@
 {{- if ne .Values.hosting.domain "" }}
-{{- $name := .Values.hosting.domain | replace "." "-" }}
+{{- $tlsSecretName :=  (include "monoskope.tlsSecretName" .) }}
+{{- $mtlsSecretName :=  (include "monoskope.mtlsSecretName" .) }}
+{{- $caSecretName :=  (include "monoskope.caSecretName" .) }}
+{{- $domain :=  (include "monoskope.domain" .) }}
+{{- $mtlsDomain :=  (include "monoskope.mtlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: {{ include "monoskope.fullname" . }}-{{ $name }}
+  name: {{ .Release.Name }}-tls
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ include "monoskope.domain" . }}
+  hostname: {{ $domain }}
   acmeProvider:
     authority: none
   tlsSecret:
-    name: {{ include "monoskope.tlsSecretName" . }}
+    name: {{ $tlsSecretName }}
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ include "monoskope.tlsSecretName" . }}
+  name: {{ $tlsSecretName }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ include "monoskope.tlsSecretName" . }}
+  secretName: {{ $tlsSecretName }}
   issuerRef:
     name: {{ .Values.hosting.issuer }}
     kind: ClusterIssuer
   dnsNames:
-  - {{ include "monoskope.domain" . }}
+  - {{ $domain }}
 ---
 {{- if .Values.hosting.mtls.enabled }}
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: {{ include "monoskope.fullname" . }}-{{ $name }}
+  name: {{ .Release.Name }}-mtls
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ include "monoskope.mtlsDomain" . }}
+  hostname: {{ $mtlsDomain }}
   acmeProvider:
     authority: none
   tlsSecret:
-    name: {{ include "monoskope.mtlsSecretName" . }}
+    name: {{ $mtlsSecretName }}
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: {{ include "monoskope.mtlsSecretName" . }}
+  name: {{ $mtlsSecretName }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ include "monoskope.mtlsSecretName" . }}
+  secretName: {{ $mtlsSecretName }}
   issuerRef:
     name: {{ include "monoskope.pkiName" . }}-issuer
     kind: Issuer
   dnsNames:
-  - {{ include "monoskope.mtlsDomain" . }}
+  - {{ $mtlsDomain }}
   usages:
   - client auth
   - server auth
@@ -65,12 +69,15 @@ spec:
 apiVersion: getambassador.io/v2
 kind: TLSContext
 metadata:
-  name: {{ $name }}-context-mtls
+  name: {{ .Release.Name }}-mtls-ctx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   hosts:
-  - {{ include "monoskope.mtlsDomain" . }}
-  secret: {{ include "monoskope.mtlsSecretName" . }}
-  ca_secret: {{ include "monoskope.caSecretName" . }}
+  - {{ $mtlsDomain }}
+  secret: {{ $mtlsSecretName }}
+  ca_secret: {{ $caSecretName }}
   cert_required: true
 {{- end }}
 {{- end }}
