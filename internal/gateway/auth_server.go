@@ -122,10 +122,13 @@ func (s *authServer) auth(c *gin.Context) {
 	var claims *auth.Claims
 	if claims = s.tokenValidation(c); claims != nil {
 		s.writeSuccess(c, claims)
+		return
 	}
 	if claims = s.certValidation(c); claims != nil {
 		s.writeSuccess(c, claims)
+		return
 	}
+
 	c.String(http.StatusUnauthorized, "authorization failed")
 }
 
