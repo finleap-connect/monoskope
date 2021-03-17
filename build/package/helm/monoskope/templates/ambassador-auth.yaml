@@ -14,3 +14,13 @@ spec:
     - "x-auth-issuer"
   add_auth_headers:
     x-forwarded-client-cert: "%DOWNSTREAM_PEER_CERT%"
+---
+apiVersion: getambassador.io/v2
+kind:  Module
+metadata:
+  name:  {{ include "monoskope.fullname" . }}-ambassador-module
+spec:
+# See below for more information.
+  config:
+    grpc_stats: true
+    set_current_client_cert_details: FORWARD_ONLY

@@ -31,25 +31,6 @@ spec:
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
-  name: {{ include "monoskope.fullname" . }}-gateway-version-mapping-mtls
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-spec:
-  grpc: true
-  timeout_ms: 20000
-  prefix: /common.ServiceInformationService/
-  rewrite: /common.ServiceInformationService/
-  bypass_auth: true
-  host: "^{{$mtlsDomain}}:443$" # allow mtls to bypass auth plugin
-  host_regex: true
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
-  add_request_headers:
-    x-forwarded-client-cert: "%DOWNSTREAM_PEER_CERT%"
----
-apiVersion: getambassador.io/v1
-kind: Mapping
-metadata:
   name: {{ include "monoskope.fullname" . }}-commandhandler-mapping
   namespace: {{ .Release.Namespace }}
   labels:
