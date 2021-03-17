@@ -8,6 +8,7 @@ metadata:
 spec:
   grpc: true
   timeout_ms: 20000
+  bypass_auth: true
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}

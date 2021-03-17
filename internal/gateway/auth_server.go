@@ -102,13 +102,6 @@ func (s *authServer) registerViews(r *gin.Engine) {
 func (s *authServer) auth(c *gin.Context) {
 	route := c.Param("route")
 
-	// Allow access to the Gateway in general
-	if strings.HasPrefix(route, "/gateway.Gateway/") {
-		s.log.Info("Allowing anonymous access.", "Route", route)
-		c.Writer.WriteHeader(http.StatusOK)
-		return
-	}
-
 	s.log.Info("Token validation requested...", "Route", route)
 	var claims *auth.Claims
 	var err error

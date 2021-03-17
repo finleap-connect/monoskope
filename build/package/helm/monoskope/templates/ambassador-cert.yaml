@@ -1,9 +1,9 @@
 {{- if ne .Values.hosting.domain "" }}
-{{- $tlsSecretName :=  (include "monoskope.tlsSecretName" .) }}
-{{- $mtlsSecretName :=  (include "monoskope.mtlsSecretName" .) }}
-{{- $caSecretName :=  (include "monoskope.caSecretName" .) }}
-{{- $domain :=  (include "monoskope.domain" .) }}
-{{- $mtlsDomain :=  (include "monoskope.mtlsDomain" .) }}
+{{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
+{{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
+{{- $caSecretName := (include "monoskope.caSecretName" .) }}
+{{- $domain := (include "monoskope.domain" .) }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
@@ -17,6 +17,8 @@ spec:
     authority: none
   tlsSecret:
     name: {{ $tlsSecretName }}
+  tls:
+    min_tls_version: v1.2
 ---
 apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
@@ -53,6 +55,7 @@ spec:
   - {{ $mtlsDomain }}
   usages:
   - server auth
+  - client auth
 ---
 apiVersion: getambassador.io/v2
 kind: TLSContext
@@ -64,8 +67,10 @@ metadata:
 spec:
   hosts:
   - {{ $mtlsDomain }}
+  - {{ $mtlsDomain }}:443
   secret: {{ $mtlsSecretName }}
   ca_secret: {{ $caSecretName }}
   cert_required: true
+  min_tls_version: v1.2
 {{- end }}
 {{- end }}
