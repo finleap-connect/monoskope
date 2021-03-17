@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
@@ -125,7 +126,7 @@ var _ = BeforeSuite(func(done Done) {
 	grpcServer = grpc.NewServer("gateway-grpc", false)
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterGatewayServer(s, gatewayApiServer)
-		api_common.RegisterServiceInformationServiceServer(s, gatewayApiServer)
+		api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 	})
 
 	apiListener, err = net.Listen("tcp", anyLocalAddr)
