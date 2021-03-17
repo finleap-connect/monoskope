@@ -19,9 +19,10 @@ import (
 const (
 	defaultAuthorizationHeader = "Authorization"
 
-	HeaderAuthName   = "x-auth-name"
-	HeaderAuthEmail  = "x-auth-email"
-	HeaderAuthIssuer = "x-auth-issuer"
+	HeaderAuthName            = "x-auth-name"
+	HeaderAuthEmail           = "x-auth-email"
+	HeaderAuthIssuer          = "x-auth-issuer"
+	HeaderForwardedClientCert = "x-forwarded-client-cert"
 )
 
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
@@ -101,6 +102,13 @@ func (s *authServer) registerViews(r *gin.Engine) {
 // auth serves as handler for the auth route of the server.
 func (s *authServer) auth(c *gin.Context) {
 	route := c.Param("route")
+
+	if util.GetOperationMode() == util.DEVELOPMENT {
+		// Print headers
+		for k := range c.Request.Header {
+			s.log.Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
+		}
+	}
 
 	s.log.Info("Token validation requested...", "Route", route)
 	var claims *auth.Claims

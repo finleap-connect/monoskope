@@ -44,6 +44,8 @@ spec:
   host: "^{{$mtlsDomain}}:443$" # allow mtls to bypass auth plugin
   host_regex: true
   service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
+  add_request_headers:
+    x-forwarded-client-cert: "%DOWNSTREAM_PEER_CERT%"
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
