@@ -31,7 +31,7 @@ func NewReportPermissions() *cobra.Command {
 					sub := p.Subject()
 
 					if res == "" {
-						res = "self"
+						res = "same"
 					}
 
 					if sub == "" {
