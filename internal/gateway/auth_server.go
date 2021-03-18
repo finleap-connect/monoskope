@@ -30,10 +30,6 @@ const (
 	HeaderForwardedClientCert = "x-forwarded-client-cert"
 )
 
-var (
-	ErrTokenMustNotBeEmpty = errors.New("token must not be empty")
-)
-
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	api         *http.Server
