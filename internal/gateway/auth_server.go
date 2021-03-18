@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -142,7 +143,7 @@ func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
 	}
 
 	if claims, err := s.authHandler.Authorize(c.Request.Context(), token); err != nil {
-		s.log.Error(err, "Token validation failed.")
+		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	} else {
 		s.log.Info("Token validation successful.", "User", claims.Email)
@@ -155,8 +156,8 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 	s.log.Info("Validating client certificate...")
 
 	cert, err := clientCertificateFromRequest(c.Request)
-	if err != nil {
-		s.log.Error(err, "Certificate validation failed.")
+	if err != nil || cert == nil {
+		s.log.Info("Certificate validation failed.", "error", err.Error())
 		return nil
 	}
 
@@ -205,7 +206,12 @@ func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
 		return nil, nil
 	}
 
-	block, _ := pem.Decode([]byte(pemData))
+	decodedValue, err := url.QueryUnescape(pemData)
+	if err != nil {
+		return nil, nil
+	}
+
+	block, _ := pem.Decode([]byte(decodedValue))
 	if block == nil {
 		return nil, nil
 	}
