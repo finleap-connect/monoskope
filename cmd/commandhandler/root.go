@@ -27,6 +27,7 @@ func main() {
 
 	report := NewReportCmd()
 	report.AddCommand(NewReportPermissions())
+	report.AddCommand(NewReportCommands())
 	rootCmd.AddCommand(report)
 
 	if err := rootCmd.Execute(); err != nil {

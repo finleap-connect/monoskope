@@ -4,6 +4,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	formatMarkdown bool
+)
+
 func NewReportCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:                   "report",

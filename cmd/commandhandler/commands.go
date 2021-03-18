@@ -8,11 +8,11 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
 )
 
-func NewReportPermissions() *cobra.Command {
-	reportPermissionsCmd := &cobra.Command{
-		Use:   "permissions",
-		Short: "Prints a list of permissions.",
-		Long:  `Prints a list of permissions.`,
+func NewReportCommands() *cobra.Command {
+	reportCommandsCmd := &cobra.Command{
+		Use:   "commands",
+		Short: "Prints a list of commands.",
+		Long:  `Prints a list of commands.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data := [][]string{}
 
@@ -24,32 +24,14 @@ func NewReportPermissions() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				policies := command.Policies(cmd.Context())
-
-				for _, p := range policies {
-					res := p.Resource()
-					sub := p.Subject()
-
-					if res == "" {
-						res = "self"
-					}
-
-					if sub == "" {
-						sub = "self"
-					}
-
-					data = append(data, []string{
-						string(cmdType),
-						p.Role().String(),
-						p.Scope().String(),
-						res,
-						sub,
-					})
-				}
+				data = append(data, []string{
+					string(cmdType),
+					command.AggregateType().String(),
+				})
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Command", "Role", "Scope", "Resource", "Subject"})
+			table.SetHeader([]string{"Command", "Aggregate"})
 
 			if formatMarkdown {
 				table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
@@ -76,8 +58,8 @@ func NewReportPermissions() *cobra.Command {
 		},
 	}
 
-	flags := reportPermissionsCmd.Flags()
+	flags := reportCommandsCmd.Flags()
 	flags.BoolVarP(&formatMarkdown, "markdown", "m", false, "Print table in markdown format.")
 
-	return reportPermissionsCmd
+	return reportCommandsCmd
 }
