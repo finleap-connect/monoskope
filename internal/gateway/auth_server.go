@@ -139,6 +139,7 @@ func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
 
 	token := defaultBearerTokenFromRequest(c.Request)
 	if token != "" {
+		s.log.Info("Token validation failed.", "error", "token is empty")
 		return nil
 	}
 
@@ -156,7 +157,7 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 	s.log.Info("Validating client certificate...")
 
 	cert, err := clientCertificateFromRequest(c.Request)
-	if err != nil || cert == nil {
+	if err != nil {
 		s.log.Info("Certificate validation failed.", "error", err.Error())
 		return nil
 	}
@@ -203,17 +204,17 @@ func defaultBearerTokenFromRequest(r *http.Request) string {
 func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
 	pemData := r.Header.Get(HeaderForwardedClientCert)
 	if pemData == "" {
-		return nil, nil
+		return nil, errors.New("cert header is empty")
 	}
 
 	decodedValue, err := url.QueryUnescape(pemData)
 	if err != nil {
-		return nil, nil
+		return nil, errors.New("could not unescape pem data from header")
 	}
 
 	block, _ := pem.Decode([]byte(decodedValue))
 	if block == nil {
-		return nil, nil
+		return nil, errors.New("decoding pem failed")
 	}
 
 	return x509.ParseCertificate(block.Bytes)
