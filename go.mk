@@ -32,7 +32,7 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint mod fmt vet test clean
+.PHONY: lint mod fmt vet test clean report
 
 mod:
 	$(GO) mod download
@@ -49,6 +49,13 @@ lint:
 
 run-%:
 	$(call go-run,$*)
+
+report:
+	@echo
+	@$(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report commands $(ARGS)
+	@echo
+	@$(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report permissions $(ARGS)
+	@echo
 
 test: 
 	@find . -name '*.coverprofile' -exec rm {} \;
