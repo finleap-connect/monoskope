@@ -52,6 +52,9 @@ type Policy interface {
 	AcceptsSubject(string) bool
 	// MustBeSubject checks if the policy enforces the given subject.
 	MustBeSubject(string) bool
+
+	// String returns a string representation of the policy.
+	String() string
 }
 
 // Policy describes which Role/Scope/Resource combination is allowed to execute a certain Command.

@@ -16,6 +16,17 @@ import (
 	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 )
 
+func RegisterCommands(superusers ...string) es.CommandRegistry {
+	commandRegistry := es.NewCommandRegistry()
+	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserCommand() })
+	commandRegistry.RegisterCommand(func() es.Command {
+		cmd := commands.NewCreateUserRoleBindingCommand()
+		cmd.DeclareSuperusers(superusers)
+		return cmd
+	})
+	return commandRegistry
+}
+
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
 func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient, superusers ...string) (es.CommandRegistry, error) {
 	// Setup repositories
@@ -38,13 +49,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	)
 
 	// Register commands
-	commandRegistry := es.NewCommandRegistry()
-	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserCommand() })
-	commandRegistry.RegisterCommand(func() es.Command {
-		cmd := commands.NewCreateUserRoleBindingCommand()
-		cmd.DeclareSuperusers(superusers)
-		return cmd
-	})
+	commandRegistry := RegisterCommands(superusers...)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
 

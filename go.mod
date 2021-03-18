@@ -17,6 +17,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
 	github.com/ory/dockertest/v3 v3.6.3
