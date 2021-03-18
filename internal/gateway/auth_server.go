@@ -138,7 +138,7 @@ func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
 	s.log.Info("Validating token...")
 
 	token := defaultBearerTokenFromRequest(c.Request)
-	if token != "" {
+	if token == "" {
 		s.log.Info("Token validation failed.", "error", "token is empty")
 		return nil
 	}
