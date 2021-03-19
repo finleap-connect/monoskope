@@ -78,8 +78,8 @@ Usage:
 {{- include $template (dict "Chart" (dict "Name" (last $subchart)) "Values" $values "Release" $dot.Release "Capabilities" $dot.Capabilities) }}
 {{- end }}
 
-{{- define "monoskope.pkiIssuer" -}}
-{{- printf "%s-pki-issuer" (include "monoskope.fullname" .) -}}
+{{- define "monoskope.trustAnchorSecretName" -}}
+{{- printf "%s-trust-anchor" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.tlsSecretName" -}}
@@ -90,8 +90,8 @@ Usage:
 {{- printf "%s-mtls-cert" (include "monoskope.fullname" .) }}
 {{- end }}
 
-{{- define "monoskope.caSecretName" -}}
-{{- printf "%s-ca-cert" (include "monoskope.fullname" .) }}
+{{- define "monoskope.identityCAName" -}}
+{{- printf "%s-identity" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.domain" -}}

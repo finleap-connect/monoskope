@@ -1,28 +1,44 @@
-{{- if .Values.hosting.mtls.enabled }}
-apiVersion: cert-manager.io/v1alpha3
+{{- if .Values.pki.enabled }}
+{{- if .Values.pki.issuer.ca.enabled }}
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.pkiIssuer" . }}-selfsigning
+  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  selfSigned: {}
+  ca:
+    secretName: {{ required ".Values.pki.issuer.ca.existingTrustAnchorSecretName is required when using the CA issuer!" .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
 ---
+{{- else if .Values.pki.issuer.vault.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  vault:
+    {{- toYaml .Values.pki.issuer.vault | nindent 6 }}
+---
+{{- end }}
 apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
-  name: {{ include "monoskope.caSecretName" . }}
+  name: {{ include "monoskope.identityCAName" . }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  secretName: {{ include "monoskope.caSecretName" . }}
-  commonName: Monoskope CA
+  secretName: {{ include "monoskope.identityCAName" . }}
+  commonName: identity.monoskope.cluster.local
+  dnsNames:
+  - identity.monoskope.cluster.local
   subject:
     organizations:
       - Monoskope
   isCA: true
   issuerRef:
-    name: {{ include "monoskope.pkiIssuer" . }}-selfsigning
+    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
     kind: Issuer
   usages:
     - client auth
@@ -33,12 +49,12 @@ spec:
 apiVersion: cert-manager.io/v1alpha3
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.pkiIssuer" . }}
+  name: {{ include "monoskope.fullname" . }}-identity-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   ca:
-    secretName: {{ include "monoskope.caSecretName" . }}
+    secretName: {{ include "monoskope.identityCAName" . }}
 ---
 apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
@@ -49,9 +65,13 @@ metadata:
 spec:
   secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
   issuerRef:
-    name: {{ include "monoskope.pkiIssuer" . }}
+    name: {{ include "monoskope.fullname" . }}-identity-issuer
     kind: Issuer
-  commonName: m8-operator
+  commonName: operator.monoskope.cluster.local
+  dnsNames:
+  - operator.monoskope.cluster.local
+  emailAddresses:
+  - operator@monoskope.io
   subject:
     organizations:
       - Monoskope

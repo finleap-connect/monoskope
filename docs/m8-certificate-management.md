@@ -26,6 +26,19 @@ This can be done in two ways:
 * via the [CA issuer](https://cert-manager.io/docs/configuration/ca/)
 * via the [Vault issuer](https://cert-manager.io/docs/configuration/vault/)
 
+### Using the CA issuer
+
+If you're using the CA Issuer you have to set the following in the `values.yaml` when deploying Monoskope:
+
+```yaml
+pki:
+  enabled: true
+  issuer:
+    ca:
+      enabled: true
+      existingTrustAnchorSecretName: "m8-trust-anchor" # name of secret in K8s where you have to provide the root ca
+```
+
 ## Rotating the trust anchor
 
 Rotating the trust anchor without downtime is a multi-step process: you must generate a new trust anchor, bundle it with the old one, rotate the issuer certificate and key pair, and finally remove the old trust anchor from the bundle. If you simply need to rotate the issuer certificate and key pair, you can skip directly to Rotating the identity issuer certificate and ignore the trust anchor rotation steps.

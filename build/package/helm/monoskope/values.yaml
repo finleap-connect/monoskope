@@ -11,11 +11,21 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+pki:
+  enabled: true
+  issuer:
+    ca:
+      enabled: true
+      existingTrustAnchorSecretName: "m8-trust-anchor"
+    vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
+      enabled: false
+      path: pki_int/sign/example-dot-com
+      server: https://vault.local
+
 hosting:
   issuer: ""
   domain: &domain monoskope.io
   mtls:
-    enabled: true
     subdomain: mtls
 
 messageBus:

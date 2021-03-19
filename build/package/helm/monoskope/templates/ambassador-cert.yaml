@@ -1,7 +1,7 @@
 {{- if ne .Values.hosting.domain "" }}
 {{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
 {{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
-{{- $caSecretName := (include "monoskope.caSecretName" .) }}
+{{- $caSecretName := (include "monoskope.identityCAName" .) }}
 {{- $domain := (include "monoskope.domain" .) }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 apiVersion: getambassador.io/v2
@@ -46,7 +46,7 @@ metadata:
 spec:
   secretName: {{ $mtlsSecretName }}
   issuerRef:
-    name: {{ include "monoskope.pkiIssuer" . }}
+    name: {{ include "monoskope.fullname" . }}-identity-issuer
     kind: Issuer
   subject:
     organizations:
