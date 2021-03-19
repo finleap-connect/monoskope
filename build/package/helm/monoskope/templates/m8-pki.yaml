@@ -1,6 +1,6 @@
 {{- if .Values.pki.enabled }}
 {{- if .Values.pki.issuer.ca.enabled }}
-apiVersion: cert-manager.io/v1
+apiVersion: cert-manager.io/v1alpha3
 kind: Issuer
 metadata:
   name: {{ include "monoskope.fullname" . }}-root-ca-issuer
@@ -11,7 +11,7 @@ spec:
     secretName: {{ required ".Values.pki.issuer.ca.existingTrustAnchorSecretName is required when using the CA issuer!" .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
 ---
 {{- else if .Values.pki.issuer.vault.enabled }}
-apiVersion: cert-manager.io/v1
+apiVersion: cert-manager.io/v1alpha3
 kind: Issuer
 metadata:
   name: {{ include "monoskope.fullname" . }}-root-ca-issuer
@@ -70,7 +70,7 @@ spec:
   commonName: operator.monoskope.cluster.local
   dnsNames:
   - operator.monoskope.cluster.local
-  emailAddresses:
+  emailSANs:
   - operator@monoskope.io
   subject:
     organizations:
