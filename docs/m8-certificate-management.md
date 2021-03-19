@@ -45,6 +45,8 @@ Create secret containing the generated trust anchor as in the namespace you're a
 kubectl -n monoskope create secret tls m8-trust-anchor --cert=ca.crt --key=ca.key
 ```
 
+After storing the trust anchor in a K8s secret you can delete your local copy or store it in a save location.
+
 ## Rotating the trust anchor
 
 Rotating the trust anchor without downtime is a multi-step process: you must generate a new trust anchor, bundle it with the old one, rotate the issuer certificate and key pair, and finally remove the old trust anchor from the bundle. If you simply need to rotate the issuer certificate and key pair, you can skip directly to Rotating the identity issuer certificate and ignore the trust anchor rotation steps.
