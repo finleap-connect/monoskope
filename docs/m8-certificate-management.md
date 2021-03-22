@@ -104,7 +104,7 @@ After storing the trust anchor in a K8s secret you can delete your local copy or
 
 ### Using the Vault issuer
 
-> This part has not been documented yet. Feel free to create A PR/MR.
+> This part has not been documented yet. Feel free to create a PR/MR.
 
 ## Issuing mTLS certificates
 
