@@ -27,8 +27,8 @@ Using this root `CA` an intermediate certificate or identity certificate is issu
 Again `cert-manager` is used now as intermediate `CA` or identity `CA` based on the identity certificate.
 Now with the identity `CA` in place, we can issue server and client certificates.
 
-Servers and clients now uses a certificate issued by the intermediate `CA`.
-**They do not use the intermediate certificate to validate each others certificates.
+Servers and clients use a certificate issued by the intermediate `CA`.
+**BUT they do not use the intermediate certificate to validate each others certificates.
 They use the `TA` to validate them instead.
 This is very important and comes into play when certificates are rotated later on.
 Remember this, it is crucial for the whole chain management.**
