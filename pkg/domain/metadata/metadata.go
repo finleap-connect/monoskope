@@ -11,6 +11,7 @@ import (
 
 const (
 	componentInformationKey = "component_information"
+	userIdKey               = "user_id"
 )
 
 // ComponentInformation are information about a service/component.
@@ -83,9 +84,7 @@ func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformat
 }
 
 func (m *domainMetadataManager) SetUserId(id string) {
-	userInfo := m.GetUserInformation()
-	userInfo.Id = id
-	m.SetUserInformation(userInfo)
+	m.Set(userIdKey, id)
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
@@ -99,6 +98,9 @@ func (m *domainMetadataManager) GetUserInformation() *UserInformation {
 	}
 	if header, ok := m.Get(gateway.HeaderAuthIssuer); ok {
 		userInfo.Issuer = header
+	}
+	if header, ok := m.Get(userIdKey); ok {
+		userInfo.Id = header
 	}
 	return userInfo
 }
