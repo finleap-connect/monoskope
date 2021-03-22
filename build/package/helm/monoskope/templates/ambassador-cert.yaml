@@ -1,7 +1,6 @@
 {{- if ne .Values.hosting.domain "" }}
 {{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
 {{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
-{{- $caSecretName := (include "monoskope.identityCAName" .) }}
 {{- $domain := (include "monoskope.domain" .) }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 apiVersion: getambassador.io/v2
@@ -69,7 +68,7 @@ spec:
   - {{ $mtlsDomain }}
   - {{ $mtlsDomain }}:443
   secret: {{ $mtlsSecretName }}
-  ca_secret: {{ $caSecretName }}
+  ca_secret: {{ .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
   cert_required: true
   min_tls_version: v1.2
 {{- end }}

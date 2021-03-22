@@ -41,10 +41,10 @@ spec:
     name: {{ include "monoskope.fullname" . }}-root-ca-issuer
     kind: Issuer
   usages:
-    - client auth
-    - server auth
-    - digital signature
-    - key encipherment
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth
 ---
 apiVersion: cert-manager.io/v1alpha3
 kind: Issuer
