@@ -8,15 +8,45 @@
 
 ## Overview
 
-Monoskope needs it's own PKI because components like the `m8 Operator` use [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to communicate and authenticate with the Monoskope control plane.
+Monoskope needs it's own [PKI](https://en.wikipedia.org/wiki/Public_key_infrastructure) because components like the `m8 Operator` use [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to communicate and authenticate with the `Monoskope Control Plane (m8CP)`.
 
 ## So what does the cert chain look like?
 
-<img alt="Monoskope Certificate Chain" style="float: left;" width="100" height="100" src="images/CertificateChain.png">
-
 Good you ask! Certificate chains can really mess with your head. Have a look at the following diagram:
 
-<div style="clear: left;" />
+![alt text](images/CertificateChain.png "Monoskope Certificate Chain")
+
+At the root of everything sits our `Trust Anchor (TA)` as we call it.
+The `TA` is a self signed certificate you create and provide to the `m8CP`.
+Monoskope utilizes `cert-manager` and uses it as root `CA` based on the `TA` you provide.
+
+Using this root `CA` an intermediate certificate or identity certificate is issued.
+Again `cert-manager` is used now as intermediate `CA` based on the identity certificate.
+Now with intermediate `CA` or identity `CA` in place, we can issue server and client certificates.
+
+The server now uses a certificate issued by the intermediate `CA`.
+This is true for all clients as well.
+
+**But they do not use the intermediate `CA` to validate each others certificates.
+They use the `TA` certificate to validate them.
+This is very important and comes into play when certificates are rotated later on.**
+
+### So why is the identity `CA` even necessary?
+
+The identity `CA` is necessary because we want to be able to automatically rotate the certificates of clients, servers and even the identity `CA` regularly without causing a downtime or human intervention.
+
+Have a look at this diagram:
+
+![alt text](images/CertificateChainIdentitiyRotation.png "Monoskope Certificate Chain")
+
+A new identity `CA` certificate was issued.
+Based on this new certificate a new certificate was issued and is used by the server.
+The client is still using a certificate based on the old identity `CA`.
+
+The fact that this is no problem is, that they are both validated against the exact same `TA`.
+As long as the old identity `CA` is not expired the whole chain is valid and accepted by the server.
+
+Since client and server certificates are invalidated more often than the identity `CA`, all clients and servers will have a new certificate based on the new identity `CA` before the old one expires.
 
 ## Create a trust anchor
 
