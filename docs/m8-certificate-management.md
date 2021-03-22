@@ -49,16 +49,17 @@ After storing the trust anchor in a K8s secret you can delete your local copy or
 
 ## Rotating the trust anchor
 
-Rotating the trust anchor without downtime is a multi-step process: you must generate a new trust anchor, bundle it with the old one, rotate the issuer certificate and key pair, and finally remove the old trust anchor from the bundle. If you simply need to rotate the issuer certificate and key pair, you can skip directly to Rotating the identity issuer certificate and ignore the trust anchor rotation steps.
+Rotating the trust anchor without downtime is a multi-step process:
+you must generate a new trust anchor, bundle it with the old one, rotate all certificates derived from the old one, and finally remove the old trust anchor from the bundle.
 
-### Create a new trust anchor
+Create a new trust anchor:
 
 ```bash
 step certificate create root.monoskope.cluster.local ca-new.crt ca-new.key \
   --profile root-ca --no-password --insecure
 ```
 
-### Create Bundle with old and new CA cert
+Create Bundle with old and new CA cert:
 
 ```bash
 step certificate bundle ca-new.crt ca-old.crt bundle.crt
