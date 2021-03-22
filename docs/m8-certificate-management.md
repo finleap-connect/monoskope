@@ -10,6 +10,12 @@
 
 Monoskope needs it's own PKI because components like the `m8 Operator` use [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to communicate and authenticate with the Monoskope control plane.
 
+## So what does the cert chain look like?
+
+Good you ask! Certificate chains can really mess with your head. Have a look at the following diagram:
+
+![alt text](images/CertificateChain.png "Monoskope Certificate Chain")
+
 ## Create a trust anchor
 
 Create a root CA certificate which we call the trust anchor:
@@ -65,9 +71,9 @@ Create Bundle with old and new CA cert:
 step certificate bundle ca-new.crt ca-old.crt bundle.crt
 ```
 
-## Issueing mTLS certificates
+## Issuing mTLS certificates
 
-When issueing certificates for components like the m8 Operator there are some expectations which must be met:
+When issuing certificates for components like the m8 Operator there are some expectations which must be met:
 
 1. The `commonName` must be a subdomain of `monoskope.cluster.local`, e.g. `operator.monoskope.cluster.local`. It should be unique throughout the system.
 1. Set `X509v3 Subject Alternative Name` DNS to the same as for `commonName` and add a unique email address as user information, e.g.:
