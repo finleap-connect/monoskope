@@ -4,10 +4,10 @@ package eventsourcing
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -44,7 +44,7 @@ func (c *eventStoreClient) Store(ctx context.Context, opts ...grpc.CallOption) (
 
 type EventStore_StoreClient interface {
 	Send(*Event) error
-	CloseAndRecv() (*empty.Empty, error)
+	CloseAndRecv() (*emptypb.Empty, error)
 	grpc.ClientStream
 }
 
@@ -56,11 +56,11 @@ func (x *eventStoreStoreClient) Send(m *Event) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *eventStoreStoreClient) CloseAndRecv() (*empty.Empty, error) {
+func (x *eventStoreStoreClient) CloseAndRecv() (*emptypb.Empty, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(empty.Empty)
+	m := new(emptypb.Empty)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func _EventStore_Store_Handler(srv interface{}, stream grpc.ServerStream) error 
 }
 
 type EventStore_StoreServer interface {
-	SendAndClose(*empty.Empty) error
+	SendAndClose(*emptypb.Empty) error
 	Recv() (*Event, error)
 	grpc.ServerStream
 }
@@ -147,7 +147,7 @@ type eventStoreStoreServer struct {
 	grpc.ServerStream
 }
 
-func (x *eventStoreStoreServer) SendAndClose(m *empty.Empty) error {
+func (x *eventStoreStoreServer) SendAndClose(m *emptypb.Empty) error {
 	return x.ServerStream.SendMsg(m)
 }
 

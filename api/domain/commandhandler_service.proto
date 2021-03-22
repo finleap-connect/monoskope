@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
+
+package domain;
+
+// API extensions of the Monoskope CommandHandler.
+service CommandHandlerExtensions {
+  // Execute executes a command.
+  rpc GetPermissionModel(google.protobuf.Empty) returns (PermissionModel);
+}
+
+message PermissionModel {
+  repeated string roles = 1;
+  repeated string scopes = 2;
+}
