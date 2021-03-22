@@ -24,31 +24,30 @@ The `TA` is a self signed certificate [you create](#create-a-trust-anchor) and p
 Monoskope utilizes `cert-manager` and uses it as root `CA` based on the `TA` you provide.
 
 Using this root `CA` an intermediate certificate or identity certificate is issued.
-Again `cert-manager` is used now as intermediate `CA` based on the identity certificate.
-Now with intermediate `CA` or identity `CA` in place, we can issue server and client certificates.
+Again `cert-manager` is used now as intermediate `CA` or identity `CA` based on the identity certificate.
+Now with the identity `CA` in place, we can issue server and client certificates.
 
-The server now uses a certificate issued by the intermediate `CA`.
-This is true for all clients as well.
+Servers and clients now uses a certificate issued by the intermediate `CA`.
+**They do not use the intermediate certificate to validate each others certificates.
+They use the `TA` to validate them instead.
+This is very important and comes into play when certificates are rotated later on.
+Remember this, it is crucial for the whole chain management.**
 
-**But they do not use the intermediate `CA` to validate each others certificates.
-They use the `TA` certificate to validate them.
-This is very important and comes into play when certificates are rotated later on.**
+### So why is the intermediate even necessary?
 
-### So why is the identity `CA` even necessary?
-
-The identity `CA` is necessary because we want to be able to automatically rotate the certificates of clients, servers and even the identity `CA` regularly without causing a downtime or human intervention.
+The identity certificate and the `CA` based on it are necessary because we want to be able to automatically rotate the certificates of clients, servers and even the identity certificate regularly without causing a downtime or human intervention.
 
 Have a look at this diagram:
 
 ![alt text](images/CertificateChainIdentitiyRotation.png "Monoskope Certificate Chain - Identity Rotation")
 
-A new identity `CA` certificate was issued.
-Based on this new certificate a new certificate was issued and is used by the server.
-The client is still using a certificate based on the old identity `CA`.
+A new identity certificate was issued automatically.
+Based on this new certificate a new certificate was issued and is used by the server automatically.
+The client is still using a certificate based on the old identity certificate.
 The fact that this is no problem is, that they are both validated against the exact same `TA`.
-As long as the old identity `CA` is not expired the whole chain is valid and accepted by the server.
+As long as the old identity certificate is not expired the whole chain is valid and accepted by the server.
 
-Since client and server certificates are invalidated more often than the identity `CA`, all clients and servers will have a new certificate based on the new identity `CA` before the old one expires.
+Since client and server certificates are invalidated more often than the identity certificate, all clients and servers will have a new certificate based on the new identity certificate before the old one expires.
 
 ### And what about the rotation of the `Trust Anchor`?
 
