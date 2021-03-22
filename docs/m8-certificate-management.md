@@ -12,9 +12,11 @@ Monoskope needs it's own PKI because components like the `m8 Operator` use [mTLS
 
 ## So what does the cert chain look like?
 
+<img alt="Monoskope Certificate Chain" style="float: left;" width="100" height="100" src="images/CertificateChain.png">
+
 Good you ask! Certificate chains can really mess with your head. Have a look at the following diagram:
 
-![alt text](images/CertificateChain.png "Monoskope Certificate Chain")
+<div style="clear: left;" />
 
 ## Create a trust anchor
 
