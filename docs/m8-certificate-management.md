@@ -42,7 +42,6 @@ Have a look at this diagram:
 A new identity `CA` certificate was issued.
 Based on this new certificate a new certificate was issued and is used by the server.
 The client is still using a certificate based on the old identity `CA`.
-
 The fact that this is no problem is, that they are both validated against the exact same `TA`.
 As long as the old identity `CA` is not expired the whole chain is valid and accepted by the server.
 
@@ -85,24 +84,6 @@ kubectl -n monoskope create secret tls m8-trust-anchor --cert=ca.crt --key=ca.ke
 
 After storing the trust anchor in a K8s secret you can delete your local copy or store it in a save location.
 
-## Rotating the trust anchor
-
-Rotating the trust anchor without downtime is a multi-step process:
-you must generate a new trust anchor, bundle it with the old one, rotate all certificates derived from the old one, and finally remove the old trust anchor from the bundle.
-
-Create a new trust anchor:
-
-```bash
-step certificate create root.monoskope.cluster.local ca-new.crt ca-new.key \
-  --profile root-ca --no-password --insecure
-```
-
-Create Bundle with old and new CA cert:
-
-```bash
-step certificate bundle ca-new.crt ca-old.crt bundle.crt
-```
-
 ## Issuing mTLS certificates
 
 When issuing certificates for components like the m8 Operator there are some expectations which must be met:
@@ -140,4 +121,22 @@ spec:
     - Monoskope
   usages:
   - client auth
+```
+
+## Rotating the trust anchor
+
+Rotating the trust anchor without downtime is a multi-step process:
+you must generate a new trust anchor, bundle it with the old one, rotate all certificates derived from the old one, and finally remove the old trust anchor from the bundle.
+
+Create a new trust anchor:
+
+```bash
+step certificate create root.monoskope.cluster.local ca-new.crt ca-new.key \
+  --profile root-ca --no-password --insecure
+```
+
+Create Bundle with old and new CA cert:
+
+```bash
+step certificate bundle ca-new.crt ca-old.crt bundle.crt
 ```
