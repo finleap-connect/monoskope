@@ -8,6 +8,8 @@
 
 ## Overview
 
+![alt text](images/OperatorCommunication.png "Monoskope Operator Communication")
+
 Monoskope needs it's own [PKI](https://en.wikipedia.org/wiki/Public_key_infrastructure) because components like the `m8 Operator` use [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to communicate and authenticate with the `Monoskope Control Plane (m8CP)`.
 
 First this document shows how the chain looks like and how it works.
