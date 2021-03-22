@@ -64,3 +64,42 @@ Create Bundle with old and new CA cert:
 ```bash
 step certificate bundle ca-new.crt ca-old.crt bundle.crt
 ```
+
+## Issueing mTLS certificates
+
+When issueing certificates for components like the m8 Operator there are some expectations which must be met:
+
+1. The `commonName` must be a subdomain of `monoskope.cluster.local`, e.g. `operator.monoskope.cluster.local`. It should be unique throughout the system.
+1. Set `X509v3 Subject Alternative Name` DNS to the same as for `commonName` and add a unique email address as user information, e.g.:
+
+    ```bash
+    DNS:operator.monoskope.cluster.local, email:operator@monoskope.io
+    ```
+
+1. Set the organization to `Monoskope`.
+
+See the default operator auth `cert-manager` certificat resource definition for this.
+This will be deployed along with the m8 control plane:
+
+```yaml
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: m8dev-monoskope-mtls-operator-auth
+  namespace: platform-monoskope-monoskope
+spec:
+  commonName: operator.monoskope.cluster.local
+  dnsNames:
+  - operator.monoskope.cluster.local
+  emailSANs:
+  - operator@monoskope.io
+  issuerRef:
+    kind: Issuer
+    name: m8dev-monoskope-identity-issuer
+  secretName: m8dev-monoskope-mtls-operator-auth
+  subject:
+    organizations:
+    - Monoskope
+  usages:
+  - client auth
+```
