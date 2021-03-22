@@ -62,6 +62,8 @@ With a buffer of at least 30 days you want to rotate the `TA`.
 You create a [new certificate](#rotating-the-trust-anchor) like you did initally for the `TA`.
 But now you bundle the old and the new certificate together and make this bundle available to the `m8CP`.
 
+Now with the bundle in place certificate chains can have the old or the new `TA` as root.
+This is not an issue since every chain can still be validated no matter which `TA` has been used.
 Now this bundle has to stay until **every** identity, server and client certificate has been rotatet. Only after that point it is safe to remove the old `TA` from the bundle.
 
 ## Create a trust anchor
