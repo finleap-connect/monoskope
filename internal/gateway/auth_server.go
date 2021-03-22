@@ -160,7 +160,7 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 
 	claims := &auth.Claims{
 		Name:   cert.Subject.CommonName,
-		Email:  cert.Subject.CommonName + "@monoskope.io",
+		Email:  cert.EmailAddresses[0],
 		Issuer: cert.Issuer.CommonName,
 	}
 	s.log.Info("Client certificate validation successful.", "User", claims.Email)
