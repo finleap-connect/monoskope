@@ -10,6 +10,9 @@
 
 Monoskope needs it's own [PKI](https://en.wikipedia.org/wiki/Public_key_infrastructure) because components like the `m8 Operator` use [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to communicate and authenticate with the `Monoskope Control Plane (m8CP)`.
 
+First this document shows how the chain looks like and how it works.
+After that the manual on how to set up everything is explained.
+
 ## So what does the cert chain look like?
 
 Good you ask! Certificate chains can really mess with your head. Have a look at the following diagram:
@@ -17,7 +20,7 @@ Good you ask! Certificate chains can really mess with your head. Have a look at 
 ![alt text](images/CertificateChain.png "Monoskope Certificate Chain")
 
 At the root of everything sits our `Trust Anchor (TA)` as we call it.
-The `TA` is a self signed certificate you create and provide to the `m8CP`.
+The `TA` is a self signed certificate [you create](#create-a-trust-anchor) and provide to the `m8CP`.
 Monoskope utilizes `cert-manager` and uses it as root `CA` based on the `TA` you provide.
 
 Using this root `CA` an intermediate certificate or identity certificate is issued.
@@ -37,7 +40,7 @@ The identity `CA` is necessary because we want to be able to automatically rotat
 
 Have a look at this diagram:
 
-![alt text](images/CertificateChainIdentitiyRotation.png "Monoskope Certificate Chain")
+![alt text](images/CertificateChainIdentitiyRotation.png "Monoskope Certificate Chain - Identity Rotation")
 
 A new identity `CA` certificate was issued.
 Based on this new certificate a new certificate was issued and is used by the server.
@@ -46,6 +49,20 @@ The fact that this is no problem is, that they are both validated against the ex
 As long as the old identity `CA` is not expired the whole chain is valid and accepted by the server.
 
 Since client and server certificates are invalidated more often than the identity `CA`, all clients and servers will have a new certificate based on the new identity `CA` before the old one expires.
+
+### And what about the rotation of the `Trust Anchor`?
+
+Now we come to the part which is not automated.
+The `TA` will expire based on what you've configured when creating the certificate.
+Now what? Let's have a look at the following diagram:
+
+![alt text](images/CertificateChainTrustAnchorRotation.png "Monoskope Certificate Chain - Trust Anchor Rotation")
+
+With a buffer of at least 30 days you want to rotate the `TA`.
+You create a [new certificate](#rotating-the-trust-anchor) like you did initally for the `TA`.
+But now you bundle the old and the new certificate together and make this bundle available to the `m8CP`.
+
+Now this bundle has to stay until **every** identity, server and client certificate has been rotatet. Only after that point it is safe to remove the old `TA` from the bundle.
 
 ## Create a trust anchor
 
