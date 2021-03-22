@@ -102,6 +102,10 @@ kubectl -n monoskope create secret tls m8-trust-anchor --cert=ca.crt --key=ca.ke
 
 After storing the trust anchor in a K8s secret you can delete your local copy or store it in a save location.
 
+### Using the Vault issuer
+
+> This part has not been documented yet. Feel free to create A PR/MR.
+
 ## Issuing mTLS certificates
 
 When issuing certificates for components like the m8 Operator there are some expectations which must be met:
