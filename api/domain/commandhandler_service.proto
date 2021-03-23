@@ -11,11 +11,24 @@ package domain;
 
 // API extensions of the Monoskope CommandHandler.
 service CommandHandlerExtensions {
-  // Execute executes a command.
+  // Returns roles and scopes available.
   rpc GetPermissionModel(google.protobuf.Empty) returns (PermissionModel);
+  // Returns overview of commands and which policies are necessary to execute
+  // them.
+  rpc GetPolicyOverview(google.protobuf.Empty) returns (PolicyOverview);
 }
 
 message PermissionModel {
   repeated string roles = 1;
   repeated string scopes = 2;
+}
+
+message PolicyOverview { repeated Policy policies = 1; }
+
+message Policy {
+  string command = 1;
+  string role = 2;
+  string scope = 3;
+  string resource = 4;
+  string subject = 5;
 }
