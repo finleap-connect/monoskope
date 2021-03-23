@@ -63,9 +63,9 @@ var _ = Describe("domain/handler", func() {
 	err = inMemoryUserRepo.Upsert(context.Background(), someOtherUser)
 	Expect(err).NotTo(HaveOccurred())
 
-	userBase := es.NewBaseCommand(aggregates.User, commands.CreateUser)
-	tenantBase := es.NewBaseCommand(aggregates.Tenant, commands.CreateTenant)
-	roleBindingBase := es.NewBaseCommand(aggregates.UserRoleBinding, commands.CreateUserRoleBinding)
+	userBase := es.NewBaseCommand(uuid.New(), aggregates.User, commands.CreateUser)
+	tenantBase := es.NewBaseCommand(uuid.New(), aggregates.Tenant, commands.CreateTenant)
+	roleBindingBase := es.NewBaseCommand(uuid.New(), aggregates.UserRoleBinding, commands.CreateUserRoleBinding)
 
 	handler := NewAuthorizationHandler(userRepo)
 

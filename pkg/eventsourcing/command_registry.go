@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -11,15 +12,15 @@ import (
 
 type CommandRegistry interface {
 	CommandHandler
-	RegisterCommand(func() Command)
-	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
+	RegisterCommand(func(uuid.UUID) Command)
+	CreateCommand(id uuid.UUID, commandType CommandType, data *anypb.Any) (Command, error)
 	SetHandler(handler CommandHandler, commandType CommandType)
 }
 
 type commandRegistry struct {
 	log      logger.Logger
 	mutex    sync.RWMutex
-	commands map[CommandType]func() Command
+	commands map[CommandType]func(uuid.UUID) Command
 	handlers map[CommandType]CommandHandler
 }
 
@@ -27,7 +28,7 @@ type commandRegistry struct {
 func NewCommandRegistry() CommandRegistry {
 	return &commandRegistry{
 		log:      logger.WithName("command-registry"),
-		commands: make(map[CommandType]func() Command),
+		commands: make(map[CommandType]func(uuid.UUID) Command),
 		handlers: make(map[CommandType]CommandHandler),
 	}
 }
@@ -37,8 +38,8 @@ func NewCommandRegistry() CommandRegistry {
 //
 // An example would be:
 //     RegisterCommand(func() Command { return &MyCommand{} })
-func (r *commandRegistry) RegisterCommand(factory func() Command) {
-	cmd := factory()
+func (r *commandRegistry) RegisterCommand(factory func(uuid.UUID) Command) {
+	cmd := factory(uuid.Nil)
 	if cmd == nil {
 		r.log.Info("factory does not create commands")
 		panic(errors.ErrFactoryInvalid)
@@ -64,11 +65,11 @@ func (r *commandRegistry) RegisterCommand(factory func() Command) {
 
 // CreateCommand creates an command of a type with an ID using the factory
 // registered with RegisterCommand.
-func (r *commandRegistry) CreateCommand(commandType CommandType, data *anypb.Any) (Command, error) {
+func (r *commandRegistry) CreateCommand(id uuid.UUID, commandType CommandType, data *anypb.Any) (Command, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	if factory, ok := r.commands[commandType]; ok {
-		cmd := factory()
+		cmd := factory(id)
 		if err := cmd.SetData(data); err != nil {
 			return nil, err
 		}

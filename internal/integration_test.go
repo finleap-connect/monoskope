@@ -3,9 +3,11 @@ package internal
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/cenkalti/backoff"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
@@ -74,7 +76,7 @@ var _ = Describe("integration", func() {
 	}
 
 	It("create a user", func() {
-		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
 		executeWithRetry(command, metadataMgr, commandHandlerClient)
@@ -97,7 +99,7 @@ var _ = Describe("integration", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
-		command, err := cmd.CreateCommand(commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{
+		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{
 			UserId: user.GetId(),
 			Role:   "admin",
 			Scope:  "system",
@@ -106,7 +108,8 @@ var _ = Describe("integration", func() {
 
 		executeWithRetry(command, metadataMgr, commandHandlerClient)
 
-		command, err = cmd.CreateCommand(commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
+		tenantId := uuid.New()
+		command, err = cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
 		Expect(err).ToNot(HaveOccurred())
 
 		executeWithRetry(command, metadataMgr, commandHandlerClient)
@@ -116,16 +119,26 @@ var _ = Describe("integration", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		event, err := eventStream.Recv()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(event).ToNot(BeNil())
+		for {
+			event, err := eventStream.Recv()
+
+			// End of stream
+			if err == io.EOF {
+				break
+			}
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(event).ToNot(BeNil())
+			testEnv.Log.Info("Event", "Data", event.String())
+		}
 
 		tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Dieter"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetName()).To(Equal("Dieter"))
+		Expect(tenant.Id).To(Equal(tenantId.String()))
 
-		command, err = cmd.CreateCommand(commandTypes.UpdateTenant, &cmdData.UpdateTenantCommandData{
+		command, err = cmd.CreateCommand(tenantId, commandTypes.UpdateTenant, &cmdData.UpdateTenantCommandData{
 			Id:     tenant.GetId(),
 			Update: &cmdData.UpdateTenantCommandData_Update{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
 		})
@@ -138,9 +151,18 @@ var _ = Describe("integration", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		event, err = eventStream.Recv()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(event).ToNot(BeNil())
+		for {
+			event, err := eventStream.Recv()
+
+			// End of stream
+			if err == io.EOF {
+				break
+			}
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(event).ToNot(BeNil())
+			testEnv.Log.Info("Event", "Data", event.String())
+		}
 
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
@@ -149,7 +171,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant.GetLastModifiedBy()).To(Equal(user))
 	})
 	It("fail to create a user which already exists", func() {
-		command, err := cmd.CreateCommand(commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)

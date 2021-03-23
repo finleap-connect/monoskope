@@ -48,9 +48,9 @@ type BaseCommand struct {
 }
 
 // NewBaseCommand creates a command.
-func NewBaseCommand(aggregateType AggregateType, commandType CommandType) *BaseCommand {
+func NewBaseCommand(id uuid.UUID, aggregateType AggregateType, commandType CommandType) *BaseCommand {
 	return &BaseCommand{
-		aggregateID:   uuid.New(),
+		aggregateID:   id,
 		aggregateType: aggregateType,
 		commandType:   commandType,
 	}

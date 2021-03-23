@@ -47,9 +47,8 @@ func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) err
 			return domainErrors.ErrTenantAlreadyExists
 		}
 	case *commands.UpdateTenantCommand:
-		_, err := a.tenantRepo.ByTenantId(ctx, cmd.GetId())
-		if err != nil {
-			return err
+		if a.Version() < 1 {
+			return fmt.Errorf("Tenant does not exist")
 		}
 		ed, err := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
 			Id:     cmd.GetId(),

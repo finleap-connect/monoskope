@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/google/uuid"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
@@ -40,7 +41,12 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	cmd, err := s.cmdRegistry.CreateCommand(evs.CommandType(command.Type), command.Data)
+	id, err := uuid.Parse(command.GetId())
+	if err != nil {
+		return nil, errors.TranslateToGrpcError(err)
+	}
+
+	cmd, err := s.cmdRegistry.CreateCommand(id, evs.CommandType(command.Type), command.Data)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
 	}

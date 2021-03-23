@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 
+	"github.com/google/uuid"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -19,9 +20,9 @@ type UpdateTenantCommand struct {
 }
 
 // NewUpdateTenantCommand creates an UpdateTenantCommand.
-func NewUpdateTenantCommand() *UpdateTenantCommand {
+func NewUpdateTenantCommand(id uuid.UUID) *UpdateTenantCommand {
 	return &UpdateTenantCommand{
-		BaseCommand: es.NewBaseCommand(aggregates.Tenant, commands.UpdateTenant),
+		BaseCommand: es.NewBaseCommand(id, aggregates.Tenant, commands.UpdateTenant),
 	}
 }
 

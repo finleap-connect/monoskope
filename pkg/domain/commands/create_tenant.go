@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 
+	"github.com/google/uuid"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -19,14 +20,17 @@ type CreateTenantCommand struct {
 }
 
 // NewCreateTenantCommand creates a CreateTenantCommand.
-func NewCreateTenantCommand() *CreateTenantCommand {
+func NewCreateTenantCommand(id uuid.UUID) *CreateTenantCommand {
 	return &CreateTenantCommand{
-		BaseCommand: es.NewBaseCommand(aggregates.Tenant, commands.CreateTenant),
+		BaseCommand: es.NewBaseCommand(id, aggregates.Tenant, commands.CreateTenant),
 	}
 }
 
 func (c *CreateTenantCommand) SetData(a *anypb.Any) error {
-	return a.UnmarshalTo(&c.CreateTenantCommandData)
+	if err := a.UnmarshalTo(&c.CreateTenantCommandData); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Policies returns the Role/Scope/Resource combination allowed to execute.

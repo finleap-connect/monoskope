@@ -41,14 +41,14 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 
 	// Register commands
 	commandRegistry := es.NewCommandRegistry()
-	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateUserCommand() })
-	commandRegistry.RegisterCommand(func() es.Command {
-		cmd := commands.NewCreateUserRoleBindingCommand()
+	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewCreateUserCommand(id) })
+	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command {
+		cmd := commands.NewCreateUserRoleBindingCommand(id)
 		cmd.DeclareSuperusers(superusers)
 		return cmd
 	})
-	commandRegistry.RegisterCommand(func() es.Command { return commands.NewCreateTenantCommand() })
-	commandRegistry.RegisterCommand(func() es.Command { return commands.NewUpdateTenantCommand() })
+	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewCreateTenantCommand(id) })
+	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewUpdateTenantCommand(id) })
 	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
 	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)

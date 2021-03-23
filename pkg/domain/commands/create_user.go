@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 
+	"github.com/google/uuid"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -18,9 +19,9 @@ type CreateUserCommand struct {
 	cmdData.CreateUserCommandData
 }
 
-func NewCreateUserCommand() *CreateUserCommand {
+func NewCreateUserCommand(id uuid.UUID) *CreateUserCommand {
 	return &CreateUserCommand{
-		BaseCommand: es.NewBaseCommand(aggregates.User, commands.CreateUser),
+		BaseCommand: es.NewBaseCommand(id, aggregates.User, commands.CreateUser),
 	}
 }
 

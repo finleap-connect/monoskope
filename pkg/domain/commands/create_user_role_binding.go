@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 
+	"github.com/google/uuid"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -19,9 +20,9 @@ type CreateUserRoleBindingCommand struct {
 	superuserPolicies []es.Policy
 }
 
-func NewCreateUserRoleBindingCommand() *CreateUserRoleBindingCommand {
+func NewCreateUserRoleBindingCommand(id uuid.UUID) *CreateUserRoleBindingCommand {
 	return &CreateUserRoleBindingCommand{
-		BaseCommand:       es.NewBaseCommand(aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
+		BaseCommand:       es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
 		superuserPolicies: []es.Policy{},
 	}
 }
