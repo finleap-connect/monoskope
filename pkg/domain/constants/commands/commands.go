@@ -11,4 +11,7 @@ const (
 
 	// Event emitted when a Tenant has been created
 	CreateTenant es.CommandType = "CreateTenant"
+
+	// Command to update a Tenant
+	UpdateTenant es.CommandType = "UpdateTenant"
 )

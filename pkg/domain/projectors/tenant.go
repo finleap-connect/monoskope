@@ -7,7 +7,6 @@ import (
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
@@ -37,12 +36,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		return nil, errors.ErrInvalidProjectionType
 	}
 
-	metadataMngr, err := metadata.NewDomainMetadataManager(ctx)
-	if err != nil {
-		return nil, err
-	}
-	userInfo := metadataMngr.GetUserInformation()
-	userId := userInfo.Id
+	userId := event.Metadata()["user_id"]
 
 	// Apply the changes for the event.
 	switch event.EventType() {
@@ -57,9 +51,14 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		i.LastModified = timestamppb.Now()
 		i.SetCreatedByID(userId)
 		i.SetLastModifiedByID(userId)
-		if err != nil {
-			return nil, err
+	case events.TenantUpdated:
+		data := &ed.TenantUpdatedEventData{}
+		if err := event.Data().ToProto(data); err != nil {
+			return projection, err
 		}
+		i.Name = data.GetUpdate().GetName().Value
+		i.LastModified = timestamppb.Now()
+		i.SetLastModifiedByID(userId)
 	default:
 		return nil, errors.ErrInvalidEventType
 	}

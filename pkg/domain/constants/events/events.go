@@ -9,4 +9,6 @@ const (
 	UserRoleBindingCreated es.EventType = "UserRoleBindingCreated"
 	// Event emitted when a User has been created
 	TenantCreated es.EventType = "TenantCreated"
+	// Event emitted when a Tenant has been updated
+	TenantUpdated es.EventType = "TenantUpdated"
 )
