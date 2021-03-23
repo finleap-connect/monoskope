@@ -35,9 +35,10 @@ func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.E
 		if err := m.applyEventsFromStore(ctx, event, outdatedError.ProjectionVersion); err != nil {
 			return err
 		}
+		return m.handler.HandleEvent(ctx, event)
+	} else {
+		return err
 	}
-
-	return m.handler.HandleEvent(ctx, event)
 }
 
 func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event, projectionVersion uint64) error {
