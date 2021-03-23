@@ -11,9 +11,22 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+pki:
+  enabled: true
+  issuer:
+    ca:
+      enabled: true
+      existingTrustAnchorSecretName: "m8-trust-anchor"
+    vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
+      enabled: false
+      path: pki_int/sign/example-dot-com
+      server: https://vault.local
+
 hosting:
   issuer: ""
   domain: &domain monoskope.io
+  mtls:
+    subdomain: mtls
 
 messageBus:
   routingKeyPrefix: "m8"
@@ -60,7 +73,7 @@ cockroachdb:
         cpu: 500m
         memory: 1Gi
       limits:
-        cpu: 1
+        cpu: 2
         memory: 2Gi
     annotations:
       linkerd.io/inject: disabled
@@ -69,7 +82,7 @@ cockroachdb:
       linkerd.io/inject: disabled
   storage:
     persistentVolume:
-      size: "20Gi" # ATTENTION: Increase for PROD according to your use-case
+      size: "1Gi" # ATTENTION: Increase for PROD according to your use-case
   conf:
     # Total size in bytes for caches, shared evenly if there are multiple
     # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
@@ -94,10 +107,13 @@ cockroachdb:
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
     enabled: true
-    labels: {}
+    labels:
+      tenant: *tenant
+      release: monitoring
+      app.kubernetes.io/part-of: *name
     annotations: {}
-    interval: 30s
-    # scrapeTimeout: 10s
+    interval: 1m
+    scrapeTimeout: 10s
 
 rabbitmq:
   enabled: true
@@ -173,3 +189,9 @@ ambassador:
     requests:
       cpu: 100m
       memory: 512Mi
+  metrics:
+    serviceMonitor:
+      enabled: true
+      selector:
+        tenant: *tenant
+        release: monitoring

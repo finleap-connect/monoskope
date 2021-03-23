@@ -1,0 +1,80 @@
+{{- if .Values.pki.enabled }}
+{{- if .Values.pki.issuer.ca.enabled }}
+apiVersion: cert-manager.io/v1alpha3
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ required ".Values.pki.issuer.ca.existingTrustAnchorSecretName is required when using the CA issuer!" .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
+---
+{{- else if .Values.pki.issuer.vault.enabled }}
+apiVersion: cert-manager.io/v1alpha3
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  vault:
+    {{- toYaml .Values.pki.issuer.vault | nindent 6 }}
+---
+{{- end }}
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.identityCAName" . }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "monoskope.identityCAName" . }}
+  commonName: identity.monoskope.cluster.local
+  dnsNames:
+  - identity.monoskope.cluster.local
+  subject:
+    organizations:
+      - Monoskope
+  isCA: true
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+    kind: Issuer
+  usages:
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth
+---
+apiVersion: cert-manager.io/v1alpha3
+kind: Issuer
+metadata:
+  name: {{ include "monoskope.fullname" . }}-identity-issuer
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "monoskope.identityCAName" . }}
+---
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-mtls-operator-auth
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-identity-issuer
+    kind: Issuer
+  commonName: operator.monoskope.cluster.local
+  dnsNames:
+  - operator.monoskope.cluster.local
+  emailSANs:
+  - operator@monoskope.io
+  subject:
+    organizations:
+      - Monoskope
+  usages:
+    - client auth
+{{- end }}
