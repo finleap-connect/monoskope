@@ -27,6 +27,7 @@ CMD_QUERYHANDLER = $(BUILD_PATH)/queryhandler
 CMD_QUERYHANDLER_SRC = cmd/queryhandler/*.go
 
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
+export M8_OPERATION_MODE = development
 
 define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)

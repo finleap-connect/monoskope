@@ -1,31 +1,75 @@
 {{- if ne .Values.hosting.domain "" }}
-{{- $name := .Values.hosting.domain | replace "." "-" }}
-{{- $tlsSecretName := printf "%s-%s" .Release.Name "ambassador-tls-cert" }}
----
+{{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
+{{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
+{{- $domain := (include "monoskope.domain" .) }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: {{ include "monoskope.fullname" . }}-{{ $name }}
+  name: {{ include "monoskope.fullname" . }}-tls
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ .Values.hosting.domain }}
+  hostname: {{ $domain }}
   acmeProvider:
     authority: none
   tlsSecret:
     name: {{ $tlsSecretName }}
+  tls:
+    min_tls_version: v1.2
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
   name: {{ $tlsSecretName }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   secretName: {{ $tlsSecretName }}
   issuerRef:
     name: {{ .Values.hosting.issuer }}
     kind: ClusterIssuer
   dnsNames:
-  - {{ .Values.hosting.domain }}
+  - {{ $domain }}
+---
+{{- if .Values.pki.enabled }}
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: {{ $mtlsSecretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $mtlsSecretName }}
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-identity-issuer
+    kind: Issuer
+  subject:
+    organizations:
+      - Monoskope
+  dnsNames:
+  - {{ $mtlsDomain }}
+  usages:
+  - server auth
+  - client auth
+---
+apiVersion: getambassador.io/v2
+kind: TLSContext
+metadata:
+  name: {{ include "monoskope.fullname" . }}-mtls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  hosts:
+  - {{ $mtlsDomain }}
+  - {{ $mtlsDomain }}:443
+  secret: {{ $mtlsSecretName }}
+  ca_secret: {{ .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
+  cert_required: true
+  min_tls_version: v1.2
+{{- end }}
 {{- end }}
