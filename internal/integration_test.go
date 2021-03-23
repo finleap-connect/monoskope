@@ -168,7 +168,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetLastModifiedBy()).ToNot(BeNil())
-		Expect(tenant.GetLastModifiedBy()).To(Equal(user))
+		Expect(tenant.GetLastModifiedBy().Id).To(Equal(user.Id))
 	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
