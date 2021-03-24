@@ -60,6 +60,13 @@ commandhandler:
     requests:
       cpu: 500m
       memory: 64Mi
+  superusers:
+    # Enable superuser functionality to create initial admin rolebindings. Superusers can assign the system admin role
+    # even if they don't have the system admin role themselves. This is needed to create admin users on initialization.
+    enabled: true
+    # List of email addresses to identify superusers.
+    emails:
+      - jan.steffen@finleap.com
 
 queryhandler:
   replicaCount: 2
