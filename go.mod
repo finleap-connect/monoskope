@@ -15,12 +15,12 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
 	github.com/ory/dockertest/v3 v3.6.3
+	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.8.0
 	github.com/spf13/cobra v1.1.1
 	github.com/streadway/amqp v1.0.0
@@ -33,5 +33,6 @@ require (
 	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b // indirect
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
