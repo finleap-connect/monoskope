@@ -14,4 +14,7 @@ const (
 
 	// Command to update a Tenant
 	UpdateTenant es.CommandType = "UpdateTenant"
+
+	// Command to delete a Tenant
+	DeleteTenant es.CommandType = "DeleteTenant"
 )

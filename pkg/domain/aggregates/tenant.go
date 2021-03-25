@@ -48,7 +48,7 @@ func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) err
 		}
 	case *commands.UpdateTenantCommand:
 		if a.Version() < 1 {
-			return fmt.Errorf("Tenant does not exist")
+			return fmt.Errorf("tenant does not exist")
 		}
 		ed, err := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
 			Id:     cmd.GetId(),
@@ -60,7 +60,19 @@ func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) err
 			return err
 		}
 		return nil
+	case *commands.DeleteTenantCommand:
+		if a.Version() < 1 {
+			return fmt.Errorf("tenant does not exist")
+		}
+		ed, err := es.ToEventDataFromProto(&eventdata.TenantDeletedEventData{Id: cmd.GetId()})
+		if err != nil {
+			return err
+		} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.TenantDeleted, ed)); err != nil {
+			return err
+		}
+		return nil
 	}
+
 	return fmt.Errorf("couldn't handle command")
 }
 
@@ -80,6 +92,8 @@ func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 		a.Name = data.Update.Name.Value
+	case events.TenantDeleted:
+		a.SetDeleted()
 	default:
 		return fmt.Errorf("couldn't handle event")
 	}

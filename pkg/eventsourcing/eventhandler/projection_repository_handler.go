@@ -68,11 +68,6 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 		return esErrors.ErrIncorrectAggregateVersion
 	}
 
-	if projection == nil {
-		// Remove projection from repo.
-		return h.repository.Remove(ctx, event.AggregateID())
-	} else {
-		// Upsert projection in repo.
-		return h.repository.Upsert(ctx, projection)
-	}
+	// Upsert projection in repo.
+	return h.repository.Upsert(ctx, projection)
 }

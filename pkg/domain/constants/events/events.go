@@ -11,4 +11,6 @@ const (
 	TenantCreated es.EventType = "TenantCreated"
 	// Event emitted when a Tenant has been updated
 	TenantUpdated es.EventType = "TenantUpdated"
+	// Event emitted when a Tenant has been deleted
+	TenantDeleted es.EventType = "TenantDeleted"
 )

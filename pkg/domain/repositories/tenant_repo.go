@@ -60,7 +60,7 @@ func (r *tenantRepository) addUsersToTenant(ctx context.Context, tenant *project
 		if err != nil {
 			return err
 		}
-		tenant.LastModifiedBy = deletedBy.User
+		tenant.DeletedBy = deletedBy.User
 	}
 	return nil
 }

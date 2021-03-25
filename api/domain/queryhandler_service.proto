@@ -3,7 +3,6 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "google/protobuf/empty.proto";
 import "api/domain/projections/messages.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -14,7 +13,7 @@ package domain;
 // UserService is a service to query users.
 service UserService {
   // GetAll returns all users.
-  rpc GetAll(google.protobuf.Empty) returns (stream projections.User);
+  rpc GetAll(GetAllRequest) returns (stream projections.User);
   // GetById returns the user found by the given id.
   rpc GetById(google.protobuf.StringValue) returns (projections.User);
   // GetByEmail returns the user found by the given email address.
@@ -30,7 +29,7 @@ service UserService {
 // TenantService is a service to query tenants.
 service TenantService {
   // GetAll returns all tenants.
-  rpc GetAll(google.protobuf.Empty) returns (stream projections.Tenant);
+  rpc GetAll(GetAllRequest) returns (stream projections.Tenant);
   // GetById returns the tenant found by the given id.
   rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
   // GetByName returns the tenant found by the given name
@@ -38,4 +37,8 @@ service TenantService {
   // GetAuditTrailById returns a stream of all events related to the given id
   rpc GetAuditTrailById(google.protobuf.StringValue)
       returns (stream projections.AuditEvent);
+}
+
+message GetAllRequest {
+  bool excludeDeleted = 1;
 }

@@ -24,6 +24,10 @@ type Aggregate interface {
 	ID() uuid.UUID
 	// Version is the version of the aggregate.
 	Version() uint64
+	// SetDeleted sets the deleted flag of the aggregate to true
+	SetDeleted()
+	// Deleted indicates whether the aggregate resource has been deleted
+	Deleted() bool
 	// Events returns the events that built up the aggregate.
 	Events() []Event
 	// ApplyEvent applies an Event on the aggregate.
@@ -37,6 +41,7 @@ type BaseAggregate struct {
 	id            uuid.UUID
 	aggregateType AggregateType
 	version       uint64
+	deleted       bool
 	events        []Event
 }
 
@@ -61,6 +66,16 @@ func (a *BaseAggregate) Type() AggregateType {
 // Version implements the Version method of the Aggregate interface.
 func (a *BaseAggregate) Version() uint64 {
 	return a.version
+}
+
+// SetDeleted implements the SetDeleted method of the Aggregate interface.
+func (a *BaseAggregate) SetDeleted() {
+	a.deleted = true
+}
+
+// Deleted implements the Deleted method of the Aggregate interface.
+func (a *BaseAggregate) Deleted() bool {
+	return a.deleted
 }
 
 // Events implements the Events method of the Aggregate interface.

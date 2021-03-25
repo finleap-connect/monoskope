@@ -169,6 +169,36 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetLastModifiedBy()).ToNot(BeNil())
 		Expect(tenant.GetLastModifiedBy().Id).To(Equal(user.Id))
+
+		command, err = cmd.CreateCommand(tenantId, commandTypes.DeleteTenant, &cmdData.DeleteTenantCommandData{
+			Id: tenant.GetId(),
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		executeWithRetry(command, metadataMgr, commandHandlerClient)
+		eventStream, err = eventStoreClient().Retrieve(ctx, &es.EventFilter{
+			AggregateType: wrapperspb.String(aggregateTypes.Tenant.String()),
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		for {
+			event, err := eventStream.Recv()
+
+			// End of stream
+			if err == io.EOF {
+				break
+			}
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(event).ToNot(BeNil())
+			testEnv.Log.Info("Event", "Data", event.String())
+		}
+
+		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(tenant).ToNot(BeNil())
+		Expect(tenant.GetDeletedBy()).ToNot(BeNil())
+		Expect(tenant.GetDeletedBy().Id).To(Equal(user.Id))
 	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})

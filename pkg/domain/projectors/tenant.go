@@ -59,6 +59,9 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		i.Name = data.GetUpdate().GetName().Value
 		i.LastModified = timestamppb.Now()
 		i.SetLastModifiedByID(userId)
+	case events.TenantDeleted:
+		i.Deleted = timestamppb.Now()
+		i.SetDeletedByID(userId)
 	default:
 		return nil, errors.ErrInvalidEventType
 	}

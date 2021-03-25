@@ -8,7 +8,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -22,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	// GetAll returns all users.
-	GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (UserService_GetAllClient, error)
 	// GetById returns the user found by the given id.
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
@@ -41,7 +40,7 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error) {
+func (c *userServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (UserService_GetAllClient, error) {
 	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[0], "/domain.UserService/GetAll", opts...)
 	if err != nil {
 		return nil, err
@@ -160,7 +159,7 @@ func (x *userServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, er
 // for forward compatibility
 type UserServiceServer interface {
 	// GetAll returns all users.
-	GetAll(*emptypb.Empty, UserService_GetAllServer) error
+	GetAll(*GetAllRequest, UserService_GetAllServer) error
 	// GetById returns the user found by the given id.
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
@@ -176,7 +175,7 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) GetAll(*emptypb.Empty, UserService_GetAllServer) error {
+func (UnimplementedUserServiceServer) GetAll(*GetAllRequest, UserService_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
 func (UnimplementedUserServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
@@ -205,7 +204,7 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 }
 
 func _UserService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(emptypb.Empty)
+	m := new(GetAllRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -344,7 +343,7 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TenantServiceClient interface {
 	// GetAll returns all tenants.
-	GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (TenantService_GetAllClient, error)
 	// GetById returns the tenant found by the given id.
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
 	// GetByName returns the tenant found by the given name
@@ -361,7 +360,7 @@ func NewTenantServiceClient(cc grpc.ClientConnInterface) TenantServiceClient {
 	return &tenantServiceClient{cc}
 }
 
-func (c *tenantServiceClient) GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error) {
+func (c *tenantServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (TenantService_GetAllClient, error) {
 	stream, err := c.cc.NewStream(ctx, &TenantService_ServiceDesc.Streams[0], "/domain.TenantService/GetAll", opts...)
 	if err != nil {
 		return nil, err
@@ -448,7 +447,7 @@ func (x *tenantServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, 
 // for forward compatibility
 type TenantServiceServer interface {
 	// GetAll returns all tenants.
-	GetAll(*emptypb.Empty, TenantService_GetAllServer) error
+	GetAll(*GetAllRequest, TenantService_GetAllServer) error
 	// GetById returns the tenant found by the given id.
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
 	// GetByName returns the tenant found by the given name
@@ -462,7 +461,7 @@ type TenantServiceServer interface {
 type UnimplementedTenantServiceServer struct {
 }
 
-func (UnimplementedTenantServiceServer) GetAll(*emptypb.Empty, TenantService_GetAllServer) error {
+func (UnimplementedTenantServiceServer) GetAll(*GetAllRequest, TenantService_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
 func (UnimplementedTenantServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
@@ -488,7 +487,7 @@ func RegisterTenantServiceServer(s grpc.ServiceRegistrar, srv TenantServiceServe
 }
 
 func _TenantService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(emptypb.Empty)
+	m := new(GetAllRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

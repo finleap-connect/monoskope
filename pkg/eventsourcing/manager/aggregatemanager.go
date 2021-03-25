@@ -26,10 +26,11 @@ func NewAggregateManager(aggregateRegistry es.AggregateRegistry, eventStoreClien
 }
 
 // Get returns the most recent version of an aggregate.
-func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateType) ([]es.Aggregate, error) {
+func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateType, excludeDeleted bool) ([]es.Aggregate, error) {
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
-		AggregateType: wrapperspb.String(aggregateType.String()),
+		AggregateType:  wrapperspb.String(aggregateType.String()),
+		ExcludeDeleted: excludeDeleted,
 	})
 	if err != nil {
 		return nil, err

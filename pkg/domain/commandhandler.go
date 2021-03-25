@@ -49,10 +49,13 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	})
 	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewCreateTenantCommand(id) })
 	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewUpdateTenantCommand(id) })
+	commandRegistry.RegisterCommand(func(id uuid.UUID) es.Command { return commands.NewDeleteTenantCommand(id) })
+
 	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
 	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)
 	commandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
+	commandRegistry.SetHandler(handler, commandTypes.DeleteTenant)
 
 	return commandRegistry, nil
 }
