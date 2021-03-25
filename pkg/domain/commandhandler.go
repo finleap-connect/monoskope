@@ -40,7 +40,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	)
 
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
 
 	// Register command handler and middleware
 	handler := es.UseCommandHandlerMiddleware(
