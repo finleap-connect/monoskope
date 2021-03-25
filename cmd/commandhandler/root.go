@@ -25,6 +25,11 @@ func init() {
 func main() {
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
 
+	report := NewReportCmd()
+	report.AddCommand(NewReportPermissions())
+	report.AddCommand(NewReportCommands())
+	rootCmd.AddCommand(report)
+
 	if err := rootCmd.Execute(); err != nil {
 		log := logger.WithName("root-cmd")
 		log.Error(err, "command failed")

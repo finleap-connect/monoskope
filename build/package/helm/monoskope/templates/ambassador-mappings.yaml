@@ -45,6 +45,20 @@ spec:
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-extensions-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.CommandHandlerExtensions/
+  rewrite: /domain.CommandHandlerExtensions/
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
   name: {{ include "monoskope.fullname" . }}-qh-usersvc-mapping
   namespace: {{ .Release.Namespace }}
   labels:

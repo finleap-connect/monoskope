@@ -4,12 +4,12 @@ package domain
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
-	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,15 +22,15 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	// GetAll returns all users.
-	GetAll(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error)
+	GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error)
 	// GetById returns the user found by the given id.
-	GetById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.User, error)
+	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
-	GetByEmail(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.User, error)
+	GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
-	GetRoleBindingsById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error)
+	GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error)
 	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error)
+	GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error)
 }
 
 type userServiceClient struct {
@@ -41,7 +41,7 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) GetAll(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error) {
+func (c *userServiceClient) GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (UserService_GetAllClient, error) {
 	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[0], "/domain.UserService/GetAll", opts...)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (x *userServiceGetAllClient) Recv() (*projections.User, error) {
 	return m, nil
 }
 
-func (c *userServiceClient) GetById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
+func (c *userServiceClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
 	out := new(projections.User)
 	err := c.cc.Invoke(ctx, "/domain.UserService/GetById", in, out, opts...)
 	if err != nil {
@@ -82,7 +82,7 @@ func (c *userServiceClient) GetById(ctx context.Context, in *wrappers.StringValu
 	return out, nil
 }
 
-func (c *userServiceClient) GetByEmail(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
+func (c *userServiceClient) GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
 	out := new(projections.User)
 	err := c.cc.Invoke(ctx, "/domain.UserService/GetByEmail", in, out, opts...)
 	if err != nil {
@@ -91,7 +91,7 @@ func (c *userServiceClient) GetByEmail(ctx context.Context, in *wrappers.StringV
 	return out, nil
 }
 
-func (c *userServiceClient) GetRoleBindingsById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error) {
+func (c *userServiceClient) GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error) {
 	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[1], "/domain.UserService/GetRoleBindingsById", opts...)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (x *userServiceGetRoleBindingsByIdClient) Recv() (*projections.UserRoleBind
 	return m, nil
 }
 
-func (c *userServiceClient) GetAuditTrailById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error) {
+func (c *userServiceClient) GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error) {
 	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[2], "/domain.UserService/GetAuditTrailById", opts...)
 	if err != nil {
 		return nil, err
@@ -160,15 +160,15 @@ func (x *userServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, er
 // for forward compatibility
 type UserServiceServer interface {
 	// GetAll returns all users.
-	GetAll(*empty.Empty, UserService_GetAllServer) error
+	GetAll(*emptypb.Empty, UserService_GetAllServer) error
 	// GetById returns the user found by the given id.
-	GetById(context.Context, *wrappers.StringValue) (*projections.User, error)
+	GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
-	GetByEmail(context.Context, *wrappers.StringValue) (*projections.User, error)
+	GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
-	GetRoleBindingsById(*wrappers.StringValue, UserService_GetRoleBindingsByIdServer) error
+	GetRoleBindingsById(*wrapperspb.StringValue, UserService_GetRoleBindingsByIdServer) error
 	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(*wrappers.StringValue, UserService_GetAuditTrailByIdServer) error
+	GetAuditTrailById(*wrapperspb.StringValue, UserService_GetAuditTrailByIdServer) error
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -176,19 +176,19 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) GetAll(*empty.Empty, UserService_GetAllServer) error {
+func (UnimplementedUserServiceServer) GetAll(*emptypb.Empty, UserService_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedUserServiceServer) GetById(context.Context, *wrappers.StringValue) (*projections.User, error) {
+func (UnimplementedUserServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
 }
-func (UnimplementedUserServiceServer) GetByEmail(context.Context, *wrappers.StringValue) (*projections.User, error) {
+func (UnimplementedUserServiceServer) GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByEmail not implemented")
 }
-func (UnimplementedUserServiceServer) GetRoleBindingsById(*wrappers.StringValue, UserService_GetRoleBindingsByIdServer) error {
+func (UnimplementedUserServiceServer) GetRoleBindingsById(*wrapperspb.StringValue, UserService_GetRoleBindingsByIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetRoleBindingsById not implemented")
 }
-func (UnimplementedUserServiceServer) GetAuditTrailById(*wrappers.StringValue, UserService_GetAuditTrailByIdServer) error {
+func (UnimplementedUserServiceServer) GetAuditTrailById(*wrapperspb.StringValue, UserService_GetAuditTrailByIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAuditTrailById not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
@@ -205,7 +205,7 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 }
 
 func _UserService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(empty.Empty)
+	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func (x *userServiceGetAllServer) Send(m *projections.User) error {
 }
 
 func _UserService_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrappers.StringValue)
+	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -238,13 +238,13 @@ func _UserService_GetById_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/domain.UserService/GetById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetById(ctx, req.(*wrappers.StringValue))
+		return srv.(UserServiceServer).GetById(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrappers.StringValue)
+	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -256,13 +256,13 @@ func _UserService_GetByEmail_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/domain.UserService/GetByEmail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetByEmail(ctx, req.(*wrappers.StringValue))
+		return srv.(UserServiceServer).GetByEmail(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetRoleBindingsById_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrappers.StringValue)
+	m := new(wrapperspb.StringValue)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -283,7 +283,7 @@ func (x *userServiceGetRoleBindingsByIdServer) Send(m *projections.UserRoleBindi
 }
 
 func _UserService_GetAuditTrailById_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrappers.StringValue)
+	m := new(wrapperspb.StringValue)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -344,11 +344,11 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TenantServiceClient interface {
 	// GetAll returns all tenants.
-	GetAll(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error)
+	GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error)
 	// GetById returns the tenant found by the given id.
-	GetById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
+	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
 	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error)
+	GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error)
 }
 
 type tenantServiceClient struct {
@@ -359,7 +359,7 @@ func NewTenantServiceClient(cc grpc.ClientConnInterface) TenantServiceClient {
 	return &tenantServiceClient{cc}
 }
 
-func (c *tenantServiceClient) GetAll(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error) {
+func (c *tenantServiceClient) GetAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (TenantService_GetAllClient, error) {
 	stream, err := c.cc.NewStream(ctx, &TenantService_ServiceDesc.Streams[0], "/domain.TenantService/GetAll", opts...)
 	if err != nil {
 		return nil, err
@@ -391,7 +391,7 @@ func (x *tenantServiceGetAllClient) Recv() (*projections.Tenant, error) {
 	return m, nil
 }
 
-func (c *tenantServiceClient) GetById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
+func (c *tenantServiceClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
 	out := new(projections.Tenant)
 	err := c.cc.Invoke(ctx, "/domain.TenantService/GetById", in, out, opts...)
 	if err != nil {
@@ -400,7 +400,7 @@ func (c *tenantServiceClient) GetById(ctx context.Context, in *wrappers.StringVa
 	return out, nil
 }
 
-func (c *tenantServiceClient) GetAuditTrailById(ctx context.Context, in *wrappers.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error) {
+func (c *tenantServiceClient) GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error) {
 	stream, err := c.cc.NewStream(ctx, &TenantService_ServiceDesc.Streams[1], "/domain.TenantService/GetAuditTrailById", opts...)
 	if err != nil {
 		return nil, err
@@ -437,11 +437,11 @@ func (x *tenantServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, 
 // for forward compatibility
 type TenantServiceServer interface {
 	// GetAll returns all tenants.
-	GetAll(*empty.Empty, TenantService_GetAllServer) error
+	GetAll(*emptypb.Empty, TenantService_GetAllServer) error
 	// GetById returns the tenant found by the given id.
-	GetById(context.Context, *wrappers.StringValue) (*projections.Tenant, error)
+	GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
 	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(*wrappers.StringValue, TenantService_GetAuditTrailByIdServer) error
+	GetAuditTrailById(*wrapperspb.StringValue, TenantService_GetAuditTrailByIdServer) error
 	mustEmbedUnimplementedTenantServiceServer()
 }
 
@@ -449,13 +449,13 @@ type TenantServiceServer interface {
 type UnimplementedTenantServiceServer struct {
 }
 
-func (UnimplementedTenantServiceServer) GetAll(*empty.Empty, TenantService_GetAllServer) error {
+func (UnimplementedTenantServiceServer) GetAll(*emptypb.Empty, TenantService_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedTenantServiceServer) GetById(context.Context, *wrappers.StringValue) (*projections.Tenant, error) {
+func (UnimplementedTenantServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
 }
-func (UnimplementedTenantServiceServer) GetAuditTrailById(*wrappers.StringValue, TenantService_GetAuditTrailByIdServer) error {
+func (UnimplementedTenantServiceServer) GetAuditTrailById(*wrapperspb.StringValue, TenantService_GetAuditTrailByIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAuditTrailById not implemented")
 }
 func (UnimplementedTenantServiceServer) mustEmbedUnimplementedTenantServiceServer() {}
@@ -472,7 +472,7 @@ func RegisterTenantServiceServer(s grpc.ServiceRegistrar, srv TenantServiceServe
 }
 
 func _TenantService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(empty.Empty)
+	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -493,7 +493,7 @@ func (x *tenantServiceGetAllServer) Send(m *projections.Tenant) error {
 }
 
 func _TenantService_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrappers.StringValue)
+	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -505,13 +505,13 @@ func _TenantService_GetById_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/domain.TenantService/GetById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).GetById(ctx, req.(*wrappers.StringValue))
+		return srv.(TenantServiceServer).GetById(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _TenantService_GetAuditTrailById_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrappers.StringValue)
+	m := new(wrapperspb.StringValue)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

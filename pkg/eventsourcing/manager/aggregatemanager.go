@@ -64,21 +64,22 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 			return nil, errors.ErrInvalidAggregateType
 		}
 
-		if aggregate, ok := aggregates[event.AggregateID()]; !ok {
+		var aggregate es.Aggregate
+		var ok bool
+		if aggregate, ok = aggregates[event.AggregateID()]; !ok {
 			// Create new empty aggregate of type.
 			aggregate, err = r.registry.CreateAggregate(aggregateType, event.AggregateID())
 			if err != nil {
 				return nil, err
 			}
 			aggregates[event.AggregateID()] = aggregate
-		} else {
-
-			if err := aggregate.ApplyEvent(event); err != nil {
-				return nil, err
-			}
-
-			aggregate.IncrementVersion()
 		}
+
+		if err := aggregate.ApplyEvent(event); err != nil {
+			return nil, err
+		}
+
+		aggregate.IncrementVersion()
 	}
 
 	return toAggregateArray(aggregates), nil
@@ -164,10 +165,7 @@ func (r *aggregateManager) Update(ctx context.Context, aggregate es.Aggregate) e
 
 	for _, event := range events {
 		// Convert to proto event
-		protoEvent, err := es.NewProtoFromEvent(event)
-		if err != nil {
-			return err
-		}
+		protoEvent := es.NewProtoFromEvent(event)
 
 		// Send event to store
 		err = stream.Send(protoEvent)
