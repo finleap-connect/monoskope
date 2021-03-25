@@ -54,9 +54,6 @@ var _ = Describe("domain/handler", func() {
 	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
-	err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
-	Expect(err).NotTo(HaveOccurred())
-
 	err = inMemoryUserRepo.Upsert(context.Background(), someUser)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -95,6 +92,9 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("system admin can create users", func() {
+		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
+		Expect(err).NotTo(HaveOccurred())
+
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 

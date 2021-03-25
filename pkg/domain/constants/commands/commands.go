@@ -17,4 +17,7 @@ const (
 
 	// Command to delete a Tenant
 	DeleteTenant es.CommandType = "DeleteTenant"
+
+	// Command to create delete a UserRoleBinding
+	DeleteUserRoleBinding es.CommandType = "DeleteUserRoleBinding"
 )

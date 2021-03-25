@@ -6,8 +6,11 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
+	api_domain "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -18,6 +21,7 @@ import (
 // apiServer is the implementation of the CommandHandler API
 type apiServer struct {
 	api.UnimplementedCommandHandlerServer
+	api_domain.UnimplementedCommandHandlerExtensionsServer
 	cmdRegistry evs.CommandRegistry
 }
 
@@ -62,4 +66,53 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*em
 	}
 
 	return &empty.Empty{}, nil
+}
+
+// GetPermissionModel implements API method GetPermissionModel
+func (s *apiServer) GetPermissionModel(ctx context.Context, in *empty.Empty) (*api_domain.PermissionModel, error) {
+	permissionModel := &api_domain.PermissionModel{}
+	for _, role := range roles.AvailableRoles {
+		permissionModel.Roles = append(permissionModel.Roles, role.String())
+	}
+	for _, scope := range scopes.AvailableScopes {
+		permissionModel.Scopes = append(permissionModel.Scopes, scope.String())
+	}
+	return permissionModel, nil
+}
+
+// GetPolicyOverview implements API method GetPolicyOverview
+func (s *apiServer) GetPolicyOverview(ctx context.Context, in *empty.Empty) (*api_domain.PolicyOverview, error) {
+	policyOverview := &api_domain.PolicyOverview{}
+	commandTypes := s.cmdRegistry.GetRegisteredCommandTypes()
+
+	for _, cmdType := range commandTypes {
+		command, err := s.cmdRegistry.CreateCommand(uuid.Nil, cmdType, nil)
+		if err != nil {
+			return nil, err
+		}
+		policies := command.Policies(ctx)
+
+		for _, p := range policies {
+			res := p.Resource()
+			sub := p.Subject()
+
+			if res == "" {
+				res = "same"
+			}
+
+			if sub == "" {
+				sub = "self"
+			}
+
+			policyOverview.Policies = append(policyOverview.Policies, &api_domain.Policy{
+				Command:  cmdType.String(),
+				Role:     p.Role().String(),
+				Scope:    p.Scope().String(),
+				Resource: res,
+				Subject:  sub,
+			})
+		}
+	}
+
+	return policyOverview, nil
 }

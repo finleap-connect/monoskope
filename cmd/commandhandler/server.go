@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	api_domain "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
@@ -86,8 +87,10 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
+		commandHandlerApiServer := commandhandler.NewApiServer(cmdRegistry)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(cmdRegistry))
+			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
+			api_domain.RegisterCommandHandlerExtensionsServer(s, commandHandlerApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

@@ -18,6 +18,7 @@
 * Architecture and more in [GDrive](https://drive.google.com/drive/folders/1QEewDHF0LwSLr6aUVoHvMWrFgaJfJLty)
 * [Flow charts](docs/flow-charts/Overview.md) of certain parts of `monoskope`
 * Docs on the almighty [Makefile](docs/Makefile.md)
+* Docs on the [permisson model](docs/PermissionModel.md)
 * Docs on the [certificate management in m8](docs/m8-certificate-management.md)
 
 ### Prerequisites

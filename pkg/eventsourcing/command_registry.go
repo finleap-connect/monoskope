@@ -14,6 +14,9 @@ type CommandRegistry interface {
 	CommandHandler
 	RegisterCommand(func(uuid.UUID) Command)
 	CreateCommand(id uuid.UUID, commandType CommandType, data *anypb.Any) (Command, error)
+	GetRegisteredCommandTypes() []CommandType
+	RegisterCommand(func() Command)
+	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
 	SetHandler(handler CommandHandler, commandType CommandType)
 }
 
@@ -31,6 +34,15 @@ func NewCommandRegistry() CommandRegistry {
 		commands: make(map[CommandType]func(uuid.UUID) Command),
 		handlers: make(map[CommandType]CommandHandler),
 	}
+}
+
+// GetRegisteredCommandTypes returns a list with all registered command types.
+func (r *commandRegistry) GetRegisteredCommandTypes() []CommandType {
+	keys := make([]CommandType, 0, len(r.commands))
+	for k := range r.commands {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // RegisterCommand registers an command factory for a type. The factory is
@@ -70,8 +82,10 @@ func (r *commandRegistry) CreateCommand(id uuid.UUID, commandType CommandType, d
 	defer r.mutex.RUnlock()
 	if factory, ok := r.commands[commandType]; ok {
 		cmd := factory(id)
-		if err := cmd.SetData(data); err != nil {
-			return nil, err
+		if data != nil {
+			if err := cmd.SetData(data); err != nil {
+				return nil, err
+			}
 		}
 		return cmd, nil
 	}

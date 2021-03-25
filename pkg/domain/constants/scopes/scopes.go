@@ -10,3 +10,9 @@ const (
 	// Tenant scope
 	Tenant es.Scope = "tenant"
 )
+
+// A list of all existing scopes.
+var AvailableScopes = []es.Scope{
+	System,
+	Tenant,
+}

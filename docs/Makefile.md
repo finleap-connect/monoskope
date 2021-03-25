@@ -52,7 +52,6 @@ The following targets are defined. Please not that there are variables (uppercas
 | `tools-clean` | Removes the tools |
 | `echo-<VARIABLENAME>` | Echos the content of `<VARIABLENAME>` |
 | *helm* | |
-| `helm-add-kubism` | Add the kubism helm repository to the local list of repos |
 | `helm-template-<CHARTNAME>` | Templates the helm chart `<CHARTNAME>` to `HELM_OUTPUT_DIR/<CHARTNAME>` |
 | `helm-install-<CHARTNAME>` | Installs the helm chart `<CHARTNAME>` to namespace `KUBE_NAMESPACE` with your current `kubecontext` and `HELM` |
 | `helm-install-from-repo-<CHARTNAME>` | Installs the helm chart `<CHARTNAME>` to namespace `KUBE_NAMESPACE` from `HELM_REGISTRY_ALIAS` in version `VERSION` |
@@ -68,3 +67,4 @@ The following targets are defined. Please not that there are variables (uppercas
 | `go-run-*` | Runs the app in `cmd/*`, e.g. `go-run-monoctl` to run `monoctl` from sources |
 | `go-test` | Runs all go tests |
 | `go-protobuf` | Generates code for all proto specs in `api` folder and it's children |
+| `go-report` | Generates report of commands and permssions |
