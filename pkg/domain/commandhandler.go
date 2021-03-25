@@ -34,16 +34,18 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 
 	// Register aggregates
 	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, userRepo) })
+	aggregateManager := esManager.NewAggregateManager(
+		aggregateRegistry,
+		esClient,
+	)
+
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id) })
 
 	// Register command handler and middleware
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
-			esManager.NewAggregateManager(
-				aggregateRegistry,
-				esClient,
-			),
+			aggregateManager,
 		),
 		domainHandlers.NewAuthorizationHandler(userRepo).Middleware,
 	)
