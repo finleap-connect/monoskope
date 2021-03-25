@@ -3,10 +3,7 @@ package gateway
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
-	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/codes"
@@ -16,7 +13,6 @@ import (
 
 type apiServer struct {
 	api.UnimplementedGatewayServer
-	apiCommon.UnimplementedServiceInformationServiceServer
 	// Logger interface
 	log logger.Logger
 	//
@@ -31,18 +27,6 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer
 		authHandler: authHandler,
 	}
 	return s
-}
-
-func (s *apiServer) GetServiceInformation(e *empty.Empty, stream apiCommon.ServiceInformationService_GetServiceInformationServer) error {
-	err := stream.Send(&apiCommon.ServiceInformation{
-		Name:    version.Name,
-		Version: version.Version,
-		Commit:  version.Commit,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {

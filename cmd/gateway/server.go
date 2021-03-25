@@ -3,12 +3,13 @@ package main
 import (
 	"os"
 
-	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	_ "go.uber.org/automaxprocs"
@@ -54,7 +55,7 @@ var serverCmd = &cobra.Command{
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterGatewayServer(s, gws)
-			apiCommon.RegisterServiceInformationServiceServer(s, gws)
+			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
 		authServer := gateway.NewAuthServer(authHandler)
