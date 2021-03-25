@@ -53,3 +53,12 @@ func (r *inMemoryRepository) Upsert(ctx context.Context, p es.Projection) error 
 	r.store[p.ID()] = p
 	return nil
 }
+
+// Remove removes a projection by ID from the storage.
+func (r *inMemoryRepository) Remove(ctx context.Context, id uuid.UUID) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	delete(r.store, id)
+	return nil
+}

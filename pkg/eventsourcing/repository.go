@@ -19,6 +19,9 @@ type ReadOnlyRepository interface {
 type WriteOnlyRepository interface {
 	// Upsert saves a projection in the storage or replaces an existing one.
 	Upsert(context.Context, Projection) error
+
+	// Remove removes a projection by ID from the storage.
+	Remove(context.Context, uuid.UUID) error
 }
 
 // Repository is a repository for reading and writing projections.
