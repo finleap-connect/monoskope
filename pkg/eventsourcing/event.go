@@ -81,14 +81,9 @@ func NewEventFromProto(protoEvent *esApi.Event) (Event, error) {
 		return nil, errors.ErrCouldNotParseAggregateId
 	}
 
-	eventData, err := toEventDataFromAny(protoEvent.GetData())
-	if err != nil {
-		panic(err)
-	}
-
 	return NewEventWithMetadata(
 		EventType(protoEvent.GetType()),
-		eventData,
+		protoEvent.GetData(),
 		protoEvent.Timestamp.AsTime(),
 		AggregateType(protoEvent.GetAggregateType()),
 		aggregateId,
@@ -98,23 +93,17 @@ func NewEventFromProto(protoEvent *esApi.Event) (Event, error) {
 }
 
 // NewProtoFromEvent converts Event to proto events
-func NewProtoFromEvent(storeEvent Event) (*esApi.Event, error) {
-	a, err := storeEvent.Data().toAny()
-	if err != nil {
-		panic(err)
-	}
-
+func NewProtoFromEvent(storeEvent Event) *esApi.Event {
 	ev := &esApi.Event{
 		Type:             storeEvent.EventType().String(),
 		Timestamp:        timestamppb.New(storeEvent.Timestamp()),
 		AggregateType:    storeEvent.AggregateType().String(),
 		AggregateId:      storeEvent.AggregateID().String(),
 		AggregateVersion: &wrapperspb.UInt64Value{Value: storeEvent.AggregateVersion()},
-		Data:             a,
+		Data:             storeEvent.Data(),
 		Metadata:         storeEvent.Metadata(),
 	}
-
-	return ev, nil
+	return ev
 }
 
 // event is an internal representation of an event.

@@ -56,7 +56,7 @@ func (u *RetrieveEventsUseCase) Run() error {
 	u.log.Info("Streaming events to client...")
 	for _, e := range events {
 		streamStartTime := time.Now()
-		protoEvent, err := es.NewProtoFromEvent(e)
+		protoEvent := es.NewProtoFromEvent(e)
 		if err != nil {
 			return err
 		}

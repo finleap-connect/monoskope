@@ -58,7 +58,7 @@ func NewTestEnv() (*TestEnv, error) {
 		// Start single node crdb
 		container, err := env.Run(&dockertest.RunOptions{
 			Name:       "cockroach",
-			Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
+			Repository: "artifactory.figo.systems/public_docker/cockroachdb/cockroach",
 			Tag:        "v20.2.2",
 			Cmd: []string{
 				"start-single-node", "--insecure",

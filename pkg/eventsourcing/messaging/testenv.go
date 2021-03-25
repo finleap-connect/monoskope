@@ -38,7 +38,7 @@ func NewTestEnv() (*TestEnv, error) {
 		// Start rabbitmq
 		container, err := env.Run(&dockertest.RunOptions{
 			Name:       "rabbitmq",
-			Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq",
+			Repository: "artifactory.figo.systems/public_docker/bitnami/rabbitmq",
 			Tag:        "3.8.9",
 			Env: []string{
 				"RABBITMQ_PLUGINS=rabbitmq_management",

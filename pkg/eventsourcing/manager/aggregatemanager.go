@@ -164,10 +164,7 @@ func (r *aggregateManager) Update(ctx context.Context, aggregate es.Aggregate) e
 
 	for _, event := range events {
 		// Convert to proto event
-		protoEvent, err := es.NewProtoFromEvent(event)
-		if err != nil {
-			return err
-		}
+		protoEvent := es.NewProtoFromEvent(event)
 
 		// Send event to store
 		err = stream.Send(protoEvent)
