@@ -11,7 +11,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 // UserAggregate is an aggregate for Users.
@@ -20,7 +19,6 @@ type UserAggregate struct {
 	aggregateManager es.AggregateManager
 	Email            string
 	Name             string
-	log              logger.Logger
 }
 
 // NewUserAggregate creates a new UserAggregate
@@ -28,7 +26,6 @@ func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateManager) *UserA
 	return &UserAggregate{
 		BaseAggregate:    es.NewBaseAggregate(aggregates.User, id),
 		aggregateManager: aggregateManager,
-		log:              logger.WithName("user-aggregate"),
 	}
 }
 
@@ -55,7 +52,7 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 			return domainErrors.ErrUserAlreadyExists
 		}
 	}
-	return fmt.Errorf("couldn't handle command")
+	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
@@ -69,8 +66,7 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		a.Email = data.Email
 		a.Name = data.Name
 	default:
-		a.log.Info("Can not handle event. Ignoring...", "EventType", event.EventType())
-		return nil
+		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
 	return nil
 }

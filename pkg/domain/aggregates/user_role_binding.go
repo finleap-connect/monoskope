@@ -34,7 +34,7 @@ func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Com
 	case *commands.CreateUserRoleBindingCommand:
 		return a.handleAddRoleToUserCommand(ctx, cmd)
 	}
-	return fmt.Errorf("couldn't handle command")
+	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
 
 // handleAddRoleToUserCommand handles the command
@@ -63,7 +63,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("couldn't handle event")
+		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
 
 	return nil
