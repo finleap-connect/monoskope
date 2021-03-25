@@ -15,8 +15,6 @@ type CommandRegistry interface {
 	RegisterCommand(func(uuid.UUID) Command)
 	CreateCommand(id uuid.UUID, commandType CommandType, data *anypb.Any) (Command, error)
 	GetRegisteredCommandTypes() []CommandType
-	RegisterCommand(func() Command)
-	CreateCommand(commandType CommandType, data *anypb.Any) (Command, error)
 	SetHandler(handler CommandHandler, commandType CommandType)
 }
 

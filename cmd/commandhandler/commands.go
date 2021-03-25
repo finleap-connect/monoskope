@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
@@ -20,7 +21,7 @@ func NewReportCommands() *cobra.Command {
 			types := commandRegistry.GetRegisteredCommandTypes()
 
 			for _, cmdType := range types {
-				command, err := commandRegistry.CreateCommand(cmdType, nil)
+				command, err := commandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
 				if err != nil {
 					return err
 				}

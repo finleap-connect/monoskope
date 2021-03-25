@@ -11,7 +11,6 @@ import (
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
@@ -150,7 +149,7 @@ func file_api_domain_queryhandler_service_proto_rawDescGZIP() []byte {
 
 var file_api_domain_queryhandler_service_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_api_domain_queryhandler_service_proto_goTypes = []interface{}{
-	(*emptypb.Empty)(nil),               // 0: google.protobuf.Empty
+	(*GetAllRequest)(nil),               // 0: domain.GetAllRequest
 	(*wrapperspb.StringValue)(nil),      // 1: google.protobuf.StringValue
 	(*projections.User)(nil),            // 2: projections.User
 	(*projections.UserRoleBinding)(nil), // 3: projections.UserRoleBinding
