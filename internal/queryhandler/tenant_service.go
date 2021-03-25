@@ -38,8 +38,6 @@ func NewTenantServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc
 	return conn, api.NewTenantServiceClient(conn), nil
 }
 
-func (s *tenantServiceServer) GetAll(ctx context.Context, excludeDelete api.
-
 // GetById returns the tenant found by the given id.
 func (s *tenantServiceServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Tenant, error) {
 	tenant, err := s.repo.ByTenantId(ctx, id.GetValue())
