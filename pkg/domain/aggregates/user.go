@@ -9,8 +9,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -52,16 +50,6 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 				return err
 			}
 			_ = a.AppendEvent(ctx, events.UserCreated, ed)
-
-			ed, err = es.ToEventDataFromProto(&eventData.UserRoleAddedEventData{
-				UserId: cmd.AggregateID().String(),
-				Role:   roles.User.String(),
-				Scope:  scopes.System.String(),
-			})
-			if err != nil {
-				return err
-			}
-			_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, ed)
 			return nil
 		} else {
 			return domainErrors.ErrUserAlreadyExists
