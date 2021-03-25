@@ -8,4 +8,7 @@ const (
 
 	// Command to create a new UserRoleBinding
 	CreateUserRoleBinding es.CommandType = "CreateUserRoleBinding"
+
+	// Command to create delete a UserRoleBinding
+	DeleteUserRoleBinding es.CommandType = "DeleteUserRoleBinding"
 )
