@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
@@ -40,8 +41,13 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 
 	userInfo := metadataMngr.GetUserInformation()
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil && !errors.Is(err, domainErrors.ErrUserNotFound) {
-		return domainErrors.ErrUnauthorized
+	if err != nil {
+		if errors.Is(err, domainErrors.ErrUserNotFound) && cmd.CommandType() == commands.CreateUser {
+			h.log.Info("User does not exist yet, but is about to create itself.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+		} else {
+			h.log.Info("User does not exist yet. User is unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+			return domainErrors.ErrUnauthorized
+		}
 	}
 
 	var userRoles []*projectionsApi.UserRoleBinding
