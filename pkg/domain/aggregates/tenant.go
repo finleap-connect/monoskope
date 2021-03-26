@@ -37,43 +37,43 @@ func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) err
 	case *commands.CreateTenantCommand:
 		_, err := a.tenantRepo.ByName(ctx, cmd.GetName())
 		if err != nil && errors.Is(err, domainErrors.ErrTenantNotFound) {
-			if ed, err := es.ToEventDataFromProto(&eventdata.TenantCreatedEventData{Name: cmd.GetName(), Prefix: cmd.GetPrefix()}); err != nil {
-				return err
-			} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.TenantCreated, ed)); err != nil {
-				return err
-			}
+			ed := es.ToEventDataFromProto(&eventdata.TenantCreatedEventData{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
+			_ = a.AppendEvent(ctx, events.TenantCreated, ed)
 			return nil
 		} else {
 			return domainErrors.ErrTenantAlreadyExists
 		}
 	case *commands.UpdateTenantCommand:
-		if a.Version() < 1 {
-			return fmt.Errorf("tenant does not exist")
+		// Check if tenant exists
+		if err := a.checkExists(); err != nil {
+			return err
 		}
-		ed, err := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
+
+		ed := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
 			Id:     cmd.GetId(),
 			Update: &eventdata.TenantUpdatedEventData_Update{Name: cmd.GetUpdate().GetName()},
 		})
-		if err != nil {
-			return err
-		} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.TenantUpdated, ed)); err != nil {
-			return err
-		}
+		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
 		return nil
 	case *commands.DeleteTenantCommand:
-		if a.Version() < 1 {
-			return fmt.Errorf("tenant does not exist")
-		}
-		ed, err := es.ToEventDataFromProto(&eventdata.TenantDeletedEventData{Id: cmd.GetId()})
-		if err != nil {
-			return err
-		} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.TenantDeleted, ed)); err != nil {
+		// Check if tenant exists
+		if err := a.checkExists(); err != nil {
 			return err
 		}
+
+		ed := es.ToEventDataFromProto(&eventdata.TenantDeletedEventData{Id: cmd.GetId()})
+		_ = a.AppendEvent(ctx, events.TenantDeleted, ed)
 		return nil
 	}
 
 	return fmt.Errorf("couldn't handle command")
+}
+
+func (a *TenantAggregate) checkExists() error {
+	if a.Version() < 1 {
+		return fmt.Errorf("tenant does not exist")
+	}
+	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

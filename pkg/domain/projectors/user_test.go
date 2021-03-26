@@ -26,9 +26,8 @@ var _ = Describe("domain/user_repo", func() {
 			Name:  adminUser.Name,
 			Email: adminUser.Email,
 		}
-		eventData, err := eventsourcing.ToEventDataFromProto(protoEventData)
-		Expect(err).NotTo(HaveOccurred())
-		userProjection, err = userProjector.Project(context.Background(), eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
+		eventData := eventsourcing.ToEventDataFromProto(protoEventData)
+		userProjection, err := userProjector.Project(context.Background(), eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1), userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.Version()).To(Equal(uint64(1)))
 	})

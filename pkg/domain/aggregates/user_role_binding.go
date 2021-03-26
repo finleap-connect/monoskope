@@ -35,43 +35,16 @@ func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateMana
 func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
-		return a.handleAddRoleToUserCommand(ctx, cmd)
+		return a.createUserRoleBinding(ctx, cmd)
 	}
 	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
-}
-
-// handleAddRoleToUserCommand handles the command
-func (a *UserRoleBindingAggregate) handleAddRoleToUserCommand(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
-	// Get all aggregates of same type
-	userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, uuid.MustParse(cmd.GetUserId()))
-	if err != nil {
-		return err
-	}
-
-	if userAggregate != nil {
-		ed, err := es.ToEventDataFromProto(&ed.UserRoleAddedEventData{
-			UserId:   cmd.GetUserId(),
-			Role:     cmd.GetRole(),
-			Scope:    cmd.GetScope(),
-			Resource: cmd.GetResource(),
-		})
-		if err != nil {
-			return err
-		}
-
-		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, ed)
-	} else {
-		return domainErrors.ErrUserNotFound
-	}
-
-	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.UserRoleBindingCreated:
-		err := a.applyUserRoleAddedEvent(event)
+		err := a.userRoleBindingCreated(event)
 		if err != nil {
 			return err
 		}
@@ -82,8 +55,31 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 	return nil
 }
 
-// applyUserRoleAddedEvent applies the event on the aggregate
-func (a *UserRoleBindingAggregate) applyUserRoleAddedEvent(event es.Event) error {
+// createUserRoleBinding handles the command
+func (a *UserRoleBindingAggregate) createUserRoleBinding(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
+	// Get all aggregates of same type
+	userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, uuid.MustParse(cmd.GetUserId()))
+	if err != nil {
+		return err
+	}
+
+	if userAggregate != nil {
+		eventData := &ed.UserRoleAddedEventData{
+			UserId:   cmd.GetUserId(),
+			Role:     cmd.GetRole(),
+			Scope:    cmd.GetScope(),
+			Resource: cmd.GetResource(),
+		}
+		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
+	} else {
+		return domainErrors.ErrUserNotFound
+	}
+
+	return nil
+}
+
+// userRoleBindingCreated applies the event on the aggregate
+func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error {
 	data := &ed.UserRoleAddedEventData{}
 	err := event.Data().ToProto(data)
 	if err != nil {

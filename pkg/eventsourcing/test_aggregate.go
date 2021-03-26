@@ -27,12 +27,9 @@ func newTestAggregate() *testAggregate {
 func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
 	switch cmd := cmd.(type) {
 	case *testCommand:
-		ed, err := ToEventDataFromProto(&testEd.TestEventData{
+		ed := ToEventDataFromProto(&testEd.TestEventData{
 			Hello: cmd.TestCommandData.GetTest(),
 		})
-		if err != nil {
-			return err
-		}
 		_ = a.AppendEvent(ctx, testEventType, ed)
 		return nil
 	}

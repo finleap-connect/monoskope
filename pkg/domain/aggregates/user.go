@@ -33,24 +33,7 @@ func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateManager) *UserA
 func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
-		// Get all aggregates of same type
-		aggregates, err := a.aggregateManager.All(ctx, a.Type())
-		if err != nil {
-			return err
-		}
-
-		// Check if user already exists
-		if !containsUser(aggregates, cmd.GetEmail()) {
-			// User does not exist yet, creating...
-			ed, err := es.ToEventDataFromProto(&eventData.UserCreatedEventData{Email: cmd.GetEmail(), Name: cmd.GetName()})
-			if err != nil {
-				return err
-			}
-			_ = a.AppendEvent(ctx, events.UserCreated, ed)
-			return nil
-		} else {
-			return domainErrors.ErrUserAlreadyExists
-		}
+		return a.createUser(ctx, cmd)
 	}
 	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
@@ -59,15 +42,14 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 func (a *UserAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.UserCreated:
-		data := &eventData.UserCreatedEventData{}
-		if err := event.Data().ToProto(data); err != nil {
+		err := a.userCreated(event)
+		if err != nil {
 			return err
 		}
-		a.Email = data.Email
-		a.Name = data.Name
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
+
 	return nil
 }
 
@@ -81,4 +63,39 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 		}
 	}
 	return false
+}
+
+// createUser handle the command
+func (a *UserAggregate) createUser(ctx context.Context, cmd *commands.CreateUserCommand) error {
+	// Get all aggregates of same type
+	aggregates, err := a.aggregateManager.All(ctx, a.Type())
+	if err != nil {
+		return err
+	}
+
+	// Check if user already exists
+	if !containsUser(aggregates, cmd.GetEmail()) {
+		// User does not exist yet, creating...
+		eventData := &eventData.UserCreatedEventData{
+			Email: cmd.GetEmail(),
+			Name:  cmd.GetName(),
+		}
+		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(eventData))
+		return nil
+	} else {
+		return domainErrors.ErrUserAlreadyExists
+	}
+}
+
+// userCreated handle the event
+func (a *UserAggregate) userCreated(event es.Event) error {
+	data := &eventData.UserCreatedEventData{}
+	if err := event.Data().ToProto(data); err != nil {
+		return err
+	}
+
+	a.Email = data.Email
+	a.Name = data.Name
+
+	return nil
 }

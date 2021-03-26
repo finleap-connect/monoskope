@@ -10,20 +10,19 @@ import (
 type EventData []byte
 
 // toEventDataFromAny marshalls a given any to protojson
-func toEventDataFromAny(a *anypb.Any) (EventData, error) {
+func toEventDataFromAny(a *anypb.Any) EventData {
 	bytes, err := protojson.Marshal(a)
 	if err != nil {
-		return bytes, err
+		panic(err)
 	}
-	return bytes, nil
+	return bytes
 }
 
 // ToEventDataFromProto marshalls m into EventData.
-func ToEventDataFromProto(m protoreflect.ProtoMessage) (EventData, error) {
+func ToEventDataFromProto(m protoreflect.ProtoMessage) EventData {
 	a := &anypb.Any{}
-	err := a.MarshalFrom(m)
-	if err != nil {
-		return EventData{}, err
+	if err := a.MarshalFrom(m); err != nil {
+		panic(err)
 	}
 	return toEventDataFromAny(a)
 }
