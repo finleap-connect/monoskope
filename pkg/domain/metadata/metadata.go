@@ -3,15 +3,17 @@ package domain
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/grpc/metadata"
 )
 
 const (
 	componentInformationKey = "component_information"
-	userIdKey               = "user_id"
+	rolebindingsKey         = "user_role_bindings"
 )
 
 // ComponentInformation are information about a service/component.
@@ -23,29 +25,20 @@ type ComponentInformation struct {
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id     string
+	Id     uuid.UUID
 	Name   string
 	Email  string
 	Issuer string
 }
 
 // domainMetadataManager is a domain specific metadata manager.
-type domainMetadataManager struct {
+type DomainMetadataManager struct {
 	es.MetadataManager
-}
-
-type DomainMetadataManager interface {
-	es.MetadataManager
-	SetComponentInformation() error
-	SetUserInformation(userInformation *UserInformation)
-	GetUserInformation() *UserInformation
-	GetOutgoingGrpcContext() context.Context
-	SetUserId(string)
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
-func NewDomainMetadataManager(ctx context.Context) (DomainMetadataManager, error) {
-	m := &domainMetadataManager{
+func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, error) {
+	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
 	}
 
@@ -68,7 +61,7 @@ func NewDomainMetadataManager(ctx context.Context) (DomainMetadataManager, error
 }
 
 // SetComponentInformation sets the ComponentInformation about the currently executing service/component.
-func (m *domainMetadataManager) SetComponentInformation() error {
+func (m *DomainMetadataManager) SetComponentInformation() error {
 	return m.SetObject(componentInformationKey, &ComponentInformation{
 		Name:    version.Name,
 		Version: version.Version,
@@ -76,19 +69,26 @@ func (m *domainMetadataManager) SetComponentInformation() error {
 	})
 }
 
+func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) error {
+	return m.SetObject(rolebindingsKey, roleBindings)
+}
+
+func (m *DomainMetadataManager) GetRoleBindings() ([]*projections.UserRoleBinding, error) {
+	roleBindings := make([]*projections.UserRoleBinding, 0)
+	err := m.GetObject(rolebindingsKey, &roleBindings)
+	return roleBindings, err
+}
+
 // SetUserInformation sets the UserInformation in the metadata.
-func (m *domainMetadataManager) SetUserInformation(userInformation *UserInformation) {
+func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformation) {
 	m.Set(gateway.HeaderAuthName, userInformation.Name)
 	m.Set(gateway.HeaderAuthEmail, userInformation.Email)
 	m.Set(gateway.HeaderAuthIssuer, userInformation.Issuer)
-}
-
-func (m *domainMetadataManager) SetUserId(id string) {
-	m.Set(userIdKey, id)
+	m.Set(gateway.HeaderAuthId, userInformation.Id.String())
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
-func (m *domainMetadataManager) GetUserInformation() *UserInformation {
+func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 	userInfo := &UserInformation{}
 	if header, ok := m.Get(gateway.HeaderAuthName); ok {
 		userInfo.Name = header
@@ -99,13 +99,16 @@ func (m *domainMetadataManager) GetUserInformation() *UserInformation {
 	if header, ok := m.Get(gateway.HeaderAuthIssuer); ok {
 		userInfo.Issuer = header
 	}
-	if header, ok := m.Get(userIdKey); ok {
-		userInfo.Id = header
+	if header, ok := m.Get(gateway.HeaderAuthId); ok {
+		id, err := uuid.Parse(header)
+		if err == nil {
+			userInfo.Id = id
+		}
 	}
 	return userInfo
 }
 
 // GetOutgoingGrpcContext returns a new context enriched with the metadata of this manager.
-func (m *domainMetadataManager) GetOutgoingGrpcContext() context.Context {
+func (m *DomainMetadataManager) GetOutgoingGrpcContext() context.Context {
 	return metadata.NewOutgoingContext(m.MetadataManager.GetContext(), metadata.New(m.GetMetadata()))
 }

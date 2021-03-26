@@ -15,22 +15,27 @@ import (
 
 // TenantAggregate is an aggregate for Tenants.
 type TenantAggregate struct {
-	*es.BaseAggregate
+	DomainAggregateBase
 	aggregateManager es.AggregateManager
 	Name             string
 	Prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
-func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateManager) *TenantAggregate {
+func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateManager) es.Aggregate {
 	return &TenantAggregate{
-		BaseAggregate:    es.NewBaseAggregate(aggregates.Tenant, id),
+		DomainAggregateBase: DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, id),
+		},
 		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+	if err := a.Authorize(ctx, cmd); err != nil {
+		return err
+	}
 	if err := a.validate(ctx, cmd); err != nil {
 		return err
 	}
@@ -54,15 +59,10 @@ func (a *TenantAggregate) validate(ctx context.Context, cmd es.Command) error {
 		if containsTenant(aggregates, cmd.GetName()) {
 			return domainErrors.ErrTenantAlreadyExists
 		}
+		return nil
 	default:
-		if !a.Exists() {
-			return domainErrors.ErrTenantNotFound
-		}
-		if a.Deleted() {
-			return domainErrors.ErrTenantDeleted
-		}
+		return a.Validate(ctx, cmd)
 	}
-	return nil
 }
 
 func containsTenant(values []es.Aggregate, name string) bool {

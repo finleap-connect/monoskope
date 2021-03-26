@@ -19,7 +19,7 @@ type CreateUserCommand struct {
 	cmdData.CreateUserCommandData
 }
 
-func NewCreateUserCommand(id uuid.UUID) *CreateUserCommand {
+func NewCreateUserCommand(id uuid.UUID) es.Command {
 	return &CreateUserCommand{
 		BaseCommand: es.NewBaseCommand(id, aggregates.User, commands.CreateUser),
 	}
@@ -31,7 +31,6 @@ func (c *CreateUserCommand) SetData(a *anypb.Any) error {
 
 func (c *CreateUserCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithSubject(c.GetEmail()),                      // Allows user to create themselves
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins to create any users
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins to create users
 	}
 }

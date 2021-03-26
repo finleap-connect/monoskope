@@ -35,8 +35,7 @@ func (c *DeleteUserRoleBindingCommand) SetData(a *anypb.Any) error {
 }
 func (c *DeleteUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
-		// TODO: Tenant admin can not delete rolebinding
-		// es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResource(c.Resource), // Tenant admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                         // System admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResourceMatch(true), // Tenant admin
 	}
 }

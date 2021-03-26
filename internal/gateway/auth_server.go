@@ -24,6 +24,7 @@ import (
 const (
 	HeaderAuthorization = "Authorization"
 
+	HeaderAuthId              = "x-auth-id"
 	HeaderAuthName            = "x-auth-name"
 	HeaderAuthEmail           = "x-auth-email"
 	HeaderAuthIssuer          = "x-auth-issuer"

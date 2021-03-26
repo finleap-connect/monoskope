@@ -162,7 +162,6 @@ var _ = Describe("domain/handler", func() {
 				Scope:  scopes.System.String(),
 			},
 		}
-		command.DeclareSuperusers([]string{someUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 	})

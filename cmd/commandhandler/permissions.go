@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -28,29 +29,17 @@ func NewReportPermissions() *cobra.Command {
 				policies := command.Policies(cmd.Context())
 
 				for _, p := range policies {
-					res := p.Resource()
-					sub := p.Subject()
-
-					if res == "" {
-						res = "same"
-					}
-
-					if sub == "" {
-						sub = "self"
-					}
-
 					data = append(data, []string{
 						string(cmdType),
 						p.Role().String(),
 						p.Scope().String(),
-						res,
-						sub,
+						fmt.Sprintf("%v", p.ResourceMatch()),
 					})
 				}
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Command", "Role", "Scope", "Resource", "Subject"})
+			table.SetHeader([]string{"Command", "Role", "Scope", "ResourceMatch"})
 
 			if formatMarkdown {
 				table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})

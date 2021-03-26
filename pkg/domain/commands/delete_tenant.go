@@ -20,7 +20,7 @@ type DeleteTenantCommand struct {
 }
 
 // NewDeleteTenantCommand creates a DeleteTenantCommand.
-func NewDeleteTenantCommand(id uuid.UUID) *DeleteTenantCommand {
+func NewDeleteTenantCommand(id uuid.UUID) es.Command {
 	return &DeleteTenantCommand{
 		BaseCommand: es.NewBaseCommand(id, aggregates.Tenant, commands.DeleteTenant),
 	}

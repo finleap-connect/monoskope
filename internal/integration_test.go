@@ -64,7 +64,7 @@ var _ = Describe("integration", func() {
 	}
 
 	It("create a user", func() {
-		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -79,10 +79,18 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(event).ToNot(BeNil())
 
-		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())
-		Expect(user.GetEmail()).To(Equal("admin@monoskope.io"))
+		Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
+	})
+	It("fail to create a user which already exists", func() {
+		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).To(HaveOccurred())
+		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
 	It("create a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
@@ -149,14 +157,6 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetDeletedBy()).ToNot(BeNil())
 		Expect(tenant.GetDeletedBy().GetId()).To(Equal(user.GetId()))
-	})
-	It("fail to create a user which already exists", func() {
-		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
-		Expect(err).To(HaveOccurred())
-		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
 })
 

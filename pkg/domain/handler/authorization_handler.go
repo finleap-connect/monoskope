@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"errors"
 
-	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
@@ -14,9 +14,10 @@ import (
 )
 
 type authorizationHandler struct {
-	log                logger.Logger
-	userRepo           repositories.ReadOnlyUserRepository
-	nextHandlerInChain es.CommandHandler
+	log                 logger.Logger
+	userRepo            repositories.ReadOnlyUserRepository
+	nextHandlerInChain  es.CommandHandler
+	bypassAuthorization bool
 }
 
 // NewAuthorizationHandler creates a new CommandHandler which handles authorization.
@@ -24,6 +25,17 @@ func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *auth
 	return &authorizationHandler{
 		log:      logger.WithName("authorization-middleware"),
 		userRepo: userRepo,
+	}
+}
+
+// BypassAuthorization disables authorization checks and returns a function to enable it again
+func (h *authorizationHandler) BypassAuthorization() func() {
+	h.bypassAuthorization = true
+	h.log.Info("WARNING authorization bypass has been enabled.")
+
+	return func() {
+		h.bypassAuthorization = false
+		h.log.Info("Authorization bypass has been disabled.")
 	}
 }
 
@@ -38,56 +50,39 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	if err != nil {
 		return err
 	}
-
 	userInfo := metadataMngr.GetUserInformation()
-	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil {
-		if errors.Is(err, domainErrors.ErrUserNotFound) && cmd.CommandType() == commands.CreateUser {
-			h.log.Info("User does not exist yet, but is about to create itself.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		} else {
-			h.log.Info("User does not exist yet. User is unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+
+	if h.bypassAuthorization {
+		h.log.Info("WARNING authorization bypass enabled.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+		if err := metadataMngr.SetRoleBindings([]*projections.UserRoleBinding{
+			{
+				Role:  roles.Admin.String(),
+				Scope: scopes.System.String(),
+			},
+		}); err != nil {
+			h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			return domainErrors.ErrUnauthorized
 		}
+		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
 	}
 
-	if user != nil {
-		metadataMngr.SetUserId(user.ID().String())
+	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
+	if err != nil {
+		h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+		return domainErrors.ErrUnauthorized
 	}
 
-	var userRoles []*projectionsApi.UserRoleBinding
-	if user != nil {
-		userRoles = user.GetRoles()
+	userRoleBindings := user.GetRoles()
+	userInfo.Id = user.ID()
+	metadataMngr.SetUserInformation(userInfo)
+	if err := metadataMngr.SetRoleBindings(userRoleBindings); err != nil {
+		h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+		return domainErrors.ErrUnauthorized
 	}
 
-	h.log.Info("Checking command authorization...", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-	for _, policy := range cmd.Policies(ctx) {
-		if policyAccepts(userInfo.Email, userRoles, policy) {
-			h.log.Info("User is authorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-			if h.nextHandlerInChain != nil {
-				return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
-			} else {
-				return nil
-			}
-		}
+	if h.nextHandlerInChain != nil {
+		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
+	} else {
+		return nil
 	}
-	h.log.Info("User is unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-	return domainErrors.ErrUnauthorized
-}
-
-// policyAccepts validates the policy against a user
-func policyAccepts(userEmail string, userRoleBindings []*projectionsApi.UserRoleBinding, policy es.Policy) bool {
-	if userRoleBindings != nil {
-		for _, roleBinding := range userRoleBindings {
-			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
-				policy.AcceptsScope(es.Scope(roleBinding.Scope)) &&
-				policy.AcceptsResource(roleBinding.Resource) &&
-				policy.AcceptsSubject(userEmail) {
-				return true
-			}
-		}
-	} else if policy.MustBeSubject(userEmail) {
-		return true
-	}
-
-	return false
 }

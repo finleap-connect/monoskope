@@ -20,7 +20,7 @@ type CreateTenantCommand struct {
 }
 
 // NewCreateTenantCommand creates a CreateTenantCommand.
-func NewCreateTenantCommand(id uuid.UUID) *CreateTenantCommand {
+func NewCreateTenantCommand(id uuid.UUID) es.Command {
 	return &CreateTenantCommand{
 		BaseCommand: es.NewBaseCommand(id, aggregates.Tenant, commands.CreateTenant),
 	}

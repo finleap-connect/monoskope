@@ -54,7 +54,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient, "admin@monoskope.io")
+	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
 	if err != nil {
 		return nil, err
 	}

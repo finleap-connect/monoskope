@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
 
 	api_domain "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
@@ -29,7 +26,6 @@ var (
 	keepAlive        bool
 	eventStoreAddr   string
 	queryHandlerAddr string
-	enableSuperusers bool
 )
 
 var serverCmd = &cobra.Command{
@@ -60,20 +56,9 @@ var serverCmd = &cobra.Command{
 		// Setup domain
 		var cmdRegistry es.CommandRegistry
 		log.Info("Seting up es/cqrs...")
-		if enableSuperusers {
-			if u := strings.Split(os.Getenv("SUPERUSERS"), ","); len(u) != 0 {
-				cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient, u...)
-				if err != nil {
-					return err
-				}
-			} else {
-				return fmt.Errorf("no valid list of superusers provided")
-			}
-		} else {
-			cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
-			if err != nil {
-				return err
-			}
+		cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		if err != nil {
+			return err
 		}
 
 		// Create gRPC server and register implementation
@@ -102,5 +87,4 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
-	flags.BoolVar(&enableSuperusers, "enable-superusers", false, "Enable superuser functionality for initial system admin creation")
 }

@@ -1,4 +1,4 @@
-{{- if .Values.superusers.enabled }}
+{{- if .Values.superusers.emails }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

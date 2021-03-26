@@ -15,29 +15,71 @@ import (
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
-	*es.BaseAggregate
+	DomainAggregateBase
 	aggregateManager es.AggregateManager
 	userId           uuid.UUID // User to add a role to
 	role             es.Role   // Role to add to the user
 	scope            es.Scope  // Scope of the role binding
-	resource         string    // Resource of the role binding
+	resource         uuid.UUID // Resource of the role binding
 }
 
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
-func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateManager) *UserRoleBindingAggregate {
+func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateManager) es.Aggregate {
 	return &UserRoleBindingAggregate{
-		BaseAggregate:    es.NewBaseAggregate(aggregates.UserRoleBinding, id),
+		DomainAggregateBase: DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding, id),
+		},
 		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+	if err := a.Authorize(ctx, cmd); err != nil {
+		return err
+	}
+	if err := a.validate(ctx, cmd); err != nil {
+		return err
+	}
+	return a.execute(ctx, cmd)
+}
+
+func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
-		return a.createUserRoleBinding(ctx, cmd)
+		if a.Exists() {
+			return domainErrors.ErrTenantAlreadyExists
+		}
+
+		// Get all aggregates of same type
+		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, uuid.MustParse(cmd.GetUserId()))
+		if err != nil {
+			return err
+		}
+
+		if userAggregate == nil {
+			return domainErrors.ErrUserNotFound
+		}
+		return nil
+	default:
+		return a.Validate(ctx, cmd)
 	}
-	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+}
+
+func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateUserRoleBindingCommand:
+		eventData := &ed.UserRoleAddedEventData{
+			UserId:   cmd.GetUserId(),
+			Role:     cmd.GetRole(),
+			Scope:    cmd.GetScope(),
+			Resource: cmd.GetResource(),
+		}
+		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
+	default:
+		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+	}
+	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
@@ -51,30 +93,6 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
-
-	return nil
-}
-
-// createUserRoleBinding handles the command
-func (a *UserRoleBindingAggregate) createUserRoleBinding(ctx context.Context, cmd *commands.CreateUserRoleBindingCommand) error {
-	// Get all aggregates of same type
-	userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, uuid.MustParse(cmd.GetUserId()))
-	if err != nil {
-		return err
-	}
-
-	if userAggregate != nil {
-		eventData := &ed.UserRoleAddedEventData{
-			UserId:   cmd.GetUserId(),
-			Role:     cmd.GetRole(),
-			Scope:    cmd.GetScope(),
-			Resource: cmd.GetResource(),
-		}
-		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
-	} else {
-		return domainErrors.ErrUserNotFound
-	}
-
 	return nil
 }
 
@@ -94,7 +112,12 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	a.userId = userId
 	a.role = es.Role(data.Role)
 	a.scope = es.Scope(data.Scope)
-	a.resource = data.Resource
+
+	id, err := uuid.Parse(data.Resource)
+	if err != nil {
+		return err
+	}
+	a.resource = id
 
 	return nil
 }

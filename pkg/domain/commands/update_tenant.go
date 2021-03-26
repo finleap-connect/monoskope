@@ -20,14 +20,10 @@ type UpdateTenantCommand struct {
 }
 
 // NewUpdateTenantCommand creates an UpdateTenantCommand.
-func NewUpdateTenantCommand(id uuid.UUID) *UpdateTenantCommand {
+func NewUpdateTenantCommand(id uuid.UUID) es.Command {
 	return &UpdateTenantCommand{
 		BaseCommand: es.NewBaseCommand(id, aggregates.Tenant, commands.UpdateTenant),
 	}
-}
-
-func (c *UpdateTenantCommand) GetName() string {
-	return c.GetUpdate().GetName().GetValue()
 }
 
 func (c *UpdateTenantCommand) SetData(a *anypb.Any) error {

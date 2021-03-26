@@ -10,13 +10,22 @@ import (
 
 // CreateCommand builds up a new proto command with the given type and data.
 func CreateCommand(id uuid.UUID, commandType es.CommandType, commandData protoreflect.ProtoMessage) (*esApi.Command, error) {
-	data := &anypb.Any{}
-	if err := data.MarshalFrom(commandData); err != nil {
+	data, err := CreateCommandData(commandData)
+	if err != nil {
 		return nil, err
 	}
+
 	return &esApi.Command{
 		Id:   id.String(),
 		Type: commandType.String(),
 		Data: data,
 	}, nil
+}
+
+func CreateCommandData(commandData protoreflect.ProtoMessage) (*anypb.Any, error) {
+	data := &anypb.Any{}
+	if err := data.MarshalFrom(commandData); err != nil {
+		return nil, err
+	}
+	return data, nil
 }
