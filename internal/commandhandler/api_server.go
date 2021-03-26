@@ -2,6 +2,7 @@ package commandhandler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -47,7 +48,7 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
 	id, err := uuid.Parse(command.GetId())
 	if err != nil {
-		return nil, errors.TranslateToGrpcError(err)
+		return nil, errors.ErrInvalidArgument(fmt.Sprintf("Failed to parse id of command: %s", err.Error()))
 	}
 
 	cmd, err := s.cmdRegistry.CreateCommand(id, evs.CommandType(command.Type), command.Data)

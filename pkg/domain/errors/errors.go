@@ -66,3 +66,7 @@ func TranslateToGrpcError(err error) error {
 	}
 	return err
 }
+
+func ErrInvalidArgument(msg string) error {
+	return status.Error(codes.InvalidArgument, msg)
+}
