@@ -19,6 +19,8 @@ var (
 	ErrTenantNotFound = errors.New("tenant not found")
 	// ErrTenantAlreadyExists is when a tenant does already exist.
 	ErrTenantAlreadyExists = errors.New("tenant already exists")
+	// ErrTenantDeleted is when a tenant is deleted.
+	ErrTenantDeleted = errors.New("tenant has been deleted")
 )
 
 var (
@@ -64,7 +66,7 @@ func TranslateToGrpcError(err error) error {
 	if code, ok := reverseErrorMap[err]; ok {
 		return status.Error(code, err.Error())
 	}
-	return err
+	return status.Error(codes.Internal, err.Error())
 }
 
 func ErrInvalidArgument(msg string) error {

@@ -2,7 +2,6 @@ package aggregates
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -11,44 +10,81 @@ import (
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
-	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // TenantAggregate is an aggregate for Tenants.
 type TenantAggregate struct {
 	*es.BaseAggregate
-	tenantRepo repos.ReadOnlyTenantRepository
-	Name       string
-	Prefix     string
+	aggregateManager es.AggregateManager
+	Name             string
+	Prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
-func NewTenantAggregate(id uuid.UUID, tenantRepo repos.ReadOnlyTenantRepository) *TenantAggregate {
+func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateManager) *TenantAggregate {
 	return &TenantAggregate{
-		BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, id),
-		tenantRepo:    tenantRepo,
+		BaseAggregate:    es.NewBaseAggregate(aggregates.Tenant, id),
+		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+	if err := a.validate(ctx, cmd); err != nil {
+		return err
+	}
+	return a.execute(ctx, cmd)
+}
+
+// validate validates the current state of the aggregate and if a specific command is valid in the current state
+func (a *TenantAggregate) validate(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateTenantCommand:
-		_, err := a.tenantRepo.ByName(ctx, cmd.GetName())
-		if err != nil && errors.Is(err, domainErrors.ErrTenantNotFound) {
-			ed := es.ToEventDataFromProto(&eventdata.TenantCreatedEventData{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
-			_ = a.AppendEvent(ctx, events.TenantCreated, ed)
-			return nil
-		} else {
+		if a.Exists() {
 			return domainErrors.ErrTenantAlreadyExists
 		}
-	case *commands.UpdateTenantCommand:
-		// Check if tenant exists
-		if err := a.checkExists(); err != nil {
+
+		// Get all aggregates of same type
+		aggregates, err := a.aggregateManager.All(ctx, a.Type())
+		if err != nil {
 			return err
 		}
 
+		if containsTenant(aggregates, cmd.GetName()) {
+			return domainErrors.ErrTenantAlreadyExists
+		}
+	default:
+		if !a.Exists() {
+			return domainErrors.ErrTenantNotFound
+		}
+		if a.Deleted() {
+			return domainErrors.ErrTenantDeleted
+		}
+	}
+	return nil
+}
+
+func containsTenant(values []es.Aggregate, name string) bool {
+	for _, value := range values {
+		d, ok := value.(*TenantAggregate)
+		if ok {
+			if d.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// execute executes the command after it has successfully been validated
+func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateTenantCommand:
+		ed := es.ToEventDataFromProto(&eventdata.TenantCreatedEventData{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
+		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
+		return nil
+	case *commands.UpdateTenantCommand:
 		ed := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
 			Id:     cmd.GetId(),
 			Update: &eventdata.TenantUpdatedEventData_Update{Name: cmd.GetUpdate().GetName()},
@@ -56,24 +92,12 @@ func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) err
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
 		return nil
 	case *commands.DeleteTenantCommand:
-		// Check if tenant exists
-		if err := a.checkExists(); err != nil {
-			return err
-		}
-
 		ed := es.ToEventDataFromProto(&eventdata.TenantDeletedEventData{Id: cmd.GetId()})
 		_ = a.AppendEvent(ctx, events.TenantDeleted, ed)
 		return nil
+	default:
+		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
-
-	return fmt.Errorf("couldn't handle command")
-}
-
-func (a *TenantAggregate) checkExists() error {
-	if a.Version() < 1 {
-		return fmt.Errorf("tenant does not exist")
-	}
-	return nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
@@ -93,9 +117,9 @@ func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 		}
 		a.Name = data.Update.Name.Value
 	case events.TenantDeleted:
-		a.SetDeleted()
+		a.SetDeleted(true)
 	default:
-		return fmt.Errorf("couldn't handle event")
+		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
 	return nil
 }

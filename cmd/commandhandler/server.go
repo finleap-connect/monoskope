@@ -57,19 +57,12 @@ var serverCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		// Create TenantService client
-		conn, tenantSvcClient, err := queryhandler.NewTenantServiceClient(ctx, queryHandlerAddr)
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-
 		// Setup domain
 		var cmdRegistry es.CommandRegistry
 		log.Info("Seting up es/cqrs...")
 		if enableSuperusers {
 			if u := strings.Split(os.Getenv("SUPERUSERS"), ","); len(u) != 0 {
-				cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, tenantSvcClient, esClient, u...)
+				cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient, u...)
 				if err != nil {
 					return err
 				}
@@ -77,7 +70,7 @@ var serverCmd = &cobra.Command{
 				return fmt.Errorf("no valid list of superusers provided")
 			}
 		} else {
-			cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, tenantSvcClient, esClient)
+			cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 			if err != nil {
 				return err
 			}

@@ -32,10 +32,9 @@ func RegisterCommands(superusers ...string) es.CommandRegistry {
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, tenantService domainApi.TenantServiceClient, esClient esApi.EventStoreClient, superusers ...string) (es.CommandRegistry, error) {
+func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient, superusers ...string) (es.CommandRegistry, error) {
 	// Setup repositories
 	userRepo := repos.NewRemoteUserRepository(userService)
-	tenantRepo := repos.NewRemoteTenantRepository(tenantService)
 
 	// Register aggregates
 	aggregateRegistry := es.NewAggregateRegistry()
@@ -46,7 +45,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, tenantRepo) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Register command handler and middleware
 	handler := es.UseCommandHandlerMiddleware(

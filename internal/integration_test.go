@@ -3,10 +3,9 @@ package internal
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 
-	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,7 +15,6 @@ import (
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	esCmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
@@ -24,16 +22,6 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
-
-func executeWithRetry(command *esCmd.Command, metadataMgr metadata.DomainMetadataManager, commandHandlerClient func() es.CommandHandlerClient) {
-	backoffParams := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 5)
-	err := backoff.Retry(func() error {
-		var err error
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
-		return err
-	}, backoffParams)
-	Expect(err).ToNot(HaveOccurred())
-}
 
 var _ = Describe("integration", func() {
 	ctx := context.Background()
@@ -79,7 +67,8 @@ var _ = Describe("integration", func() {
 		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
-		executeWithRetry(command, metadataMgr, commandHandlerClient)
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
 
 		eventStream, err := eventStoreClient().Retrieve(ctx, &es.EventFilter{
 			AggregateType: wrapperspb.String(aggregateTypes.User.String()),
@@ -106,36 +95,24 @@ var _ = Describe("integration", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		executeWithRetry(command, metadataMgr, commandHandlerClient)
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
 
 		tenantId := uuid.New()
-		command, err = cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Dieter", Prefix: "dt"})
+		command, err = cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"})
 		Expect(err).ToNot(HaveOccurred())
 
-		executeWithRetry(command, metadataMgr, commandHandlerClient)
-
-		eventStream, err := eventStoreClient().Retrieve(ctx, &es.EventFilter{
-			AggregateType: wrapperspb.String(aggregateTypes.Tenant.String()),
-		})
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		for {
-			event, err := eventStream.Recv()
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
 
-			// End of stream
-			if err == io.EOF {
-				break
-			}
-
-			Expect(err).ToNot(HaveOccurred())
-			Expect(event).ToNot(BeNil())
-			testEnv.Log.Info("Event", "Data", event.String())
-		}
-
-		tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Dieter"))
+		tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Tenant X"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.GetName()).To(Equal("Dieter"))
+		Expect(tenant.GetName()).To(Equal("Tenant X"))
+		Expect(tenant.GetPrefix()).To(Equal("tx"))
 		Expect(tenant.Id).To(Equal(tenantId.String()))
 
 		command, err = cmd.CreateCommand(tenantId, commandTypes.UpdateTenant, &cmdData.UpdateTenantCommandData{
@@ -144,25 +121,11 @@ var _ = Describe("integration", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		executeWithRetry(command, metadataMgr, commandHandlerClient)
-
-		eventStream, err = eventStoreClient().Retrieve(ctx, &es.EventFilter{
-			AggregateType: wrapperspb.String(aggregateTypes.Tenant.String()),
-		})
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		for {
-			event, err := eventStream.Recv()
-
-			// End of stream
-			if err == io.EOF {
-				break
-			}
-
-			Expect(err).ToNot(HaveOccurred())
-			Expect(event).ToNot(BeNil())
-			testEnv.Log.Info("Event", "Data", event.String())
-		}
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
 
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
@@ -175,30 +138,17 @@ var _ = Describe("integration", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		executeWithRetry(command, metadataMgr, commandHandlerClient)
-		eventStream, err = eventStoreClient().Retrieve(ctx, &es.EventFilter{
-			AggregateType: wrapperspb.String(aggregateTypes.Tenant.String()),
-		})
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		for {
-			event, err := eventStream.Recv()
-
-			// End of stream
-			if err == io.EOF {
-				break
-			}
-
-			Expect(err).ToNot(HaveOccurred())
-			Expect(event).ToNot(BeNil())
-			testEnv.Log.Info("Event", "Data", event.String())
-		}
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
 
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetDeletedBy()).ToNot(BeNil())
-		Expect(tenant.GetDeletedBy().Id).To(Equal(user.Id))
+		Expect(tenant.GetDeletedBy().GetId()).To(Equal(user.GetId()))
 	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})

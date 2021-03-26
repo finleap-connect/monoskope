@@ -25,15 +25,17 @@ type Aggregate interface {
 	// Version is the version of the aggregate.
 	Version() uint64
 	// SetDeleted sets the deleted flag of the aggregate to true
-	SetDeleted()
+	SetDeleted(bool)
 	// Deleted indicates whether the aggregate resource has been deleted
 	Deleted() bool
-	// Events returns the events that built up the aggregate.
+	// Events returns outstanding events that need to persisted. They are cleared on reading them.
 	Events() []Event
 	// ApplyEvent applies an Event on the aggregate.
 	ApplyEvent(Event) error
 	// IncrementVersion increments the version of the Aggregate.
 	IncrementVersion()
+	// Exists returns if the version of the aggregate is >0
+	Exists() bool
 }
 
 // BaseAggregate is the base implementation for all aggregates
@@ -69,13 +71,18 @@ func (a *BaseAggregate) Version() uint64 {
 }
 
 // SetDeleted implements the SetDeleted method of the Aggregate interface.
-func (a *BaseAggregate) SetDeleted() {
-	a.deleted = true
+func (a *BaseAggregate) SetDeleted(deleted bool) {
+	a.deleted = deleted
 }
 
 // Deleted implements the Deleted method of the Aggregate interface.
 func (a *BaseAggregate) Deleted() bool {
 	return a.deleted
+}
+
+// Exists returns if the version of the aggregate is >0
+func (a *BaseAggregate) Exists() bool {
+	return a.version > 0
 }
 
 // Events implements the Events method of the Aggregate interface.
