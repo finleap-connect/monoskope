@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -16,7 +15,6 @@ import (
 // DeleteTenantCommand is a command for deleting a tenant.
 type DeleteTenantCommand struct {
 	*es.BaseCommand
-	cmdData.DeleteTenantCommandData
 }
 
 // NewDeleteTenantCommand creates a DeleteTenantCommand.
@@ -27,7 +25,7 @@ func NewDeleteTenantCommand(id uuid.UUID) es.Command {
 }
 
 func (c *DeleteTenantCommand) SetData(a *anypb.Any) error {
-	return a.UnmarshalTo(&c.DeleteTenantCommandData)
+	return nil
 }
 
 // Policies returns the Role/Scope/Resource combination allowed to execute.

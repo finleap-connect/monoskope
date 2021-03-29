@@ -17,18 +17,6 @@ message TenantCreatedEventData {
 }
 
 message TenantUpdatedEventData {
-  // Unique identifier of the updated tenant (UUID 128-bit number)
-  string id = 1;
-  // The updated information
-  Update update = 2; // required
-
-  message Update {
-    // New name for the tenant
-    google.protobuf.StringValue name = 1;
-  }
-}
-
-message TenantDeletedEventData {
-  // Unique identifier of the updated tenant (UUID 128-bit number)
-  string id = 1;
+  // New name for the tenant
+  google.protobuf.StringValue name = 1;
 }

@@ -86,14 +86,12 @@ func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) error {
 		return nil
 	case *commands.UpdateTenantCommand:
 		ed := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
-			Id:     cmd.GetId(),
-			Update: &eventdata.TenantUpdatedEventData_Update{Name: cmd.GetUpdate().GetName()},
+			Name: cmd.GetName(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
 		return nil
 	case *commands.DeleteTenantCommand:
-		ed := es.ToEventDataFromProto(&eventdata.TenantDeletedEventData{Id: cmd.GetId()})
-		_ = a.AppendEvent(ctx, events.TenantDeleted, ed)
+		_ = a.AppendEvent(ctx, events.TenantDeleted, nil)
 		return nil
 	default:
 		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
@@ -115,7 +113,7 @@ func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.Name = data.Update.Name.Value
+		a.Name = data.GetName().GetValue()
 	case events.TenantDeleted:
 		a.SetDeleted(true)
 	default:

@@ -114,8 +114,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant.Id).To(Equal(tenantId.String()))
 
 		command, err = cmd.CreateCommand(tenantId, commandTypes.UpdateTenant, &cmdData.UpdateTenantCommandData{
-			Id:     tenant.GetId(),
-			Update: &cmdData.UpdateTenantCommandData_Update{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
+			Name: &wrapperspb.StringValue{Value: "DIIIETER"},
 		})
 		Expect(err).ToNot(HaveOccurred())
 
@@ -131,9 +130,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant.GetLastModifiedBy()).ToNot(BeNil())
 		Expect(tenant.GetLastModifiedBy().Id).To(Equal(user.Id))
 
-		command, err = cmd.CreateCommand(tenantId, commandTypes.DeleteTenant, &cmdData.DeleteTenantCommandData{
-			Id: tenant.GetId(),
-		})
+		command, err = cmd.CreateCommand(tenantId, commandTypes.DeleteTenant, nil)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)

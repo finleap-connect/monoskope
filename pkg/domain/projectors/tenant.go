@@ -37,6 +37,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		return nil, errors.ErrInvalidProjectionType
 	}
 
+	// Get UserID from event metadata
 	userId := event.Metadata()[gateway.HeaderAuthId]
 
 	// Apply the changes for the event.
@@ -57,7 +58,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
-		i.Name = data.GetUpdate().GetName().Value
+		i.Name = data.GetName().GetValue()
 		i.LastModified = timestamppb.Now()
 		i.SetLastModifiedByID(userId)
 	case events.TenantDeleted:

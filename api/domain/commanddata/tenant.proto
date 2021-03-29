@@ -19,19 +19,6 @@ message CreateTenantCommandData {
 
 // Request to update a single tenant
 message UpdateTenantCommandData {
-  // Unique identifier of the tenant to update (UUID 128-bit number)
-  string id = 1; // required
-  // The information to update
-  Update update = 2; // required
-
-  message Update {
-    // New name for the tenant
-    google.protobuf.StringValue name = 1;
-  }
-}
-
-// Request to delete a single tenant
-message DeleteTenantCommandData {
-  // Unique identifier of the tenant to delete (UUID 128-bit number)
-  string id = 1; // required
+  // New name for the tenant
+  google.protobuf.StringValue name = 1;
 }

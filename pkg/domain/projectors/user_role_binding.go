@@ -2,7 +2,6 @@ package projectors
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
@@ -10,6 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 type userRoleBindingProjector struct {
@@ -29,10 +29,14 @@ func (u *userRoleBindingProjector) NewProjection(id uuid.UUID) es.Projection {
 
 // Project updates the state of the projection occording to the given event.
 func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
+	// Get the actual projection type
 	i, ok := projection.(*projections.UserRoleBinding)
 	if !ok {
-		return nil, errors.New("model is of incorrect type")
+		return nil, errors.ErrInvalidProjectionType
 	}
+
+	// Get UserID from event metadata
+	// userId := event.Metadata()[gateway.HeaderAuthId]
 
 	// Apply the changes for the event.
 	switch event.EventType() {
@@ -49,8 +53,11 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 			i.Scope = data.GetScope()
 			i.Resource = data.GetResource()
 		}
+	case events.UserRoleBindingDeleted:
+		// i.Deleted = timestamp.Now()
+		// i.SetDeletedByID(userId)
 	default:
-		return nil, errors.New("could not handle event: " + event.String())
+		return nil, errors.ErrInvalidEventType
 	}
 
 	i.IncrementVersion()
