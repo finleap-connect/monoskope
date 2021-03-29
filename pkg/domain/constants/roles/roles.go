@@ -1,6 +1,11 @@
 package roles
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+import (
+	"fmt"
+
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+)
 
 // Roles
 const (
@@ -19,4 +24,13 @@ var AvailableRoles = []es.Role{
 	User,
 	Admin,
 	Agent,
+}
+
+func ValidateRole(role string) error {
+	for _, v := range AvailableRoles {
+		if v.String() == role {
+			return nil
+		}
+	}
+	return errors.ErrInvalidArgument(fmt.Sprintf("Role '%s' is invalid.", role))
 }

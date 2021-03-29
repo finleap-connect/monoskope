@@ -1,6 +1,11 @@
 package scopes
 
-import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+import (
+	"fmt"
+
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+)
 
 // Scopes
 const (
@@ -15,4 +20,13 @@ const (
 var AvailableScopes = []es.Scope{
 	System,
 	Tenant,
+}
+
+func ValidateScope(scope string) error {
+	for _, v := range AvailableScopes {
+		if v.String() == scope {
+			return nil
+		}
+	}
+	return errors.ErrInvalidArgument(fmt.Sprintf("Scope '%s' is invalid.", scope))
 }

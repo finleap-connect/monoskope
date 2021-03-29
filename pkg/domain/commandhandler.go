@@ -123,6 +123,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	commandRegistry := RegisterCommands()
 	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
 	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
+	commandRegistry.SetHandler(handler, commandTypes.DeleteUserRoleBinding)
 	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)
 	commandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
 	commandRegistry.SetHandler(handler, commandTypes.DeleteTenant)

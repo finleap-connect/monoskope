@@ -115,18 +115,6 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 	return nil
 }
 
-func containsUser(values []es.Aggregate, emailAddress string) bool {
-	for _, value := range values {
-		d, ok := value.(*UserAggregate)
-		if ok {
-			if d.Email == emailAddress {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // userCreated handle the event
 func (a *UserAggregate) userCreated(event es.Event) error {
 	data := &eventData.UserCreatedEventData{}
@@ -138,4 +126,16 @@ func (a *UserAggregate) userCreated(event es.Event) error {
 	a.Name = data.Name
 
 	return nil
+}
+
+func containsUser(values []es.Aggregate, emailAddress string) bool {
+	for _, value := range values {
+		d, ok := value.(*UserAggregate)
+		if ok {
+			if d.Email == emailAddress {
+				return true
+			}
+		}
+	}
+	return false
 }

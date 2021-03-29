@@ -9,6 +9,9 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -51,13 +54,20 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 			return domainErrors.ErrTenantAlreadyExists
 		}
 
+		var err error
+		var userId uuid.UUID
 		// Get all aggregates of same type
-		id, err := uuid.Parse(cmd.GetUserId())
-		if err != nil {
+		if userId, err = uuid.Parse(cmd.GetUserId()); err != nil {
+			return errors.ErrInvalidArgument("user id is invalid")
+		}
+		if err := roles.ValidateRole(cmd.GetRole()); err != nil {
+			return err
+		}
+		if err := scopes.ValidateScope(cmd.GetScope()); err != nil {
 			return err
 		}
 
-		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, id)
+		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, userId)
 		if err != nil {
 			return err
 		}
@@ -95,6 +105,8 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+	case events.UserRoleBindingDeleted:
+		a.SetDeleted(true)
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}

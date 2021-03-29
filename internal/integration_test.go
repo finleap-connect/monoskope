@@ -10,14 +10,14 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
-	est "gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -42,13 +42,6 @@ var _ = Describe("integration", func() {
 		return chClient
 	}
 
-	eventStoreClient := func() es.EventStoreClient {
-		esAddr := testEnv.eventStoreTestEnv.GetApiAddr()
-		_, esClient, err := est.NewEventStoreClient(ctx, esAddr)
-		Expect(err).ToNot(HaveOccurred())
-		return esClient
-	}
-
 	userServiceClient := func() domainApi.UserServiceClient {
 		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
 		_, client, err := queryhandler.NewUserServiceClient(ctx, addr)
@@ -63,26 +56,34 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	It("create a user", func() {
-		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"})
+	It("manage a user", func() {
+		userId := uuid.New()
+		command, err := cmd.CreateCommand(userId, commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"})
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
-		eventStream, err := eventStoreClient().Retrieve(ctx, &es.EventFilter{
-			AggregateType: wrapperspb.String(aggregateTypes.User.String()),
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		event, err := eventStream.Recv()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(event).ToNot(BeNil())
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
 
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())
 		Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
+		Expect(user.Id).To(Equal(userId.String()))
+
+		command, err = cmd.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()})
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+
+		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(user).ToNot(BeNil())
+		Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
+		Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
@@ -92,7 +93,7 @@ var _ = Describe("integration", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
-	It("create a tenant", func() {
+	It("manage a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
