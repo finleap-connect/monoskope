@@ -63,7 +63,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 			h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			return domainErrors.ErrUnauthorized
 		}
-		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
+		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetContext(), cmd)
 	}
 
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
@@ -81,7 +81,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 
 	if h.nextHandlerInChain != nil {
-		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetOutgoingGrpcContext(), cmd)
+		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetContext(), cmd)
 	} else {
 		return nil
 	}

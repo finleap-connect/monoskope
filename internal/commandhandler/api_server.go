@@ -16,6 +16,7 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc"
 )
 
@@ -24,12 +25,14 @@ type apiServer struct {
 	api.UnimplementedCommandHandlerServer
 	api_domain.UnimplementedCommandHandlerExtensionsServer
 	cmdRegistry evs.CommandRegistry
+	log         logger.Logger
 }
 
 // NewApiServer returns a new configured instance of apiServer
 func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 	return &apiServer{
 		cmdRegistry: cmdRegistry,
+		log:         logger.WithName("commandhandler-api-server"),
 	}
 }
 
@@ -46,6 +49,12 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.log.Info("Panic recovered.", "error", r)
+		}
+	}()
+
 	id, err := uuid.Parse(command.GetId())
 	if err != nil {
 		return nil, errors.ErrInvalidArgument(fmt.Sprintf("Failed to parse id of command: %s", err.Error()))

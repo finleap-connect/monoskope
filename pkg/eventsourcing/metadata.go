@@ -10,10 +10,6 @@ import (
 type metadataKeyType struct {
 }
 
-type metadata struct {
-	data map[string]string
-}
-
 /*
  MetadataManager is an interface for a storage of metadata.
  It can be used to easily store any metadata in the context of a call.
@@ -47,9 +43,9 @@ func NewMetadataManagerFromContext(ctx context.Context) MetadataManager {
 		data: make(map[string]string),
 	}
 
-	d, ok := ctx.Value(metadataKeyType{}).(metadata)
+	d, ok := ctx.Value(metadataKeyType{}).(map[string]string)
 	if ok {
-		m.data = d.data
+		m.data = d
 	}
 
 	return m
@@ -93,5 +89,5 @@ func (m *metadataManager) GetObject(key string, v interface{}) error {
 
 // GetContext returns a new context enriched with the metadata of this manager.
 func (m *metadataManager) GetContext() context.Context {
-	return context.WithValue(m.ctx, metadataKeyType{}, metadata{data: m.data})
+	return context.WithValue(m.ctx, metadataKeyType{}, m.data)
 }

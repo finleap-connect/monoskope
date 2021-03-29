@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -36,7 +37,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		return nil, errors.ErrInvalidProjectionType
 	}
 
-	userId := event.Metadata()["user_id"]
+	userId := event.Metadata()[gateway.HeaderAuthId]
 
 	// Apply the changes for the event.
 	switch event.EventType() {

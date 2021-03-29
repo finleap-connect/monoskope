@@ -52,7 +52,12 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		}
 
 		// Get all aggregates of same type
-		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, uuid.MustParse(cmd.GetUserId()))
+		id, err := uuid.Parse(cmd.GetUserId())
+		if err != nil {
+			return err
+		}
+
+		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, id)
 		if err != nil {
 			return err
 		}
@@ -113,11 +118,12 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	a.role = es.Role(data.Role)
 	a.scope = es.Scope(data.Scope)
 
-	id, err := uuid.Parse(data.Resource)
-	if err != nil {
-		return err
+	if data.Resource != "" {
+		id, err := uuid.Parse(data.Resource)
+		if err != nil {
+			return err
+		}
+		a.resource = id
 	}
-	a.resource = id
-
 	return nil
 }

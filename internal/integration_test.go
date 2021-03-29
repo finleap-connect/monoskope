@@ -96,18 +96,8 @@ var _ = Describe("integration", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
-		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{
-			UserId: user.GetId(),
-			Role:   "admin",
-			Scope:  "system",
-		})
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-
 		tenantId := uuid.New()
-		command, err = cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"})
+		command, err := cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"})
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)

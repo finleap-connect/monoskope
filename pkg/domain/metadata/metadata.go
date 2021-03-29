@@ -42,13 +42,15 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 		es.NewMetadataManagerFromContext(ctx),
 	}
 
-	// Get the grpc metadata from incoming context
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		data := make(map[string]string)
-		for k, v := range md {
-			data[k] = v[0] // typically only the first and only value of that is relevant
+	if len(m.GetMetadata()) == 0 {
+		// Get the grpc metadata from incoming context
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			data := make(map[string]string)
+			for k, v := range md {
+				data[k] = v[0] // typically only the first and only value of that is relevant
+			}
+			m.SetMetadata(data)
 		}
-		m.SetMetadata(data)
 	}
 
 	if _, exists := m.Get(componentInformationKey); !exists {
