@@ -21,12 +21,12 @@ func NewTenantProjector() es.Projector {
 	}
 }
 
-func (u *tenantProjector) NewProjection(id uuid.UUID) es.Projection {
+func (t *tenantProjector) NewProjection(id uuid.UUID) es.Projection {
 	return projections.NewTenantProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (u *tenantProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
+func (t *tenantProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
 	p, ok := projection.(*projections.Tenant)
 	if !ok {
@@ -43,7 +43,7 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		p.Name = data.GetName()
 		p.Prefix = data.GetPrefix()
 
-		if err := u.ProjectCreated(event, p.DomainProjection); err != nil {
+		if err := t.ProjectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.TenantUpdated:
@@ -52,11 +52,11 @@ func (u *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 			return projection, err
 		}
 		p.Name = data.GetName().GetValue()
-		if err := u.ProjectModified(event, p.DomainProjection); err != nil {
+		if err := t.ProjectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.TenantDeleted:
-		if err := u.ProjectDeleted(event, p.DomainProjection); err != nil {
+		if err := t.ProjectDeleted(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:
