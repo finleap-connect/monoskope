@@ -91,6 +91,8 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 			Resource: cmd.GetResource(),
 		}
 		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
+	case *commands.DeleteUserRoleBindingCommand:
+		_ = a.AppendEvent(ctx, events.UserRoleBindingDeleted, nil)
 	default:
 		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}

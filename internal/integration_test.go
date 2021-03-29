@@ -58,7 +58,10 @@ var _ = Describe("integration", func() {
 
 	It("manage a user", func() {
 		userId := uuid.New()
-		command, err := cmd.CreateCommand(userId, commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"})
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(userId, commandTypes.CreateUser),
+			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -73,7 +76,11 @@ var _ = Describe("integration", func() {
 		Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
 		Expect(user.Id).To(Equal(userId.String()))
 
-		command, err = cmd.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, &cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()})
+		userRoleBindingId := uuid.New()
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
+			&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -84,9 +91,22 @@ var _ = Describe("integration", func() {
 		Expect(user).ToNot(BeNil())
 		Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
 		Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
+
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+		Expect(err).ToNot(HaveOccurred())
+
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
+
+		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(user).ToNot(BeNil())
 	})
 	It("fail to create a user which already exists", func() {
-		command, err := cmd.CreateCommand(uuid.New(), commandTypes.CreateUser, &cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"})
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
+			&cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"},
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -98,7 +118,10 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		tenantId := uuid.New()
-		command, err := cmd.CreateCommand(tenantId, commandTypes.CreateTenant, &cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"})
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+			&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -114,9 +137,10 @@ var _ = Describe("integration", func() {
 		Expect(tenant.GetPrefix()).To(Equal("tx"))
 		Expect(tenant.Id).To(Equal(tenantId.String()))
 
-		command, err = cmd.CreateCommand(tenantId, commandTypes.UpdateTenant, &cmdData.UpdateTenantCommandData{
-			Name: &wrapperspb.StringValue{Value: "DIIIETER"},
-		})
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
@@ -131,10 +155,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant.GetLastModifiedBy()).ToNot(BeNil())
 		Expect(tenant.GetLastModifiedBy().Id).To(Equal(user.Id))
 
-		command, err = cmd.CreateCommand(tenantId, commandTypes.DeleteTenant, nil)
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate

@@ -14,21 +14,13 @@ import (
 
 // DeleteUserRoleBindingCommand is a command for removing a role from a user.
 type DeleteUserRoleBindingCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 }
 
-func NewDeleteUserRoleBindingCommand() *DeleteUserRoleBindingCommand {
+func NewDeleteUserRoleBindingCommand(id uuid.UUID) es.Command {
 	return &DeleteUserRoleBindingCommand{
-		aggregateId: uuid.New(),
+		BaseCommand: es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.DeleteUserRoleBinding),
 	}
-}
-
-func (c *DeleteUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *DeleteUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-func (c *DeleteUserRoleBindingCommand) CommandType() es.CommandType {
-	return commands.DeleteUserRoleBinding
 }
 func (c *DeleteUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return nil

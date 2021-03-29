@@ -30,6 +30,7 @@ func RegisterCommands() es.CommandRegistry {
 	// User
 	commandRegistry.RegisterCommand(commands.NewCreateUserCommand)
 	commandRegistry.RegisterCommand(commands.NewCreateUserRoleBindingCommand)
+	commandRegistry.RegisterCommand(commands.NewDeleteUserRoleBindingCommand)
 
 	// Tenant
 	commandRegistry.RegisterCommand(commands.NewCreateTenantCommand)

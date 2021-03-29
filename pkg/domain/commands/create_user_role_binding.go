@@ -24,7 +24,6 @@ func NewCreateUserRoleBindingCommand(id uuid.UUID) es.Command {
 		BaseCommand: es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
 	}
 }
-
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserRoleBindingCommandData)
 }
