@@ -5,8 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	roleConstants "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
-	scopeConstants "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -52,14 +50,6 @@ func (r *userRepository) addRolesToUser(ctx context.Context, user *projections.U
 		return err
 	}
 	user.Roles = toProtoRoles(roles)
-
-	// Add user default role
-	user.Roles = append(user.Roles, &projectionsApi.UserRoleBinding{
-		Id:     uuid.Nil.String(),
-		UserId: user.GetId(),
-		Role:   roleConstants.User.String(),
-		Scope:  scopeConstants.System.String(),
-	})
 
 	return nil
 }
