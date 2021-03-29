@@ -43,19 +43,19 @@ func NewTenantRepository(repository es.Repository, userRepo UserRepository) Tena
 }
 
 func (r *tenantRepository) addUsersToTenant(ctx context.Context, tenant *projections.Tenant) error {
-	createdBy, err := r.userRepo.ByUserId(ctx, tenant.GetCreatedByID())
+	createdBy, err := r.userRepo.ByUserId(ctx, tenant.CreatedById)
 	if err != nil {
 		return err
 	}
 	tenant.CreatedBy = createdBy.User
-	if id := tenant.GetLastModifiedByID(); id != "" {
+	if id := tenant.LastModifiedById; id != uuid.Nil {
 		lastModifiedBy, err := r.userRepo.ByUserId(ctx, id)
 		if err != nil {
 			return err
 		}
 		tenant.LastModifiedBy = lastModifiedBy.User
 	}
-	if id := tenant.GetDeletedByID(); id != "" {
+	if id := tenant.DeletedById; id != uuid.Nil {
 		deletedBy, err := r.userRepo.ByUserId(ctx, id)
 		if err != nil {
 			return err

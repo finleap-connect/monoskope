@@ -26,7 +26,7 @@ type UserRepository interface {
 // ReadOnlyUserRepository is a repository for reading user projections.
 type ReadOnlyUserRepository interface {
 	// ById searches for the a user projection by it's id.
-	ByUserId(context.Context, string) (*projections.User, error)
+	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
 }
@@ -63,13 +63,8 @@ func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRo
 }
 
 // ById searches for the a user projection by it's id.
-func (r *userRepository) ByUserId(ctx context.Context, id string) (*projections.User, error) {
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return nil, err
-	}
-
-	projection, err := r.ById(ctx, uuid)
+func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
+	projection, err := r.ById(ctx, id)
 	if err != nil {
 		return nil, err
 	}

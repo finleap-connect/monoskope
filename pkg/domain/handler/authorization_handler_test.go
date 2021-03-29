@@ -32,12 +32,10 @@ var _ = Describe("domain/handler", func() {
 		Email: "some.user@monoskope.io",
 	}}
 
-	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{
-		Id:     uuid.New().String(),
-		UserId: adminUser.Id,
-		Role:   roles.Admin.String(),
-		Scope:  scopes.System.String(),
-	}}
+	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	adminRoleBinding.UserId = adminUser.Id
+	adminRoleBinding.Role = roles.Admin.String()
+	adminRoleBinding.Scope = scopes.System.String()
 
 	inMemoryRoleRepo := es_repos.NewInMemoryRepository()
 	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)

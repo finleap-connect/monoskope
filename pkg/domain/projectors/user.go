@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -20,11 +19,8 @@ func NewUserProjector() es.Projector {
 }
 
 func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {
-	return &projections.User{
-		User: &projectionsApi.User{
-			Id: id.String(),
-		},
-	}
+	return projections.NewUserProjection(id)
+
 }
 
 // Project updates the state of the projection occording to the given event.

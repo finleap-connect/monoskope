@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/uuid"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
@@ -39,10 +40,15 @@ func NewUserServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc.C
 }
 
 // GetById returns the user found by the given id.
-func (s *userServiceServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.User, error) {
-	user, err := s.repo.ByUserId(ctx, id.GetValue())
+func (s *userServiceServer) GetById(ctx context.Context, userId *wrappers.StringValue) (*projections.User, error) {
+	uuid, err := uuid.Parse(userId.Value)
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateToGrpcError(err)
+	}
+
+	user, err := s.repo.ByUserId(ctx, uuid)
+	if err != nil {
+		return nil, errors.TranslateToGrpcError(err)
 	}
 	return user.Proto(), nil
 }
@@ -57,7 +63,12 @@ func (s *userServiceServer) GetByEmail(ctx context.Context, email *wrappers.Stri
 }
 
 func (s *userServiceServer) GetRoleBindingsById(userId *wrappers.StringValue, stream api.UserService_GetRoleBindingsByIdServer) error {
-	user, err := s.repo.ByUserId(stream.Context(), userId.GetValue())
+	uuid, err := uuid.Parse(userId.Value)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	user, err := s.repo.ByUserId(stream.Context(), uuid)
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
