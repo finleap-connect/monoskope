@@ -49,12 +49,6 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			s.log.Info("Panic recovered.", "error", r)
-		}
-	}()
-
 	id, err := uuid.Parse(command.GetId())
 	if err != nil {
 		return nil, errors.ErrInvalidArgument(fmt.Sprintf("Failed to parse id of command: %s", err.Error()))

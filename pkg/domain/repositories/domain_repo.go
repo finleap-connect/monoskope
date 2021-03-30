@@ -15,7 +15,8 @@ type domainRepository struct {
 
 func NewDomainRepository(repository es.Repository, userRepo UserRepository) *domainRepository {
 	return &domainRepository{
-		userRepo: userRepo,
+		Repository: repository,
+		userRepo:   userRepo,
 	}
 }
 
