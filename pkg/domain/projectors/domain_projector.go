@@ -8,15 +8,16 @@ import (
 	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type DomainProjector struct {
+type domainProjector struct {
 }
 
-func NewDomainProjector() *DomainProjector {
-	return &DomainProjector{}
+// NewDomainProjector returns a new basic domain projector
+func NewDomainProjector() *domainProjector {
+	return &domainProjector{}
 }
 
-// GetUserIdFromEvent gets the UserID from event metadata
-func (*DomainProjector) GetUserIdFromEvent(event es.Event) (uuid.UUID, error) {
+// getUserIdFromEvent gets the UserID from event metadata
+func (*domainProjector) getUserIdFromEvent(event es.Event) (uuid.UUID, error) {
 	userId, err := uuid.Parse(event.Metadata()[gateway.HeaderAuthId])
 	if err != nil {
 		return uuid.Nil, err
@@ -24,9 +25,10 @@ func (*DomainProjector) GetUserIdFromEvent(event es.Event) (uuid.UUID, error) {
 	return userId, nil
 }
 
-func (p *DomainProjector) ProjectModified(event es.Event, dp *projections.DomainProjection) error {
+// projectModified updates the modified metadata
+func (p *domainProjector) projectModified(event es.Event, dp *projections.DomainProjection) error {
 	// Get UserID from event metadata
-	userId, err := p.GetUserIdFromEvent(event)
+	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		return err
 	}
@@ -37,9 +39,10 @@ func (p *DomainProjector) ProjectModified(event es.Event, dp *projections.Domain
 	return nil
 }
 
-func (p *DomainProjector) ProjectCreated(event es.Event, dp *projections.DomainProjection) error {
+// projectCreated updates the created metadata
+func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainProjection) error {
 	// Get UserID from event metadata
-	userId, err := p.GetUserIdFromEvent(event)
+	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		return err
 	}
@@ -47,12 +50,13 @@ func (p *DomainProjector) ProjectCreated(event es.Event, dp *projections.DomainP
 	dp.Created = timestamp.New(event.Timestamp())
 	dp.CreatedById = userId
 
-	return p.ProjectModified(event, dp)
+	return p.projectModified(event, dp)
 }
 
-func (p *DomainProjector) ProjectDeleted(event es.Event, dp *projections.DomainProjection) error {
+// projectDeleted updates the deleted metadata
+func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainProjection) error {
 	// Get UserID from event metadata
-	userId, err := p.GetUserIdFromEvent(event)
+	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		return err
 	}
@@ -60,5 +64,5 @@ func (p *DomainProjector) ProjectDeleted(event es.Event, dp *projections.DomainP
 	dp.Deleted = timestamp.New(event.Timestamp())
 	dp.DeletedById = userId
 
-	return p.ProjectModified(event, dp)
+	return p.projectModified(event, dp)
 }

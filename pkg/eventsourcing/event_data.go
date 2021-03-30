@@ -37,7 +37,7 @@ func (d EventData) toAny() (*anypb.Any, error) {
 	return a, nil
 }
 
-// ToProto the contents the EventData into m.
+// ToProto unmarshals the contents the EventData into m.
 func (d EventData) ToProto(m protoreflect.ProtoMessage) error {
 	a, err := d.toAny()
 	if err != nil {

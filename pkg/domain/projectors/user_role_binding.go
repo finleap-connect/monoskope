@@ -12,12 +12,12 @@ import (
 )
 
 type userRoleBindingProjector struct {
-	*DomainProjector
+	*domainProjector
 }
 
 func NewUserRoleBindingProjector() es.Projector {
 	return &userRoleBindingProjector{
-		DomainProjector: NewDomainProjector(),
+		domainProjector: NewDomainProjector(),
 	}
 }
 
@@ -46,11 +46,11 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 		p.Scope = data.GetScope()
 		p.Resource = data.GetResource()
 
-		if err := u.ProjectCreated(event, p.DomainProjection); err != nil {
+		if err := u.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.UserRoleBindingDeleted:
-		if err := u.ProjectDeleted(event, p.DomainProjection); err != nil {
+		if err := u.projectDeleted(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:

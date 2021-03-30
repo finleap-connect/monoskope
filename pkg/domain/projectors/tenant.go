@@ -12,12 +12,12 @@ import (
 )
 
 type tenantProjector struct {
-	*DomainProjector
+	*domainProjector
 }
 
 func NewTenantProjector() es.Projector {
 	return &tenantProjector{
-		DomainProjector: NewDomainProjector(),
+		domainProjector: NewDomainProjector(),
 	}
 }
 
@@ -43,7 +43,7 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		p.Name = data.GetName()
 		p.Prefix = data.GetPrefix()
 
-		if err := t.ProjectCreated(event, p.DomainProjection); err != nil {
+		if err := t.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.TenantUpdated:
@@ -52,11 +52,11 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 			return projection, err
 		}
 		p.Name = data.GetName().GetValue()
-		if err := t.ProjectModified(event, p.DomainProjection); err != nil {
+		if err := t.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.TenantDeleted:
-		if err := t.ProjectDeleted(event, p.DomainProjection); err != nil {
+		if err := t.projectDeleted(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:

@@ -12,12 +12,12 @@ import (
 )
 
 type userProjector struct {
-	*DomainProjector
+	*domainProjector
 }
 
 func NewUserProjector() es.Projector {
 	return &userProjector{
-		DomainProjector: NewDomainProjector(),
+		domainProjector: NewDomainProjector(),
 	}
 }
 
@@ -45,7 +45,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 		p.Email = data.GetEmail()
 		p.Name = data.GetName()
 
-		if err := u.ProjectCreated(event, p.DomainProjection); err != nil {
+		if err := u.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:

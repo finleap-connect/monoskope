@@ -99,7 +99,7 @@ func (r *tenantRepository) ByName(ctx context.Context, name string) (*projection
 	for _, p := range ps {
 		if t, ok := p.(*projections.Tenant); ok {
 			if name == t.Name {
-				// User found
+				// Tenant found
 				tenant = t
 			}
 		}
