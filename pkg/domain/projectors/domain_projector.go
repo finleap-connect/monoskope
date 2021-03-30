@@ -5,15 +5,19 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type domainProjector struct {
+	log logger.Logger
 }
 
 // NewDomainProjector returns a new basic domain projector
 func NewDomainProjector() *domainProjector {
-	return &domainProjector{}
+	return &domainProjector{
+		log: logger.WithName("domain-projector"),
+	}
 }
 
 // getUserIdFromEvent gets the UserID from event metadata
@@ -30,7 +34,8 @@ func (p *domainProjector) projectModified(event es.Event, dp *projections.Domain
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
-		return err
+		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
+		return nil
 	}
 
 	dp.LastModified = timestamp.New(event.Timestamp())
@@ -44,7 +49,8 @@ func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainP
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
-		return err
+		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
+		return nil
 	}
 
 	dp.Created = timestamp.New(event.Timestamp())
@@ -58,7 +64,8 @@ func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainP
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
-		return err
+		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
+		return nil
 	}
 
 	dp.Deleted = timestamp.New(event.Timestamp())
