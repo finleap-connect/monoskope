@@ -57,6 +57,7 @@ func SetupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, ha
 
 			userId := uuid.New()
 			data, err := commands.CreateCommandData(&cmdData.CreateUserCommandData{
+				Name:  userInfo[0],
 				Email: superUser,
 			})
 			if err != nil {
