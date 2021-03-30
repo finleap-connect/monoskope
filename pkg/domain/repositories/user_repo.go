@@ -113,7 +113,7 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 	return nil, errors.ErrUserNotFound
 }
 
-// All searches for the a user projection by it's email address.
+// All searches for all user projections.
 func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
 	ps, err := r.All(ctx)
 	if err != nil {

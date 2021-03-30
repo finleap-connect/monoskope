@@ -55,3 +55,18 @@ func (s *tenantServiceServer) GetByName(ctx context.Context, name *wrappers.Stri
 	}
 	return tenant.Proto(), nil
 }
+
+func (s *tenantServiceServer) GetAll(request *api.GetAllRequest, stream api.TenantService_GetAllServer) error {
+	users, err := s.repo.GetAll(stream.Context(), request.GetExcludeDeleted())
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, user := range users {
+		err := stream.Send(user.Proto())
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
+}

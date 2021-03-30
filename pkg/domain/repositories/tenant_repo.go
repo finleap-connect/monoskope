@@ -27,6 +27,8 @@ type ReadOnlyTenantRepository interface {
 	ByTenantId(context.Context, string) (*projections.Tenant, error)
 	// ByName searches for the a tenant projection by it's name
 	ByName(context.Context, string) (*projections.Tenant, error)
+	// GetAll searches for all tenant projections.
+	GetAll(context.Context, bool) ([]*projections.Tenant, error)
 }
 
 // WriteOnlyTenantRepository is a repository for writing tenant projections.
@@ -90,4 +92,20 @@ func (r *tenantRepository) ByName(ctx context.Context, name string) (*projection
 	}
 
 	return nil, errors.ErrTenantNotFound
+}
+
+// All searches for the a tenant projections.
+func (r *tenantRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.Tenant, error) {
+	ps, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var tenants []*projections.Tenant
+	for _, p := range ps {
+		if t, ok := p.(*projections.Tenant); ok {
+			tenants = append(tenants, t)
+		}
+	}
+	return tenants, nil
 }
