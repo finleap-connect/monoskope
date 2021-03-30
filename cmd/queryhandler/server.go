@@ -36,7 +36,7 @@ var serverCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Create EventStore client
-		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
+		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
 		esConnection, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err

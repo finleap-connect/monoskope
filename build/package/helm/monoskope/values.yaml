@@ -121,7 +121,7 @@ rabbitmq:
   persistence:
     enabled: false
   image:
-    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
+    registry: gitlab.figo.systems/platform/dependency_proxy/containers
     tag: 3.8.9
     pullPolicy: Always
   loadDefinition:
