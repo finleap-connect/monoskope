@@ -29,6 +29,8 @@ type ReadOnlyUserRepository interface {
 	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
+	// GetAll searches for all user projection.
+	GetAll(context.Context, bool) ([]*projections.User, error)
 }
 
 // WriteOnlyUserRepository is a repository for writing user projections.
@@ -109,4 +111,20 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 	}
 
 	return nil, errors.ErrUserNotFound
+}
+
+// All searches for the a user projection by it's email address.
+func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
+	ps, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*projections.User
+	for _, p := range ps {
+		if u, ok := p.(*projections.User); ok {
+			users = append(users, u)
+		}
+	}
+	return users, nil
 }
