@@ -71,9 +71,16 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err != nil {
 			return err
 		}
-
 		if userAggregate == nil {
 			return domainErrors.ErrUserNotFound
+		}
+
+		roleBindings, err := a.aggregateManager.All(ctx, aggregates.UserRoleBinding)
+		if err != nil {
+			return err
+		}
+		if containsRoleBinding(roleBindings, cmd.UserId, cmd.Role, cmd.Scope, cmd.Resource) {
+			return domainErrors.ErrUserRoleBindingAlreadyExists
 		}
 		return nil
 	default:
@@ -140,4 +147,18 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 		a.resource = id
 	}
 	return nil
+}
+
+func containsRoleBinding(values []es.Aggregate, userId string, role, scope, resource string) bool {
+	for _, value := range values {
+		d, ok := value.(*UserRoleBindingAggregate)
+		if ok &&
+			d.userId.String() == userId &&
+			d.role.String() == role &&
+			d.scope.String() == scope &&
+			d.resource.String() == resource {
+			return true
+		}
+	}
+	return false
 }
