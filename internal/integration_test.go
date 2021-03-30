@@ -86,6 +86,14 @@ var _ = Describe("integration", func() {
 		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
+
+		// Creating the same rolebinding again should fail
+		command.Id = uuid.New().String()
+		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		Expect(err).To(HaveOccurred())
+
 		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())

@@ -138,6 +138,7 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	a.userId = userId
 	a.role = es.Role(data.Role)
 	a.scope = es.Scope(data.Scope)
+	a.resource = uuid.Nil
 
 	if data.Resource != "" {
 		id, err := uuid.Parse(data.Resource)
@@ -146,17 +147,27 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 		}
 		a.resource = id
 	}
+
 	return nil
 }
 
 func containsRoleBinding(values []es.Aggregate, userId string, role, scope, resource string) bool {
+	resourceId := uuid.Nil
+	if resource != "" {
+		id, err := uuid.Parse(resource)
+		if err != nil {
+			return false
+		}
+		resourceId = id
+	}
+
 	for _, value := range values {
 		d, ok := value.(*UserRoleBindingAggregate)
 		if ok &&
 			d.userId.String() == userId &&
 			d.role.String() == role &&
 			d.scope.String() == scope &&
-			d.resource.String() == resource {
+			d.resource == resourceId {
 			return true
 		}
 	}
