@@ -8,18 +8,18 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
-type DomainRepository struct {
+type domainRepository struct {
 	es.Repository
 	userRepo UserRepository
 }
 
-func NewDomainRepository(repository es.Repository, userRepo UserRepository) *DomainRepository {
-	return &DomainRepository{
+func NewDomainRepository(repository es.Repository, userRepo UserRepository) *domainRepository {
+	return &domainRepository{
 		userRepo: userRepo,
 	}
 }
 
-func (r *DomainRepository) addMetadata(ctx context.Context, dp *projections.DomainProjection) error {
+func (r *domainRepository) addMetadata(ctx context.Context, dp *projections.DomainProjection) error {
 	if id := dp.CreatedById; id != uuid.Nil {
 		createdBy, err := r.userRepo.ByUserId(ctx, id)
 		if err != nil {
