@@ -50,10 +50,10 @@ func (b *S3BackupHandler) initClient() error {
 		return nil
 	}
 
-	dstAccessKey := os.Getenv("S3_ACCESS_KEY_DST")
-	dstSecretKey := os.Getenv("S3_SECRET_KEY_DST")
+	dstAccessKey := os.Getenv("S3_ACCESS_KEY")
+	dstSecretKey := os.Getenv("S3_SECRET_KEY")
 
-	if v := os.Getenv("S3_ENCRYPTION_KEY_DST"); v != "" {
+	if v := os.Getenv("S3_ENCRYPTION_KEY"); v != "" {
 		b.encryptionKey = v
 	}
 
