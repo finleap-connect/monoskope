@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"io"
 	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
@@ -35,8 +36,6 @@ func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.S
 }
 
 func (u *RetrieveEventsUseCase) Run() error {
-	loadStartTime := time.Now()
-
 	// Convert filter
 	sq, err := NewStoreQueryFromProto(u.filter)
 	if err != nil {
@@ -45,16 +44,21 @@ func (u *RetrieveEventsUseCase) Run() error {
 
 	// Retrieve events from Event Store
 	u.log.Info("Retrieving events from the database...")
-	events, err := u.store.Load(u.ctx, sq)
+
+	eventStream, err := u.store.Load(u.ctx, sq)
 	if err != nil {
 		return err
 	}
 
-	retrievalTime := time.Since(loadStartTime).Seconds()
+	for {
+		e, err := eventStream.Receive()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
 
-	// Send events to client
-	u.log.Info("Streaming events to client...")
-	for _, e := range events {
 		streamStartTime := time.Now()
 		protoEvent := es.NewProtoFromEvent(e)
 		if err != nil {
@@ -68,7 +72,7 @@ func (u *RetrieveEventsUseCase) Run() error {
 
 		// Count retrieved event
 		u.metrics.RetrievedTotalCounter.WithLabelValues(protoEvent.Type, protoEvent.AggregateType).Inc()
-		u.metrics.RetrievedHistogram.WithLabelValues(protoEvent.Type, protoEvent.AggregateType).Observe(time.Since(streamStartTime).Seconds() + retrievalTime)
+		u.metrics.RetrievedHistogram.WithLabelValues(protoEvent.Type, protoEvent.AggregateType).Observe(time.Since(streamStartTime).Seconds())
 	}
 
 	return nil

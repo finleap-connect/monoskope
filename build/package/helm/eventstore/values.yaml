@@ -99,3 +99,22 @@ storeDatabase:
   existingSecret: ""
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
+
+backup:
+  # -- Enables automated backups for the eventstore
+  enabled: false
+  alerting:
+    # -- Enables alerting for failed backups
+    enabled: false
+    secondsSinceLastSuccessfullBackup: 86400 # 60x60x24 := 24h
+    alertAfter: 1h
+  # -- CRON expression defining the full backup schedule
+  schedule: "0 22 * * *"
+  # -- Number of recent backups to keep
+  retentionCount: 7
+  # -- Backup destination
+  destination:
+    s3:
+      endpoint: s3.monoskope.io
+      bucket: my-backup-bucket
+      credentialsSecretName: s3-credentials

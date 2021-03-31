@@ -2,10 +2,69 @@ package eventsourcing
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type EventStreamReceiver interface {
+	Receive() (Event, error)
+}
+
+type EventStreamSender interface {
+	Send(Event)
+	Error(error)
+	Done()
+}
+
+type EventStream interface {
+	EventStreamSender
+	EventStreamReceiver
+}
+type eventStreamResult struct {
+	events chan Event
+	errors chan error
+	done   chan int
+}
+
+func NewEventStream() EventStream {
+	return &eventStreamResult{
+		events: make(chan Event),
+		errors: make(chan error),
+		done:   make(chan int),
+	}
+}
+
+func (e *eventStreamResult) Send(event Event) {
+	if event != nil {
+		e.events <- event
+	}
+}
+
+func (e *eventStreamResult) Error(err error) {
+	if err != nil {
+		e.errors <- err
+	}
+}
+
+func (e *eventStreamResult) Receive() (Event, error) {
+	select {
+	case <-e.done:
+		return nil, io.EOF
+	case event := <-e.events:
+		return event, nil
+	case err := <-e.errors:
+		return nil, err
+	}
+}
+
+func (e *eventStreamResult) Done() {
+	defer close(e.done)
+	defer close(e.events)
+	defer close(e.errors)
+	e.done <- 1
+}
 
 // Store is an interface for an event storage backend.
 type Store interface {
@@ -16,7 +75,7 @@ type Store interface {
 	Save(context.Context, []Event) error
 
 	// Load loads all events for the query from the store.
-	Load(context.Context, *StoreQuery) ([]Event, error)
+	Load(context.Context, *StoreQuery) (EventStreamReceiver, error)
 
 	// Close closes the underlying connections
 	Close() error

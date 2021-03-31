@@ -196,12 +196,12 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	eventStream := evs.NewEventStream()
+
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
 	}
-
-	var events []evs.Event
 
 	// Basic query to query all events
 	dbQuery := s.db.
@@ -212,17 +212,17 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuer
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
 
-	err := dbQuery.ForEach(func(e *eventRecord) (err error) {
-		events = append(events, pgEvent{
-			eventRecord: *e,
+	go func() {
+		defer eventStream.Done()
+		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
+			eventStream.Send(pgEvent{
+				eventRecord: *e,
+			})
+			return nil
 		})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return events, nil
+		eventStream.Error(err)
+	}()
+	return eventStream, nil
 }
 
 func (s *postgresEventStore) Close() error {

@@ -3,6 +3,7 @@ module gitlab.figo.systems/platform/monoskope/monoskope
 go 1.16
 
 require (
+	github.com/aws/aws-sdk-go v1.27.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/gin-contrib/cors v1.3.1
