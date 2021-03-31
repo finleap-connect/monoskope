@@ -1,7 +1,9 @@
 package backup
 
 import (
+	"archive/tar"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -14,16 +16,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"golang.org/x/sync/errgroup"
 )
 
 const encryptionAlgorithm string = "AES256"
-const partitionSize int = 1000
 
 type S3Config struct {
-	endpoint       string
-	bucket         string
-	retentionCount int
-	disableSSL     bool
+	endpoint   string
+	bucket     string
+	region     string
+	disableSSL bool
 }
 
 type S3BackupHandler struct {
@@ -34,13 +36,13 @@ type S3BackupHandler struct {
 	encryptionKey string
 }
 
-func NewBackupHandler(conf *S3Config, store es.Store) (*S3BackupHandler, error) {
+func NewS3BackupHandler(conf *S3Config, store es.Store) BackupHandler {
 	b := &S3BackupHandler{
 		log:   logger.WithName("s3-backup-handler"),
 		conf:  conf,
 		store: store,
 	}
-	return b, nil
+	return b
 }
 
 func (b *S3BackupHandler) initClient() error {
@@ -57,9 +59,9 @@ func (b *S3BackupHandler) initClient() error {
 
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(dstAccessKey, dstSecretKey, ""),
-		Endpoint:         &b.conf.endpoint,
-		Region:           aws.String("us-east-1"),
-		DisableSSL:       &b.conf.disableSSL,
+		Endpoint:         aws.String(b.conf.endpoint),
+		Region:           aws.String(b.conf.region),
+		DisableSSL:       aws.Bool(b.conf.disableSSL),
 		S3ForcePathStyle: aws.Bool(true),
 	})
 	if err != nil {
@@ -70,32 +72,85 @@ func (b *S3BackupHandler) initClient() error {
 	return nil
 }
 
-func (b *S3BackupHandler) RunBackup(ctx context.Context) (int64, error) {
+func (b *S3BackupHandler) RunBackup(ctx context.Context) (*BackupResult, error) {
 	filename := fmt.Sprintf("%v-eventstore-backup.tar", time.Now().UTC().Format(time.RFC3339))
-
 	b.log.Info("Starting backup...", "Bucket", b.conf.bucket, "Endpoint", b.conf.bucket, "Filename", filename)
+
+	result := &BackupResult{}
 	err := b.initClient()
 	if err != nil {
-		return 0, err
+		return result, err
 	}
-	return b.backupEvents(ctx, filename)
+
+	reader, writer := io.Pipe()
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return b.streamEvents(ctx, writer, result)
+	})
+	eg.Go(func() error {
+		return b.uploadBackup(ctx, filename, reader)
+	})
+	return result, eg.Wait()
 }
 
-func (b *S3BackupHandler) backupEvents(ctx context.Context, filename string) (int64, error) {
-	return 0, nil
+func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *BackupResult) error {
+	defer writer.Close()
+	tarWriter := tar.NewWriter(writer)
+	defer tarWriter.Close()
+
+	eventStream, err := b.store.Load(ctx, &es.StoreQuery{})
+	if err != nil {
+		return err
+	}
+
+	b.log.Info("Streaming events from store...")
+	for {
+		event, err := eventStream.Receive()
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		bytes, err := json.Marshal(event)
+		if err != nil {
+			b.log.Error(err, "An error occured when marshalling event", "AggregateType", event.AggregateType())
+			return err
+		}
+
+		err = tarWriter.WriteHeader(&tar.Header{
+			Name:       fmt.Sprintf("%s-%s-%v.json", event.AggregateType().String(), event.AggregateID().String(), event.AggregateVersion()),
+			Mode:       0600,
+			ChangeTime: time.Now().UTC(),
+			ModTime:    time.Now().UTC(),
+			Size:       int64(len(bytes)),
+		})
+		if err != nil {
+			b.log.Error(err, "An error occured when writing tar header", "AggregateType", event.AggregateType())
+			return err
+		}
+
+		numBytes, err := tarWriter.Write(bytes)
+		if err != nil {
+			b.log.Error(err, "An error occured when writing tar payload for event", "AggregateType", event.AggregateType())
+			return err
+		} else {
+			result.ProcessedEvents++
+			result.ProcessedBytes += uint64(numBytes)
+		}
+	}
+
+	return nil
 }
 
-func (b *S3BackupHandler) uploadBackup(ctx context.Context, filename string, reader *io.PipeReader, size int64) error {
+func (b *S3BackupHandler) uploadBackup(ctx context.Context, filename string, reader *io.PipeReader) error {
+	defer reader.Close()
 	b.log.Info("Uploading backup to S3...", "Bucket", b.conf.bucket, "Endpoint", b.conf.bucket, "Filename", filename)
 
 	// Create an uploader with the session and default options
 	uploader := s3manager.NewUploaderWithClient(b.s3Client)
-
-	// Prevent hitting the limit
-	if size/uploader.PartSize > int64(uploader.MaxUploadParts) {
-		uploader.PartSize = int64(float64(size) / float64(uploader.MaxUploadParts) * 1.2) // * <factor> for safety if initial object size increases during backup
-		b.log.Info("Adjusted s3manager.Uploader.PartSize to prevent hitting s3manager.Uploader.MaxUploadParts", "partSize", uploader.PartSize, "MaxUploadParts", uploader.MaxUploadParts)
-	}
 
 	ui := &s3manager.UploadInput{
 		Bucket:      aws.String(b.conf.bucket),
@@ -109,8 +164,5 @@ func (b *S3BackupHandler) uploadBackup(ctx context.Context, filename string, rea
 	}
 
 	_, err := uploader.UploadWithContext(ctx, ui)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
