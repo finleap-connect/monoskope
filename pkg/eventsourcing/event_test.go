@@ -29,16 +29,11 @@ var _ = Describe("EventData", func() {
 		Expect(pe.AggregateType).To(Equal(se.AggregateType().String()))
 		Expect(pe.AggregateVersion.GetValue()).To(Equal(se.AggregateVersion()))
 		Expect(se.Data()).To(Equal(EventData(pe.Data)))
-
-		proto := &testEd.TestEventData{}
-		_, err := ToEventDataFromProto(proto)
-		Expect(err).ToNot(HaveOccurred())
 	}
 
 	It("can convert to storage event from proto", func() {
 		proto := &testEd.TestEventData{Hello: "world"}
-		ed, err := ToEventDataFromProto(proto)
-		Expect(err).ToNot(HaveOccurred())
+		ed := ToEventDataFromProto(proto)
 
 		timestamp := time.Now().UTC()
 		pe := &esApi.Event{
@@ -59,9 +54,7 @@ var _ = Describe("EventData", func() {
 		timestamp := time.Now().UTC()
 		aggregateId := uuid.New()
 
-		ed, err := ToEventDataFromProto(&testEd.TestEventData{Hello: "world"})
-		Expect(err).ToNot(HaveOccurred())
-
+		ed := ToEventDataFromProto(&testEd.TestEventData{Hello: "world"})
 		se := NewEvent(
 			context.Background(),
 			EventType("TestType"),
@@ -76,9 +69,7 @@ var _ = Describe("EventData", func() {
 	})
 	It("fails to convert to storage query from proto filter for invalid aggregate id", func() {
 		proto := &testEd.TestEventData{Hello: "world"}
-		ed, err := ToEventDataFromProto(proto)
-		Expect(err).ToNot(HaveOccurred())
-
+		ed := ToEventDataFromProto(proto)
 		pe := &esApi.Event{
 			Type:             testEventType.String(),
 			Timestamp:        timestamppb.New(time.Now().UTC()),

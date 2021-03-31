@@ -12,8 +12,7 @@ var _ = Describe("EventData", func() {
 		return &cmdApi.TestCommandData{Test: "Hello world!"}
 	}
 	eventDataFromProto := func() EventData {
-		eventData, err := ToEventDataFromProto(getProto())
-		Expect(err).To(Not(HaveOccurred()))
+		eventData := ToEventDataFromProto(getProto())
 		Expect(eventData).To(Not(BeNil()))
 		return eventData
 	}
@@ -27,8 +26,7 @@ var _ = Describe("EventData", func() {
 		err := any.MarshalFrom(proto)
 		Expect(err).To(Not(HaveOccurred()))
 
-		eventData, err := toEventDataFromAny(&any)
-		Expect(err).To(Not(HaveOccurred()))
+		eventData := toEventDataFromAny(&any)
 		Expect(eventData).To(Not(BeNil()))
 	})
 	It("can unmarshall to any", func() {

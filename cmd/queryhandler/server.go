@@ -36,7 +36,7 @@ var serverCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Create EventStore client
-		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
+		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
 		esConnection, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
@@ -53,7 +53,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		userRepo, err := domain.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
+		userRepo, tenantRepo, err := domain.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
-			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer())
+			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer(tenantRepo))
 			qhApi.RegisterUserServiceServer(s, queryhandler.NewUserServiceServer(userRepo))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})

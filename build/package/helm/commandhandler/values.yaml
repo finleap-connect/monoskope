@@ -27,9 +27,6 @@ serviceAccount:
   name: ""
 
 superusers:
-  # Enable superuser functionality to create initial admin rolebindings. Superusers can assign the system admin role
-  # even if they don't have the system admin role themselves. This is needed to create admin users on initialization.
-  enabled: false
   # List of email addresses to identify superusers.
   emails: []
 

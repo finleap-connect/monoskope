@@ -34,9 +34,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	testCount := 0
 
 	createTestEventData := func(something string) evs.EventData {
-		ed, err := evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
-		Expect(err).ToNot(HaveOccurred())
-		return ed
+		return evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
 	}
 	createEvent := func() evs.Event {
 		eventType := evs.EventType("TestEvent")

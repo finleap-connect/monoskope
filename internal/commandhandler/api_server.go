@@ -2,9 +2,11 @@ package commandhandler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/google/uuid"
 	api_domain "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/commands"
@@ -14,6 +16,7 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc"
 )
 
@@ -22,12 +25,14 @@ type apiServer struct {
 	api.UnimplementedCommandHandlerServer
 	api_domain.UnimplementedCommandHandlerExtensionsServer
 	cmdRegistry evs.CommandRegistry
+	log         logger.Logger
 }
 
 // NewApiServer returns a new configured instance of apiServer
 func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 	return &apiServer{
 		cmdRegistry: cmdRegistry,
+		log:         logger.WithName("commandhandler-api-server"),
 	}
 }
 
@@ -44,7 +49,12 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 
 // Execute implements the API method Execute
 func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
-	cmd, err := s.cmdRegistry.CreateCommand(evs.CommandType(command.Type), command.Data)
+	id, err := uuid.Parse(command.GetId())
+	if err != nil {
+		return nil, errors.ErrInvalidArgument(fmt.Sprintf("Failed to parse id of command: %s", err.Error()))
+	}
+
+	cmd, err := s.cmdRegistry.CreateCommand(id, evs.CommandType(command.Type), command.Data)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
 	}
@@ -80,30 +90,18 @@ func (s *apiServer) GetPolicyOverview(ctx context.Context, in *empty.Empty) (*ap
 	commandTypes := s.cmdRegistry.GetRegisteredCommandTypes()
 
 	for _, cmdType := range commandTypes {
-		command, err := s.cmdRegistry.CreateCommand(cmdType, nil)
+		command, err := s.cmdRegistry.CreateCommand(uuid.Nil, cmdType, nil)
 		if err != nil {
 			return nil, err
 		}
 		policies := command.Policies(ctx)
 
 		for _, p := range policies {
-			res := p.Resource()
-			sub := p.Subject()
-
-			if res == "" {
-				res = "same"
-			}
-
-			if sub == "" {
-				sub = "self"
-			}
-
 			policyOverview.Policies = append(policyOverview.Policies, &api_domain.Policy{
-				Command:  cmdType.String(),
-				Role:     p.Role().String(),
-				Scope:    p.Scope().String(),
-				Resource: res,
-				Subject:  sub,
+				Command:       cmdType.String(),
+				Role:          p.Role().String(),
+				Scope:         p.Scope().String(),
+				ResourceMatch: p.ResourceMatch(),
 			})
 		}
 	}

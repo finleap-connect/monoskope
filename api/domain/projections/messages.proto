@@ -19,18 +19,8 @@ message Tenant {
   // DNS compatibility is ensured on validation. E.g. no more than 12
   // characters.
   string prefix = 3;
-  // When tenant has been created
-  google.protobuf.Timestamp Created = 4;
-  // By whom the tenant has been created
-  User CreatedBy = 5;
-  // When tenant has been last modified
-  google.protobuf.Timestamp LastModified = 6;
-  // By whom the tenant has been last modified
-  User LastModifiedBy = 7;
-  // When tenant has been deleted
-  google.protobuf.Timestamp Deleted = 8;
-  // By whom the tenant has been deleted
-  User DeletedBy = 9;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 4;
 }
 
 // User within Monoskope
@@ -43,6 +33,8 @@ message User {
   string email = 3;
   // Roles of the user
   repeated UserRoleBinding roles = 4;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 5;
 }
 
 message UserRoleBinding {
@@ -56,6 +48,8 @@ message UserRoleBinding {
   string scope = 4;
   // Target resource of the role
   string resource = 5;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 6;
 }
 
 message AuditEvent {
@@ -65,4 +59,19 @@ message AuditEvent {
   google.protobuf.Timestamp timestamp = 2;
   // Description of what happened
   string description = 3;
+}
+
+message ProjectionMetadata {
+  // When tenant has been created
+  google.protobuf.Timestamp Created = 1;
+  // By whom the tenant has been created
+  User CreatedBy = 2;
+  // When tenant has been last modified
+  google.protobuf.Timestamp LastModified = 3;
+  // By whom the tenant has been last modified
+  User LastModifiedBy = 4;
+  // When tenant has been deleted
+  google.protobuf.Timestamp Deleted = 5;
+  // By whom the tenant has been deleted
+  User DeletedBy = 6;
 }

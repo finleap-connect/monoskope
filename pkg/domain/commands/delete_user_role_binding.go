@@ -14,29 +14,20 @@ import (
 
 // DeleteUserRoleBindingCommand is a command for removing a role from a user.
 type DeleteUserRoleBindingCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 }
 
-func NewDeleteUserRoleBindingCommand() *DeleteUserRoleBindingCommand {
+func NewDeleteUserRoleBindingCommand(id uuid.UUID) es.Command {
 	return &DeleteUserRoleBindingCommand{
-		aggregateId: uuid.New(),
+		BaseCommand: es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.DeleteUserRoleBinding),
 	}
-}
-
-func (c *DeleteUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *DeleteUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-func (c *DeleteUserRoleBindingCommand) CommandType() es.CommandType {
-	return commands.DeleteUserRoleBinding
 }
 func (c *DeleteUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return nil
 }
 func (c *DeleteUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
-		// TODO: Tenant admin can not delete rolebinding
-		// es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResource(c.Resource), // Tenant admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                         // System admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResourceMatch(true), // Tenant admin
 	}
 }

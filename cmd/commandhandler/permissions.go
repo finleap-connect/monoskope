@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
@@ -20,36 +22,24 @@ func NewReportPermissions() *cobra.Command {
 			types := commandRegistry.GetRegisteredCommandTypes()
 
 			for _, cmdType := range types {
-				command, err := commandRegistry.CreateCommand(cmdType, nil)
+				command, err := commandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
 				if err != nil {
 					return err
 				}
 				policies := command.Policies(cmd.Context())
 
 				for _, p := range policies {
-					res := p.Resource()
-					sub := p.Subject()
-
-					if res == "" {
-						res = "same"
-					}
-
-					if sub == "" {
-						sub = "self"
-					}
-
 					data = append(data, []string{
 						string(cmdType),
 						p.Role().String(),
 						p.Scope().String(),
-						res,
-						sub,
+						fmt.Sprintf("%v", p.ResourceMatch()),
 					})
 				}
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Command", "Role", "Scope", "Resource", "Subject"})
+			table.SetHeader([]string{"Command", "Role", "Scope", "ResourceMatch"})
 
 			if formatMarkdown {
 				table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})

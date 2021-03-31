@@ -51,4 +51,7 @@ message EventFilter {
   google.protobuf.Timestamp min_timestamp = 7;
   // Filter events with a timestamp <= max_timestamp
   google.protobuf.Timestamp max_timestamp = 8;
+
+  // Filter events by aggregates that have not been deleted
+  bool exclude_deleted = 9;
 }

@@ -69,3 +69,17 @@ spec:
   prefix: /domain.UserService/
   rewrite: /domain.UserService/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-tenantsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.TenantService/
+  rewrite: /domain.TenantService/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}

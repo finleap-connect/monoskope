@@ -11,10 +11,13 @@ package commands;
 
 // Command is a command to be executed by the CommandHandler
 message Command {
+  // Unique identifier of the aggregate the command applies to (UUID 128-bit
+  // number)
+  string id = 1; // required
   // Type of the command
-  string type = 1;
+  string type = 2;
   // Command type specific data
-  google.protobuf.Any data = 2;
+  google.protobuf.Any data = 3;
 }
 
 message TestCommandData {

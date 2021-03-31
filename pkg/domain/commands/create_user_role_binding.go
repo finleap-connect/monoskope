@@ -15,41 +15,21 @@ import (
 
 // AddRoleToUser is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 	cmdData.CreateUserRoleBindingCommandData
-	superuserPolicies []es.Policy
 }
 
-func NewCreateUserRoleBindingCommand() *CreateUserRoleBindingCommand {
+func NewCreateUserRoleBindingCommand(id uuid.UUID) es.Command {
 	return &CreateUserRoleBindingCommand{
-		aggregateId:                      uuid.New(),
-		CreateUserRoleBindingCommandData: cmdData.CreateUserRoleBindingCommandData{},
-		superuserPolicies:                []es.Policy{},
+		BaseCommand: es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
 	}
-}
-
-func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *CreateUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType {
-	return commands.CreateUserRoleBinding
 }
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserRoleBindingCommandData)
 }
 func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
-	return append(
-		c.superuserPolicies,
-		[]es.Policy{
-			es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                          // System admin
-			es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResource(c.Resource), // Tenant admin
-		}...,
-	)
-}
-
-func (c *CreateUserRoleBindingCommand) DeclareSuperusers(users []string) {
-	for _, user := range users {
-		c.superuserPolicies = append(c.superuserPolicies, es.NewPolicy().WithSubject(user))
+	return []es.Policy{
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                         // System admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResourceMatch(true), // Tenant admin
 	}
 }

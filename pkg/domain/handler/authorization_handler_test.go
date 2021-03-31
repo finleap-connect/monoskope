@@ -9,12 +9,14 @@ import (
 	cmddata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
@@ -29,18 +31,11 @@ var _ = Describe("domain/handler", func() {
 		Name:  "some.user",
 		Email: "some.user@monoskope.io",
 	}}
-	someOtherUser := &projections.User{User: &projectionsApi.User{
-		Id:    uuid.New().String(),
-		Name:  "some-other.user",
-		Email: "some-other.user@monoskope.io",
-	}}
 
-	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{
-		Id:     uuid.New().String(),
-		UserId: adminUser.Id,
-		Role:   roles.Admin.String(),
-		Scope:  scopes.System.String(),
-	}}
+	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	adminRoleBinding.UserId = adminUser.Id
+	adminRoleBinding.Role = roles.Admin.String()
+	adminRoleBinding.Scope = scopes.System.String()
 
 	inMemoryRoleRepo := es_repos.NewInMemoryRepository()
 	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
@@ -51,33 +46,12 @@ var _ = Describe("domain/handler", func() {
 	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
 
-	err = inMemoryUserRepo.Upsert(context.Background(), someUser)
-	Expect(err).NotTo(HaveOccurred())
+	userBase := es.NewBaseCommand(uuid.New(), aggregates.User, commands.CreateUser)
+	tenantBase := es.NewBaseCommand(uuid.New(), aggregates.Tenant, commands.CreateTenant)
+	roleBindingBase := es.NewBaseCommand(uuid.New(), aggregates.UserRoleBinding, commands.CreateUserRoleBinding)
 
 	handler := NewAuthorizationHandler(userRepo)
 
-	It("user can't create other users", func() {
-		manager, err := metadata.NewDomainMetadataManager(context.Background())
-		Expect(err).ToNot(HaveOccurred())
-
-		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
-
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: "janedoe@monoskope.io",
-		}})
-		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(errors.ErrUnauthorized))
-	})
-	It("user can create themselves", func() {
-		manager, err := metadata.NewDomainMetadataManager(context.Background())
-		Expect(err).ToNot(HaveOccurred())
-
-		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: adminUser.Email,
-		}})
-		Expect(err).ToNot(HaveOccurred())
-	})
 	It("system admin can create users", func() {
 		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
 		Expect(err).NotTo(HaveOccurred())
@@ -86,25 +60,24 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{CreateUserCommandData: cmddata.CreateUserCommandData{
-			Email: someUser.Email,
-		}})
+
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
+			BaseCommand:           userBase,
+			CreateUserCommandData: cmddata.CreateUserCommandData{Email: someUser.Email},
+		})
 		Expect(err).ToNot(HaveOccurred())
 	})
-	It("user can't make themselves admin", func() {
+	It("system admin can create tenants", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
-			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
-				UserId: someUser.Id,
-				Role:   roles.Admin.String(),
-				Scope:  scopes.System.String(),
-			},
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
+
+		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateTenantCommand{
+			BaseCommand:             tenantBase,
+			CreateTenantCommandData: cmddata.CreateTenantCommandData{Name: "dieter", Prefix: "dt"},
 		})
-		Expect(err).To(HaveOccurred())
-		Expect(err).To(Equal(errors.ErrUnauthorized))
+		Expect(err).ToNot(HaveOccurred())
 	})
 	It("admin can create rolebinding for any user", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
@@ -112,6 +85,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
+			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
@@ -124,15 +98,15 @@ var _ = Describe("domain/handler", func() {
 		manager, err := metadata.NewDomainMetadataManager(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
-		manager.SetUserInformation(&metadata.UserInformation{Email: someUser.Email})
+		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 		command := &cmd.CreateUserRoleBindingCommand{
+			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
-				UserId: someOtherUser.Id,
+				UserId: someUser.Id,
 				Role:   roles.Admin.String(),
 				Scope:  scopes.System.String(),
 			},
 		}
-		command.DeclareSuperusers([]string{someUser.Email})
 		err = handler.HandleCommand(manager.GetContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 	})

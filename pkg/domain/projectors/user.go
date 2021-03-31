@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -13,24 +12,23 @@ import (
 )
 
 type userProjector struct {
+	*domainProjector
 }
 
 func NewUserProjector() es.Projector {
-	return &userProjector{}
+	return &userProjector{
+		domainProjector: NewDomainProjector(),
+	}
 }
 
 func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {
-	return &projections.User{
-		User: &projectionsApi.User{
-			Id: id.String(),
-		},
-	}
+	return projections.NewUserProjection(id)
 }
 
 // Project updates the state of the projection occording to the given event.
 func (u *userProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
-	i, ok := projection.(*projections.User)
+	p, ok := projection.(*projections.User)
 	if !ok {
 		return nil, errors.ErrInvalidProjectionType
 	}
@@ -43,14 +41,18 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 			return projection, err
 		}
 
-		i.Id = event.AggregateID().String()
-		i.Email = data.GetEmail()
-		i.Name = data.GetName()
+		p.Id = event.AggregateID().String()
+		p.Email = data.GetEmail()
+		p.Name = data.GetName()
+
+		if err := u.projectCreated(event, p.DomainProjection); err != nil {
+			return nil, err
+		}
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
 
-	i.IncrementVersion()
+	p.IncrementVersion()
 
-	return i, nil
+	return p, nil
 }

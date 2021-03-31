@@ -4,7 +4,7 @@ GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 GO             ?= go
 
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
-GINKO_VERSION  ?= v1.14.2
+GINKO_VERSION  ?= v1.15.2
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.36.0
@@ -94,7 +94,10 @@ clean: ginkgo-clean golangci-lint-clean build-clean
 protobuf:
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
-	find ./api -name '*.proto' -exec $(PROTOC) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. --go-grpc_out=. {} \;
+	# generates server part
+	find ./api -name '*.proto' -exec $(PROTOC) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
+	# generates client part
+	find ./api -name '*.proto' -exec $(PROTOC) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
