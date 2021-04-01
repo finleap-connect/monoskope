@@ -105,5 +105,9 @@ func (env *TestEnv) ClearStore(ctx context.Context) error {
 }
 
 func (env *TestEnv) Shutdown() error {
+	if err := env.Store.Close(); err != nil {
+		return err
+	}
+
 	return env.TestEnv.Shutdown()
 }

@@ -22,7 +22,6 @@ type TestEnv struct {
 	messagingTestEnv *messaging.TestEnv
 	storageTestEnv   *storage.TestEnv
 	publisher        es.EventBusPublisher
-	store            es.Store
 }
 
 func (t *TestEnv) GetMessagingTestEnv() *messaging.TestEnv {
@@ -65,7 +64,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	// Create server
 	env.grpcServer = grpc.NewServer("eventstore_grpc", false)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterEventStoreServer(s, NewApiServer(env.store, env.publisher))
+		api.RegisterEventStoreServer(s, NewApiServer(env.storageTestEnv.Store, env.publisher))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -95,10 +94,6 @@ func (env *TestEnv) GetApiAddr() string {
 
 func (env *TestEnv) Shutdown() error {
 	if err := env.publisher.Close(); err != nil {
-		return err
-	}
-
-	if err := env.store.Close(); err != nil {
 		return err
 	}
 
