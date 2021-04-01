@@ -13,6 +13,7 @@ import (
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 // postgresEventStore implements an EventStore for PostgreSQL.
@@ -171,7 +172,9 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 		return errors.ErrCouldNotSaveEvents
 	}
 
-	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
+	if util.GetOperationMode() == util.DEVELOPMENT {
+		s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
+	}
 	return nil
 }
 
