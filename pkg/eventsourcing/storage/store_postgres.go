@@ -229,9 +229,12 @@ func (s *postgresEventStore) Close() error {
 	s.log.Info("Shutting down...")
 
 	s.cancel()
-	err := s.db.Close()
-	if err != nil {
-		return err
+
+	if s.db != nil {
+		err := s.db.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	s.log.Info("Shutdown complete.")
