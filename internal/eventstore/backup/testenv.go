@@ -51,22 +51,29 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	// Start rabbitmq
-	container, err := env.Run(&dockertest.RunOptions{
-		Name:       "minio",
-		Repository: "artifactory.figo.systems/public_docker/minio/minio",
-		Tag:        "latest",
-		Cmd:        []string{"server", "/data"},
-		Env: []string{
-			fmt.Sprintf("MINIO_ACCESS_KEY=%s", accessKeyID),
-			fmt.Sprintf("MINIO_SECRET_KEY=%s", secretAccessKey),
-		},
-	})
-	if err != nil {
+	if err := env.CreateDockerPool(); err != nil {
 		return nil, err
 	}
 
-	env.Endpoint = fmt.Sprintf("localhost:%s", container.GetPort("9000/tcp"))
+	if v := os.Getenv("MINIO_URL"); v != "" {
+		env.Endpoint = v
+	} else {
+		container, err := env.Run(&dockertest.RunOptions{
+			Name:       "minio",
+			Repository: "artifactory.figo.systems/public_docker/minio/minio",
+			Tag:        "latest",
+			Cmd:        []string{"server", "/data"},
+			Env: []string{
+				fmt.Sprintf("MINIO_ACCESS_KEY=%s", accessKeyID),
+				fmt.Sprintf("MINIO_SECRET_KEY=%s", secretAccessKey),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		env.Endpoint = fmt.Sprintf("localhost:%s", container.GetPort("9000/tcp"))
+	}
 
 	env.Log.Info("check minio connection", "endpoint", env.Endpoint)
 	err = env.WaitForS3(env.Endpoint, accessKeyID, secretAccessKey)

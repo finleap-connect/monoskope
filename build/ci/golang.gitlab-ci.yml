@@ -3,6 +3,9 @@ variables:
   RABBITMQ_DEFAULT_PASS: guest
   AMQP_URL: "amqp://guest:guest@127.0.0.1:5672"
   DB_URL: "postgres://root@127.0.0.1:26257/test?sslmode=disable"
+  MINIO_ACCESS_KEY: "TESTACCESSKEY"
+  MINIO_SECRET_KEY: "TESTSECRETKEY"
+  MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
   image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:latest
@@ -38,6 +41,9 @@ test:golang:
     - name: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach:v20.2.2
       alias: cockroachdb
       command: ["start-single-node", "--insecure"]
+    - name: gitlab.figo.systems/platform/dependency_proxy/containers/minio/minio:latest
+      alias: minio
+      command: ["server", "/data"]
   script:
     - make go-ginkgo-get
     - make go-test
