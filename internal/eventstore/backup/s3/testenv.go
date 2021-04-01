@@ -1,4 +1,4 @@
-package backup
+package s3
 
 import (
 	"context"
@@ -18,6 +18,7 @@ import (
 const (
 	accessKeyID     = "TESTACCESSKEY"
 	secretAccessKey = "TESTSECRETKEY"
+	encryptionKey   = "thisis32bitlongpassphraseimusing"
 )
 
 type TestEnv struct {
@@ -80,7 +81,9 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
+	os.Setenv("S3_ENCRYPTION_KEY", encryptionKey)
 	os.Setenv("S3_ACCESS_KEY", accessKeyID)
+	os.Setenv("S3_SECRET_KEY", secretAccessKey)
 	os.Setenv("S3_SECRET_KEY", secretAccessKey)
 
 	return env, nil

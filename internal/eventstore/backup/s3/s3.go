@@ -1,8 +1,9 @@
-package backup
+package s3
 
 import (
 	"archive/tar"
 	"context"
+	"crypto/aes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,12 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/backup"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/sync/errgroup"
 )
-
-const encryptionAlgorithm string = "AES256"
 
 type S3Config struct {
 	Endpoint   string
@@ -29,14 +29,13 @@ type S3Config struct {
 }
 
 type S3BackupHandler struct {
-	log           logger.Logger
-	store         es.Store
-	conf          *S3Config
-	s3Client      *s3.S3
-	encryptionKey string
+	log      logger.Logger
+	store    es.Store
+	conf     *S3Config
+	s3Client *s3.S3
 }
 
-func NewS3BackupHandler(conf *S3Config, store es.Store) BackupHandler {
+func NewS3BackupHandler(conf *S3Config, store es.Store) backup.BackupHandler {
 	b := &S3BackupHandler{
 		log:   logger.WithName("s3-backup-handler"),
 		conf:  conf,
@@ -53,10 +52,6 @@ func (b *S3BackupHandler) initClient() error {
 	dstAccessKey := os.Getenv("S3_ACCESS_KEY")
 	dstSecretKey := os.Getenv("S3_SECRET_KEY")
 
-	if v := os.Getenv("S3_ENCRYPTION_KEY"); v != "" {
-		b.encryptionKey = v
-	}
-
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(dstAccessKey, dstSecretKey, ""),
 		Endpoint:         aws.String(b.conf.Endpoint),
@@ -72,11 +67,11 @@ func (b *S3BackupHandler) initClient() error {
 	return nil
 }
 
-func (b *S3BackupHandler) RunBackup(ctx context.Context) (*BackupResult, error) {
+func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.BackupResult, error) {
 	filename := fmt.Sprintf("%v-eventstore-backup.tar", time.Now().UTC().Format(time.RFC3339))
 	b.log.Info("Starting backup...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", filename)
 
-	result := &BackupResult{}
+	result := &backup.BackupResult{}
 	err := b.initClient()
 	if err != nil {
 		return result, err
@@ -99,7 +94,7 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*BackupResult, error) 
 	return result, nil
 }
 
-func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *BackupResult) error {
+func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *backup.BackupResult) error {
 	defer writer.Close()
 	tarWriter := tar.NewWriter(writer)
 	defer tarWriter.Close()
@@ -107,6 +102,12 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 	eventStream, err := b.store.Load(ctx, &es.StoreQuery{})
 	if err != nil {
 		return err
+	}
+
+	encryptionKey := ""
+	if v := os.Getenv("S3_ENCRYPTION_KEY"); v != "" {
+		encryptionKey = v
+		b.log.Info("Encrypting backup with AES and key specified in env var S3_ENCRYPTION_KEY.")
 	}
 
 	b.log.Info("Streaming events from store...")
@@ -124,6 +125,15 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 		if err != nil {
 			b.log.Error(err, "An error occured when marshalling event", "AggregateType", event.AggregateType())
 			return err
+		}
+
+		// Use encryption if key has been specified
+		if encryptionKey != "" {
+			encryptedBytes, err := encryptAES([]byte(encryptionKey), bytes)
+			if err != nil {
+				return err
+			}
+			bytes = encryptedBytes
 		}
 
 		err = tarWriter.WriteHeader(&tar.Header{
@@ -164,11 +174,36 @@ func (b *S3BackupHandler) uploadBackup(ctx context.Context, filename string, rea
 		Body:        reader,
 		ContentType: aws.String("application/tar"),
 	}
-	if b.encryptionKey != "" {
-		ui.SSECustomerKey = &b.encryptionKey
-		ui.SSECustomerAlgorithm = aws.String(encryptionAlgorithm)
-	}
 
 	_, err := uploader.UploadWithContext(ctx, ui)
 	return err
 }
+
+func encryptAES(key []byte, payload []byte) ([]byte, error) {
+	// create cipher
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// allocate space for ciphered data
+	out := make([]byte, len(payload))
+
+	// encrypt
+	c.Encrypt(out, payload)
+
+	// return encrypted payload
+	return out, nil
+}
+
+// func decryptAES(key []byte, encryptedPayload []byte) ([]byte, error) {
+// 	c, err := aes.NewCipher(key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	payload := make([]byte, len(encryptedPayload))
+// 	c.Decrypt(payload, encryptedPayload)
+
+// 	return payload, nil
+// }

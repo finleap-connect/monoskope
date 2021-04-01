@@ -1,4 +1,4 @@
-package backup
+package s3
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ var (
 
 func TestBackup(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/eventstore-backup-junit.xml")
+	junitReporter := reporters.NewJUnitReporter("../../../../reports/eventstore-backup-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "eventstore/backup", []Reporter{junitReporter})
 }
 

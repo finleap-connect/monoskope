@@ -1,4 +1,4 @@
-package backup
+package s3
 
 import (
 	"context"
