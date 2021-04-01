@@ -57,11 +57,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.store, err = storage.NewPostgresEventStore(env.storageTestEnv.GetStoreConfig())
-	if err != nil {
-		return nil, err
-	}
-	err = env.store.Connect(context.Background())
+	err = env.storageTestEnv.Store.Connect(context.Background())
 	if err != nil {
 		return nil, err
 	}

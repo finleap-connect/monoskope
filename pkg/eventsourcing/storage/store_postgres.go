@@ -269,6 +269,7 @@ func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 
 // Clear clears the event storage. This is only for testing purposes.
 func (s *postgresEventStore) clear(ctx context.Context) error {
+	s.log.Info("Clearing store...")
 	return s.db.
 		RunInTransaction(ctx, func(tx *pg.Tx) (err error) {
 			_, err = tx.Model((*eventRecord)(nil)).Where("1=1").Delete()

@@ -14,6 +14,8 @@ import (
 
 var _ = Describe("s3 backups", func() {
 	It("should backup s3 bucket", func() {
+		defer testEnv.storageTestEnv.ClearStore(context.Background())
+
 		conf := &S3Config{
 			Bucket:     testEnv.Bucket,
 			Endpoint:   testEnv.Endpoint,
@@ -24,17 +26,17 @@ var _ = Describe("s3 backups", func() {
 		var err error
 		userId := uuid.New()
 		roleBindingId := uuid.New()
-		err = testEnv.store.Save(context.Background(), []eventsourcing.Event{
+		err = testEnv.storageTestEnv.Store.Save(context.Background(), []eventsourcing.Event{
 			eventsourcing.NewEvent(context.Background(), events.UserCreated, nil, time.Now().UTC(), aggregates.User, userId, 1),
 		})
 		Expect(err).ToNot(HaveOccurred())
-		err = testEnv.store.Save(context.Background(), []eventsourcing.Event{
+		err = testEnv.storageTestEnv.Store.Save(context.Background(), []eventsourcing.Event{
 			eventsourcing.NewEvent(context.Background(), events.UserRoleBindingCreated, nil, time.Now().UTC(), aggregates.UserRoleBinding, roleBindingId, 1),
 			eventsourcing.NewEvent(context.Background(), events.UserRoleBindingDeleted, nil, time.Now().UTC(), aggregates.UserRoleBinding, roleBindingId, 2),
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		b := NewS3BackupHandler(conf, testEnv.store)
+		b := NewS3BackupHandler(conf, testEnv.storageTestEnv.Store)
 		Expect(b).ToNot(BeNil())
 
 		backupResult, err := b.RunBackup(context.Background())

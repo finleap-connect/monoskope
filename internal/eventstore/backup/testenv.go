@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/storage"
 )
 
@@ -24,7 +23,6 @@ const (
 type TestEnv struct {
 	*test.TestEnv
 	storageTestEnv *storage.TestEnv
-	store          es.Store
 	Endpoint       string
 	Bucket         string
 }
@@ -42,11 +40,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.store, err = storage.NewPostgresEventStore(env.storageTestEnv.GetStoreConfig())
-	if err != nil {
-		return nil, err
-	}
-	err = env.store.Connect(context.Background())
+	err = env.storageTestEnv.Store.Connect(context.Background())
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -21,10 +22,7 @@ const (
 type TestEnv struct {
 	*test.TestEnv
 	*postgresStoreConfig
-}
-
-func (t *TestEnv) GetStoreConfig() *postgresStoreConfig {
-	return t.postgresStoreConfig
+	Store evs.Store
 }
 
 func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
@@ -90,7 +88,20 @@ func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 		env.postgresStoreConfig = conf
 	}
 
+	store, err := NewPostgresEventStore(env.postgresStoreConfig)
+	if err != nil {
+		return nil, err
+	}
+	env.Store = store
+
 	return env, nil
+}
+
+func (env *TestEnv) ClearStore(ctx context.Context) error {
+	if pgStore, ok := env.Store.(*postgresEventStore); ok {
+		return pgStore.clear(ctx)
+	}
+	panic("that thing is not a pgstore")
 }
 
 func (env *TestEnv) Shutdown() error {
