@@ -4,6 +4,8 @@ import (
 	"archive/tar"
 	"context"
 	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -278,33 +280,57 @@ func (b *S3BackupHandler) readBackup(ctx context.Context, writer *io.PipeWriter,
 	return nil
 }
 
-func encryptAES(key []byte, payload []byte) ([]byte, error) {
-	// create cipher
+func encryptAES(key []byte, plaintext []byte) ([]byte, error) {
 	c, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	// allocate space for ciphered data
-	out := make([]byte, len(payload))
+	// gcm or Galois/Counter Mode, is a mode of operation
+	// for symmetric key cryptographic block ciphers
+	// - https://en.wikipedia.org/wiki/Galois/Counter_Mode
+	gcm, err := cipher.NewGCM(c)
+	// if any error generating new GCM
+	// handle them
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	// encrypt
-	c.Encrypt(out, payload)
+	// creates a new byte array the size of the nonce
+	// which must be passed to Seal
+	nonce := make([]byte, gcm.NonceSize())
+	// populates our nonce with a cryptographically secure
+	// random sequence
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		fmt.Println(err)
+	}
 
 	// return encrypted payload
-	return out, nil
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-func decryptAES(key []byte, encryptedPayload []byte) ([]byte, error) {
+func decryptAES(key []byte, ciphertext []byte) ([]byte, error) {
 	c, err := aes.NewCipher(key)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		fmt.Println(err)
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	payload := make([]byte, len(encryptedPayload))
-	c.Decrypt(payload, encryptedPayload)
-
-	return payload, nil
+	return plaintext, nil
 }
 
 func convertToS3Event(event es.Event) es.Event {
