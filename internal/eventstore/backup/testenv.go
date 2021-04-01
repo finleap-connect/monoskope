@@ -115,19 +115,17 @@ func (t *TestEnv) WaitForS3(endpoint, accessKeyID, secretAccessKey string) error
 }
 
 func (t *TestEnv) CreateBucket(endpoint, accessKeyID, secretAccessKey string) error {
-	return t.Retry(func() error {
-		newSession, err := session.NewSession(&aws.Config{
-			Credentials:      credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
-			Endpoint:         aws.String(endpoint),
-			Region:           aws.String("us-east-1"),
-			DisableSSL:       aws.Bool(true),
-			S3ForcePathStyle: aws.Bool(true),
-		})
-		if err != nil {
-			return err
-		}
-		client := s3.New(newSession)
-		_, err = client.CreateBucket(&s3.CreateBucketInput{Bucket: &t.Bucket})
-		return err
+	newSession, err := session.NewSession(&aws.Config{
+		Credentials:      credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
+		Endpoint:         aws.String(endpoint),
+		Region:           aws.String("us-east-1"),
+		DisableSSL:       aws.Bool(true),
+		S3ForcePathStyle: aws.Bool(true),
 	})
+	if err != nil {
+		return err
+	}
+	client := s3.New(newSession)
+	_, err = client.CreateBucket(&s3.CreateBucketInput{Bucket: &t.Bucket})
+	return err
 }
