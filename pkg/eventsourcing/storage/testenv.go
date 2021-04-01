@@ -97,11 +97,14 @@ func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 	return env, nil
 }
 
-func (env *TestEnv) ClearStore(ctx context.Context) error {
+func (env *TestEnv) ClearStore(ctx context.Context) {
 	if pgStore, ok := env.Store.(*postgresEventStore); ok {
-		return pgStore.clear(ctx)
+		if err := pgStore.clear(ctx); err != nil {
+			panic(err)
+		}
+	} else {
+		panic("that thing is not a pgstore")
 	}
-	panic("that thing is not a pgstore")
 }
 
 func (env *TestEnv) Shutdown() error {
