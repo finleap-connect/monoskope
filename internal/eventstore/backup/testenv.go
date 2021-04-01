@@ -73,12 +73,12 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		}
 
 		env.Endpoint = fmt.Sprintf("localhost:%s", container.GetPort("9000/tcp"))
-	}
 
-	env.Log.Info("check minio connection", "endpoint", env.Endpoint)
-	err = env.WaitForS3(env.Endpoint, accessKeyID, secretAccessKey)
-	if err != nil {
-		return nil, err
+		env.Log.Info("check minio connection", "endpoint", env.Endpoint)
+		err = env.WaitForS3(env.Endpoint, accessKeyID, secretAccessKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = env.CreateBucket(env.Endpoint, accessKeyID, secretAccessKey)
