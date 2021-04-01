@@ -104,9 +104,9 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 		return err
 	}
 
-	encryptionKey := ""
+	var encryptionKey []byte
 	if v := os.Getenv("S3_ENCRYPTION_KEY"); v != "" {
-		encryptionKey = v
+		encryptionKey = []byte(v)
 		b.log.Info("Encrypting backup with AES and key specified in env var S3_ENCRYPTION_KEY.")
 	}
 
@@ -128,8 +128,8 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 		}
 
 		// Use encryption if key has been specified
-		if encryptionKey != "" {
-			encryptedBytes, err := encryptAES([]byte(encryptionKey), bytes)
+		if len(encryptionKey) > 0 {
+			encryptedBytes, err := encryptAES(encryptionKey, bytes)
 			if err != nil {
 				return err
 			}
