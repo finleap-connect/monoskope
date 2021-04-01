@@ -22,10 +22,10 @@ import (
 const encryptionAlgorithm string = "AES256"
 
 type S3Config struct {
-	endpoint   string
-	bucket     string
-	region     string
-	disableSSL bool
+	Endpoint   string
+	Bucket     string
+	Region     string
+	DisableSSL bool
 }
 
 type S3BackupHandler struct {
@@ -59,9 +59,9 @@ func (b *S3BackupHandler) initClient() error {
 
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(dstAccessKey, dstSecretKey, ""),
-		Endpoint:         aws.String(b.conf.endpoint),
-		Region:           aws.String(b.conf.region),
-		DisableSSL:       aws.Bool(b.conf.disableSSL),
+		Endpoint:         aws.String(b.conf.Endpoint),
+		Region:           aws.String(b.conf.Region),
+		DisableSSL:       aws.Bool(b.conf.DisableSSL),
 		S3ForcePathStyle: aws.Bool(true),
 	})
 	if err != nil {
@@ -74,7 +74,7 @@ func (b *S3BackupHandler) initClient() error {
 
 func (b *S3BackupHandler) RunBackup(ctx context.Context) (*BackupResult, error) {
 	filename := fmt.Sprintf("%v-eventstore-backup.tar", time.Now().UTC().Format(time.RFC3339))
-	b.log.Info("Starting backup...", "Bucket", b.conf.bucket, "Endpoint", b.conf.bucket, "Filename", filename)
+	b.log.Info("Starting backup...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", filename)
 
 	result := &BackupResult{}
 	err := b.initClient()
@@ -90,7 +90,13 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*BackupResult, error) 
 	eg.Go(func() error {
 		return b.uploadBackup(ctx, filename, reader)
 	})
-	return result, eg.Wait()
+
+	if err := eg.Wait(); err != nil {
+		b.log.Error(err, "Error occured when backing up eventstore.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+		return result, err
+	}
+	b.log.Info("Backing up eventstore has been successful.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+	return result, nil
 }
 
 func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *BackupResult) error {
@@ -147,13 +153,13 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 
 func (b *S3BackupHandler) uploadBackup(ctx context.Context, filename string, reader *io.PipeReader) error {
 	defer reader.Close()
-	b.log.Info("Uploading backup to S3...", "Bucket", b.conf.bucket, "Endpoint", b.conf.bucket, "Filename", filename)
+	b.log.Info("Uploading backup to S3...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", filename)
 
 	// Create an uploader with the session and default options
 	uploader := s3manager.NewUploaderWithClient(b.s3Client)
 
 	ui := &s3manager.UploadInput{
-		Bucket:      aws.String(b.conf.bucket),
+		Bucket:      aws.String(b.conf.Bucket),
 		Key:         aws.String(filename),
 		Body:        reader,
 		ContentType: aws.String("application/tar"),
