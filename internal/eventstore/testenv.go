@@ -29,13 +29,14 @@ func (t *TestEnv) GetMessagingTestEnv() *messaging.TestEnv {
 	return t.messagingTestEnv
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	var err error
+
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("EventStoreTestEnv"),
+		TestEnv: testEnv,
 	}
 
-	env.messagingTestEnv, err = messaging.NewTestEnv()
+	env.messagingTestEnv, err = messaging.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.storageTestEnv, err = storage.NewTestEnv()
+	env.storageTestEnv, err = storage.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -118,5 +119,5 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.apiListener.Close(); err != nil {
 		return err
 	}
-	return env.TestEnv.Shutdown()
+	return nil
 }

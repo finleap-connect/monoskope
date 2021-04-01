@@ -27,9 +27,9 @@ func (t *TestEnv) GetStoreConfig() *postgresStoreConfig {
 	return t.postgresStoreConfig
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("StorageTestEnv"),
+		TestEnv: parent,
 	}
 
 	if err := env.CreateDockerPool(); err != nil {

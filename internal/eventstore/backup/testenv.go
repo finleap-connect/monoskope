@@ -29,14 +29,15 @@ type TestEnv struct {
 	Bucket         string
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	var err error
+
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("EventStoreTestEnv"),
+		TestEnv: testEnv,
 		Bucket:  "test-bucket",
 	}
 
-	env.storageTestEnv, err = storage.NewTestEnv()
+	env.storageTestEnv, err = storage.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -47,10 +48,6 @@ func NewTestEnv() (*TestEnv, error) {
 	}
 	err = env.store.Connect(context.Background())
 	if err != nil {
-		return nil, err
-	}
-
-	if err := env.CreateDockerPool(); err != nil {
 		return nil, err
 	}
 

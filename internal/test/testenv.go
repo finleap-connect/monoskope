@@ -15,6 +15,7 @@ type TestEnv struct {
 	pool      *dockertest.Pool
 	resources map[string]*dockertest.Resource
 	Log       logger.Logger
+	shutdown  bool
 }
 
 func IsRunningInCI() bool {
@@ -89,6 +90,11 @@ func NewTestEnv(envName string) *TestEnv {
 }
 
 func (env *TestEnv) Shutdown() error {
+	if env.shutdown {
+		return nil
+	}
+
+	env.shutdown = true
 	log := env.Log
 	log.Info("Tearing down testenv...")
 
