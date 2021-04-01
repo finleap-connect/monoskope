@@ -12,24 +12,28 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
-var _ = Describe("s3 backups", func() {
-	It("should backup s3 bucket", func() {
-		defer testEnv.storageTestEnv.ClearStore(context.Background())
+var _ = Describe("s3", func() {
+	backupIdentifier := ""
 
-		conf := &S3Config{
-			Bucket:     testEnv.Bucket,
-			Endpoint:   testEnv.Endpoint,
-			DisableSSL: true,
-			Region:     "us-east-1",
-		}
+	conf := &S3Config{
+		DisableSSL: true,
+		Region:     "us-east-1",
+	}
+
+	It("should backup eventstore to s3", func() {
+		defer testEnv.storageTestEnv.ClearStore(context.Background())
+		conf.Bucket = testEnv.Bucket
+		conf.Endpoint = testEnv.Endpoint
 
 		var err error
 		userId := uuid.New()
 		roleBindingId := uuid.New()
+
 		err = testEnv.storageTestEnv.Store.Save(context.Background(), []eventsourcing.Event{
 			eventsourcing.NewEvent(context.Background(), events.UserCreated, nil, time.Now().UTC(), aggregates.User, userId, 1),
 		})
 		Expect(err).ToNot(HaveOccurred())
+
 		err = testEnv.storageTestEnv.Store.Save(context.Background(), []eventsourcing.Event{
 			eventsourcing.NewEvent(context.Background(), events.UserRoleBindingCreated, nil, time.Now().UTC(), aggregates.UserRoleBinding, roleBindingId, 1),
 			eventsourcing.NewEvent(context.Background(), events.UserRoleBindingDeleted, nil, time.Now().UTC(), aggregates.UserRoleBinding, roleBindingId, 2),
@@ -39,9 +43,23 @@ var _ = Describe("s3 backups", func() {
 		b := NewS3BackupHandler(conf, testEnv.storageTestEnv.Store)
 		Expect(b).ToNot(BeNil())
 
-		backupResult, err := b.RunBackup(context.Background())
+		result, err := b.RunBackup(context.Background())
 		Expect(err).ToNot(HaveOccurred())
-		Expect(backupResult.ProcessedEvents).To(BeNumerically(">", 0))
-		Expect(backupResult.ProcessedBytes).To(BeNumerically(">", 0))
+		Expect(result.ProcessedEvents).To(BeNumerically(">", 0))
+		Expect(result.ProcessedBytes).To(BeNumerically(">", 0))
+		backupIdentifier = result.BackupIdentifier
+	})
+	It("should restore eventstore from s3", func() {
+		defer testEnv.storageTestEnv.ClearStore(context.Background())
+		conf.Bucket = testEnv.Bucket
+		conf.Endpoint = testEnv.Endpoint
+
+		b := NewS3BackupHandler(conf, testEnv.storageTestEnv.Store)
+		Expect(b).ToNot(BeNil())
+
+		result, err := b.RunRestore(context.Background(), backupIdentifier)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result.ProcessedEvents).To(BeNumerically(">", 0))
+		Expect(result.ProcessedBytes).To(BeNumerically(">", 0))
 	})
 })

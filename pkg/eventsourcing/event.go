@@ -49,7 +49,7 @@ type Event interface {
 func NewEvent(ctx context.Context, eventType EventType, data EventData, timestamp time.Time,
 	aggregateType AggregateType, aggregateID uuid.UUID, aggregateVersion uint64) Event {
 
-	return event{
+	return &event{
 		eventType:        eventType,
 		data:             data,
 		timestamp:        timestamp,
