@@ -18,12 +18,12 @@ spec:
   - name: {{ .Release.Namespace }}.rules
     rules:
     - alert: 
-      expr: time() - eventstore_backup_last_success_timestamp_seconds{namespace="{{ .Release.Namespace }}"} > {{ .Values.alerting.secondsSinceLastSuccessfulBackup }}
-      for: {{ .Values.alerting.alertAfter }}
+      expr: time() - eventstore_backup_last_success_timestamp_seconds{namespace="{{ .Release.Namespace }}"} > {{ .Values.backup.alerting.secondsSinceLastSuccessfulBackup }}
+      for: {{ .Values.backup.alerting.alertAfter }}
       labels:
         installed_by: {{ .Release.Namespace }}
         severity: critical
       annotations:
-        description: The event store backup job in namespace {{ .Release.Namespace }} has not run within the last {{ .Values.alerting.secondsSinceLastSuccessfulBackup }} seconds!
+        description: The event store backup job in namespace {{ .Release.Namespace }} has not run within the last {{ .Values.backup.alerting.secondsSinceLastSuccessfulBackup }} seconds!
         summary: The event store backup job in namespace {{ .Release.Namespace }} has not run.
 {{- end }}

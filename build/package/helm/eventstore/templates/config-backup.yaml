@@ -9,8 +9,6 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  schedule: {{ .Values.backup.schedule }}
-  retentionCount: {{ .Values.backup.retentionCount }}
 {{- if .Values.backup.destination.s3 }}
   s3.yaml: |
     {{- toYaml .Values.backup.destination.s3 | nindent 4 }}
