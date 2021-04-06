@@ -6,6 +6,9 @@ metadata:
   name: {{ $fullname }}-selfsigning-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   selfSigned: {}
 ---
@@ -15,6 +18,9 @@ metadata:
   name: {{ $fullname }}-ca
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ $fullname }}-ca
   commonName: CockroachDB CA
@@ -36,6 +42,9 @@ metadata:
   name: {{ $fullname }}-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ca:
     secretName: {{ $fullname }}-ca
@@ -46,6 +55,9 @@ metadata:
   name: {{ $fullname }}-root
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
   issuerRef:
@@ -63,6 +75,9 @@ metadata:
   name: {{ $fullname }}-node
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ .Values.cockroachdb.tls.certs.nodeSecret }}
   issuerRef:

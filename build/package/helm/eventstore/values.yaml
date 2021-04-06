@@ -106,15 +106,16 @@ backup:
   alerting:
     # -- Enables alerting for failed backups
     enabled: false
-    secondsSinceLastSuccessfullBackup: 86400 # 60x60x24 := 24h
+    secondsSinceLastSuccessfulBackup: 86400 # 60x60x24 := 24h
     alertAfter: 1h
-  # -- CRON expression defining the full backup schedule
+  # -- CRON expression defining the backup schedule
   schedule: "0 22 * * *"
-  # -- Number of recent backups to keep
+  # -- Number of most recent backups to keep
   retentionCount: 7
+  # -- Secret containing destination specific secrets, e.g. credentials to s3. The secret will be mounted as environment.
+  existingSecretName: ""
   # -- Backup destination
-  destination:
-    s3:
-      endpoint: s3.monoskope.io
-      bucket: my-backup-bucket
-      credentialsSecretName: s3-credentials
+  destination: {}
+    # s3:
+    #   endpoint: s3.monoskope.io
+    #   bucket: my-backup-bucket

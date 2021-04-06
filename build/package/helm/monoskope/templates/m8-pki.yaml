@@ -6,6 +6,9 @@ metadata:
   name: {{ include "monoskope.fullname" . }}-root-ca-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ca:
     secretName: {{ required ".Values.pki.issuer.ca.existingTrustAnchorSecretName is required when using the CA issuer!" .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
@@ -17,6 +20,9 @@ metadata:
   name: {{ include "monoskope.fullname" . }}-root-ca-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   vault:
     {{- toYaml .Values.pki.issuer.vault | nindent 6 }}
@@ -28,6 +34,9 @@ metadata:
   name: {{ include "monoskope.identityCAName" . }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ include "monoskope.identityCAName" . }}
   commonName: identity.monoskope.cluster.local
@@ -52,6 +61,9 @@ metadata:
   name: {{ include "monoskope.fullname" . }}-identity-issuer
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   ca:
     secretName: {{ include "monoskope.identityCAName" . }}
@@ -62,6 +74,9 @@ metadata:
   name: {{ include "monoskope.fullname" . }}-mtls-operator-auth
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
   issuerRef:

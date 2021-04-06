@@ -1,0 +1,18 @@
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "eventstore.fullname" . }}-backup
+  labels:
+    {{- include "eventstore.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  schedule: {{ .Values.backup.schedule }}
+  retentionCount: {{ .Values.backup.retentionCount }}
+{{- if .Values.backup.destination.s3 }}
+  s3.yaml: |
+    {{- toYaml .Values.backup.destination.s3 | nindent 4 }}
+{{- end }}
+{{- end }}

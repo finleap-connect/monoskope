@@ -49,6 +49,17 @@ eventstore:
     requests:
       cpu: 500m
       memory: 64Mi
+  backup:
+    enabled: true
+    alerting:
+      enabled: true
+    schedule: "0 22 * * *"
+    retentionCount: 7
+    existingSecretName: eventstore-backup-credentials
+    destination:
+      s3:
+        endpoint: s3.es1.fra.optimist.innovo.cloud
+        bucket: m8-eventstore-dev
 
 commandhandler:
   replicaCount: 2
