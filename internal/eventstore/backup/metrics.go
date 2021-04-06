@@ -30,14 +30,14 @@ type metricsPublisher struct {
 	start          time.Time
 }
 
-// NewMetricsPusher creates a new backup.MetricsPublisher.
-func NewMetricsPusher(pushGatewayUrl string) (MetricsPublisher, error) {
+// NewMetricsPublisher creates a new backup.MetricsPublisher.
+func NewMetricsPublisher(pushGatewayUrl string) (MetricsPublisher, error) {
 	if pushGatewayUrl == "" {
 		return nil, errors.New("URL of prometheus push gateway invalid.")
 	}
 
 	mp := &metricsPublisher{
-		log: logger.WithName("metrics-pusher"),
+		log: logger.WithName("metrics-publisher"),
 	}
 
 	mp.completionTime = prometheus.NewGauge(prometheus.GaugeOpts{
