@@ -23,6 +23,7 @@ require (
 	github.com/ory/dockertest/v3 v3.6.3
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.8.0
+	github.com/robfig/cron v1.2.0
 	github.com/spf13/cobra v1.1.1
 	github.com/streadway/amqp v1.0.0
 	github.com/ugorji/go v1.2.4 // indirect
@@ -35,5 +36,5 @@ require (
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )

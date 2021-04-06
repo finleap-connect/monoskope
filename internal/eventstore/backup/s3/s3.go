@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
 
@@ -22,13 +23,30 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v2"
 )
 
 type S3Config struct {
-	Endpoint   string
-	Bucket     string
-	Region     string
-	DisableSSL bool
+	Endpoint   string `yaml:"endpoint"`
+	Bucket     string `yaml:"bucket"`
+	Region     string `yaml:"region"`
+	DisableSSL bool   `yaml:"disableSSL"`
+}
+
+// NewS3ConfigFromFile creates a new S3 config from a given yaml file
+func NewS3ConfigFromFile(path string) (*S3Config, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &S3Config{}
+	err = yaml.Unmarshal(data, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }
 
 type S3BackupHandler struct {
@@ -93,7 +111,6 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.Result, error)
 		b.log.Error(err, "Error occured when backing up eventstore.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 		return result, err
 	}
-	b.log.Info("Backing up eventstore has been successful.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 	return result, nil
 }
 
@@ -119,7 +136,6 @@ func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*b
 		b.log.Error(err, "Error occured when restoring events.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 		return result, err
 	}
-	b.log.Info("Restoring events has been successful.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 	return result, nil
 }
 

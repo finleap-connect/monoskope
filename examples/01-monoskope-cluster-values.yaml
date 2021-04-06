@@ -60,6 +60,7 @@ eventstore:
       s3:
         endpoint: s3.es1.fra.optimist.innovo.cloud
         bucket: m8-eventstore-dev
+        region: us-east-1 # default
 
 commandhandler:
   replicaCount: 2

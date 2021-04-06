@@ -119,3 +119,5 @@ backup:
     # s3:
     #   endpoint: s3.monoskope.io
     #   bucket: my-backup-bucket
+    #   region: us-east-1
+    #   disableSSL: false

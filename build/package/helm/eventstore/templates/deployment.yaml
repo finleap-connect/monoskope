@@ -89,6 +89,7 @@ spec:
             - /eventstore
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
+            - {{ (printf "--enable-backups=%v" .Values.backup.enabled) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)

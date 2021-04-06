@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	apiAddr      string
-	metricsAddr  string
-	keepAlive    bool
-	msgbusPrefix string
+	apiAddr       string
+	metricsAddr   string
+	keepAlive     bool
+	msgbusPrefix  string
+	enableBackups bool
 )
 
 var serverCmd = &cobra.Command{
@@ -32,14 +33,29 @@ var serverCmd = &cobra.Command{
 		log.Info("Setting up event store...")
 		store, err := eventstore.NewEventStore()
 		if err != nil {
+			log.Error(err, "Failed to configure event store.")
 			return err
 		}
 		defer store.Close()
+
+		// setup backup management
+		if enableBackups {
+			backupManger, err := eventstore.NewBackupManager(store)
+			if err != nil {
+				log.Error(err, "Failed to configure automatic backups.")
+				return err
+			}
+			defer backupManger.Close()
+			log.Info("Automatic backups are ENABLED.")
+		} else {
+			log.Info("Automatic backups are DISABLED.")
+		}
 
 		// init message bus publisher
 		log.Info("Setting up message bus publisher...")
 		publisher, err := messagebus.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
+			log.Error(err, "Failed to configure message bus publisher.")
 			return err
 		}
 		defer publisher.Close()
@@ -63,6 +79,7 @@ func init() {
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
+	flags.BoolVar(&enableBackups, "enable-backups", false, "If enabled, eventstore will create automatic backups based on your configuration")
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
