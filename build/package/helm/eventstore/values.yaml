@@ -102,10 +102,10 @@ storeDatabase:
 
 backup:
   # -- Enables automated backups for the eventstore
-  enabled: true
+  enabled: false
   alerting:
     # -- Enables alerting for failed backups
-    enabled: true
+    enabled: false
     secondsSinceLastSuccessfulBackup: 86400 # 60x60x24 := 24h
     alertAfter: 1h
   # -- CRON expression defining the backup schedule
