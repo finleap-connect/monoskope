@@ -15,20 +15,18 @@ import (
 const BackupPath = "/etc/eventstore/backup"
 
 type BackupManager struct {
-	log              logr.Logger
-	store            eventsourcing.Store
-	backupHandler    backup.BackupHandler
-	metricsPublisher backup.MetricsPublisher
-	retention        int
+	log           logr.Logger
+	store         eventsourcing.Store
+	backupHandler backup.BackupHandler
+	retention     int
 }
 
 // NewBackupManager creates a new backup manager configured by config files taken from eventstore.BackupPath and environment config.
-func NewBackupManager(metricsPublisher backup.MetricsPublisher, store eventsourcing.Store, retention int) (*BackupManager, error) {
+func NewBackupManager(store eventsourcing.Store, retention int) (*BackupManager, error) {
 	manager := &BackupManager{
-		log:              logger.WithName("backup-manager"),
-		store:            store,
-		retention:        retention,
-		metricsPublisher: metricsPublisher,
+		log:       logger.WithName("backup-manager"),
+		store:     store,
+		retention: retention,
 	}
 	if err := manager.configure(); err != nil {
 		return nil, err
@@ -68,4 +66,8 @@ func (bm *BackupManager) RunBackup(ctx context.Context) (*backup.BackupResult, e
 
 func (bm *BackupManager) RunPurge(ctx context.Context) (*backup.PurgeResult, error) {
 	return bm.backupHandler.RunPurge(ctx)
+}
+
+func (bm *BackupManager) RunRestore(ctx context.Context, backupIdentifier string) (*backup.RestoreResult, error) {
+	return bm.backupHandler.RunRestore(ctx, backupIdentifier)
 }

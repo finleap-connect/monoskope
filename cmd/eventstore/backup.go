@@ -14,7 +14,7 @@ import (
 var (
 	pushGatewayUrl string
 	retention      int
-	timeout        string
+	timeoutBackup  string
 )
 
 var backupCmd = &cobra.Command{
@@ -25,7 +25,7 @@ var backupCmd = &cobra.Command{
 		var err error
 		log := logger.WithName("backup-cmd")
 
-		timeout, err := time.ParseDuration(timeout)
+		timeout, err := time.ParseDuration(timeoutBackup)
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ var backupCmd = &cobra.Command{
 
 		// setup backup management
 		log.Info("Setting up backup manager...")
-		backupManger, err := eventstore.NewBackupManager(metricsPublisher, store, retention)
+		backupManger, err := eventstore.NewBackupManager(store, retention)
 		if err != nil {
 			log.Error(err, "Failed to configure backup.")
 			return err
@@ -111,6 +111,6 @@ func init() {
 	// Local flags
 	flags := backupCmd.Flags()
 	flags.IntVar(&retention, "retention", 7, "Count of backups to keep, <1 means keep all")
-	flags.StringVar(&timeout, "timeout", "1h", "Timeout after which to cancel the backup job")
+	flags.StringVar(&timeoutBackup, "timeout", "1h", "Timeout after which to cancel the backup job")
 	flags.StringVar(&pushGatewayUrl, "prometheus-gateway-url", "", "Url of the gateway to push prometheus metrics to")
 }
