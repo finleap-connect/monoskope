@@ -53,11 +53,11 @@ spec:
             - name: backup-config
               configMap:
                 name: {{ include "eventstore.fullname" . }}-backup
-              items:
-            {{- if .Values.backup.destination.s3 }}
-              - key: "s3.yaml"
-                path: "s3.yaml"
-            {{- end }}
+                items:
+              {{- if .Values.backup.destination.s3 }}
+                - key: "s3.yaml"
+                  path: "s3.yaml"
+              {{- end }}
           containers:
           - name: {{ .Chart.Name }}
             securityContext:
