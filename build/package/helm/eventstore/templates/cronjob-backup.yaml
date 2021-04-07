@@ -67,7 +67,7 @@ spec:
             args:
               - /eventstore
               - backup
-              - --retention-count={{ .Values.backup.retentionCount }}
+              - --retention={{ .Values.backup.retentionCount }}
               - --timeout={{ .Values.backup.timeout }}
               - --prometheus-gateway-url={{ .Values.backup.prometheusPushgatewayUrl }}
             volumeMounts:
