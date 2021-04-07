@@ -97,6 +97,6 @@ var _ = Describe("s3", func() {
 		pr, err := b.RunPurge(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(pr.BackupsLeft).To(BeNumerically("==", 5))
-		Expect(pr.PurgedBackups).To(BeNumerically("==", 3))
+		Expect(pr.PurgedBackups).To(BeNumerically("==", 4))
 	})
 })
