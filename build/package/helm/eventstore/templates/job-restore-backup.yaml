@@ -20,6 +20,7 @@ spec:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations:
+        linkerd.io/inject: disabled
         {{- toYaml . | nindent 12 }}
       {{- end }}
       labels:

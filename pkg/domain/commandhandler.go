@@ -51,7 +51,7 @@ func SetupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, ha
 			metadataMgr.SetUserInformation(&metadata.UserInformation{
 				Name:   userInfo[0],
 				Email:  superUser,
-				Issuer: "system",
+				Issuer: "commandhandler",
 			})
 			ctx := metadataMgr.GetContext()
 
@@ -69,7 +69,10 @@ func SetupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, ha
 			}
 
 			err = handler.HandleCommand(ctx, cmd)
-			if err != nil && !errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+			if err != nil {
+				if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+					continue
+				}
 				return err
 			}
 

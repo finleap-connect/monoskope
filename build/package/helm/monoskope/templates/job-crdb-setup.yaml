@@ -1,5 +1,9 @@
-{{ if .Values.cockroachdb.enabled }}
-{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-setup") -}}
+{{- if .Values.cockroachdb.enabled }}
+{{- if .Values.cockroachdb.dropExistingDatabase }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init-with-drop") -}}
+{{- else }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init") -}}
+{{- end }}
 {{- $crdbName := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
 {{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
 apiVersion: batch/v1
@@ -30,6 +34,9 @@ spec:
       - args:
         - sql
         - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
+{{- if .Values.cockroachdb.dropExistingDatabase }}
+        - --execute=DROP DATABASE IF EXISTS eventstore;
+{{- end }}
         - --execute=CREATE USER IF NOT EXISTS eventstore;
         - --execute=CREATE DATABASE IF NOT EXISTS eventstore;
         - --execute=GRANT ALL ON DATABASE eventstore TO eventstore;
@@ -58,4 +65,4 @@ spec:
               - key: tls.key
                 path: root.key
                 mode: 0400
-{{ end }}
+{{- end }}
