@@ -52,7 +52,7 @@ eventstore:
   backup:
     enabled: true
     alerting:
-      enabled: true
+      enabled: false
     schedule: "0 22 * * *"
     retentionCount: 7
     existingSecretName: eventstore-backup-credentials
