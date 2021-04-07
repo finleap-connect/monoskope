@@ -48,6 +48,7 @@ var _ = Describe("s3", func() {
 		Expect(result.ProcessedEvents).To(BeNumerically(">", 0))
 		Expect(result.ProcessedBytes).To(BeNumerically(">", 0))
 		backupIdentifier = result.BackupIdentifier
+		time.Sleep(1000 * time.Millisecond)
 	})
 	It("should restore eventstore", func() {
 		defer testEnv.storageTestEnv.ClearStore(context.Background())
