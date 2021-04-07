@@ -11,6 +11,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,17 +52,19 @@ func NewS3ConfigFromFile(path string) (*S3Config, error) {
 }
 
 type S3BackupHandler struct {
-	log      logger.Logger
-	store    es.Store
-	conf     *S3Config
-	s3Client *s3.S3
+	log       logger.Logger
+	store     es.Store
+	conf      *S3Config
+	s3Client  *s3.S3
+	retention int
 }
 
-func NewS3BackupHandler(conf *S3Config, store es.Store) backup.BackupHandler {
+func NewS3BackupHandler(conf *S3Config, store es.Store, retention int) backup.BackupHandler {
 	b := &S3BackupHandler{
-		log:   logger.WithName("s3-backup-handler"),
-		conf:  conf,
-		store: store,
+		log:       logger.WithName("s3-backup-handler"),
+		conf:      conf,
+		store:     store,
+		retention: retention,
 	}
 	return b
 }
@@ -88,11 +92,11 @@ func (b *S3BackupHandler) initClient() error {
 	return nil
 }
 
-func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.Result, error) {
+func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.BackupResult, error) {
 	filename := fmt.Sprintf("%v-eventstore-backup.tar", time.Now().UTC().Format(time.RFC3339))
 	b.log.Info("Starting backup...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", filename)
 
-	result := &backup.Result{BackupIdentifier: filename}
+	result := &backup.BackupResult{BackupIdentifier: filename}
 	err := b.initClient()
 	if err != nil {
 		return result, err
@@ -114,10 +118,10 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.Result, error)
 	return result, nil
 }
 
-func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*backup.Result, error) {
+func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*backup.RestoreResult, error) {
 	b.log.Info("Starting restore...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", identifier)
 
-	result := &backup.Result{BackupIdentifier: identifier}
+	result := &backup.RestoreResult{}
 	err := b.initClient()
 	if err != nil {
 		return result, err
@@ -139,7 +143,92 @@ func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*b
 	return result, nil
 }
 
-func (b *S3BackupHandler) storeEvents(ctx context.Context, reader *io.PipeReader, result *backup.Result) error {
+func (b *S3BackupHandler) RunPurge(ctx context.Context) (*backup.PurgeResult, error) {
+	b.log.Info("Starting purge...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Retention", b.retention)
+	result := &backup.PurgeResult{}
+
+	err := b.initClient()
+	if err != nil {
+		return result, err
+	}
+
+	return result, b.purgeBackups(ctx, result)
+}
+
+func (b *S3BackupHandler) purgeBackups(ctx context.Context, result *backup.PurgeResult) error {
+	if b.retention < 1 {
+		b.log.Info("Not deleting any backups because retention is set to < 1.")
+		return nil
+	}
+
+	var continuationToken *string = nil
+	var isTruncated *bool = aws.Bool(true)
+	objectInfos := make([]*s3.Object, 0)
+
+	for isTruncated != nil && *isTruncated {
+		listObjectsOutput, err := b.s3Client.ListObjectsWithContext(ctx, &s3.ListObjectsInput{
+			Bucket: aws.String(b.conf.Bucket),
+			Prefix: aws.String(""),
+			Marker: continuationToken,
+		})
+		if err != nil {
+			return fmt.Errorf("Error listing objects in bucket: %v", err.Error())
+		}
+		isTruncated = listObjectsOutput.IsTruncated
+		continuationToken = listObjectsOutput.NextMarker
+
+		if listObjectsOutput.Contents != nil {
+			objectInfos = append(objectInfos, listObjectsOutput.Contents...)
+		}
+	}
+
+	// Sort backups by last modification date, ascending
+	sort.Slice(objectInfos, func(i, j int) bool {
+		return objectInfos[i].LastModified.Before(*objectInfos[j].LastModified)
+	})
+
+	// Get all tars
+	var infos []*s3.ObjectIdentifier
+	for _, objectInfo := range objectInfos {
+		if filepath.Ext(*objectInfo.Key) == ".tar" {
+			infos = append(infos, &s3.ObjectIdentifier{
+				Key: objectInfo.Key,
+			})
+		}
+	}
+
+	result.BackupsLeft = len(infos)
+	if result.BackupsLeft < 1 {
+		return fmt.Errorf("Destination bucket contains no backups.")
+	}
+	b.log.Info("Listing backups in bucket finished.", "ExistingBackups", result.BackupsLeft)
+
+	if result.BackupsLeft <= b.retention {
+		b.log.Info("Not purging backups because the number of backups is lower than or equal to the number of backups to keep.", "Retention", b.retention, "ExistingBackups", result.BackupsLeft)
+		return nil
+	}
+
+	backupsToDelete := result.BackupsLeft - b.retention
+	b.log.Info("Purging backups...", "BackupsToDelete", backupsToDelete, "Retention", b.retention)
+
+	_, err := b.s3Client.DeleteObjectsWithContext(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(b.conf.Bucket),
+		Delete: &s3.Delete{
+			Objects: infos[:backupsToDelete],
+		},
+	})
+	if err != nil {
+		b.log.Error(err, "Encountered an error trying to delete an object in S3: %v", "objectName", err.Error)
+		return err
+	}
+
+	result.BackupsLeft -= backupsToDelete
+	result.PurgedBackups = backupsToDelete
+
+	return nil
+}
+
+func (b *S3BackupHandler) storeEvents(ctx context.Context, reader *io.PipeReader, result *backup.RestoreResult) error {
 	defer reader.Close()
 	tarReader := tar.NewReader(reader)
 
@@ -190,7 +279,7 @@ func (b *S3BackupHandler) storeEvents(ctx context.Context, reader *io.PipeReader
 	return nil
 }
 
-func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *backup.Result) error {
+func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWriter, result *backup.BackupResult) error {
 	defer writer.Close()
 	tarWriter := tar.NewWriter(writer)
 	defer tarWriter.Close()

@@ -36,7 +36,7 @@ func NewBackupManager(metricsPublisher backup.MetricsPublisher, store eventsourc
 	return manager, nil
 }
 
-func (b *BackupManager) configure() error {
+func (bm *BackupManager) configure() error {
 	// Get backup destination configuration
 	fileInfos, err := ioutil.ReadDir(BackupPath)
 	if err != nil {
@@ -55,13 +55,17 @@ func (b *BackupManager) configure() error {
 			if err != nil {
 				return err
 			}
-			b.backupHandler = s3.NewS3BackupHandler(conf, b.store)
+			bm.backupHandler = s3.NewS3BackupHandler(conf, bm.store, bm.retention)
 		}
 	}
 
 	return nil
 }
 
-func (b *BackupManager) RunBackup(ctx context.Context) (*backup.Result, error) {
-	return b.backupHandler.RunBackup(ctx)
+func (bm *BackupManager) RunBackup(ctx context.Context) (*backup.BackupResult, error) {
+	return bm.backupHandler.RunBackup(ctx)
+}
+
+func (bm *BackupManager) RunPurge(ctx context.Context) (*backup.PurgeResult, error) {
+	return bm.backupHandler.RunPurge(ctx)
 }
