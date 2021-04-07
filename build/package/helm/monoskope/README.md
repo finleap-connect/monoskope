@@ -12,9 +12,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
+| https://artifactory.figo.systems/artifactory/virtual_helm | ambassador | 6.5.18 |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://www.getambassador.io | ambassador | 6.5.18 |
 
 ## Values
 
@@ -24,6 +24,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.enableAES | bool | `false` |  |
 | ambassador.enabled | bool | `true` |  |
 | ambassador.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador"` |  |
+| ambassador.metrics.serviceMonitor.enabled | bool | `true` |  |
+| ambassador.metrics.serviceMonitor.selector.release | string | `"monitoring"` |  |
+| ambassador.metrics.serviceMonitor.selector.tenant | string | `"finleap-cloud"` |  |
 | ambassador.rbac.create | bool | `false` |  |
 | ambassador.replicaCount | int | `3` |  |
 | ambassador.resources.limits.cpu | int | `4` |  |
@@ -42,16 +45,19 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
 | cockroachdb.serviceMonitor.enabled | bool | `true` |  |
-| cockroachdb.serviceMonitor.interval | string | `"30s"` |  |
-| cockroachdb.serviceMonitor.labels | object | `{}` |  |
+| cockroachdb.serviceMonitor.interval | string | `"1m"` |  |
+| cockroachdb.serviceMonitor.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| cockroachdb.serviceMonitor.labels.release | string | `"monitoring"` |  |
+| cockroachdb.serviceMonitor.labels.tenant | string | `"finleap-cloud"` |  |
+| cockroachdb.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | cockroachdb.statefulset.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.statefulset.maxUnavailable | int | `1` |  |
 | cockroachdb.statefulset.replicas | int | `3` |  |
-| cockroachdb.statefulset.resources.limits.cpu | int | `1` |  |
+| cockroachdb.statefulset.resources.limits.cpu | int | `2` |  |
 | cockroachdb.statefulset.resources.limits.memory | string | `"2Gi"` |  |
 | cockroachdb.statefulset.resources.requests.cpu | string | `"500m"` |  |
 | cockroachdb.statefulset.resources.requests.memory | string | `"1Gi"` |  |
-| cockroachdb.storage.persistentVolume.size | string | `"20Gi"` |  |
+| cockroachdb.storage.persistentVolume.size | string | `"1Gi"` |  |
 | cockroachdb.tls.certs.clientRootSecret | string | `"monoskope-crdb-root"` |  |
 | cockroachdb.tls.certs.nodeSecret | string | `"monoskope-crdb-node"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
@@ -71,11 +77,18 @@ Monoskope implements the management and operation of tenants, users and their ro
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | hosting.domain | string | `"monoskope.io"` |  |
 | hosting.issuer | string | `""` |  |
+| hosting.mtls.subdomain | string | `"mtls"` |  |
 | messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
 | messageBus.routingKeyPrefix | string | `"m8"` |  |
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
+| pki.enabled | bool | `true` |  |
+| pki.issuer.ca.enabled | bool | `true` |  |
+| pki.issuer.ca.existingTrustAnchorSecretName | string | `"m8-trust-anchor"` |  |
+| pki.issuer.vault.enabled | bool | `false` |  |
+| pki.issuer.vault.path | string | `"pki_int/sign/example-dot-com"` |  |
+| pki.issuer.vault.server | string | `"https://vault.local"` |  |
 | queryhandler.enabled | bool | `true` |  |
 | queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | queryhandler.replicaCount | int | `1` |  |
@@ -90,7 +103,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name"` |  |
 | rabbitmq.extraPlugins | string | `"rabbitmq_auth_mechanism_ssl"` |  |
 | rabbitmq.image.pullPolicy | string | `"Always"` |  |
-| rabbitmq.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq"` |  |
+| rabbitmq.image.registry | string | `"gitlab.figo.systems/platform/dependency_proxy/containers"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
 | rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |

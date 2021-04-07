@@ -18,6 +18,8 @@ spec:
     spec:
       backoffLimit: 4
       ttlSecondsAfterFinished: 100
+      completions: 1
+      parallelism: 1
       template:
         metadata:
           {{- with .Values.podAnnotations }}
@@ -66,7 +68,8 @@ spec:
               - /eventstore
               - backup
               - --retention-count={{ .Values.backup.retentionCount }}
-              - {{ (printf "--prometheus-gateway-url=%v" .Values.backup.prometheusPushgatewayUrl) }}
+              - --timeout={{ .Values.backup.timeout }}
+              - --prometheus-gateway-url={{ .Values.backup.prometheusPushgatewayUrl }}
             volumeMounts:
               {{- if .Values.storeDatabase.tlsSecret }}
               - name: dbcerts

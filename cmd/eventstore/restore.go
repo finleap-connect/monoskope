@@ -69,7 +69,7 @@ func init() {
 	rootCmd.AddCommand(restoreCmd)
 	// Local flags
 	flags := restoreCmd.Flags()
-	flags.StringVar(&timeoutBackup, "timeout", "1h", "Timeout after which to cancel the restore job")
+	flags.StringVar(&timeoutRestore, "timeout", "1h", "Timeout after which to cancel the restore job")
 	flags.StringVar(&backupIdentifier, "identifier", "", "Identifier of the backup to restore")
 	util.PanicOnError(restoreCmd.MarkFlagRequired("identifier"))
 }

@@ -94,6 +94,7 @@ messageBus:
   tlsSecret: ""
 
 storeDatabase:
+  # -- URL of the database
   url: postgres://root@127.0.0.1:26257/test?sslmode=disable
   # -- Name of the secret containing the config for the eventstore database
   existingSecret: ""
@@ -116,6 +117,8 @@ backup:
   existingSecretName: ""
   # -- Prometheus push gateway to push metrics to
   prometheusPushgatewayUrl: ""
+  # -- Timeout for backup job
+  timeout: 1h
   # -- Backup destination, e.g. s3
   destination: {}
     # s3:
@@ -123,3 +126,10 @@ backup:
     #   bucket: my-backup-bucket
     #   region: us-east-1
     #   disableSSL: false
+  restore:
+    # -- Enabling this will deploy a job which restores the backup set up in backupIdentifier from the backup.destination specified earlier.
+    enabled: false
+    # -- Identifier of the backup to restore.
+    backupIdentifier: ""
+    # -- Timeout for restore job
+    timeout: 1h
