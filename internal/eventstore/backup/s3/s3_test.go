@@ -91,7 +91,6 @@ var _ = Describe("s3", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(result.ProcessedEvents).To(BeNumerically(">", 0))
 			Expect(result.ProcessedBytes).To(BeNumerically(">", 0))
-			time.Sleep(1000 * time.Millisecond)
 		}
 
 		pr, err := b.RunPurge(context.Background())

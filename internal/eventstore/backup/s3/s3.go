@@ -93,8 +93,8 @@ func (b *S3BackupHandler) initClient() error {
 }
 
 func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.BackupResult, error) {
-	filename := fmt.Sprintf("%v-eventstore-backup.tar", time.Now().UTC().Format(time.RFC3339))
-	b.log.Info("Starting backup...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", filename)
+	filename := fmt.Sprintf("monoskope/eventstore/%s-%s.tar", time.Now().UTC().Format(time.RFC3339), uuid.New().String())
+	b.log.Info("Starting backup...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Endpoint, "Filename", filename)
 
 	result := &backup.BackupResult{BackupIdentifier: filename}
 	err := b.initClient()
@@ -119,7 +119,7 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.BackupResult, 
 }
 
 func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*backup.RestoreResult, error) {
-	b.log.Info("Starting restore...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Filename", identifier)
+	b.log.Info("Starting restore...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Endpoint, "Filename", identifier)
 
 	result := &backup.RestoreResult{}
 	err := b.initClient()
@@ -144,7 +144,7 @@ func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*b
 }
 
 func (b *S3BackupHandler) RunPurge(ctx context.Context) (*backup.PurgeResult, error) {
-	b.log.Info("Starting purge...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Bucket, "Retention", b.retention)
+	b.log.Info("Starting purge...", "Bucket", b.conf.Bucket, "Endpoint", b.conf.Endpoint, "Retention", b.retention)
 	result := &backup.PurgeResult{}
 
 	err := b.initClient()
