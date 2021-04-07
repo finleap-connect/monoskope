@@ -6,8 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/backup"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	_ "go.uber.org/automaxprocs"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 var (
@@ -17,12 +18,12 @@ var (
 )
 
 var backupCmd = &cobra.Command{
-	Use:   "server [flags]",
-	Short: "Starts the server",
-	Long:  `Starts the gRPC API and metrics server`,
+	Use:   "backup [flags]",
+	Short: "Starts the backup",
+	Long:  `Starts the backup of the event store`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		log := logger.WithName("server-cmd")
+		log := logger.WithName("backup-cmd")
 
 		timeout, err := time.ParseDuration(timeout)
 		if err != nil {
@@ -38,20 +39,71 @@ var backupCmd = &cobra.Command{
 		}
 		defer store.Close()
 
+		// setup metrics publisher
+		log.Info("Setting up metrics publisher...")
+		var metricsPublisher backup.MetricsPublisher
+		if len(pushGatewayUrl) > 0 {
+			metricsPublisher, err = backup.NewMetricsPublisher(pushGatewayUrl)
+			if err != nil {
+				log.Error(err, "Failed to configure metrics publisher.")
+				return err
+			}
+		} else {
+			metricsPublisher = backup.NewNoopMetricsPublisher()
+		}
+		defer util.PanicOnError(metricsPublisher.CloseAndPush())
+
 		// setup backup management
-		backupManger, err := eventstore.NewBackupManager(store, retention)
+		log.Info("Setting up backup manager...")
+		backupManger, err := eventstore.NewBackupManager(metricsPublisher, store, retention)
 		if err != nil {
-			log.Error(err, "Failed to configure automatic backups.")
+			log.Error(err, "Failed to configure backup.")
 			return err
 		}
+
+		// setup context
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		result, err := backupManger.RunBackup(ctx)
-		log.Info("Backing up eventstore has been successful.", "BackupIdentifier", result.BackupIdentifier, "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+		// start backup
+		log.Info("Starting backup...")
+		err = runBackup(ctx, log, metricsPublisher, backupManger)
+		if err != nil {
+			log.Error(err, "Failed to run backup.")
+			return err
+		}
+
+		// start purge
+		log.Info("Starting purge...")
+		err = runPurge(ctx, log, backupManger)
+		if err != nil {
+			log.Error(err, "Failed to run purge.")
+			return err
+		}
 
 		return err
 	},
+}
+
+func runBackup(ctx context.Context, log logger.Logger, metricsPublisher backup.MetricsPublisher, backupManger *eventstore.BackupManager) error {
+	metricsPublisher.Start()
+	result, err := backupManger.RunBackup(ctx)
+	metricsPublisher.Finished()
+	metricsPublisher.SetBytes(float64(result.ProcessedBytes))
+	metricsPublisher.SetEventCount(float64(result.ProcessedEvents))
+
+	if err != nil {
+		metricsPublisher.SetFailTime()
+		log.Error(err, "Failed to back up eventstore.", "BackupIdentifier", result.BackupIdentifier, "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+	} else {
+		metricsPublisher.SetSuccessTime()
+		log.Info("Backing up eventstore has been successful.", "BackupIdentifier", result.BackupIdentifier, "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+	}
+	return err
+}
+
+func runPurge(ctx context.Context, log logger.Logger, backupManger *eventstore.BackupManager) error {
+	return nil
 }
 
 func init() {
@@ -59,6 +111,6 @@ func init() {
 	// Local flags
 	flags := backupCmd.Flags()
 	flags.IntVar(&retention, "retention", 7, "Count of backups to keep, <1 means keep all")
-	flags.StringVar(&timeout, "timeout", "1h", "Timeout to cancel backup job")
+	flags.StringVar(&timeout, "timeout", "1h", "Timeout after which to cancel the backup job")
 	flags.StringVar(&pushGatewayUrl, "prometheus-gateway-url", "", "Url of the gateway to push prometheus metrics to")
 }

@@ -11,17 +11,38 @@ import (
 )
 
 type MetricsPublisher interface {
+	// Start sets a timestamp for start of a backup
 	Start()
+	// Finished sets the duration an backup has taken and the completion time to now
 	Finished()
+	// SetSuccessTime adds the success timestamp to the pushed metrics and sets the time to now
 	SetSuccessTime()
+	// SetFailTime adds a failed timestamp to the pushed metrics and sets the time to now
+	SetFailTime()
+	// SetEventCount sets the events processed during an backup
 	SetEventCount(eventCount float64)
+	// SetBytes sets the bytes written to backup
 	SetBytes(sizeInBytes float64)
+	// CloseAndPush sends the metrics to the prometheus push gateway
 	CloseAndPush() error
 }
+
+type noopMetricsPublisher struct{}
+
+// NewNoopMetricsPublisher returns a noop metrics publisher which does nothing
+func NewNoopMetricsPublisher() MetricsPublisher                { return &noopMetricsPublisher{} }
+func (*noopMetricsPublisher) Start()                           {}
+func (*noopMetricsPublisher) Finished()                        {}
+func (*noopMetricsPublisher) SetSuccessTime()                  {}
+func (*noopMetricsPublisher) SetFailTime()                     {}
+func (*noopMetricsPublisher) SetEventCount(eventCount float64) {}
+func (*noopMetricsPublisher) SetBytes(eventCount float64)      {}
+func (*noopMetricsPublisher) CloseAndPush() error              { return nil }
 
 type metricsPublisher struct {
 	log            logger.Logger
 	completionTime prometheus.Gauge
+	failedTime     prometheus.Gauge
 	successTime    prometheus.Gauge
 	duration       prometheus.Gauge
 	bytes          prometheus.Gauge
@@ -30,7 +51,7 @@ type metricsPublisher struct {
 	start          time.Time
 }
 
-// NewMetricsPublisher creates a new backup.MetricsPublisher.
+// NewMetricsPublisher creates a new backup.MetricsPublisher publishing metrics to a prometheus pushgateway
 func NewMetricsPublisher(pushGatewayUrl string) (MetricsPublisher, error) {
 	if pushGatewayUrl == "" {
 		return nil, errors.New("URL of prometheus push gateway invalid.")
@@ -47,6 +68,10 @@ func NewMetricsPublisher(pushGatewayUrl string) (MetricsPublisher, error) {
 	mp.successTime = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "backup_last_success_timestamp_seconds",
 		Help: "The timestamp of the last successful completion of a backup.",
+	})
+	mp.failedTime = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "backup_last_fail_timestamp_seconds",
+		Help: "The timestamp of the last fail of a backup.",
 	})
 	mp.duration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "backup_duration_seconds",
@@ -83,30 +108,40 @@ func NewMetricsPublisher(pushGatewayUrl string) (MetricsPublisher, error) {
 	return mp, nil
 }
 
-// Add successTime to pusher only in case of success.
+// SetSuccessTime adds the successtime to the pushed metrics and sets the time to now
 func (mp *metricsPublisher) SetSuccessTime() {
 	mp.pusher.Collector(mp.successTime)
 	mp.successTime.SetToCurrentTime()
 }
 
-// Set the start
+// SetFailTime adds a failed timestamp to the pushed metrics and sets the time to now
+func (mp *metricsPublisher) SetFailTime() {
+	mp.pusher.Collector(mp.failedTime)
+	mp.failedTime.SetToCurrentTime()
+}
+
+// Start sets a timestamp for start of a backup
 func (mp *metricsPublisher) Start() {
 	mp.start = time.Now()
 }
 
+// Finished sets the duration an backup has taken and the completion time to now
 func (mp *metricsPublisher) Finished() {
 	mp.duration.Set(time.Since(mp.start).Seconds())
 	mp.completionTime.SetToCurrentTime()
 }
 
+// SetBytes sets the bytes written to backup
 func (mp *metricsPublisher) SetBytes(bytes float64) {
 	mp.bytes.Set(bytes)
 }
 
+// SetEventCount sets the events processed during an backup
 func (mp *metricsPublisher) SetEventCount(eventCount float64) {
 	mp.events.Set(eventCount)
 }
 
+// CloseAndPush sends the metrics to the prometheus push gateway
 func (mp *metricsPublisher) CloseAndPush() error {
 	// Add is used here rather than Push to not delete a previously pushed
 	// success timestamp in case of a failure of this backup.

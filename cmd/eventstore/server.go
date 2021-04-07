@@ -9,7 +9,6 @@ import (
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
 )
 
