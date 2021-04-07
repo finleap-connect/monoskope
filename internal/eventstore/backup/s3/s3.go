@@ -3,11 +3,7 @@ package s3
 import (
 	"archive/tar"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,6 +21,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/backup"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 )
@@ -255,7 +252,7 @@ func (b *S3BackupHandler) storeEvents(ctx context.Context, reader *io.PipeReader
 
 		// Use encryption if key has been specified
 		if len(encryptionKey) > 0 {
-			encryptedBytes, err := decryptAES(encryptionKey, bytes)
+			encryptedBytes, err := util.DecryptAES(encryptionKey, bytes)
 			if err != nil {
 				return err
 			}
@@ -315,7 +312,7 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 
 		// Use encryption if key has been specified
 		if len(encryptionKey) > 0 {
-			encryptedBytes, err := encryptAES(encryptionKey, bytes)
+			encryptedBytes, err := util.EncryptAES(encryptionKey, bytes)
 			if err != nil {
 				return err
 			}
@@ -384,53 +381,6 @@ func (b *S3BackupHandler) readBackup(ctx context.Context, writer *io.PipeWriter,
 	}
 
 	return nil
-}
-
-// encryptAES encrypts plaintext with key, see https://golang.org/pkg/crypto/cipher/#NewCFBEncrypter
-func encryptAES(key []byte, plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	// The IV needs to be unique, but not secure. Therefore it's common to
-	// include it at the beginning of the ciphertext.
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-
-	// It's important to remember that ciphertexts must be authenticated
-	// (i.e. by using crypto/hmac) as well as being encrypted in order to
-	// be secure.
-	return ciphertext, nil
-}
-
-// decryptAES decrypts ciphertext with key, see https://golang.org/pkg/crypto/cipher/#NewCFBDecrypter
-func decryptAES(key []byte, ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	// The IV needs to be unique, but not secure. Therefore it's common to
-	// include it at the beginning of the ciphertext.
-	if len(ciphertext) < aes.BlockSize {
-		return nil, errors.New("ciphertext too short")
-	}
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
-
-	stream := cipher.NewCFBDecrypter(block, iv)
-
-	// XORKeyStream can work in-place if the two arguments are the same.
-	stream.XORKeyStream(ciphertext, ciphertext)
-
-	return ciphertext, nil
 }
 
 func convertToS3Event(event es.Event) es.Event {
