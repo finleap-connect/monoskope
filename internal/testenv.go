@@ -17,20 +17,20 @@ type TestEnv struct {
 	commandHandlerTestEnv *commandhandler.TestEnv
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	var err error
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("IntegrationTestEnv"),
+		TestEnv: testEnv,
 	}
 
-	os.Setenv("SUPERUSERS", "admin@monoskope.io")
+	os.Setenv("SUPERUSERS", "admin@monoskope.io,admin@monoskope.io")
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
+	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnv(env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -56,5 +56,5 @@ func (env *TestEnv) Shutdown() error {
 		return err
 	}
 
-	return env.TestEnv.Shutdown()
+	return nil
 }

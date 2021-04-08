@@ -6,10 +6,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
 var (
-	env *TestEnv
+	baseTestEnv *test.TestEnv
+	env         *TestEnv
 )
 
 func TestMessageBus(t *testing.T) {
@@ -23,14 +25,14 @@ var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 
 	By("bootstrapping test env")
-	env, err = NewTestEnv()
+	baseTestEnv = test.NewTestEnv("messaging-testenv")
+	env, err = NewTestEnvWithParent(baseTestEnv)
 	Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
-	var err error
 	By("tearing down the test environment")
 
-	err = env.Shutdown()
-	Expect(err).To(BeNil())
+	Expect(env.Shutdown()).To(Not(HaveOccurred()))
+	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
 })

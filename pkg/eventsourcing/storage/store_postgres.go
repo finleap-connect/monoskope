@@ -13,6 +13,7 @@ import (
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 // postgresEventStore implements an EventStore for PostgreSQL.
@@ -171,7 +172,9 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 		return errors.ErrCouldNotSaveEvents
 	}
 
-	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
+	if util.GetOperationMode() == util.DEVELOPMENT {
+		s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
+	}
 	return nil
 }
 
@@ -196,12 +199,12 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	eventStream := evs.NewEventStream()
+
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
 	}
-
-	var events []evs.Event
 
 	// Basic query to query all events
 	dbQuery := s.db.
@@ -212,26 +215,29 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuer
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
 
-	err := dbQuery.ForEach(func(e *eventRecord) (err error) {
-		events = append(events, pgEvent{
-			eventRecord: *e,
+	go func() {
+		defer eventStream.Done()
+		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
+			eventStream.Send(pgEvent{
+				eventRecord: *e,
+			})
+			return nil
 		})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return events, nil
+		eventStream.Error(err)
+	}()
+	return eventStream, nil
 }
 
 func (s *postgresEventStore) Close() error {
 	s.log.Info("Shutting down...")
 
 	s.cancel()
-	err := s.db.Close()
-	if err != nil {
-		return err
+
+	if s.db != nil {
+		err := s.db.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	s.log.Info("Shutdown complete.")
@@ -269,6 +275,7 @@ func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 
 // Clear clears the event storage. This is only for testing purposes.
 func (s *postgresEventStore) clear(ctx context.Context) error {
+	s.log.Info("Clearing store...")
 	return s.db.
 		RunInTransaction(ctx, func(tx *pg.Tx) (err error) {
 			_, err = tx.Model((*eventRecord)(nil)).Where("1=1").Delete()

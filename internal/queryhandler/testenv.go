@@ -28,12 +28,12 @@ type TestEnv struct {
 	esClient          esApi.EventStoreClient
 }
 
-func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
+func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
 	ctx := context.Background()
 
 	env := &TestEnv{
-		TestEnv:           test.NewTestEnv("QueryHandlerTestEnv"),
+		TestEnv:           testeEnv,
 		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
@@ -96,5 +96,6 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.apiListener.Close(); err != nil {
 		return err
 	}
-	return env.TestEnv.Shutdown()
+
+	return nil
 }

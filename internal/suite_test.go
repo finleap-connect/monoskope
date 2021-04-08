@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/reporters"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var (
-	testEnv *TestEnv
+	baseTestEnv *test.TestEnv
+	testEnv     *TestEnv
 )
 
 func TestQueryHandler(t *testing.T) {
@@ -24,14 +26,14 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("bootstrapping test env")
-	testEnv, err = NewTestEnv()
+	baseTestEnv = test.NewTestEnv("integration-testenv")
+	testEnv, err = NewTestEnv(baseTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 }, 120)
 
 var _ = AfterSuite(func() {
-	var err error
 	By("tearing down the test environment")
 
-	err = testEnv.Shutdown()
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
+	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
 })

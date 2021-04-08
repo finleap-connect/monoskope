@@ -61,12 +61,13 @@ queryhandler:
 
 cockroachdb:
   enabled: true
+  dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
     tag: v20.2.2
     imagePullPolicy: Always
   statefulset:
-    replicas: 3 # Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
+    replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
     maxUnavailable: 1
     resources:
       requests:

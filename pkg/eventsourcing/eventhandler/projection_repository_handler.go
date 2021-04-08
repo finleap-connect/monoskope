@@ -7,6 +7,7 @@ import (
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 type ProjectionOutdatedError struct {
@@ -34,7 +35,10 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
-	h.log.Info("Projecting event...", "EventType", event.EventType(), "AggregateType", event.AggregateType())
+	if util.GetOperationMode() == util.DEVELOPMENT {
+		h.log.Info("Projecting event...", "EventType", event.EventType(), "AggregateType", event.AggregateType())
+	}
+
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 
 	// If error is not found create new projection.

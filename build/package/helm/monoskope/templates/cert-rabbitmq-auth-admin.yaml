@@ -6,6 +6,9 @@ metadata:
   name: {{ $fullname }}-auth-admin
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   secretName: {{ .Values.eventstore.messageBus.tlsSecret }}
   issuerRef:

@@ -13,6 +13,19 @@ A Helm chart for the Monoskope EventStore
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
+| backup.alerting.alertAfter | string | `"1h"` |  |
+| backup.alerting.enabled | bool | `false` | Enables alerting for failed backups |
+| backup.alerting.secondsSinceLastSuccessfulBackup | int | `86400` |  |
+| backup.destination | object | `{}` | Backup destination, e.g. s3 |
+| backup.enabled | bool | `false` | Enables automated backups for the eventstore |
+| backup.existingSecretName | string | `""` | Secret containing destination specific secrets, e.g. credentials to s3. The secret will be mounted as environment. |
+| backup.prometheusPushgatewayUrl | string | `""` | Prometheus push gateway to push metrics to |
+| backup.restore.backupIdentifier | string | `""` | Identifier of the backup to restore. |
+| backup.restore.enabled | bool | `false` | Enabling this will deploy a job which restores the backup set up in backupIdentifier from the backup.destination specified earlier. |
+| backup.restore.timeout | string | `"1h"` | Timeout for restore job |
+| backup.retentionCount | int | `7` | Number of most recent backups to keep |
+| backup.schedule | string | `"0 22 * * *"` | CRON expression defining the backup schedule |
+| backup.timeout | string | `"1h"` | Timeout for backup job |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
@@ -47,7 +60,7 @@ A Helm chart for the Monoskope EventStore
 | service.type | string | `"ClusterIP"` |  |
 | storeDatabase.existingSecret | string | `""` | Name of the secret containing the config for the eventstore database |
 | storeDatabase.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
-| storeDatabase.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
+| storeDatabase.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` | URL of the database |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

@@ -13,6 +13,7 @@ hosting:
 
 cockroachdb:
   enabled: true
+  # dropExistingDatabase: true
   statefulset:
     replicas: 5
   storage:
@@ -49,6 +50,22 @@ eventstore:
     requests:
       cpu: 500m
       memory: 64Mi
+  backup:
+    enabled: true
+    alerting:
+      enabled: false
+    schedule: "0 22 * * *"
+    retentionCount: 7
+    existingSecretName: eventstore-backup-credentials
+    prometheusPushgatewayUrl: http://monitoring-prometheus-pushgateway.monitoring:9091
+    destination:
+      s3:
+        endpoint: s3.es1.fra.optimist.innovo.cloud
+        bucket: devcluster-bkp
+        region: us-east-1
+    restore:
+      enabled: false
+      backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
 
 commandhandler:
   replicaCount: 2

@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo/reporters"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,10 +26,11 @@ var _ = BeforeSuite(func(done Done) {
 	var err error
 
 	By("bootstrapping test env")
-	eventStoreTestEnv, err := eventstore.NewTestEnv()
+	baseTestEnv := test.NewTestEnv("queryhandler-testenv")
+	eventStoreTestEnv, err := eventstore.NewTestEnvWithParent(baseTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 
-	testEnv, err = NewTestEnv(eventStoreTestEnv)
+	testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 }, 60)
 

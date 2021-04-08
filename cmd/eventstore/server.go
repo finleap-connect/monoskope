@@ -9,7 +9,6 @@ import (
 	api_es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	_ "go.uber.org/automaxprocs"
 	ggrpc "google.golang.org/grpc"
 )
 
@@ -32,6 +31,7 @@ var serverCmd = &cobra.Command{
 		log.Info("Setting up event store...")
 		store, err := eventstore.NewEventStore()
 		if err != nil {
+			log.Error(err, "Failed to configure event store.")
 			return err
 		}
 		defer store.Close()
@@ -40,6 +40,7 @@ var serverCmd = &cobra.Command{
 		log.Info("Setting up message bus publisher...")
 		publisher, err := messagebus.NewEventBusPublisher("eventstore", msgbusPrefix)
 		if err != nil {
+			log.Error(err, "Failed to configure message bus publisher.")
 			return err
 		}
 		defer publisher.Close()

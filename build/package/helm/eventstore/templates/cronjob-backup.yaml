@@ -1,0 +1,95 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "eventstore.fullname" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eventstore.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  schedule: {{ .Values.backup.schedule | quote }}
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      ttlSecondsAfterFinished: 100
+      completions: 1
+      parallelism: 1
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            linkerd.io/inject: disabled
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "eventstore.selectorLabels" . | nindent 12 }}
+            {{- with (.Values.labels | default .Values.global.labels) }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        spec:
+          restartPolicy: OnFailure
+          {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          volumes:
+            {{- if .Values.storeDatabase.tlsSecret }}
+            - name: dbcerts
+              secret:
+                secretName: {{ .Values.storeDatabase.tlsSecret }}
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                  - key: tls.crt
+                    path: tls.crt
+                  - key: tls.key
+                    path: tls.key
+            {{- end }}
+            - name: backup-config
+              configMap:
+                name: {{ include "eventstore.fullname" . }}-backup
+                items:
+              {{- if .Values.backup.destination.s3 }}
+                - key: "s3.yaml"
+                  path: "s3.yaml"
+              {{- end }}
+          containers:
+          - name: {{ .Chart.Name }}
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            args:
+              - /eventstore
+              - backup
+              - --retention={{ .Values.backup.retentionCount }}
+              - --timeout={{ .Values.backup.timeout }}
+              - --prometheus-gateway-url={{ .Values.backup.prometheusPushgatewayUrl }}
+            volumeMounts:
+              {{- if .Values.storeDatabase.tlsSecret }}
+              - name: dbcerts
+                mountPath: /etc/eventstore/certs/db
+              {{- end }}
+              - name: backup-config
+                mountPath: /etc/eventstore/backup
+            envFrom:
+              - secretRef:
+                  name: {{ .Values.storeDatabase.existingSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
+              - secretRef:
+                  name: {{ .Values.backup.existingSecretName | default (printf "%s-%s" (include "eventstore.fullname" .) "backup") }}
+            env:
+              - name: K8S_JOB
+                value: {{ include "eventstore.fullname" . }}-backup
+              - name: K8S_NAMESPACE
+                value: {{ .Release.Namespace | quote }}
+              - name: K8S_POD
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+{{- end }}

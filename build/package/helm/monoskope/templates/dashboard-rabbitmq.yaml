@@ -6,7 +6,7 @@ metadata:
   name: {{ include "monoskope.fullname" . }}-rabbitmq-dashboard
   labels:
     {{- if .Values.rabbitmq.metrics.grafanaDashboard.extraLabels }}
-{{ toYaml .Values.rabbitmq.metrics.grafanaDashboard.extraLabels | trim | indent 4 }}
+      {{ toYaml .Values.rabbitmq.metrics.grafanaDashboard.extraLabels | trim | nindent 4 }}
     {{- end }}
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:

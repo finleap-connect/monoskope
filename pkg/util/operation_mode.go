@@ -23,7 +23,7 @@ func GetOperationMode() OperationMode {
 
 	switch operationMode {
 	case DEVELOPMENT:
-		fmt.Print("################ WARNING #################\n> OPERATION MODE IS SET TO DEVELOPMENT.\n> SENSIBLE INFORMATION MIGHT BE LEAKED!\n########################################\n")
+		fmt.Print("################ WARNING ###############\n> OPERATION MODE IS SET TO DEVELOPMENT.\n> SENSIBLE INFORMATION MIGHT BE LEAKED!\n########################################\n")
 		return DEVELOPMENT
 	default:
 		return RELEASE

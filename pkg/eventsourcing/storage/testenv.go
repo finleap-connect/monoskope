@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -21,15 +22,12 @@ const (
 type TestEnv struct {
 	*test.TestEnv
 	*postgresStoreConfig
+	Store evs.Store
 }
 
-func (t *TestEnv) GetStoreConfig() *postgresStoreConfig {
-	return t.postgresStoreConfig
-}
-
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("StorageTestEnv"),
+		TestEnv: parent,
 	}
 
 	if err := env.CreateDockerPool(); err != nil {
@@ -90,9 +88,29 @@ func NewTestEnv() (*TestEnv, error) {
 		env.postgresStoreConfig = conf
 	}
 
+	store, err := NewPostgresEventStore(env.postgresStoreConfig)
+	if err != nil {
+		return nil, err
+	}
+	env.Store = store
+
 	return env, nil
 }
 
+func (env *TestEnv) ClearStore(ctx context.Context) {
+	if pgStore, ok := env.Store.(*postgresEventStore); ok {
+		if err := pgStore.clear(ctx); err != nil {
+			panic(err)
+		}
+	} else {
+		panic("that thing is not a pgstore")
+	}
+}
+
 func (env *TestEnv) Shutdown() error {
+	if err := env.Store.Close(); err != nil {
+		return err
+	}
+
 	return env.TestEnv.Shutdown()
 }

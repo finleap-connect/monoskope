@@ -18,9 +18,9 @@ func (env *TestEnv) Shutdown() error {
 	return env.TestEnv.Shutdown()
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("MessagingTestEnv"),
+		TestEnv: testEnv,
 	}
 
 	if err := env.CreateDockerPool(); err != nil {

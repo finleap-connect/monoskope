@@ -46,6 +46,7 @@ A Helm chart for the Monoskope CommandHandler
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `""` |  |
+| superusers.emails | list | `[]` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------
