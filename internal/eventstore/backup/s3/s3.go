@@ -370,13 +370,13 @@ func (b *S3BackupHandler) readBackup(ctx context.Context, writer *io.PipeWriter,
 
 	object, err := b.s3Client.GetObjectWithContext(ctx, objectInput)
 	if err != nil {
-		b.log.Error(err, "An error occured when backing up object")
+		b.log.Error(err, "An error occured when reading object")
 		return err
 	}
 
 	_, err = io.Copy(writer, object.Body)
 	if err != nil {
-		b.log.Error(err, "An error occured when writing object to tar")
+		b.log.Error(err, "An error occured when writing object to destination")
 		return err
 	}
 
