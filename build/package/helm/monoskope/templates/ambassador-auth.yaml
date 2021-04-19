@@ -1,3 +1,4 @@
+{{- if .Values.ambassador.enabled }}
 apiVersion: getambassador.io/v1
 kind: AuthService
 metadata:
@@ -17,3 +18,4 @@ spec:
     - "x-auth-issuer"
   add_auth_headers:
     x-forwarded-client-cert: "%DOWNSTREAM_PEER_CERT%"
+{{- end }}

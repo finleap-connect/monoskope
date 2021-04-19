@@ -1,78 +1,8 @@
 {{ if .Values.cockroachdb.enabled }}
-{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb") -}}
-apiVersion: cert-manager.io/v1alpha2
-kind: Issuer
-metadata:
-  name: {{ $fullname }}-selfsigning-issuer
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
-  name: {{ $fullname }}-ca
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  secretName: {{ $fullname }}-ca
-  commonName: CockroachDB CA
-  organization:
-  - CockroachDB
-  isCA: true
-  issuerRef:
-    name: {{ $fullname }}-selfsigning-issuer
-    kind: Issuer
-  usages:
-  - client auth
-  - server auth
-  - digital signature
-  - key encipherment
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Issuer
-metadata:
-  name: {{ $fullname }}-issuer
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  ca:
-    secretName: {{ $fullname }}-ca
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: {{ $fullname }}-root
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  secretName: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
-  issuerRef:
-    name: {{ $fullname }}-issuer
-    kind: Issuer
-  commonName: root
-  organization:
-  - Cockroach
-  usages:
-  - client auth
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: {{ $fullname }}-node
+  name: {{ include "monoskope.fullname" . }}-crdb-node
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}
@@ -80,12 +10,12 @@ metadata:
     {{- end }}
 spec:
   secretName: {{ .Values.cockroachdb.tls.certs.nodeSecret }}
+  duration: {{ .Values.pki.certificates.duration }}
+  renewBefore: {{ .Values.pki.certificates.renewBefore }}
   issuerRef:
-    name: {{ $fullname }}-issuer
+    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
     kind: Issuer
   commonName: node
-  organization:
-  - Cockroach
   ipAddresses:
   - 127.0.0.1
   - '::'
@@ -103,7 +33,9 @@ spec:
   - "*.{{.Release.Name}}-cockroachdb"
   - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}"
   - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local"
-  
+  subject:
+    organizations:
+      - Monoskope
   usages:
   - client auth
   - server auth

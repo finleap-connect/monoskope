@@ -153,3 +153,11 @@ deliver:queryhandler:
     - lint:golang
     - test:golang
     - build:golang:queryhandler
+
+scan:image:
+  stage: scan
+  image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7
+  only:
+    - tags
+  script:
+    - ./build/ci/scan_images.sh

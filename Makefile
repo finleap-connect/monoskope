@@ -36,5 +36,6 @@ tools: go-ginkgo-get go-golangci-lint-get
 
 tools-clean: go-ginkgo-clean go-golangci-lint-clean
 
-echo-%:
-	@echo $($*)
+get-latest:
+	@echo LATEST_REV: $(LATEST_REV)
+	@echo LATEST_TAG: $(LATEST_TAG)

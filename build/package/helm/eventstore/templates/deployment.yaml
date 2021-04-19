@@ -99,10 +99,12 @@ spec:
             {{- if .Values.storeDatabase.tlsSecret }}
             - name: dbcerts
               mountPath: /etc/eventstore/certs/db
+              readOnly: true
             {{- end }}
-            {{- if .Values.storeDatabase.tlsSecret }}
+            {{- if .Values.messageBus.tlsSecret }}
             - name: buscerts
-              mountPath: /etc/eventstore/certs/bus
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
             {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -121,23 +123,9 @@ spec:
         - name: dbcerts
           secret:
             secretName: {{ .Values.storeDatabase.tlsSecret }}
-            items:
-              - key: ca.crt
-                path: ca.crt
-              - key: tls.crt
-                path: tls.crt
-              - key: tls.key
-                path: tls.key
         {{- end }}
         {{- if .Values.messageBus.tlsSecret }}
         - name: buscerts
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
-            items:
-              - key: ca.crt
-                path: ca.crt
-              - key: tls.crt
-                path: tls.crt
-              - key: tls.key
-                path: tls.key
         {{- end }}
