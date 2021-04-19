@@ -90,7 +90,7 @@ messageBus:
   url: amqps://127.0.0.1:5672/
   # -- Name of the configmap containing the config for the eventstore messagebus
   existingSecret: ""
-  # -- Name of the secret containing the tls certificates/keys
+  # -- Name of the secret containing the tls certificate/key to access the messagebus
   tlsSecret: ""
 
 storeDatabase:

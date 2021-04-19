@@ -11,7 +11,7 @@ metadata:
     {{- end }}
 spec:
   ca:
-    secretName: {{ required ".Values.pki.issuer.ca.existingTrustAnchorSecretName is required when using the CA issuer!" .Values.pki.issuer.ca.existingTrustAnchorSecretName }}
+    secretName: {{ .Values.pki.issuer.ca.existingTrustAnchorSecretName | default (printf "%s-trust-anchor" (include "monoskope.fullname" .)) }}
 ---
 {{- else if .Values.pki.issuer.vault.enabled }}
 apiVersion: cert-manager.io/v1alpha3
@@ -31,46 +31,6 @@ spec:
 apiVersion: cert-manager.io/v1alpha3
 kind: Certificate
 metadata:
-  name: {{ include "monoskope.identityCAName" . }}
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  secretName: {{ include "monoskope.identityCAName" . }}
-  commonName: identity.monoskope.cluster.local
-  dnsNames:
-  - identity.monoskope.cluster.local
-  subject:
-    organizations:
-      - Monoskope
-  isCA: true
-  issuerRef:
-    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
-    kind: Issuer
-  usages:
-  - cert sign
-  - crl sign
-  - server auth
-  - client auth
----
-apiVersion: cert-manager.io/v1alpha3
-kind: Issuer
-metadata:
-  name: {{ include "monoskope.fullname" . }}-identity-issuer
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  ca:
-    secretName: {{ include "monoskope.identityCAName" . }}
----
-apiVersion: cert-manager.io/v1alpha3
-kind: Certificate
-metadata:
   name: {{ include "monoskope.fullname" . }}-mtls-operator-auth
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
@@ -79,8 +39,10 @@ metadata:
     {{- end }}
 spec:
   secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
+  duration: 24h
+  renewBefore: 12h
   issuerRef:
-    name: {{ include "monoskope.fullname" . }}-identity-issuer
+    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
     kind: Issuer
   commonName: operator.monoskope.cluster.local
   dnsNames:

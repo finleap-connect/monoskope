@@ -1,3 +1,4 @@
+{{- if .Values.ambassador.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -24,3 +25,4 @@ spec:
       annotations:
         description: The ambassador cert in namespace {{ .Release.Namespace }} is expiring in <=20 days.
         summary:  The ambassador cert in namespace {{ .Release.Namespace }} is expiring in <=20 days.
+{{- end }}

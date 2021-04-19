@@ -13,10 +13,14 @@ global:
 
 pki:
   enabled: true
+  certificates:
+    duration: 48h
+    renewBefore: 23h
   issuer:
     ca:
       enabled: true
       existingTrustAnchorSecretName: "m8-trust-anchor"
+      secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
     vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
       enabled: false
       path: pki_int/sign/example-dot-com
@@ -25,8 +29,6 @@ pki:
 hosting:
   issuer: ""
   domain: &domain monoskope.io
-  mtls:
-    subdomain: mtls
 
 messageBus:
   routingKeyPrefix: "m8"
@@ -133,6 +135,7 @@ rabbitmq:
     load_definitions = /app/rabbitmq-definitions.json
     auth_mechanisms.1 = EXTERNAL
     ssl_cert_login_from = common_name
+    ssl_options.depth = 2
   serviceAccount:
     create: false
   rbac:
@@ -142,7 +145,7 @@ rabbitmq:
     labels:
       app.kubernetes.io/part-of: *name
   auth:
-    username: admin # admin user with read/write access
+    username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
     existingErlangSecret: monoskope-rabbitmq-erlang-cookie
     tls:
@@ -196,3 +199,23 @@ ambassador:
       selector:
         tenant: *tenant
         release: monitoring
+  service:
+    type: LoadBalancer
+    ports:
+      - name: tcp
+        port: 80
+        targetPort: 8000
+        protocol: TCP
+        # nodePort: 30080
+        # hostPort: 80
+      - name: https
+        port: 443
+        targetPort: 8443
+        # protocol: TCP
+        # nodePort: 30443
+        # hostPort: 443
+      # TCPMapping_Port
+        # port: 2222
+        # targetPort: 2222
+        # protocol: TCP
+        # nodePort: 30222

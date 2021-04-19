@@ -4,7 +4,7 @@
 
 * [step-cli](https://smallstep.com/cli/) installed locally
 * [cert-manager](https://cert-manager.io) running in target cluster
-* [OPTIONAL] [Vault](https://www.vaultproject.io/) accessable by `cert-manager`
+* [OPTIONAL] [Vault](https://www.vaultproject.io/) accessible by `cert-manager`
 
 ## Overview
 
@@ -25,33 +25,9 @@ At the root of everything sits our `Trust Anchor (TA)` as we call it.
 The `TA` is a self signed certificate [you create](#create-a-trust-anchor) and provide to the `m8CP`.
 Monoskope utilizes `cert-manager` and uses it as root `CA` based on the `TA` you provide.
 
-Using this root `CA` an intermediate certificate or identity certificate is issued.
-Again `cert-manager` is used now as intermediate `CA` or identity `CA` based on the identity certificate.
-Now with the identity `CA` in place, we can issue server and client certificates.
+Now with the `CA` in place, we can issue server and client certificates.
 
-Servers and clients use a certificate issued by the intermediate `CA`.
-**BUT they do not use the intermediate certificate to validate each others certificates.
-They use the `TA` to validate them instead.
-This is very important and comes into play when certificates are rotated later on.
-Remember this, it is crucial for the whole chain management.**
-
-### So why is the intermediate even necessary?
-
-The identity certificate and the `CA` based on it are necessary because we want to be able to automatically rotate the certificates of clients, servers and even the identity certificate regularly without causing a downtime or human intervention.
-
-Have a look at this diagram:
-
-![alt text](images/CertificateChainIdentitiyRotation.png "Monoskope Certificate Chain - Identity Rotation")
-
-A new identity certificate was issued automatically.
-Based on this new certificate a new certificate was issued and is used by the server automatically.
-The client is still using a certificate based on the old identity certificate.
-The fact that this is no problem is, that they are both validated against the exact same `TA`.
-As long as the old identity certificate is not expired the whole chain is valid and accepted by the server.
-
-Since client and server certificates are invalidated more often than the identity certificate, all clients and servers will have a new certificate based on the new identity certificate before the old one expires.
-
-### And what about the rotation of the `Trust Anchor`?
+### What about the rotation of the `Trust Anchor`?
 
 Now we come to the part which is not automated.
 The `TA` will expire based on what you've configured when creating the certificate.
@@ -60,12 +36,12 @@ Now what? Let's have a look at the following diagram:
 ![alt text](images/CertificateChainTrustAnchorRotation.png "Monoskope Certificate Chain - Trust Anchor Rotation")
 
 With a buffer of at least 30 days you want to rotate the `TA`.
-You create a [new certificate](#rotating-the-trust-anchor) like you did initally for the `TA`.
+You create a [new certificate](#rotating-the-trust-anchor) like you did initially for the `TA`.
 But now you bundle the old and the new certificate together and make this bundle available to the `m8CP`.
 
 Now with the bundle in place certificate chains can have the old or the new `TA` as root.
 This is not an issue since every chain can still be validated no matter which `TA` has been used.
-Now this bundle has to stay until **every** identity, server and client certificate has been rotatet. Only after that point it is safe to remove the old `TA` from the bundle.
+Now this bundle has to stay until **every** server and client certificate has been rotated. Only after that point it is safe to remove the old `TA` from the bundle.
 
 ## Create a trust anchor
 
@@ -121,7 +97,7 @@ When issuing certificates for components like the m8 Operator there are some exp
 
 1. Set the organization to `Monoskope`.
 
-See the default operator auth `cert-manager` certificat resource definition for this.
+See the default operator auth `cert-manager` certificate resource definition for this.
 This will be deployed along with the m8 control plane:
 
 ```yaml
@@ -138,7 +114,7 @@ spec:
   - operator@monoskope.io
   issuerRef:
     kind: Issuer
-    name: m8dev-monoskope-identity-issuer
+    name: m8dev-monoskope-root-ca-issuer
   secretName: m8dev-monoskope-mtls-operator-auth
   subject:
     organizations:

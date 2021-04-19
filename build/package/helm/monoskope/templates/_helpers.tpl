@@ -99,5 +99,9 @@ Usage:
 {{- end }}
 
 {{- define "monoskope.mtlsDomain" -}}
-{{- printf "%s.%s" .Values.hosting.mtls.subdomain .Values.hosting.domain }}
+{{- printf "mapi.%s" .Values.hosting.domain }}
+{{- end }}
+
+{{- define "monoskope.tlsDomain" -}}
+{{- printf "api.%s" .Values.hosting.domain }}
 {{- end }}

@@ -15,16 +15,17 @@ cockroachdb:
   enabled: true
   # dropExistingDatabase: true
   statefulset:
-    replicas: 5
+    replicas: 3
   storage:
     persistentVolume:
       size: "1Gi"
 
 rabbitmq:
   enabled: true
-  replicaCount: 5
+  replicaCount: 3
 
 gateway:
+  enabled: true
   replicaCount: 2
   auth:
     issuerURL: https://gitlab.figo.systems
@@ -40,6 +41,7 @@ eventstore:
   replicaCount: 2
   enabled: true
   messageBus:
+    caSecret: m8-trust-anchor
     tlsSecret: monoskope-rabbitmq-auth-admin
   storeDatabase:
     tlsSecret: monoskope-crdb-auth-evenstore

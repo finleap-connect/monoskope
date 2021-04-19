@@ -9,7 +9,7 @@
 
 * [Permission Model](permissionModel.md)
 * [EventStore Backup & Restore](eventstore-backup.md)
-* [Certificate Management](certificate-management)
+* [Certificate Management](certificate-management.md)
 
 ## Docs on Monoskope Helm Charts
 

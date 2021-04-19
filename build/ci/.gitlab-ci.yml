@@ -3,6 +3,7 @@ stages:
   - test
   - build
   - deliver
+  - scan
   - deploy
 
 include:

@@ -15,7 +15,9 @@ lint-%:
 	@$(HELM) lint $(HELM_PATH)/$*
 
 install-%:
-	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --skip-crds --atomic --timeout 5m
+	@cat $(HELM_VALUES_FILE) | sed "s/0.0.1-local/$(VERSION)/g" > $(HELM_VALUES_FILE).tag
+	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE).tag --skip-crds
+	@rm $(HELM_VALUES_FILE).tag
 
 install-from-repo-%:
 	@$(MAKE) helm-dep-$*

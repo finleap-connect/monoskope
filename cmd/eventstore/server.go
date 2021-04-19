@@ -27,15 +27,6 @@ var serverCmd = &cobra.Command{
 		var err error
 		log := logger.WithName("server-cmd")
 
-		// init event store
-		log.Info("Setting up event store...")
-		store, err := eventstore.NewEventStore()
-		if err != nil {
-			log.Error(err, "Failed to configure event store.")
-			return err
-		}
-		defer store.Close()
-
 		// init message bus publisher
 		log.Info("Setting up message bus publisher...")
 		publisher, err := messagebus.NewEventBusPublisher("eventstore", msgbusPrefix)
@@ -44,6 +35,15 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		defer publisher.Close()
+
+		// init event store
+		log.Info("Setting up event store...")
+		store, err := eventstore.NewEventStore()
+		if err != nil {
+			log.Error(err, "Failed to configure event store.")
+			return err
+		}
+		defer store.Close()
 
 		// Create the server
 		log.Info("Creating gRPC server...")

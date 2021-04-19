@@ -1,49 +1,116 @@
-# Local dev environment values for monoskope.
+# Dev cluster environment values for monoskope.
 
 nameOverride: ""
 fullnameOverride: ""
+
+imageTag: &imageTag "0.0.1-local"
 
 global:
   imagePullSecrets:
     - name: gitlab-registry
 
-gateway:
-  enabled: false
-
-eventstore:
-  enabled: false
-
-commandhandler:
-  enabled: false
-
-queryhandler:
-  enabled: false
-
-rabbitmq:
-  enabled: false
-  replicaCount: 3
-  persistence:
-    enabled: false
-  image:
-    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
-    tag: 3.8.9
-  loadDefinition:
-    enabled: true
-    existingSecret: rabbitmq-load-definition
-  extraConfiguration: |-
-    load_definitions = /app/rabbitmq-definitions.json
-  auth:
-    username: admin
-    password: foo # this will be overwritten by a real password but needs to be set initially
-    existingErlangSecret: rabbitmq-erlang-cookie
-    tls:
-      enabled: true
-      existingSecret: rabbitmq-leaf
-  podAnnotations:
-    linkerd.io/inject: disabled
+hosting:
+  issuer: letsencrypt-production
+  domain: &domain monoskope.dev.finleap.cloud
 
 cockroachdb:
-  enabled: false
+  enabled: true
+  # dropExistingDatabase: true
+  statefulset:
+    replicas: 3
+  storage:
+    persistentVolume:
+      size: "1Gi"
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+
+gateway:
+  enabled: true
+  image:
+    tag: *imageTag
+  replicaCount: 1
+  auth:
+    issuerURL: https://gitlab.figo.systems
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+eventstore:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
+  storeDatabase:
+    tlsSecret: monoskope-crdb-auth-evenstore
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  backup:
+    enabled: true
+    alerting:
+      enabled: false
+    schedule: "0 22 * * *"
+    retentionCount: 7
+    existingSecretName: eventstore-backup-credentials
+    prometheusPushgatewayUrl: http://monitoring-prometheus-pushgateway.monitoring:9091
+    destination:
+      s3:
+        endpoint: s3.es1.fra.optimist.innovo.cloud
+        bucket: devcluster-bkp
+        region: us-east-1
+    restore:
+      enabled: false
+      backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
+
+commandhandler:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  superusers:
+    # Enable superuser functionality to create initial admin rolebindings. Superusers can assign the system admin role
+    # even if they don't have the system admin role themselves. This is needed to create admin users on initialization.
+    enabled: true
+    # List of email addresses to identify superusers.
+    emails:
+      - jan.steffen@finleap.com
+
+queryhandler:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin
 
 ambassador:
+  enabled: true
   replicaCount: 1
+  service:
+    loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
