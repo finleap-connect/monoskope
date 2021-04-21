@@ -62,8 +62,8 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
-			qhApi.RegisterTenantServiceServer(s, queryhandler.NewTenantServiceServer(tenantRepo))
-			qhApi.RegisterUserServiceServer(s, queryhandler.NewUserServiceServer(userRepo))
+			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(tenantRepo))
+			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(userRepo))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

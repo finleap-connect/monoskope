@@ -58,8 +58,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	grpcServer := grpc.NewServer("queryhandler_grpc", false)
 	env.grpcServer = grpcServer
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServiceServer(s, NewUserServiceServer(userRepo))
-		api.RegisterTenantServiceServer(s, NewTenantServiceServer(tenantRepo))
+		api.RegisterUserServer(s, NewUserServer(userRepo))
+		api.RegisterTenantServer(s, NewTenantServer(tenantRepo))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

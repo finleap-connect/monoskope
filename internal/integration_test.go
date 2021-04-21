@@ -42,16 +42,16 @@ var _ = Describe("integration", func() {
 		return chClient
 	}
 
-	userServiceClient := func() domainApi.UserServiceClient {
+	userServiceClient := func() domainApi.UserClient {
 		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewUserServiceClient(ctx, addr)
+		_, client, err := queryhandler.NewUserClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
-	tenantServiceClient := func() domainApi.TenantServiceClient {
+	tenantServiceClient := func() domainApi.TenantClient {
 		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewTenantServiceClient(ctx, addr)
+		_, client, err := queryhandler.NewTenantClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}

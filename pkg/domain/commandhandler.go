@@ -148,7 +148,7 @@ func setupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, ha
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
+func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
 	// Register aggregates
 	aggregateManager := registerAggregates(esClient)
 

@@ -14,21 +14,21 @@ import (
 	"google.golang.org/grpc"
 )
 
-// userServiceServer is the implementation of the TenantService API
-type userServiceServer struct {
-	api.UnimplementedUserServiceServer
+// UserServer is the implementation of the TenantService API
+type UserServer struct {
+	api.UnimplementedUserServer
 
 	repo repositories.ReadOnlyUserRepository
 }
 
-// NewUserServiceServer returns a new configured instance of userServiceServer
-func NewUserServiceServer(userRepo repositories.ReadOnlyUserRepository) *userServiceServer {
-	return &userServiceServer{
+// NewUserServer returns a new configured instance of UserServer
+func NewUserServer(userRepo repositories.ReadOnlyUserRepository) *UserServer {
+	return &UserServer{
 		repo: userRepo,
 	}
 }
 
-func NewUserServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.UserServiceClient, error) {
+func NewUserClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.UserClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
@@ -36,11 +36,11 @@ func NewUserServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc.C
 		return nil, nil, errors.TranslateToGrpcError(err)
 	}
 
-	return conn, api.NewUserServiceClient(conn), nil
+	return conn, api.NewUserClient(conn), nil
 }
 
 // GetById returns the user found by the given id.
-func (s *userServiceServer) GetById(ctx context.Context, userId *wrappers.StringValue) (*projections.User, error) {
+func (s *UserServer) GetById(ctx context.Context, userId *wrappers.StringValue) (*projections.User, error) {
 	uuid, err := uuid.Parse(userId.Value)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
@@ -54,7 +54,7 @@ func (s *userServiceServer) GetById(ctx context.Context, userId *wrappers.String
 }
 
 // GetByEmail returns the user found by the given email address.
-func (s *userServiceServer) GetByEmail(ctx context.Context, email *wrappers.StringValue) (*projections.User, error) {
+func (s *UserServer) GetByEmail(ctx context.Context, email *wrappers.StringValue) (*projections.User, error) {
 	user, err := s.repo.ByEmail(ctx, email.GetValue())
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
@@ -62,7 +62,7 @@ func (s *userServiceServer) GetByEmail(ctx context.Context, email *wrappers.Stri
 	return user.Proto(), nil
 }
 
-func (s *userServiceServer) GetRoleBindingsById(userId *wrappers.StringValue, stream api.UserService_GetRoleBindingsByIdServer) error {
+func (s *UserServer) GetRoleBindingsById(userId *wrappers.StringValue, stream api.User_GetRoleBindingsByIdServer) error {
 	uuid, err := uuid.Parse(userId.Value)
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
@@ -82,8 +82,8 @@ func (s *userServiceServer) GetRoleBindingsById(userId *wrappers.StringValue, st
 	return nil
 }
 
-func (s *userServiceServer) GetAll(request *api.GetAllRequest, stream api.UserService_GetAllServer) error {
-	users, err := s.repo.GetAll(stream.Context(), request.GetExcludeDeleted())
+func (s *UserServer) GetAll(request *api.GetAllRequest, stream api.User_GetAllServer) error {
+	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

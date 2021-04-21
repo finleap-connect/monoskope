@@ -15,19 +15,19 @@ import (
 
 // tenantServiceServer is the implementation of the TenantService API
 type tenantServiceServer struct {
-	api.UnimplementedTenantServiceServer
+	api.UnimplementedTenantServer
 
 	repo repositories.ReadOnlyTenantRepository
 }
 
 // NewTenantServiceServer returns a new configured instance of tenantServiceServer
-func NewTenantServiceServer(tenantRepo repositories.ReadOnlyTenantRepository) *tenantServiceServer {
+func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository) *tenantServiceServer {
 	return &tenantServiceServer{
 		repo: tenantRepo,
 	}
 }
 
-func NewTenantServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.TenantServiceClient, error) {
+func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.TenantClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
@@ -35,7 +35,7 @@ func NewTenantServiceClient(ctx context.Context, queryHandlerAddr string) (*grpc
 		return nil, nil, errors.TranslateToGrpcError(err)
 	}
 
-	return conn, api.NewTenantServiceClient(conn), nil
+	return conn, api.NewTenantClient(conn), nil
 }
 
 // GetById returns the tenant found by the given id.
@@ -56,8 +56,8 @@ func (s *tenantServiceServer) GetByName(ctx context.Context, name *wrappers.Stri
 	return tenant.Proto(), nil
 }
 
-func (s *tenantServiceServer) GetAll(request *api.GetAllRequest, stream api.TenantService_GetAllServer) error {
-	users, err := s.repo.GetAll(stream.Context(), request.GetExcludeDeleted())
+func (s *tenantServiceServer) GetAll(request *api.GetAllRequest, stream api.Tenant_GetAllServer) error {
+	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

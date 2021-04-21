@@ -47,7 +47,7 @@ var serverCmd = &cobra.Command{
 
 		// Create UserService client
 		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}

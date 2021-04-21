@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
+
+package projections;
+
+message ProjectionMetadata {
+  // When it has been created
+  google.protobuf.Timestamp Created = 1;
+  // By whom it has been created
+  User CreatedBy = 2;
+  // When it has been last modified
+  google.protobuf.Timestamp LastModified = 3;
+  // By whom it has been last modified
+  User LastModifiedBy = 4;
+  // When it has been deleted
+  google.protobuf.Timestamp Deleted = 5;
+  // By whom it has been deleted
+  User DeletedBy = 6;
+}
+
+// User within Monoskope
+message User {
+  // Unique identifier of the user (UUID 128-bit number)
+  string id = 1;
+  // Name of the user
+  string name = 2;
+  // Email address of the user
+  string email = 3;
+  // Roles of the user
+  repeated UserRoleBinding roles = 4;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 5;
+}
+
+message UserRoleBinding {
+  // Unique identifier of the user role binding (UUID 128-bit number)
+  string id = 1;
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 2;
+  // Name of the role
+  string role = 3;
+  // Scope of the role
+  string scope = 4;
+  // Target resource of the role
+  string resource = 5;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 6;
+}
