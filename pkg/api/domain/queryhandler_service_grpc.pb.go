@@ -5,9 +5,11 @@ package domain
 import (
 	context "context"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -589,6 +591,156 @@ var TenantService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetAuditTrailById",
 			Handler:       _TenantService_GetAuditTrailById_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
+// K8SOperatorClient is the client API for K8SOperator service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type K8SOperatorClient interface {
+	GetOperatorInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*OperatorInformationResponse, error)
+	Retrieve(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (K8SOperator_RetrieveClient, error)
+}
+
+type k8SOperatorClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewK8SOperatorClient(cc grpc.ClientConnInterface) K8SOperatorClient {
+	return &k8SOperatorClient{cc}
+}
+
+func (c *k8SOperatorClient) GetOperatorInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*OperatorInformationResponse, error) {
+	out := new(OperatorInformationResponse)
+	err := c.cc.Invoke(ctx, "/domain.K8sOperator/GetOperatorInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *k8SOperatorClient) Retrieve(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (K8SOperator_RetrieveClient, error) {
+	stream, err := c.cc.NewStream(ctx, &K8SOperator_ServiceDesc.Streams[0], "/domain.K8sOperator/Retrieve", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &k8SOperatorRetrieveClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type K8SOperator_RetrieveClient interface {
+	Recv() (*eventsourcing.Event, error)
+	grpc.ClientStream
+}
+
+type k8SOperatorRetrieveClient struct {
+	grpc.ClientStream
+}
+
+func (x *k8SOperatorRetrieveClient) Recv() (*eventsourcing.Event, error) {
+	m := new(eventsourcing.Event)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// K8SOperatorServer is the server API for K8SOperator service.
+// All implementations must embed UnimplementedK8SOperatorServer
+// for forward compatibility
+type K8SOperatorServer interface {
+	GetOperatorInformation(context.Context, *emptypb.Empty) (*OperatorInformationResponse, error)
+	Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error
+	mustEmbedUnimplementedK8SOperatorServer()
+}
+
+// UnimplementedK8SOperatorServer must be embedded to have forward compatible implementations.
+type UnimplementedK8SOperatorServer struct {
+}
+
+func (UnimplementedK8SOperatorServer) GetOperatorInformation(context.Context, *emptypb.Empty) (*OperatorInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOperatorInformation not implemented")
+}
+func (UnimplementedK8SOperatorServer) Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error {
+	return status.Errorf(codes.Unimplemented, "method Retrieve not implemented")
+}
+func (UnimplementedK8SOperatorServer) mustEmbedUnimplementedK8SOperatorServer() {}
+
+// UnsafeK8SOperatorServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to K8SOperatorServer will
+// result in compilation errors.
+type UnsafeK8SOperatorServer interface {
+	mustEmbedUnimplementedK8SOperatorServer()
+}
+
+func RegisterK8SOperatorServer(s grpc.ServiceRegistrar, srv K8SOperatorServer) {
+	s.RegisterService(&K8SOperator_ServiceDesc, srv)
+}
+
+func _K8SOperator_GetOperatorInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(K8SOperatorServer).GetOperatorInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.K8sOperator/GetOperatorInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(K8SOperatorServer).GetOperatorInformation(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _K8SOperator_Retrieve_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(emptypb.Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(K8SOperatorServer).Retrieve(m, &k8SOperatorRetrieveServer{stream})
+}
+
+type K8SOperator_RetrieveServer interface {
+	Send(*eventsourcing.Event) error
+	grpc.ServerStream
+}
+
+type k8SOperatorRetrieveServer struct {
+	grpc.ServerStream
+}
+
+func (x *k8SOperatorRetrieveServer) Send(m *eventsourcing.Event) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// K8SOperator_ServiceDesc is the grpc.ServiceDesc for K8SOperator service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var K8SOperator_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.K8sOperator",
+	HandlerType: (*K8SOperatorServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetOperatorInformation",
+			Handler:    _K8SOperator_GetOperatorInformation_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Retrieve",
+			Handler:       _K8SOperator_Retrieve_Handler,
 			ServerStreams: true,
 		},
 	},

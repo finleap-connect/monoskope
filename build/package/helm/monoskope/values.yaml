@@ -200,23 +200,3 @@ ambassador:
       selector:
         tenant: *tenant
         release: monitoring
-  service:
-    type: LoadBalancer
-    ports:
-      - name: tcp
-        port: 80
-        targetPort: 8000
-        protocol: TCP
-        # nodePort: 30080
-        # hostPort: 80
-      - name: https
-        port: 443
-        targetPort: 8443
-        # protocol: TCP
-        # nodePort: 30443
-        # hostPort: 443
-      # TCPMapping_Port
-        # port: 2222
-        # targetPort: 2222
-        # protocol: TCP
-        # nodePort: 30222

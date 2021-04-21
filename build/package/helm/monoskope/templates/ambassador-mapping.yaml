@@ -92,16 +92,5 @@ spec:
   prefix: /domain.TenantService/
   rewrite: /domain.TenantService/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
----
-{{- end }}
-{{- if .Values.rabbitmq.enabled }}
-apiVersion: getambassador.io/v1
-kind: TCPMapping
-metadata:
-  name: {{ include "monoskope.fullname" . }}-rabbitmq-mapping
-  namespace: {{ .Release.Namespace }}
-spec:
-  port: 8000
-  service: {{.Release.Name}}-rabbitmq:{{.Values.rabbitmq.service.tlsPort}}
 {{- end }}
 {{- end }}

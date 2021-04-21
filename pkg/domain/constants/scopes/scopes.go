@@ -14,6 +14,9 @@ const (
 
 	// Tenant scope
 	Tenant es.Scope = "tenant"
+
+	// Cluster scope
+	Cluster es.Scope = "cluster"
 )
 
 // A list of all existing scopes.

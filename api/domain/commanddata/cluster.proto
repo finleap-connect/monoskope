@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata";
+
+package commanddata;
+
+message RequestClusterRegistration {
+  // Unique name of the cluster
+  string name = 1;
+  // Address of the clusters KubeAPIServer
+  string apiServerAddress = 2;
+  // CA certificate of the cluster
+  bytes clusterCACert = 3;
+}

@@ -2,7 +2,7 @@
 
 ![Monoskope Logo](assets/logo/monoskope.png)
 
-`Monoskope` implements the management and operation of tenants, users and their roles in a [Kubernetes](https://kubernetes.io/) multi-cluster environment. It fullfills the needs of operators of the clusters as well as the needs of developers using the cloud infrastructure provided by the operators.
+`Monoskope` implements the management and operation of tenants, users and their roles in a [Kubernetes](https://kubernetes.io/) multi-cluster environment. It fulfills the needs of operators of the clusters as well as the needs of developers using the cloud infrastructure provided by the operators.
 
 ## Build status
 
@@ -22,6 +22,11 @@ The following things must be set up in your target K8s Cluster:
 * [vault-operator](https://gitlab.figo.systems/platform/vault-operator) to generate/gather secrets for
   * RabbitMQ
   * Gateway
+
+## Acknowledgments
+
+The implementation of CQRS/ES in Monoskope is not cloned, but inspired by [Event Horizon](https://github.com/looplab/eventhorizon) a CQRS/ES toolkit for Go.
+Event Horizon is licensed under Apache License 2.0. A copy of the license is available [here](EVENTHORIZON_LICENSE).
 
 ## Documentation
 

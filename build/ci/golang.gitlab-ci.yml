@@ -29,8 +29,7 @@ lint:golang:
   stage: test
   extends: .gobase
   script:
-    - make go-golangci-lint-get
-    - make -j go-vet go-lint
+    - LINTER=golangci-lint make -j go-vet go-lint
 
 test:golang:
   stage: test
@@ -45,8 +44,7 @@ test:golang:
       alias: minio
       command: ["server", "/data"]
   script:
-    - make go-ginkgo-get
-    - make go-test
+    - GINKGO=ginkgo make go-test
     - make go-coverage
   artifacts:
     name: "Go Tests"
@@ -58,7 +56,7 @@ build:golang:gateway:
   stage: build
   extends: .gobase-no-push
   only:
-    - tags
+    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-gateway
@@ -72,7 +70,7 @@ build:golang:eventstore:
   stage: build
   extends: .gobase-no-push
   only:
-    - tags
+    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-eventstore
@@ -86,7 +84,7 @@ build:golang:commandhandler:
   stage: build
   extends: .gobase-no-push
   only:
-    - tags
+    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-commandhandler
@@ -100,7 +98,7 @@ build:golang:queryhandler:
   stage: build
   extends: .gobase-no-push
   only:
-    - tags
+    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-queryhandler
@@ -156,8 +154,9 @@ deliver:queryhandler:
 
 scan:image:
   stage: scan
-  image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7
-  only:
-    - tags
+  image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7.76.1
+  # only:
+  #   - web
   script:
-    - ./build/ci/scan_images.sh
+    - export VERSION=$(sh ./build/ci/configure_versions.sh)
+    - sh ./build/ci/scan_images.sh

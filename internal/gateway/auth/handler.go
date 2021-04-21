@@ -37,7 +37,7 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 
 	n.log.Info("Setting up auth provider...", "IssuerURL", n.config.IssuerURL)
 
-	// Using an exponantial backoff to avoid issues in development environments
+	// Using an exponential backoff to avoid issues in development environments
 	backoffParams := backoff.NewExponentialBackOff()
 	backoffParams.MaxElapsedTime = time.Second * 10
 	err := backoff.Retry(func() error {
