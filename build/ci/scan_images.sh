@@ -7,7 +7,6 @@ curl -k -L -H "Authorization: Bearer $ROX_API_TOKEN" https://$ROX_CENTRAL_ENDPOI
 chmod a+x ./roxctl
 
 echo "Scanning images..."
-echo "Checking values files in '$CI_PROJECT_DIR/build/package/helm'..."
 
 for file in $(find $CI_PROJECT_DIR/build/package/helm -type f -name values.yaml); do
     CURRENT_IMAGE=$(grep "repository:" $file | cut -d':' -f2- | tr -d '[:space:]' | cut -d':' -f3)
