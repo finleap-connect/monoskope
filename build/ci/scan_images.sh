@@ -9,9 +9,11 @@ chmod a+x ./roxctl
 echo "Scanning images..."
 echo "Checking values files in '$CI_PROJECT_DIR/build/package/helm'..."
 
+echo "CI_REGISTRY=$CI_REGISTRY"
 for file in $(find $CI_PROJECT_DIR/build/package/helm -type f -name values.yaml); do
     CURRENT_IMAGE=$(grep "repository:" $file | cut -d':' -f2- | tr -d '[:space:]' | cut -d':' -f3)
-    if [[ $CURRENT_IMAGE == ${CI_REGISTRY}* ]]; then
+    echo "CURRENT_IMAGE=$CURRENT_IMAGE"
+    if [[ "$CURRENT_IMAGE" =~ ^${CI_REGISTRY}.* ]]; then
         echo "Scanning '$CURRENT_IMAGE' ..."
         ./roxctl image scan -e $ROX_CENTRAL_API_ENDPOINT --force --image $CURRENT_IMAGE:$VERSION
         ./roxctl image check -e $ROX_CENTRAL_API_ENDPOINT --image $CURRENT_IMAGE:$VERSION
