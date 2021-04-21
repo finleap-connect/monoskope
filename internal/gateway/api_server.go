@@ -60,7 +60,7 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*
 		userInfo.Expiry = timestamppb.New(token.Expiry)
 	}
 
-	s.log.Info("User authenticated sucessfully.", "User", claims.Email, "Expiry", token.Expiry.String())
+	s.log.Info("User authenticated successfully.", "User", claims.Email, "Expiry", token.Expiry.String())
 	return userInfo, nil
 }
 
@@ -72,7 +72,7 @@ func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthReq
 		return nil, err
 	}
 
-	s.log.Info("Refreshed authentication sucessfully.", "Expiry", token.Expiry.String())
+	s.log.Info("Refreshed authentication successfully.", "Expiry", token.Expiry.String())
 	accessToken := &api.AuthResponse{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,

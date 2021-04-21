@@ -3,7 +3,9 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "google/protobuf/empty.proto";
 import "api/domain/projections/messages.proto";
+import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
@@ -39,6 +41,24 @@ service TenantService {
       returns (stream projections.AuditEvent);
 }
 
-message GetAllRequest {
-  bool excludeDeleted = 1;
+// K8sOperator service is used by remote m8 Operators to query the Control Plane
+service K8sOperator {
+  rpc GetOperatorInformation(google.protobuf.Empty)
+      returns (OperatorInformationResponse);
+  rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
+}
+
+message GetAllRequest { bool excludeDeleted = 1; }
+
+// OperatorInformationResponse is the information the Control Plane has about
+// the requesting operator
+message OperatorInformationResponse {
+  // Unique identifier of the cluster (UUID 128-bit number)
+  string id = 1;
+  // Unique name of the cluster
+  string name = 2;
+  // Address of the clusters KubeAPIServer
+  string apiServerAddress = 3;
+  // CA certificate of the cluster
+  bytes clusterCACert = 4;
 }

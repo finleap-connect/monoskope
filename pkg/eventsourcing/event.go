@@ -137,7 +137,7 @@ func (e event) AggregateType() AggregateType {
 	return e.aggregateType
 }
 
-// AggrgateID implements the AggrgateID method of the Event interface.
+// AggregateID implements the AggregateID method of the Event interface.
 func (e event) AggregateID() uuid.UUID {
 	return e.aggregateID
 }

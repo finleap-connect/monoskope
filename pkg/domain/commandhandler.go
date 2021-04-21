@@ -18,12 +18,13 @@ import (
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	domainHandlers "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esCommandHandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/commandhandler"
 	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 )
 
+// RegisterCommands registers all commands available
 func RegisterCommands() es.CommandRegistry {
 	commandRegistry := es.NewCommandRegistry()
 
@@ -37,10 +38,57 @@ func RegisterCommands() es.CommandRegistry {
 	commandRegistry.RegisterCommand(commands.NewUpdateTenantCommand)
 	commandRegistry.RegisterCommand(commands.NewDeleteTenantCommand)
 
+	// Cluster
+	commandRegistry.RegisterCommand(commands.NewRequestClusterRegistrationCommand)
+	commandRegistry.RegisterCommand(commands.NewDeleteClusterCommand)
+
 	return commandRegistry
 }
 
-func SetupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, handler es.CommandHandler) error {
+// registerCommandsWithHandler registers all commands available and sets the given commandhandler
+func registerCommandsWithHandler(handler es.CommandHandler) es.CommandRegistry {
+	commandRegistry := RegisterCommands()
+
+	// User
+	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
+	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
+	commandRegistry.SetHandler(handler, commandTypes.DeleteUserRoleBinding)
+
+	// Tenant
+	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)
+	commandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
+	commandRegistry.SetHandler(handler, commandTypes.DeleteTenant)
+
+	// Cluster
+	commandRegistry.SetHandler(handler, commandTypes.RequestClusterRegistration)
+	commandRegistry.SetHandler(handler, commandTypes.DeleteCluster)
+
+	return commandRegistry
+}
+
+// registerAggregates registers all aggregates
+func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
+	aggregateRegistry := es.NewAggregateRegistry()
+	aggregateManager := esManager.NewAggregateManager(
+		aggregateRegistry,
+		esClient,
+	)
+
+	// User
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
+
+	// Tenant
+	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+
+	// Cluster
+	aggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
+
+	return aggregateManager
+}
+
+// setupSuperUsers creates users and rolebindings for all super users
+func setupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, handler es.CommandHandler) error {
 	if superUsers := strings.Split(os.Getenv("SUPERUSERS"), ","); len(superUsers) != 0 {
 		for _, superUser := range superUsers {
 			userInfo := strings.Split(superUser, "@")
@@ -101,21 +149,13 @@ func SetupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, ha
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
 func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
-	// Setup repositories
-	userRepo := repos.NewRemoteUserRepository(userService)
-
 	// Register aggregates
-	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateManager := esManager.NewAggregateManager(
-		aggregateRegistry,
-		esClient,
-	)
+	aggregateManager := registerAggregates(esClient)
 
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+	// Setup repositories
+	userRepo := repositories.NewRemoteUserRepository(userService)
 
-	// Register command handler and middleware
+	// Create command handler
 	authorizationHandler := domainHandlers.NewAuthorizationHandler(userRepo)
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
@@ -125,18 +165,13 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 	)
 
 	// Register commands
-	commandRegistry := RegisterCommands()
-	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
-	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
-	commandRegistry.SetHandler(handler, commandTypes.DeleteUserRoleBinding)
-	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)
-	commandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
-	commandRegistry.SetHandler(handler, commandTypes.DeleteTenant)
+	commandRegistry := registerCommandsWithHandler(handler)
 
 	// Create super users
-	cancelBypass := authorizationHandler.BypassAuthorization()
-	defer cancelBypass()
-	if err := SetupSuperUsers(ctx, commandRegistry, handler); err != nil {
+	cancel := authorizationHandler.BypassAuthorization()
+	defer cancel()
+
+	if err := setupSuperUsers(ctx, commandRegistry, handler); err != nil {
 		return nil, err
 	}
 

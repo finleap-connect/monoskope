@@ -34,7 +34,7 @@ func NewApiServer(store es.Store, bus es.EventBusPublisher) *apiServer {
 // Store implements the API method for storing events
 func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
 	// Perform the use case for storing events
-	if err := usecases.NewStoreEventsUseCase(stream, s.store, s.bus, s.metrics).Run(); err != nil {
+	if err := usecases.NewStoreEventsUseCase(stream, s.store, s.bus, s.metrics).Run(stream.Context()); err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
 	return nil
@@ -43,7 +43,7 @@ func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
 // Retrieve implements the API method for retrieving events from the store
 func (s *apiServer) Retrieve(filter *esApi.EventFilter, stream esApi.EventStore_RetrieveServer) error {
 	// Perform the use case for storing events
-	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter, s.metrics).Run()
+	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter, s.metrics).Run(stream.Context())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

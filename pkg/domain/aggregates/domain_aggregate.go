@@ -13,12 +13,12 @@ type DomainAggregateBase struct {
 }
 
 func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command) error {
-	metadataMngr, err := metadata.NewDomainMetadataManager(ctx)
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
 		return err
 	}
 
-	userRoleBindings, err := metadataMngr.GetRoleBindings()
+	userRoleBindings, err := metadataManager.GetRoleBindings()
 	if err != nil {
 		return err
 	}

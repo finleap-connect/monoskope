@@ -149,7 +149,7 @@ func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
 	}
 }
 
-// tokenValidation validates the client certificate provided within the forwareded client secret header
+// tokenValidation validates the client certificate provided within the forwarded client secret header
 func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 	s.log.Info("Validating client certificate...")
 

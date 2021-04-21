@@ -15,7 +15,7 @@ var (
 
 var _ = Describe("Gateway", func() {
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
+		conn, err := CreateInsecureGatewayConnection(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
@@ -29,7 +29,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateInsecureGatewayConnecton(ctx, apiListener.Addr().String())
+		conn, err := CreateInsecureGatewayConnection(ctx, apiListener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

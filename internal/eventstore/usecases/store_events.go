@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -8,12 +9,12 @@ import (
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type StoreEventsUseCase struct {
-	UseCaseBase
+	*usecase.UseCaseBase
 
 	store   es.Store
 	bus     es.EventBusPublisher
@@ -23,21 +24,18 @@ type StoreEventsUseCase struct {
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.Store, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) UseCase {
+func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.Store, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &StoreEventsUseCase{
-		UseCaseBase: UseCaseBase{
-			log: logger.WithName("store-events-use-case"),
-			ctx: stream.Context(),
-		},
-		store:   store,
-		bus:     bus,
-		stream:  stream,
-		metrics: metrics,
+		UseCaseBase: usecase.NewUseCaseBase("store-events"),
+		store:       store,
+		bus:         bus,
+		stream:      stream,
+		metrics:     metrics,
 	}
 	return useCase
 }
 
-func (u *StoreEventsUseCase) Run() error {
+func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 	for {
 		startTime := time.Now()
 
@@ -63,17 +61,17 @@ func (u *StoreEventsUseCase) Run() error {
 		}
 
 		// Store events in database
-		u.log.Info("Saving events in the store...")
-		if err := u.store.Save(u.ctx, []es.Event{ev}); err != nil {
+		u.Log.Info("Saving events in the store...")
+		if err := u.store.Save(ctx, []es.Event{ev}); err != nil {
 			return err
 		}
 
-		// Count sucessfully stored event
+		// Count successfully stored event
 		u.metrics.StoredTotalCounter.WithLabelValues(event.Type, event.AggregateType).Inc()
 
 		// Send events to message bus
-		u.log.Info("Sending events to the message bus...")
-		if err := u.bus.PublishEvent(u.ctx, ev); err != nil {
+		u.Log.Info("Sending events to the message bus...")
+		if err := u.bus.PublishEvent(ctx, ev); err != nil {
 			return err
 		}
 		u.metrics.StoredHistogram.WithLabelValues(event.Type, event.AggregateType).Observe(time.Since(startTime).Seconds())

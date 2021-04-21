@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata";
+
+package eventdata;
+
+message ClusterRegisteredEventData {
+  // Name of the cluster
+  string name = 1;
+
+  // Address of the KubeApiServer
+  string api_server_address = 2;
+
+  // CA certificate of the K8s cluster
+  bytes ca_certificate = 3;
+}

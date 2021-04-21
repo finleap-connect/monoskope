@@ -5,6 +5,7 @@ cover.out
 .idea
 .vscode
 .project
+*.test
 project.dict
 *.suo
 *.ntvs*

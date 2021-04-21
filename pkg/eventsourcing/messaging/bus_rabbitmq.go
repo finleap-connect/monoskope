@@ -129,7 +129,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 // publishEvent will push to the queue without checking for
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
-// recieve the message.
+// receive the message.
 func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 	if !b.isConnected {
 		return errors.ErrMessageNotConnected
@@ -463,7 +463,7 @@ func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName strin
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
-// rabbitEvent implements the message body transfered via rabbitmq
+// rabbitEvent implements the message body transferred via rabbitmq
 type rabbitMessage struct {
 	EventType        evs.EventType
 	Data             evs.EventData
@@ -499,7 +499,7 @@ func (e rabbitEvent) AggregateType() evs.AggregateType {
 	return e.rabbitMessage.AggregateType
 }
 
-// AggrgateID implements the AggrgateID method of the Event interface.
+// AggregateID implements the AggregateID method of the Event interface.
 func (e rabbitEvent) AggregateID() uuid.UUID {
 	return e.rabbitMessage.AggregateID
 }
