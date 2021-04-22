@@ -81,12 +81,7 @@ func (a *ClusterRegistrationAggregate) HandleCommand(ctx context.Context, cmd es
 		_ = a.AppendEvent(ctx, events.ClusterRegistrationRequested, ed)
 		return nil
 	case *commands.ApproveClusterRegistration:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterRegistered{
-			Name:             a.name,
-			ApiServerAddress: a.apiServerAddr,
-			CaCertificate:    a.caCertificate,
-		})
-		_ = a.AppendEvent(ctx, events.ClusterRegistrationApproved, ed)
+		_ = a.AppendEvent(ctx, events.ClusterRegistrationApproved, nil)
 		return nil
 	case *commands.DenyClusterRegistration:
 		_ = a.AppendEvent(ctx, events.ClusterRegistrationDenied, nil)
