@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateUserCommand)
+}
+
 // CreateUserCommand is a command for creating a user.
 type CreateUserCommand struct {
 	*es.BaseCommand

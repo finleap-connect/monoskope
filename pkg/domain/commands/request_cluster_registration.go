@@ -11,6 +11,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewRequestClusterRegistrationCommand)
+}
+
 // RequestClusterRegistration is a command for registering a new cluster with the m8 Control Plane.
 type RequestClusterRegistration struct {
 	*es.BaseCommand

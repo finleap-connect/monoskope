@@ -3,90 +3,98 @@ package domain
 import (
 	"context"
 
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	aggregateTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
-	dom "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
+	eventsourcingApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projectors"
-	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	esm "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
-	esRepos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/eventhandler"
+	esr "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 )
 
-// SetupQueryHandlerDomain sets up the necessary handlers/projectors/repositories for the query side of es/cqrs.
-func SetupQueryHandlerDomain(ctx context.Context, messageBusConsumer es.EventBusConsumer, esClient esApi.EventStoreClient) (repos.UserRepository, repos.TenantRepository, error) {
+type QueryHandlerDomain struct {
+	UserRepository                repositories.UserRepository
+	TenantRepository              repositories.TenantRepository
+	ClusterRegistrationRepository repositories.ClusterRegistrationRepository
+}
+
+func NewQueryHandlerDomain(ctx context.Context, messageBusConsumer eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
+	qhDomain := &QueryHandlerDomain{}
+
 	// Setup repositories
-	userRoleBindingRepo := repos.NewUserRoleBindingRepository(esRepos.NewInMemoryRepository())
-	userRepo := repos.NewUserRepository(esRepos.NewInMemoryRepository(), userRoleBindingRepo)
-	tenantRepo := repos.NewTenantRepository(esRepos.NewInMemoryRepository(), userRepo)
+	userRoleBindings := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
+	qhDomain.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), userRoleBindings)
+	qhDomain.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository(), qhDomain.UserRepository)
+	qhDomain.ClusterRegistrationRepository = repositories.NewClusterRegistrationRepository(esr.NewInMemoryRepository(), qhDomain.UserRepository)
 
 	// Setup event handler and middleware
-	userEventHandler := es.UseEventHandlerMiddleware(
-		esm.NewProjectingEventHandler(
+	userEventHandler := eventsourcing.UseEventHandlerMiddleware(
+		eventhandler.NewProjectingEventHandler(
 			projectors.NewUserProjector(),
-			userRepo,
+			qhDomain.UserRepository,
 		),
-		esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
 	)
 
 	// Register event handler with message bus
 	err := messageBusConsumer.AddHandler(ctx,
 		userEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.User),
+		messageBusConsumer.Matcher().MatchAggregateType(aggregates.User),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Setup event handler and middleware
-	userRoleBindingEventHandler := es.UseEventHandlerMiddleware(
-		esm.NewProjectingEventHandler(
+	userRoleBindingEventHandler := eventsourcing.UseEventHandlerMiddleware(
+		eventhandler.NewProjectingEventHandler(
 			projectors.NewUserRoleBindingProjector(),
-			userRoleBindingRepo,
+			userRoleBindings,
 		),
-		esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
 	)
 
 	// Register event handler with message bus
 	err = messageBusConsumer.AddHandler(ctx,
 		userRoleBindingEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.UserRoleBinding),
+		messageBusConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Setup event handler and middleware
-	tenantEventHandler := es.UseEventHandlerMiddleware(
-		esm.NewProjectingEventHandler(
+	tenantEventHandler := eventsourcing.UseEventHandlerMiddleware(
+		eventhandler.NewProjectingEventHandler(
 			projectors.NewTenantProjector(),
-			tenantRepo,
+			qhDomain.TenantRepository,
 		),
-		esm.NewEventStoreReplayMiddleware(esClient).Middleware,
+		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
 	)
 
 	// Register event handler with message bus
 	err = messageBusConsumer.AddHandler(ctx,
 		tenantEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregateTypes.Tenant),
+		messageBusConsumer.Matcher().MatchAggregateType(aggregates.Tenant),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Start repo warming
-	userRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.User, userEventHandler)
+	userRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.User, userEventHandler)
 	if err := userRepoWarming.WarmUp(ctx); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	userRoleBindingRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.UserRoleBinding, userRoleBindingEventHandler)
+	userRoleBindingRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.UserRoleBinding, userRoleBindingEventHandler)
 	if err := userRoleBindingRepoWarming.WarmUp(ctx); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	tenantRepoWarming := dom.NewRepoWarmingMiddleware(esClient, aggregateTypes.Tenant, tenantEventHandler)
+	tenantRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.Tenant, tenantEventHandler)
 	if err := tenantRepoWarming.WarmUp(ctx); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return userRepo, tenantRepo, nil
+	return qhDomain, nil
 }

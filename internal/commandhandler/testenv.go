@@ -9,6 +9,7 @@ import (
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -54,7 +55,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
+	err = domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 	// Create server
 	env.grpcServer = grpc.NewServer("commandhandler_grpc", false)
 
-	commandHandler := NewApiServer(cmdRegistry)
+	commandHandler := NewApiServer(es.DefaultCommandRegistry)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		esApi.RegisterCommandHandlerServer(s, commandHandler)
 	})

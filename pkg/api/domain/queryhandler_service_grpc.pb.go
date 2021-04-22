@@ -467,30 +467,30 @@ var Tenant_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
-// ClusterRegistrationRequestClient is the client API for ClusterRegistrationRequest service.
+// ClusterRegistrationClient is the client API for ClusterRegistration service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ClusterRegistrationRequestClient interface {
+type ClusterRegistrationClient interface {
 	// GetAll returns all registration requests.
-	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistrationRequest_GetAllClient, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error)
 	// GetPending returns all pending registration requests.
-	GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistrationRequest_GetPendingClient, error)
+	GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error)
 }
 
-type clusterRegistrationRequestClient struct {
+type clusterRegistrationClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewClusterRegistrationRequestClient(cc grpc.ClientConnInterface) ClusterRegistrationRequestClient {
-	return &clusterRegistrationRequestClient{cc}
+func NewClusterRegistrationClient(cc grpc.ClientConnInterface) ClusterRegistrationClient {
+	return &clusterRegistrationClient{cc}
 }
 
-func (c *clusterRegistrationRequestClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistrationRequest_GetAllClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterRegistrationRequest_ServiceDesc.Streams[0], "/domain.ClusterRegistrationRequest/GetAll", opts...)
+func (c *clusterRegistrationClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[0], "/domain.ClusterRegistration/GetAll", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &clusterRegistrationRequestGetAllClient{stream}
+	x := &clusterRegistrationGetAllClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -500,16 +500,16 @@ func (c *clusterRegistrationRequestClient) GetAll(ctx context.Context, in *GetAl
 	return x, nil
 }
 
-type ClusterRegistrationRequest_GetAllClient interface {
+type ClusterRegistration_GetAllClient interface {
 	Recv() (*projections.ClusterRegistration, error)
 	grpc.ClientStream
 }
 
-type clusterRegistrationRequestGetAllClient struct {
+type clusterRegistrationGetAllClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterRegistrationRequestGetAllClient) Recv() (*projections.ClusterRegistration, error) {
+func (x *clusterRegistrationGetAllClient) Recv() (*projections.ClusterRegistration, error) {
 	m := new(projections.ClusterRegistration)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -517,12 +517,12 @@ func (x *clusterRegistrationRequestGetAllClient) Recv() (*projections.ClusterReg
 	return m, nil
 }
 
-func (c *clusterRegistrationRequestClient) GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistrationRequest_GetPendingClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterRegistrationRequest_ServiceDesc.Streams[1], "/domain.ClusterRegistrationRequest/GetPending", opts...)
+func (c *clusterRegistrationClient) GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[1], "/domain.ClusterRegistration/GetPending", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &clusterRegistrationRequestGetPendingClient{stream}
+	x := &clusterRegistrationGetPendingClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -532,16 +532,16 @@ func (c *clusterRegistrationRequestClient) GetPending(ctx context.Context, in *e
 	return x, nil
 }
 
-type ClusterRegistrationRequest_GetPendingClient interface {
+type ClusterRegistration_GetPendingClient interface {
 	Recv() (*projections.ClusterRegistration, error)
 	grpc.ClientStream
 }
 
-type clusterRegistrationRequestGetPendingClient struct {
+type clusterRegistrationGetPendingClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterRegistrationRequestGetPendingClient) Recv() (*projections.ClusterRegistration, error) {
+func (x *clusterRegistrationGetPendingClient) Recv() (*projections.ClusterRegistration, error) {
 	m := new(projections.ClusterRegistration)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -549,99 +549,98 @@ func (x *clusterRegistrationRequestGetPendingClient) Recv() (*projections.Cluste
 	return m, nil
 }
 
-// ClusterRegistrationRequestServer is the server API for ClusterRegistrationRequest service.
-// All implementations must embed UnimplementedClusterRegistrationRequestServer
+// ClusterRegistrationServer is the server API for ClusterRegistration service.
+// All implementations must embed UnimplementedClusterRegistrationServer
 // for forward compatibility
-type ClusterRegistrationRequestServer interface {
+type ClusterRegistrationServer interface {
 	// GetAll returns all registration requests.
-	GetAll(*GetAllRequest, ClusterRegistrationRequest_GetAllServer) error
+	GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error
 	// GetPending returns all pending registration requests.
-	GetPending(*emptypb.Empty, ClusterRegistrationRequest_GetPendingServer) error
-	mustEmbedUnimplementedClusterRegistrationRequestServer()
+	GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error
+	mustEmbedUnimplementedClusterRegistrationServer()
 }
 
-// UnimplementedClusterRegistrationRequestServer must be embedded to have forward compatible implementations.
-type UnimplementedClusterRegistrationRequestServer struct {
+// UnimplementedClusterRegistrationServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterRegistrationServer struct {
 }
 
-func (UnimplementedClusterRegistrationRequestServer) GetAll(*GetAllRequest, ClusterRegistrationRequest_GetAllServer) error {
+func (UnimplementedClusterRegistrationServer) GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedClusterRegistrationRequestServer) GetPending(*emptypb.Empty, ClusterRegistrationRequest_GetPendingServer) error {
+func (UnimplementedClusterRegistrationServer) GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetPending not implemented")
 }
-func (UnimplementedClusterRegistrationRequestServer) mustEmbedUnimplementedClusterRegistrationRequestServer() {
-}
+func (UnimplementedClusterRegistrationServer) mustEmbedUnimplementedClusterRegistrationServer() {}
 
-// UnsafeClusterRegistrationRequestServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ClusterRegistrationRequestServer will
+// UnsafeClusterRegistrationServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterRegistrationServer will
 // result in compilation errors.
-type UnsafeClusterRegistrationRequestServer interface {
-	mustEmbedUnimplementedClusterRegistrationRequestServer()
+type UnsafeClusterRegistrationServer interface {
+	mustEmbedUnimplementedClusterRegistrationServer()
 }
 
-func RegisterClusterRegistrationRequestServer(s grpc.ServiceRegistrar, srv ClusterRegistrationRequestServer) {
-	s.RegisterService(&ClusterRegistrationRequest_ServiceDesc, srv)
+func RegisterClusterRegistrationServer(s grpc.ServiceRegistrar, srv ClusterRegistrationServer) {
+	s.RegisterService(&ClusterRegistration_ServiceDesc, srv)
 }
 
-func _ClusterRegistrationRequest_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _ClusterRegistration_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetAllRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ClusterRegistrationRequestServer).GetAll(m, &clusterRegistrationRequestGetAllServer{stream})
+	return srv.(ClusterRegistrationServer).GetAll(m, &clusterRegistrationGetAllServer{stream})
 }
 
-type ClusterRegistrationRequest_GetAllServer interface {
+type ClusterRegistration_GetAllServer interface {
 	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
-type clusterRegistrationRequestGetAllServer struct {
+type clusterRegistrationGetAllServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterRegistrationRequestGetAllServer) Send(m *projections.ClusterRegistration) error {
+func (x *clusterRegistrationGetAllServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _ClusterRegistrationRequest_GetPending_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _ClusterRegistration_GetPending_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ClusterRegistrationRequestServer).GetPending(m, &clusterRegistrationRequestGetPendingServer{stream})
+	return srv.(ClusterRegistrationServer).GetPending(m, &clusterRegistrationGetPendingServer{stream})
 }
 
-type ClusterRegistrationRequest_GetPendingServer interface {
+type ClusterRegistration_GetPendingServer interface {
 	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
-type clusterRegistrationRequestGetPendingServer struct {
+type clusterRegistrationGetPendingServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterRegistrationRequestGetPendingServer) Send(m *projections.ClusterRegistration) error {
+func (x *clusterRegistrationGetPendingServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-// ClusterRegistrationRequest_ServiceDesc is the grpc.ServiceDesc for ClusterRegistrationRequest service.
+// ClusterRegistration_ServiceDesc is the grpc.ServiceDesc for ClusterRegistration service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ClusterRegistrationRequest_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "domain.ClusterRegistrationRequest",
-	HandlerType: (*ClusterRegistrationRequestServer)(nil),
+var ClusterRegistration_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.ClusterRegistration",
+	HandlerType: (*ClusterRegistrationServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetAll",
-			Handler:       _ClusterRegistrationRequest_GetAll_Handler,
+			Handler:       _ClusterRegistration_GetAll_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "GetPending",
-			Handler:       _ClusterRegistrationRequest_GetPending_Handler,
+			Handler:       _ClusterRegistration_GetPending_Handler,
 			ServerStreams: true,
 		},
 	},

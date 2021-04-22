@@ -13,16 +13,16 @@ import (
 	"google.golang.org/grpc"
 )
 
-// tenantServiceServer is the implementation of the TenantService API
-type tenantServiceServer struct {
+// tenantServer is the implementation of the TenantService API
+type tenantServer struct {
 	api.UnimplementedTenantServer
 
 	repo repositories.ReadOnlyTenantRepository
 }
 
 // NewTenantServiceServer returns a new configured instance of tenantServiceServer
-func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository) *tenantServiceServer {
-	return &tenantServiceServer{
+func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository) *tenantServer {
+	return &tenantServer{
 		repo: tenantRepo,
 	}
 }
@@ -39,7 +39,7 @@ func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.Client
 }
 
 // GetById returns the tenant found by the given id.
-func (s *tenantServiceServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Tenant, error) {
+func (s *tenantServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Tenant, error) {
 	tenant, err := s.repo.ByTenantId(ctx, id.GetValue())
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *tenantServiceServer) GetById(ctx context.Context, id *wrappers.StringVa
 }
 
 // GetByName returns the tenant found by the given name.
-func (s *tenantServiceServer) GetByName(ctx context.Context, name *wrappers.StringValue) (*projections.Tenant, error) {
+func (s *tenantServer) GetByName(ctx context.Context, name *wrappers.StringValue) (*projections.Tenant, error) {
 	tenant, err := s.repo.ByName(ctx, name.GetValue())
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
@@ -56,7 +56,7 @@ func (s *tenantServiceServer) GetByName(ctx context.Context, name *wrappers.Stri
 	return tenant.Proto(), nil
 }
 
-func (s *tenantServiceServer) GetAll(request *api.GetAllRequest, stream api.Tenant_GetAllServer) error {
+func (s *tenantServer) GetAll(request *api.GetAllRequest, stream api.Tenant_GetAllServer) error {
 	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 func NewReportPermissions() *cobra.Command {
@@ -18,11 +18,8 @@ func NewReportPermissions() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data := [][]string{}
 
-			commandRegistry := domain.RegisterCommands()
-			types := commandRegistry.GetRegisteredCommandTypes()
-
-			for _, cmdType := range types {
-				command, err := commandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
+			for _, cmdType := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
 				if err != nil {
 					return err
 				}

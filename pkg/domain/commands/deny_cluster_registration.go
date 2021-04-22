@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewDenyClusterRegistration)
+}
+
 // DenyClusterRegistration is a command for denial of new cluster to register with the m8 Control Plane.
 type DenyClusterRegistration struct {
 	*es.BaseCommand

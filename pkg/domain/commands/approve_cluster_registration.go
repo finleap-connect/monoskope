@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewApproveClusterRegistration)
+}
+
 // ApproveClusterRegistration is a command for approval of new cluster to register with the m8 Control Plane.
 type ApproveClusterRegistration struct {
 	*es.BaseCommand

@@ -12,6 +12,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewDeleteUserRoleBindingCommand)
+}
+
 // DeleteUserRoleBindingCommand is a command for removing a role from a user.
 type DeleteUserRoleBindingCommand struct {
 	*es.BaseCommand

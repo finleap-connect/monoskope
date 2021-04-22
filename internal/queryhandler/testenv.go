@@ -49,7 +49,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	}
 
 	// Setup domain
-	userRepo, tenantRepo, err := domain.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	qhDomain, err := domain.NewQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +58,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	grpcServer := grpc.NewServer("queryhandler_grpc", false)
 	env.grpcServer = grpcServer
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServer(s, NewUserServer(userRepo))
-		api.RegisterTenantServer(s, NewTenantServer(tenantRepo))
+		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
+		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

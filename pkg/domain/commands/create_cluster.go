@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateClusterCommand)
+}
+
 // CreateClusterCommand is a command for deleting a cluster.
 type CreateClusterCommand struct {
 	*es.BaseCommand

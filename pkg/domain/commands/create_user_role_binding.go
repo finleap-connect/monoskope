@@ -13,7 +13,11 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// AddRoleToUser is a command for adding a role to a user.
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateUserRoleBindingCommand)
+}
+
+// CreateUserRoleBindingCommand is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
 	*es.BaseCommand
 	cmdData.CreateUserRoleBindingCommandData

@@ -12,6 +12,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewDeleteTenantCommand)
+}
+
 // DeleteTenantCommand is a command for deleting a tenant.
 type DeleteTenantCommand struct {
 	*es.BaseCommand

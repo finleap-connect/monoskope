@@ -53,7 +53,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		userRepo, tenantRepo, err := domain.SetupQueryHandlerDomain(ctx, ebConsumer, esClient)
+		qhDomain, err := domain.NewQueryHandlerDomain(ctx, ebConsumer, esClient)
 		if err != nil {
 			return err
 		}
@@ -62,8 +62,8 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
-			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(tenantRepo))
-			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(userRepo))
+			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(qhDomain.TenantRepository))
+			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
