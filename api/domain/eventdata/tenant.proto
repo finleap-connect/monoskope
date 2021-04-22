@@ -9,14 +9,14 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package eventdata;
 
-message TenantCreatedEventData {
+message TenantCreated {
   // Name of the tenant
   string name = 1;
   // Prefix of the tenant
   string prefix = 2;
 }
 
-message TenantUpdatedEventData {
+message TenantUpdated {
   // New name for the tenant
   google.protobuf.StringValue name = 1;
 }

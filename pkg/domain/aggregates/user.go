@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	eventData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -46,7 +46,7 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error
 func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
-		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventData.UserCreatedEventData{
+		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
 			Email: cmd.GetEmail(),
 			Name:  cmd.GetName(),
 		}))
@@ -117,7 +117,7 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 
 // userCreated handle the event
 func (a *UserAggregate) userCreated(event es.Event) error {
-	data := &eventData.UserCreatedEventData{}
+	data := &eventdata.UserCreated{}
 	if err := event.Data().ToProto(data); err != nil {
 		return err
 	}

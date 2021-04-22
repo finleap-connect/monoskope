@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -41,7 +40,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 
 	switch cmd := cmd.(type) {
 	case *commands.CreateClusterCommand:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedEventData{
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
 			Name:             cmd.GetName(),
 			ApiServerAddress: cmd.GetApiServerAddress(),
 			CaCertificate:    cmd.GetClusterCACert(),
@@ -60,7 +59,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &ed.ClusterCreatedEventData{}
+		data := &eventdata.ClusterCreated{}
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err

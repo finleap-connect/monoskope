@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -36,7 +36,7 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.TenantCreated:
-		data := &ed.TenantCreatedEventData{}
+		data := &eventdata.TenantCreated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
@@ -47,7 +47,7 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 			return nil, err
 		}
 	case events.TenantUpdated:
-		data := &ed.TenantUpdatedEventData{}
+		data := &eventdata.TenantUpdated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}

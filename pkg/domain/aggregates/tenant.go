@@ -81,11 +81,11 @@ func containsTenant(values []es.Aggregate, name string) bool {
 func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateTenantCommand:
-		ed := es.ToEventDataFromProto(&eventdata.TenantCreatedEventData{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
+		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
 		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
 		return nil
 	case *commands.UpdateTenantCommand:
-		ed := es.ToEventDataFromProto(&eventdata.TenantUpdatedEventData{
+		ed := es.ToEventDataFromProto(&eventdata.TenantUpdated{
 			Name: cmd.GetName(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
@@ -102,14 +102,14 @@ func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) error {
 func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.TenantCreated:
-		data := &eventdata.TenantCreatedEventData{}
+		data := &eventdata.TenantCreated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
 		a.Name = data.Name
 		a.Prefix = data.Prefix
 	case events.TenantUpdated:
-		data := &eventdata.TenantUpdatedEventData{}
+		data := &eventdata.TenantUpdated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}

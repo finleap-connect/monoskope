@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -91,7 +91,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
-		eventData := &ed.UserRoleAddedEventData{
+		eventData := &eventdata.UserRoleAdded{
 			UserId:   cmd.GetUserId(),
 			Role:     cmd.GetRole(),
 			Scope:    cmd.GetScope(),
@@ -124,7 +124,7 @@ func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
 
 // userRoleBindingCreated applies the event on the aggregate
 func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error {
-	data := &ed.UserRoleAddedEventData{}
+	data := &eventdata.UserRoleAdded{}
 	err := event.Data().ToProto(data)
 	if err != nil {
 		return err

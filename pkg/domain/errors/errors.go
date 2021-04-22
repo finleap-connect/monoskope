@@ -28,15 +28,15 @@ var (
 	// ErrTenantAlreadyExists is when a tenant does already exist.
 	ErrTenantAlreadyExists = errors.New("tenant already exists")
 
-	// AggregateAlreadyExists is when an aggregate does already exist.
-	AggregateAlreadyExists = errors.New("aggregate already exists")
+	// ErrAggregateAlreadyExists is when an aggregate does already exist.
+	ErrAggregateAlreadyExists = errors.New("aggregate already exists")
 )
 
 var (
 	errorMap = map[codes.Code][]error{
 		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, AggregateAlreadyExists},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrAggregateAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )
@@ -78,6 +78,12 @@ func TranslateToGrpcError(err error) error {
 	return status.Error(codes.Internal, err.Error())
 }
 
+// Returns a gRPC status error with InvalidArgument code
 func ErrInvalidArgument(msg string) error {
 	return status.Error(codes.InvalidArgument, msg)
+}
+
+// Returns a gRPC status error with FailedPrecondition code
+func ErrFailedPrecondition(msg string) error {
+	return status.Error(codes.FailedPrecondition, msg)
 }
