@@ -11,14 +11,14 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// CreateUserCommand is a command for creating a user.
+// RequestClusterRegistration is a command for registering a new cluster with the m8 Control Plane.
 type RequestClusterRegistration struct {
 	*es.BaseCommand
 	cmdData.RequestClusterRegistration
 }
 
 func NewRequestClusterRegistrationCommand(id uuid.UUID) es.Command {
-	return &CreateUserCommand{
+	return &RequestClusterRegistration{
 		BaseCommand: es.NewBaseCommand(id, aggregates.User, commands.RequestClusterRegistration),
 	}
 }

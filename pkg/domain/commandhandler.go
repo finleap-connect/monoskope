@@ -40,6 +40,9 @@ func RegisterCommands() es.CommandRegistry {
 
 	// Cluster
 	commandRegistry.RegisterCommand(commands.NewRequestClusterRegistrationCommand)
+	commandRegistry.RegisterCommand(commands.NewApproveClusterRegistration)
+	commandRegistry.RegisterCommand(commands.NewDenyClusterRegistration)
+	commandRegistry.RegisterCommand(commands.NewCreateClusterCommand)
 	commandRegistry.RegisterCommand(commands.NewDeleteClusterCommand)
 
 	return commandRegistry
@@ -61,6 +64,9 @@ func registerCommandsWithHandler(handler es.CommandHandler) es.CommandRegistry {
 
 	// Cluster
 	commandRegistry.SetHandler(handler, commandTypes.RequestClusterRegistration)
+	commandRegistry.SetHandler(handler, commandTypes.ApproveClusterRegistration)
+	commandRegistry.SetHandler(handler, commandTypes.DenyClusterRegistration)
+	commandRegistry.SetHandler(handler, commandTypes.CreateCluster)
 	commandRegistry.SetHandler(handler, commandTypes.DeleteCluster)
 
 	return commandRegistry
@@ -82,6 +88,7 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
 	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Cluster
+	aggregateRegistry.RegisterAggregate(aggregates.NewClusterRegistrationAggregate)
 	aggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
 
 	return aggregateManager

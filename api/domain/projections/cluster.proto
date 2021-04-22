@@ -23,7 +23,7 @@ message ClusterRegistrationRequest {
   ProjectionMetadata metadata = 5;
 
   enum Status {
-    PENDING = 0;
+    REQUESTED = 0;
     APPROVED = 1;
     DENIED = 2;
   }

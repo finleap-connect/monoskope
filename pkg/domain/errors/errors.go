@@ -27,13 +27,16 @@ var (
 	ErrTenantNotFound = errors.New("tenant not found")
 	// ErrTenantAlreadyExists is when a tenant does already exist.
 	ErrTenantAlreadyExists = errors.New("tenant already exists")
+
+	// AggregateAlreadyExists is when an aggregate does already exist.
+	AggregateAlreadyExists = errors.New("aggregate already exists")
 )
 
 var (
 	errorMap = map[codes.Code][]error{
 		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, AggregateAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

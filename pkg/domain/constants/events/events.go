@@ -23,6 +23,9 @@ const (
 	ClusterRegistrationApproved es.EventType = "ClusterRegistrationApproved"
 	// Event emitted when a Cluster Registration has been denied
 	ClusterRegistrationDenied es.EventType = "ClusterRegistrationDenied"
+
+	// Event emitted when a Cluster has been created
+	ClusterCreated es.EventType = "ClusterCreated"
 	// Event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
 )

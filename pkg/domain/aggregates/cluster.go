@@ -5,19 +5,12 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-)
-
-type ClusterState string
-
-const (
-	Requested ClusterState = "Requested"
-	Approved  ClusterState = "Approved"
-	Denied    ClusterState = "Denied"
 )
 
 // ClusterAggregate is an aggregate for K8s Clusters.
@@ -26,7 +19,6 @@ type ClusterAggregate struct {
 	name          string
 	apiServerAddr string
 	caCertificate []byte
-	state         ClusterState
 }
 
 // ClusterAggregate creates a new ClusterAggregate
@@ -48,8 +40,13 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	}
 
 	switch cmd := cmd.(type) {
-	case *commands.RequestClusterRegistration:
-		_ = a.AppendEvent(ctx, events.ClusterRegistrationRequested, nil)
+	case *commands.CreateClusterCommand:
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedEventData{
+			Name:             cmd.GetName(),
+			ApiServerAddress: cmd.GetApiServerAddress(),
+			CaCertificate:    cmd.GetClusterCACert(),
+		})
+		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
 		return nil
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
@@ -62,20 +59,15 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
-	case events.ClusterRegistrationRequested:
-		data := &ed.ClusterRegisteredEventData{}
+	case events.ClusterCreated:
+		data := &ed.ClusterCreatedEventData{}
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
 		}
-		a.state = Requested
 		a.name = data.GetName()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertificate = data.GetCaCertificate()
-	case events.ClusterRegistrationApproved:
-		a.state = Approved
-	case events.ClusterRegistrationDenied:
-		a.state = Denied
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:
