@@ -13,12 +13,12 @@ import (
 )
 
 type clusterregistrationProjector struct {
-	*domainProjector
+	*approvableProjector
 }
 
 func NewClusterRegistrationProjector() es.Projector {
 	return &clusterregistrationProjector{
-		domainProjector: NewDomainProjector(),
+		approvableProjector: NewApprovableProjector(),
 	}
 }
 
@@ -51,12 +51,12 @@ func (t *clusterregistrationProjector) Project(ctx context.Context, event es.Eve
 		}
 	case events.ClusterRegistrationApproved:
 		p.Status = projectionsApi.ClusterRegistration_APPROVED
-		if err := t.projectModified(event, p.DomainProjection); err != nil {
+		if err := t.projectApproved(event, p.ApprovableProjection); err != nil {
 			return nil, err
 		}
 	case events.ClusterRegistrationDenied:
 		p.Status = projectionsApi.ClusterRegistration_DENIED
-		if err := t.projectModified(event, p.DomainProjection); err != nil {
+		if err := t.projectDenied(event, p.ApprovableProjection); err != nil {
 			return nil, err
 		}
 	default:

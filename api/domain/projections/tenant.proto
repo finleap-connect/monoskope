@@ -20,5 +20,5 @@ message Tenant {
   // characters.
   string prefix = 3;
   // Metadata about the projection
-  ProjectionMetadata metadata = 4;
+  LifecycleMetadata metadata = 4;
 }

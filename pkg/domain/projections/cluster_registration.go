@@ -7,17 +7,17 @@ import (
 )
 
 type ClusterRegistration struct {
-	*DomainProjection
+	*ApprovableProjection
 	*projections.ClusterRegistration
 }
 
 func NewClusterRegistrationProjection(id uuid.UUID) eventsourcing.Projection {
-	dp := NewDomainProjection()
+	dp := NewApprovableProjection()
 	return &ClusterRegistration{
-		DomainProjection: dp,
+		ApprovableProjection: dp,
 		ClusterRegistration: &projections.ClusterRegistration{
 			Id:       id.String(),
-			Metadata: &dp.ProjectionMetadata,
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }

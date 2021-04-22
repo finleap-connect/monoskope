@@ -6,7 +6,7 @@ import (
 )
 
 type DomainProjection struct {
-	projections.ProjectionMetadata
+	projections.LifecycleMetadata
 	version          uint64
 	CreatedById      uuid.UUID
 	LastModifiedById uuid.UUID

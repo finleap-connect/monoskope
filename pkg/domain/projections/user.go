@@ -17,7 +17,7 @@ func NewUserProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		User: &projections.User{
 			Id:       id.String(),
-			Metadata: &dp.ProjectionMetadata,
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }

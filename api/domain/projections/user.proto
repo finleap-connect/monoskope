@@ -9,7 +9,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package projections;
 
-message ProjectionMetadata {
+message LifecycleMetadata {
   // When it has been created
   google.protobuf.Timestamp Created = 1;
   // By whom it has been created
@@ -24,6 +24,17 @@ message ProjectionMetadata {
   User DeletedBy = 6;
 }
 
+message ApprovalMetadata {
+  // When it has been approved
+  google.protobuf.Timestamp Approved = 7;
+  // By whom it has been approved
+  User ApprovedBy = 8;
+  // When it has been denied
+  google.protobuf.Timestamp Denied = 9;
+  // By whom it has been denied
+  User DeniedBy = 10;
+}
+
 // User within Monoskope
 message User {
   // Unique identifier of the user (UUID 128-bit number)
@@ -35,7 +46,7 @@ message User {
   // Roles of the user
   repeated UserRoleBinding roles = 4;
   // Metadata about the projection
-  ProjectionMetadata metadata = 5;
+  LifecycleMetadata metadata = 5;
 }
 
 message UserRoleBinding {
@@ -50,5 +61,5 @@ message UserRoleBinding {
   // Target resource of the role
   string resource = 5;
   // Metadata about the projection
-  ProjectionMetadata metadata = 6;
+  LifecycleMetadata metadata = 6;
 }

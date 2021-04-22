@@ -21,8 +21,10 @@ message ClusterRegistration {
   bytes clusterCACert = 4;
   // Status of the request
   Status status = 5;
-  // Metadata about the projection
-  ProjectionMetadata metadata = 6;
+  // Metadata about the lifecycle of the projection
+  LifecycleMetadata metadata = 6;
+  // Metadata about the approval of the projection
+  ApprovalMetadata approvalMetadata = 7;
 
   enum Status {
     REQUESTED = 0;
@@ -42,5 +44,5 @@ message Cluster {
   // CA certificate of the cluster
   bytes clusterCACert = 4;
   // Metadata about the projection
-  ProjectionMetadata metadata = 5;
+  LifecycleMetadata metadata = 5;
 }

@@ -16,7 +16,7 @@ func NewUserRoleBinding(id uuid.UUID) *UserRoleBinding {
 		DomainProjection: dp,
 		UserRoleBinding: &projections.UserRoleBinding{
 			Id:       id.String(),
-			Metadata: &dp.ProjectionMetadata,
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }
