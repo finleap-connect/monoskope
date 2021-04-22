@@ -28,15 +28,17 @@ var (
 	// ErrTenantAlreadyExists is when a tenant does already exist.
 	ErrTenantAlreadyExists = errors.New("tenant already exists")
 
-	// ErrAggregateAlreadyExists is when an aggregate does already exist.
-	ErrAggregateAlreadyExists = errors.New("aggregate already exists")
+	// ErrClusterRegistrationNotFound is when a cluster registration is not known to the system.
+	ErrClusterRegistrationNotFound = errors.New("cluster registration not found")
+	// ErrClusterRegistrationAlreadyExists is when an aggregate does already exist.
+	ErrClusterRegistrationAlreadyExists = errors.New("cluster registration already exists")
 )
 
 var (
 	errorMap = map[codes.Code][]error{
-		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound},
+		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound, ErrClusterRegistrationNotFound},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrAggregateAlreadyExists},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

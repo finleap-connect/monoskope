@@ -44,7 +44,7 @@ func (a *ClusterRegistrationAggregate) validate(ctx context.Context, cmd es.Comm
 	switch cmd := cmd.(type) {
 	case *commands.RequestClusterRegistration:
 		if a.Exists() {
-			return domainErrors.ErrAggregateAlreadyExists
+			return domainErrors.ErrClusterRegistrationAlreadyExists
 		}
 		return nil
 	case *commands.ApproveClusterRegistration:

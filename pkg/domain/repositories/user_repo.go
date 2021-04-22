@@ -86,28 +86,15 @@ func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projectio
 
 // ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.GetAll(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	var user *projections.User
-	for _, p := range ps {
-		if u, ok := p.(*projections.User); ok {
-			if email == u.Email {
-				// User found
-				user = u
-			}
+	for _, u := range ps {
+		if email == u.Email {
+			return u, nil
 		}
-	}
-
-	if user != nil {
-		// Find roles of user
-		err = r.addRolesToUser(ctx, user)
-		if err != nil {
-			return nil, err
-		}
-		return user, nil
 	}
 
 	return nil, errors.ErrUserNotFound
@@ -123,6 +110,11 @@ func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*pr
 	var users []*projections.User
 	for _, p := range ps {
 		if u, ok := p.(*projections.User); ok {
+			// Find roles of user
+			err = r.addRolesToUser(ctx, u)
+			if err != nil {
+				return nil, err
+			}
 			users = append(users, u)
 		}
 	}

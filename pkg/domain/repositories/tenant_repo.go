@@ -63,31 +63,20 @@ func (r *tenantRepository) ByTenantId(ctx context.Context, id string) (*projecti
 	if err != nil {
 		return nil, err
 	}
+
 	return tenant, nil
 }
 
 // ByTenantName searches for a tenant projection by its name.
 func (r *tenantRepository) ByName(ctx context.Context, name string) (*projections.Tenant, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.GetAll(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	var tenant *projections.Tenant
-	for _, p := range ps {
-		if t, ok := p.(*projections.Tenant); ok {
-			if name == t.Name {
-				// Tenant found
-				tenant = t
-
-				// Find users that created, modified or deleted tenant
-				err = r.addMetadata(ctx, tenant.DomainProjection)
-				if err != nil {
-					return nil, err
-				}
-
-				return tenant, nil
-			}
+	for _, t := range ps {
+		if name == t.Name {
+			return t, nil
 		}
 	}
 
@@ -104,7 +93,16 @@ func (r *tenantRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*
 	var tenants []*projections.Tenant
 	for _, p := range ps {
 		if t, ok := p.(*projections.Tenant); ok {
-			tenants = append(tenants, t)
+			if !t.GetDeleted().IsValid() || includeDeleted {
+				// Add metadata
+				err = r.addMetadata(ctx, t.DomainProjection)
+				if err != nil {
+					return nil, err
+				}
+				tenants = append(tenants, t)
+			}
+		} else {
+			return nil, esErrors.ErrInvalidProjectionType
 		}
 	}
 	return tenants, nil

@@ -9,32 +9,6 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package projections;
 
-message LifecycleMetadata {
-  // When it has been created
-  google.protobuf.Timestamp Created = 1;
-  // By whom it has been created
-  User CreatedBy = 2;
-  // When it has been last modified
-  google.protobuf.Timestamp LastModified = 3;
-  // By whom it has been last modified
-  User LastModifiedBy = 4;
-  // When it has been deleted
-  google.protobuf.Timestamp Deleted = 5;
-  // By whom it has been deleted
-  User DeletedBy = 6;
-}
-
-message ApprovalMetadata {
-  // When it has been approved
-  google.protobuf.Timestamp Approved = 7;
-  // By whom it has been approved
-  User ApprovedBy = 8;
-  // When it has been denied
-  google.protobuf.Timestamp Denied = 9;
-  // By whom it has been denied
-  User DeniedBy = 10;
-}
-
 // User within Monoskope
 message User {
   // Unique identifier of the user (UUID 128-bit number)
@@ -45,8 +19,18 @@ message User {
   string email = 3;
   // Roles of the user
   repeated UserRoleBinding roles = 4;
-  // Metadata about the projection
-  LifecycleMetadata metadata = 5;
+  // When it has been created
+  google.protobuf.Timestamp Created = 5;
+  // By whom it has been created
+  string CreatedById = 6;
+  // When it has been last modified
+  google.protobuf.Timestamp LastModified = 7;
+  // By whom it has been last modified
+  string LastModifiedById = 8;
+  // When it has been deleted
+  google.protobuf.Timestamp Deleted = 9;
+  // By whom it has been deleted
+  User DeletedBy = 10;
 }
 
 message UserRoleBinding {
@@ -60,6 +44,16 @@ message UserRoleBinding {
   string scope = 4;
   // Target resource of the role
   string resource = 5;
-  // Metadata about the projection
-  LifecycleMetadata metadata = 6;
+  // When it has been created
+  google.protobuf.Timestamp Created = 6;
+  // By whom it has been created
+  string CreatedById = 7;
+  // When it has been last modified
+  google.protobuf.Timestamp LastModified = 8;
+  // By whom it has been last modified
+  string LastModifiedById = 9;
+  // When it has been deleted
+  google.protobuf.Timestamp Deleted = 10;
+  // By whom it has been deleted
+  User DeletedBy = 11;
 }
