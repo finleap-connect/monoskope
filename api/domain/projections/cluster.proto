@@ -9,18 +9,20 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package projections;
 
-// ClusterRegistrationRequest within Monoskope
-message ClusterRegistrationRequest {
+// ClusterRegistration within Monoskope
+message ClusterRegistration {
   // Unique identifier (UUID 128-bit number)
   string id = 1;
   // Unique name of the cluster
   string name = 2;
   // Address of the clusters KubeAPIServer
   string apiServerAddress = 3;
+  // CA certificate of the cluster
+  bytes clusterCACert = 4;
   // Status of the request
-  Status status = 4;
+  Status status = 5;
   // Metadata about the projection
-  ProjectionMetadata metadata = 5;
+  ProjectionMetadata metadata = 6;
 
   enum Status {
     REQUESTED = 0;
@@ -39,4 +41,6 @@ message Cluster {
   string apiServerAddress = 3;
   // CA certificate of the cluster
   bytes clusterCACert = 4;
+  // Metadata about the projection
+  ProjectionMetadata metadata = 5;
 }

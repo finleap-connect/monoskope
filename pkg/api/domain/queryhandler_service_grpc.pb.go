@@ -501,7 +501,7 @@ func (c *clusterRegistrationRequestClient) GetAll(ctx context.Context, in *GetAl
 }
 
 type ClusterRegistrationRequest_GetAllClient interface {
-	Recv() (*projections.ClusterRegistrationRequest, error)
+	Recv() (*projections.ClusterRegistration, error)
 	grpc.ClientStream
 }
 
@@ -509,8 +509,8 @@ type clusterRegistrationRequestGetAllClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterRegistrationRequestGetAllClient) Recv() (*projections.ClusterRegistrationRequest, error) {
-	m := new(projections.ClusterRegistrationRequest)
+func (x *clusterRegistrationRequestGetAllClient) Recv() (*projections.ClusterRegistration, error) {
+	m := new(projections.ClusterRegistration)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -533,7 +533,7 @@ func (c *clusterRegistrationRequestClient) GetPending(ctx context.Context, in *e
 }
 
 type ClusterRegistrationRequest_GetPendingClient interface {
-	Recv() (*projections.ClusterRegistrationRequest, error)
+	Recv() (*projections.ClusterRegistration, error)
 	grpc.ClientStream
 }
 
@@ -541,8 +541,8 @@ type clusterRegistrationRequestGetPendingClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterRegistrationRequestGetPendingClient) Recv() (*projections.ClusterRegistrationRequest, error) {
-	m := new(projections.ClusterRegistrationRequest)
+func (x *clusterRegistrationRequestGetPendingClient) Recv() (*projections.ClusterRegistration, error) {
+	m := new(projections.ClusterRegistration)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -593,7 +593,7 @@ func _ClusterRegistrationRequest_GetAll_Handler(srv interface{}, stream grpc.Ser
 }
 
 type ClusterRegistrationRequest_GetAllServer interface {
-	Send(*projections.ClusterRegistrationRequest) error
+	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
@@ -601,7 +601,7 @@ type clusterRegistrationRequestGetAllServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterRegistrationRequestGetAllServer) Send(m *projections.ClusterRegistrationRequest) error {
+func (x *clusterRegistrationRequestGetAllServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -614,7 +614,7 @@ func _ClusterRegistrationRequest_GetPending_Handler(srv interface{}, stream grpc
 }
 
 type ClusterRegistrationRequest_GetPendingServer interface {
-	Send(*projections.ClusterRegistrationRequest) error
+	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
@@ -622,7 +622,7 @@ type clusterRegistrationRequestGetPendingServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterRegistrationRequestGetPendingServer) Send(m *projections.ClusterRegistrationRequest) error {
+func (x *clusterRegistrationRequestGetPendingServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 

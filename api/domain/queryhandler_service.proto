@@ -40,11 +40,10 @@ service Tenant {
 // ClusterRegistrationRequest is a service to query ClusterRegistrationRequests.
 service ClusterRegistrationRequest {
   // GetAll returns all registration requests.
-  rpc GetAll(GetAllRequest)
-      returns (stream projections.ClusterRegistrationRequest);
+  rpc GetAll(GetAllRequest) returns (stream projections.ClusterRegistration);
   // GetPending returns all pending registration requests.
   rpc GetPending(google.protobuf.Empty)
-      returns (stream projections.ClusterRegistrationRequest);
+      returns (stream projections.ClusterRegistration);
 }
 
 // K8sOperator is a service used by remote K8s Operators to query the Control
