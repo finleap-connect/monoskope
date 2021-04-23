@@ -14,87 +14,64 @@ import (
 )
 
 type QueryHandlerDomain struct {
+	UserRoleBindingRepository     repositories.UserRoleBindingRepository
 	UserRepository                repositories.UserRepository
 	TenantRepository              repositories.TenantRepository
 	ClusterRegistrationRepository repositories.ClusterRegistrationRepository
 }
 
-func NewQueryHandlerDomain(ctx context.Context, messageBusConsumer eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
-	qhDomain := &QueryHandlerDomain{}
+func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
+	d := &QueryHandlerDomain{}
 
 	// Setup repositories
-	userRoleBindings := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
-	qhDomain.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), userRoleBindings)
-	qhDomain.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository(), qhDomain.UserRepository)
-	qhDomain.ClusterRegistrationRepository = repositories.NewClusterRegistrationRepository(esr.NewInMemoryRepository(), qhDomain.UserRepository)
+	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
+	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
+	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository(), d.UserRepository)
+	d.ClusterRegistrationRepository = repositories.NewClusterRegistrationRepository(esr.NewInMemoryRepository(), d.UserRepository)
 
-	// Setup event handler and middleware
-	userEventHandler := eventsourcing.UseEventHandlerMiddleware(
-		eventhandler.NewProjectingEventHandler(
-			projectors.NewUserProjector(),
-			qhDomain.UserRepository,
-		),
-		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
-	)
+	// Setup projectors
+	userProjector := projectors.NewUserProjector()
+	userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
+	tenantProjector := projectors.NewTenantProjector()
 
-	// Register event handler with message bus
-	err := messageBusConsumer.AddHandler(ctx,
-		userEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregates.User),
-	)
-	if err != nil {
+	// Setup handler
+	userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, d.UserRepository)
+	tenantProjectingHandler := eventhandler.NewProjectingEventHandler(tenantProjector, d.TenantRepository)
+	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, d.UserRoleBindingRepository)
+
+	// Setup middleware
+	replayHandler := eventhandler.NewEventStoreReplayEventHandler(esClient)
+	//
+	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler.AsMiddleware)
+	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler.AsMiddleware)
+	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler.AsMiddleware)
+
+	// Setup matcher for event bus
+	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)
+	tenantMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Tenant)
+	userRoleBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
+
+	// Register event handler with event bus
+	if err := eventBus.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
 		return nil, err
 	}
-
-	// Setup event handler and middleware
-	userRoleBindingEventHandler := eventsourcing.UseEventHandlerMiddleware(
-		eventhandler.NewProjectingEventHandler(
-			projectors.NewUserRoleBindingProjector(),
-			userRoleBindings,
-		),
-		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
-	)
-
-	// Register event handler with message bus
-	err = messageBusConsumer.AddHandler(ctx,
-		userRoleBindingEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding),
-	)
-	if err != nil {
+	if err := eventBus.AddHandler(ctx, tenantHandlerChain, tenantMatcher); err != nil {
 		return nil, err
 	}
-
-	// Setup event handler and middleware
-	tenantEventHandler := eventsourcing.UseEventHandlerMiddleware(
-		eventhandler.NewProjectingEventHandler(
-			projectors.NewTenantProjector(),
-			qhDomain.TenantRepository,
-		),
-		eventhandler.NewEventStoreReplayMiddleware(esClient).Middleware,
-	)
-
-	// Register event handler with message bus
-	err = messageBusConsumer.AddHandler(ctx,
-		tenantEventHandler,
-		messageBusConsumer.Matcher().MatchAggregateType(aggregates.Tenant),
-	)
-	if err != nil {
+	if err := eventBus.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
 		return nil, err
 	}
 
 	// Start repo warming
-	userRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.User, userEventHandler)
-	if err := userRepoWarming.WarmUp(ctx); err != nil {
+	if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
 		return nil, err
 	}
-	userRoleBindingRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.UserRoleBinding, userRoleBindingEventHandler)
-	if err := userRoleBindingRepoWarming.WarmUp(ctx); err != nil {
+	if err := handler.WarmUp(ctx, esClient, aggregates.UserRoleBinding, userRoleBindingHandlerChain); err != nil {
 		return nil, err
 	}
-	tenantRepoWarming := handler.NewRepoWarmingMiddleware(esClient, aggregates.Tenant, tenantEventHandler)
-	if err := tenantRepoWarming.WarmUp(ctx); err != nil {
+	if err := handler.WarmUp(ctx, esClient, aggregates.Tenant, tenantHandlerChain); err != nil {
 		return nil, err
 	}
 
-	return qhDomain, nil
+	return d, nil
 }

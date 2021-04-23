@@ -30,8 +30,8 @@ type EventBusConsumer interface {
 type EventMatcher interface {
 	// Any matches any event.
 	Any() EventMatcher
-	// MatchEventType matches a specific event type, nil events never match.
+	// MatchEventType matches a specific event type.
 	MatchEventType(eventType EventType) EventMatcher
-	// MatchAggregate matches a specific aggregate type, nil events never match.
+	// MatchAggregate matches a specific aggregate type.
 	MatchAggregateType(aggregateType AggregateType) EventMatcher
 }
