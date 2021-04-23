@@ -12,14 +12,14 @@ import (
 type Logger = logr.Logger
 
 var (
-	zapLog *zap.Logger
+	zapLog        *zap.Logger
+	operationMode operation.OperationMode
 )
 
 func init() {
 	var err error
 
-	operationMode := operation.GetOperationMode()
-
+	operationMode = operation.GetOperationMode()
 	switch operationMode {
 	case operation.DEVELOPMENT:
 		zapLog, err = zap.NewDevelopment()
@@ -35,7 +35,14 @@ func init() {
 }
 
 func WithOptions(opts ...zap.Option) logr.Logger {
-	return zapr.NewLogger(zapLog.WithOptions(opts...))
+	switch operationMode {
+	case operation.DEVELOPMENT:
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(int(zap.DebugLevel))
+	case operation.RELEASE:
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(int(zap.InfoLevel))
+	default:
+		return zapr.NewLogger(zapLog.WithOptions(opts...))
+	}
 }
 
 func WithName(name string) logr.Logger {
