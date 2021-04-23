@@ -33,11 +33,13 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userProjector := projectors.NewUserProjector()
 	userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
 	tenantProjector := projectors.NewTenantProjector()
+	clusterRegistrationProjector := projectors.NewClusterRegistrationProjector()
 
 	// Setup handler
 	userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, d.UserRepository)
 	tenantProjectingHandler := eventhandler.NewProjectingEventHandler(tenantProjector, d.TenantRepository)
 	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, d.UserRoleBindingRepository)
+	clusterRegistrationProjectingHandler := eventhandler.NewProjectingEventHandler(clusterRegistrationProjector, d.ClusterRegistrationRepository)
 
 	// Setup middleware
 	replayHandler := eventhandler.NewEventStoreReplayEventHandler(esClient)
@@ -45,11 +47,13 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler.AsMiddleware)
 	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler.AsMiddleware)
 	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler.AsMiddleware)
+	clusterRegistrationHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterRegistrationProjectingHandler, replayHandler.AsMiddleware)
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)
 	tenantMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Tenant)
 	userRoleBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
+	clusterRegistrationMatcher := eventBus.Matcher().MatchAggregateType(aggregates.ClusterRegistration)
 
 	// Register event handler with event bus
 	if err := eventBus.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
@@ -61,6 +65,9 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	if err := eventBus.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
 		return nil, err
 	}
+	if err := eventBus.AddHandler(ctx, clusterRegistrationHandlerChain, clusterRegistrationMatcher); err != nil {
+		return nil, err
+	}
 
 	// Start repo warming
 	if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
@@ -70,6 +77,9 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.Tenant, tenantHandlerChain); err != nil {
+		return nil, err
+	}
+	if err := handler.WarmUp(ctx, esClient, aggregates.ClusterRegistration, clusterRegistrationHandlerChain); err != nil {
 		return nil, err
 	}
 
