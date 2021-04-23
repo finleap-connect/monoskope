@@ -31,7 +31,7 @@ func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *auth
 // BypassAuthorization disables authorization checks and returns a function to enable it again
 func (h *authorizationHandler) BypassAuthorization() func() {
 	h.bypassAuthorization = true
-	h.log.Info("WARNING authorization bypass has been enabled.")
+	h.log.V(logger.WarnLevel).Info("Authorization bypass has been enabled.")
 
 	return func() {
 		h.bypassAuthorization = false
@@ -46,15 +46,15 @@ func (m *authorizationHandler) Middleware(h es.CommandHandler) es.CommandHandler
 
 // HandleCommand implements the CommandHandler interface
 func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
-	metadataMngr, err := metadata.NewDomainMetadataManager(ctx)
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
 		return err
 	}
-	userInfo := metadataMngr.GetUserInformation()
+	userInfo := metadataManager.GetUserInformation()
 
 	if h.bypassAuthorization {
-		h.log.Info("WARNING authorization bypass enabled.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		if err := metadataMngr.SetRoleBindings([]*projections.UserRoleBinding{
+		h.log.V(logger.WarnLevel).Info("Authorization bypass enabled.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+		if err := metadataManager.SetRoleBindings([]*projections.UserRoleBinding{
 			{
 				Role:  roles.Admin.String(),
 				Scope: scopes.System.String(),
@@ -63,7 +63,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 			h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 			return domainErrors.ErrUnauthorized
 		}
-		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetContext(), cmd)
+		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	}
 
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
@@ -74,14 +74,14 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 
 	userRoleBindings := user.GetRoles()
 	userInfo.Id = user.ID()
-	metadataMngr.SetUserInformation(userInfo)
-	if err := metadataMngr.SetRoleBindings(userRoleBindings); err != nil {
+	metadataManager.SetUserInformation(userInfo)
+	if err := metadataManager.SetRoleBindings(userRoleBindings); err != nil {
 		h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 		return domainErrors.ErrUnauthorized
 	}
 
 	if h.nextHandlerInChain != nil {
-		return h.nextHandlerInChain.HandleCommand(metadataMngr.GetContext(), cmd)
+		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	} else {
 		return nil
 	}

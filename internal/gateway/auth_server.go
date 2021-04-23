@@ -18,7 +18,6 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/operation"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
@@ -111,11 +110,9 @@ func (s *authServer) auth(c *gin.Context) {
 	route := c.Param("route")
 	s.log.Info("Authenticating request...", "route", route)
 
-	if operation.GetOperationMode() == operation.DEVELOPMENT {
-		// Print headers
-		for k := range c.Request.Header {
-			s.log.Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
-		}
+	// Print headers
+	for k := range c.Request.Header {
+		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
 	}
 
 	var claims *auth.Claims

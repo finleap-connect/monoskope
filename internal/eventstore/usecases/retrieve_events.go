@@ -8,6 +8,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
 )
 
@@ -41,6 +42,7 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 	}
 
 	// Retrieve events from Event Store
+	u.Log.V(logger.DebugLevel).Info("Retrieving events from the database...")
 	eventStream, err := u.store.Load(ctx, sq)
 	if err != nil {
 		return err

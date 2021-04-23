@@ -105,7 +105,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 		select {
 		case confirmed := <-b.notifyPublish:
 			if confirmed.Ack {
-				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+				b.log.V(logger.DebugLevel).Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
 			} else {
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
@@ -438,7 +438,7 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName string, msgs <-chan amqp.Delivery, handler evs.EventHandler) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for d := range msgs {
-		b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
+		b.log.V(logger.DebugLevel).Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
 
 		re := &rabbitEvent{}
 		err := json.Unmarshal(d.Body, re)

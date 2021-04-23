@@ -16,6 +16,13 @@ var (
 	operationMode operation.OperationMode
 )
 
+const (
+	DebugLevel = 1
+	InfoLevel  = 0
+	WarnLevel  = -1
+	ErrorLevel = -2
+)
+
 func init() {
 	var err error
 
@@ -37,11 +44,11 @@ func init() {
 func WithOptions(opts ...zap.Option) logr.Logger {
 	switch operationMode {
 	case operation.DEVELOPMENT:
-		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(int(zap.DebugLevel))
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(DebugLevel)
 	case operation.RELEASE:
-		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(int(zap.InfoLevel))
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(InfoLevel)
 	default:
-		return zapr.NewLogger(zapLog.WithOptions(opts...))
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(ErrorLevel)
 	}
 }
 
