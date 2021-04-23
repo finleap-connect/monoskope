@@ -60,6 +60,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
 		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository))
+		api.RegisterClusterRegistrationServer(s, NewClusterRegistrationServer(qhDomain.ClusterRegistrationRepository))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

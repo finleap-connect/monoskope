@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -29,6 +30,8 @@ type ReadOnlyClusterRegistrationRepository interface {
 	ByName(context.Context, string) (*projections.ClusterRegistration, error)
 	// GetAll searches for all clusterregistration projections.
 	GetAll(context.Context, bool) ([]*projections.ClusterRegistration, error)
+	// GetPending searches for the pending clusterregistration projections.
+	GetPending(context.Context) ([]*projections.ClusterRegistration, error)
 }
 
 // WriteOnlyClusterRegistrationRepository is a repository for writing clusterregistration projections.
@@ -102,6 +105,22 @@ func (r *clusterregistrationRepository) GetAll(ctx context.Context, includeDelet
 			}
 		} else {
 			return nil, esErrors.ErrInvalidProjectionType
+		}
+	}
+	return clusterregistrations, nil
+}
+
+// GetPending searches for the pending clusterregistration projections.
+func (r *clusterregistrationRepository) GetPending(ctx context.Context) ([]*projections.ClusterRegistration, error) {
+	ps, err := r.GetAll(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var clusterregistrations []*projections.ClusterRegistration
+	for _, t := range ps {
+		if t.Status == projectionsApi.ClusterRegistration_REQUESTED {
+			clusterregistrations = append(clusterregistrations, t)
 		}
 	}
 	return clusterregistrations, nil

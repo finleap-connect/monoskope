@@ -10,8 +10,6 @@ import (
 
 type approvableRepository struct {
 	*domainRepository
-	es.Repository
-	userRepo UserRepository
 }
 
 func NewApprovableRepository(repository es.Repository, userRepo UserRepository) *approvableRepository {
