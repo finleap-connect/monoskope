@@ -26,22 +26,18 @@ import (
 
 // registerAggregates registers all aggregates
 func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
-	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateManager := esManager.NewAggregateManager(
-		aggregateRegistry,
-		esClient,
-	)
+	aggregateManager := esManager.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
 
 	// User
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
 
 	// Tenant
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Cluster
-	aggregateRegistry.RegisterAggregate(aggregates.NewClusterRegistrationAggregate)
-	aggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
+	es.DefaultAggregateRegistry.RegisterAggregate(aggregates.NewClusterRegistrationAggregate)
+	es.DefaultAggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
 
 	return aggregateManager
 }

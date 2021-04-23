@@ -19,6 +19,12 @@ type aggregateRegistry struct {
 	aggregates map[AggregateType]func(id uuid.UUID) Aggregate
 }
 
+var DefaultAggregateRegistry AggregateRegistry
+
+func init() {
+	DefaultAggregateRegistry = NewAggregateRegistry()
+}
+
 // NewAggregateRegistry creates a new aggregate registry
 func NewAggregateRegistry() AggregateRegistry {
 	return &aggregateRegistry{

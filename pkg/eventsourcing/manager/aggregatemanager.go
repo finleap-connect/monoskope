@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-// aggregateManager handles storing and loading aggregates in memory.
+// aggregateManager handles storing and loading aggregates from/to the EventStore.
 type aggregateManager struct {
 	registry es.AggregateRegistry
 	esClient esApi.EventStoreClient
