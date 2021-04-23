@@ -24,26 +24,6 @@ import (
 	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 )
 
-// setHandler registers all commands available and sets the given commandhandler
-func setHandler(handler es.CommandHandler) {
-	// Use
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.CreateUser)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.DeleteUserRoleBinding)
-
-	// Tenant
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.CreateTenant)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.DeleteTenant)
-
-	// Cluster
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.RequestClusterRegistration)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.ApproveClusterRegistration)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.DenyClusterRegistration)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.CreateCluster)
-	es.DefaultCommandRegistry.SetHandler(handler, commandTypes.DeleteCluster)
-}
-
 // registerAggregates registers all aggregates
 func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
 	aggregateRegistry := es.NewAggregateRegistry()
@@ -144,7 +124,9 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	)
 
 	// Set command handler
-	setHandler(handler)
+	for _, t := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+		es.DefaultCommandRegistry.SetHandler(handler, t)
+	}
 
 	// Create super users
 	cancel := authorizationHandler.BypassAuthorization()
