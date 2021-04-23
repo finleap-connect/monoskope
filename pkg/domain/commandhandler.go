@@ -42,62 +42,115 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
 	return aggregateManager
 }
 
-// setupSuperUsers creates users and rolebindings for all super users
-func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
-	if superUsers := strings.Split(os.Getenv("SUPERUSERS"), ","); len(superUsers) != 0 {
-		for _, superUser := range superUsers {
-			userInfo := strings.Split(superUser, "@")
-			metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
-			if err != nil {
-				return err
-			}
-			metadataMgr.SetUserInformation(&metadata.UserInformation{
-				Name:   userInfo[0],
-				Email:  superUser,
-				Issuer: "commandhandler",
-			})
-			ctx := metadataMgr.GetContext()
+// setupUser creates users
+func setupUser(ctx context.Context, name, email string, handler es.CommandHandler) (uuid.UUID, error) {
+	userId := uuid.New()
+	data, err := commands.CreateCommandData(&cmdData.CreateUserCommandData{
+		Name:  name,
+		Email: email,
+	})
+	if err != nil {
+		return userId, err
+	}
 
-			userId := uuid.New()
-			data, err := commands.CreateCommandData(&cmdData.CreateUserCommandData{
-				Name:  userInfo[0],
-				Email: superUser,
-			})
-			if err != nil {
-				return err
-			}
-			cmd, err := es.DefaultCommandRegistry.CreateCommand(userId, commandTypes.CreateUser, data)
-			if err != nil {
-				return err
-			}
+	cmd, err := es.DefaultCommandRegistry.CreateCommand(userId, commandTypes.CreateUser, data)
+	if err != nil {
+		return userId, err
+	}
 
-			err = handler.HandleCommand(ctx, cmd)
-			if err != nil {
-				if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
-					continue
-				}
-				return err
-			}
-
-			data, err = commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
-				UserId: userId.String(),
-				Role:   roles.Admin.String(),
-				Scope:  scopes.System.String(),
-			})
-			if err != nil {
-				return err
-			}
-
-			cmd, err = es.DefaultCommandRegistry.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, data)
-			if err != nil {
-				return err
-			}
-
-			err = handler.HandleCommand(ctx, cmd)
-			if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
-				return err
-			}
+	if err := handler.HandleCommand(ctx, cmd); err != nil {
+		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+			return userId, nil
 		}
+		return userId, err
+	}
+	return userId, nil
+}
+
+// setupRoleBinding creates rolebindings
+func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string, handler es.CommandHandler) error {
+	data, err := commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
+		UserId: userId.String(),
+		Role:   role,
+		Scope:  scope,
+	})
+	if err != nil {
+		return err
+	}
+
+	cmd, err := es.DefaultCommandRegistry.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, data)
+	if err != nil {
+		return err
+	}
+
+	err = handler.HandleCommand(ctx, cmd)
+	if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
+		return err
+	}
+
+	return nil
+}
+
+// setupSuperUsers creates super users/rolebindings
+func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
+	superUsers := strings.Split(os.Getenv("SUPER_USERS"), ",")
+	if len(superUsers) == 0 {
+		return nil
+	}
+
+	for _, superUser := range superUsers {
+		userInfo := strings.Split(superUser, "@")
+
+		userId, err := setupUser(ctx, userInfo[0], superUser, handler)
+		if err != nil {
+			return err
+		}
+
+		err = setupRoleBinding(ctx, userId, roles.Admin.String(), scopes.System.String(), handler)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setupOperatorUser(ctx context.Context, handler es.CommandHandler) error {
+	k8sOperator := os.Getenv("K8S_OPERATOR")
+	if len(k8sOperator) == 0 {
+		return nil
+	}
+
+	userId, err := setupUser(ctx, "m8operator", k8sOperator, handler)
+	if err != nil {
+		return err
+	}
+
+	err = setupRoleBinding(ctx, userId, roles.K8sOperator.String(), string(scopes.System), handler)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setupUsers creates default users/rolebindings
+func setupUsers(ctx context.Context, handler es.CommandHandler) error {
+	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return err
+	}
+	metadataMgr.SetUserInformation(&metadata.UserInformation{
+		Name:  "system",
+		Email: "system@monoskope.io",
+	})
+	ctx = metadataMgr.GetContext()
+
+	if err := setupSuperUsers(ctx, handler); err != nil {
+		return err
+	}
+	if err := setupOperatorUser(ctx, handler); err != nil {
+		return err
 	}
 	return nil
 }
@@ -124,11 +177,10 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 		es.DefaultCommandRegistry.SetHandler(handler, t)
 	}
 
-	// Create super users
+	// Create default and super users
 	cancel := authorizationHandler.BypassAuthorization()
 	defer cancel()
-
-	if err := setupSuperUsers(ctx, handler); err != nil {
+	if err := setupUsers(ctx, handler); err != nil {
 		return err
 	}
 

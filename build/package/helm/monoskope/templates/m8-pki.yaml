@@ -48,7 +48,7 @@ spec:
   dnsNames:
   - operator.monoskope.cluster.local
   emailSANs:
-  - operator@monoskope.io
+  - {{ .Values.commandhandler.users.k8sOperator }}
   subject:
     organizations:
       - Monoskope

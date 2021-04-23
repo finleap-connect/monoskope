@@ -27,10 +27,10 @@ import (
 var _ = Describe("integration", func() {
 	ctx := context.Background()
 
-	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
+	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
-	metadataMgr.SetUserInformation(&metadata.UserInformation{
+	mdManager.SetUserInformation(&metadata.UserInformation{
 		Name:   "admin",
 		Email:  "admin@monoskope.io",
 		Issuer: "monoskope",
@@ -72,7 +72,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -91,7 +91,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -99,7 +99,7 @@ var _ = Describe("integration", func() {
 
 		// Creating the same rolebinding again should fail
 		command.Id = uuid.New().String()
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).To(HaveOccurred())
 
 		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
@@ -108,7 +108,7 @@ var _ = Describe("integration", func() {
 		Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
 		Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -125,7 +125,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
@@ -140,7 +140,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -159,7 +159,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -171,7 +171,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant.Metadata.GetLastModifiedBy()).ToNot(BeNil())
 		Expect(tenant.Metadata.GetLastModifiedBy().Id).To(Equal(user.Id))
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -184,6 +184,12 @@ var _ = Describe("integration", func() {
 		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
 	})
 	It("manage a cluster", func() {
+		mdManager.SetUserInformation(&metadata.UserInformation{
+			Name:   "m8operator",
+			Email:  "operator@monoskope.io",
+			Issuer: "monoskope",
+		})
+
 		requestId := uuid.New()
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(requestId, commandTypes.RequestClusterRegistration),
@@ -191,7 +197,7 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(metadataMgr.GetOutgoingGrpcContext(), command)
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate

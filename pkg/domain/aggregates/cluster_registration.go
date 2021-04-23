@@ -32,7 +32,7 @@ type ClusterRegistrationAggregate struct {
 
 // NewClusterRegistrationAggregate creates a new ClusterRegistrationAggregate
 func NewClusterRegistrationAggregate(id uuid.UUID) es.Aggregate {
-	return &ClusterAggregate{
+	return &ClusterRegistrationAggregate{
 		DomainAggregateBase: DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.ClusterRegistration, id),
 		},

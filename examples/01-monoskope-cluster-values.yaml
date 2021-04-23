@@ -79,13 +79,17 @@ commandhandler:
     requests:
       cpu: 500m
       memory: 64Mi
-  superusers:
-    # Enable superuser functionality to create initial admin rolebindings. Superusers can assign the system admin role
-    # even if they don't have the system admin role themselves. This is needed to create admin users on initialization.
-    enabled: true
-    # List of email addresses to identify superusers.
-    emails:
+  users:
+    # -- Email address to identify K8s Operators.
+    k8sOperator: "m8-operator@finleap.com"
+    # -- List of email addresses to identify superusers.
+    superusers:
+      - alexander.stielau@finleap.com
+      - carolin.dohmen@finleap.com
+      - christian.huening@finleap.com
       - jan.steffen@finleap.com
+      - lukas.grundmann@finleap.com
+      - lutz.behnke@finleap.com
 
 queryhandler:
   replicaCount: 2
