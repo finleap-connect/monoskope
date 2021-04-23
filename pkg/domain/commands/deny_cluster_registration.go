@@ -25,7 +25,7 @@ type DenyClusterRegistration struct {
 
 func NewDenyClusterRegistration(id uuid.UUID) es.Command {
 	return &DenyClusterRegistration{
-		BaseCommand: es.NewBaseCommand(id, aggregates.User, commands.DenyClusterRegistration),
+		BaseCommand: es.NewBaseCommand(id, aggregates.ClusterRegistration, commands.DenyClusterRegistration),
 	}
 }
 

@@ -25,7 +25,7 @@ type ApproveClusterRegistration struct {
 
 func NewApproveClusterRegistration(id uuid.UUID) es.Command {
 	return &ApproveClusterRegistration{
-		BaseCommand: es.NewBaseCommand(id, aggregates.User, commands.ApproveClusterRegistration),
+		BaseCommand: es.NewBaseCommand(id, aggregates.ClusterRegistration, commands.ApproveClusterRegistration),
 	}
 }
 

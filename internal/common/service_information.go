@@ -5,7 +5,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/operation"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,7 +17,7 @@ type serviceInformationService struct {
 func (s *serviceInformationService) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	s.log.Info("Service information requested.")
 
-	if util.GetOperationMode() == util.DEVELOPMENT {
+	if operation.GetOperationMode() == operation.DEVELOPMENT {
 		// Print headers
 		if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 			for k, vs := range md {

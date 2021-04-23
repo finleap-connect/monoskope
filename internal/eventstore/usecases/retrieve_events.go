@@ -41,8 +41,6 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 	}
 
 	// Retrieve events from Event Store
-	u.Log.Info("Retrieving events from the database...")
-
 	eventStream, err := u.store.Load(ctx, sq)
 	if err != nil {
 		return err
