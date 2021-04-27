@@ -18,13 +18,6 @@ const (
 	// Command to delete a Tenant
 	DeleteTenant es.CommandType = "DeleteTenant"
 
-	// Command to request a Cluster
-	RequestClusterRegistration es.CommandType = "RequestClusterRegistration"
-	// Command to approve a requested Cluster
-	ApproveClusterRegistration es.CommandType = "ApproveClusterRegistration"
-	// Command to deny a requested Cluster
-	DenyClusterRegistration es.CommandType = "DenyClusterRegistration"
-
 	// Command to create a Cluster
 	CreateCluster es.CommandType = "CreateCluster"
 	// Command to delete a Cluster

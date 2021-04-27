@@ -20,7 +20,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -53,13 +52,6 @@ var _ = Describe("integration", func() {
 	tenantServiceClient := func() domainApi.TenantClient {
 		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
 		_, client, err := queryhandler.NewTenantClient(ctx, addr)
-		Expect(err).ToNot(HaveOccurred())
-		return client
-	}
-
-	clusterRegistrationClient := func() domainApi.ClusterRegistrationClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewClusterRegistrationClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
@@ -182,35 +174,6 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
-	})
-	It("manage a cluster", func() {
-		mdManager.SetUserInformation(&metadata.UserInformation{
-			Name:   "m8operator",
-			Email:  "operator@monoskope.io",
-			Issuer: "monoskope",
-		})
-
-		requestId := uuid.New()
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(requestId, commandTypes.RequestClusterRegistration),
-			&cmdData.RequestClusterRegistration{Name: "local-test-cluster", ApiServerAddress: "localhost:443", ClusterCACert: []byte("novalidcacert")},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
-
-		pendingRegistrations, err := clusterRegistrationClient().GetPending(ctx, &emptypb.Empty{})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(pendingRegistrations).ToNot(BeNil())
-
-		pendingRegistration, err := pendingRegistrations.Recv()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(pendingRegistration).ToNot(BeNil())
-		Expect(pendingRegistration.Id).To(Equal(requestId.String()))
 	})
 })
 

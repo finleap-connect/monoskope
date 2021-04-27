@@ -24,7 +24,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	os.Setenv("SUPER_USERS", "admin@monoskope.io")
-	os.Setenv("K8S_OPERATOR", "operator@monoskope.io")
 
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {

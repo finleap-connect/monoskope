@@ -26,11 +26,8 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-users:
-  # -- Email address to identify K8s Operators.
-  k8sOperator: "k8s-operator@monoskope.io"
-  # -- List of email addresses to identify superusers.
-  superusers: []
+# -- List of email addresses to identify superusers.
+superusers: []
 
 podAnnotations: {}
 

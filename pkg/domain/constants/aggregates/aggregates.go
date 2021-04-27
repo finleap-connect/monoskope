@@ -9,8 +9,6 @@ const (
 	UserRoleBinding es.AggregateType = "UserRoleBinding"
 	// Type for the TenantAggregate
 	Tenant es.AggregateType = "Tenant"
-	// Type for the ClusterRegistrationAggregate
-	ClusterRegistration es.AggregateType = "ClusterRegistration"
 	// Type for the ClusterAggregate
 	Cluster es.AggregateType = "Cluster"
 )

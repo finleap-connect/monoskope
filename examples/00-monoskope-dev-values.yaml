@@ -86,17 +86,14 @@ commandhandler:
     requests:
       cpu: 500m
       memory: 64Mi
-  users:
-    # -- Email address to identify K8s Operators.
-    k8sOperator: "m8-operator@finleap.com"
-    # -- List of email addresses to identify superusers.
-    superusers:
-      - alexander.stielau@finleap.com
-      - carolin.dohmen@finleap.com
-      - christian.huening@finleap.com
-      - jan.steffen@finleap.com
-      - lukas.grundmann@finleap.com
-      - lutz.behnke@finleap.com
+  # -- List of email addresses to identify superusers.
+  superusers:
+    - alexander.stielau@finleap.com
+    - carolin.dohmen@finleap.com
+    - christian.huening@finleap.com
+    - jan.steffen@finleap.com
+    - lukas.grundmann@finleap.com
+    - lutz.behnke@finleap.com
 
 queryhandler:
   enabled: true
