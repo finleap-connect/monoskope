@@ -8,10 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// Store is an interface for an event storage backend.
-type Store interface {
-	// Connect connects to the bus
-	Connect(context.Context) error
+// EventStore is an interface for an event storage backend.
+type EventStore interface {
+	// Open connects to the bus
+	Open(context.Context) error
 
 	// Save appends all events in the event stream to the store.
 	Save(context.Context, []Event) error

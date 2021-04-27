@@ -80,7 +80,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(config *postgresStoreConfig) (evs.Store, error) {
+func NewPostgresEventStore(config *postgresStoreConfig) (evs.EventStore, error) {
 	err := config.Validate()
 	if err != nil {
 		return nil, err
@@ -95,8 +95,8 @@ func NewPostgresEventStore(config *postgresStoreConfig) (evs.Store, error) {
 	return s, nil
 }
 
-// Connect starts automatic reconnect with postgres db
-func (s *postgresEventStore) Connect(ctx context.Context) error {
+// Open starts automatic reconnect with postgres db
+func (s *postgresEventStore) Open(ctx context.Context) error {
 	go s.handleReconnect()
 	for !s.isConnected {
 		select {

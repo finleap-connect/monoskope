@@ -17,7 +17,7 @@ import (
 type StoreEventsUseCase struct {
 	*usecase.UseCaseBase
 
-	store   es.Store
+	store   es.EventStore
 	bus     es.EventBusPublisher
 	stream  esApi.EventStore_StoreServer
 	metrics *metrics.EventStoreMetrics
@@ -25,7 +25,7 @@ type StoreEventsUseCase struct {
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.Store, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.EventStore, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &StoreEventsUseCase{
 		UseCaseBase: usecase.NewUseCaseBase("store-events"),
 		store:       store,

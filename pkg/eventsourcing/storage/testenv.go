@@ -22,7 +22,7 @@ const (
 type TestEnv struct {
 	*test.TestEnv
 	*postgresStoreConfig
-	Store evs.Store
+	Store evs.EventStore
 }
 
 func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {

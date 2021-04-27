@@ -16,13 +16,13 @@ const BackupPath = "/etc/eventstore/backup"
 
 type BackupManager struct {
 	log           logr.Logger
-	store         eventsourcing.Store
+	store         eventsourcing.EventStore
 	backupHandler backup.BackupHandler
 	retention     int
 }
 
 // NewBackupManager creates a new backup manager configured by config files taken from eventstore.BackupPath and environment config.
-func NewBackupManager(store eventsourcing.Store, retention int) (*BackupManager, error) {
+func NewBackupManager(store eventsourcing.EventStore, retention int) (*BackupManager, error) {
 	manager := &BackupManager{
 		log:       logger.WithName("backup-manager"),
 		store:     store,

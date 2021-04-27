@@ -41,7 +41,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	err = env.storageTestEnv.Store.Connect(context.Background())
+	err = env.storageTestEnv.Store.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}

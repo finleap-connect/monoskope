@@ -62,7 +62,7 @@ var _ = Describe("storage/postgres", func() {
 
 		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
-		err = es.Connect(ctxWithTimeout)
+		err = es.Open(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
