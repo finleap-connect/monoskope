@@ -21,12 +21,11 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esCommandHandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/commandhandler"
-	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 )
 
 // registerAggregates registers all aggregates
-func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
-	aggregateManager := esManager.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
+func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
+	aggregateManager := es.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
 
 	// User
 	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })

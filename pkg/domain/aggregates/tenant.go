@@ -16,13 +16,13 @@ import (
 // TenantAggregate is an aggregate for Tenants.
 type TenantAggregate struct {
 	DomainAggregateBase
-	aggregateManager es.AggregateManager
+	aggregateManager es.AggregateStore
 	Name             string
 	Prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
-func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateManager) es.Aggregate {
+func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &TenantAggregate{
 		DomainAggregateBase: DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, id),

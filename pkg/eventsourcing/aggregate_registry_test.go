@@ -7,7 +7,7 @@ import (
 )
 
 var _ = Describe("aggregate_registry", func() {
-	It("can register and unregister aggregates", func() {
+	It("can register and unregistered aggregates", func() {
 		registry := NewAggregateRegistry()
 		registry.RegisterAggregate(func(id uuid.UUID) Aggregate { return newTestAggregate() })
 	})

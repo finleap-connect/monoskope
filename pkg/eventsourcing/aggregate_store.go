@@ -1,4 +1,4 @@
-package manager
+package eventsourcing
 
 import (
 	"context"
@@ -6,27 +6,39 @@ import (
 
 	"github.com/google/uuid"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-// aggregateManager handles storing and loading aggregates from/to the EventStore.
-type aggregateManager struct {
-	registry es.AggregateRegistry
+// AggregateStore handles storing and loading Aggregates
+type AggregateStore interface {
+	// Get returns the most recent version of all aggregate of a given type.
+	All(context.Context, AggregateType) ([]Aggregate, error)
+
+	// Get returns the most recent version of an aggregate.
+	Get(context.Context, AggregateType, uuid.UUID) (Aggregate, error)
+
+	// Update stores all in-flight events for an aggregate.
+	Update(context.Context, Aggregate) error
+}
+
+// aggregateStore handles storing and loading aggregates from/to the EventStore.
+type aggregateStore struct {
+	registry AggregateRegistry
 	esClient esApi.EventStoreClient
 }
 
 // NewAggregateManager creates a new AggregateHandler which loads/updates Aggregates with the given EventStore.
-func NewAggregateManager(aggregateRegistry es.AggregateRegistry, eventStoreClient esApi.EventStoreClient) es.AggregateManager {
-	return &aggregateManager{
+func NewAggregateManager(aggregateRegistry AggregateRegistry, eventStoreClient esApi.EventStoreClient) AggregateStore {
+	return &aggregateStore{
 		esClient: eventStoreClient,
 		registry: aggregateRegistry,
 	}
 }
 
 // Get returns the most recent version of an aggregate.
-func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateType) ([]es.Aggregate, error) {
+func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) ([]Aggregate, error) {
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateType: wrapperspb.String(aggregateType.String()),
@@ -35,7 +47,7 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 		return nil, err
 	}
 
-	var eventStream []es.Event
+	var eventStream []Event
 	for {
 		// Read next event
 		protoEvent, err := stream.Recv()
@@ -48,7 +60,7 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 			return nil, err
 		}
 
-		event, err := es.NewEventFromProto(protoEvent)
+		event, err := NewEventFromProto(protoEvent)
 		if err != nil { // Error converting
 			return nil, err
 		}
@@ -58,13 +70,13 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 	}
 
 	// Apply all events gathered from store on aggregate.
-	aggregates := make(map[uuid.UUID]es.Aggregate)
+	aggregates := make(map[uuid.UUID]Aggregate)
 	for _, event := range eventStream {
 		if event.AggregateType() != aggregateType {
 			return nil, errors.ErrInvalidAggregateType
 		}
 
-		var aggregate es.Aggregate
+		var aggregate Aggregate
 		var ok bool
 		if aggregate, ok = aggregates[event.AggregateID()]; !ok {
 			// Create new empty aggregate of type.
@@ -85,8 +97,8 @@ func (r *aggregateManager) All(ctx context.Context, aggregateType es.AggregateTy
 	return toAggregateArray(aggregates), nil
 }
 
-func toAggregateArray(aggregateMap map[uuid.UUID]es.Aggregate) []es.Aggregate {
-	var aggregates []es.Aggregate
+func toAggregateArray(aggregateMap map[uuid.UUID]Aggregate) []Aggregate {
+	var aggregates []Aggregate
 	for _, aggregate := range aggregateMap {
 		aggregates = append(aggregates, aggregate)
 	}
@@ -94,7 +106,7 @@ func toAggregateArray(aggregateMap map[uuid.UUID]es.Aggregate) []es.Aggregate {
 }
 
 // Get returns the most recent version of an aggregate.
-func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateType, id uuid.UUID) (es.Aggregate, error) {
+func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, id uuid.UUID) (Aggregate, error) {
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateId:   wrapperspb.String(id.String()),
@@ -104,7 +116,7 @@ func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateTy
 		return nil, err
 	}
 
-	var eventStream []es.Event
+	var eventStream []Event
 	for {
 		// Read next event
 		protoEvent, err := stream.Recv()
@@ -117,7 +129,7 @@ func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateTy
 			return nil, err
 		}
 
-		event, err := es.NewEventFromProto(protoEvent)
+		event, err := NewEventFromProto(protoEvent)
 		if err != nil { // Error converting
 			return nil, err
 		}
@@ -149,8 +161,8 @@ func (r *aggregateManager) Get(ctx context.Context, aggregateType es.AggregateTy
 }
 
 // Update stores all in-flight events for an aggregate.
-func (r *aggregateManager) Update(ctx context.Context, aggregate es.Aggregate) error {
-	events := aggregate.Events()
+func (r *aggregateStore) Update(ctx context.Context, aggregate Aggregate) error {
+	events := aggregate.UncommittedEvents()
 
 	// Check that there are events in-flight.
 	if len(events) == 0 {
@@ -165,7 +177,7 @@ func (r *aggregateManager) Update(ctx context.Context, aggregate es.Aggregate) e
 
 	for _, event := range events {
 		// Convert to proto event
-		protoEvent := es.NewProtoFromEvent(event)
+		protoEvent := NewProtoFromEvent(event)
 
 		// Send event to store
 		err = stream.Send(protoEvent)
