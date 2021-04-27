@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
@@ -17,13 +18,19 @@ func NewReportCommands() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data := [][]string{}
 
-			for _, cmdType := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
-				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
+			var cmdTypes []string
+			for _, v := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+				cmdTypes = append(cmdTypes, v.String())
+			}
+			sort.Strings(cmdTypes)
+
+			for _, cmdType := range cmdTypes {
+				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, es.CommandType(cmdType), nil)
 				if err != nil {
 					return err
 				}
 				data = append(data, []string{
-					string(cmdType),
+					cmdType,
 					command.AggregateType().String(),
 				})
 			}

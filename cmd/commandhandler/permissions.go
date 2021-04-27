@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
@@ -18,8 +19,14 @@ func NewReportPermissions() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data := [][]string{}
 
-			for _, cmdType := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
-				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
+			var cmdTypes []string
+			for _, v := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+				cmdTypes = append(cmdTypes, v.String())
+			}
+			sort.Strings(cmdTypes)
+
+			for _, cmdType := range cmdTypes {
+				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, es.CommandType(cmdType), nil)
 				if err != nil {
 					return err
 				}
@@ -27,7 +34,7 @@ func NewReportPermissions() *cobra.Command {
 
 				for _, p := range policies {
 					data = append(data, []string{
-						string(cmdType),
+						cmdType,
 						p.Role().String(),
 						p.Scope().String(),
 						fmt.Sprintf("%v", p.ResourceMatch()),
