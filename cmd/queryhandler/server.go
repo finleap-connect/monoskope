@@ -64,7 +64,6 @@ var serverCmd = &cobra.Command{
 		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
 			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(qhDomain.TenantRepository))
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
-			qhApi.RegisterClusterRegistrationServer(s, queryhandler.NewClusterRegistrationServer(qhDomain.ClusterRegistrationRepository))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
