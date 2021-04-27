@@ -64,8 +64,8 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 	return b, nil
 }
 
-// Connect starts automatic reconnect with rabbitmq
-func (b *rabbitEventBus) Connect(ctx context.Context) error {
+// Open starts automatic reconnect with rabbitmq
+func (b *rabbitEventBus) Open(ctx context.Context) error {
 	go b.handleReconnect(b.conf.url)
 	for !b.isConnected {
 		select {
