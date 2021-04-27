@@ -51,13 +51,13 @@ func NewS3ConfigFromFile(path string) (*S3Config, error) {
 
 type S3BackupHandler struct {
 	log       logger.Logger
-	store     es.Store
+	store     es.EventStore
 	conf      *S3Config
 	s3Client  *s3.S3
 	retention int
 }
 
-func NewS3BackupHandler(conf *S3Config, store es.Store, retention int) backup.BackupHandler {
+func NewS3BackupHandler(conf *S3Config, store es.EventStore, retention int) backup.BackupHandler {
 	b := &S3BackupHandler{
 		log:       logger.WithName("s3-backup-handler"),
 		conf:      conf,

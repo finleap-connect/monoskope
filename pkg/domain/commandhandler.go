@@ -21,134 +21,140 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esCommandHandler "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/commandhandler"
-	esManager "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/manager"
 )
 
-// RegisterCommands registers all commands available
-func RegisterCommands() es.CommandRegistry {
-	commandRegistry := es.NewCommandRegistry()
-
-	// User
-	commandRegistry.RegisterCommand(commands.NewCreateUserCommand)
-	commandRegistry.RegisterCommand(commands.NewCreateUserRoleBindingCommand)
-	commandRegistry.RegisterCommand(commands.NewDeleteUserRoleBindingCommand)
-
-	// Tenant
-	commandRegistry.RegisterCommand(commands.NewCreateTenantCommand)
-	commandRegistry.RegisterCommand(commands.NewUpdateTenantCommand)
-	commandRegistry.RegisterCommand(commands.NewDeleteTenantCommand)
-
-	// Cluster
-	commandRegistry.RegisterCommand(commands.NewRequestClusterRegistrationCommand)
-	commandRegistry.RegisterCommand(commands.NewDeleteClusterCommand)
-
-	return commandRegistry
-}
-
-// registerCommandsWithHandler registers all commands available and sets the given commandhandler
-func registerCommandsWithHandler(handler es.CommandHandler) es.CommandRegistry {
-	commandRegistry := RegisterCommands()
-
-	// User
-	commandRegistry.SetHandler(handler, commandTypes.CreateUser)
-	commandRegistry.SetHandler(handler, commandTypes.CreateUserRoleBinding)
-	commandRegistry.SetHandler(handler, commandTypes.DeleteUserRoleBinding)
-
-	// Tenant
-	commandRegistry.SetHandler(handler, commandTypes.CreateTenant)
-	commandRegistry.SetHandler(handler, commandTypes.UpdateTenant)
-	commandRegistry.SetHandler(handler, commandTypes.DeleteTenant)
-
-	// Cluster
-	commandRegistry.SetHandler(handler, commandTypes.RequestClusterRegistration)
-	commandRegistry.SetHandler(handler, commandTypes.DeleteCluster)
-
-	return commandRegistry
-}
-
 // registerAggregates registers all aggregates
-func registerAggregates(esClient esApi.EventStoreClient) es.AggregateManager {
-	aggregateRegistry := es.NewAggregateRegistry()
-	aggregateManager := esManager.NewAggregateManager(
-		aggregateRegistry,
-		esClient,
-	)
+func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
+	aggregateManager := es.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
 
 	// User
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
 
 	// Tenant
-	aggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Cluster
-	aggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
+	es.DefaultAggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
 
 	return aggregateManager
 }
 
-// setupSuperUsers creates users and rolebindings for all super users
-func setupSuperUsers(ctx context.Context, commandRegistry es.CommandRegistry, handler es.CommandHandler) error {
-	if superUsers := strings.Split(os.Getenv("SUPERUSERS"), ","); len(superUsers) != 0 {
-		for _, superUser := range superUsers {
-			userInfo := strings.Split(superUser, "@")
-			metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
-			if err != nil {
-				return err
-			}
-			metadataMgr.SetUserInformation(&metadata.UserInformation{
-				Name:   userInfo[0],
-				Email:  superUser,
-				Issuer: "commandhandler",
-			})
-			ctx := metadataMgr.GetContext()
+// setupUser creates users
+func setupUser(ctx context.Context, name, email string, handler es.CommandHandler) (uuid.UUID, error) {
+	userId := uuid.New()
+	data, err := commands.CreateCommandData(&cmdData.CreateUserCommandData{
+		Name:  name,
+		Email: email,
+	})
+	if err != nil {
+		return userId, err
+	}
 
-			userId := uuid.New()
-			data, err := commands.CreateCommandData(&cmdData.CreateUserCommandData{
-				Name:  userInfo[0],
-				Email: superUser,
-			})
-			if err != nil {
-				return err
-			}
-			cmd, err := commandRegistry.CreateCommand(userId, commandTypes.CreateUser, data)
-			if err != nil {
-				return err
-			}
+	cmd, err := es.DefaultCommandRegistry.CreateCommand(userId, commandTypes.CreateUser, data)
+	if err != nil {
+		return userId, err
+	}
 
-			err = handler.HandleCommand(ctx, cmd)
-			if err != nil {
-				if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
-					continue
-				}
-				return err
-			}
-
-			data, err = commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
-				UserId: userId.String(),
-				Role:   roles.Admin.String(),
-				Scope:  scopes.System.String(),
-			})
-			if err != nil {
-				return err
-			}
-
-			cmd, err = commandRegistry.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, data)
-			if err != nil {
-				return err
-			}
-
-			err = handler.HandleCommand(ctx, cmd)
-			if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
-				return err
-			}
+	if err := handler.HandleCommand(ctx, cmd); err != nil {
+		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+			return userId, nil
 		}
+		return userId, err
+	}
+	return userId, nil
+}
+
+// setupRoleBinding creates rolebindings
+func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string, handler es.CommandHandler) error {
+	data, err := commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
+		UserId: userId.String(),
+		Role:   role,
+		Scope:  scope,
+	})
+	if err != nil {
+		return err
+	}
+
+	cmd, err := es.DefaultCommandRegistry.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, data)
+	if err != nil {
+		return err
+	}
+
+	err = handler.HandleCommand(ctx, cmd)
+	if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
+		return err
+	}
+
+	return nil
+}
+
+// setupSuperUsers creates super users/rolebindings
+func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
+	superUsers := strings.Split(os.Getenv("SUPER_USERS"), ",")
+	if len(superUsers) == 0 {
+		return nil
+	}
+
+	for _, superUser := range superUsers {
+		userInfo := strings.Split(superUser, "@")
+
+		userId, err := setupUser(ctx, userInfo[0], superUser, handler)
+		if err != nil {
+			return err
+		}
+
+		err = setupRoleBinding(ctx, userId, roles.Admin.String(), scopes.System.String(), handler)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setupOperatorUser(ctx context.Context, handler es.CommandHandler) error {
+	k8sOperator := os.Getenv("K8S_OPERATOR")
+	if len(k8sOperator) == 0 {
+		return nil
+	}
+
+	userId, err := setupUser(ctx, "m8operator", k8sOperator, handler)
+	if err != nil {
+		return err
+	}
+
+	err = setupRoleBinding(ctx, userId, roles.K8sOperator.String(), string(scopes.System), handler)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setupUsers creates default users/rolebindings
+func setupUsers(ctx context.Context, handler es.CommandHandler) error {
+	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return err
+	}
+	metadataMgr.SetUserInformation(&metadata.UserInformation{
+		Name:  "system",
+		Email: "system@monoskope.io",
+	})
+	ctx = metadataMgr.GetContext()
+
+	if err := setupSuperUsers(ctx, handler); err != nil {
+		return err
+	}
+	if err := setupOperatorUser(ctx, handler); err != nil {
+		return err
 	}
 	return nil
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserServiceClient, esClient esApi.EventStoreClient) (es.CommandRegistry, error) {
+func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserClient, esClient esApi.EventStoreClient) error {
 	// Register aggregates
 	aggregateManager := registerAggregates(esClient)
 
@@ -164,16 +170,17 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserSe
 		authorizationHandler.Middleware,
 	)
 
-	// Register commands
-	commandRegistry := registerCommandsWithHandler(handler)
-
-	// Create super users
-	cancel := authorizationHandler.BypassAuthorization()
-	defer cancel()
-
-	if err := setupSuperUsers(ctx, commandRegistry, handler); err != nil {
-		return nil, err
+	// Set command handler
+	for _, t := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+		es.DefaultCommandRegistry.SetHandler(handler, t)
 	}
 
-	return commandRegistry, nil
+	// Create default and super users
+	cancel := authorizationHandler.BypassAuthorization()
+	defer cancel()
+	if err := setupUsers(ctx, handler); err != nil {
+		return err
+	}
+
+	return nil
 }

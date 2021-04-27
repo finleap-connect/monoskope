@@ -28,8 +28,8 @@ type Aggregate interface {
 	SetDeleted(bool)
 	// Deleted indicates whether the aggregate resource has been deleted
 	Deleted() bool
-	// Events returns outstanding events that need to persisted. They are cleared on reading them.
-	Events() []Event
+	// UncommittedEvents returns outstanding events that need to persisted. They are cleared on reading them.
+	UncommittedEvents() []Event
 	// ApplyEvent applies an Event on the aggregate.
 	ApplyEvent(Event) error
 	// IncrementVersion increments the version of the Aggregate.
@@ -85,8 +85,8 @@ func (a *BaseAggregate) Exists() bool {
 	return a.version > 0
 }
 
-// Events implements the Events method of the Aggregate interface.
-func (a *BaseAggregate) Events() []Event {
+// UncommittedEvents implements the UncommittedEvents method of the Aggregate interface.
+func (a *BaseAggregate) UncommittedEvents() []Event {
 	defer func() {
 		a.events = nil
 	}()

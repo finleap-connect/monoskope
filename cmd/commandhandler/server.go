@@ -47,16 +47,15 @@ var serverCmd = &cobra.Command{
 
 		// Create UserService client
 		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
 		// Setup domain
-		var cmdRegistry es.CommandRegistry
 		log.Info("Seting up es/cqrs...")
-		cmdRegistry, err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 		if err != nil {
 			return err
 		}
@@ -65,7 +64,7 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
-		commandHandlerApiServer := commandhandler.NewApiServer(cmdRegistry)
+		commandHandlerApiServer := commandhandler.NewApiServer(es.DefaultCommandRegistry)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
 			api_domain.RegisterCommandHandlerExtensionsServer(s, commandHandlerApiServer)

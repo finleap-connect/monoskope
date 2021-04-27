@@ -18,36 +18,34 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// UserServiceClient is the client API for UserService service.
+// UserClient is the client API for User service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserServiceClient interface {
+type UserClient interface {
 	// GetAll returns all users.
-	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (UserService_GetAllClient, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (User_GetAllClient, error)
 	// GetById returns the user found by the given id.
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
 	GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
-	GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error)
-	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error)
+	GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (User_GetRoleBindingsByIdClient, error)
 }
 
-type userServiceClient struct {
+type userClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
-	return &userServiceClient{cc}
+func NewUserClient(cc grpc.ClientConnInterface) UserClient {
+	return &userClient{cc}
 }
 
-func (c *userServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (UserService_GetAllClient, error) {
-	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[0], "/domain.UserService/GetAll", opts...)
+func (c *userClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (User_GetAllClient, error) {
+	stream, err := c.cc.NewStream(ctx, &User_ServiceDesc.Streams[0], "/domain.User/GetAll", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &userServiceGetAllClient{stream}
+	x := &userGetAllClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -57,16 +55,16 @@ func (c *userServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts 
 	return x, nil
 }
 
-type UserService_GetAllClient interface {
+type User_GetAllClient interface {
 	Recv() (*projections.User, error)
 	grpc.ClientStream
 }
 
-type userServiceGetAllClient struct {
+type userGetAllClient struct {
 	grpc.ClientStream
 }
 
-func (x *userServiceGetAllClient) Recv() (*projections.User, error) {
+func (x *userGetAllClient) Recv() (*projections.User, error) {
 	m := new(projections.User)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -74,30 +72,30 @@ func (x *userServiceGetAllClient) Recv() (*projections.User, error) {
 	return m, nil
 }
 
-func (c *userServiceClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
+func (c *userClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
 	out := new(projections.User)
-	err := c.cc.Invoke(ctx, "/domain.UserService/GetById", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/domain.User/GetById", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userServiceClient) GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
+func (c *userClient) GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error) {
 	out := new(projections.User)
-	err := c.cc.Invoke(ctx, "/domain.UserService/GetByEmail", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/domain.User/GetByEmail", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userServiceClient) GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetRoleBindingsByIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[1], "/domain.UserService/GetRoleBindingsById", opts...)
+func (c *userClient) GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (User_GetRoleBindingsByIdClient, error) {
+	stream, err := c.cc.NewStream(ctx, &User_ServiceDesc.Streams[1], "/domain.User/GetRoleBindingsById", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &userServiceGetRoleBindingsByIdClient{stream}
+	x := &userGetRoleBindingsByIdClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -107,16 +105,16 @@ func (c *userServiceClient) GetRoleBindingsById(ctx context.Context, in *wrapper
 	return x, nil
 }
 
-type UserService_GetRoleBindingsByIdClient interface {
+type User_GetRoleBindingsByIdClient interface {
 	Recv() (*projections.UserRoleBinding, error)
 	grpc.ClientStream
 }
 
-type userServiceGetRoleBindingsByIdClient struct {
+type userGetRoleBindingsByIdClient struct {
 	grpc.ClientStream
 }
 
-func (x *userServiceGetRoleBindingsByIdClient) Recv() (*projections.UserRoleBinding, error) {
+func (x *userGetRoleBindingsByIdClient) Recv() (*projections.UserRoleBinding, error) {
 	m := new(projections.UserRoleBinding)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -124,250 +122,185 @@ func (x *userServiceGetRoleBindingsByIdClient) Recv() (*projections.UserRoleBind
 	return m, nil
 }
 
-func (c *userServiceClient) GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (UserService_GetAuditTrailByIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[2], "/domain.UserService/GetAuditTrailById", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &userServiceGetAuditTrailByIdClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type UserService_GetAuditTrailByIdClient interface {
-	Recv() (*projections.AuditEvent, error)
-	grpc.ClientStream
-}
-
-type userServiceGetAuditTrailByIdClient struct {
-	grpc.ClientStream
-}
-
-func (x *userServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, error) {
-	m := new(projections.AuditEvent)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// UserServiceServer is the server API for UserService service.
-// All implementations must embed UnimplementedUserServiceServer
+// UserServer is the server API for User service.
+// All implementations must embed UnimplementedUserServer
 // for forward compatibility
-type UserServiceServer interface {
+type UserServer interface {
 	// GetAll returns all users.
-	GetAll(*GetAllRequest, UserService_GetAllServer) error
+	GetAll(*GetAllRequest, User_GetAllServer) error
 	// GetById returns the user found by the given id.
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetByEmail returns the user found by the given email address.
 	GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
-	GetRoleBindingsById(*wrapperspb.StringValue, UserService_GetRoleBindingsByIdServer) error
-	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(*wrapperspb.StringValue, UserService_GetAuditTrailByIdServer) error
-	mustEmbedUnimplementedUserServiceServer()
+	GetRoleBindingsById(*wrapperspb.StringValue, User_GetRoleBindingsByIdServer) error
+	mustEmbedUnimplementedUserServer()
 }
 
-// UnimplementedUserServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedUserServiceServer struct {
+// UnimplementedUserServer must be embedded to have forward compatible implementations.
+type UnimplementedUserServer struct {
 }
 
-func (UnimplementedUserServiceServer) GetAll(*GetAllRequest, UserService_GetAllServer) error {
+func (UnimplementedUserServer) GetAll(*GetAllRequest, User_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedUserServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
+func (UnimplementedUserServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
 }
-func (UnimplementedUserServiceServer) GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
+func (UnimplementedUserServer) GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByEmail not implemented")
 }
-func (UnimplementedUserServiceServer) GetRoleBindingsById(*wrapperspb.StringValue, UserService_GetRoleBindingsByIdServer) error {
+func (UnimplementedUserServer) GetRoleBindingsById(*wrapperspb.StringValue, User_GetRoleBindingsByIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetRoleBindingsById not implemented")
 }
-func (UnimplementedUserServiceServer) GetAuditTrailById(*wrapperspb.StringValue, UserService_GetAuditTrailByIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetAuditTrailById not implemented")
-}
-func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
+func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
-// UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserServiceServer will
+// UnsafeUserServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserServer will
 // result in compilation errors.
-type UnsafeUserServiceServer interface {
-	mustEmbedUnimplementedUserServiceServer()
+type UnsafeUserServer interface {
+	mustEmbedUnimplementedUserServer()
 }
 
-func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
-	s.RegisterService(&UserService_ServiceDesc, srv)
+func RegisterUserServer(s grpc.ServiceRegistrar, srv UserServer) {
+	s.RegisterService(&User_ServiceDesc, srv)
 }
 
-func _UserService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _User_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetAllRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(UserServiceServer).GetAll(m, &userServiceGetAllServer{stream})
+	return srv.(UserServer).GetAll(m, &userGetAllServer{stream})
 }
 
-type UserService_GetAllServer interface {
+type User_GetAllServer interface {
 	Send(*projections.User) error
 	grpc.ServerStream
 }
 
-type userServiceGetAllServer struct {
+type userGetAllServer struct {
 	grpc.ServerStream
 }
 
-func (x *userServiceGetAllServer) Send(m *projections.User) error {
+func (x *userGetAllServer) Send(m *projections.User) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _UserService_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _User_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).GetById(ctx, in)
+		return srv.(UserServer).GetById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/domain.UserService/GetById",
+		FullMethod: "/domain.User/GetById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetById(ctx, req.(*wrapperspb.StringValue))
+		return srv.(UserServer).GetById(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_GetByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _User_GetByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).GetByEmail(ctx, in)
+		return srv.(UserServer).GetByEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/domain.UserService/GetByEmail",
+		FullMethod: "/domain.User/GetByEmail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetByEmail(ctx, req.(*wrapperspb.StringValue))
+		return srv.(UserServer).GetByEmail(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_GetRoleBindingsById_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _User_GetRoleBindingsById_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(wrapperspb.StringValue)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(UserServiceServer).GetRoleBindingsById(m, &userServiceGetRoleBindingsByIdServer{stream})
+	return srv.(UserServer).GetRoleBindingsById(m, &userGetRoleBindingsByIdServer{stream})
 }
 
-type UserService_GetRoleBindingsByIdServer interface {
+type User_GetRoleBindingsByIdServer interface {
 	Send(*projections.UserRoleBinding) error
 	grpc.ServerStream
 }
 
-type userServiceGetRoleBindingsByIdServer struct {
+type userGetRoleBindingsByIdServer struct {
 	grpc.ServerStream
 }
 
-func (x *userServiceGetRoleBindingsByIdServer) Send(m *projections.UserRoleBinding) error {
+func (x *userGetRoleBindingsByIdServer) Send(m *projections.UserRoleBinding) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _UserService_GetAuditTrailById_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrapperspb.StringValue)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(UserServiceServer).GetAuditTrailById(m, &userServiceGetAuditTrailByIdServer{stream})
-}
-
-type UserService_GetAuditTrailByIdServer interface {
-	Send(*projections.AuditEvent) error
-	grpc.ServerStream
-}
-
-type userServiceGetAuditTrailByIdServer struct {
-	grpc.ServerStream
-}
-
-func (x *userServiceGetAuditTrailByIdServer) Send(m *projections.AuditEvent) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-// UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
+// User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "domain.UserService",
-	HandlerType: (*UserServiceServer)(nil),
+var User_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.User",
+	HandlerType: (*UserServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetById",
-			Handler:    _UserService_GetById_Handler,
+			Handler:    _User_GetById_Handler,
 		},
 		{
 			MethodName: "GetByEmail",
-			Handler:    _UserService_GetByEmail_Handler,
+			Handler:    _User_GetByEmail_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetAll",
-			Handler:       _UserService_GetAll_Handler,
+			Handler:       _User_GetAll_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "GetRoleBindingsById",
-			Handler:       _UserService_GetRoleBindingsById_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "GetAuditTrailById",
-			Handler:       _UserService_GetAuditTrailById_Handler,
+			Handler:       _User_GetRoleBindingsById_Handler,
 			ServerStreams: true,
 		},
 	},
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
-// TenantServiceClient is the client API for TenantService service.
+// TenantClient is the client API for Tenant service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type TenantServiceClient interface {
+type TenantClient interface {
 	// GetAll returns all tenants.
-	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (TenantService_GetAllClient, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (Tenant_GetAllClient, error)
 	// GetById returns the tenant found by the given id.
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
 	// GetByName returns the tenant found by the given name
 	GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
-	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error)
 }
 
-type tenantServiceClient struct {
+type tenantClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTenantServiceClient(cc grpc.ClientConnInterface) TenantServiceClient {
-	return &tenantServiceClient{cc}
+func NewTenantClient(cc grpc.ClientConnInterface) TenantClient {
+	return &tenantClient{cc}
 }
 
-func (c *tenantServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (TenantService_GetAllClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TenantService_ServiceDesc.Streams[0], "/domain.TenantService/GetAll", opts...)
+func (c *tenantClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (Tenant_GetAllClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Tenant_ServiceDesc.Streams[0], "/domain.Tenant/GetAll", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &tenantServiceGetAllClient{stream}
+	x := &tenantGetAllClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -377,16 +310,16 @@ func (c *tenantServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opt
 	return x, nil
 }
 
-type TenantService_GetAllClient interface {
+type Tenant_GetAllClient interface {
 	Recv() (*projections.Tenant, error)
 	grpc.ClientStream
 }
 
-type tenantServiceGetAllClient struct {
+type tenantGetAllClient struct {
 	grpc.ClientStream
 }
 
-func (x *tenantServiceGetAllClient) Recv() (*projections.Tenant, error) {
+func (x *tenantGetAllClient) Recv() (*projections.Tenant, error) {
 	m := new(projections.Tenant)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -394,30 +327,170 @@ func (x *tenantServiceGetAllClient) Recv() (*projections.Tenant, error) {
 	return m, nil
 }
 
-func (c *tenantServiceClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
+func (c *tenantClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
 	out := new(projections.Tenant)
-	err := c.cc.Invoke(ctx, "/domain.TenantService/GetById", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/domain.Tenant/GetById", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tenantServiceClient) GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
+func (c *tenantClient) GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error) {
 	out := new(projections.Tenant)
-	err := c.cc.Invoke(ctx, "/domain.TenantService/GetByName", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/domain.Tenant/GetByName", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tenantServiceClient) GetAuditTrailById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (TenantService_GetAuditTrailByIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TenantService_ServiceDesc.Streams[1], "/domain.TenantService/GetAuditTrailById", opts...)
+// TenantServer is the server API for Tenant service.
+// All implementations must embed UnimplementedTenantServer
+// for forward compatibility
+type TenantServer interface {
+	// GetAll returns all tenants.
+	GetAll(*GetAllRequest, Tenant_GetAllServer) error
+	// GetById returns the tenant found by the given id.
+	GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
+	// GetByName returns the tenant found by the given name
+	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
+	mustEmbedUnimplementedTenantServer()
+}
+
+// UnimplementedTenantServer must be embedded to have forward compatible implementations.
+type UnimplementedTenantServer struct {
+}
+
+func (UnimplementedTenantServer) GetAll(*GetAllRequest, Tenant_GetAllServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
+}
+func (UnimplementedTenantServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
+}
+func (UnimplementedTenantServer) GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
+}
+func (UnimplementedTenantServer) mustEmbedUnimplementedTenantServer() {}
+
+// UnsafeTenantServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TenantServer will
+// result in compilation errors.
+type UnsafeTenantServer interface {
+	mustEmbedUnimplementedTenantServer()
+}
+
+func RegisterTenantServer(s grpc.ServiceRegistrar, srv TenantServer) {
+	s.RegisterService(&Tenant_ServiceDesc, srv)
+}
+
+func _Tenant_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAllRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TenantServer).GetAll(m, &tenantGetAllServer{stream})
+}
+
+type Tenant_GetAllServer interface {
+	Send(*projections.Tenant) error
+	grpc.ServerStream
+}
+
+type tenantGetAllServer struct {
+	grpc.ServerStream
+}
+
+func (x *tenantGetAllServer) Send(m *projections.Tenant) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Tenant_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TenantServer).GetById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Tenant/GetById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TenantServer).GetById(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tenant_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TenantServer).GetByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Tenant/GetByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TenantServer).GetByName(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Tenant_ServiceDesc is the grpc.ServiceDesc for Tenant service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Tenant_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.Tenant",
+	HandlerType: (*TenantServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetById",
+			Handler:    _Tenant_GetById_Handler,
+		},
+		{
+			MethodName: "GetByName",
+			Handler:    _Tenant_GetByName_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetAll",
+			Handler:       _Tenant_GetAll_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
+// ClusterRegistrationClient is the client API for ClusterRegistration service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ClusterRegistrationClient interface {
+	// GetAll returns all registration requests.
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error)
+	// GetPending returns all pending registration requests.
+	GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error)
+}
+
+type clusterRegistrationClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewClusterRegistrationClient(cc grpc.ClientConnInterface) ClusterRegistrationClient {
+	return &clusterRegistrationClient{cc}
+}
+
+func (c *clusterRegistrationClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[0], "/domain.ClusterRegistration/GetAll", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &tenantServiceGetAuditTrailByIdClient{stream}
+	x := &clusterRegistrationGetAllClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -427,170 +500,147 @@ func (c *tenantServiceClient) GetAuditTrailById(ctx context.Context, in *wrapper
 	return x, nil
 }
 
-type TenantService_GetAuditTrailByIdClient interface {
-	Recv() (*projections.AuditEvent, error)
+type ClusterRegistration_GetAllClient interface {
+	Recv() (*projections.ClusterRegistration, error)
 	grpc.ClientStream
 }
 
-type tenantServiceGetAuditTrailByIdClient struct {
+type clusterRegistrationGetAllClient struct {
 	grpc.ClientStream
 }
 
-func (x *tenantServiceGetAuditTrailByIdClient) Recv() (*projections.AuditEvent, error) {
-	m := new(projections.AuditEvent)
+func (x *clusterRegistrationGetAllClient) Recv() (*projections.ClusterRegistration, error) {
+	m := new(projections.ClusterRegistration)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-// TenantServiceServer is the server API for TenantService service.
-// All implementations must embed UnimplementedTenantServiceServer
+func (c *clusterRegistrationClient) GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[1], "/domain.ClusterRegistration/GetPending", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterRegistrationGetPendingClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ClusterRegistration_GetPendingClient interface {
+	Recv() (*projections.ClusterRegistration, error)
+	grpc.ClientStream
+}
+
+type clusterRegistrationGetPendingClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterRegistrationGetPendingClient) Recv() (*projections.ClusterRegistration, error) {
+	m := new(projections.ClusterRegistration)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ClusterRegistrationServer is the server API for ClusterRegistration service.
+// All implementations must embed UnimplementedClusterRegistrationServer
 // for forward compatibility
-type TenantServiceServer interface {
-	// GetAll returns all tenants.
-	GetAll(*GetAllRequest, TenantService_GetAllServer) error
-	// GetById returns the tenant found by the given id.
-	GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
-	// GetByName returns the tenant found by the given name
-	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
-	// GetAuditTrailById returns a stream of all events related to the given id
-	GetAuditTrailById(*wrapperspb.StringValue, TenantService_GetAuditTrailByIdServer) error
-	mustEmbedUnimplementedTenantServiceServer()
+type ClusterRegistrationServer interface {
+	// GetAll returns all registration requests.
+	GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error
+	// GetPending returns all pending registration requests.
+	GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error
+	mustEmbedUnimplementedClusterRegistrationServer()
 }
 
-// UnimplementedTenantServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedTenantServiceServer struct {
+// UnimplementedClusterRegistrationServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterRegistrationServer struct {
 }
 
-func (UnimplementedTenantServiceServer) GetAll(*GetAllRequest, TenantService_GetAllServer) error {
+func (UnimplementedClusterRegistrationServer) GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedTenantServiceServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
+func (UnimplementedClusterRegistrationServer) GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetPending not implemented")
 }
-func (UnimplementedTenantServiceServer) GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
-}
-func (UnimplementedTenantServiceServer) GetAuditTrailById(*wrapperspb.StringValue, TenantService_GetAuditTrailByIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetAuditTrailById not implemented")
-}
-func (UnimplementedTenantServiceServer) mustEmbedUnimplementedTenantServiceServer() {}
+func (UnimplementedClusterRegistrationServer) mustEmbedUnimplementedClusterRegistrationServer() {}
 
-// UnsafeTenantServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TenantServiceServer will
+// UnsafeClusterRegistrationServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterRegistrationServer will
 // result in compilation errors.
-type UnsafeTenantServiceServer interface {
-	mustEmbedUnimplementedTenantServiceServer()
+type UnsafeClusterRegistrationServer interface {
+	mustEmbedUnimplementedClusterRegistrationServer()
 }
 
-func RegisterTenantServiceServer(s grpc.ServiceRegistrar, srv TenantServiceServer) {
-	s.RegisterService(&TenantService_ServiceDesc, srv)
+func RegisterClusterRegistrationServer(s grpc.ServiceRegistrar, srv ClusterRegistrationServer) {
+	s.RegisterService(&ClusterRegistration_ServiceDesc, srv)
 }
 
-func _TenantService_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _ClusterRegistration_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetAllRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(TenantServiceServer).GetAll(m, &tenantServiceGetAllServer{stream})
+	return srv.(ClusterRegistrationServer).GetAll(m, &clusterRegistrationGetAllServer{stream})
 }
 
-type TenantService_GetAllServer interface {
-	Send(*projections.Tenant) error
+type ClusterRegistration_GetAllServer interface {
+	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
-type tenantServiceGetAllServer struct {
+type clusterRegistrationGetAllServer struct {
 	grpc.ServerStream
 }
 
-func (x *tenantServiceGetAllServer) Send(m *projections.Tenant) error {
+func (x *clusterRegistrationGetAllServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _TenantService_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).GetById(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.TenantService/GetById",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).GetById(ctx, req.(*wrapperspb.StringValue))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).GetByName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.TenantService/GetByName",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).GetByName(ctx, req.(*wrapperspb.StringValue))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_GetAuditTrailById_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrapperspb.StringValue)
+func _ClusterRegistration_GetPending_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(TenantServiceServer).GetAuditTrailById(m, &tenantServiceGetAuditTrailByIdServer{stream})
+	return srv.(ClusterRegistrationServer).GetPending(m, &clusterRegistrationGetPendingServer{stream})
 }
 
-type TenantService_GetAuditTrailByIdServer interface {
-	Send(*projections.AuditEvent) error
+type ClusterRegistration_GetPendingServer interface {
+	Send(*projections.ClusterRegistration) error
 	grpc.ServerStream
 }
 
-type tenantServiceGetAuditTrailByIdServer struct {
+type clusterRegistrationGetPendingServer struct {
 	grpc.ServerStream
 }
 
-func (x *tenantServiceGetAuditTrailByIdServer) Send(m *projections.AuditEvent) error {
+func (x *clusterRegistrationGetPendingServer) Send(m *projections.ClusterRegistration) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-// TenantService_ServiceDesc is the grpc.ServiceDesc for TenantService service.
+// ClusterRegistration_ServiceDesc is the grpc.ServiceDesc for ClusterRegistration service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var TenantService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "domain.TenantService",
-	HandlerType: (*TenantServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetById",
-			Handler:    _TenantService_GetById_Handler,
-		},
-		{
-			MethodName: "GetByName",
-			Handler:    _TenantService_GetByName_Handler,
-		},
-	},
+var ClusterRegistration_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.ClusterRegistration",
+	HandlerType: (*ClusterRegistrationServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetAll",
-			Handler:       _TenantService_GetAll_Handler,
+			Handler:       _ClusterRegistration_GetAll_Handler,
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "GetAuditTrailById",
-			Handler:       _TenantService_GetAuditTrailById_Handler,
+			StreamName:    "GetPending",
+			Handler:       _ClusterRegistration_GetPending_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -601,7 +651,7 @@ var TenantService_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type K8SOperatorClient interface {
-	GetOperatorInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*OperatorInformationResponse, error)
+	GetCluster(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*projections.Cluster, error)
 	Retrieve(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (K8SOperator_RetrieveClient, error)
 }
 
@@ -613,9 +663,9 @@ func NewK8SOperatorClient(cc grpc.ClientConnInterface) K8SOperatorClient {
 	return &k8SOperatorClient{cc}
 }
 
-func (c *k8SOperatorClient) GetOperatorInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*OperatorInformationResponse, error) {
-	out := new(OperatorInformationResponse)
-	err := c.cc.Invoke(ctx, "/domain.K8sOperator/GetOperatorInformation", in, out, opts...)
+func (c *k8SOperatorClient) GetCluster(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*projections.Cluster, error) {
+	out := new(projections.Cluster)
+	err := c.cc.Invoke(ctx, "/domain.K8sOperator/GetCluster", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -658,7 +708,7 @@ func (x *k8SOperatorRetrieveClient) Recv() (*eventsourcing.Event, error) {
 // All implementations must embed UnimplementedK8SOperatorServer
 // for forward compatibility
 type K8SOperatorServer interface {
-	GetOperatorInformation(context.Context, *emptypb.Empty) (*OperatorInformationResponse, error)
+	GetCluster(context.Context, *emptypb.Empty) (*projections.Cluster, error)
 	Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error
 	mustEmbedUnimplementedK8SOperatorServer()
 }
@@ -667,8 +717,8 @@ type K8SOperatorServer interface {
 type UnimplementedK8SOperatorServer struct {
 }
 
-func (UnimplementedK8SOperatorServer) GetOperatorInformation(context.Context, *emptypb.Empty) (*OperatorInformationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOperatorInformation not implemented")
+func (UnimplementedK8SOperatorServer) GetCluster(context.Context, *emptypb.Empty) (*projections.Cluster, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCluster not implemented")
 }
 func (UnimplementedK8SOperatorServer) Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error {
 	return status.Errorf(codes.Unimplemented, "method Retrieve not implemented")
@@ -686,20 +736,20 @@ func RegisterK8SOperatorServer(s grpc.ServiceRegistrar, srv K8SOperatorServer) {
 	s.RegisterService(&K8SOperator_ServiceDesc, srv)
 }
 
-func _K8SOperator_GetOperatorInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _K8SOperator_GetCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(K8SOperatorServer).GetOperatorInformation(ctx, in)
+		return srv.(K8SOperatorServer).GetCluster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/domain.K8sOperator/GetOperatorInformation",
+		FullMethod: "/domain.K8sOperator/GetCluster",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(K8SOperatorServer).GetOperatorInformation(ctx, req.(*emptypb.Empty))
+		return srv.(K8SOperatorServer).GetCluster(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -733,8 +783,8 @@ var K8SOperator_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*K8SOperatorServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetOperatorInformation",
-			Handler:    _K8SOperator_GetOperatorInformation_Handler,
+			MethodName: "GetCluster",
+			Handler:    _K8SOperator_GetCluster_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -2,32 +2,37 @@ package logger
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/operation"
 	"go.uber.org/zap"
 )
 
 type Logger = logr.Logger
 
 var (
-	zapLog  *zap.Logger
-	logMode string
+	zapLog        *zap.Logger
+	operationMode operation.OperationMode
+)
+
+const (
+	DebugLevel = 1
+	InfoLevel  = 0
+	WarnLevel  = -1
+	ErrorLevel = -2
 )
 
 func init() {
 	var err error
 
-	if logMode == "" {
-		logMode = os.Getenv("LOG_MODE")
-	}
-
-	if logMode == "" || logMode == "dev" {
+	operationMode = operation.GetOperationMode()
+	switch operationMode {
+	case operation.DEVELOPMENT:
 		zapLog, err = zap.NewDevelopment()
-	} else if logMode == "prod" {
+	case operation.RELEASE:
 		zapLog, err = zap.NewProduction()
-	} else {
+	default:
 		zapLog = zap.NewNop()
 	}
 
@@ -37,7 +42,14 @@ func init() {
 }
 
 func WithOptions(opts ...zap.Option) logr.Logger {
-	return zapr.NewLogger(zapLog.WithOptions(opts...))
+	switch operationMode {
+	case operation.DEVELOPMENT:
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(DebugLevel)
+	case operation.RELEASE:
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(InfoLevel)
+	default:
+		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(ErrorLevel)
+	}
 }
 
 func WithName(name string) logr.Logger {

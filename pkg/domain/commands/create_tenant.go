@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateTenantCommand)
+}
+
 // CreateTenantCommand is a command for creating a tenant.
 type CreateTenantCommand struct {
 	*es.BaseCommand

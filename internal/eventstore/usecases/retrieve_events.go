@@ -8,13 +8,14 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
 )
 
 type RetrieveEventsUseCase struct {
 	*usecase.UseCaseBase
 
-	store   es.Store
+	store   es.EventStore
 	filter  *esApi.EventFilter
 	stream  esApi.EventStore_RetrieveServer
 	metrics *metrics.EventStoreMetrics
@@ -22,7 +23,7 @@ type RetrieveEventsUseCase struct {
 
 // NewRetrieveEventsUseCase creates a new usecase which retrieves all events
 // from the store which match the filter
-func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.Store, filter *esApi.EventFilter, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, filter *esApi.EventFilter, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &RetrieveEventsUseCase{
 		UseCaseBase: usecase.NewUseCaseBase("retrieve-events"),
 		store:       store,
@@ -41,8 +42,7 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 	}
 
 	// Retrieve events from Event Store
-	u.Log.Info("Retrieving events from the database...")
-
+	u.Log.V(logger.DebugLevel).Info("Retrieving events from the database...")
 	eventStream, err := u.store.Load(ctx, sq)
 	if err != nil {
 		return err

@@ -15,3 +15,12 @@ message RequestClusterRegistration {
   // CA certificate of the cluster
   bytes clusterCACert = 3;
 }
+
+message CreateCluster {
+  // Unique name of the cluster
+  string name = 1;
+  // Address of the clusters KubeAPIServer
+  string apiServerAddress = 2;
+  // CA certificate of the cluster
+  bytes clusterCACert = 3;
+}

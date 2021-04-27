@@ -9,6 +9,7 @@ import (
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -16,7 +17,7 @@ import (
 type StoreEventsUseCase struct {
 	*usecase.UseCaseBase
 
-	store   es.Store
+	store   es.EventStore
 	bus     es.EventBusPublisher
 	stream  esApi.EventStore_StoreServer
 	metrics *metrics.EventStoreMetrics
@@ -24,7 +25,7 @@ type StoreEventsUseCase struct {
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.Store, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.EventStore, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &StoreEventsUseCase{
 		UseCaseBase: usecase.NewUseCaseBase("store-events"),
 		store:       store,
@@ -61,7 +62,7 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 		}
 
 		// Store events in database
-		u.Log.Info("Saving events in the store...")
+		u.Log.V(logger.DebugLevel).Info("Saving events in the store...")
 		if err := u.store.Save(ctx, []es.Event{ev}); err != nil {
 			return err
 		}
@@ -70,7 +71,7 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 		u.metrics.StoredTotalCounter.WithLabelValues(event.Type, event.AggregateType).Inc()
 
 		// Send events to message bus
-		u.Log.Info("Sending events to the message bus...")
+		u.Log.V(logger.DebugLevel).Info("Sending events to the message bus...")
 		if err := u.bus.PublishEvent(ctx, ev); err != nil {
 			return err
 		}

@@ -17,12 +17,10 @@ const (
 	// Event emitted when a Tenant has been deleted
 	TenantDeleted es.EventType = "TenantDeleted"
 
-	// Event emitted when a Cluster Registration has been requested
-	ClusterRegistrationRequested es.EventType = "ClusterRegistrationRequested"
-	// Event emitted when a Cluster Registration has been registered
-	ClusterRegistrationApproved es.EventType = "ClusterRegistrationApproved"
-	// Event emitted when a Cluster Registration has been denied
-	ClusterRegistrationDenied es.EventType = "ClusterRegistrationDenied"
+	// Event emitted when a Cluster has been created
+	ClusterCreated es.EventType = "ClusterCreated"
+	// Event emitted when a Cluster has been created
+	ClusterUpdate es.EventType = "ClusterUpdated"
 	// Event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
 )

@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 func NewReportPermissions() *cobra.Command {
@@ -18,11 +19,14 @@ func NewReportPermissions() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data := [][]string{}
 
-			commandRegistry := domain.RegisterCommands()
-			types := commandRegistry.GetRegisteredCommandTypes()
+			var cmdTypes []string
+			for _, v := range es.DefaultCommandRegistry.GetRegisteredCommandTypes() {
+				cmdTypes = append(cmdTypes, v.String())
+			}
+			sort.Strings(cmdTypes)
 
-			for _, cmdType := range types {
-				command, err := commandRegistry.CreateCommand(uuid.Nil, cmdType, nil)
+			for _, cmdType := range cmdTypes {
+				command, err := es.DefaultCommandRegistry.CreateCommand(uuid.Nil, es.CommandType(cmdType), nil)
 				if err != nil {
 					return err
 				}
@@ -30,7 +34,7 @@ func NewReportPermissions() *cobra.Command {
 
 				for _, p := range policies {
 					data = append(data, []string{
-						string(cmdType),
+						cmdType,
 						p.Role().String(),
 						p.Scope().String(),
 						fmt.Sprintf("%v", p.ResourceMatch()),

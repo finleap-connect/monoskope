@@ -17,7 +17,7 @@ func NewTenantProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		Tenant: &projections.Tenant{
 			Id:       id.String(),
-			Metadata: &dp.ProjectionMetadata,
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }

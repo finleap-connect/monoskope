@@ -1,4 +1,4 @@
-package util
+package operation
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ type OperationMode string
 
 const (
 	RELEASE     OperationMode = "release"
+	CMDLINE     OperationMode = "cmdline"
 	DEVELOPMENT OperationMode = "development"
 )
 
@@ -25,6 +26,8 @@ func GetOperationMode() OperationMode {
 	case DEVELOPMENT:
 		fmt.Print("################ WARNING ###############\n> OPERATION MODE IS SET TO DEVELOPMENT.\n> SENSIBLE INFORMATION MIGHT BE LEAKED!\n########################################\n")
 		return DEVELOPMENT
+	case CMDLINE:
+		return CMDLINE
 	default:
 		return RELEASE
 	}

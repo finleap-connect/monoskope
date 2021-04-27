@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -22,7 +22,7 @@ var _ = Describe("domain/user_repo", func() {
 	It("can handle events", func() {
 		userProjector := NewUserProjector()
 		userProjection := userProjector.NewProjection(uuid.New())
-		protoEventData := &ed.UserCreatedEventData{
+		protoEventData := &eventdata.UserCreated{
 			Name:  adminUser.Name,
 			Email: adminUser.Email,
 		}

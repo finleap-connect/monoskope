@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -13,27 +14,28 @@ import (
 )
 
 func init() {
-	es.DefaultCommandRegistry.RegisterCommand(NewDeleteClusterCommand)
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateClusterCommand)
 }
 
-// DeleteClusterCommand is a command for deleting a cluster.
-type DeleteClusterCommand struct {
+// CreateClusterCommand is a command for deleting a cluster.
+type CreateClusterCommand struct {
 	*es.BaseCommand
+	cmdData.CreateCluster
 }
 
-// NewDeleteClusterCommand creates a DeleteClusterCommand.
-func NewDeleteClusterCommand(id uuid.UUID) es.Command {
-	return &DeleteClusterCommand{
-		BaseCommand: es.NewBaseCommand(id, aggregates.Cluster, commands.DeleteCluster),
+// NewCreateClusterCommand creates a CreateClusterCommand.
+func NewCreateClusterCommand(id uuid.UUID) es.Command {
+	return &CreateClusterCommand{
+		BaseCommand: es.NewBaseCommand(id, aggregates.Cluster, commands.CreateCluster),
 	}
 }
 
-func (c *DeleteClusterCommand) SetData(a *anypb.Any) error {
+func (c *CreateClusterCommand) SetData(a *anypb.Any) error {
 	return nil
 }
 
 // Policies returns the Role/Scope/Resource combination allowed to execute.
-func (c *DeleteClusterCommand) Policies(ctx context.Context) []es.Policy {
+func (c *CreateClusterCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
 		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins
 	}

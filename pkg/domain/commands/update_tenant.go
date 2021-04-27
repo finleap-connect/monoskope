@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewUpdateTenantCommand)
+}
+
 // UpdateTenantCommand is a command for updating a tenant.
 type UpdateTenantCommand struct {
 	*es.BaseCommand

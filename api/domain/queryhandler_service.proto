@@ -4,7 +4,9 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/empty.proto";
-import "api/domain/projections/messages.proto";
+import "api/domain/projections/user.proto";
+import "api/domain/projections/tenant.proto";
+import "api/domain/projections/cluster.proto";
 import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -12,8 +14,8 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package domain;
 
-// UserService is a service to query users.
-service UserService {
+// User is a service to query Users.
+service User {
   // GetAll returns all users.
   rpc GetAll(GetAllRequest) returns (stream projections.User);
   // GetById returns the user found by the given id.
@@ -23,42 +25,32 @@ service UserService {
   // GetRoleBindingsById returns all role bindings related to the given user id.
   rpc GetRoleBindingsById(google.protobuf.StringValue)
       returns (stream projections.UserRoleBinding);
-  // GetAuditTrailById returns a stream of all events related to the given id
-  rpc GetAuditTrailById(google.protobuf.StringValue)
-      returns (stream projections.AuditEvent);
 }
 
-// TenantService is a service to query tenants.
-service TenantService {
+// Tenant is a service to query Tenants.
+service Tenant {
   // GetAll returns all tenants.
   rpc GetAll(GetAllRequest) returns (stream projections.Tenant);
   // GetById returns the tenant found by the given id.
   rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
   // GetByName returns the tenant found by the given name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
-  // GetAuditTrailById returns a stream of all events related to the given id
-  rpc GetAuditTrailById(google.protobuf.StringValue)
-      returns (stream projections.AuditEvent);
 }
 
-// K8sOperator service is used by remote m8 Operators to query the Control Plane
+// ClusterRegistration is a service to query ClusterRegistrations.
+service ClusterRegistration {
+  // GetAll returns all registration requests.
+  rpc GetAll(GetAllRequest) returns (stream projections.ClusterRegistration);
+  // GetPending returns all pending registration requests.
+  rpc GetPending(google.protobuf.Empty)
+      returns (stream projections.ClusterRegistration);
+}
+
+// K8sOperator is a service used by remote K8s Operators to query the Control
+// Plane
 service K8sOperator {
-  rpc GetOperatorInformation(google.protobuf.Empty)
-      returns (OperatorInformationResponse);
+  rpc GetCluster(google.protobuf.Empty) returns (projections.Cluster);
   rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
 }
 
-message GetAllRequest { bool excludeDeleted = 1; }
-
-// OperatorInformationResponse is the information the Control Plane has about
-// the requesting operator
-message OperatorInformationResponse {
-  // Unique identifier of the cluster (UUID 128-bit number)
-  string id = 1;
-  // Unique name of the cluster
-  string name = 2;
-  // Address of the clusters KubeAPIServer
-  string apiServerAddress = 3;
-  // CA certificate of the cluster
-  bytes clusterCACert = 4;
-}
+message GetAllRequest { bool includeDeleted = 1; }

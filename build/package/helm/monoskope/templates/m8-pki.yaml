@@ -1,5 +1,4 @@
-{{- if .Values.pki.enabled }}
-{{- if .Values.pki.issuer.ca.enabled }}
+{{- if and .Values.pki.enabled .Values.pki.issuer.ca.enabled }}
 apiVersion: cert-manager.io/v1alpha3
 kind: Issuer
 metadata:
@@ -26,32 +25,4 @@ metadata:
 spec:
   vault:
     {{- toYaml .Values.pki.issuer.vault | nindent 6 }}
----
-{{- end }}
-apiVersion: cert-manager.io/v1alpha3
-kind: Certificate
-metadata:
-  name: {{ include "monoskope.fullname" . }}-mtls-operator-auth
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  secretName: {{ include "monoskope.fullname" . }}-mtls-operator-auth
-  duration: 24h
-  renewBefore: 12h
-  issuerRef:
-    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
-    kind: Issuer
-  commonName: operator.monoskope.cluster.local
-  dnsNames:
-  - operator.monoskope.cluster.local
-  emailSANs:
-  - operator@monoskope.io
-  subject:
-    organizations:
-      - Monoskope
-  usages:
-    - client auth
 {{- end }}

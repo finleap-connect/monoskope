@@ -10,29 +10,14 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-type repoWarmingReplayMiddleware struct {
-	log           logger.Logger
-	esClient      apiEs.EventStoreClient
-	aggregateType es.AggregateType
-	eventHandler  es.EventHandler
-}
-
-// NewRepoWarmingMiddleware creates an EventHandler which queryies the EventStore to warm up the repository initially.
-func NewRepoWarmingMiddleware(esClient apiEs.EventStoreClient, aggregateType es.AggregateType, eventHandler es.EventHandler) *repoWarmingReplayMiddleware {
-	return &repoWarmingReplayMiddleware{
-		log:           logger.WithName("repository-warming-middleware").WithValues("aggregateType", aggregateType),
-		esClient:      esClient,
-		aggregateType: aggregateType,
-		eventHandler:  eventHandler,
-	}
-}
-
-func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
-	m.log.Info("Warming up...")
+// NewRepoWarmingMiddleware creates an EventHandler which queries the EventStore to warm up the repository initially.
+func WarmUp(ctx context.Context, esClient apiEs.EventStoreClient, aggregateType es.AggregateType, eventHandler es.EventHandler) error {
+	log := logger.WithName("repository-warming-middleware").WithValues("aggregateType", aggregateType)
+	log.Info("Warming up...")
 
 	// Retrieve events from store
-	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		AggregateType: wrapperspb.String(m.aggregateType.String()),
+	eventStream, err := esClient.Retrieve(ctx, &apiEs.EventFilter{
+		AggregateType: wrapperspb.String(aggregateType.String()),
 	})
 	if err != nil {
 		return err
@@ -59,7 +44,7 @@ func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
 		}
 
 		// Let the next handler in the chain handle the event
-		err = m.eventHandler.HandleEvent(ctx, esEvent)
+		err = eventHandler.HandleEvent(ctx, esEvent)
 		if err != nil {
 			return err
 		}
@@ -67,7 +52,7 @@ func (m *repoWarmingReplayMiddleware) WarmUp(ctx context.Context) error {
 		appliedEvents++
 	}
 
-	m.log.Info("Warmup finished.", "eventsApplied", appliedEvents)
+	log.Info("Warmup finished.", "eventsApplied", appliedEvents)
 
 	return nil
 }

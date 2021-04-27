@@ -25,6 +25,12 @@ type commandRegistry struct {
 	handlers map[CommandType]CommandHandler
 }
 
+var DefaultCommandRegistry CommandRegistry
+
+func init() {
+	DefaultCommandRegistry = NewCommandRegistry()
+}
+
 // newCommandRegistry creates a new command registry
 func NewCommandRegistry() CommandRegistry {
 	return &commandRegistry{

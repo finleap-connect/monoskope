@@ -12,11 +12,11 @@ import (
 )
 
 type remoteUserRepository struct {
-	userService api.UserServiceClient
+	userService api.UserClient
 }
 
 // NewRemoteUserRepository creates a repository for reading user projections.
-func NewRemoteUserRepository(userService api.UserServiceClient) ReadOnlyUserRepository {
+func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository {
 	return &remoteUserRepository{
 		userService: userService,
 	}

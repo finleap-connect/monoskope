@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -25,7 +25,7 @@ func (u *userRoleBindingProjector) NewProjection(id uuid.UUID) es.Projection {
 	return projections.NewUserRoleBinding(id)
 }
 
-// Project updates the state of the projection occording to the given event.
+// Project updates the state of the projection according to the given event.
 func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
 	p, ok := projection.(*projections.UserRoleBinding)
@@ -36,7 +36,7 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.UserRoleBindingCreated:
-		data := &ed.UserRoleAddedEventData{}
+		data := &eventdata.UserRoleAdded{}
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}

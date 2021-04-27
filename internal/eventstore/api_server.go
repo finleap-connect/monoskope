@@ -14,13 +14,13 @@ type apiServer struct {
 	esApi.UnimplementedEventStoreServer
 	// Logger interface
 	log     logger.Logger
-	store   es.Store
+	store   es.EventStore
 	bus     es.EventBusPublisher
 	metrics *metrics.EventStoreMetrics
 }
 
 // NewApiServer returns a new configured instance of apiServer
-func NewApiServer(store es.Store, bus es.EventBusPublisher) *apiServer {
+func NewApiServer(store es.EventStore, bus es.EventBusPublisher) *apiServer {
 	s := &apiServer{
 		log:     logger.WithName("server"),
 		store:   store,

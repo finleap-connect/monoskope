@@ -110,11 +110,9 @@ func (s *authServer) auth(c *gin.Context) {
 	route := c.Param("route")
 	s.log.Info("Authenticating request...", "route", route)
 
-	if util.GetOperationMode() == util.DEVELOPMENT {
-		// Print headers
-		for k := range c.Request.Header {
-			s.log.Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
-		}
+	// Print headers
+	for k := range c.Request.Header {
+		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
 	}
 
 	var claims *auth.Claims

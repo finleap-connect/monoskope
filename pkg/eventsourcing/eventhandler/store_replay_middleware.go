@@ -10,25 +10,27 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-type eventStoreReplayMiddleware struct {
+type eventStoreReplayEventHandler struct {
 	esClient apiEs.EventStoreClient
 	handler  es.EventHandler
 }
 
-// NewEventStoreReplayMiddleware creates an EventHandler which automates querying the EventStore in case of gaps in AggregateVersion found in other EventHandlers later in the chain of EventHandlers.
-func NewEventStoreReplayMiddleware(esClient apiEs.EventStoreClient) *eventStoreReplayMiddleware {
-	return &eventStoreReplayMiddleware{
+// NewEventStoreReplayEventHandler creates an EventHandler which automates querying the EventStore in case of gaps in AggregateVersion found in other EventHandlers later in the chain of EventHandlers.
+func NewEventStoreReplayEventHandler(esClient apiEs.EventStoreClient) *eventStoreReplayEventHandler {
+	return &eventStoreReplayEventHandler{
 		esClient: esClient,
 	}
 }
 
-func (m *eventStoreReplayMiddleware) Middleware(h es.EventHandler) es.EventHandler {
-	m.handler = h
-	return m
+func (m *eventStoreReplayEventHandler) AsMiddleware(h es.EventHandler) es.EventHandler {
+	return &eventStoreReplayEventHandler{
+		esClient: m.esClient,
+		handler:  h,
+	}
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
-func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.Event) error {
+func (m *eventStoreReplayEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
 	var outdatedError *ProjectionOutdatedError
 	if err := m.handler.HandleEvent(ctx, event); errors.As(err, &outdatedError) {
 		// If the next handler in the chain tells that the projection is outdated
@@ -41,7 +43,7 @@ func (m *eventStoreReplayMiddleware) HandleEvent(ctx context.Context, event es.E
 	}
 }
 
-func (m *eventStoreReplayMiddleware) applyEventsFromStore(ctx context.Context, event es.Event, projectionVersion uint64) error {
+func (m *eventStoreReplayEventHandler) applyEventsFromStore(ctx context.Context, event es.Event, projectionVersion uint64) error {
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
 		AggregateType: wrapperspb.String(event.AggregateID().String()),

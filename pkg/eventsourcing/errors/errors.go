@@ -8,13 +8,13 @@ var (
 	ErrNoEventsToAppend = errors.New("no events to append")
 
 	// ErrIncorrectEventAggregateVersion is when an event is for an other version of the aggregate.
-	ErrIncorrectAggregateVersion = errors.New("mismatching event aggreagte version")
+	ErrIncorrectAggregateVersion = errors.New("mismatching event aggregate version")
 
 	// ErrAggregateVersionAlreadyExists is when an event is referencing an older version of the aggregate than is stored.
-	ErrAggregateVersionAlreadyExists = errors.New("event aggreagte version already exists in store")
+	ErrAggregateVersionAlreadyExists = errors.New("event aggregate version already exists in store")
 
 	// ErrInvalidAggregateType is when an event is for a different type of aggregate.
-	ErrInvalidAggregateType = errors.New("mismatching event aggreagte type")
+	ErrInvalidAggregateType = errors.New("mismatching event aggregate type")
 
 	// ErrCouldNotSaveEvents is when events could not be saved.
 	ErrCouldNotSaveEvents = errors.New("could not save events")
@@ -23,7 +23,7 @@ var (
 	ErrCouldNotConnect = errors.New("could not connect to storage")
 
 	// ErrConnectionClosed is when connection with underlying storage has been closed
-	ErrConnectionClosed = errors.New("conntion to storage closed")
+	ErrConnectionClosed = errors.New("connection to storage closed")
 )
 
 // MessageBus Errors
@@ -43,8 +43,8 @@ var (
 	// ErrMessageNotConnected is when there is no connection
 	ErrMessageNotConnected = errors.New("message bus not connected")
 
-	// ErrMessageBusConnection is when an unexpected error on message bus occured
-	ErrMessageBusConnection = errors.New("unexpected error on message bus occured")
+	// ErrMessageBusConnection is when an unexpected error on message bus occurred
+	ErrMessageBusConnection = errors.New("unexpected error on message bus occurred")
 
 	// ErrCouldNotAddHandler is when an handler could not be added
 	ErrCouldNotAddHandler = errors.New("could not add handler")
