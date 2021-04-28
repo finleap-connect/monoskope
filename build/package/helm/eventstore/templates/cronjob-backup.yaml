@@ -22,9 +22,9 @@ spec:
       parallelism: 1
       template:
         metadata:
-          {{- with .Values.podAnnotations }}
           annotations:
             linkerd.io/inject: disabled
+          {{- with .Values.podAnnotations }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           labels:
