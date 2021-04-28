@@ -28,15 +28,11 @@ type Policy interface {
 	Role() Role
 	// Scope returns the scope this policy accepts.
 	Scope() Scope
-	// ResourceMatch returns if the resource must match the requested resource.
-	ResourceMatch() bool
 
 	// WithRole sets the role this policy accepts to the given value.
 	WithRole(Role) Policy
 	// WithScope sets the scope this policy accepts to the given value.
 	WithScope(Scope) Policy
-	// WithResourceMatch sets if the resource must match the requested resource.
-	WithResourceMatch(bool) Policy
 
 	// AcceptsRole checks if the policy accepts the given role.
 	AcceptsRole(Role) bool
@@ -78,12 +74,6 @@ func (p *policy) WithScope(scope Scope) Policy {
 	return p
 }
 
-// WithResource sets the resource of this policy accepts to the given value.
-func (p *policy) WithResourceMatch(mustMatch bool) Policy {
-	p.resourceMatch = mustMatch
-	return p
-}
-
 // Role returns the role this policy accepts.
 func (p *policy) Role() Role {
 	return p.role
@@ -92,11 +82,6 @@ func (p *policy) Role() Role {
 // Scope returns the scope this policy accepts.
 func (p *policy) Scope() Scope {
 	return p.scope
-}
-
-// ResourceMatch returns if the resource must match the requested resource.
-func (p *policy) ResourceMatch() bool {
-	return p.resourceMatch
 }
 
 // AcceptsRole checks if the policy accepts the given role.
@@ -111,5 +96,5 @@ func (p *policy) AcceptsScope(scope Scope) bool {
 
 // String returns a string representation of the policy.
 func (p *policy) String() string {
-	return fmt.Sprintf("RO:%s|SC:%s|REM:%v", p.role, p.scope, p.resourceMatch)
+	return fmt.Sprintf("RO:%s|SC:%s", p.role, p.scope)
 }

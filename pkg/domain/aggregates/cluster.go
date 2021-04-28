@@ -31,7 +31,7 @@ func NewClusterAggregate(id uuid.UUID) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
-	if err := a.Authorize(ctx, cmd); err != nil {
+	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
 		return err
 	}
 	if err := a.Validate(ctx, cmd); err != nil {

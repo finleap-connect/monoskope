@@ -3,6 +3,8 @@ package aggregates
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -12,7 +14,7 @@ type DomainAggregateBase struct {
 	*es.BaseAggregate
 }
 
-func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command) error {
+func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command, expectedResource uuid.UUID) error {
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
 		return err
@@ -21,9 +23,11 @@ func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command) err
 	userRoleBindings := metadataManager.GetRoleBindings()
 	for _, policy := range cmd.Policies(ctx) {
 		for _, roleBinding := range userRoleBindings {
-			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
-				policy.AcceptsScope(es.Scope(roleBinding.Scope)) {
-				if !policy.ResourceMatch() || roleBinding.Resource == a.ID().String() {
+			if policy.AcceptsRole(es.Role(roleBinding.GetRole())) &&
+				policy.AcceptsScope(es.Scope(roleBinding.GetScope())) {
+				if roleBinding.GetScope() == scopes.System.String() {
+					return nil
+				} else if roleBinding.GetResource() == expectedResource.String() {
 					return nil
 				}
 			}

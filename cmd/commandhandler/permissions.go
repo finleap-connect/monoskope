@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"sort"
 
@@ -37,13 +36,12 @@ func NewReportPermissions() *cobra.Command {
 						cmdType,
 						p.Role().String(),
 						p.Scope().String(),
-						fmt.Sprintf("%v", p.ResourceMatch()),
 					})
 				}
 			}
 
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Command", "Role", "Scope", "ResourceMatch"})
+			table.SetHeader([]string{"Command", "Role", "Scope"})
 
 			if formatMarkdown {
 				table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})

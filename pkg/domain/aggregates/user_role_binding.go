@@ -38,9 +38,6 @@ func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateStor
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
-	if err := a.Authorize(ctx, cmd); err != nil {
-		return err
-	}
 	if err := a.validate(ctx, cmd); err != nil {
 		return err
 	}
@@ -56,6 +53,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 
 		var err error
 		var userId uuid.UUID
+		var resource uuid.UUID
 		// Get all aggregates of same type
 		if userId, err = uuid.Parse(cmd.GetUserId()); err != nil {
 			return errors.ErrInvalidArgument("user id is invalid")
@@ -66,6 +64,9 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err := scopes.ValidateScope(cmd.GetScope()); err != nil {
 			return err
 		}
+		if resource, err = uuid.Parse(cmd.GetResource()); err != nil && cmd.GetResource() != "" {
+			return errors.ErrInvalidArgument("resource id is invalid")
+		}
 
 		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, userId)
 		if err != nil {
@@ -73,6 +74,10 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		}
 		if userAggregate == nil {
 			return domainErrors.ErrUserNotFound
+		}
+
+		if err := a.Authorize(ctx, cmd, resource); err != nil {
+			return err
 		}
 
 		roleBindings, err := a.aggregateManager.All(ctx, aggregates.UserRoleBinding)
