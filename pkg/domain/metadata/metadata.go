@@ -12,8 +12,20 @@ import (
 )
 
 const (
-	componentInformationKey = "component_information"
-	rolebindingsKey         = "user_role_bindings"
+	componentName    = "component_name"
+	componentVersion = "component_version"
+	componentCommit  = "component_commit"
+)
+
+var (
+	acceptedHeaders = []string{
+		componentName,
+		componentCommit,
+		componentVersion,
+		gateway.HeaderAuthEmail,
+		gateway.HeaderAuthId,
+		gateway.HeaderAuthIssuer,
+	}
 )
 
 // ComponentInformation are information about a service/component.
@@ -34,12 +46,29 @@ type UserInformation struct {
 // domainMetadataManager is a domain specific metadata manager.
 type DomainMetadataManager struct {
 	es.MetadataManager
+	domainContext *DomainContext
+}
+
+type DomainContext struct {
+	context.Context
+	UserRoleBindings []*projections.UserRoleBinding
+}
+
+func newDomainContext(ctx *DomainContext) *DomainContext {
+	if ctx == nil {
+		return &DomainContext{}
+	}
+
+	return &DomainContext{
+		UserRoleBindings: ctx.UserRoleBindings,
+	}
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
 func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, error) {
 	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
+		nil,
 	}
 
 	if len(m.GetMetadata()) == 0 {
@@ -47,38 +76,38 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			data := make(map[string]string)
 			for k, v := range md {
-				data[k] = v[0] // typically only the first and only value of that is relevant
+				if isHeaderAccepted(k) {
+					data[k] = v[0] // typically only the first and only value of that is relevant
+				}
 			}
 			m.SetMetadata(data)
 		}
 	}
 
-	if _, exists := m.Get(componentInformationKey); !exists {
-		if err := m.SetComponentInformation(); err != nil {
-			return nil, err
-		}
+	if domainContext, ok := ctx.(*DomainContext); ok {
+		m.domainContext = domainContext
+	}
+
+	if _, exists := m.Get(componentName); !exists {
+		m.SetComponentInformation()
 	}
 
 	return m, nil
 }
 
 // SetComponentInformation sets the ComponentInformation about the currently executing service/component.
-func (m *DomainMetadataManager) SetComponentInformation() error {
-	return m.SetObject(componentInformationKey, &ComponentInformation{
-		Name:    version.Name,
-		Version: version.Version,
-		Commit:  version.Commit,
-	})
+func (m *DomainMetadataManager) SetComponentInformation() {
+	m.Set(componentName, version.Name)
+	m.Set(componentVersion, version.Version)
+	m.Set(componentCommit, version.Commit)
 }
 
-func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) error {
-	return m.SetObject(rolebindingsKey, roleBindings)
+func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) {
+	m.domainContext.UserRoleBindings = roleBindings
 }
 
-func (m *DomainMetadataManager) GetRoleBindings() ([]*projections.UserRoleBinding, error) {
-	roleBindings := make([]*projections.UserRoleBinding, 0)
-	err := m.GetObject(rolebindingsKey, &roleBindings)
-	return roleBindings, err
+func (m *DomainMetadataManager) GetRoleBindings() []*projections.UserRoleBinding {
+	return m.domainContext.UserRoleBindings
 }
 
 // SetUserInformation sets the UserInformation in the metadata.
@@ -112,5 +141,20 @@ func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 
 // GetOutgoingGrpcContext returns a new context enriched with the metadata of this manager.
 func (m *DomainMetadataManager) GetOutgoingGrpcContext() context.Context {
-	return metadata.NewOutgoingContext(m.MetadataManager.GetContext(), metadata.New(m.GetMetadata()))
+	return metadata.NewOutgoingContext(m.GetContext(), metadata.New(m.GetMetadata()))
+}
+
+func (m *DomainMetadataManager) GetContext() context.Context {
+	dc := newDomainContext(m.domainContext)
+	dc.Context = m.MetadataManager.GetContext()
+	return dc
+}
+
+func isHeaderAccepted(key string) bool {
+	for _, acceptedHeader := range acceptedHeaders {
+		if acceptedHeader == key {
+			return true
+		}
+	}
+	return false
 }

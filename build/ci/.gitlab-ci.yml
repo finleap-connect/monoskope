@@ -4,6 +4,7 @@ stages:
   - build
   - deliver
   - scan
+  - chart
   - deploy
 
 include:

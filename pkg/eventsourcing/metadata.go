@@ -15,11 +15,12 @@ type metadataKeyType struct {
  It can be used to easily store any metadata in the context of a call.
 */
 type MetadataManager interface {
-	// GetContext returns a new context enriched with the metadata of this manager based on the .
+	// GetContext returns a new context enriched with the metadata of this manager.
 	GetContext() context.Context
 
 	// GetMetadata returns the metadata of this manager.
 	GetMetadata() map[string]string
+
 	// SetMetadata sets the metadata of this manager.
 	SetMetadata(map[string]string) MetadataManager
 
