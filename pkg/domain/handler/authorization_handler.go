@@ -54,15 +54,12 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 
 	if h.bypassAuthorization {
 		h.log.V(logger.WarnLevel).Info("Authorization bypass enabled.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		if err := metadataManager.SetRoleBindings([]*projections.UserRoleBinding{
+		metadataManager.SetRoleBindings([]*projections.UserRoleBinding{
 			{
 				Role:  roles.Admin.String(),
 				Scope: scopes.System.String(),
 			},
-		}); err != nil {
-			h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-			return domainErrors.ErrUnauthorized
-		}
+		})
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	}
 
@@ -75,10 +72,7 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	userRoleBindings := user.GetRoles()
 	userInfo.Id = user.ID()
 	metadataManager.SetUserInformation(userInfo)
-	if err := metadataManager.SetRoleBindings(userRoleBindings); err != nil {
-		h.log.Error(err, "Error when setting rolebindings.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		return domainErrors.ErrUnauthorized
-	}
+	metadataManager.SetRoleBindings(userRoleBindings)
 
 	if h.nextHandlerInChain != nil {
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)

@@ -243,7 +243,7 @@ func (s *postgresEventStore) Close() error {
 	return nil
 }
 
-// mapStoreQuery maps the generic query struct to a postgress orm query
+// mapStoreQuery maps the generic query struct to a postgres orm query
 func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 	if storeQuery == nil {
 		return
@@ -384,7 +384,7 @@ func (e pgEvent) AggregateType() evs.AggregateType {
 	return e.eventRecord.AggregateType
 }
 
-// AggrgateID implements the AggrgateID method of the Event interface.
+// AggregateID implements the AggregateID method of the Event interface.
 func (e pgEvent) AggregateID() uuid.UUID {
 	return e.eventRecord.AggregateID
 }

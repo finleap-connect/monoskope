@@ -52,7 +52,7 @@ test:golang:
     reports:
       junit: ["reports/*.xml"]
 
-build:golang:gateway:
+build:gateway:
   stage: build
   extends: .gobase-no-push
   only:
@@ -66,7 +66,7 @@ build:golang:gateway:
     expire_in: 1 day
   needs: []
 
-build:golang:eventstore:
+build:eventstore:
   stage: build
   extends: .gobase-no-push
   only:
@@ -80,7 +80,7 @@ build:golang:eventstore:
     expire_in: 1 day
   needs: []
 
-build:golang:commandhandler:
+build:commandhandler:
   stage: build
   extends: .gobase-no-push
   only:
@@ -94,7 +94,7 @@ build:golang:commandhandler:
     expire_in: 1 day
   needs: []
 
-build:golang:queryhandler:
+build:queryhandler:
   stage: build
   extends: .gobase-no-push
   only:
@@ -117,7 +117,7 @@ deliver:gateway:
   dependencies:
     - lint:golang
     - test:golang
-    - build:golang:gateway
+    - build:gateway
 
 deliver:eventstore:
   stage: deliver
@@ -128,7 +128,7 @@ deliver:eventstore:
   dependencies:
     - lint:golang
     - test:golang
-    - build:golang:eventstore
+    - build:eventstore
 
 deliver:commandhandler:
   stage: deliver
@@ -139,7 +139,7 @@ deliver:commandhandler:
   dependencies:
     - lint:golang
     - test:golang
-    - build:golang:commandhandler
+    - build:commandhandler
 
 deliver:queryhandler:
   stage: deliver
@@ -150,9 +150,9 @@ deliver:queryhandler:
   dependencies:
     - lint:golang
     - test:golang
-    - build:golang:queryhandler
+    - build:queryhandler
 
-scan:image:
+scan:images:
   stage: scan
   image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7.76.1
   only:

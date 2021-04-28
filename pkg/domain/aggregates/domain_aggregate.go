@@ -18,11 +18,7 @@ func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command) err
 		return err
 	}
 
-	userRoleBindings, err := metadataManager.GetRoleBindings()
-	if err != nil {
-		return err
-	}
-
+	userRoleBindings := metadataManager.GetRoleBindings()
 	for _, policy := range cmd.Policies(ctx) {
 		for _, roleBinding := range userRoleBindings {
 			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&

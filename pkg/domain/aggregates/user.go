@@ -79,16 +79,12 @@ func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
 }
 
 func (a *UserAggregate) authorize(ctx context.Context, cmd es.Command) error {
-	metadataMngr, err := metadata.NewDomainMetadataManager(ctx)
+	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
 		return err
 	}
 
-	userRoleBindings, err := metadataMngr.GetRoleBindings()
-	if err != nil {
-		return err
-	}
-
+	userRoleBindings := metadataMgr.GetRoleBindings()
 	for _, policy := range cmd.Policies(ctx) {
 		for _, roleBinding := range userRoleBindings {
 			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
