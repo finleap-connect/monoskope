@@ -10,27 +10,28 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
-type authorizationHandler struct {
+type userInformationHandler struct {
 	log                logger.Logger
 	userRepo           repositories.ReadOnlyUserRepository
 	nextHandlerInChain es.CommandHandler
 }
 
-// NewAuthorizationHandler creates a new CommandHandler which handles authorization.
-func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *authorizationHandler {
-	return &authorizationHandler{
-		log:      logger.WithName("authorization-middleware"),
+// NewUserInformationHandler creates a new CommandHandler which handles authorization.
+func NewUserInformationHandler(userRepo repositories.ReadOnlyUserRepository) *userInformationHandler {
+	return &userInformationHandler{
+		log:      logger.WithName("user-information-middleware"),
 		userRepo: userRepo,
 	}
 }
 
-func (m *authorizationHandler) Middleware(h es.CommandHandler) es.CommandHandler {
+func (m *userInformationHandler) Middleware(h es.CommandHandler) es.CommandHandler {
 	m.nextHandlerInChain = h
 	return m
 }
 
 // HandleCommand implements the CommandHandler interface
-func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
+	// Gather context
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
 		return err
@@ -42,17 +43,20 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	}
 
+	// Check that user exists
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
 	if err != nil {
 		h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
 		return domainErrors.ErrUnauthorized
 	}
 
+	// Enrich context with rolebindings and user information
 	userRoleBindings := user.GetRoles()
 	userInfo.Id = user.ID()
 	metadataManager.SetUserInformation(userInfo)
 	metadataManager.SetRoleBindings(userRoleBindings)
 
+	// Run next handler in chain
 	if h.nextHandlerInChain != nil {
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	} else {

@@ -43,22 +43,19 @@ type Policy interface {
 	String() string
 }
 
-// Policy describes which Role/Scope/Resource combination is allowed to execute a certain Command.
+// Policy describes which Role/Scope combination is allowed to execute a certain Command.
 type policy struct {
 	// Role is the Role a user must have due to the policy.
 	role Role
 	// Scope is the Scope of the Role a user must have due to the policy.
 	scope Scope
-	// resourceMatch is if the resource must match the requested resource.
-	resourceMatch bool
 }
 
 // NewPolicy creates a new policy which accepts anything.
 func NewPolicy() Policy {
 	return &policy{
-		role:          AnyRole,
-		scope:         AnyScope,
-		resourceMatch: false,
+		role:  AnyRole,
+		scope: AnyScope,
 	}
 }
 

@@ -162,7 +162,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	userRepo := repositories.NewRemoteUserRepository(userService)
 
 	// Create command handler
-	authorizationHandler := domainHandlers.NewAuthorizationHandler(userRepo)
+	authorizationHandler := domainHandlers.NewUserInformationHandler(userRepo)
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
 			aggregateManager,
