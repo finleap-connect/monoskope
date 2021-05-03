@@ -10,7 +10,6 @@ import (
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
-	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -34,7 +33,7 @@ func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggre
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
-	if err := a.authorize(ctx, cmd); err != nil {
+	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
 		return err
 	}
 	if err := a.validate(ctx, cmd); err != nil {
@@ -76,28 +75,6 @@ func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
 	default:
 		return a.Validate(ctx, cmd)
 	}
-}
-
-func (a *UserAggregate) authorize(ctx context.Context, cmd es.Command) error {
-	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
-	if err != nil {
-		return err
-	}
-
-	if metadataMgr.IsAuthorizationBypassed() {
-		return nil
-	}
-
-	userRoleBindings := metadataMgr.GetRoleBindings()
-	for _, policy := range cmd.Policies(ctx) {
-		for _, roleBinding := range userRoleBindings {
-			if policy.AcceptsRole(es.Role(roleBinding.Role)) &&
-				policy.AcceptsScope(es.Scope(roleBinding.Scope)) {
-				return nil
-			}
-		}
-	}
-	return domainErrors.ErrUnauthorized
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
