@@ -20,6 +20,10 @@ func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command, exp
 		return err
 	}
 
+	if metadataManager.IsAuthorizationBypassed() {
+		return nil
+	}
+
 	userRoleBindings := metadataManager.GetRoleBindings()
 	for _, policy := range cmd.Policies(ctx) {
 		for _, roleBinding := range userRoleBindings {

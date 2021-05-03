@@ -51,7 +51,8 @@ type DomainMetadataManager struct {
 
 type DomainContext struct {
 	context.Context
-	UserRoleBindings []*projections.UserRoleBinding
+	UserRoleBindings    []*projections.UserRoleBinding
+	BypassAuthorization bool
 }
 
 func newDomainContext(ctx *DomainContext) *DomainContext {
@@ -60,7 +61,8 @@ func newDomainContext(ctx *DomainContext) *DomainContext {
 	}
 
 	return &DomainContext{
-		UserRoleBindings: ctx.UserRoleBindings,
+		UserRoleBindings:    ctx.UserRoleBindings,
+		BypassAuthorization: ctx.BypassAuthorization,
 	}
 }
 
@@ -157,4 +159,18 @@ func isHeaderAccepted(key string) bool {
 		}
 	}
 	return false
+}
+
+// BypassAuthorization disables authorization checks and returns a function to enable it again
+func (m *DomainMetadataManager) BypassAuthorization() func() {
+	dc := newDomainContext(m.domainContext)
+	dc.BypassAuthorization = true
+	m.domainContext = dc
+	return func() {
+		dc.BypassAuthorization = false
+	}
+}
+
+func (m *DomainMetadataManager) IsAuthorizationBypassed() bool {
+	return m.domainContext.BypassAuthorization
 }

@@ -3,9 +3,6 @@ package handler
 import (
 	"context"
 
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
@@ -14,10 +11,9 @@ import (
 )
 
 type authorizationHandler struct {
-	log                 logger.Logger
-	userRepo            repositories.ReadOnlyUserRepository
-	nextHandlerInChain  es.CommandHandler
-	bypassAuthorization bool
+	log                logger.Logger
+	userRepo           repositories.ReadOnlyUserRepository
+	nextHandlerInChain es.CommandHandler
 }
 
 // NewAuthorizationHandler creates a new CommandHandler which handles authorization.
@@ -25,17 +21,6 @@ func NewAuthorizationHandler(userRepo repositories.ReadOnlyUserRepository) *auth
 	return &authorizationHandler{
 		log:      logger.WithName("authorization-middleware"),
 		userRepo: userRepo,
-	}
-}
-
-// BypassAuthorization disables authorization checks and returns a function to enable it again
-func (h *authorizationHandler) BypassAuthorization() func() {
-	h.bypassAuthorization = true
-	h.log.V(logger.WarnLevel).Info("Authorization bypass has been enabled.")
-
-	return func() {
-		h.bypassAuthorization = false
-		h.log.Info("Authorization bypass has been disabled.")
 	}
 }
 
@@ -52,14 +37,8 @@ func (h *authorizationHandler) HandleCommand(ctx context.Context, cmd es.Command
 	}
 	userInfo := metadataManager.GetUserInformation()
 
-	if h.bypassAuthorization {
+	if metadataManager.IsAuthorizationBypassed() {
 		h.log.V(logger.WarnLevel).Info("Authorization bypass enabled.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		metadataManager.SetRoleBindings([]*projections.UserRoleBinding{
-			{
-				Role:  roles.Admin.String(),
-				Scope: scopes.System.String(),
-			},
-		})
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	}
 

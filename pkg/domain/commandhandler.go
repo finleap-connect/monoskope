@@ -176,9 +176,14 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	}
 
 	// Create default and super users
-	cancel := authorizationHandler.BypassAuthorization()
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return err
+	}
+
+	cancel := metadataManager.BypassAuthorization()
 	defer cancel()
-	if err := setupUsers(ctx, handler); err != nil {
+	if err := setupUsers(metadataManager.GetContext(), handler); err != nil {
 		return err
 	}
 

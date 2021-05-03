@@ -84,6 +84,10 @@ func (a *UserAggregate) authorize(ctx context.Context, cmd es.Command) error {
 		return err
 	}
 
+	if metadataMgr.IsAuthorizationBypassed() {
+		return nil
+	}
+
 	userRoleBindings := metadataMgr.GetRoleBindings()
 	for _, policy := range cmd.Policies(ctx) {
 		for _, roleBinding := range userRoleBindings {
