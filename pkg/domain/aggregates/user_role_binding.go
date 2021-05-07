@@ -67,17 +67,16 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if resource, err = uuid.Parse(cmd.GetResource()); err != nil && cmd.GetResource() != "" {
 			return errors.ErrInvalidArgument("resource id is invalid")
 		}
+		if err := a.Authorize(ctx, cmd, resource); err != nil {
+			return err
+		}
 
 		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, userId)
 		if err != nil {
 			return err
 		}
-		if userAggregate == nil {
+		if !userAggregate.Exists() {
 			return domainErrors.ErrUserNotFound
-		}
-
-		if err := a.Authorize(ctx, cmd, resource); err != nil {
-			return err
 		}
 
 		roleBindings, err := a.aggregateManager.All(ctx, aggregates.UserRoleBinding)
