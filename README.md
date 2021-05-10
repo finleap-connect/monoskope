@@ -33,7 +33,7 @@ Event Horizon is licensed under Apache License 2.0. A copy of the license is ava
 ### General
 
 * Architecture and more in [GDrive](https://drive.google.com/drive/folders/1QEewDHF0LwSLr6aUVoHvMWrFgaJfJLty)
-* The [m8 docs](docs/overview.md)
+* The [m8 docs](docs/README.md)
 
 ### Helm Charts
 
