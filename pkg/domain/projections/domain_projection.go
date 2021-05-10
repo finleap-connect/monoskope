@@ -7,7 +7,6 @@ import (
 
 type DomainProjection struct {
 	projections.LifecycleMetadata
-	id               uuid.UUID
 	version          uint64
 	CreatedById      uuid.UUID
 	LastModifiedById uuid.UUID
@@ -16,11 +15,6 @@ type DomainProjection struct {
 
 func NewDomainProjection() *DomainProjection {
 	return &DomainProjection{}
-}
-
-// ID implements the ID method of the Aggregate interface.
-func (p *DomainProjection) ID() uuid.UUID {
-	return p.id
 }
 
 // Version implements the Version method of the Projection interface.

@@ -1,9 +1,14 @@
+**[[Back To Overview]](../README.md)**
+
+---
+
 # Monoskope Documentation Overview
 
 ## Docs for development
 
 * [Makefile](Makefile.md)
-* [Flow charts](flow-charts/overview.md)
+* [Flow charts](flow-charts/README.md)
+* [Get started](development/README.md)
 
 ## Using Monoskope
 
