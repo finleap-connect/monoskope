@@ -5,7 +5,7 @@
 # Implementing `Aggregates`
 
 An `Aggregate` is an entity in your business model (e.g. `User`) which has a state built from the `EventStream` belonging to it.
-`Aggregates` can be applied to it and an `Aggregate` may emit `Event(s)` in reaction to a `Aggregate`.
+[`Commands`](commands.md) can be applied to it and an `Aggregate` may emit [`Event(s)`](events.md) in reaction to a `Aggregate`.
 
 ## Prerequisites
 
