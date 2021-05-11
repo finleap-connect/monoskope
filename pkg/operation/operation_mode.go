@@ -13,10 +13,6 @@ const (
 	DEVELOPMENT OperationMode = "development"
 )
 
-func init() {
-	_ = GetOperationMode()
-}
-
 // GetOperationMode returns the operation mode specified via the env var M8_OPERATION_MODE.
 // (defaults is RELEASE)
 func GetOperationMode() OperationMode {
