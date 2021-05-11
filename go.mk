@@ -26,6 +26,9 @@ CMD_COMMANDHANDLER_SRC = cmd/commandhandler/*.go
 CMD_QUERYHANDLER = $(BUILD_PATH)/queryhandler
 CMD_QUERYHANDLER_SRC = cmd/queryhandler/*.go
 
+CMD_CLBOREACTOR = $(BUILD_PATH)/clboreactor
+CMD_CLBOREACTOR_SRC = cmd/clusterbootstrapreactor/*.go
+
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
@@ -111,10 +114,14 @@ $(CMD_COMMANDHANDLER):
 $(CMD_QUERYHANDLER):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
 
+$(CMD_CLBOREACTOR):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_CLBOREACTOR_SRC)
+
 build-clean: 
 	rm -Rf $(CMD_GATEWAY)
 	rm -Rf $(CMD_EVENTSTORE)
 	rm -Rf $(CMD_COMMANDHANDLER)
+	rm -Rf $(CMD_CLBOREACTOR)
 
 build-gateway: $(CMD_GATEWAY)
 
@@ -123,3 +130,5 @@ build-eventstore: $(CMD_EVENTSTORE)
 build-commandhandler: $(CMD_COMMANDHANDLER)
 
 build-queryhandler: $(CMD_QUERYHANDLER)
+
+build-clboreactor: $(CMD_CLBOREACTOR)

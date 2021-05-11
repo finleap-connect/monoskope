@@ -68,7 +68,7 @@ spec:
               containerPort: 9102
               protocol: TCP
           args:
-            - /reactor
+            - /clboreactor
             - serve
           livenessProbe:
             httpGet:
