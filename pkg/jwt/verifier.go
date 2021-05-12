@@ -15,7 +15,7 @@ type jwtVerifier struct {
 	publicKey interface{}
 }
 
-// NewVerifier creates a new verifier for raw JWTs
+// NewVerifier creates a new verifier for raw JWT
 func NewVerifier(publicKeyFilename string) (Verifier, error) {
 	pubKeyBytes, err := ioutil.ReadFile(publicKeyFilename)
 	if err != nil {

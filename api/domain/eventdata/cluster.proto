@@ -28,3 +28,8 @@ message ClusterCreated {
   // CA certificate of the K8s cluster
   bytes ca_certificate = 3;
 }
+
+message ClusterBootstrapTokenCreated {
+  // JsonWebToken for cluster bootstrap
+  string JWT = 1;
+}
