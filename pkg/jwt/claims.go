@@ -12,22 +12,36 @@ const (
 	DefaultExpiry   = 24 * time.Hour
 )
 
-type ClusterBootstrapClaims struct {
-	jwt.Claims
+type ClusterBootstrapToken struct {
+	*jwt.Claims
 }
 
 // Creates a new cluster bootstrap token
-func NewClusterBootstrapClaims(subject string) *ClusterBootstrapClaims {
+func NewClusterBootstrapToken(subject string) *ClusterBootstrapToken {
 	now := time.Now().UTC()
 
-	return &ClusterBootstrapClaims{
-		Claims: jwt.Claims{
-			ID:       uuid.New().String(),
-			Issuer:   MonoskopeIssuer,
-			Subject:  subject,
-			Audience: jwt.Audience{subject},
-			Expiry:   jwt.NewNumericDate(now.Add(DefaultExpiry)),
-			IssuedAt: jwt.NewNumericDate(now),
+	return &ClusterBootstrapToken{
+		Claims: &jwt.Claims{
+			ID:        uuid.New().String(),
+			Issuer:    MonoskopeIssuer,
+			Subject:   subject,
+			Audience:  jwt.Audience{subject},
+			Expiry:    jwt.NewNumericDate(now.Add(DefaultExpiry)),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}
+}
+
+// IsExpired returns if the token is expired
+func (t *ClusterBootstrapToken) IsExpired() bool {
+	return t.Expiry.Time().Before(time.Now().UTC())
+}
+
+// IsValid returns if the token is not used too early or is expired
+func (t *ClusterBootstrapToken) IsValid() bool {
+	if t.NotBefore != nil && time.Now().UTC().Before(t.NotBefore.Time()) {
+		return false
+	}
+	return !t.IsExpired()
 }

@@ -32,7 +32,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			return nil, err
 		}
 
-		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapClaims(data.Name))
+		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(data.Name))
 		if err != nil {
 			return nil, err
 		}
