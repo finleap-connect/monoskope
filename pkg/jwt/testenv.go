@@ -41,11 +41,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	}
 	env.privateKeyFile = privKeyFile.Name()
 
-	pubKeyPEM, err := x509.MarshalPKIXPublicKey(privKey.Public())
-	if err != nil {
-		return nil, err
-	}
-
 	pubKeyFile, err := ioutil.TempFile("", "public.key")
 	if err != nil {
 		return nil, err
@@ -53,7 +48,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	defer pubKeyFile.Close()
 	env.publicKeyFile = pubKeyFile.Name()
 
-	_, err = pubKeyFile.Write(pubKeyPEM)
+	_, err = pubKeyFile.Write(x509.MarshalPKCS1PublicKey(&privKey.PublicKey))
 	if err != nil {
 		return nil, err
 	}

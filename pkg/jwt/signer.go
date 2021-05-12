@@ -11,14 +11,26 @@ const (
 	SignatureAlgorithm = jose.RS512
 )
 
+// JWTSigner is an interface for JWT signers
+type JWTSigner interface {
+	// GenerateSignedToken generates a signed JWT containing the given claims
+	GenerateSignedToken(interface{}) (string, error)
+}
+
+type jwtSigner struct {
+	jose.Signer
+}
+
 // NewSigner creates a thin wrapper around Square's
 // go-jose library to issue JWT.
-func NewSigner(privateKeyFilename string) (jose.Signer, error) {
+func NewSigner(privateKeyFilename string) (JWTSigner, error) {
+	// Read private key from file
 	privKeyBytes, err := ioutil.ReadFile(privateKeyFilename)
 	if err != nil {
 		return nil, err
 	}
 
+	// Decode
 	privKey, err := LoadPrivateKey(privKeyBytes)
 	if err != nil {
 		return nil, err
@@ -26,6 +38,7 @@ func NewSigner(privateKeyFilename string) (jose.Signer, error) {
 
 	// create Square.jose signing key
 	key := jose.SigningKey{Algorithm: SignatureAlgorithm, Key: privKey}
+
 	// create a Square.jose RSA signer, used to sign the JWT
 	var signerOpts = jose.SignerOptions{}
 	signerOpts.WithType("JWT")
@@ -34,15 +47,18 @@ func NewSigner(privateKeyFilename string) (jose.Signer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rsaSigner, nil
+
+	return &jwtSigner{
+		Signer: rsaSigner,
+	}, nil
 }
 
-// Sign an authentication token and return the serialized JWS
-func Sign(signer jose.Signer, claims *jwt.Claims) (string, error) {
-	builder := jwt.Signed(signer).Claims(claims)
-	signed, err := builder.CompactSerialize()
+// GenerateSignedToken generates a signed JWT containing the given claims
+func (signer *jwtSigner) GenerateSignedToken(claims interface{}) (string, error) {
+	builder := jwt.Signed(signer.Signer).Claims(claims)
+	rawJWT, err := builder.CompactSerialize()
 	if err != nil {
 		return "", err
 	}
-	return signed, nil
+	return rawJWT, nil
 }
