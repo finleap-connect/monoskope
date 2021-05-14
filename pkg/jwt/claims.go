@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	MonoskopeIssuer = "Monoskope"
-	DefaultExpiry   = 24 * time.Hour
+	MonoskopeIssuer               = "Monoskope"
+	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
 type ClusterBootstrapToken struct {
@@ -26,7 +26,7 @@ func NewClusterBootstrapToken(subject string) *ClusterBootstrapToken {
 			Issuer:    MonoskopeIssuer,
 			Subject:   subject,
 			Audience:  jwt.Audience{subject},
-			Expiry:    jwt.NewNumericDate(now.Add(DefaultExpiry)),
+			Expiry:    jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
 		},
