@@ -49,6 +49,10 @@
 
 ## Prerequisites
 
+## Go
+
+* Execute `make go-tools` to get linter and testing binaries
+
 ### gRPC
 
 * [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
