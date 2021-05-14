@@ -18,14 +18,21 @@ type JWTSigner interface {
 }
 
 type jwtSigner struct {
-	jose.Signer
+	privateKeyFileName string
 }
 
 // NewSigner creates a thin wrapper around Square's
 // go-jose library to issue JWT.
-func NewSigner(privateKeyFilename string) (JWTSigner, error) {
+func NewSigner(privateKeyFilename string) JWTSigner {
+	return &jwtSigner{
+		privateKeyFileName: privateKeyFilename,
+	}
+}
+
+// createSigner loads the private key and a returns a new jose.Signer
+func (signer *jwtSigner) createSigner() (jose.Signer, error) {
 	// Read private key from file
-	privKeyBytes, err := ioutil.ReadFile(privateKeyFilename)
+	privKeyBytes, err := ioutil.ReadFile(signer.privateKeyFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -48,14 +55,17 @@ func NewSigner(privateKeyFilename string) (JWTSigner, error) {
 		return nil, err
 	}
 
-	return &jwtSigner{
-		Signer: rsaSigner,
-	}, nil
+	return rsaSigner, nil
 }
 
 // GenerateSignedToken generates a signed JWT containing the given claims
 func (signer *jwtSigner) GenerateSignedToken(claims interface{}) (string, error) {
-	builder := jwt.Signed(signer.Signer).Claims(claims)
+	joseSigner, err := signer.createSigner()
+	if err != nil {
+		return "", err
+	}
+
+	builder := jwt.Signed(joseSigner).Claims(claims)
 	rawJWT, err := builder.CompactSerialize()
 	if err != nil {
 		return "", err

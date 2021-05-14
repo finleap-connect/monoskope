@@ -11,8 +11,7 @@ import (
 
 var _ = Describe("jwt/verifier", func() {
 	It("can verify a JWT", func() {
-		signer, err := NewSigner(testEnv.privateKeyFile)
-		Expect(err).ToNot(HaveOccurred())
+		signer := NewSigner(testEnv.privateKeyFile)
 		Expect(signer).ToNot(BeNil())
 
 		claims := jwt.Claims{
@@ -31,8 +30,7 @@ var _ = Describe("jwt/verifier", func() {
 		Expect(rawJWT).ToNot(BeEmpty())
 		testEnv.Log.Info("JWT created.", "JWT", rawJWT)
 
-		verifier, err := NewVerifier(testEnv.publicKeyFile)
-		Expect(err).ToNot(HaveOccurred())
+		verifier := NewVerifier(testEnv.publicKeyFile)
 		Expect(verifier).ToNot(BeNil())
 
 		claimsFromJWT := jwt.Claims{}

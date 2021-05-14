@@ -11,8 +11,7 @@ import (
 
 var _ = Describe("jwt/signer", func() {
 	It("can sign a JWT", func() {
-		signer, err := NewSigner(testEnv.privateKeyFile)
-		Expect(err).ToNot(HaveOccurred())
+		signer := NewSigner(testEnv.privateKeyFile)
 		Expect(signer).ToNot(BeNil())
 
 		rawJWT, err := signer.GenerateSignedToken(jwt.Claims{

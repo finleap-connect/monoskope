@@ -12,12 +12,19 @@ type Verifier interface {
 }
 
 type jwtVerifier struct {
-	publicKey interface{}
+	publicKeyFilename string
 }
 
 // NewVerifier creates a new verifier for raw JWT
-func NewVerifier(publicKeyFilename string) (Verifier, error) {
-	pubKeyBytes, err := ioutil.ReadFile(publicKeyFilename)
+func NewVerifier(publicKeyFilename string) Verifier {
+	return &jwtVerifier{
+		publicKeyFilename: publicKeyFilename,
+	}
+}
+
+// loadPublicKey loads the public key
+func (v *jwtVerifier) loadPublicKey() (interface{}, error) {
+	pubKeyBytes, err := ioutil.ReadFile(v.publicKeyFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -27,19 +34,22 @@ func NewVerifier(publicKeyFilename string) (Verifier, error) {
 		return nil, err
 	}
 
-	return &jwtVerifier{
-		publicKey: pubKey,
-	}, nil
+	return pubKey, nil
 }
 
 // Verify parses the raw JWT, verifies the content against the public key of the verifier and parses the claims
 func (v *jwtVerifier) Verify(rawJWT string, claims interface{}) error {
+	pubKey, err := v.loadPublicKey()
+	if err != nil {
+		return err
+	}
+
 	parsedJWT, err := jwt.ParseSigned(rawJWT)
 	if err != nil {
 		return err
 	}
 
-	if err := parsedJWT.Claims(v.publicKey, claims); err != nil {
+	if err := parsedJWT.Claims(pubKey, claims); err != nil {
 		return err
 	}
 
