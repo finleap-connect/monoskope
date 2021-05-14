@@ -47,6 +47,13 @@
 └── README.md # The entry point for the project docs.
 ```
 
+## Prerequisites
+
+### gRPC
+
+* [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
+* [Quickstart - gRPC in Go](https://grpc.io/docs/languages/go/quickstart/)
+
 ## Event Sourcing & CQRS
 
 ### Reading list
