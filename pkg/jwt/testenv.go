@@ -48,7 +48,12 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	defer pubKeyFile.Close()
 	env.publicKeyFile = pubKeyFile.Name()
 
-	_, err = pubKeyFile.Write(x509.MarshalPKCS1PublicKey(&privKey.PublicKey))
+	pubKeyPem, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = pubKeyFile.Write(pubKeyPem)
 	if err != nil {
 		return nil, err
 	}

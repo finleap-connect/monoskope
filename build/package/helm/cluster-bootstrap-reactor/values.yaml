@@ -65,3 +65,8 @@ affinity: {}
 
 labels: {}
   # app.kubernetes.io/part-of: my-app
+
+# -- secret containing the private key (PEM or DER-encoded)
+keySecret:
+  name: ""
+  field: "tls.key"
