@@ -66,6 +66,23 @@ affinity: {}
 labels: {}
   # app.kubernetes.io/part-of: my-app
 
+
+# -- API address of the event store
+eventStore:
+  prefix: "" # Defaults to the release name
+  host: "eventstore"
+  port: 8080
+
+messageBus:
+  # -- Prefix for routing messages via message bus
+  routingKeyPrefix: m8
+  # -- URL of the bus
+  url: amqps://127.0.0.1:5672/
+  # -- Name of the configmap containing the config for the messagebus
+  existingSecret: ""
+  # -- Name of the secret containing the tls certificates/keys
+  tlsSecret: ""
+  
 # -- secret containing the private key (PEM or DER-encoded)
 keySecret:
   name: ""

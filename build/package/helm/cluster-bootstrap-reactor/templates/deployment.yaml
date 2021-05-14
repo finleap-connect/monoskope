@@ -70,6 +70,8 @@ spec:
           args:
             - /clboreactor
             - serve
+            - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
+            - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
           env:
             - name: K8S_NAMESPACE
               value: {{ .Release.Namespace }}
@@ -86,6 +88,15 @@ spec:
             periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: keySecret
+              mountPath: /etc/reactor
+              readOnly: true
+          {{- if .Values.messageBus.tlsSecret }}
+            - name: buscerts
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -97,4 +108,16 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: keySecret
+          secret:
+            secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}
+            items:
+            - key: {{ .Values.keySecret.field }}
+              path: signing.key
+      {{- if .Values.messageBus.tlsSecret }}
+        - name: buscerts
+          secret:
+            secretName: {{ .Values.messageBus.tlsSecret }}
       {{- end }}
