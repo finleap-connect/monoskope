@@ -30,10 +30,20 @@ var _ = Describe("jwt/verifier", func() {
 		Expect(rawJWT).ToNot(BeEmpty())
 		testEnv.Log.Info("JWT created.", "JWT", rawJWT)
 
-		verifier := NewVerifier(testEnv.publicKeyFile)
+		verifier, err := NewVerifier(testEnv.publicKeyFile)
+		Expect(err).ToNot(HaveOccurred())
 		Expect(verifier).ToNot(BeNil())
 
 		claimsFromJWT := jwt.Claims{}
+		err = verifier.Verify(rawJWT, &claimsFromJWT)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(claims).To(Equal(claimsFromJWT))
+
+		err = testEnv.RotateCertificate()
+		Expect(err).ToNot(HaveOccurred())
+		time.Sleep(500 * time.Millisecond)
+
+		claimsFromJWT = jwt.Claims{}
 		err = verifier.Verify(rawJWT, &claimsFromJWT)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(claims).To(Equal(claimsFromJWT))

@@ -33,15 +33,9 @@ func NewClusterBootstrapToken(subject string) *ClusterBootstrapToken {
 	}
 }
 
-// IsExpired returns if the token is expired
-func (t *ClusterBootstrapToken) IsExpired() bool {
-	return t.Expiry.Time().Before(time.Now().UTC())
-}
-
 // IsValid returns if the token is not used too early or is expired
-func (t *ClusterBootstrapToken) IsValid() bool {
-	if t.NotBefore != nil && time.Now().UTC().Before(t.NotBefore.Time()) {
-		return false
-	}
-	return !t.IsExpired()
+func (t *ClusterBootstrapToken) Validate() error {
+	return t.ValidateWithLeeway(jwt.Expected{
+		Issuer: MonoskopeIssuer,
+	}, jwt.DefaultLeeway)
 }
