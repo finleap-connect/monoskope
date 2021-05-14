@@ -9,10 +9,11 @@ GINKO_VERSION  ?= v1.15.2
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
+PROTOC     	   ?= protoc
+
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
-PROTOC     	   ?= protoc
 
 CMD_GATEWAY = $(BUILD_PATH)/gateway
 CMD_GATEWAY_SRC = cmd/gateway/*.go
@@ -80,7 +81,7 @@ ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get:
-	$(shell curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_DIR) $(LINTER_VERSION))
+	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
 ginkgo-clean:
 	rm -Rf $(TOOLS_DIR)/ginkgo
