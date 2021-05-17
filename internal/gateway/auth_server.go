@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
@@ -38,10 +39,11 @@ type authServer struct {
 	log         logger.Logger
 	shutdown    *util.ShutdownWaitGroup
 	authHandler *auth.Handler
+	userRepo    repositories.ReadOnlyUserRepository
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(authHandler *auth.Handler) *authServer {
+func NewAuthServer(authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
 		api:         &http.Server{Handler: engine},
@@ -49,6 +51,7 @@ func NewAuthServer(authHandler *auth.Handler) *authServer {
 		log:         logger.WithName("auth-server"),
 		shutdown:    util.NewShutdownWaitGroup(),
 		authHandler: authHandler,
+		userRepo:    userRepo,
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
@@ -117,15 +120,27 @@ func (s *authServer) auth(c *gin.Context) {
 
 	var claims *auth.Claims
 	if claims = s.tokenValidation(c); claims != nil {
-		s.writeSuccess(c, claims)
-		return
+		if userId, ok := s.retrieveUserId(c, claims.Email); ok {
+			s.writeSuccess(c, claims, userId)
+			return
+		}
 	}
 	if claims = s.certValidation(c); claims != nil {
-		s.writeSuccess(c, claims)
-		return
+		if userId, ok := s.retrieveUserId(c, claims.Email); ok {
+			s.writeSuccess(c, claims, userId)
+			return
+		}
 	}
 
 	c.String(http.StatusUnauthorized, "authorization failed")
+}
+
+func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool) {
+	user, err := s.userRepo.ByEmail(c, email)
+	if err != nil {
+		return "", false
+	}
+	return user.Id, true
 }
 
 // tokenValidation validates the token provided within the authorization
@@ -168,7 +183,7 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 }
 
 // writeSuccess writes all request headers back to the response along with information got from the upstream IdP and sends an http status ok
-func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims) {
+func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims, userId string) {
 	// Copy request headers to response
 	for k := range c.Request.Header {
 		// Avoid copying the original Content-Length header from the client
@@ -179,6 +194,7 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims) {
 	}
 
 	// Set headers with auth info
+	c.Writer.Header().Set(HeaderAuthId, userId)
 	c.Writer.Header().Set(HeaderAuthName, claims.Name)
 	c.Writer.Header().Set(HeaderAuthEmail, claims.Email)
 	c.Writer.Header().Set(HeaderAuthIssuer, claims.Issuer)

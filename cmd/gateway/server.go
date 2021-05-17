@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 
@@ -12,16 +14,18 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
-	grpcApiAddr string
-	httpApiAddr string
-	metricsAddr string
-	keepAlive   bool
-	authConfig  = auth.Config{}
+	grpcApiAddr      string
+	httpApiAddr      string
+	queryHandlerAddr string
+	metricsAddr      string
+	keepAlive        bool
+	authConfig       = auth.Config{}
 )
 
 var serverCmd = &cobra.Command{
@@ -58,7 +62,15 @@ var serverCmd = &cobra.Command{
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
-		authServer := gateway.NewAuthServer(authHandler)
+		// Create UserService client
+		conn, userSvcClient, err := queryhandler.NewUserClient(context.Background(), queryHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		userRepo := repositories.NewRemoteUserRepository(userSvcClient)
+
+		authServer := gateway.NewAuthServer(authHandler, userRepo)
 
 		// Finally start the servers
 		eg, _ := errgroup.WithContext(cmd.Context())
@@ -79,6 +91,7 @@ func init() {
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
 	flags.StringVar(&grpcApiAddr, "grpc-api-addr", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
+	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "http://localhost:6555", "Issuer URL")
 }
