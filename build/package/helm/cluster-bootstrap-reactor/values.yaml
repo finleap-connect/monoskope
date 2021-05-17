@@ -83,7 +83,8 @@ messageBus:
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
   
-# -- secret containing the private key (PEM or DER-encoded)
 keySecret:
+  # -- secret containing private key
   name: ""
+  # -- field of the secret containing the private key (PEM or DER-encoded)
   field: "tls.key"

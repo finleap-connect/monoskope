@@ -67,6 +67,9 @@ spec:
             - name: http-metrics
               containerPort: 9102
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
           args:
             - /clboreactor
             - serve
