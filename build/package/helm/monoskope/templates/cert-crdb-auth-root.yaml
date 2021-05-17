@@ -12,6 +12,8 @@ spec:
   secretName: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
   duration: {{ .Values.pki.certificates.duration }}
   renewBefore: {{ .Values.pki.certificates.renewBefore }}
+  privateKey:
+    rotationPolicy: Always
   issuerRef:
     name: {{ include "monoskope.fullname" . }}-root-ca-issuer
     kind: Issuer
