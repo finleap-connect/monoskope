@@ -81,6 +81,12 @@ ports:
   httpApi: 8081
   metrics: 9102
 
+# -- API address of the query handler
+queryHandler:
+  prefix: "" # Defaults to the release name
+  host: "queryhandler"
+  port: 8080
+
 keepAlive: false
 
 auth:

@@ -94,6 +94,7 @@ spec:
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--grpc-api-addr=:%v" .Values.ports.grpcApi) }}
             - {{ (printf "--http-api-addr=:%v" .Values.ports.httpApi) }}
+            - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
           {{- if .Values.livenessProbe.enabled }}
