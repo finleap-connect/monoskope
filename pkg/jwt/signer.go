@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	SignatureAlgorithm = jose.RS512
+	SignatureAlgorithm = jose.RS256
 )
 
 // JWTSigner is an interface for JWT signers
