@@ -92,4 +92,4 @@
 
 * [Projections](projections.md)
 * [Projectors](projectors.md)
-* [Repositories](permissionModel.md)
+* [Repositories](repositories.md)
