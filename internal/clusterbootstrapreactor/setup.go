@@ -13,7 +13,7 @@ import (
 
 func SetupClusterBootstrapReactor(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) error {
 	// Set up JWT signer
-	signer := jwt.NewSigner("DINGS")
+	signer := jwt.NewSigner("/etc/reactor/signing.key")
 
 	// Set up middleware
 	replayHandler := eventhandler.NewEventStoreReplayEventHandler(esClient)
