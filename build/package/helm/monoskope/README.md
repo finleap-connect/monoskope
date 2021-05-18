@@ -8,6 +8,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../cluster-bootstrap-reactor | cluster-bootstrap-reactor |  |
 | file://../commandhandler | commandhandler |  |
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
@@ -36,6 +37,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.resources.requests.memory | string | `"512Mi"` |  |
 | ambassador.scope.singleNamespace | bool | `true` |  |
 | ambassador.serviceAccount.create | bool | `false` |  |
+| cluster-bootstrap-reactor.enabled | bool | `true` |  |
+| cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
+| cluster-bootstrap-reactor.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
 | cockroachdb.dropExistingDatabase | bool | `false` |  |
@@ -84,6 +88,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
+| pki.authentication.keySecretName | string | `"m8-authentication"` |  |
 | pki.certificates.duration | string | `"48h"` |  |
 | pki.certificates.renewBefore | string | `"23h"` |  |
 | pki.enabled | bool | `true` |  |

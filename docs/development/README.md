@@ -47,6 +47,17 @@
 └── README.md # The entry point for the project docs.
 ```
 
+## Prerequisites
+
+## Go
+
+* Execute `make go-tools` to get linter and testing binaries
+
+### gRPC
+
+* [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
+* [Quickstart - gRPC in Go](https://grpc.io/docs/languages/go/quickstart/)
+
 ## Event Sourcing & CQRS
 
 ### Reading list
@@ -81,4 +92,4 @@
 
 * [Projections](projections.md)
 * [Projectors](projectors.md)
-* [Repositories](permissionModel.md)
+* [Repositories](repositories.md)

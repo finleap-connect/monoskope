@@ -13,9 +13,7 @@ include:
   # - template: Security/SAST.gitlab-ci.yml
 
 .docker-builder:
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.5.4
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.2
   only:
     - web
 

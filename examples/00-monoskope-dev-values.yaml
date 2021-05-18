@@ -28,9 +28,9 @@ rabbitmq:
 
 gateway:
   enabled: true
+  replicaCount: 1
   image:
     tag: *imageTag
-  replicaCount: 1
   auth:
     issuerURL: https://gitlab.figo.systems
   resources:
@@ -115,3 +115,18 @@ ambassador:
   replicaCount: 1
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+
+cluster-bootstrap-reactor:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin

@@ -1,4 +1,4 @@
-FROM registry.gitlab.figo.systems/platform/golang-builder:go1.15-alpine3.12 AS builder
+FROM registry.gitlab.figo.systems/finleap-cloud-tools/golang-builder:1.16-alpine3.13 AS builder
 
 WORKDIR /tmp/build
 
