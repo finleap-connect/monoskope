@@ -28,9 +28,9 @@ rabbitmq:
 
 gateway:
   enabled: true
+  replicaCount: 1
   image:
     tag: *imageTag
-  replicaCount: 1
   auth:
     issuerURL: https://gitlab.figo.systems
   resources:
