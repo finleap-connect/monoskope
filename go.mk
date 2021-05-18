@@ -9,10 +9,26 @@ GINKO_VERSION  ?= v1.15.2
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
+PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
+PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/include
+PROTOC_VERSION             ?= 3.17.0
+PROTOC_GEN_GO_VERSION      ?= v1.26
+PROTOC_GEN_GO_GRPC_VERSION ?= v1.1
+
+CURL          ?= curl
+
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
-PROTOC     	   ?= protoc
+
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+
+ifeq ($(uname_S),Linux)
+ARCH = linux-x86_64
+endif
+ifeq ($(uname_S),Darwin)
+ARCH = osx-x86_64
+endif
 
 CMD_GATEWAY = $(BUILD_PATH)/gateway
 CMD_GATEWAY_SRC = cmd/gateway/*.go
@@ -91,13 +107,25 @@ clean: ginkgo-clean golangci-lint-clean build-clean
 	rm -Rf reports/
 	find . -name '*.coverprofile' -exec rm {} \;
 
+protoc-get:
+	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
+	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
+	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
+	mkdir -p $(PROTOC_IMPORTS_DIR)/
+	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
+	rm -rf $(TOOLS_DIR)/.protoc-unpack/
+	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
+	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
+
 protobuf:
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
-	find ./api -name '*.proto' -exec $(PROTOC) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
+	export PATH="$$PATH:$(TOOLS_DIR)" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
 	# generates client part
-	find ./api -name '*.proto' -exec $(PROTOC) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
+	export PATH="$$PATH:$(TOOLS_DIR)" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
+	cp -a gitlab.figo.systems/platform/monoskope/monoskope/pkg/api pkg/
+	rm -rf gitlab.figo.systems/platform/monoskope/monoskope/pkg/api
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
