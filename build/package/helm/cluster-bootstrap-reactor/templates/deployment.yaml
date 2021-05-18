@@ -69,7 +69,7 @@ spec:
               protocol: TCP
           envFrom:
             - secretRef:
-                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
+                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "cluster-bootstrap-reactor.fullname" .) "bus") }}
           args:
             - /clboreactor
             - serve
@@ -92,7 +92,7 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: keySecret
+            - name: key-secret
               mountPath: /etc/reactor
               readOnly: true
           {{- if .Values.messageBus.tlsSecret }}
@@ -113,7 +113,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: keySecret
+        - name: key-secret
           secret:
             secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}
             items:

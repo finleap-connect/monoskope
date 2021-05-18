@@ -207,3 +207,5 @@ cluster-bootstrap-reactor:
   enabled: true
   keySecret:
     name: *authKeySecretName
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName
