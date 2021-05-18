@@ -4,10 +4,13 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/heptiolabs/healthcheck"
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/clusterbootstrapreactor"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -39,7 +42,7 @@ var serveCmd = &cobra.Command{
 
 		// Create EventStore client
 		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
-		esConnection, _, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
+		esConnection, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
 		}
@@ -53,7 +56,19 @@ var serveCmd = &cobra.Command{
 		}
 		defer ebConsumer.Close()
 
-		// Finally start the servers
+		// Set up
+		err = clusterbootstrapreactor.SetupClusterBootstrapReactor(ctx, ebConsumer, esClient)
+		if err != nil {
+			return err
+		}
+
+		// Wait for interrupt signal sent from terminal or on sigterm
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, syscall.SIGTERM)
+		signal.Notify(sigint, syscall.SIGQUIT)
+		<-sigint
+
 		return nil
 	},
 }

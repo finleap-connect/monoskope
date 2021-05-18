@@ -15,7 +15,7 @@ type clusterBootstrapReactor struct {
 }
 
 // NewClusterBootstrapReactor creates a new Reactor.
-func NewAggregateHandler(signer jwt.JWTSigner) es.Reactor {
+func NewClusterBootstrapReactor(signer jwt.JWTSigner) es.Reactor {
 	return &clusterBootstrapReactor{
 		signer: signer,
 	}
