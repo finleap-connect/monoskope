@@ -10,7 +10,7 @@ LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
 PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
-PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/include
+PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
 PROTOC_VERSION             ?= 3.17.0
 PROTOC_GEN_GO_VERSION      ?= v1.26
 PROTOC_GEN_GO_GRPC_VERSION ?= v1.1
