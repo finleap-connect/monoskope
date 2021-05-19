@@ -14,6 +14,7 @@ PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
 PROTOC_VERSION             ?= 3.17.0
 PROTOC_GEN_GO_VERSION      ?= v1.26.0
 PROTOC_GEN_GO_GRPC_VERSION ?= v1.1.0
+PROTO_FILES                != find api -name "*.proto"
 
 CURL          ?= curl
 
@@ -61,20 +62,28 @@ fmt:
 vet:
 	$(GO) vet ./...
 
-lint:
+go-lint:
 	$(LINTER) run -v --no-config --deadline=5m
 
-run-%:
+go-run-%:
 	$(call go-run,$*)
 
-report:
+go-report:
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report commands $(ARGS)
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report permissions $(ARGS)
 	@echo
 
-test: 
+.protobuf-deps: $(PROTO_FILES)
+	for file in $$(find pkg/api/ -name "*.pb.go") ; do source=$$(awk '/^\/\/ source:/ { print $$3 }' $$file) ; echo "$$file: $$source"; done >.protobuf-deps
+	echo -n "GENERATED_GO_FILES := " >>.protobuf-deps
+	for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
+	echo >>.protobuf-deps
+
+include .protobuf-deps
+
+go-test: $(GENERATED_GO_FILES)
 	@find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
@@ -83,10 +92,10 @@ test:
 	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
-coverage:
+go-coverage:
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-loc:
+go-loc:
 	@gocloc .
 
 ginkgo-get:
@@ -95,17 +104,12 @@ ginkgo-get:
 golangci-lint-get:
 	$(shell curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_DIR) $(LINTER_VERSION))
 
+
 ginkgo-clean:
 	rm -Rf $(TOOLS_DIR)/ginkgo
 
 golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
-
-tools: golangci-lint-get ginkgo-get
-
-clean: ginkgo-clean golangci-lint-clean build-clean
-	rm -Rf reports/
-	find . -name '*.coverprofile' -exec rm {} \;
 
 protoc-get:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
@@ -117,7 +121,15 @@ protoc-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-protobuf:
+go-tools: golangci-lint-get ginkgo-get protoc-get
+
+go-clean: ginkgo-clean golangci-lint-clean go-build-clean
+	rm  .protobuf-deps
+	rm -Rf reports/
+	find . -name '*.coverprofile' -exec rm {} \;
+
+
+%.pb.go: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
@@ -137,15 +149,15 @@ $(CMD_COMMANDHANDLER):
 $(CMD_QUERYHANDLER):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
 
-build-clean: 
+go-build-clean: 
 	rm -Rf $(CMD_GATEWAY)
 	rm -Rf $(CMD_EVENTSTORE)
 	rm -Rf $(CMD_COMMANDHANDLER)
 
-build-gateway: $(CMD_GATEWAY)
+go-build-gateway: $(CMD_GATEWAY)
 
-build-eventstore: $(CMD_EVENTSTORE)
+go-build-eventstore: $(CMD_EVENTSTORE)
 
-build-commandhandler: $(CMD_COMMANDHANDLER)
+go-build-commandhandler: $(CMD_COMMANDHANDLER)
 
-build-queryhandler: $(CMD_QUERYHANDLER)
+go-build-queryhandler: $(CMD_QUERYHANDLER)
