@@ -17,6 +17,7 @@ type QueryHandlerDomain struct {
 	UserRoleBindingRepository repositories.UserRoleBindingRepository
 	UserRepository            repositories.UserRepository
 	TenantRepository          repositories.TenantRepository
+	TenantUserRepository      repositories.ReadOnlyTenantUserRepository
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
@@ -26,6 +27,7 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
 	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
 	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository(), d.UserRepository)
+	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
 
 	// Setup projectors
 	userProjector := projectors.NewUserProjector()

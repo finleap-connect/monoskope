@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/uuid"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
@@ -17,13 +18,15 @@ import (
 type tenantServer struct {
 	api.UnimplementedTenantServer
 
-	repo repositories.ReadOnlyTenantRepository
+	repoTenant repositories.ReadOnlyTenantRepository
+	repoUsers  repositories.ReadOnlyTenantUserRepository
 }
 
 // NewTenantServiceServer returns a new configured instance of tenantServiceServer
-func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository) *tenantServer {
+func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository, tenantUserRepo repositories.ReadOnlyTenantUserRepository) *tenantServer {
 	return &tenantServer{
-		repo: tenantRepo,
+		repoTenant: tenantRepo,
+		repoUsers:  tenantUserRepo,
 	}
 }
 
@@ -40,7 +43,7 @@ func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.Client
 
 // GetById returns the tenant found by the given id.
 func (s *tenantServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Tenant, error) {
-	tenant, err := s.repo.ByTenantId(ctx, id.GetValue())
+	tenant, err := s.repoTenant.ByTenantId(ctx, id.GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -49,21 +52,43 @@ func (s *tenantServer) GetById(ctx context.Context, id *wrappers.StringValue) (*
 
 // GetByName returns the tenant found by the given name.
 func (s *tenantServer) GetByName(ctx context.Context, name *wrappers.StringValue) (*projections.Tenant, error) {
-	tenant, err := s.repo.ByName(ctx, name.GetValue())
+	tenant, err := s.repoTenant.ByName(ctx, name.GetValue())
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
 	}
 	return tenant.Proto(), nil
 }
 
+// GetAll returns all tenants.
 func (s *tenantServer) GetAll(request *api.GetAllRequest, stream api.Tenant_GetAllServer) error {
-	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
+	tenants, err := s.repoTenant.GetAll(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
 
-	for _, user := range users {
-		err := stream.Send(user.Proto())
+	for _, t := range tenants {
+		err := stream.Send(t.Proto())
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
+}
+
+// GetUsers returns users belonging to the given tenant id.
+func (s *tenantServer) GetUsers(id *wrappers.StringValue, stream api.Tenant_GetUsersServer) error {
+	uuid, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return err
+	}
+
+	users, err := s.repoUsers.GetTenantUsersById(stream.Context(), uuid)
+	if err != nil {
+		return err
+	}
+
+	for _, u := range users {
+		err := stream.Send(u.Proto())
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
 		}
