@@ -35,6 +35,9 @@ service Tenant {
   rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
   // GetByName returns the tenant found by the given name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetUsers returns users belonging to the given tenant id.
+  rpc GetUsers(google.protobuf.StringValue)
+      returns (stream projections.TenantUser);
 }
 
 // ClusterRegistration is a service to query ClusterRegistrations.
