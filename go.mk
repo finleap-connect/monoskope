@@ -12,8 +12,8 @@ LINTER_VERSION ?= v1.39.0
 PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
 PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
 PROTOC_VERSION             ?= 3.17.0
-PROTOC_GEN_GO_VERSION      ?= v1.26
-PROTOC_GEN_GO_GRPC_VERSION ?= v1.1
+PROTOC_GEN_GO_VERSION      ?= v1.26.0
+PROTOC_GEN_GO_GRPC_VERSION ?= v1.1.0
 
 CURL          ?= curl
 
@@ -113,7 +113,7 @@ protoc-get:
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
 	mkdir -p $(PROTOC_IMPORTS_DIR)/
 	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
-	rm -rf $(TOOLS_DIR)/.protoc-unpack/
+	rm -rf $(TOOLS_DIR)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
@@ -121,11 +121,9 @@ protobuf:
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
-	export PATH="$$PATH:$(TOOLS_DIR)" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
+	export PATH="$(TOOLS_DIR):$$PATH:" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
 	# generates client part
-	export PATH="$$PATH:$(TOOLS_DIR)" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
-	cp -a gitlab.figo.systems/platform/monoskope/monoskope/pkg/api pkg/
-	rm -rf gitlab.figo.systems/platform/monoskope/monoskope/pkg/api
+	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)

@@ -21,6 +21,7 @@ project.dict
 /tmp/
 
 /tools/*
+/include/*
 !/tools/goget-wrapper
 *.coverprofile
 
