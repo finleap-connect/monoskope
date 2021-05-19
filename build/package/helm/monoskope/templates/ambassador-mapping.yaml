@@ -75,8 +75,8 @@ metadata:
 spec:
   grpc: true
   timeout_ms: 20000
-  prefix: /domain.UserService/
-  rewrite: /domain.UserService/
+  prefix: /domain.User/
+  rewrite: /domain.User/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v1
@@ -89,8 +89,8 @@ metadata:
 spec:
   grpc: true
   timeout_ms: 20000
-  prefix: /domain.TenantService/
-  rewrite: /domain.TenantService/
+  prefix: /domain.Tenant/
+  rewrite: /domain.Tenant/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 {{- end }}
 {{- end }}
