@@ -3,7 +3,6 @@ sequenceDiagram
     participant M as monoctl
     participant A as Ambassador
     participant G as Gateway
-    participant I as Identity Provider
     participant C as CommandHandler
     U-->>+M: monoctl tenant create
     M-->>+A: calls API
@@ -14,8 +13,7 @@ sequenceDiagram
     Note right of M: Normal auth flow<br> executed by<br>monoctl.<br>See Login.
     M-->>+A: calls API
     A-->>+G: authenticate request
-    G-->>+I: get user info with token
-    I-->>-G: returns authorized
+    G-->>G: validate token
     G-->>-A: returns authorized
     A-->>+C: calls API
     C-->>-A: returns command response
