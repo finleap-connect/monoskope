@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"io/fs"
 	"io/ioutil"
+	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
@@ -68,6 +69,14 @@ func (env *TestEnv) RotateCertificate() error {
 		return err
 	}
 	return nil
+}
+
+func (env *TestEnv) CreateSigner() JWTSigner {
+	return NewSigner(env.privateKeyFile)
+}
+
+func (env *TestEnv) CreateVerifier(keyExpiration time.Duration) (JWTVerifier, error) {
+	return NewVerifier(env.publicKeyFile, keyExpiration)
 }
 
 func (env *TestEnv) Shutdown() error {

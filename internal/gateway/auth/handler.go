@@ -2,33 +2,50 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/oauth2"
 )
 
 type Handler struct {
-	config     *Config
-	httpClient *http.Client
-	Provider   *oidc.Provider
-	verifier   *oidc.IDTokenVerifier
-	log        logger.Logger
+	config           *Config
+	httpClient       *http.Client
+	Provider         *oidc.Provider
+	upstreamVerifier *oidc.IDTokenVerifier
+	verifier         jwt.JWTVerifier
+	signer           jwt.JWTSigner
+	log              logger.Logger
 }
 
-func NewHandler(config *Config) *Handler {
+func NewHandler(config *Config, signer jwt.JWTSigner, verifier jwt.JWTVerifier) *Handler {
 	n := &Handler{
 		config:     config,
+		signer:     signer,
+		verifier:   verifier,
 		httpClient: http.DefaultClient,
 		log:        logger.WithName("auth"),
 	}
+	n.log.Info("Auth handler configured.",
+		"IssuerIdentifier",
+		n.config.IssuerIdentifier,
+		"IssuerURL",
+		n.config.IssuerURL,
+		"Scopes",
+		n.config.Scopes,
+		"RedirectURIs",
+		n.config.RedirectURIs,
+	)
 	return n
 }
 
@@ -74,7 +91,7 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 		}()
 	}
 
-	n.verifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
+	n.upstreamVerifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
 
 	n.log.Info("Connected to auth provider successful.", "IssuerURL", n.config.IssuerURL, "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 
@@ -95,34 +112,64 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 	return oidc.ClientContext(ctx, n.httpClient)
 }
 
-func (n *Handler) Refresh(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
-	n.log.Info("Refreshing token...")
-
-	// Generate a new token with a refresht token and the expiry of the access token set to golang zero date.
-	// Setting the access token expired will force the token source to automatically use the refresh token to issue a new token.
-	t := &oauth2.Token{
-		RefreshToken: refreshToken,
-		Expiry:       time.Time{}, // golang zero date
+// Exchange exchanges the auth code with a token of the upstream IDP and verifies the claims
+func (n *Handler) Exchange(ctx context.Context, code, state, redirectURL string) (*jwt.StandardClaims, error) {
+	upstreamToken, err := n.exchange(ctx, code, redirectURL)
+	if err != nil {
+		return nil, err
 	}
-	return n.getOauth2Config(nil, "").TokenSource(n.clientContext(ctx), t).Token()
+	n.log.V(logger.DebugLevel).Info("Token received in exchange for auth code.", "Token", upstreamToken)
+
+	upstreamClaims, err := n.verifyStateAndClaims(ctx, upstreamToken, state)
+	if err != nil {
+		return nil, err
+	}
+	n.log.V(logger.DebugLevel).Info("Claims verified.", "Claims", upstreamClaims)
+
+	return upstreamClaims, nil
 }
 
-// Exchange converts an authorization code into a token.
-func (n *Handler) Exchange(ctx context.Context, code, redirectURL string) (*oauth2.Token, error) {
+// IssueToken wraps the upstream claims in a JWT signed by Monoskope
+func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardClaims, userId string) (string, *jwt.AuthToken, error) {
+	token := jwt.NewAuthToken(upstreamClaims, userId, n.config.IssuerIdentifier)
+	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token)
+
+	signedToken, err := n.signer.GenerateSignedToken(token)
+	if err != nil {
+		return "", nil, err
+	}
+	n.log.V(logger.DebugLevel).Info("Token signed successfully.", "SignedToken", signedToken)
+
+	return signedToken, token, err
+}
+
+// exchange exchanges the auth code with a token of the upstream IDP
+func (n *Handler) exchange(ctx context.Context, code, redirectURL string) (*oauth2.Token, error) {
 	n.log.Info("Exchanging auth code for token...")
 	return n.getOauth2Config(nil, redirectURL).Exchange(n.clientContext(ctx), code)
 }
 
+func (n *Handler) redirectUrlAllowed(callBackUrl string) bool {
+	for _, validUrl := range n.config.RedirectURIs {
+		if strings.EqualFold(strings.ToLower(validUrl), strings.ToLower(callBackUrl)) {
+			return true
+		}
+	}
+	return false
+}
+
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig) (string, string, error) {
+func (n *Handler) GetAuthCodeURL(state *api.AuthState, scopes []string) (string, string, error) {
+	if !n.redirectUrlAllowed(state.GetCallbackURL()) {
+		return "", "", errors.New("callback url not allowed")
+	}
+
 	// Encode state and calculate nonce
 	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
 	if err != nil {
 		return "", "", err
 	}
 	nonce := util.HashString(encoded + n.config.Nonce)
-
-	scopes := append(config.Scopes, oidc.ScopeOpenID, "profile", "email")
 
 	// Construct authCodeURL
 	authCodeURL := ""
@@ -136,14 +183,14 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, config *AuthCodeURLConfig
 	return authCodeURL, encoded, nil
 }
 
-func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*Claims, error) {
+func (n *Handler) verifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*jwt.StandardClaims, error) {
 	n.log.Info("Verifying state and claims...")
 	if !token.Valid() {
 		return nil, fmt.Errorf("failed to verify ID token")
 	}
 
 	rawIDToken := token.Extra("id_token").(string)
-	idToken, err := n.verifier.Verify(ctx, rawIDToken)
+	idToken, err := n.upstreamVerifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify ID token: %v", err)
 	}
@@ -171,23 +218,16 @@ func (n *Handler) VerifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 	return claims, nil
 }
 
-// authorize verifies a bearer token and pulls user information form the claims.
-func (n *Handler) Authorize(ctx context.Context, token string) (*Claims, error) {
-	userInfo, err := n.Provider.UserInfo(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
-	if err != nil {
-		return nil, fmt.Errorf("failed to access userinfo")
+// Authorize parses the raw JWT, verifies the content against the public key of the verifier and parses the claims
+func (n *Handler) Authorize(ctx context.Context, token string, claims interface{}) error {
+	if err := n.verifier.Verify(token, claims); err != nil {
+		return err
 	}
-
-	claims := &Claims{}
-	if err := userInfo.Claims(claims); err != nil {
-		return nil, fmt.Errorf("failed to parse claims: %v", err)
-	}
-
-	return claims, nil
+	return nil
 }
 
-func getClaims(idToken *oidc.IDToken) (*Claims, error) {
-	claims := &Claims{}
+func getClaims(idToken *oidc.IDToken) (*jwt.StandardClaims, error) {
+	claims := &jwt.StandardClaims{}
 
 	if err := idToken.Claims(claims); err != nil {
 		return nil, fmt.Errorf("failed to parse claims: %v", err)

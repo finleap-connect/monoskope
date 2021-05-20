@@ -8,23 +8,24 @@ import (
 )
 
 type Config struct {
-	IssuerURL      string
-	OfflineAsScope bool
-	Nonce          string
-	ClientId       string
-	ClientSecret   string
+	IssuerIdentifier string
+	IssuerURL        string
+	OfflineAsScope   bool
+	Nonce            string
+	ClientId         string
+	ClientSecret     string
+	Scopes           []string
+	RedirectURIs     []string
 }
 
-type Claims struct {
-	Subject       string `json:"sub"`
-	Name          string `json:"name"`
-	Email         string `json:"email"`
-	EmailVerified bool   `json:"email_verified"`
-	Issuer        string `json:"iss"`
-}
-
-type AuthCodeURLConfig struct {
-	Scopes []string
+func (conf *Config) String() string {
+	return fmt.Sprintf(
+		"IssuerIdentifier: %s\\nIssuerURL: %s\\ņScopes: %v\\ņRedirectURIs: %v",
+		conf.IssuerIdentifier,
+		conf.IssuerURL,
+		conf.Scopes,
+		conf.RedirectURIs,
+	)
 }
 
 type State struct {

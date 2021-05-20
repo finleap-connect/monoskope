@@ -18,6 +18,7 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
@@ -118,18 +119,14 @@ func (s *authServer) auth(c *gin.Context) {
 		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
 	}
 
-	var claims *auth.Claims
-	if claims = s.tokenValidation(c); claims != nil {
-		if userId, ok := s.retrieveUserId(c, claims.Email); ok {
-			s.writeSuccess(c, claims, userId)
-			return
-		}
+	var authToken *jwt.AuthToken
+	if authToken = s.tokenValidation(c); authToken != nil {
+		s.writeSuccess(c, authToken)
+		return
 	}
-	if claims = s.certValidation(c); claims != nil {
-		if userId, ok := s.retrieveUserId(c, claims.Email); ok {
-			s.writeSuccess(c, claims, userId)
-			return
-		}
+	if authToken = s.certValidation(c); authToken != nil {
+		s.writeSuccess(c, authToken)
+		return
 	}
 
 	c.String(http.StatusUnauthorized, "authorization failed")
@@ -144,7 +141,7 @@ func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool)
 }
 
 // tokenValidation validates the token provided within the authorization
-func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
+func (s *authServer) tokenValidation(c *gin.Context) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
 	token := defaultBearerTokenFromRequest(c.Request)
@@ -153,17 +150,19 @@ func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
 		return nil
 	}
 
-	if claims, err := s.authHandler.Authorize(c.Request.Context(), token); err != nil {
+	authToken := &jwt.AuthToken{}
+	if err := s.authHandler.Authorize(c.Request.Context(), token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
-	} else {
-		s.log.Info("Token validation successful.", "User", claims.Email)
-		return claims
+	} else if err := authToken.Validate(); err != nil {
+		s.log.Info("Token validation failed.", "error", err.Error())
+		return nil
 	}
+	return authToken
 }
 
 // tokenValidation validates the client certificate provided within the forwarded client secret header
-func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
+func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 	s.log.Info("Validating client certificate...")
 
 	cert, err := clientCertificateFromRequest(c.Request)
@@ -172,18 +171,22 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 		return nil
 	}
 
-	claims := &auth.Claims{
-		Name:   cert.Subject.CommonName,
-		Email:  cert.EmailAddresses[0],
-		Issuer: cert.Issuer.CommonName,
+	if userId, ok := s.retrieveUserId(c, cert.EmailAddresses[0]); !ok {
+		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
+		return nil
+	} else {
+		claims := jwt.NewAuthToken(&jwt.StandardClaims{
+			Name:  cert.Subject.CommonName,
+			Email: cert.EmailAddresses[0],
+		}, userId, "mtls")
+		claims.Issuer = cert.Issuer.CommonName
+		s.log.Info("Client certificate validation successful.", "User", claims.Email)
+		return claims
 	}
-	s.log.Info("Client certificate validation successful.", "User", claims.Email)
-
-	return claims
 }
 
 // writeSuccess writes all request headers back to the response along with information got from the upstream IdP and sends an http status ok
-func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims, userId string) {
+func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
 	// Copy request headers to response
 	for k := range c.Request.Header {
 		// Avoid copying the original Content-Length header from the client
@@ -194,7 +197,7 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims, userId st
 	}
 
 	// Set headers with auth info
-	c.Writer.Header().Set(HeaderAuthId, userId)
+	c.Writer.Header().Set(HeaderAuthId, claims.Subject)
 	c.Writer.Header().Set(HeaderAuthName, claims.Name)
 	c.Writer.Header().Set(HeaderAuthEmail, claims.Email)
 	c.Writer.Header().Set(HeaderAuthIssuer, claims.Issuer)

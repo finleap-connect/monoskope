@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -32,7 +33,10 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			return nil, err
 		}
 
-		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(data.Name))
+		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
+			Name:  data.Name,
+			Email: data.Name + "@monoskope.io",
+		}, uuid.New().String(), "cluster-bootstrap-reactor"))
 		if err != nil {
 			return nil, err
 		}

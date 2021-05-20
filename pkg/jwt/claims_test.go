@@ -7,7 +7,7 @@ import (
 
 var _ = Describe("jwt/claims", func() {
 	It("validate claims", func() {
-		t := NewClusterBootstrapToken("me")
+		t := NewClusterBootstrapToken(&StandardClaims{}, "me", "test")
 		Expect(t.Validate()).ToNot(HaveOccurred())
 	})
 })

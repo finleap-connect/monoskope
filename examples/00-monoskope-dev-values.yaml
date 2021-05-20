@@ -32,6 +32,7 @@ gateway:
   image:
     tag: *imageTag
   auth:
+    issuerIdentifier: gitlab
     issuerURL: https://gitlab.figo.systems
   resources:
     limits:
