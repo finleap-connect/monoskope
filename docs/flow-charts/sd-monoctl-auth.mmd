@@ -14,5 +14,7 @@ sequenceDiagram
     M-->>+G: calls ExchangeAuthCode
     G-->>+I: exchange auth_code
     I-->>-G: returns id_token
-    G-->>-M: returns access_token, refresh_token, expiry
+    G-->>G: verifies id_token and claims
+    G-->>G: issues access_token signed by M8
+    G-->>-M: returns access_token, expiry
     M-->>-U: output login success
