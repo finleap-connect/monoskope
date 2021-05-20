@@ -12,8 +12,8 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-// Verifier verifies a JWT and parses claims
-type Verifier interface {
+// JWTVerifier verifies a JWT and parses claims
+type JWTVerifier interface {
 	Verify(string, interface{}) error
 	Close() error
 }
@@ -32,7 +32,7 @@ type jwtVerifier struct {
 }
 
 // NewVerifier creates a new verifier for raw JWT
-func NewVerifier(publicKeyFilename string, keyExpiration time.Duration) (Verifier, error) {
+func NewVerifier(publicKeyFilename string, keyExpiration time.Duration) (JWTVerifier, error) {
 	v := &jwtVerifier{
 		log:           logger.WithName("jwt-verifier"),
 		publicKey:     make([]key, 0),

@@ -13,7 +13,6 @@ package gateway;
 service Gateway {
   rpc GetAuthInformation(AuthState) returns (AuthInformation);
   rpc ExchangeAuthCode(AuthCode) returns (AuthResponse);
-  rpc RefreshAuth(RefreshAuthRequest) returns (AuthResponse);
 }
 
 message AuthState { string CallbackURL = 1; }
@@ -31,9 +30,5 @@ message AuthCode {
 
 message AuthResponse {
   string AccessToken = 1;
-  string IdToken = 2;
-  string RefreshToken = 3;
-  google.protobuf.Timestamp Expiry = 4;
+  google.protobuf.Timestamp Expiry = 2;
 }
-
-message RefreshAuthRequest { string RefreshToken = 1; }

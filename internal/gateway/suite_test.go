@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
@@ -17,8 +19,16 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	clientAuth "gitlab.figo.systems/platform/monoskope/monoskope/pkg/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	ggrpc "google.golang.org/grpc"
 )
 
@@ -38,6 +48,7 @@ var (
 
 type oAuthTestEnv struct {
 	*test.TestEnv
+	jwtTestEnv *jwt.TestEnv
 	IssuerURL  string
 	AuthConfig *auth.Config
 }
@@ -47,7 +58,14 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		TestEnv: test.NewTestEnv(envName),
 	}
 
-	err := env.CreateDockerPool()
+	jwtTestEnv, err := jwt.NewTestEnv(env.TestEnv)
+	if err != nil {
+		_ = env.Shutdown()
+		return nil, err
+	}
+	env.jwtTestEnv = jwtTestEnv
+
+	err = env.CreateDockerPool()
 	if err != nil {
 		_ = env.Shutdown()
 		return nil, err
@@ -79,15 +97,39 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		env.IssuerURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
 		env.AuthConfig = &auth.Config{
-			IssuerURL:      env.IssuerURL,
-			OfflineAsScope: true,
-			ClientId:       "gateway",
-			ClientSecret:   "app-secret",
-			Nonce:          "secret-nonce",
+			IssuerIdentifier: "dex",
+			IssuerURL:        env.IssuerURL,
+			OfflineAsScope:   true,
+			ClientId:         "gateway",
+			ClientSecret:     "app-secret",
+			Nonce:            "secret-nonce",
+			Scopes: []string{
+				"openid",
+				"profile",
+				"email",
+				"federated:id",
+			},
+			RedirectURIs: []string{
+				fmt.Sprintf("http://%s%s", RedirectURLHostname, RedirectURLPort),
+			},
 		}
 	}
-
 	return env, nil
+}
+
+func (env *oAuthTestEnv) NewOidcClientServer(ready chan<- string) (*clientAuth.Server, error) {
+	serverConf := &clientAuth.Config{
+		LocalServerBindAddress: []string{
+			fmt.Sprintf("%s%s", RedirectURLHostname, RedirectURLPort),
+		},
+		RedirectURLHostname:  RedirectURLHostname,
+		LocalServerReadyChan: ready,
+	}
+	server, err := clientAuth.NewServer(serverConf)
+	if err != nil {
+		return nil, err
+	}
+	return server, nil
 }
 
 func (env *oAuthTestEnv) Shutdown() error {
@@ -112,15 +154,35 @@ var _ = BeforeSuite(func(done Done) {
 	env, err = SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
+	signer := env.jwtTestEnv.CreateSigner()
+	verifier, err := env.jwtTestEnv.CreateVerifier(10 * time.Minute)
+	Expect(err).ToNot(HaveOccurred())
+
 	// Start gateway
-	authHandler := auth.NewHandler(env.AuthConfig)
+	authHandler := auth.NewHandler(env.AuthConfig, signer, verifier)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup OIDC
 	err = authHandler.SetupOIDC(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
-	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler)
+	// Setup user repo
+	userId := uuid.New()
+	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
+	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	adminRoleBinding.UserId = adminUser.Id
+	adminRoleBinding.Role = roles.Admin.String()
+	adminRoleBinding.Scope = scopes.System.String()
+
+	inMemoryUserRepo := es_repos.NewInMemoryRepository()
+	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
+	err = inMemoryUserRepo.Upsert(ctx, adminUser)
+	Expect(err).ToNot(HaveOccurred())
+	err = inMemoryUserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
+	Expect(err).ToNot(HaveOccurred())
+
+	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
+	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler, userRepo)
 
 	// Create gRPC server and register implementation
 	grpcServer = grpc.NewServer("gateway-grpc", false)

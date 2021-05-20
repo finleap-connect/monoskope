@@ -44,7 +44,9 @@ gateway:
   replicaCount: 1
   auth:
     issuerURL: https://your-idp.com
-
+  keySecret:
+    name: *authKeySecretName
+    
 eventstore:
   enabled: true
   replicaCount: 1
