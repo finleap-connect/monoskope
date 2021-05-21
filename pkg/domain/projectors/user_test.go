@@ -1,6 +1,7 @@
 package projectors
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,9 +13,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
-
-var _ = Describe("Testing with Ginkgo", func() {
-})
 
 var _ = Describe("domain/user_repo", func() {
 	ctx := context.Background()

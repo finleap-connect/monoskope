@@ -39,10 +39,12 @@ message Cluster {
   string id = 1;
   // Unique name of the cluster
   string name = 2;
+  // Unique label of the cluster, to be utilized for generating unique labels and symbols, e.g. with metrics.
+  string label = 3;
   // Address of the clusters KubeAPIServer
-  string apiServerAddress = 3;
+  string apiServerAddress = 4;
   // CA certificate of the cluster
-  bytes clusterCACert = 4;
+  bytes clusterCACert = 5;
   // Metadata about the projection
-  LifecycleMetadata metadata = 5;
+  LifecycleMetadata metadata = 6;
 }
