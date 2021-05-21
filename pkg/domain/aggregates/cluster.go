@@ -43,6 +43,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	case *commands.CreateClusterCommand:
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
 			Name:                cmd.GetName(),
+			Label:               cmd.GetLabel(),
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
@@ -66,6 +67,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 		a.name = data.GetName()
+		a.label = data.GetLabel()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
 	case events.ClusterDeleted:

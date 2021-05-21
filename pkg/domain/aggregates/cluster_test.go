@@ -14,43 +14,20 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	meta "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
-const shortDuration = 1 * time.Second
+var (
+	expectedName                = "the one cluster"
+	expectedLabel               = "one-cluster"
+	expectedApiServerAddress    = "one.example.com"
+	expectedClusterCACertBundle = []byte("This should be a certificate")
+)
 
 var _ = Describe("Unit Test for Cluster Aggregate", func() {
 	It("should set the data from a command to the resultant event", func() {
 
-		baseCtx, cancel := context.WithTimeout(context.Background(), shortDuration)
-		defer cancel()
-
-		metaMgr, err := meta.NewDomainMetadataManager(baseCtx)
-		Expect(err).NotTo(HaveOccurred())
-		metaMgr, err = meta.NewDomainMetadataManager(metaMgr.GetContext())
-		Expect(err).NotTo(HaveOccurred())
-
-		metaMgr.SetUserInformation(&meta.UserInformation{
-			Id:     uuid.New(),
-			Name:   "admin",
-			Email:  "admin@monoskope.io",
-			Issuer: "monoskope",
-		})
-
-		metaMgr.SetRoleBindings([]*projections.UserRoleBinding{
-			{
-				Role:  roles.Admin.String(),
-				Scope: scopes.System.String(),
-			},
-		})
-
-		ctx := metaMgr.GetContext()
-
-		var (
-			expectedName                = "the one cluster"
-			expectedLabel               = "one-cluster"
-			expectedApiServerAddress    = "one.example.com"
-			expectedClusterCACertBundle = []byte("This should be a certificate")
-		)
+		ctx, err := makeMetadataContextWithSystemAdminUser()
 
 		agg := NewClusterAggregate(uuid.New())
 		agg.IncrementVersion() // to make aggregate verification pass
@@ -81,22 +58,60 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 
 	})
 
-	/*
-		It("should apply the data from an event to the aggregate", func() {
+	It("should apply the data from an event to the aggregate", func() {
 
-			ctx, cancel := context.WithTimeout(context.Background(), shortDuration)
-			defer cancel()
+		ctx, err := makeMetadataContextWithSystemAdminUser()
 
-			agg := NewClusterAggregate(uuid.New())
+		agg := NewClusterAggregate(uuid.New())
+		agg.IncrementVersion()
 
-			esCommand := cmd.NewCreateClusterCommand(uuid.New())
-
-			err := agg.HandleCommand(ctx, esCommand)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(ClusterAggregate(agg).GetName()).To(Equal("the one cluster"))
-
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
+			Name:                expectedName,
+			Label:               expectedLabel,
+			ApiServerAddress:    expectedApiServerAddress,
+			CaCertificateBundle: expectedClusterCACertBundle,
 		})
+		esEvent := es.NewEvent(ctx, events.ClusterCreated, ed, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
 
-	*/
+		err = agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(agg.(*ClusterAggregate).name).To(Equal(expectedName))
+		Expect(agg.(*ClusterAggregate).label).To(Equal(expectedLabel))
+		Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedApiServerAddress))
+		Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedClusterCACertBundle))
+
+	})
+
 })
+
+func makeMetadataContextWithSystemAdminUser() (context.Context, error) {
+	metaMgr, err := meta.NewDomainMetadataManager(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	// forces the setting of the domain context
+	metaMgr, err = meta.NewDomainMetadataManager(metaMgr.GetContext())
+	if err != nil {
+		return nil, err
+	}
+
+	metaMgr.SetUserInformation(&meta.UserInformation{
+		Id:     uuid.New(),
+		Name:   "admin",
+		Email:  "admin@monoskope.io",
+		Issuer: "monoskope",
+	})
+
+	metaMgr.SetRoleBindings([]*projections.UserRoleBinding{
+		{
+			Role:  roles.Admin.String(),
+			Scope: scopes.System.String(),
+		},
+	})
+
+	return metaMgr.GetContext(), nil
+
+}

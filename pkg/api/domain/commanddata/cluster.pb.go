@@ -20,6 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// used by ???
 type RequestClusterRegistration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -95,6 +96,7 @@ func (x *RequestClusterRegistration) GetClusterCACertBundle() []byte {
 	return nil
 }
 
+// Command issued by an admin via monoctl to create information about a new cluster
 type CreateCluster struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
