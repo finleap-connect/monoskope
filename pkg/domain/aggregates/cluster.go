@@ -16,8 +16,9 @@ import (
 type ClusterAggregate struct {
 	DomainAggregateBase
 	name          string
+	label         string
 	apiServerAddr string
-	caCertificate []byte
+	caCertBundle  []byte
 }
 
 // ClusterAggregate creates a new ClusterAggregate
@@ -41,9 +42,9 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	switch cmd := cmd.(type) {
 	case *commands.CreateClusterCommand:
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
-			Name:             cmd.GetName(),
-			ApiServerAddress: cmd.GetApiServerAddress(),
-			CaCertificate:    cmd.GetClusterCACert(),
+			Name:                cmd.GetName(),
+			ApiServerAddress:    cmd.GetApiServerAddress(),
+			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
 		return nil
@@ -66,11 +67,15 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		}
 		a.name = data.GetName()
 		a.apiServerAddr = data.GetApiServerAddress()
-		a.caCertificate = data.GetCaCertificate()
+		a.caCertBundle = data.GetCaCertificateBundle()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
 	return nil
+}
+
+func (a *ClusterAggregate) GetName() string {
+	return a.name
 }

@@ -17,7 +17,7 @@ func init() {
 	es.DefaultCommandRegistry.RegisterCommand(NewCreateClusterCommand)
 }
 
-// CreateClusterCommand is a command for deleting a cluster.
+// CreateClusterCommand is a command for creating a cluster.
 type CreateClusterCommand struct {
 	*es.BaseCommand
 	cmdData.CreateCluster
@@ -31,7 +31,7 @@ func NewCreateClusterCommand(id uuid.UUID) es.Command {
 }
 
 func (c *CreateClusterCommand) SetData(a *anypb.Any) error {
-	return nil
+	return a.UnmarshalTo(&c.CreateCluster)
 }
 
 // Policies returns the Role/Scope/Resource combination allowed to execute.
