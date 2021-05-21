@@ -43,6 +43,9 @@ CMD_COMMANDHANDLER_SRC = cmd/commandhandler/*.go
 CMD_QUERYHANDLER = $(BUILD_PATH)/queryhandler
 CMD_QUERYHANDLER_SRC = cmd/queryhandler/*.go
 
+CMD_CLBOREACTOR = $(BUILD_PATH)/clboreactor
+CMD_CLBOREACTOR_SRC = cmd/clusterbootstrapreactor/*.go
+
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
@@ -102,7 +105,7 @@ ginkgo-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get:
-	$(shell curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_DIR) $(LINTER_VERSION))
+	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
 
 ginkgo-clean:
@@ -149,10 +152,14 @@ $(CMD_COMMANDHANDLER):
 $(CMD_QUERYHANDLER):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
 
+$(CMD_CLBOREACTOR):
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_CLBOREACTOR_SRC)
+
 go-build-clean: 
 	rm -Rf $(CMD_GATEWAY)
 	rm -Rf $(CMD_EVENTSTORE)
 	rm -Rf $(CMD_COMMANDHANDLER)
+	rm -Rf $(CMD_CLBOREACTOR)
 
 go-build-gateway: $(CMD_GATEWAY)
 
@@ -161,3 +168,5 @@ go-build-eventstore: $(CMD_EVENTSTORE)
 go-build-commandhandler: $(CMD_COMMANDHANDLER)
 
 go-build-queryhandler: $(CMD_QUERYHANDLER)
+
+go-build-clboreactor: $(CMD_CLBOREACTOR)

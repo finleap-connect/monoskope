@@ -58,6 +58,7 @@ set-version-all:
 	@$(MAKE) helm-set-version-eventstore
 	@$(MAKE) helm-set-version-commandhandler
 	@$(MAKE) helm-set-version-queryhandler
+	@$(MAKE) helm-set-version-cluster-bootstrap-reactor
 
 docs:
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl

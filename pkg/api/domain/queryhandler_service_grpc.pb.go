@@ -285,6 +285,8 @@ type TenantClient interface {
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
 	// GetByName returns the tenant found by the given name
 	GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Tenant, error)
+	// GetUsers returns users belonging to the given tenant id.
+	GetUsers(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (Tenant_GetUsersClient, error)
 }
 
 type tenantClient struct {
@@ -345,6 +347,38 @@ func (c *tenantClient) GetByName(ctx context.Context, in *wrapperspb.StringValue
 	return out, nil
 }
 
+func (c *tenantClient) GetUsers(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (Tenant_GetUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Tenant_ServiceDesc.Streams[1], "/domain.Tenant/GetUsers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tenantGetUsersClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Tenant_GetUsersClient interface {
+	Recv() (*projections.TenantUser, error)
+	grpc.ClientStream
+}
+
+type tenantGetUsersClient struct {
+	grpc.ClientStream
+}
+
+func (x *tenantGetUsersClient) Recv() (*projections.TenantUser, error) {
+	m := new(projections.TenantUser)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // TenantServer is the server API for Tenant service.
 // All implementations must embed UnimplementedTenantServer
 // for forward compatibility
@@ -355,6 +389,8 @@ type TenantServer interface {
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
 	// GetByName returns the tenant found by the given name
 	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error)
+	// GetUsers returns users belonging to the given tenant id.
+	GetUsers(*wrapperspb.StringValue, Tenant_GetUsersServer) error
 	mustEmbedUnimplementedTenantServer()
 }
 
@@ -370,6 +406,9 @@ func (UnimplementedTenantServer) GetById(context.Context, *wrapperspb.StringValu
 }
 func (UnimplementedTenantServer) GetByName(context.Context, *wrapperspb.StringValue) (*projections.Tenant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
+}
+func (UnimplementedTenantServer) GetUsers(*wrapperspb.StringValue, Tenant_GetUsersServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedTenantServer) mustEmbedUnimplementedTenantServer() {}
 
@@ -441,6 +480,27 @@ func _Tenant_GetByName_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Tenant_GetUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TenantServer).GetUsers(m, &tenantGetUsersServer{stream})
+}
+
+type Tenant_GetUsersServer interface {
+	Send(*projections.TenantUser) error
+	grpc.ServerStream
+}
+
+type tenantGetUsersServer struct {
+	grpc.ServerStream
+}
+
+func (x *tenantGetUsersServer) Send(m *projections.TenantUser) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Tenant_ServiceDesc is the grpc.ServiceDesc for Tenant service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -461,6 +521,11 @@ var Tenant_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetAll",
 			Handler:       _Tenant_GetAll_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetUsers",
+			Handler:       _Tenant_GetUsers_Handler,
 			ServerStreams: true,
 		},
 	},

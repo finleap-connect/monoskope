@@ -25,6 +25,8 @@ pki:
       enabled: false
       path: pki_int/sign/example-dot-com
       server: https://vault.local
+  authentication:
+    keySecretName: &authKeySecretName "m8-authentication"
 
 hosting:
   issuer: ""
@@ -42,7 +44,9 @@ gateway:
   replicaCount: 1
   auth:
     issuerURL: https://your-idp.com
-
+  keySecret:
+    name: *authKeySecretName
+    
 eventstore:
   enabled: true
   replicaCount: 1
@@ -200,3 +204,10 @@ ambassador:
       selector:
         tenant: *tenant
         release: monitoring
+
+cluster-bootstrap-reactor:
+  enabled: true
+  keySecret:
+    name: *authKeySecretName
+  messageBus:
+    existingSecret: *msgBusClientConfigSecretName

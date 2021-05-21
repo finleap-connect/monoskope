@@ -97,6 +97,7 @@ spec:
           volumeMounts:
             - name: buscerts
               mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

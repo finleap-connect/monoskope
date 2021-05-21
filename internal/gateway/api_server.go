@@ -5,6 +5,7 @@ import (
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,19 +19,21 @@ type apiServer struct {
 	//
 	authConfig  *auth.Config
 	authHandler *auth.Handler
+	userRepo    repositories.ReadOnlyUserRepository
 }
 
-func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler) *apiServer {
+func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *apiServer {
 	s := &apiServer{
 		log:         logger.WithName("server"),
 		authConfig:  authConfig,
 		authHandler: authHandler,
+		userRepo:    userRepo,
 	}
 	return s
 }
 
 func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
-	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, &auth.AuthCodeURLConfig{})
+	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, s.authConfig.Scopes)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
@@ -41,44 +44,29 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState
 func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
 	s.log.Info("Authenticating user...")
 
-	token, err := s.authHandler.Exchange(ctx, code.GetCode(), code.CallbackURL)
+	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackURL)
+	if err != nil {
+		s.log.Error(err, "User authentication failed.")
+		return nil, err
+	}
+
+	user, err := s.userRepo.ByEmail(ctx, upstreamClaims.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	claims, err := s.authHandler.VerifyStateAndClaims(ctx, token, code.GetState())
+	signedToken, rawToken, err := s.authHandler.IssueToken(ctx, upstreamClaims, user.Id)
 	if err != nil {
+		s.log.Error(err, "Issueing token failed.")
 		return nil, err
 	}
 
 	userInfo := &api.AuthResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
+		AccessToken: signedToken,
+		Expiry:      timestamppb.New(rawToken.Expiry.Time()),
 	}
 
-	if !token.Expiry.IsZero() {
-		userInfo.Expiry = timestamppb.New(token.Expiry)
-	}
+	s.log.Info("User authenticated successfully.", "User", upstreamClaims.Email, "Expiry", userInfo.Expiry)
 
-	s.log.Info("User authenticated successfully.", "User", claims.Email, "Expiry", token.Expiry.String())
 	return userInfo, nil
-}
-
-func (s *apiServer) RefreshAuth(ctx context.Context, request *api.RefreshAuthRequest) (*api.AuthResponse, error) {
-	s.log.Info("Refreshing authentication of user...")
-
-	token, err := s.authHandler.Refresh(ctx, request.GetRefreshToken())
-	if err != nil {
-		return nil, err
-	}
-
-	s.log.Info("Refreshed authentication successfully.", "Expiry", token.Expiry.String())
-	accessToken := &api.AuthResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-	}
-	if !token.Expiry.IsZero() {
-		accessToken.Expiry = timestamppb.New(token.Expiry)
-	}
-	return accessToken, nil
 }
