@@ -53,16 +53,16 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint go-mod fmt vet test clean report
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
 
 go-mod:
 	$(GO) mod download
 	$(GO) mod verify
 
-fmt:
+go-fmt:
 	$(GO) fmt ./...
 
-vet:
+go-vet:
 	$(GO) vet ./...
 
 go-lint:
