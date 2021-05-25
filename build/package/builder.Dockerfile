@@ -6,6 +6,7 @@ ARG PROTOC_IMPORTS_DIR=/include
 ARG PROTOC_VERSION=3.17.0
 ARG PROTOC_GEN_GO_VERSION=v1.26.0
 ARG PROTOC_GEN_GO_GRPC_VERSION=v1.1.0
+ARG ARCH=linux-x86_64
 
 ENV TOOLS_DIR  /tools
 ENV GINKGO     ginkgo
@@ -22,7 +23,7 @@ RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/i
 
 RUN go get -u github.com/onsi/ginkgo/ginkgo
 
-RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-linux-x86_64.zip" ; \
+RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ACH.zip" ; \
     unzip protoc-$PROTOC_VERSION-$ARCH.zip -d /.protoc-unpack ;\
     mv /.protoc-unpack/bin/protoc $PROTOC ;\
     mkdir -p $PROTOC_IMPORTS_DIR/ ;\
