@@ -23,7 +23,8 @@ RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/i
 
 RUN go get -u github.com/onsi/ginkgo/ginkgo
 
-RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ACH.zip" ; \
+RUN echo curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ACH.zip" ; \
+    curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ACH.zip" ; \
     unzip protoc-$PROTOC_VERSION-$ARCH.zip -d /.protoc-unpack ;\
     mv /.protoc-unpack/bin/protoc $PROTOC ;\
     mkdir -p $PROTOC_IMPORTS_DIR/ ;\
