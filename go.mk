@@ -9,11 +9,27 @@ GINKO_VERSION  ?= v1.15.2
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
-PROTOC     	   ?= protoc
+PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
+PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
+PROTOC_VERSION             ?= 3.17.0
+PROTOC_GEN_GO_VERSION      ?= v1.26.0
+PROTOC_GEN_GO_GRPC_VERSION ?= v1.1.0
+PROTO_FILES                != find api -name "*.proto"
+
+CURL          ?= curl
 
 COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
+
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+
+ifeq ($(uname_S),Linux)
+ARCH = linux-x86_64
+endif
+ifeq ($(uname_S),Darwin)
+ARCH = osx-x86_64
+endif
 
 CMD_GATEWAY = $(BUILD_PATH)/gateway
 CMD_GATEWAY_SRC = cmd/gateway/*.go
@@ -37,32 +53,40 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: lint mod fmt vet test clean report
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
 
-mod:
+go-mod:
 	$(GO) mod download
 	$(GO) mod verify
 
-fmt:
+go-fmt:
 	$(GO) fmt ./...
 
-vet:
+go-vet:
 	$(GO) vet ./...
 
-lint:
+go-lint:
 	$(LINTER) run -v --no-config --deadline=5m
 
-run-%:
+go-run-%:
 	$(call go-run,$*)
 
-report:
+go-report:
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report commands $(ARGS)
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report permissions $(ARGS)
 	@echo
 
-test: 
+.protobuf-deps: $(PROTO_FILES)
+	for file in $$(find pkg/api/ -name "*.pb.go") ; do source=$$(awk '/^\/\/ source:/ { print $$3 }' $$file) ; echo "$$file: $$source"; done >.protobuf-deps
+	echo -n "GENERATED_GO_FILES := " >>.protobuf-deps
+	for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
+	echo >>.protobuf-deps
+
+include .protobuf-deps
+
+go-test: $(GENERATED_GO_FILES)
 	@find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
@@ -71,10 +95,10 @@ test:
 	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
-coverage:
+go-coverage:
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-loc:
+go-loc:
 	@gocloc .
 
 ginkgo-get:
@@ -83,25 +107,38 @@ ginkgo-get:
 golangci-lint-get:
 	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
+
 ginkgo-clean:
 	rm -Rf $(TOOLS_DIR)/ginkgo
 
 golangci-lint-clean:
 	rm -Rf $(TOOLS_DIR)/golangci-lint
 
-tools: golangci-lint-get ginkgo-get
+protoc-get:
+	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
+	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
+	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
+	mkdir -p $(PROTOC_IMPORTS_DIR)/
+	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
+	rm -rf $(TOOLS_DIR)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
+	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
+	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-clean: ginkgo-clean golangci-lint-clean build-clean
+go-tools: golangci-lint-get ginkgo-get protoc-get
+
+go-clean: ginkgo-clean golangci-lint-clean go-build-clean
+	rm  .protobuf-deps
 	rm -Rf reports/
 	find . -name '*.coverprofile' -exec rm {} \;
 
-protobuf:
+
+%.pb.go: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
-	find ./api -name '*.proto' -exec $(PROTOC) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
+	export PATH="$(TOOLS_DIR):$$PATH:" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go-grpc_out=. {} \;
 	# generates client part
-	find ./api -name '*.proto' -exec $(PROTOC) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
+	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
@@ -118,18 +155,18 @@ $(CMD_QUERYHANDLER):
 $(CMD_CLBOREACTOR):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_CLBOREACTOR_SRC)
 
-build-clean: 
+go-build-clean: 
 	rm -Rf $(CMD_GATEWAY)
 	rm -Rf $(CMD_EVENTSTORE)
 	rm -Rf $(CMD_COMMANDHANDLER)
 	rm -Rf $(CMD_CLBOREACTOR)
 
-build-gateway: $(CMD_GATEWAY)
+go-build-gateway: $(CMD_GATEWAY)
 
-build-eventstore: $(CMD_EVENTSTORE)
+go-build-eventstore: $(CMD_EVENTSTORE)
 
-build-commandhandler: $(CMD_COMMANDHANDLER)
+go-build-commandhandler: $(CMD_COMMANDHANDLER)
 
-build-queryhandler: $(CMD_QUERYHANDLER)
+go-build-queryhandler: $(CMD_QUERYHANDLER)
 
-build-clboreactor: $(CMD_CLBOREACTOR)
+go-build-clboreactor: $(CMD_CLBOREACTOR)
