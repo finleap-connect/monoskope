@@ -25,7 +25,7 @@ RUN go get -u github.com/onsi/ginkgo/ginkgo
 RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ARCH.zip" ; \
     echo curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ARCH.zip" ; \
     ls -la ; \
-    unzip protoc-v$PROTOC_VERSION-$ARCH.zip -d /.protoc-unpack ;\
+    unzip protoc-$PROTOC_VERSION-$ARCH.zip -d /.protoc-unpack ;\
     mv /.protoc-unpack/bin/protoc $PROTOC ;\
     mkdir -p $PROTOC_IMPORTS_DIR/ ;\
     cp -a .protoc-unpack/include/* $PROTOC_IMPORTS_DIR/ ;\
