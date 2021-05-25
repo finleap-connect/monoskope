@@ -26,8 +26,8 @@ RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PR
     echo curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ARCH.zip" ; \
     ls -la ; \
     unzip protoc-$PROTOC_VERSION-$ARCH.zip -d /.protoc-unpack ;\
+    mkdir -p $PROTOC_IMPORTS_DIR/ $TOOLS_DIR ;\
     mv /.protoc-unpack/bin/protoc $PROTOC ;\
-    mkdir -p $PROTOC_IMPORTS_DIR/ ;\
     cp -a .protoc-unpack/include/* $PROTOC_IMPORTS_DIR/ ;\
     rm -rf /.protoc-unpack/ protoc-$PROTOC_VERSION-$ARCH.zip ;\
     go get -u google.golang.org/protobuf/cmd/protoc-gen-go@$PROTOC_GEN_GO_VERSION ;\
