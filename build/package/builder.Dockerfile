@@ -1,11 +1,11 @@
 FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.16.2-buster
 
 # ensure versions are synched with the Makefile!
-ARG PROTOC_VERSION             3.17.0
-ARG PROTOC_IMPORTS_DIR         /include
-ARG PROTOC_VERSION             3.17.0
-ARG PROTOC_GEN_GO_VERSION      v1.26.0
-ARG PROTOC_GEN_GO_GRPC_VERSION v1.1.0
+ARG PROTOC_VERSION=3.17.0
+ARG PROTOC_IMPORTS_DIR=/include
+ARG PROTOC_VERSION=3.17.0
+ARG PROTOC_GEN_GO_VERSION=v1.26.0
+ARG PROTOC_GEN_GO_GRPC_VERSION=v1.1.0
 
 ENV TOOLS_DIR  /tools
 ENV GINKGO     ginkgo
