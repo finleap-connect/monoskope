@@ -28,6 +28,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 	It("should set the data from a command to the resultant event", func() {
 
 		ctx, err := makeMetadataContextWithSystemAdminUser()
+		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New())
 		agg.IncrementVersion() // to make aggregate verification pass
@@ -61,6 +62,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 	It("should apply the data from an event to the aggregate", func() {
 
 		ctx, err := makeMetadataContextWithSystemAdminUser()
+		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New())
 		agg.IncrementVersion()
