@@ -32,13 +32,15 @@ var (
 	ErrClusterRegistrationNotFound = errors.New("cluster registration not found")
 	// ErrClusterRegistrationAlreadyExists is when an aggregate does already exist.
 	ErrClusterRegistrationAlreadyExists = errors.New("cluster registration already exists")
+	// ErrClusterAlreadyExists is when a cluster does already exist.
+	ErrClusterAlreadyExists = errors.New("cluster already exists")
 )
 
 var (
 	errorMap = map[codes.Code][]error{
 		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound, ErrClusterRegistrationNotFound},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists, ErrClusterAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

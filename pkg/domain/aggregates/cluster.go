@@ -9,6 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -36,7 +37,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	if err := a.Authorize(ctx, cmd); err != nil {
 		return err
 	}
-	if err := a.Validate(ctx, cmd); err != nil {
+	if err := a.validate(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -54,10 +55,26 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
 		return nil
 	case *commands.RequestClusterCertificateCommand:
-		_ = a.AppendEvent(ctx, events.ClusterCertificateRequested, nil)
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCertificateRequested{
+			CertificateSigningRequest: cmd.GetCertificateSigningRequest(),
+		})
+		_ = a.AppendEvent(ctx, events.ClusterCertificateRequested, ed)
 		return nil
 	default:
 		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+	}
+}
+
+// validate validates the current state of the aggregate and if a specific command is valid in the current state
+func (a *ClusterAggregate) validate(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateClusterCommand:
+		if a.Exists() {
+			return domainErrors.ErrClusterAlreadyExists
+		}
+		return nil
+	default:
+		return a.Validate(ctx, cmd)
 	}
 }
 
