@@ -18,7 +18,6 @@ type ClusterAggregate struct {
 	name                      string
 	label                     string
 	apiServerAddr             string
-	jwt                       string
 	caCertBundle              []byte
 	certificateSigningRequest []byte
 }
@@ -75,11 +74,12 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.label = data.GetLabel()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
-	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
-		a.jwt = data.GetJWT()
 	case events.ClusterCertificateRequested:
 		data := &eventdata.ClusterCertificateRequested{}
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
 		a.certificateSigningRequest = data.GetCertificateSigningRequest()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
