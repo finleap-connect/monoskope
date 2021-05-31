@@ -47,4 +47,6 @@ message Cluster {
   bytes clusterCACert = 5;
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
+  // Bootstrap token for cluster authentication
+  string bootstrapToken = 7;
 }
