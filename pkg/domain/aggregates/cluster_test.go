@@ -31,7 +31,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New())
-		agg.IncrementVersion() // to make aggregate verification pass
 
 		esCommand, ok := cmd.NewCreateClusterCommand(uuid.New()).(*cmd.CreateClusterCommand)
 		Expect(ok).To(BeTrue())
