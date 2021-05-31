@@ -3,7 +3,6 @@ package messaging
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/ory/dockertest/v3"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -27,11 +26,6 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	warumupSeconds := 30
-	if test.IsRunningInCI() {
-		warumupSeconds = 0 // no warmup necessary in CI
-	}
-
 	if v := os.Getenv("AMQP_URL"); v != "" {
 		env.AmqpURL = v // running in ci pipeline
 	} else {
@@ -50,12 +44,6 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 
 		// Build connection string
 		env.AmqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
-	}
-
-	// Wait for rabbitmq to start
-	for i := warumupSeconds; i > 0; i-- {
-		env.Log.Info("Waiting for rabbitmq to warm up...", "secondsLeft", i)
-		time.Sleep(1 * time.Second)
 	}
 
 	return env, nil
