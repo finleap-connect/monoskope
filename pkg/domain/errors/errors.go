@@ -32,6 +32,11 @@ var (
 	ErrClusterRegistrationNotFound = errors.New("cluster registration not found")
 	// ErrClusterRegistrationAlreadyExists is when an aggregate does already exist.
 	ErrClusterRegistrationAlreadyExists = errors.New("cluster registration already exists")
+
+	// ErrClusterNotFound is when a cluster is not known to the system.
+	ErrClusterNotFound = errors.New("cluster not found")
+	// ErrClusterAlreadyExists is when a cluster does already exist.
+	ErrClusterAlreadyExists = errors.New("cluster already exists")
 )
 
 var (

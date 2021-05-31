@@ -9,24 +9,28 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
 	DomainAggregateBase
-	name          string
-	label         string
-	apiServerAddr string
-	caCertBundle  []byte
+	aggregateManager es.AggregateStore
+	name             string
+	label            string
+	apiServerAddr    string
+	caCertBundle     []byte
+	bootstrapToken   string
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID) es.Aggregate {
+func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
 		},
+		aggregateManager: aggregateManager,
 	}
 }
 
@@ -35,7 +39,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	if err := a.Authorize(ctx, cmd); err != nil {
 		return err
 	}
-	if err := a.Validate(ctx, cmd); err != nil {
+	if err := a.validate(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -57,6 +61,41 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	}
 }
 
+// validate validates the current state of the aggregate and if a specific command is valid in the current state
+func (a *ClusterAggregate) validate(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateClusterCommand:
+		if a.Exists() {
+			return domainErrors.ErrClusterAlreadyExists
+		}
+
+		// Get all aggregates of same type
+		aggregates, err := a.aggregateManager.All(ctx, a.Type())
+		if err != nil {
+			return err
+		}
+
+		if containsCluster(aggregates, cmd.GetName()) {
+			return domainErrors.ErrClusterAlreadyExists
+		}
+		return nil
+	default:
+		return a.Validate(ctx, cmd)
+	}
+}
+
+func containsCluster(values []es.Aggregate, name string) bool {
+	for _, value := range values {
+		d, ok := value.(*ClusterAggregate)
+		if ok {
+			if d.name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
@@ -70,6 +109,13 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.label = data.GetLabel()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
+	case events.ClusterBootstrapTokenCreated:
+		data := &eventdata.ClusterBootstrapTokenCreated{}
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		a.bootstrapToken = data.GetJWT()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:
