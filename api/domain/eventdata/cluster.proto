@@ -11,7 +11,8 @@ message ClusterRegistered {
   // Name of the cluster, to be presented to humans
   string name = 1;
 
-  // Unique label of the cluster, to be utilized for generating unique labels and symbols, e.g. with metrics.
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
   string label = 2;
 
   // Address of the KubeApiServer
@@ -25,7 +26,8 @@ message ClusterCreated {
   // Name of the cluster, to be presented to humans
   string name = 1;
 
-  // Unique label of the cluster, to be utilized for generating unique labels and symbols, e.g. with metrics.
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
   string label = 2;
 
   // Address of the KubeApiServer
@@ -39,3 +41,5 @@ message ClusterBootstrapTokenCreated {
   // JsonWebToken for cluster bootstrap
   string JWT = 1;
 }
+
+message ClusterCertificateRequested { bytes certificateSigningRequest = 1; }

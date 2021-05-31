@@ -15,10 +15,12 @@ import (
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
 	DomainAggregateBase
-	name          string
-	label         string
-	apiServerAddr string
-	caCertBundle  []byte
+	name                      string
+	label                     string
+	apiServerAddr             string
+	jwt                       string
+	caCertBundle              []byte
+	certificateSigningRequest []byte
 }
 
 // ClusterAggregate creates a new ClusterAggregate
@@ -52,6 +54,9 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
 		return nil
+	case *commands.RequestClusterCertificateCommand:
+		_ = a.AppendEvent(ctx, events.ClusterCertificateRequested, nil)
+		return nil
 	default:
 		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
@@ -70,6 +75,12 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.label = data.GetLabel()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
+	case events.ClusterBootstrapTokenCreated:
+		data := &eventdata.ClusterBootstrapTokenCreated{}
+		a.jwt = data.GetJWT()
+	case events.ClusterCertificateRequested:
+		data := &eventdata.ClusterCertificateRequested{}
+		a.certificateSigningRequest = data.GetCertificateSigningRequest()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:
