@@ -532,6 +532,236 @@ var Tenant_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
+// ClusterClient is the client API for Cluster service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ClusterClient interface {
+	// get all known clusters
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (Cluster_GetAllClient, error)
+	// get cluster by UUID
+	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
+	// get cluster by name
+	GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
+	// get JWT token for cluster authentication by cluster UUID
+	GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
+}
+
+type clusterClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewClusterClient(cc grpc.ClientConnInterface) ClusterClient {
+	return &clusterClient{cc}
+}
+
+func (c *clusterClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (Cluster_GetAllClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Cluster_ServiceDesc.Streams[0], "/domain.Cluster/GetAll", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterGetAllClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Cluster_GetAllClient interface {
+	Recv() (*projections.Cluster, error)
+	grpc.ClientStream
+}
+
+type clusterGetAllClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterGetAllClient) Recv() (*projections.Cluster, error) {
+	m := new(projections.Cluster)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *clusterClient) GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error) {
+	out := new(projections.Cluster)
+	err := c.cc.Invoke(ctx, "/domain.Cluster/GetById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *clusterClient) GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error) {
+	out := new(projections.Cluster)
+	err := c.cc.Invoke(ctx, "/domain.Cluster/GetByName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *clusterClient) GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error) {
+	out := new(wrapperspb.StringValue)
+	err := c.cc.Invoke(ctx, "/domain.Cluster/GetBootstrapToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ClusterServer is the server API for Cluster service.
+// All implementations must embed UnimplementedClusterServer
+// for forward compatibility
+type ClusterServer interface {
+	// get all known clusters
+	GetAll(*GetAllRequest, Cluster_GetAllServer) error
+	// get cluster by UUID
+	GetById(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
+	// get cluster by name
+	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
+	// get JWT token for cluster authentication by cluster UUID
+	GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error)
+	mustEmbedUnimplementedClusterServer()
+}
+
+// UnimplementedClusterServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterServer struct {
+}
+
+func (UnimplementedClusterServer) GetAll(*GetAllRequest, Cluster_GetAllServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
+}
+func (UnimplementedClusterServer) GetById(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
+}
+func (UnimplementedClusterServer) GetByName(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
+}
+func (UnimplementedClusterServer) GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBootstrapToken not implemented")
+}
+func (UnimplementedClusterServer) mustEmbedUnimplementedClusterServer() {}
+
+// UnsafeClusterServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterServer will
+// result in compilation errors.
+type UnsafeClusterServer interface {
+	mustEmbedUnimplementedClusterServer()
+}
+
+func RegisterClusterServer(s grpc.ServiceRegistrar, srv ClusterServer) {
+	s.RegisterService(&Cluster_ServiceDesc, srv)
+}
+
+func _Cluster_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAllRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ClusterServer).GetAll(m, &clusterGetAllServer{stream})
+}
+
+type Cluster_GetAllServer interface {
+	Send(*projections.Cluster) error
+	grpc.ServerStream
+}
+
+type clusterGetAllServer struct {
+	grpc.ServerStream
+}
+
+func (x *clusterGetAllServer) Send(m *projections.Cluster) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Cluster_GetById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterServer).GetById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Cluster/GetById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterServer).GetById(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Cluster_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterServer).GetByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Cluster/GetByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterServer).GetByName(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Cluster_GetBootstrapToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterServer).GetBootstrapToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Cluster/GetBootstrapToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterServer).GetBootstrapToken(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Cluster_ServiceDesc is the grpc.ServiceDesc for Cluster service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Cluster_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.Cluster",
+	HandlerType: (*ClusterServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetById",
+			Handler:    _Cluster_GetById_Handler,
+		},
+		{
+			MethodName: "GetByName",
+			Handler:    _Cluster_GetByName_Handler,
+		},
+		{
+			MethodName: "GetBootstrapToken",
+			Handler:    _Cluster_GetBootstrapToken_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetAll",
+			Handler:       _Cluster_GetAll_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
 // ClusterRegistrationClient is the client API for ClusterRegistration service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.

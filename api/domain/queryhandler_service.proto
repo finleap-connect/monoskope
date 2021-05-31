@@ -40,6 +40,18 @@ service Tenant {
       returns (stream projections.TenantUser);
 }
 
+// Cluster is a service to query information about known clusters.
+service Cluster {
+  // get all known clusters
+  rpc GetAll(GetAllRequest) returns (stream projections.Cluster);
+  // get cluster by UUID
+  rpc GetById(google.protobuf.StringValue) returns (projections.Cluster);
+  // get cluster by name
+  rpc GetByName(google.protobuf.StringValue) returns (projections.Cluster);
+  // get JWT token for cluster authentication by cluster UUID
+  rpc GetBootstrapToken(google.protobuf.StringValue) returns (google.protobuf.StringValue);
+}
+
 // ClusterRegistration is a service to query ClusterRegistrations.
 service ClusterRegistration {
   // GetAll returns all registration requests.

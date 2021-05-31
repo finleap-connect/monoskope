@@ -58,6 +58,16 @@
 * [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
 * [Quickstart - gRPC in Go](https://grpc.io/docs/languages/go/quickstart/)
 
+## To create a new aggregate
+
+1. Add command messages (command data, to be more specific) to separate file in `api/domain/commanddata/` folder
+1. add code to handle new command to separate file in `pkg/domain/commands/` folder. Ideally copy and apapt existing examples.
+1. add aggregate to separate file in `pkg/domain/aggregates/` folder.
+1. Add service with query functions to `api/domain/queryhandler_service.proto`
+1. Add messages for projection in `api/domain/projections` (ideally in separate `.proto` file)
+1. Implement query functiosn in new projection repository in `pkg/domain/repositories/`.
+1. Implment projector in `pkg/domain/projectors/` folder. There should be at least one projector per aggregate, but there may be multiple projectors. In order to have one projector handle events by multiple Aggregate types, simply register multiple matchers on the same projector. See `pkg/domain/queryhandler.go` for details. (TODO: create more elaborate examples for later use)
+
 ## Event Sourcing & CQRS
 
 ### Reading list
