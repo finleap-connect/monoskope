@@ -16,19 +16,22 @@ import (
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
 	DomainAggregateBase
+	aggregateManager          es.AggregateStore
 	name                      string
 	label                     string
 	apiServerAddr             string
 	caCertBundle              []byte
+	bootstrapToken            string
 	certificateSigningRequest []byte
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID) es.Aggregate {
+func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
 		},
+		aggregateManager: aggregateManager,
 	}
 }
 
@@ -72,10 +75,32 @@ func (a *ClusterAggregate) validate(ctx context.Context, cmd es.Command) error {
 		if a.Exists() {
 			return domainErrors.ErrClusterAlreadyExists
 		}
+
+		// Get all aggregates of same type
+		aggregates, err := a.aggregateManager.All(ctx, a.Type())
+		if err != nil {
+			return err
+		}
+
+		if containsCluster(aggregates, cmd.GetName()) {
+			return domainErrors.ErrClusterAlreadyExists
+		}
 		return nil
 	default:
 		return a.Validate(ctx, cmd)
 	}
+}
+
+func containsCluster(values []es.Aggregate, name string) bool {
+	for _, value := range values {
+		d, ok := value.(*ClusterAggregate)
+		if ok {
+			if d.name == name {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
@@ -98,6 +123,13 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 		a.certificateSigningRequest = data.GetCertificateSigningRequest()
+	case events.ClusterBootstrapTokenCreated:
+		data := &eventdata.ClusterBootstrapTokenCreated{}
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		a.bootstrapToken = data.GetJWT()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:

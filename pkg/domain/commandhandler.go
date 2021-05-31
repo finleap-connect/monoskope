@@ -35,7 +35,7 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
 	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Cluster
-	es.DefaultAggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewClusterAggregate(id, aggregateManager) })
 
 	return aggregateManager
 }

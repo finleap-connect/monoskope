@@ -22,6 +22,7 @@ var (
 	expectedLabel               = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
+	expectedJWT                 = "thisisnotajwt"
 )
 
 var _ = Describe("Unit Test for Cluster Aggregate", func() {
@@ -30,7 +31,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewClusterAggregate(uuid.New())
+		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
 
 		esCommand, ok := cmd.NewCreateClusterCommand(uuid.New()).(*cmd.CreateClusterCommand)
 		Expect(ok).To(BeTrue())
@@ -63,7 +64,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewClusterAggregate(uuid.New())
+		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
 		agg.IncrementVersion()
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
@@ -83,6 +84,26 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedApiServerAddress))
 		Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedClusterCACertBundle))
 
+	})
+
+	It("should write the jwt from a BootstrapTokenCreated event to the aggregate", func() {
+
+		ctx, err := makeMetadataContextWithSystemAdminUser()
+		Expect(err).NotTo(HaveOccurred())
+
+		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
+		agg.IncrementVersion()
+
+		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
+			JWT: expectedJWT,
+		})
+		esEvent := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, ed, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err = agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(agg.(*ClusterAggregate).bootstrapToken).To(Equal(expectedJWT))
 	})
 
 })
@@ -115,4 +136,27 @@ func makeMetadataContextWithSystemAdminUser() (context.Context, error) {
 
 	return metaMgr.GetContext(), nil
 
+}
+
+type aggregateTestStore struct {
+}
+
+// NewTestAggregateManager creates a new dummy AggregateHandler which allows observing interactions and injecting test data.
+func NewTestAggregateManager() es.AggregateStore {
+	return &aggregateTestStore{}
+}
+
+// Get returns the most recent version of all aggregate of a given type.
+func (tas *aggregateTestStore) All(context.Context, es.AggregateType) ([]es.Aggregate, error) {
+	return []es.Aggregate{}, nil
+}
+
+// Get returns the most recent version of an aggregate.
+func (tas *aggregateTestStore) Get(context.Context, es.AggregateType, uuid.UUID) (es.Aggregate, error) {
+	return nil, nil
+}
+
+// Update stores all in-flight events for an aggregate.
+func (tas *aggregateTestStore) Update(context.Context, es.Aggregate) error {
+	return nil
 }
