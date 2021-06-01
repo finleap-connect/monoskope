@@ -107,6 +107,44 @@ func (s *authServer) registerViews(r *gin.Engine) {
 		c.String(http.StatusOK, "ready")
 	})
 	r.POST("/auth/*route", s.auth)
+	r.POST("/k8sTokenReview", s.tokenReview)
+}
+
+// tokenReview serves as handler for the tokenReview route of the server.
+// it reviews tokens for K8s webhook authentication.
+func (s *authServer) tokenReview(c *gin.Context) {
+	s.log.Info("Reviewing K8s token...")
+
+	if c.Request.Method != http.MethodPost {
+		s.log.Info("Failed to review token since it was NOT send via POST method.")
+		c.String(http.StatusMethodNotAllowed, "authorization failed")
+		return
+	}
+
+	tokenReviewRequest := &auth.TokenReviewRequest{}
+	err := c.BindJSON(tokenReviewRequest)
+	if err != nil {
+		s.log.Error(err, "Error unmarshalling request")
+		c.String(http.StatusInternalServerError, "malformed request")
+		return
+	}
+	s.log.V(logger.DebugLevel).Info("Unmarshalled token review request successfully.", "TokenReviewRequest", tokenReviewRequest)
+
+	var authToken *jwt.AuthToken
+	if authToken = s.tokenValidation(c.Request.Context(), tokenReviewRequest.Spec.Token, jwt.AudienceK8sAuth); authToken != nil {
+		tokenReviewRequest.Status = auth.TokenReviewStatus{
+			Authenticated: true,
+			User: auth.UserInfo{
+				Username: authToken.Name,
+				Groups:   authToken.Groups,
+				UID:      authToken.ID,
+			},
+		}
+		c.JSON(http.StatusOK, tokenReviewRequest)
+		return
+	}
+
+	c.String(http.StatusUnauthorized, "authorization failed")
 }
 
 // auth serves as handler for the auth route of the server.
@@ -120,7 +158,7 @@ func (s *authServer) auth(c *gin.Context) {
 	}
 
 	var authToken *jwt.AuthToken
-	if authToken = s.tokenValidation(c); authToken != nil {
+	if authToken = s.tokenValidationFromContext(c); authToken != nil {
 		s.writeSuccess(c, authToken)
 		return
 	}
@@ -140,21 +178,25 @@ func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool)
 	return user.Id, true
 }
 
-// tokenValidation validates the token provided within the authorization
-func (s *authServer) tokenValidation(c *gin.Context) *jwt.AuthToken {
+// tokenValidationFromContext validates the token provided within the authorization flow from gin context
+func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
+	return s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+}
+
+// tokenValidation validates the token provided within the authorization flow
+func (s *authServer) tokenValidation(ctx context.Context, token string, expectedAudience ...string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
-	token := defaultBearerTokenFromRequest(c.Request)
 	if token == "" {
 		s.log.Info("Token validation failed.", "error", "token is empty")
 		return nil
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authHandler.Authorize(c.Request.Context(), token, authToken); err != nil {
+	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
-	} else if err := authToken.Validate(); err != nil {
+	} else if err := authToken.Validate(expectedAudience...); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
