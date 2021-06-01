@@ -170,6 +170,9 @@ deliver:clboreactor:
 scan:images:
   stage: scan
   image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7.76.1
+  only:
+    - web
+    - tags
   script:
     - export VERSION=$(sh ./build/ci/configure_versions.sh)
     - sh ./build/ci/scan_images.sh
