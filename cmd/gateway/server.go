@@ -132,12 +132,12 @@ func init() {
 	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
-	flags.StringVar(&authConfig.IssuerIdentifier, "issuer-identifier", "", "Issuer Identifier")
-	flags.StringVar(&authConfig.IssuerURL, "issuer-url", "", "Issuer URL")
+	flags.StringVar(&authConfig.IdentityProviderName, "identity-provider-name", "", "Identity provider name")
+	flags.StringVar(&authConfig.IdentityProvider, "identity-provider-url", "", "Identity provider URL")
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
 	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")
 
-	util.PanicOnError(serverCmd.MarkFlagRequired("issuer-identifier"))
-	util.PanicOnError(serverCmd.MarkFlagRequired("issuer-url"))
+	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))
+	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-url"))
 }

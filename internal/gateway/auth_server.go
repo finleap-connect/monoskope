@@ -101,50 +101,28 @@ func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	return nil
 }
 
+// Tell the server to shutdown
+func (s *authServer) Shutdown() {
+	s.shutdown.Expect()
+}
+
 // registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
 	r.POST("/auth/*route", s.auth)
-	r.POST("/k8sTokenReview", s.tokenReview)
+	r.GET("/.well-known/openid-configuration", s.discovery)
+	r.GET("/keys", s.keys)
 }
 
-// tokenReview serves as handler for the tokenReview route of the server.
-// it reviews tokens for K8s webhook authentication.
-func (s *authServer) tokenReview(c *gin.Context) {
-	s.log.Info("Reviewing K8s token...")
+func (s *authServer) discovery(c *gin.Context) {
+	c.JSON(http.StatusOK, s.authHandler.Discovery("/keys"))
+}
 
-	if c.Request.Method != http.MethodPost {
-		s.log.Info("Failed to review token since it was NOT send via POST method.")
-		c.String(http.StatusMethodNotAllowed, "authorization failed")
-		return
-	}
-
-	tokenReviewRequest := &auth.TokenReviewRequest{}
-	err := c.BindJSON(tokenReviewRequest)
-	if err != nil {
-		s.log.Error(err, "Error unmarshalling request")
-		c.String(http.StatusInternalServerError, "malformed request")
-		return
-	}
-	s.log.V(logger.DebugLevel).Info("Unmarshalled token review request successfully.", "TokenReviewRequest", tokenReviewRequest)
-
-	var authToken *jwt.AuthToken
-	if authToken = s.tokenValidation(c.Request.Context(), tokenReviewRequest.Spec.Token, jwt.AudienceK8sAuth); authToken != nil {
-		tokenReviewRequest.Status = auth.TokenReviewStatus{
-			Authenticated: true,
-			User: auth.UserInfo{
-				Username: authToken.Name,
-				Groups:   authToken.Groups,
-				UID:      authToken.ID,
-			},
-		}
-		c.JSON(http.StatusOK, tokenReviewRequest)
-		return
-	}
-
-	c.String(http.StatusUnauthorized, "authorization failed")
+func (s *authServer) keys(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authHandler.KeyExpiration().Seconds())))
+	c.JSON(http.StatusOK, s.authHandler.Keys())
 }
 
 // auth serves as handler for the auth route of the server.

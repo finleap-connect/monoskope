@@ -33,7 +33,8 @@ import (
 )
 
 const (
-	anyLocalAddr        = "127.0.0.1:0"
+	localAddrAPIServer  = "127.0.0.1:9090"
+	localAddrAuthServer = "127.0.0.1:9091"
 	RedirectURLHostname = "localhost"
 	RedirectURLPort     = ":8000"
 )
@@ -41,16 +42,18 @@ const (
 var (
 	env *oAuthTestEnv
 
-	apiListener net.Listener
-	httpClient  *http.Client
-	grpcServer  *grpc.Server
+	apiListenerAPIServer  net.Listener
+	apiListenerAuthServer net.Listener
+	httpClient            *http.Client
+	grpcServer            *grpc.Server
+	localAuthServer       *authServer
 )
 
 type oAuthTestEnv struct {
 	*test.TestEnv
-	jwtTestEnv *jwt.TestEnv
-	IssuerURL  string
-	AuthConfig *auth.Config
+	jwtTestEnv          *jwt.TestEnv
+	IdentityProviderURL string
+	AuthConfig          *auth.Config
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -94,15 +97,16 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 			_ = env.Shutdown()
 			return nil, err
 		}
-		env.IssuerURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
+		env.IdentityProviderURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
 		env.AuthConfig = &auth.Config{
-			IssuerIdentifier: "dex",
-			IssuerURL:        env.IssuerURL,
-			OfflineAsScope:   true,
-			ClientId:         "gateway",
-			ClientSecret:     "app-secret",
-			Nonce:            "secret-nonce",
+			Issuer:               fmt.Sprintf("http://%s", localAddrAuthServer),
+			IdentityProviderName: "dex",
+			IdentityProvider:     env.IdentityProviderURL,
+			OfflineAsScope:       true,
+			ClientId:             "gateway",
+			ClientSecret:         "app-secret",
+			Nonce:                "secret-nonce",
 			Scopes: []string{
 				"openid",
 				"profile",
@@ -191,10 +195,20 @@ var _ = BeforeSuite(func(done Done) {
 		api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 	})
 
-	apiListener, err = net.Listen("tcp", anyLocalAddr)
+	apiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := grpcServer.ServeFromListener(apiListener, nil)
+		err := grpcServer.ServeFromListener(apiListenerAPIServer, nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	localAuthServer = NewAuthServer(authHandler, userRepo)
+	apiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
+	Expect(err).ToNot(HaveOccurred())
+	go func() {
+		err := localAuthServer.ServeFromListener(apiListenerAuthServer)
 		if err != nil {
 			panic(err)
 		}
@@ -211,7 +225,8 @@ var _ = AfterSuite(func() {
 	Expect(err).To(BeNil())
 
 	grpcServer.Shutdown()
+	localAuthServer.Shutdown()
 
-	err = apiListener.Close()
-	Expect(err).To(BeNil())
+	defer apiListenerAPIServer.Close()
+	defer apiListenerAuthServer.Close()
 })

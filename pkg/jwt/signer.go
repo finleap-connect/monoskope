@@ -44,10 +44,11 @@ func (signer *jwtSigner) createSigner() (jose.Signer, error) {
 	}
 
 	// create Square.jose signing key
-	key := jose.SigningKey{Algorithm: SignatureAlgorithm, Key: privKey}
+	key := jose.SigningKey{Algorithm: jose.SignatureAlgorithm(privKey.Algorithm), Key: privKey.Key}
 
 	// create a Square.jose RSA signer, used to sign the JWT
 	var signerOpts = jose.SignerOptions{}
+	signerOpts.WithHeader("kid", privKey.KeyID)
 	signerOpts.WithType("JWT")
 
 	rsaSigner, err := jose.NewSigner(key, &signerOpts)

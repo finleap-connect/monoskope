@@ -17,7 +17,7 @@ var _ = Describe("jwt/key", func() {
 		privKey, err := LoadPrivateKey(bytes)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(privKey).ToNot(BeNil())
-		Expect(privKey).To(Equal(testEnv.privateKey))
+		Expect(privKey.Key).To(Equal(testEnv.privateKey))
 	})
 	It("can load private key from file", func() {
 		bytes, err := ioutil.ReadFile(testEnv.publicKeyFile)
@@ -28,7 +28,7 @@ var _ = Describe("jwt/key", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(pubKey).ToNot(BeNil())
 
-		rsaPublicKey, ok := pubKey.(*rsa.PublicKey)
+		rsaPublicKey, ok := pubKey.Key.(*rsa.PublicKey)
 		Expect(ok).To(BeTrue())
 		Expect(*rsaPublicKey).To(Equal(testEnv.privateKey.PublicKey))
 	})

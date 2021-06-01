@@ -16,6 +16,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	"golang.org/x/oauth2"
+	"gopkg.in/square/go-jose.v2"
 )
 
 type Handler struct {
@@ -37,10 +38,12 @@ func NewHandler(config *Config, signer jwt.JWTSigner, verifier jwt.JWTVerifier) 
 		log:        logger.WithName("auth"),
 	}
 	n.log.Info("Auth handler configured.",
-		"IssuerIdentifier",
-		n.config.IssuerIdentifier,
-		"IssuerURL",
-		n.config.IssuerURL,
+		"Issuer",
+		n.config.Issuer,
+		"IdentityProviderName",
+		n.config.IdentityProviderName,
+		"IdentityProvider",
+		n.config.IdentityProvider,
 		"Scopes",
 		n.config.Scopes,
 		"RedirectURIs",
@@ -52,18 +55,16 @@ func NewHandler(config *Config, signer jwt.JWTSigner, verifier jwt.JWTVerifier) 
 func (n *Handler) SetupOIDC(ctx context.Context) error {
 	ctx = oidc.ClientContext(ctx, n.httpClient)
 
-	n.log.Info("Setting up auth provider...", "IssuerURL", n.config.IssuerURL)
-
 	// Using an exponential backoff to avoid issues in development environments
 	backoffParams := backoff.NewExponentialBackOff()
 	backoffParams.MaxElapsedTime = time.Second * 10
 	err := backoff.Retry(func() error {
 		var err error
-		n.Provider, err = oidc.NewProvider(ctx, n.config.IssuerURL)
+		n.Provider, err = oidc.NewProvider(ctx, n.config.IdentityProvider)
 		return err
 	}, backoffParams)
 	if err != nil {
-		return fmt.Errorf("failed to query provider %q: %v", n.config.IssuerURL, err)
+		return fmt.Errorf("failed to query provider %q: %v", n.config.IdentityProvider, err)
 	}
 
 	// What scopes does a provider support?
@@ -93,7 +94,7 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 
 	n.upstreamVerifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
 
-	n.log.Info("Connected to auth provider successful.", "IssuerURL", n.config.IssuerURL, "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
+	n.log.Info("Connected to auth provider successful.", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 
 	return nil
 }
@@ -131,7 +132,7 @@ func (n *Handler) Exchange(ctx context.Context, code, state, redirectURL string)
 
 // IssueToken wraps the upstream claims in a JWT signed by Monoskope
 func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardClaims, userId string) (string, *jwt.AuthToken, error) {
-	token := jwt.NewAuthToken(upstreamClaims, userId, n.config.IssuerIdentifier)
+	token := jwt.NewAuthToken(upstreamClaims, userId, n.config.IdentityProviderName)
 	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token)
 
 	signedToken, err := n.signer.GenerateSignedToken(token)
@@ -224,6 +225,21 @@ func (n *Handler) Authorize(ctx context.Context, token string, claims interface{
 		return err
 	}
 	return nil
+}
+
+func (n *Handler) Discovery(keysPath string) *OpenIdConfiguration {
+	return &OpenIdConfiguration{
+		Issuer:  n.config.Issuer,
+		JwksURL: fmt.Sprintf("%s%s", n.config.Issuer, keysPath),
+	}
+}
+
+func (n *Handler) Keys() *jose.JSONWebKeySet {
+	return n.verifier.JWKS()
+}
+
+func (n *Handler) KeyExpiration() time.Duration {
+	return n.verifier.KeyExpiration()
 }
 
 func getClaims(idToken *oidc.IDToken) (*jwt.StandardClaims, error) {
