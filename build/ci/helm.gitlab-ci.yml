@@ -18,8 +18,6 @@ lint:helm:
 chart:deliver:
   stage: chart
   extends: .helm
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
@@ -30,8 +28,6 @@ deploy:monoskope:
   extends: .helm
   environment:
     name: figo-dev
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
