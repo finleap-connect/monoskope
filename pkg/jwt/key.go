@@ -62,7 +62,12 @@ func LoadPublicKey(data []byte) (*jose.JSONWebKey, error) {
 
 	cert, err1 := x509.ParseCertificate(input)
 	if err1 == nil {
-		return convertToJSONWebKey(cert, keyID, true)
+		pubKeyPem, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		keyID := util.HashBytes(pubKeyPem)
+		return convertToJSONWebKey(cert.PublicKey, keyID, true)
 	}
 
 	jwk, err2 := loadJSONWebKey(data, true)
