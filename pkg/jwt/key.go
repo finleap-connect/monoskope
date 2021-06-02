@@ -19,10 +19,10 @@ func loadJSONWebKey(json []byte, pub bool) (*jose.JSONWebKey, error) {
 		return nil, err
 	}
 	if !jwk.Valid() {
-		return nil, errors.New("invalid JWK key")
+		return nil, errors.New("invalid JWK")
 	}
 	if jwk.IsPublic() != pub {
-		return nil, errors.New("priv/pub JWK key mismatch")
+		return nil, errors.New("priv/pub JWK mismatch")
 	}
 	return &jwk, nil
 }
@@ -35,10 +35,10 @@ func convertToJSONWebKey(key interface{}, kid string, pub bool) (*jose.JSONWebKe
 		Use:       "sig",
 	}
 	if !jwk.Valid() {
-		return nil, errors.New("invalid JWK key")
+		return nil, errors.New("invalid JWK")
 	}
 	if jwk.IsPublic() != pub {
-		return nil, errors.New("priv/pub JWK key mismatch")
+		return nil, errors.New("priv/pub JWK mismatch")
 	}
 	return &jwk, nil
 }
