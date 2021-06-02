@@ -142,5 +142,5 @@ func init() {
 
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-url"))
-	util.PanicOnError(serverCmd.MarkFlagRequired("issuer"))
+	util.PanicOnError(serverCmd.MarkFlagRequired("external-url"))
 }
