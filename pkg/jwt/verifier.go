@@ -148,10 +148,10 @@ func (v *jwtVerifier) Verify(rawJWT string, claims interface{}) error {
 	for _, key := range v.jsonWebKeys {
 		if key.jwk.KeyID == kid {
 			if err := parsedJWT.Claims(key.jwk, claims); err == nil {
-				v.log.Info("Successfully verified claims with kid %v.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), key.jwk.KeyID)
+				v.log.Info("Successfully verified claims.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), "KeyID", key.jwk.KeyID)
 				return nil
 			} else {
-				v.log.Info("Failed to verify claims with one of the known public keys.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), "error", err.Error())
+				v.log.Info("Failed to verify claims.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), "KeyID", key.jwk.KeyID, "error", err.Error())
 			}
 		}
 	}
