@@ -98,7 +98,6 @@ spec:
             - --metrics-addr=:{{ .Values.ports.metrics }}
             - --identity-provider-name={{ .Values.auth.identityProviderName }}
             - --identity-provider-url={{ .Values.auth.identityProviderURL }}
-            - --external-url={{ .Values.auth.externalURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
           {{- if .Values.livenessProbe.enabled }}

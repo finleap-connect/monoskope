@@ -35,7 +35,6 @@ var (
 	authConfig       = auth.Config{}
 	scopes           string
 	redirectUris     string
-	externalURL      string
 )
 
 var serverCmd = &cobra.Command{
@@ -100,7 +99,7 @@ var serverCmd = &cobra.Command{
 		defer conn.Close()
 		userRepo := repositories.NewRemoteUserRepository(userSvcClient)
 
-		authServer := gateway.NewAuthServer(authHandler, externalURL, userRepo)
+		authServer := gateway.NewAuthServer(authHandler, userRepo)
 
 		// Gateway API server
 		gws := gateway.NewApiServer(&authConfig, authHandler, userRepo)
@@ -135,7 +134,6 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&authConfig.IdentityProviderName, "identity-provider-name", "", "Identity provider name")
 	flags.StringVar(&authConfig.IdentityProvider, "identity-provider-url", "", "Identity provider URL")
-	flags.StringVar(&externalURL, "external-url", "", "External issuer URL")
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
 	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")

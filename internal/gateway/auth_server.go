@@ -41,11 +41,10 @@ type authServer struct {
 	shutdown    *util.ShutdownWaitGroup
 	authHandler *auth.Handler
 	userRepo    repositories.ReadOnlyUserRepository
-	externalURL string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(authHandler *auth.Handler, externalURL string, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
 		api:         &http.Server{Handler: engine},
@@ -54,7 +53,6 @@ func NewAuthServer(authHandler *auth.Handler, externalURL string, userRepo repos
 		shutdown:    util.NewShutdownWaitGroup(),
 		authHandler: authHandler,
 		userRepo:    userRepo,
-		externalURL: externalURL,
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
@@ -120,8 +118,8 @@ func (s *authServer) registerViews(r *gin.Engine) {
 
 func (s *authServer) discovery(c *gin.Context) {
 	c.JSON(http.StatusOK, &auth.OpenIdConfiguration{
-		Issuer:  s.externalURL,
-		JwksURL: fmt.Sprintf("%s%s", s.externalURL, "/keys"),
+		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
+		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
 	})
 }
 

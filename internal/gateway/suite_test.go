@@ -54,7 +54,6 @@ type oAuthTestEnv struct {
 	jwtTestEnv          *jwt.TestEnv
 	AuthConfig          *auth.Config
 	IdentityProviderURL string
-	ExternalURL         string
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -99,7 +98,6 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 			return nil, err
 		}
 		env.IdentityProviderURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
-		env.ExternalURL = fmt.Sprintf("http://%s", localAddrAuthServer)
 
 		env.AuthConfig = &auth.Config{
 			IdentityProviderName: "dex",
@@ -205,7 +203,7 @@ var _ = BeforeSuite(func(done Done) {
 		}
 	}()
 
-	localAuthServer = NewAuthServer(authHandler, env.ExternalURL, userRepo)
+	localAuthServer = NewAuthServer(authHandler, userRepo)
 	apiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {

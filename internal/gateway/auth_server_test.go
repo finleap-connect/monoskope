@@ -17,7 +17,8 @@ var _ = Describe("Gateway Auth Server", func() {
 
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(doc.Text()).NotTo(BeEmpty())
+		docText := doc.Text()
+		Expect(docText).NotTo(BeEmpty())
 	})
 	It("can retrieve jwks", func() {
 		res, err := httpClient.Get(fmt.Sprintf("http://%s/keys", localAddrAuthServer))
