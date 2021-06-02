@@ -17,6 +17,7 @@ include:
   only:
     - web
     - tags
+    - develop
 
 prepare:builder:
   stage: prepare
