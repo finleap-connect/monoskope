@@ -7,6 +7,8 @@ require (
 	github.com/aws/aws-sdk-go v1.27.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/cucumber/godog v0.11.0
+	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.6.3
@@ -29,6 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.24.0 // indirect
 	github.com/spf13/cobra v1.1.1
+	github.com/spf13/pflag v1.0.5
 	github.com/streadway/amqp v1.0.0
 	github.com/ugorji/go v1.2.4 // indirect
 	go.uber.org/automaxprocs v1.3.0

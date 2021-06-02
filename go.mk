@@ -6,6 +6,9 @@ GO             ?= go
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.15.2
 
+GODOG          ?= godog
+GODOG_VERSION  ?= v0.11.0
+
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
@@ -124,7 +127,10 @@ protoc-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-go-tools: golangci-lint-get ginkgo-get protoc-get
+godog-get:
+	go get github.com/cucumber/godog/cmd/godog@$(GODOG_VERSION)
+
+go-tools: golangci-lint-get ginkgo-get protoc-get godog-get
 
 go-clean: ginkgo-clean golangci-lint-clean go-build-clean
 	rm  .protobuf-deps
