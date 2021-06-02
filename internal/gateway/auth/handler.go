@@ -113,35 +113,18 @@ func (n *Handler) clientContext(ctx context.Context) context.Context {
 	return oidc.ClientContext(ctx, n.httpClient)
 }
 
-// Exchange exchanges the auth code with a token of the upstream IDP and verifies the claims
-func (n *Handler) Exchange(ctx context.Context, code, state, redirectURL string) (*jwt.StandardClaims, error) {
-	upstreamToken, err := n.exchange(ctx, code, redirectURL)
-	if err != nil {
-		return nil, err
+func getClaims(idToken *oidc.IDToken) (*jwt.StandardClaims, error) {
+	claims := &jwt.StandardClaims{}
+
+	if err := idToken.Claims(claims); err != nil {
+		return nil, fmt.Errorf("failed to parse claims: %v", err)
 	}
-	n.log.V(logger.DebugLevel).Info("Token received in exchange for auth code.", "Token", upstreamToken)
 
-	upstreamClaims, err := n.verifyStateAndClaims(ctx, upstreamToken, state)
-	if err != nil {
-		return nil, err
+	if !claims.EmailVerified {
+		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
 	}
-	n.log.V(logger.DebugLevel).Info("Claims verified.", "Claims", upstreamClaims)
 
-	return upstreamClaims, nil
-}
-
-// IssueToken wraps the upstream claims in a JWT signed by Monoskope
-func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardClaims, userId string) (string, *jwt.AuthToken, error) {
-	token := jwt.NewAuthToken(upstreamClaims, userId, n.config.IdentityProviderName)
-	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token)
-
-	signedToken, err := n.signer.GenerateSignedToken(token)
-	if err != nil {
-		return "", nil, err
-	}
-	n.log.V(logger.DebugLevel).Info("Token signed successfully.", "SignedToken", signedToken)
-
-	return signedToken, token, err
+	return claims, nil
 }
 
 // exchange exchanges the auth code with a token of the upstream IDP
@@ -157,31 +140,6 @@ func (n *Handler) redirectUrlAllowed(callBackUrl string) bool {
 		}
 	}
 	return false
-}
-
-// AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Handler) GetAuthCodeURL(state *api.AuthState, scopes []string) (string, string, error) {
-	if !n.redirectUrlAllowed(state.GetCallbackURL()) {
-		return "", "", errors.New("callback url not allowed")
-	}
-
-	// Encode state and calculate nonce
-	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
-	if err != nil {
-		return "", "", err
-	}
-	nonce := util.HashString(encoded + n.config.Nonce)
-
-	// Construct authCodeURL
-	authCodeURL := ""
-	if n.config.OfflineAsScope {
-		scopes = append(scopes, oidc.ScopeOfflineAccess)
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
-	} else {
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
-	}
-
-	return authCodeURL, encoded, nil
 }
 
 func (n *Handler) verifyStateAndClaims(ctx context.Context, token *oauth2.Token, encodedState string) (*jwt.StandardClaims, error) {
@@ -219,6 +177,62 @@ func (n *Handler) verifyStateAndClaims(ctx context.Context, token *oauth2.Token,
 	return claims, nil
 }
 
+// Exchange exchanges the auth code with a token of the upstream IDP and verifies the claims
+func (n *Handler) Exchange(ctx context.Context, code, state, redirectURL string) (*jwt.StandardClaims, error) {
+	upstreamToken, err := n.exchange(ctx, code, redirectURL)
+	if err != nil {
+		return nil, err
+	}
+	n.log.V(logger.DebugLevel).Info("Token received in exchange for auth code.", "Token", upstreamToken)
+
+	upstreamClaims, err := n.verifyStateAndClaims(ctx, upstreamToken, state)
+	if err != nil {
+		return nil, err
+	}
+	n.log.V(logger.DebugLevel).Info("Claims verified.", "Claims", upstreamClaims)
+
+	return upstreamClaims, nil
+}
+
+// IssueToken wraps the upstream claims in a JWT signed by Monoskope
+func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardClaims, userId string) (string, *jwt.AuthToken, error) {
+	token := jwt.NewAuthToken(upstreamClaims, userId, n.config.IdentityProviderName)
+	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token)
+
+	signedToken, err := n.signer.GenerateSignedToken(token)
+	if err != nil {
+		return "", nil, err
+	}
+	n.log.V(logger.DebugLevel).Info("Token signed successfully.", "SignedToken", signedToken)
+
+	return signedToken, token, err
+}
+
+// AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
+func (n *Handler) GetAuthCodeURL(state *api.AuthState, scopes []string) (string, string, error) {
+	if !n.redirectUrlAllowed(state.GetCallbackURL()) {
+		return "", "", errors.New("callback url not allowed")
+	}
+
+	// Encode state and calculate nonce
+	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
+	if err != nil {
+		return "", "", err
+	}
+	nonce := util.HashString(encoded + n.config.Nonce)
+
+	// Construct authCodeURL
+	var authCodeURL string
+	if n.config.OfflineAsScope {
+		scopes = append(scopes, oidc.ScopeOfflineAccess)
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
+	} else {
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
+	}
+
+	return authCodeURL, encoded, nil
+}
+
 // Authorize parses the raw JWT, verifies the content against the public key of the verifier and parses the claims
 func (n *Handler) Authorize(ctx context.Context, token string, claims interface{}) error {
 	if err := n.verifier.Verify(token, claims); err != nil {
@@ -240,18 +254,4 @@ func (n *Handler) Keys() *jose.JSONWebKeySet {
 
 func (n *Handler) KeyExpiration() time.Duration {
 	return n.verifier.KeyExpiration()
-}
-
-func getClaims(idToken *oidc.IDToken) (*jwt.StandardClaims, error) {
-	claims := &jwt.StandardClaims{}
-
-	if err := idToken.Claims(claims); err != nil {
-		return nil, fmt.Errorf("failed to parse claims: %v", err)
-	}
-
-	if !claims.EmailVerified {
-		return nil, fmt.Errorf("email (%q) in returned claims was not verified", claims.Email)
-	}
-
-	return claims, nil
 }
