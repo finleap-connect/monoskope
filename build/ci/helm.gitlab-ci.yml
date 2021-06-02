@@ -28,6 +28,8 @@ deploy:monoskope:
   extends: .helm
   environment:
     name: figo-dev
+  only:
+    - develop
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
