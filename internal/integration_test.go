@@ -202,7 +202,7 @@ var _ = Describe("integration", func() {
 		Expect(cluster.GetName()).To(Equal("my awesome cluster"))
 		Expect(cluster.GetLabel()).To(Equal("mac"))
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(cluster.GetClusterCACert()).To(Equal([]byte("This should be a certificate")))
+		Expect(cluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
 
 		// TODO add reactor to test env for bootstrap token creation
 	})

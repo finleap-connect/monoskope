@@ -52,7 +52,7 @@ func (u *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		p.Name = data.GetName()
 		p.Label = data.GetLabel()
 		p.ApiServerAddress = data.GetApiServerAddress()
-		p.ClusterCACert = data.GetCaCertificateBundle()
+		p.ClusterCACertBundle = data.GetCaCertificateBundle()
 	default:
 		return nil, errors.ErrInvalidEventType
 	}

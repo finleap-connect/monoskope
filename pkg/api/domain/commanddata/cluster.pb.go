@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// used by ???
+// used by the M8 Cluster Operator to register itself
 type RequestClusterRegistration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
