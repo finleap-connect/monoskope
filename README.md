@@ -32,10 +32,6 @@ To install your instance in a running Kubernetes cluster:
 * Select a commit and the `CI_PIPELINE_IID` (the project internal one!) from a successful build for that commit and concatenate without separator to generate a version idenfifier
   `export VERSION="0.0.0-$COMMIT_HASH$PIPELINE_ID" ; export KUBE_NAMESPACE=<your namespace> make helm-install-monoskope`
 
-To install on a local KinD cluster you need to do the following:
-* stand up a KinD cluster:
-  `kind create cluster`
-
 ## Acknowledgments
 
 The implementation of CQRS/ES in Monoskope is not cloned, but inspired by [Event Horizon](https://github.com/looplab/eventhorizon) a CQRS/ES toolkit for Go.

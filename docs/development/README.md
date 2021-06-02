@@ -58,6 +58,22 @@
 * [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
 * [Quickstart - gRPC in Go](https://grpc.io/docs/languages/go/quickstart/)
 
+## Deploy to local KinD cluster
+
+* stand up a KinD cluster:
+  `kind create cluster --name m8kind --config build/deploy/kind/kubeadm_conf.yaml --kubeconfig $HOME/.kube/kind-m8kind-config`
+* pick up configuration for kubectl and check nodes of newly created cluster
+  'export KUBECONFIG="$KUBECONFIG:$HOME/.kube/kind-m8kind-config"
+* ensure the finleap helm repo has been added to your local configuration
+  ```
+  helm3 repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
+  helm3 repo update
+  ``'
+* deploy helm charts
+  `VERSION="0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
+
+
+
 ## To create a new aggregate
 
 1. Add command messages (command data, to be more specific) to separate file in `api/domain/commanddata/` folder
