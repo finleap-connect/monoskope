@@ -16,10 +16,6 @@ func thereIsAnEmptyListOfClusters() error {
 	return godog.ErrPending
 }
 
-func thereIsAnListOfClustersWithTheDnsAddresses(arg1 string) error {
-	return godog.ErrPending
-}
-
 func thereAreClustersWithTheDnsAddressesOf(tbl *Table) error {
 	return godog.ErrPending
 }
