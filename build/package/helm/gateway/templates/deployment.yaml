@@ -96,8 +96,9 @@ spec:
             - --http-api-addr=:{{ .Values.ports.httpApi }}
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - --metrics-addr=:{{ .Values.ports.metrics }}
-            - --issuer-identifier={{ .Values.auth.issuerIdentifier }}
-            - --issuer-url={{ .Values.auth.issuerURL }}
+            - --identity-provider-name={{ .Values.auth.identityProviderName }}
+            - --identity-provider-url={{ .Values.auth.identityProviderURL }}
+            - --issuer={{ .Values.auth.externalURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
           {{- if .Values.livenessProbe.enabled }}
