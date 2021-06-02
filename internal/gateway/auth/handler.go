@@ -38,8 +38,6 @@ func NewHandler(config *Config, signer jwt.JWTSigner, verifier jwt.JWTVerifier) 
 		log:        logger.WithName("auth"),
 	}
 	n.log.Info("Auth handler configured.",
-		"Issuer",
-		n.config.Issuer,
 		"IdentityProviderName",
 		n.config.IdentityProviderName,
 		"IdentityProvider",
@@ -239,13 +237,6 @@ func (n *Handler) Authorize(ctx context.Context, token string, claims interface{
 		return err
 	}
 	return nil
-}
-
-func (n *Handler) Discovery(keysPath string) *OpenIdConfiguration {
-	return &OpenIdConfiguration{
-		Issuer:  n.config.Issuer,
-		JwksURL: fmt.Sprintf("%s%s", n.config.Issuer, keysPath),
-	}
 }
 
 func (n *Handler) Keys() *jose.JSONWebKeySet {
