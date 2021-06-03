@@ -5,7 +5,7 @@ Feature: Clusters
    running in remote clusters.
    In general, cluster information should only be manipulated by admins with the system scope.
 
-   Scenario: create a cluster
+   Scenario: attempting to create a cluster with insufficient credentials
      Given there is an empty list of clusters
      And my name is "not-an-admin", my email is "not-an-admin@monoskope.io" and have a token issued by "monoskope"
      
