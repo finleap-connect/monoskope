@@ -98,6 +98,9 @@ go-test: $(GENERATED_GO_FILES)
 	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
+go-acceptance:
+	cd test/acceptance; godog
+
 go-coverage:
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
