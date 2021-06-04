@@ -57,9 +57,9 @@ used. Any solution utilized may or may not be specifig to a given tooling or IDE
 * implement an extension to the test environment, analog to `pkg/eventsourcing/messaging/testenv.go`
   that will start the reactor conatainers
 * automatically update Docker images executed by test
-** ensure that in-tree reactors are rebuild from latest source before starting integration test.
-** pass version information to test environment for starting the correct version of the container
-image. Do not use `latest` as development may be conducted by multiple developers concurrently.
+  * ensure that in-tree reactors are rebuild from latest source before starting integration test.
+  * pass version information to test environment for starting the correct version of the container
+    image. Do not use `latest` as development may be conducted by multiple developers concurrently.
 
 Optionally: build internal API for reactors to register themself to the control plane and add
 command to `monoctl` to allow admins to query the registered reactors.
@@ -70,3 +70,4 @@ Proposed
 
 ## Consequences
 
+* Implement extension to test environment (Ticket: TBD)
