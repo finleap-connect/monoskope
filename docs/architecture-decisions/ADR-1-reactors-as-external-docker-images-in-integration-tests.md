@@ -47,6 +47,11 @@ used. Any solution utilized may or may not be specifig to a given tooling or IDE
 
 * possibly no debug.
 
+## Criteria
+
+* keep integration test as close to production requirements and context as possible
+* allow for maximum extensibility.
+
 ## Decision
 
 * implement an extension to the test environment, analog to `pkg/eventsourcing/messaging/testenv.go`
