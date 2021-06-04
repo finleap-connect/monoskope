@@ -53,13 +53,14 @@ func NewVerifier(publicKeyFilename string, keyExpiration time.Duration) (JWTVeri
 	if err != nil {
 		return nil, err
 	}
-	go v.loadPublicKeyOnFileChange()
 
 	err = watcher.Add(publicKeyFilename)
 	if err != nil {
 		return nil, err
 	}
 	v.watcher = watcher
+
+	go v.loadPublicKeyOnFileChange()
 
 	return v, nil
 }

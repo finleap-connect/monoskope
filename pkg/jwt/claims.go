@@ -87,5 +87,6 @@ func (t *AuthToken) validate(expectedAudience ...string) error {
 	return t.ValidateWithLeeway(jwt.Expected{
 		Issuer:   MonoskopeIssuer,
 		Audience: expectedAudience,
+		Time:     time.Now().UTC(),
 	}, jwt.DefaultLeeway)
 }

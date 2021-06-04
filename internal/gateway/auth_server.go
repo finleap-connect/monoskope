@@ -177,7 +177,8 @@ func (s *authServer) tokenValidation(ctx context.Context, token string, expected
 	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
-	} else if err := authToken.Validate(expectedAudience...); err != nil {
+	}
+	if err := authToken.Validate(expectedAudience...); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}

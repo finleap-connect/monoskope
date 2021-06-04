@@ -51,7 +51,7 @@ var (
 
 type oAuthTestEnv struct {
 	*test.TestEnv
-	jwtTestEnv          *jwt.TestEnv
+	JwtTestEnv          *jwt.TestEnv
 	AuthConfig          *auth.Config
 	IdentityProviderURL string
 }
@@ -66,7 +66,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		_ = env.Shutdown()
 		return nil, err
 	}
-	env.jwtTestEnv = jwtTestEnv
+	env.JwtTestEnv = jwtTestEnv
 
 	err = env.CreateDockerPool()
 	if err != nil {
@@ -157,8 +157,8 @@ var _ = BeforeSuite(func(done Done) {
 	env, err = SetupAuthTestEnv("TestGateway")
 	Expect(err).ToNot(HaveOccurred())
 
-	signer := env.jwtTestEnv.CreateSigner()
-	verifier, err := env.jwtTestEnv.CreateVerifier(10 * time.Minute)
+	signer := env.JwtTestEnv.CreateSigner()
+	verifier, err := env.JwtTestEnv.CreateVerifier(10 * time.Minute)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Start gateway
