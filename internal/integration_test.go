@@ -204,11 +204,9 @@ var _ = Describe("integration", func() {
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(cluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
 
-		Expect(cluster.GetBootstrapToken()).To(Equal([]byte("foo")))
-
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())
-		Expect(tokenValue.GetValue()).To(Equal("foo"))
+		Expect(tokenValue.GetValue()).ToNot(Equal(""))
 
 	})
 })
