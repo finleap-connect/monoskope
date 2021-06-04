@@ -16,6 +16,8 @@ include:
   image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.2
   only:
     - web
+    - tags
+    - develop
 
 prepare:builder:
   stage: prepare

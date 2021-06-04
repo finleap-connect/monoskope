@@ -137,7 +137,3 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	}
 	return nil
 }
-
-func (a *ClusterAggregate) GetName() string {
-	return a.name
-}

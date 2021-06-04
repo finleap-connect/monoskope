@@ -20,7 +20,7 @@ var (
 
 var _ = Describe("Gateway", func() {
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListener.Addr().String())
+		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
@@ -31,7 +31,7 @@ var _ = Describe("Gateway", func() {
 		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListener.Addr().String())
+		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwcAuth := api.NewGatewayClient(conn)
@@ -53,7 +53,7 @@ var _ = Describe("Gateway", func() {
 		Expect(err).NotTo(HaveOccurred())
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
-		formAction := fmt.Sprintf("%s%s", env.IssuerURL, path)
+		formAction := fmt.Sprintf("%s%s", env.IdentityProviderURL, path)
 
 		var authCode string
 		var statusCode int
@@ -89,7 +89,7 @@ var _ = Describe("Gateway", func() {
 
 var _ = Describe("HealthCheck", func() {
 	It("can do health checks", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListener.Addr().String())
+		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

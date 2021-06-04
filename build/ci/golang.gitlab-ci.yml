@@ -55,8 +55,6 @@ test:golang:
 build:gateway:
   stage: build
   extends: .gobase-no-push
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-gateway
@@ -69,8 +67,6 @@ build:gateway:
 build:eventstore:
   stage: build
   extends: .gobase-no-push
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-eventstore
@@ -83,8 +79,6 @@ build:eventstore:
 build:commandhandler:
   stage: build
   extends: .gobase-no-push
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-commandhandler
@@ -97,8 +91,6 @@ build:commandhandler:
 build:queryhandler:
   stage: build
   extends: .gobase-no-push
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-queryhandler
@@ -111,8 +103,6 @@ build:queryhandler:
 build:clboreactor:
   stage: build
   extends: .gobase-no-push
-  only:
-    - web
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make go-build-clboreactor
@@ -182,6 +172,8 @@ scan:images:
   image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7.76.1
   only:
     - web
+    - tags
+    - develop
   script:
     - export VERSION=$(sh ./build/ci/configure_versions.sh)
     - sh ./build/ci/scan_images.sh

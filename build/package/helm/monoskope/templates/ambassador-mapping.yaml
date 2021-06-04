@@ -33,6 +33,34 @@ spec:
   rewrite: /common.ServiceInformationService/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
 ---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-oidc-discovery-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  bypass_auth: true
+  method: GET
+  prefix: /.well-known/
+  rewrite: /.well-known/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-oidc-keys-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  bypass_auth: true
+  method: GET
+  prefix: /keys
+  rewrite: /keys
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+---
 {{- end }}
 {{- if .Values.commandhandler.enabled }}
 apiVersion: getambassador.io/v1

@@ -9,24 +9,27 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // JWTVerifier verifies a JWT and parses claims
 type JWTVerifier interface {
 	Verify(string, interface{}) error
+	JWKS() *jose.JSONWebKeySet
+	KeyExpiration() time.Duration
 	Close() error
 }
 
-type key struct {
-	publicKey interface{}
-	expiry    time.Time
+type jwkWithExpiry struct {
+	jwk    *jose.JSONWebKey
+	expiry time.Time
 }
 
 type jwtVerifier struct {
 	log           logger.Logger
 	keyExpiration time.Duration
-	publicKey     []key
+	jsonWebKeys   []jwkWithExpiry
 	watcher       *fsnotify.Watcher
 	mutex         sync.RWMutex
 }
@@ -35,7 +38,7 @@ type jwtVerifier struct {
 func NewVerifier(publicKeyFilename string, keyExpiration time.Duration) (JWTVerifier, error) {
 	v := &jwtVerifier{
 		log:           logger.WithName("jwt-verifier"),
-		publicKey:     make([]key, 0),
+		jsonWebKeys:   make([]jwkWithExpiry, 0),
 		keyExpiration: keyExpiration,
 	}
 
@@ -50,13 +53,14 @@ func NewVerifier(publicKeyFilename string, keyExpiration time.Duration) (JWTVeri
 	if err != nil {
 		return nil, err
 	}
-	go v.loadPublicKeyOnFileChange()
 
 	err = watcher.Add(publicKeyFilename)
 	if err != nil {
 		return nil, err
 	}
 	v.watcher = watcher
+
+	go v.loadPublicKeyOnFileChange()
 
 	return v, nil
 }
@@ -74,7 +78,7 @@ func (v *jwtVerifier) loadPublicKeyOnFileChange() {
 				if err != nil {
 					v.log.Error(err, "Error rotating public key.")
 				}
-				v.log.Info("Public key has been updated.", "KeyCount", len(v.publicKey))
+				v.log.Info("Public key has been updated.", "KeyCount", len(v.jsonWebKeys))
 			}
 		case err, ok := <-v.watcher.Errors:
 			if !ok {
@@ -100,7 +104,7 @@ func (v *jwtVerifier) rotatePublicKey(filename string) error {
 		return err
 	}
 
-	v.publicKey = append(v.publicKey, key{publicKey: pubKey, expiry: time.Now().UTC().Add(v.keyExpiration)})
+	v.jsonWebKeys = append(v.jsonWebKeys, jwkWithExpiry{jwk: pubKey, expiry: time.Now().UTC().Add(v.keyExpiration)})
 	v.removeExpiredKeys()
 
 	return nil
@@ -108,11 +112,11 @@ func (v *jwtVerifier) rotatePublicKey(filename string) error {
 
 // removeExpiredKeys removes expired public keys from cache
 func (v *jwtVerifier) removeExpiredKeys() {
-	var validKeys []key
-	for _, k := range v.publicKey {
+	var validKeys []jwkWithExpiry
+	for _, k := range v.jsonWebKeys {
 		// check if expired and give a little extra time to verify
 		if k.expiry.Before(time.Now().UTC().Add(1 * time.Minute)) {
-			v.log.Info("Public key expired. Removing from list.", "Expiry", k.expiry, "KeyCount", len(v.publicKey))
+			v.log.Info("Public key expired. Removing from list.", "Expiry", k.expiry, "KeyCount", len(v.jsonWebKeys))
 		} else {
 			validKeys = append(validKeys, k)
 		}
@@ -124,7 +128,7 @@ func (v *jwtVerifier) removeExpiredKeys() {
 		panic(err)
 	}
 
-	v.publicKey = validKeys
+	v.jsonWebKeys = validKeys
 }
 
 // Verify parses the raw JWT, verifies the content against the public key of the verifier and parses the claims
@@ -141,18 +145,37 @@ func (v *jwtVerifier) Verify(rawJWT string, claims interface{}) error {
 		return err
 	}
 
-	// iterate known public keys to validate signature
-	for _, pubKey := range v.publicKey {
-		if err := parsedJWT.Claims(pubKey.publicKey, claims); err == nil {
-			v.log.Info("Successfully verified claims with one of the known public keys.", "Expiry", pubKey.expiry, "KeyCount", len(v.publicKey))
-			return nil
-		} else {
-			v.log.Info("Failed to verify claims with one of the known public keys.", "Expiry", pubKey.expiry, "KeyCount", len(v.publicKey), "error", err.Error())
+	kid := parsedJWT.Headers[0].KeyID
+	for _, key := range v.jsonWebKeys {
+		if key.jwk.KeyID == kid {
+			if err := parsedJWT.Claims(key.jwk, claims); err == nil {
+				v.log.Info("Successfully verified claims.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), "KeyID", key.jwk.KeyID)
+				return nil
+			} else {
+				v.log.Info("Failed to verify claims.", "Expiry", key.expiry, "KeyCount", len(v.jsonWebKeys), "KeyID", key.jwk.KeyID, "error", err.Error())
+			}
 		}
 	}
 
 	// none of the known keys could verify claims
 	return errors.New("failed to very claims")
+}
+
+func (v *jwtVerifier) JWKS() *jose.JSONWebKeySet {
+	v.mutex.RLock()
+	defer v.mutex.RUnlock()
+
+	jwks := &jose.JSONWebKeySet{
+		Keys: make([]jose.JSONWebKey, 0),
+	}
+	for _, k := range v.jsonWebKeys {
+		jwks.Keys = append(jwks.Keys, *k.jwk)
+	}
+	return jwks
+}
+
+func (v *jwtVerifier) KeyExpiration() time.Duration {
+	return v.keyExpiration
 }
 
 // Close closes file watcher

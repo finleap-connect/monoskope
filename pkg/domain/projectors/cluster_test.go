@@ -46,7 +46,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetName()).To(Equal(expectedName))
 		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
-		Expect(cluster.GetClusterCACert()).To(Equal(expectedClusterCACertBundle))
+		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		protoTokenCreatedEventData := &eventdata.ClusterBootstrapTokenCreated{
 			JWT: expectedJWT,

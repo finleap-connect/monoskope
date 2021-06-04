@@ -7,7 +7,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package commanddata;
 
-// used by ???
+// used by the M8 Cluster Operator to register itself
 message RequestClusterRegistration {
   // Unique name of the cluster
   string name = 1;

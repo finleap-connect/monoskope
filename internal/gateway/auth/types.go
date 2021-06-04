@@ -8,24 +8,29 @@ import (
 )
 
 type Config struct {
-	IssuerIdentifier string
-	IssuerURL        string
-	OfflineAsScope   bool
-	Nonce            string
-	ClientId         string
-	ClientSecret     string
-	Scopes           []string
-	RedirectURIs     []string
+	IdentityProvider     string
+	IdentityProviderName string
+	Scopes               []string
+	OfflineAsScope       bool
+	Nonce                string
+	ClientId             string
+	ClientSecret         string
+	RedirectURIs         []string
 }
 
 func (conf *Config) String() string {
 	return fmt.Sprintf(
-		"IssuerIdentifier: %s\\nIssuerURL: %s\\ņScopes: %v\\ņRedirectURIs: %v",
-		conf.IssuerIdentifier,
-		conf.IssuerURL,
+		"IdentityProviderName: %s\\IdentityProvider: %s\\ņScopes: %v\\ņRedirectURIs: %v",
+		conf.IdentityProviderName,
+		conf.IdentityProvider,
 		conf.Scopes,
 		conf.RedirectURIs,
 	)
+}
+
+type OpenIdConfiguration struct {
+	Issuer  string `json:"issuer"`
+	JwksURL string `json:"jwks_uri"`
 }
 
 type State struct {

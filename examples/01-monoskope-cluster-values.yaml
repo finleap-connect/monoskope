@@ -28,8 +28,8 @@ gateway:
   enabled: true
   replicaCount: 2
   auth:
-    issuerIdentifier: gitlab
-    issuerURL: https://gitlab.figo.systems
+    identityProviderName: gitlab
+    identityProviderURL: https://gitlab.figo.systems
   resources:
     limits:
       cpu: 2000m
