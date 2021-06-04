@@ -37,7 +37,7 @@ func (c *RequestClusterCertificateCommand) SetData(a *anypb.Any) error {
 // Policies returns the Role/Scope/Resource combination allowed to execute.
 func (c *RequestClusterCertificateCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins
-		//TODO: Add proper policy for k8s operator / m8 certissuer
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),       // Allows system admins
+		es.NewPolicy().WithRole(roles.K8sOperator).WithScope(scopes.System), // Allows k8s operators
 	}
 }

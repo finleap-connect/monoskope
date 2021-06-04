@@ -14,12 +14,16 @@ const (
 
 	// User role
 	User es.Role = "user"
+
+	// K8sOperator role
+	K8sOperator es.Role = "k8soperator"
 )
 
 // A list of all existing roles.
 var AvailableRoles = []es.Role{
 	Admin,
 	User,
+	K8sOperator,
 }
 
 func ValidateRole(role string) error {
