@@ -20,3 +20,9 @@ Example: the *ClusterBootstrapReactor* is implemented in
 * `build/package/helm/monoskope/values.yaml` Line 208ff
 
 ## out-of-tree
+
+TBD
+
+## Adding Reactors to integration test
+
+TBD
