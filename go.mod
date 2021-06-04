@@ -10,7 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-logr/logr v0.2.1
+	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/go-pg/pg/v10 v10.7.3
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
@@ -33,14 +33,14 @@ require (
 	github.com/ugorji/go v1.2.4 // indirect
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
-	golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
+	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/client-go v0.21.1
 )
