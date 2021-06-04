@@ -43,3 +43,4 @@ message ClusterBootstrapTokenCreated {
 }
 
 message ClusterCertificateRequested { bytes certificateSigningRequest = 1; }
+message ClusterCertificateIssued { bytes certificate = 1; }

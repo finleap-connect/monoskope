@@ -53,6 +53,24 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			event.AggregateType(),
 			event.AggregateID(),
 			event.AggregateVersion()+1))
+	case events.ClusterCertificateRequested:
+		data := &eventdata.ClusterCertificateRequested{}
+		if err := event.Data().ToProto(data); err != nil {
+			return nil, err
+		}
+
+		eventData := &eventdata.ClusterCertificateIssued{
+			Certificate: nil, // actually put that cert here
+		}
+
+		eventsToEmit = append(eventsToEmit, es.NewEvent(
+			ctx,
+			events.ClusterOperatorCertificateIssued,
+			es.ToEventDataFromProto(eventData),
+			time.Now().UTC(),
+			event.AggregateType(),
+			event.AggregateID(),
+			event.AggregateVersion()+1))
 	}
 
 	return eventsToEmit, nil
