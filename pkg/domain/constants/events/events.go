@@ -27,6 +27,8 @@ const (
 	ClusterBootstrapTokenCreated es.EventType = "ClusterBootstrapTokenCreated"
 	// Event emitted when a certificate has been requested for a cluster
 	ClusterCertificateRequested es.EventType = "ClusterCertificateRequested"
+	// Event emitted when a certificate request has been issued
+	ClusterOperatorCertificateRequestIssued es.EventType = "ClusterOperatorCertificateRequestIssued"
 	// Event emitted when a certificate has been issued for a cluster
 	ClusterOperatorCertificateIssued es.EventType = "ClusterOperatorCertificateIssued"
 )

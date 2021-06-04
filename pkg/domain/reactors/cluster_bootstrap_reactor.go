@@ -59,14 +59,12 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			return nil, err
 		}
 
-		eventData := &eventdata.ClusterCertificateIssued{
-			Certificate: nil, // actually put that cert here
-		}
+		//TODO: Issue cert with cert-manager
 
 		eventsToEmit = append(eventsToEmit, es.NewEvent(
 			ctx,
-			events.ClusterOperatorCertificateIssued,
-			es.ToEventDataFromProto(eventData),
+			events.ClusterOperatorCertificateRequestIssued,
+			nil,
 			time.Now().UTC(),
 			event.AggregateType(),
 			event.AggregateID(),
