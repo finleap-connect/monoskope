@@ -101,12 +101,31 @@ func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	return nil
 }
 
+// Tell the server to shutdown
+func (s *authServer) Shutdown() {
+	s.shutdown.Expect()
+}
+
 // registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
 	r.POST("/auth/*route", s.auth)
+	r.GET("/.well-known/openid-configuration", s.discovery)
+	r.GET("/keys", s.keys)
+}
+
+func (s *authServer) discovery(c *gin.Context) {
+	c.JSON(http.StatusOK, &auth.OpenIdConfiguration{
+		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
+		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
+	})
+}
+
+func (s *authServer) keys(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authHandler.KeyExpiration().Seconds())))
+	c.JSON(http.StatusOK, s.authHandler.Keys())
 }
 
 // auth serves as handler for the auth route of the server.
@@ -120,7 +139,7 @@ func (s *authServer) auth(c *gin.Context) {
 	}
 
 	var authToken *jwt.AuthToken
-	if authToken = s.tokenValidation(c); authToken != nil {
+	if authToken = s.tokenValidationFromContext(c); authToken != nil {
 		s.writeSuccess(c, authToken)
 		return
 	}
@@ -140,21 +159,26 @@ func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool)
 	return user.Id, true
 }
 
-// tokenValidation validates the token provided within the authorization
-func (s *authServer) tokenValidation(c *gin.Context) *jwt.AuthToken {
+// tokenValidationFromContext validates the token provided within the authorization flow from gin context
+func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
+	return s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+}
+
+// tokenValidation validates the token provided within the authorization flow
+func (s *authServer) tokenValidation(ctx context.Context, token string, expectedAudience ...string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
-	token := defaultBearerTokenFromRequest(c.Request)
 	if token == "" {
 		s.log.Info("Token validation failed.", "error", "token is empty")
 		return nil
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authHandler.Authorize(c.Request.Context(), token, authToken); err != nil {
+	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
-	} else if err := authToken.Validate(); err != nil {
+	}
+	if err := authToken.Validate(expectedAudience...); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
