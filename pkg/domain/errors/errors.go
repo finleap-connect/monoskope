@@ -41,9 +41,9 @@ var (
 
 var (
 	errorMap = map[codes.Code][]error{
-		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound, ErrClusterRegistrationNotFound},
+		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound, ErrClusterRegistrationNotFound, ErrClusterNotFound},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists},
+		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists, ErrClusterAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

@@ -27,10 +27,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	warumupSeconds := 30
-	if test.IsRunningInCI() {
-		warumupSeconds = 0 // no warmup necessary in CI
-	}
+	rabbitWarmUpSeconds := 30
 
 	if v := os.Getenv("AMQP_URL"); v != "" {
 		env.AmqpURL = v // running in ci pipeline
@@ -47,13 +44,20 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		if err != nil {
 			return nil, err
 		}
+		if container.Container.Created.Before(time.Now().Add(time.Second * time.Duration(-rabbitWarmUpSeconds))) {
+			rabbitWarmUpSeconds = 0
+		}
 
 		// Build connection string
 		env.AmqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
 	}
 
 	// Wait for rabbitmq to start
-	for i := warumupSeconds; i > 0; i-- {
+	if test.IsRunningInCI() {
+		rabbitWarmUpSeconds = 0 // no warmup necessary in CI
+	}
+
+	for i := rabbitWarmUpSeconds; i > 0; i-- {
 		env.Log.Info("Waiting for rabbitmq to warm up...", "secondsLeft", i)
 		time.Sleep(1 * time.Second)
 	}
