@@ -38,7 +38,7 @@ var _ = Describe("package reactors", func() {
 				CaCertificateBundle: []byte("somecabundle"),
 			}
 
-			It("generates a new cluster bootstrap token", func() {
+			It("emits a ClusterBootstrapTokenCreated event", func() {
 				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(evs)).To(BeNumerically("==", 1))
@@ -60,7 +60,7 @@ var _ = Describe("package reactors", func() {
 				CertificateSigningRequest: []byte("somesigningrequest"),
 			}
 
-			It("generates a new certificate", func() {
+			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
 				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(evs)).To(BeNumerically("==", 1))
