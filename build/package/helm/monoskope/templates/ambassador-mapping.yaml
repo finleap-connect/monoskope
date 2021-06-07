@@ -124,7 +124,7 @@ spec:
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
-  name: {{ include "monoskope.fullname" . }}-qh-tenantsvc-mapping
+  name: {{ include "monoskope.fullname" . }}-qh-clustersvc-mapping
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
