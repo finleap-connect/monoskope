@@ -7,16 +7,25 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
 
 var _ = Describe("package reactors", func() {
 	Context("ClusterBootstrapReactor", func() {
 		ctx := context.Background()
 		aggregateType := aggregates.Cluster
+
+		testEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestReactors"))
+		Expect(err).NotTo(HaveOccurred())
+		defer util.PanicOnError(testEnv.Shutdown())
+
+		reactor := NewClusterBootstrapReactor(testEnv.CreateSigner())
 
 		When("ClusterCreated event occurs", func() {
 			aggregateId := uuid.New()
@@ -30,7 +39,6 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("generates a new cluster bootstrap token", func() {
-				reactor := NewClusterBootstrapReactor(JwtTestEnv.CreateSigner())
 				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(evs)).To(BeNumerically("==", 1))
@@ -53,7 +61,6 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("generates a new certificate", func() {
-				reactor := NewClusterBootstrapReactor(JwtTestEnv.CreateSigner())
 				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(evs)).To(BeNumerically("==", 1))
