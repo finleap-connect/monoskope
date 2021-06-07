@@ -212,6 +212,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		// Read next
 		firstCluster, err := clusterStream.Recv()
+		Expect(err).ToNot(HaveOccurred())
 
 		Expect(firstCluster).ToNot(BeNil())
 		Expect(firstCluster.GetName()).To(Equal("my awesome cluster"))
