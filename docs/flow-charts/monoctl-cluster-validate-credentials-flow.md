@@ -1,0 +1,24 @@
+**[[Back To Overview]](..)**
+
+# `monoctl` validate cluster credentials flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant K as kubectl
+    participant C as KubeApiServer
+    participant A as Ambassador
+    participant G as Gateway
+    participant Q as QueryHandler
+    U-->>+K: kubectl get nodes
+    K-->>+C: calls get nodes
+    C-->>+A: calls webhook
+    A-->>+G: authenticate request
+    G-->>G: validate token
+    G-->>+Q: get user’s roles
+    G-->>G: validate if user is authorized to access cluster
+    G-->>-A: returns authorized
+    A-->>-C: returns authorized
+    C-->>-K: returns response
+    K-->>-U: shows nodes of cluster
+```

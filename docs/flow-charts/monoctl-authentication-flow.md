@@ -1,4 +1,4 @@
-**[[Back To Overview]](../README.md)**
+**[[Back To Overview]](..)**
 
 # `monoctl` authentication flow
 
