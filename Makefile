@@ -14,8 +14,6 @@ export
 clean: go-clean helm-clean tools-clean
 
 # go
-#go-%:
-#	@$(MAKE) -f go.mk $*
 include go.mk
 
 # helm

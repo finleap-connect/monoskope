@@ -9,7 +9,10 @@ GINKO_VERSION  ?= v1.15.2
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
-PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
+MOCKGEN         ?= $(TOOLS_DIR)/mockgen
+GOMOCK_VERSION  ?= v1.5.0
+
+PROTOC 	   	           	   ?= $(TOOLS_DIR)/protoc
 PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
 PROTOC_VERSION             ?= 3.17.0
 PROTOC_GEN_GO_VERSION      ?= v1.26.0
@@ -107,12 +110,8 @@ ginkgo-get:
 golangci-lint-get:
 	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
-
-ginkgo-clean:
-	rm -Rf $(TOOLS_DIR)/ginkgo
-
-golangci-lint-clean:
-	rm -Rf $(TOOLS_DIR)/golangci-lint
+gomock-get:
+	$(shell $(TOOLS_DIR)/goget-wrapper github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
 protoc-get:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
@@ -124,13 +123,15 @@ protoc-get:
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-go-tools: golangci-lint-get ginkgo-get protoc-get
+go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get
 
-go-clean: ginkgo-clean golangci-lint-clean go-build-clean
+go-clean: go-build-clean
 	rm  .protobuf-deps
 	rm -Rf reports/
 	find . -name '*.coverprofile' -exec rm {} \;
-
+	rm -Rf $(MOCKGEN)
+	rm -Rf $(GINKGO)
+	rm -Rf $(LINTER)
 
 %.pb.go: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
@@ -170,3 +171,6 @@ go-build-commandhandler: $(CMD_COMMANDHANDLER)
 go-build-queryhandler: $(CMD_QUERYHANDLER)
 
 go-build-clboreactor: $(CMD_CLBOREACTOR)
+
+go-rebuild-mocks:
+	$(MOCKGEN) -package k8s -source=pkg/k8s/client.go -destination pkg/k8s/mock_client.go
