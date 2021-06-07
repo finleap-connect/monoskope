@@ -1,14 +1,16 @@
 package certificatemanagement
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	"k8s.io/client-go/kubernetes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 )
 
 type certManagerClient struct {
+	k8sClient     k8s.K8sClient
 	issuer        string
 	namingPattern string
 	namespace     string
@@ -16,8 +18,9 @@ type certManagerClient struct {
 }
 
 // NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
-func NewCertManagerClient(k8sClient *kubernetes.Clientset, namingPattern, namespace, issuer string, duration time.Duration) CertificateManager {
+func NewCertManagerClient(k8sClient k8s.K8sClient, namingPattern, namespace, issuer string, duration time.Duration) CertificateManager {
 	return &certManagerClient{
+		k8sClient:     k8sClient,
 		issuer:        issuer,
 		namingPattern: namingPattern,
 		namespace:     namespace,
@@ -26,8 +29,8 @@ func NewCertManagerClient(k8sClient *kubernetes.Clientset, namingPattern, namesp
 }
 
 // RequestCertificate requests a new certificate based on the given certificate signing request
-func (c *certManagerClient) RequestCertificate(requestID uuid.UUID, csr []byte) error {
-	cr := &cmapi.CertificateRequest{}
+func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uuid.UUID, csr []byte) error {
+	cr := new(cmapi.CertificateRequest)
 
 	// fixed defaults
 	cr.Spec.Usages = append(cr.Spec.Usages, "server auth", "client auth")
@@ -42,5 +45,5 @@ func (c *certManagerClient) RequestCertificate(requestID uuid.UUID, csr []byte) 
 	cr.Spec.IssuerRef.Name = c.issuer
 	cr.Spec.Duration.Duration = c.duration
 
-	return nil
+	return c.k8sClient.Create(ctx, cr)
 }

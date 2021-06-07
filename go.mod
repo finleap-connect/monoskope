@@ -43,6 +43,8 @@ require (
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/apimachinery v0.21.1
 	k8s.io/client-go v0.21.1
+	sigs.k8s.io/controller-runtime v0.6.2
 
 )

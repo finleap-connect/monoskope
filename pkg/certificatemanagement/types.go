@@ -1,6 +1,8 @@
 package certificatemanagement
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 )
 
@@ -8,5 +10,5 @@ import (
 type CertificateManager interface {
 	// RequestCertificate creates a new CertificateRequest with the given
 	// base64 encoded string of a PEM encoded certificate request.
-	RequestCertificate(requestID uuid.UUID, csr []byte) error
+	RequestCertificate(ctx context.Context, requestID uuid.UUID, csr []byte) error
 }
