@@ -6,19 +6,19 @@ import (
 
 	"github.com/google/uuid"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type certManagerClient struct {
-	k8sClient k8s.K8sClient
+	k8sClient ctrlclient.Client
 	issuer    string
 	namespace string
 	duration  time.Duration
 }
 
 // NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
-func NewCertManagerClient(k8sClient k8s.K8sClient, namespace, issuer string, duration time.Duration) CertificateManager {
+func NewCertManagerClient(k8sClient ctrlclient.Client, namespace, issuer string, duration time.Duration) CertificateManager {
 	return &certManagerClient{
 		k8sClient: k8sClient,
 		issuer:    issuer,

@@ -34,7 +34,7 @@ var _ = Describe("package certificatemanagement", func() {
 			expectedDuration := time.Hour * 48
 
 			It("no error occurs", func() {
-				k8sClient := k8s.NewMockK8sClient(mockCtrl)
+				k8sClient := k8s.NewMockClient(mockCtrl)
 
 				cr := new(cmapi.CertificateRequest)
 				cr.Spec.Usages = append(cr.Spec.Usages, "server auth", "client auth")

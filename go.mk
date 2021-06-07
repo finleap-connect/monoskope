@@ -173,4 +173,4 @@ go-build-queryhandler: $(CMD_QUERYHANDLER)
 go-build-clboreactor: $(CMD_CLBOREACTOR)
 
 go-rebuild-mocks:
-	$(MOCKGEN) -package k8s -source=pkg/k8s/client.go -destination pkg/k8s/mock_client.go
+	$(MOCKGEN) -package k8s -destination pkg/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
