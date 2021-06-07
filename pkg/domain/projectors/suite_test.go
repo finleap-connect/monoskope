@@ -1,6 +1,8 @@
 package projectors
 
 import (
+	"testing"
+
 	"github.com/onsi/ginkgo/reporters"
 
 	. "github.com/onsi/ginkgo"
@@ -9,14 +11,11 @@ import (
 	_ "gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
-var _ = Describe("Testing with Ginkgo", func() {
-	It("projectors", func() {
-
-		RegisterFailHandler(Fail)
-		junitReporter := reporters.NewJUnitReporter("../../../reports/domain-projectors-junit.xml")
-		RunSpecsWithDefaultAndCustomReporters(GinkgoT(), "TestProjectors", []Reporter{junitReporter})
-	})
-})
+func TestQueryHandler(t *testing.T) {
+	RegisterFailHandler(Fail)
+	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-projectors-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/projectors", []Reporter{junitReporter})
+}
 
 var _ = BeforeSuite(func(done Done) {
 	defer close(done)

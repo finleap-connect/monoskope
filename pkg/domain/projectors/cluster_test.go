@@ -28,7 +28,7 @@ var _ = Describe("domain/cluster_repo", func() {
 	userId := uuid.New()
 	adminUser := &apiProjections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
 
-	It("can handle events", func() {
+	It("can handle ClusterCreated events", func() {
 		clusterProjector := NewClusterProjector()
 		clusterProjection := clusterProjector.NewProjection(uuid.New())
 		protoClusterCreatedEventData := &eventdata.ClusterCreated{
@@ -40,7 +40,36 @@ var _ = Describe("domain/cluster_repo", func() {
 		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
 		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.MustParse(adminUser.Id), 1), clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
+
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
+
+		cluster, ok := clusterProjection.(*projections.Cluster)
+		Expect(ok).To(BeTrue())
+
+		Expect(cluster.GetName()).To(Equal(expectedName))
+		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
+		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
+		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
+
+		Expect(cluster.Metadata).ToNot(BeNil())
+		Expect(cluster.Metadata.Created).ToNot(BeNil())
+	})
+
+	It("can handle ClusterBootstrapTokenCreated events", func() {
+		clusterProjector := NewClusterProjector()
+		clusterProjection := clusterProjector.NewProjection(uuid.New())
+		protoClusterCreatedEventData := &eventdata.ClusterCreated{
+			Name:                expectedName,
+			Label:               expectedLabel,
+			ApiServerAddress:    expectedApiServerAddress,
+			CaCertificateBundle: expectedClusterCACertBundle,
+		}
+		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
+		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.MustParse(adminUser.Id), 1), clusterProjection)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
+
 		cluster, ok := clusterProjection.(*projections.Cluster)
 		Expect(ok).To(BeTrue())
 		Expect(cluster.GetName()).To(Equal(expectedName))
@@ -58,5 +87,9 @@ var _ = Describe("domain/cluster_repo", func() {
 		cluster, ok = clusterProjection.(*projections.Cluster)
 		Expect(ok).To(BeTrue())
 		Expect(cluster.GetBootstrapToken()).To(Equal(expectedJWT))
+
+		Expect(cluster.Metadata).ToNot(BeNil())
+		Expect(cluster.Metadata.LastModified).ToNot(BeNil())
+
 	})
 })
