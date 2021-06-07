@@ -2,15 +2,19 @@ package certificatemanagement
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type certManagerClient struct {
+	log       logger.Logger
 	k8sClient ctrlclient.Client
 	issuer    string
 	namespace string
@@ -20,6 +24,7 @@ type certManagerClient struct {
 // NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
 func NewCertManagerClient(k8sClient ctrlclient.Client, namespace, issuer string, duration time.Duration) CertificateManager {
 	return &certManagerClient{
+		log:       logger.WithName("certManagerClient"),
 		k8sClient: k8sClient,
 		issuer:    issuer,
 		namespace: namespace,
@@ -46,5 +51,37 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 		Duration: c.duration,
 	}
 
-	return c.k8sClient.Create(ctx, cr)
+	c.log.Info("Requesting certificate...", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
+	err := c.k8sClient.Create(ctx, cr)
+	if err != nil {
+		c.log.Error(err, "Requesting certificate failed.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
+		return ErrRequestFailed
+	}
+	return nil
+}
+
+// GetCertificate returns a byte slice containing a PEM encoded signed certificate resulting from a certificate signing request identified by the requestID
+func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.UUID) ([]byte, error) {
+	cr := new(cmapi.CertificateRequest)
+	err := c.k8sClient.Get(ctx, types.NamespacedName{Name: requestID.String(), Namespace: c.namespace}, cr)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, condition := range cr.Status.Conditions {
+		c.log.Info(condition.Message, "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer, "ConditionType", condition.Type)
+
+		switch condition.Type {
+		case cmapi.CertificateRequestConditionApproved:
+			return nil, ErrRequestPending
+		case cmapi.CertificateRequestConditionInvalidRequest:
+			return nil, ErrRequestInvalid
+		case cmapi.CertificateRequestConditionDenied:
+			return nil, ErrRequestDenied
+		case cmapi.CertificateRequestConditionReady:
+			return cr.Status.Certificate, nil
+		}
+	}
+
+	return nil, errors.New("fuck")
 }

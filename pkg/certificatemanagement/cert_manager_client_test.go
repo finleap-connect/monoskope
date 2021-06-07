@@ -11,12 +11,18 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("package certificatemanagement", func() {
 	Context("CertManagerClient", func() {
 		var mockCtrl *gomock.Controller
 		ctx := context.Background()
+		expectedCSRID := uuid.New()
+		expectedNamespace := "monoskope"
+		expectedIssuer := "monoskope-issuer"
+		expectedDuration := time.Hour * 48
 
 		BeforeEach(func() {
 			mockCtrl = gomock.NewController(GinkgoT())
@@ -27,13 +33,9 @@ var _ = Describe("package certificatemanagement", func() {
 		})
 
 		When("RequestCertificate is called with a valid CSR", func() {
-			expectedCSRID := uuid.New()
 			expectedCSR := []byte("some-csr-bytes")
-			expectedNamespace := "monoskope"
-			expectedIssuer := "monoskope-issuer"
-			expectedDuration := time.Hour * 48
 
-			It("no error occurs", func() {
+			It("returns no error", func() {
 				k8sClient := k8s.NewMockClient(mockCtrl)
 
 				cr := new(cmapi.CertificateRequest)
@@ -57,5 +59,27 @@ var _ = Describe("package certificatemanagement", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
+
+		When("GetCertificate is called", func() {
+			expectedCert := []byte("some-cert")
+
+			It("returns the issued cert with no error", func() {
+				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
+					cr := obj.(*cmapi.CertificateRequest)
+					cr.Status.Conditions = append(cr.Status.Conditions, cmapi.CertificateRequestCondition{
+						Type: cmapi.CertificateRequestConditionReady,
+					})
+					cr.Status.Certificate = expectedCert
+					return nil
+				})
+
+				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+				cert, err := client.GetCertificate(ctx, expectedCSRID)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cert).To(Equal(expectedCert))
+			})
+		})
+
 	})
 })
