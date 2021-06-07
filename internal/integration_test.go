@@ -181,6 +181,9 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+
+		Expect(tenant.Metadata.Created).NotTo(BeNil())
+
 	})
 	It("manage a cluster", func() {
 		clusterId := uuid.New()
@@ -219,6 +222,8 @@ var _ = Describe("integration", func() {
 		Expect(firstCluster.GetLabel()).To(Equal("mac"))
 		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(firstCluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
+
+		Expect(firstCluster.Metadata.Created).NotTo(BeNil())
 
 		By("by retrieving the bootstrap token")
 
