@@ -7,24 +7,23 @@ import (
 	"github.com/google/uuid"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type certManagerClient struct {
-	k8sClient     k8s.K8sClient
-	issuer        string
-	namingPattern string
-	namespace     string
-	duration      time.Duration
+	k8sClient k8s.K8sClient
+	issuer    string
+	namespace string
+	duration  time.Duration
 }
 
 // NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
-func NewCertManagerClient(k8sClient k8s.K8sClient, namingPattern, namespace, issuer string, duration time.Duration) CertificateManager {
+func NewCertManagerClient(k8sClient k8s.K8sClient, namespace, issuer string, duration time.Duration) CertificateManager {
 	return &certManagerClient{
-		k8sClient:     k8sClient,
-		issuer:        issuer,
-		namingPattern: namingPattern,
-		namespace:     namespace,
-		duration:      duration,
+		k8sClient: k8sClient,
+		issuer:    issuer,
+		namespace: namespace,
+		duration:  duration,
 	}
 }
 
@@ -43,7 +42,9 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 	cr.Namespace = c.namespace
 	cr.Spec.Request = csr
 	cr.Spec.IssuerRef.Name = c.issuer
-	cr.Spec.Duration.Duration = c.duration
+	cr.Spec.Duration = &v1.Duration{
+		Duration: c.duration,
+	}
 
 	return c.k8sClient.Create(ctx, cr)
 }
