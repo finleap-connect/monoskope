@@ -3,18 +3,30 @@ package certificatemanagement
 import (
 	"time"
 
+	"github.com/google/uuid"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type certManagerClient struct {
+	issuer        string
+	namingPattern string
+	namespace     string
+	duration      time.Duration
 }
 
-func NewCertManagerClient(k8sClient *kubernetes.Clientset) CertificateManager {
-	return &certManagerClient{}
+// NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
+func NewCertManagerClient(k8sClient *kubernetes.Clientset, namingPattern, namespace, issuer string, duration time.Duration) CertificateManager {
+	return &certManagerClient{
+		issuer:        issuer,
+		namingPattern: namingPattern,
+		namespace:     namespace,
+		duration:      duration,
+	}
 }
 
-func (c *certManagerClient) CreateCertificateRequest(name, namespace, issuer string, request []byte, duration time.Duration) error {
+// RequestCertificate requests a new certificate based on the given certificate signing request
+func (c *certManagerClient) RequestCertificate(requestID uuid.UUID, csr []byte) error {
 	cr := &cmapi.CertificateRequest{}
 
 	// fixed defaults
@@ -24,11 +36,11 @@ func (c *certManagerClient) CreateCertificateRequest(name, namespace, issuer str
 	cr.Spec.IsCA = false
 
 	// input
-	cr.Name = name
-	cr.Namespace = namespace
-	cr.Spec.Request = request
-	cr.Spec.IssuerRef.Name = issuer
-	cr.Spec.Duration.Duration = duration
+	cr.Name = requestID.String()
+	cr.Namespace = c.namespace
+	cr.Spec.Request = csr
+	cr.Spec.IssuerRef.Name = c.issuer
+	cr.Spec.Duration.Duration = c.duration
 
 	return nil
 }
