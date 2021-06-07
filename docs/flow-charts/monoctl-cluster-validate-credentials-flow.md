@@ -1,4 +1,4 @@
-**[[Back To Overview]](..)**
+**[[Back To Overview]](../)**
 
 # `monoctl` validate cluster credentials flow
 
