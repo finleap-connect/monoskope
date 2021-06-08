@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/heptiolabs/healthcheck"
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -13,7 +15,10 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/clusterbootstrapreactor"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/certificatemanagement"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -22,6 +27,8 @@ var (
 	metricsAddr    string
 	eventStoreAddr string
 	msgbusPrefix   string
+	certIssuer     string
+	certDuration   string
 )
 
 var serveCmd = &cobra.Command{
@@ -34,8 +41,12 @@ var serveCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Add health check
+		k8sNamespace := os.Getenv("K8S_NAMESPACE")
+		if k8sNamespace == "" {
+			return errors.New("K8S_NAMESPACE env variable not set")
+		}
 		promRegistry := prom.NewRegistry()
-		healthCheckHandler := healthcheck.NewMetricsHandler(promRegistry, os.Getenv("K8S_NAMESPACE"))
+		healthCheckHandler := healthcheck.NewMetricsHandler(promRegistry, k8sNamespace)
 		go func() {
 			log.Info(http.ListenAndServe(healthAddr, healthCheckHandler).Error())
 		}()
@@ -56,8 +67,21 @@ var serveCmd = &cobra.Command{
 		}
 		defer ebConsumer.Close()
 
+		// Set up K8s client
+		k8sClient, err := k8s.NewClient()
+		if err != nil {
+			return err
+		}
+
+		// Set up CertificateManager
+		duration, err := time.ParseDuration(certDuration)
+		if err != nil {
+			return err
+		}
+		certManager := certificatemanagement.NewCertManagerClient(k8sClient, k8sNamespace, certIssuer, duration)
+
 		// Set up
-		err = clusterbootstrapreactor.SetupClusterBootstrapReactor(ctx, ebConsumer, esClient)
+		err = clusterbootstrapreactor.SetupClusterBootstrapReactor(ctx, ebConsumer, esClient, certManager)
 		if err != nil {
 			return err
 		}
@@ -82,4 +106,8 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
+
+	flags.StringVarP(&certDuration, "certificate-duration", "d", "48h", "Certificate validity to request certificates for")
+	flags.StringVarP(&certIssuer, "certificate-issuer", "i", "", "Certificate issuer name to request certificates from")
+	util.PanicOnError(cobra.MarkFlagRequired(flags, "certificate-issuer"))
 }
