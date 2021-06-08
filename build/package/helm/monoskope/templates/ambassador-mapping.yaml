@@ -120,5 +120,19 @@ spec:
   prefix: /domain.Tenant/
   rewrite: /domain.Tenant/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clustersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Cluster/
+  rewrite: /domain.Cluster/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 {{- end }}
 {{- end }}
