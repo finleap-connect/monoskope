@@ -51,8 +51,10 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
 		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
 
-		Expect(cluster.Metadata).ToNot(BeNil())
-		Expect(cluster.Metadata.Created).ToNot(BeNil())
+		dp, ok := clusterProjection.(*projections.DomainProjection)
+		Expect(ok).To(BeTrue())
+
+		Expect(db.Created).ToNot(BeNil())
 	})
 
 	It("can handle ClusterBootstrapTokenCreated events", func() {
@@ -88,8 +90,10 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(ok).To(BeTrue())
 		Expect(cluster.GetBootstrapToken()).To(Equal(expectedJWT))
 
-		Expect(cluster.Metadata).ToNot(BeNil())
-		Expect(cluster.Metadata.LastModified).ToNot(BeNil())
+		dp, ok := clusterProjection.(*projections.DomainProjection)
+		Expect(ok).To(BeTrue())
+
+		Expect(db.LastModified).ToNot(BeNil())
 
 	})
 })

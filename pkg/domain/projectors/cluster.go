@@ -22,7 +22,7 @@ func NewClusterProjector() es.Projector {
 }
 
 func (u *clusterProjector) NewProjection(id uuid.UUID) es.Projection {
-	return projections.NewCluster(id)
+	return projections.NewClusterProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.

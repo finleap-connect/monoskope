@@ -61,21 +61,24 @@ func (r *clusterRepository) ByClusterId(ctx context.Context, id string) (*projec
 		return nil, esErrors.ErrInvalidProjectionType
 	}
 
+	err = r.addMetadata(ctx, cluster.DomainProjection)
+	if err != nil {
+		return nil, err
+	}
+
 	return cluster, nil
 }
 
 // ByClusterName searches for a cluster projection by its name.
 func (r *clusterRepository) ByClusterName(ctx context.Context, clusterName string) (*projections.Cluster, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.GetAll(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, p := range ps {
-		if t, ok := p.(*projections.Cluster); ok {
-			if clusterName == t.Name {
-				return t, nil
-			}
+	for _, c := range ps {
+		if clusterName == c.Name {
+			return c, nil
 		}
 	}
 
