@@ -8,9 +8,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	apiProjections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -24,7 +24,16 @@ var _ = Describe("process tenant", func() {
 
 	ctx := context.Background()
 	userId := uuid.New()
-	adminUser := &apiProjections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
+
+	mdManager, err := metadata.NewDomainMetadataManager(ctx)
+	Expect(err).ToNot(HaveOccurred())
+	mdManager.SetUserInformation(&metadata.UserInformation{
+		Id:     userId,
+		Name:   "admin",
+		Email:  "admin@monoskope.io",
+		Issuer: "monoskope",
+	})
+	ctx = mdManager.GetContext()
 
 	It("can handle TenantCreated events", func() {
 		tenantProjector := NewTenantProjector()
@@ -34,7 +43,7 @@ var _ = Describe("process tenant", func() {
 			Prefix: expectedPrefix,
 		}
 		tenantCreatedEventData := es.ToEventDataFromProto(prototenantCreatedEventData)
-		tenantProjection, err := tenantProjector.Project(context.Background(), es.NewEvent(ctx, events.TenantCreated, tenantCreatedEventData, time.Now().UTC(), aggregates.Tenant, uuid.MustParse(adminUser.Id), 1), tenantProjection)
+		tenantProjection, err := tenantProjector.Project(ctx, es.NewEvent(ctx, events.TenantCreated, tenantCreatedEventData, time.Now().UTC(), aggregates.Tenant, uuid.New(), 1), tenantProjection)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(tenantProjection.Version()).To(Equal(uint64(1)))
