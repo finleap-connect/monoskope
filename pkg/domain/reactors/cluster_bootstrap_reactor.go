@@ -9,28 +9,29 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type clusterBootstrapReactor struct {
+	log    logger.Logger
 	signer jwt.JWTSigner
 }
 
 // NewClusterBootstrapReactor creates a new Reactor.
 func NewClusterBootstrapReactor(signer jwt.JWTSigner) es.Reactor {
 	return &clusterBootstrapReactor{
+		log:    logger.WithName("clusterBootstrapReactor"),
 		signer: signer,
 	}
 }
 
 // HandleEvent handles a given event returns 0..* Events in reaction or an error
-func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Event) ([]es.Event, error) {
-	eventsToEmit := make([]es.Event, 0)
-
+func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Event, evs chan<- es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
 		data := &eventdata.ClusterCreated{}
 		if err := event.Data().ToProto(data); err != nil {
-			return nil, err
+			return err
 		}
 
 		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
@@ -38,38 +39,38 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			Email: data.Name + "@monoskope.io",
 		}, uuid.New().String(), "cluster-bootstrap-reactor"))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		eventData := &eventdata.ClusterBootstrapTokenCreated{
 			JWT: rawJWT,
 		}
 
-		eventsToEmit = append(eventsToEmit, es.NewEvent(
+		evs <- es.NewEvent(
 			ctx,
 			events.ClusterBootstrapTokenCreated,
 			es.ToEventDataFromProto(eventData),
 			time.Now().UTC(),
 			event.AggregateType(),
 			event.AggregateID(),
-			event.AggregateVersion()+1))
+			event.AggregateVersion()+1)
 	case events.ClusterCertificateRequested:
 		data := &eventdata.ClusterCertificateRequested{}
 		if err := event.Data().ToProto(data); err != nil {
-			return nil, err
+			return err
 		}
 
 		//TODO: Issue cert with cert-manager
 
-		eventsToEmit = append(eventsToEmit, es.NewEvent(
+		evs <- es.NewEvent(
 			ctx,
 			events.ClusterOperatorCertificateRequestIssued,
 			nil,
 			time.Now().UTC(),
 			event.AggregateType(),
 			event.AggregateID(),
-			event.AggregateVersion()+1))
+			event.AggregateVersion()+1)
 	}
 
-	return eventsToEmit, nil
+	return nil
 }

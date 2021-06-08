@@ -39,11 +39,15 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("emits a ClusterBootstrapTokenCreated event", func() {
-				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(len(evs)).To(BeNumerically("==", 1))
+				eventChannel := make(chan eventsourcing.Event)
+				defer close(eventChannel)
 
-				event := evs[0]
+				go func() {
+					err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
+					Expect(err).NotTo(HaveOccurred())
+				}()
+
+				event := <-eventChannel
 				Expect(event.EventType()).To(Equal(events.ClusterBootstrapTokenCreated))
 
 				eventDataTokenCreated := &eventdata.ClusterBootstrapTokenCreated{}
@@ -61,11 +65,15 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
-				evs, err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(len(evs)).To(BeNumerically("==", 1))
+				eventChannel := make(chan eventsourcing.Event)
+				defer close(eventChannel)
 
-				event := evs[0]
+				go func() {
+					err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
+					Expect(err).NotTo(HaveOccurred())
+				}()
+
+				event := <-eventChannel
 				Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateRequestIssued))
 			})
 		})
