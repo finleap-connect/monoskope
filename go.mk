@@ -3,6 +3,8 @@ GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 
 GO             ?= go
 
+GOGET          ?= $(HACK_DIR)/goget-wrapper
+
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.15.2
 
@@ -105,13 +107,13 @@ go-loc:
 	@gocloc .
 
 ginkgo-get:
-	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
+	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get:
 	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
 gomock-get:
-	$(shell $(TOOLS_DIR)/goget-wrapper github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
+	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
 protoc-get:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
@@ -120,18 +122,17 @@ protoc-get:
 	mkdir -p $(PROTOC_IMPORTS_DIR)/
 	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
 	rm -rf $(TOOLS_DIR)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
-	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
-	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
+	$(shell $(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
+	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
 go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get
 
 go-clean: go-build-clean
 	rm  .protobuf-deps
 	rm -Rf reports/
+	rm -Rf $(TOOLS_DIR)/
+	mkdir $(TOOLS_DIR)
 	find . -name '*.coverprofile' -exec rm {} \;
-	rm -Rf $(MOCKGEN)
-	rm -Rf $(GINKGO)
-	rm -Rf $(LINTER)
 
 %.pb.go: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api

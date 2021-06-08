@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-wd=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+wd=$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../tools && pwd)
 pwd=$(pwd)
 tmp_dir=$(mktemp -d)
 function cleanup {
