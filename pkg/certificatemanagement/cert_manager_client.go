@@ -2,7 +2,6 @@ package certificatemanagement
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,9 +78,13 @@ func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.U
 		case cmapi.CertificateRequestConditionDenied:
 			return nil, ErrRequestDenied
 		case cmapi.CertificateRequestConditionReady:
+			err := c.k8sClient.Delete(ctx, cr)
+			if err != nil {
+				c.log.Error(err, "Failed to delete request after successfull certificate issueing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
+			}
 			return cr.Status.Certificate, nil
 		}
 	}
 
-	return nil, errors.New("fuck")
+	return nil, ErrRequestPending
 }

@@ -68,9 +68,11 @@ var _ = Describe("package certificatemanagement", func() {
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
 					cr.Status.Conditions = append(cr.Status.Conditions, cmapi.CertificateRequestCondition{
-						Type: cmapi.CertificateRequestConditionReady,
+						Type:    cmapi.CertificateRequestConditionReady,
+						Message: "Certificate ready.",
 					})
 					cr.Status.Certificate = expectedCert
+					k8sClient.EXPECT().Delete(ctx, cr).Return(nil)
 					return nil
 				})
 
@@ -79,7 +81,35 @@ var _ = Describe("package certificatemanagement", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cert).To(Equal(expectedCert))
 			})
-		})
 
+			// Checks the GetCertificate method returns the right errors based on the condition the CertificateRequest is in
+			checkErrorResponse := func(condition cmapi.CertificateRequestConditionType, expectedError error) {
+				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
+					cr := obj.(*cmapi.CertificateRequest)
+					cr.Status.Conditions = append(cr.Status.Conditions, cmapi.CertificateRequestCondition{
+						Type:    condition,
+						Message: string(condition),
+					})
+					return nil
+				})
+
+				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+				cert, err := client.GetCertificate(ctx, expectedCSRID)
+				Expect(expectedError).To(HaveOccurred())
+				Expect(cert).To(BeNil())
+				Expect(err).To(Equal(expectedError))
+			}
+
+			It("returns ErrRequestPending when condition is CertificateRequestConditionApproved", func() {
+				checkErrorResponse(cmapi.CertificateRequestConditionApproved, ErrRequestPending)
+			})
+			It("returns ErrRequestInvalid when condition is CertificateRequestConditionInvalidRequest", func() {
+				checkErrorResponse(cmapi.CertificateRequestConditionInvalidRequest, ErrRequestInvalid)
+			})
+			It("returns ErrRequestDenied when condition is CertificateRequestConditionDenied", func() {
+				checkErrorResponse(cmapi.CertificateRequestConditionDenied, ErrRequestDenied)
+			})
+		})
 	})
 })
