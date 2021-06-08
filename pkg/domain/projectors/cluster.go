@@ -53,6 +53,7 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		p.Label = data.GetLabel()
 		p.ApiServerAddress = data.GetApiServerAddress()
 		p.ClusterCACertBundle = data.GetCaCertificateBundle()
+
 		if err := c.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
