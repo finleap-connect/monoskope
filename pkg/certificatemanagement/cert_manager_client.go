@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,23 +68,18 @@ func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.U
 		return nil, err
 	}
 
-	for _, condition := range cr.Status.Conditions {
-		c.log.Info(condition.Message, "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer, "ConditionType", condition.Type)
+	if apiutil.CertificateRequestHasInvalidRequest(cr) {
+		return nil, ErrRequestInvalid
+	}
+	if apiutil.CertificateRequestIsDenied(cr) {
+		return nil, ErrRequestDenied
+	}
 
-		switch condition.Type {
-		case cmapi.CertificateRequestConditionApproved:
-			return nil, ErrRequestPending
-		case cmapi.CertificateRequestConditionInvalidRequest:
-			return nil, ErrRequestInvalid
-		case cmapi.CertificateRequestConditionDenied:
-			return nil, ErrRequestDenied
-		case cmapi.CertificateRequestConditionReady:
-			err := c.k8sClient.Delete(ctx, cr)
-			if err != nil {
-				c.log.Error(err, "Failed to delete request after successfull certificate issueing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
-			}
-			return cr.Status.Certificate, nil
+	if len(cr.Status.Certificate) > 0 {
+		if err := c.k8sClient.Delete(ctx, cr); err != nil {
+			c.log.Error(err, "Failed to delete request after successfull certificate issueing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
 		}
+		return cr.Status.Certificate, nil
 	}
 
 	return nil, ErrRequestPending

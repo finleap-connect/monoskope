@@ -6,7 +6,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
@@ -67,10 +69,7 @@ var _ = Describe("package certificatemanagement", func() {
 				k8sClient := k8s.NewMockClient(mockCtrl)
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
-					cr.Status.Conditions = append(cr.Status.Conditions, cmapi.CertificateRequestCondition{
-						Type:    cmapi.CertificateRequestConditionReady,
-						Message: "Certificate ready.",
-					})
+					apiutil.SetCertificateRequestCondition(cr, cmapi.CertificateRequestConditionReady, cmmeta.ConditionTrue, "Approved by test.", "Certificate ready.")
 					cr.Status.Certificate = expectedCert
 					k8sClient.EXPECT().Delete(ctx, cr).Return(nil)
 					return nil
@@ -87,10 +86,7 @@ var _ = Describe("package certificatemanagement", func() {
 				k8sClient := k8s.NewMockClient(mockCtrl)
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
-					cr.Status.Conditions = append(cr.Status.Conditions, cmapi.CertificateRequestCondition{
-						Type:    condition,
-						Message: string(condition),
-					})
+					apiutil.SetCertificateRequestCondition(cr, condition, cmmeta.ConditionTrue, string(condition)+" set by test.", string(condition))
 					return nil
 				})
 
