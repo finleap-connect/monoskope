@@ -46,9 +46,6 @@ var _ = Describe("package reactors", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer util.PanicOnError(testEnv.Shutdown())
 
-		k8sClient := k8s.NewMockClient(mockCtrl)
-		reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
-
 		When("ClusterCreated event occurs", func() {
 			aggregateId := uuid.New()
 			aggregateVersion := uint64(1)
@@ -64,6 +61,9 @@ var _ = Describe("package reactors", func() {
 				eventChannel := make(chan eventsourcing.Event, 1)
 
 				defer close(eventChannel)
+
+				k8sClient := k8s.NewMockClient(mockCtrl)
+				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
 				Expect(err).NotTo(HaveOccurred())
@@ -97,12 +97,16 @@ var _ = Describe("package reactors", func() {
 			cr.Spec.Duration = &v1.Duration{
 				Duration: expectedDuration,
 			}
-			k8sClient.EXPECT().Create(ctx, cr).Return(nil)
 
 			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
 				eventChannel := make(chan eventsourcing.Event, 1)
 
 				defer close(eventChannel)
+
+				k8sClient := k8s.NewMockClient(mockCtrl)
+				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
+
+				k8sClient.EXPECT().Create(ctx, cr).Return(nil)
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
 				Expect(err).NotTo(HaveOccurred())
