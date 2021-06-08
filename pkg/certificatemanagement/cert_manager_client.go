@@ -61,26 +61,26 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 }
 
 // GetCertificate returns a byte slice containing a PEM encoded signed certificate resulting from a certificate signing request identified by the requestID
-func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.UUID) ([]byte, error) {
+func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.UUID) ([]byte, []byte, error) {
 	cr := new(cmapi.CertificateRequest)
 	err := c.k8sClient.Get(ctx, types.NamespacedName{Name: requestID.String(), Namespace: c.namespace}, cr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if apiutil.CertificateRequestHasInvalidRequest(cr) {
-		return nil, ErrRequestInvalid
+		return nil, nil, ErrRequestInvalid
 	}
 	if apiutil.CertificateRequestIsDenied(cr) {
-		return nil, ErrRequestDenied
+		return nil, nil, ErrRequestDenied
 	}
 
 	if len(cr.Status.Certificate) > 0 {
 		if err := c.k8sClient.Delete(ctx, cr); err != nil {
 			c.log.Error(err, "Failed to delete request after successfull certificate issueing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
 		}
-		return cr.Status.Certificate, nil
+		return cr.Status.CA, cr.Status.Certificate, nil
 	}
 
-	return nil, ErrRequestPending
+	return nil, nil, ErrRequestPending
 }

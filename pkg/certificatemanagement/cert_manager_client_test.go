@@ -63,6 +63,7 @@ var _ = Describe("package certificatemanagement", func() {
 		})
 
 		When("GetCertificate is called", func() {
+			expectedCACert := []byte("some-ca-cert")
 			expectedCert := []byte("some-cert")
 
 			It("returns the issued cert with no error", func() {
@@ -71,13 +72,15 @@ var _ = Describe("package certificatemanagement", func() {
 					cr := obj.(*cmapi.CertificateRequest)
 					apiutil.SetCertificateRequestCondition(cr, cmapi.CertificateRequestConditionReady, cmmeta.ConditionTrue, "Approved by test.", "Certificate ready.")
 					cr.Status.Certificate = expectedCert
+					cr.Status.CA = expectedCACert
 					k8sClient.EXPECT().Delete(ctx, cr).Return(nil)
 					return nil
 				})
 
 				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
-				cert, err := client.GetCertificate(ctx, expectedCSRID)
+				ca, cert, err := client.GetCertificate(ctx, expectedCSRID)
 				Expect(err).NotTo(HaveOccurred())
+				Expect(ca).To(Equal(expectedCACert))
 				Expect(cert).To(Equal(expectedCert))
 			})
 
@@ -91,8 +94,9 @@ var _ = Describe("package certificatemanagement", func() {
 				})
 
 				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
-				cert, err := client.GetCertificate(ctx, expectedCSRID)
+				ca, cert, err := client.GetCertificate(ctx, expectedCSRID)
 				Expect(expectedError).To(HaveOccurred())
+				Expect(ca).To(BeNil())
 				Expect(cert).To(BeNil())
 				Expect(err).To(Equal(expectedError))
 			}

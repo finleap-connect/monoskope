@@ -21,5 +21,5 @@ type CertificateManager interface {
 	RequestCertificate(ctx context.Context, requestID uuid.UUID, csr []byte) error
 	// GetCertificate returns a byte slice containing a PEM encoded signed certificate
 	// resulting from a certificate signing request identified by the requestID
-	GetCertificate(ctx context.Context, requestID uuid.UUID) ([]byte, error)
+	GetCertificate(ctx context.Context, requestID uuid.UUID) (ca []byte, cert []byte, err error)
 }
