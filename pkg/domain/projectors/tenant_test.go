@@ -42,11 +42,10 @@ var _ = Describe("process tenant", func() {
 		tenant, ok := tenantProjection.(*projections.Tenant)
 		Expect(ok).To(BeTrue())
 
+		dp := tenant.DomainProjection
+
 		Expect(tenant.GetName()).To(Equal(expectedName))
 		Expect(tenant.GetPrefix()).To(Equal(expectedPrefix))
-
-		dp, ok := tenantProjection.(*projections.DomainProjection)
-		Expect(ok).To(BeTrue())
 
 		Expect(dp.Created).ToNot(BeNil())
 	})
