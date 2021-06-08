@@ -12,7 +12,6 @@ type reactorEventHandler struct {
 	log      logger.Logger
 	esClient apiEs.EventStoreClient
 	reactor  es.Reactor
-	events   chan es.Event
 }
 
 // NewReactorEventHandler creates an EventHandler which automates storing Events in the EventStore when a Reactor has emitted any.
@@ -21,43 +20,51 @@ func NewReactorEventHandler(esClient apiEs.EventStoreClient, reactor es.Reactor)
 		log:      logger.WithName("reactorEventHandler"),
 		esClient: esClient,
 		reactor:  reactor,
-		events:   make(chan es.Event),
 	}
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (m *reactorEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
-	return m.reactor.HandleEvent(ctx, event, m.events)
+	eventsChannel := make(chan es.Event)
+	go m.handle(ctx, eventsChannel)
+	return m.reactor.HandleEvent(ctx, event, eventsChannel)
 }
 
-func (m *reactorEventHandler) handle(ctx context.Context) error {
-	var err error
-	var stream apiEs.EventStore_StoreClient
-
-	for ev := range m.events { // Read events from channel
-		if stream == nil {
-			// Create stream to send events to store.
-			stream, err = m.esClient.Store(ctx)
+func (m *reactorEventHandler) handle(ctx context.Context, events <-chan es.Event) {
+	for ev := range events { // Read events from channel
+		for {
+			err := m.storeEvent(ctx, ev)
 			if err != nil {
-				m.log.Error(err, "Failed to connect to EventStore. Retrying...")
-				// Retry on failure
-				continue
+				m.log.Error(err, "Failed to send event to EventStore. Retrying...")
+			} else {
+				break
 			}
 		}
+	}
+}
 
-		// Convert to proto event
-		protoEvent := es.NewProtoFromEvent(ev)
-
-		// Send event to store
-		err = stream.Send(protoEvent)
-		if err != nil {
-			return err
-		}
+func (m *reactorEventHandler) storeEvent(ctx context.Context, event es.Event) error {
+	// Create stream to send events to store.
+	stream, err := m.esClient.Store(ctx)
+	if err != nil {
+		m.log.Error(err, "Failed to connect to EventStore.")
+		return err
 	}
 
-	if stream == nil {
-		_, err := stream.CloseAndRecv()
+	// Convert to proto event
+	protoEvent := es.NewProtoFromEvent(event)
+
+	// Send event to store
+	err = stream.Send(protoEvent)
+	if err != nil {
+		m.log.Error(err, "Failed to send event.")
 		return err
+	}
+
+	// Close connection
+	_, err = stream.CloseAndRecv()
+	if err != nil {
+		m.log.Error(err, "Failed to close connection with EventStore.")
 	}
 
 	return nil

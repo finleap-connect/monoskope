@@ -22,6 +22,18 @@ import (
 )
 
 var _ = Describe("package reactors", func() {
+	var (
+		mockCtrl *gomock.Controller
+	)
+
+	BeforeEach(func() {
+		mockCtrl = gomock.NewController(GinkgoT())
+	})
+
+	AfterEach(func() {
+		mockCtrl.Finish()
+	})
+
 	Context("ClusterBootstrapReactor", func() {
 		ctx := context.Background()
 		aggregateType := aggregates.Cluster
@@ -34,9 +46,7 @@ var _ = Describe("package reactors", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer util.PanicOnError(testEnv.Shutdown())
 
-		mockCtrl := gomock.NewController(GinkgoT())
 		k8sClient := k8s.NewMockClient(mockCtrl)
-
 		reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
 
 		When("ClusterCreated event occurs", func() {
