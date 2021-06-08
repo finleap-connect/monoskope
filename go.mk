@@ -110,7 +110,7 @@ ginkgo-get:
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get:
-	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
+	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
 gomock-get:
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
