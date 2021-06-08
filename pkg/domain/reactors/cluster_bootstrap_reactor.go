@@ -75,7 +75,39 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			event.AggregateType(),
 			event.AggregateID(),
 			event.AggregateVersion()+1)
+
+		go r.reconcile(ctx, event, eventsChannel)
 	}
 
 	return nil
+}
+
+func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event, eventsChannel chan<- es.Event) {
+	defer close(eventsChannel)
+
+	for {
+		r.log.Info("Certificate reconciliation started...", "AggregateID", event.AggregateID())
+
+		ca, cert, err := r.certManager.GetCertificate(ctx, event.AggregateID())
+		if err != nil {
+			r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", "Certificate issued successfully.")
+			eventsChannel <- es.NewEvent(
+				ctx,
+				events.ClusterOperatorCertificateRequestIssued,
+				es.ToEventDataFromProto(&eventdata.ClusterCertificateIssued{
+					Ca:          ca,
+					Certificate: cert,
+				}),
+				time.Now().UTC(),
+				event.AggregateType(),
+				event.AggregateID(),
+				event.AggregateVersion()+1)
+		} else if err != certificatemanagement.ErrRequestPending {
+			r.log.Error(err, "Certificate reconciliation failed.")
+			break
+		}
+
+		r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", err)
+		time.Sleep(time.Second * 5)
+	}
 }
