@@ -50,6 +50,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
 		event := es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1)
 		event.Metadata()[gateway.HeaderAuthId] = userId.String()
+
 		clusterProjection, err := clusterProjector.Project(context.Background(), event, clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
 

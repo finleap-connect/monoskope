@@ -7,24 +7,19 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projectionsApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	es_repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/repositories"
 	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
-	expectedClusterName         = "the one cluster"
-	expectedClusterLabel        = "one-cluster"
-	expectedApiServerAddress    = "one.example.com"
-	expectedClusterCACertBundle = []byte("This should be a certificate")
-	expectedJWT                 = "thisisnotajwt"
+	expectedClusterName = "the one cluster"
+	// expectedClusterLabel        = "one-cluster"
+	// expectedApiServerAddress    = "one.example.com"
+	// expectedClusterCACertBundle = []byte("This should be a certificate")
 )
 
 var _ = Describe("domain/cluster_repo", func() {
@@ -91,18 +86,3 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.Created).NotTo(BeNil())
 	})
 })
-
-func makeClusterCreateEvent(ctx context.Context, id uuid.UUID) es.Event {
-
-	protoClusterCreatedEventData := &eventdata.ClusterCreated{
-		Name:                expectedClusterName,
-		Label:               expectedClusterLabel,
-		ApiServerAddress:    expectedApiServerAddress,
-		CaCertificateBundle: expectedClusterCACertBundle,
-	}
-	clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
-
-	return es.NewEvent(
-		ctx, events.ClusterCreated, clusterCreatedEventData,
-		time.Now().UTC(), aggregates.Cluster, id, 1)
-}
