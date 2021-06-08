@@ -39,7 +39,7 @@ var _ = Describe("package certificatemanagement", func() {
 				k8sClient := k8s.NewMockClient(mockCtrl)
 
 				cr := new(cmapi.CertificateRequest)
-				cr.Spec.Usages = append(cr.Spec.Usages, "server auth", "client auth")
+				cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
 				cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
 				cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
 				cr.Spec.IsCA = false

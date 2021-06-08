@@ -36,7 +36,7 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 	cr := new(cmapi.CertificateRequest)
 
 	// fixed defaults
-	cr.Spec.Usages = append(cr.Spec.Usages, "server auth", "client auth")
+	cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
 	cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
 	cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
 	cr.Spec.IsCA = false
