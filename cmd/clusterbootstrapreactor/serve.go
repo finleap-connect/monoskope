@@ -28,6 +28,7 @@ var (
 	eventStoreAddr string
 	msgbusPrefix   string
 	certIssuer     string
+	certIssuerKind string
 	certDuration   string
 )
 
@@ -45,8 +46,17 @@ var serveCmd = &cobra.Command{
 		if k8sNamespace == "" {
 			return errors.New("K8S_NAMESPACE env variable not set")
 		}
+
+		// Add health check handling
+		ready := false
 		promRegistry := prom.NewRegistry()
 		healthCheckHandler := healthcheck.NewMetricsHandler(promRegistry, k8sNamespace)
+		healthCheckHandler.AddReadinessCheck("setup complete", func() error {
+			if !ready {
+				return errors.New("starting up...")
+			}
+			return nil
+		})
 		go func() {
 			log.Info(http.ListenAndServe(healthAddr, healthCheckHandler).Error())
 		}()
@@ -78,13 +88,15 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		certManager := certificatemanagement.NewCertManagerClient(k8sClient, k8sNamespace, certIssuer, duration)
+		certManager := certificatemanagement.NewCertManagerClient(k8sClient, k8sNamespace, certIssuerKind, certIssuer, duration)
 
 		// Set up
 		err = clusterbootstrapreactor.SetupClusterBootstrapReactor(ctx, ebConsumer, esClient, certManager)
 		if err != nil {
 			return err
 		}
+
+		ready = true
 
 		// Wait for interrupt signal sent from terminal or on sigterm
 		sigint := make(chan os.Signal, 1)
@@ -108,6 +120,8 @@ func init() {
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 
 	flags.StringVarP(&certDuration, "certificate-duration", "d", "48h", "Certificate validity to request certificates for")
+	flags.StringVarP(&certIssuerKind, "certificate-issuer-kind", "k", "Issuer", "Certificate issuer kind to request certificates from")
+
 	flags.StringVarP(&certIssuer, "certificate-issuer", "i", "", "Certificate issuer name to request certificates from")
 	util.PanicOnError(cobra.MarkFlagRequired(flags, "certificate-issuer"))
 }

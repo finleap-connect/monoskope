@@ -24,7 +24,8 @@ var _ = Describe("package certificatemanagement", func() {
 		ctx := context.Background()
 		expectedCSRID := uuid.New()
 		expectedNamespace := "monoskope"
-		expectedIssuer := "monoskope-issuer"
+		expectedIssuer := "selfsigning-issuer"
+		expectedIssuerKind := "ClusterIssuer"
 		expectedDuration := time.Hour * 48
 
 		BeforeEach(func() {
@@ -43,17 +44,16 @@ var _ = Describe("package certificatemanagement", func() {
 
 				cr := new(cmapi.CertificateRequest)
 				cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
-				cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
-				cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
 				cr.Spec.IsCA = false
 				cr.Name = expectedCSRID.String()
 				cr.Namespace = expectedNamespace
 				cr.Spec.Request = expectedCSR
 				cr.Spec.IssuerRef.Name = expectedIssuer
+				cr.Spec.IssuerRef.Kind = expectedIssuerKind
 				cr.Spec.Duration = &v1.Duration{
 					Duration: expectedDuration,
 				}
-				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration)
 
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, gomock.Any()).
 					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
@@ -79,7 +79,7 @@ var _ = Describe("package certificatemanagement", func() {
 					return nil
 				})
 
-				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration)
 				ca, cert, err := client.GetCertificate(ctx, expectedCSRID)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ca).To(Equal(expectedCACert))
@@ -95,7 +95,7 @@ var _ = Describe("package certificatemanagement", func() {
 					return nil
 				})
 
-				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration)
 				ca, cert, err := client.GetCertificate(ctx, expectedCSRID)
 				Expect(expectedError).To(HaveOccurred())
 				Expect(ca).To(BeNil())

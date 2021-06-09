@@ -43,7 +43,8 @@ var _ = Describe("package reactors", func() {
 		ctx := context.Background()
 		aggregateType := aggregates.Cluster
 		expectedNamespace := "monoskope"
-		expectedIssuer := "monoskope-issuer"
+		expectedIssuer := "selfsigning-issuer"
+		expectedIssuerKind := "ClusterIssuer"
 		expectedDuration := time.Hour * 48
 		expectedCSR := []byte("some-csr-bytes")
 
@@ -66,7 +67,7 @@ var _ = Describe("package reactors", func() {
 				eventChannel := make(chan eventsourcing.Event, 1)
 
 				k8sClient := k8s.NewMockClient(mockCtrl)
-				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
+				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
 				Expect(err).NotTo(HaveOccurred())
@@ -90,12 +91,11 @@ var _ = Describe("package reactors", func() {
 
 			cr := new(cmapi.CertificateRequest)
 			cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
-			cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
-			cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
 			cr.Spec.IsCA = false
 			cr.Name = aggregateId.String()
 			cr.Namespace = expectedNamespace
 			cr.Spec.Request = expectedCSR
+			cr.Spec.IssuerRef.Kind = expectedIssuerKind
 			cr.Spec.IssuerRef.Name = expectedIssuer
 			cr.Spec.Duration = &v1.Duration{
 				Duration: expectedDuration,
@@ -105,7 +105,7 @@ var _ = Describe("package reactors", func() {
 				eventChannel := make(chan eventsourcing.Event, 2)
 
 				k8sClient := k8s.NewMockClient(mockCtrl)
-				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
+				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")
 

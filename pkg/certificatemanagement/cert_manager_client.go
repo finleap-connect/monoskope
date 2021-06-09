@@ -15,21 +15,23 @@ import (
 )
 
 type certManagerClient struct {
-	log       logger.Logger
-	k8sClient ctrlclient.Client
-	issuer    string
-	namespace string
-	duration  time.Duration
+	log        logger.Logger
+	k8sClient  ctrlclient.Client
+	issuer     string
+	issuerKind string
+	namespace  string
+	duration   time.Duration
 }
 
 // NewCertManagerClient creates a cert-manager.io specific implementation of the certificatemanagement.CertificateManager interface
-func NewCertManagerClient(k8sClient ctrlclient.Client, namespace, issuer string, duration time.Duration) CertificateManager {
+func NewCertManagerClient(k8sClient ctrlclient.Client, namespace, issuerKind, issuer string, duration time.Duration) CertificateManager {
 	return &certManagerClient{
-		log:       logger.WithName("certManagerClient"),
-		k8sClient: k8sClient,
-		issuer:    issuer,
-		namespace: namespace,
-		duration:  duration,
+		log:        logger.WithName("certManagerClient"),
+		k8sClient:  k8sClient,
+		issuer:     issuer,
+		issuerKind: issuerKind,
+		namespace:  namespace,
+		duration:   duration,
 	}
 }
 
@@ -41,8 +43,6 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 		if apierrors.IsNotFound(err) {
 			// fixed defaults
 			cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
-			cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
-			cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
 			cr.Spec.IsCA = false
 
 			// input
@@ -50,6 +50,7 @@ func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uu
 			cr.Namespace = c.namespace
 			cr.Spec.Request = csr
 			cr.Spec.IssuerRef.Name = c.issuer
+			cr.Spec.IssuerRef.Kind = c.issuerKind
 			cr.Spec.Duration = &v1.Duration{
 				Duration: c.duration,
 			}
