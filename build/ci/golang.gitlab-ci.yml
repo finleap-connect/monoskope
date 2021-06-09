@@ -24,6 +24,10 @@ variables:
   extends: .gobase
   cache:
     policy: pull
+  only:
+    - web
+    - tags
+    - develop
 
 lint:golang:
   stage: test
