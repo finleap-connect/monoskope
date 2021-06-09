@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,10 +53,11 @@ var _ = Describe("package certificatemanagement", func() {
 				cr.Spec.Duration = &v1.Duration{
 					Duration: expectedDuration,
 				}
-
-				k8sClient.EXPECT().Create(ctx, cr).Return(nil)
-
 				client := NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration)
+
+				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, gomock.Any()).
+					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
+				k8sClient.EXPECT().Create(ctx, cr).Return(nil)
 
 				err := client.RequestCertificate(ctx, expectedCSRID, expectedCSR)
 				Expect(err).NotTo(HaveOccurred())

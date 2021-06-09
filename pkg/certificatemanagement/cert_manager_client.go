@@ -8,6 +8,7 @@ import (
 	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,27 +37,33 @@ func NewCertManagerClient(k8sClient ctrlclient.Client, namespace, issuer string,
 func (c *certManagerClient) RequestCertificate(ctx context.Context, requestID uuid.UUID, csr []byte) error {
 	cr := new(cmapi.CertificateRequest)
 
-	// fixed defaults
-	cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
-	cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
-	cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
-	cr.Spec.IsCA = false
+	if err := c.k8sClient.Get(ctx, types.NamespacedName{Name: requestID.String(), Namespace: c.namespace}, cr); err != nil {
+		if apierrors.IsNotFound(err) {
+			// fixed defaults
+			cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
+			cr.Spec.IssuerRef.Kind = cmapi.IssuerKind
+			cr.Spec.IssuerRef.Group = cmapi.IssuerGroupAnnotationKey
+			cr.Spec.IsCA = false
 
-	// input
-	cr.Name = requestID.String()
-	cr.Namespace = c.namespace
-	cr.Spec.Request = csr
-	cr.Spec.IssuerRef.Name = c.issuer
-	cr.Spec.Duration = &v1.Duration{
-		Duration: c.duration,
+			// input
+			cr.Name = requestID.String()
+			cr.Namespace = c.namespace
+			cr.Spec.Request = csr
+			cr.Spec.IssuerRef.Name = c.issuer
+			cr.Spec.Duration = &v1.Duration{
+				Duration: c.duration,
+			}
+		} else {
+			return err
+		}
 	}
 
 	c.log.Info("Requesting certificate...", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
-	err := c.k8sClient.Create(ctx, cr)
-	if err != nil {
+	if err := c.k8sClient.Create(ctx, cr); err != nil {
 		c.log.Error(err, "Requesting certificate failed.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
 		return ErrRequestFailed
 	}
+
 	return nil
 }
 
