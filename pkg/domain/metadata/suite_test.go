@@ -1,4 +1,4 @@
-package projectors
+package metadata
 
 import (
 	"testing"
@@ -7,14 +7,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	_ "gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
 func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-projectors-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/projectors", []Reporter{junitReporter})
+	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-metadata-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/metadata", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {

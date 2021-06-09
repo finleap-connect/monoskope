@@ -10,7 +10,7 @@ type Cluster struct {
 	*projections.Cluster
 }
 
-func NewCluster(id uuid.UUID) *Cluster {
+func NewClusterProjection(id uuid.UUID) *Cluster {
 	dp := NewDomainProjection()
 	return &Cluster{
 		DomainProjection: dp,

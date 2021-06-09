@@ -22,11 +22,11 @@ func NewClusterProjector() es.Projector {
 }
 
 func (u *clusterProjector) NewProjection(id uuid.UUID) es.Projection {
-	return projections.NewCluster(id)
+	return projections.NewClusterProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (u *clusterProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
+func (c *clusterProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
 	p, ok := projection.(*projections.Cluster)
 	if !ok {
@@ -41,7 +41,7 @@ func (u *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 			return projection, err
 		}
 		p.BootstrapToken = data.GetJWT()
-		if err := u.projectCreated(event, p.DomainProjection); err != nil {
+		if err := c.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.ClusterCreated:
@@ -53,6 +53,10 @@ func (u *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		p.Label = data.GetLabel()
 		p.ApiServerAddress = data.GetApiServerAddress()
 		p.ClusterCACertBundle = data.GetCaCertificateBundle()
+
+		if err := c.projectCreated(event, p.DomainProjection); err != nil {
+			return nil, err
+		}
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
