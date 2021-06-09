@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
@@ -49,7 +48,6 @@ var _ = Describe("domain/cluster_repo", func() {
 		}
 		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
 		event := es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1)
-		event.Metadata()[gateway.HeaderAuthId] = userId.String()
 
 		clusterProjection, err := clusterProjector.Project(context.Background(), event, clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
