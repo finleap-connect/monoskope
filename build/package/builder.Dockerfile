@@ -10,6 +10,7 @@ ARG ARCH=linux-x86_64
 ENV TOOLS_DIR  /tools
 ENV GINKGO     ginkgo
 ENV LINTER     golangci-lint
+ENV MOCKGEN    mockgen
 ENV PROTOC     /tools/protoc
 
 WORKDIR /tmp/build
@@ -21,6 +22,8 @@ RUN apt-get update && apt install unzip docker.io -y \
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.39.0
 
 RUN go get -u github.com/onsi/ginkgo/ginkgo
+
+RUN go get -u github.com/golang/mock/mockgen
 
 RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ARCH.zip" ; \
     echo curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-$ARCH.zip" ; \

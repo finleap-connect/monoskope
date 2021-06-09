@@ -44,7 +44,7 @@ test:golang:
       alias: minio
       command: ["server", "/data"]
   script:
-    - GINKGO=ginkgo PROTOC_IMPORTS_DIR=/include make go-test
+    - MOCKGEN=mockgen GINKGO=ginkgo PROTOC_IMPORTS_DIR=/include make go-test
     - make go-coverage
   artifacts:
     name: "Go Tests"
