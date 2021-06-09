@@ -6,7 +6,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -19,6 +21,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("package reactors", func() {
@@ -60,8 +64,6 @@ var _ = Describe("package reactors", func() {
 			It("emits a ClusterBootstrapTokenCreated event", func() {
 				eventChannel := make(chan eventsourcing.Event, 1)
 
-				defer close(eventChannel)
-
 				k8sClient := k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
 
@@ -99,20 +101,45 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
-				eventChannel := make(chan eventsourcing.Event, 1)
-
-				defer close(eventChannel)
+				eventChannel := make(chan eventsourcing.Event, 2)
 
 				k8sClient := k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
+				expectedCACert := []byte("some-ca-cert")
+				expectedCert := []byte("some-cert")
 
-				k8sClient.EXPECT().Create(ctx, cr).Return(nil)
+				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
+					cr := obj.(*cmapi.CertificateRequest)
+					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
+						crGet := obj.(*cmapi.CertificateRequest)
+						*crGet = *cr
+						apiutil.SetCertificateRequestCondition(crGet, cmapi.CertificateRequestConditionReady, cmmeta.ConditionTrue, "Approved by test.", "Certificate ready.")
+						crGet.Status.Certificate = expectedCert
+						crGet.Status.CA = expectedCACert
+						return nil
+					})
+					return nil
+				})
+				k8sClient.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
+
+				finished := make(chan bool)
+				go func() {
+					defer GinkgoRecover()
+					defer func() { finished <- true }()
+
+					event := <-eventChannel
+					Expect(event).NotTo(BeNil())
+					Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateRequestIssued))
+
+					event = <-eventChannel
+					Expect(event).NotTo(BeNil())
+					Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateIssued))
+				}()
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
 				Expect(err).NotTo(HaveOccurred())
 
-				event := <-eventChannel
-				Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateRequestIssued))
+				<-finished
 			})
 		})
 	})

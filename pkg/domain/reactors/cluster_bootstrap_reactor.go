@@ -89,11 +89,11 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 		r.log.Info("Certificate reconciliation started...", "AggregateID", event.AggregateID())
 
 		ca, cert, err := r.certManager.GetCertificate(ctx, event.AggregateID())
-		if err != nil {
+		if err == nil {
 			r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", "Certificate issued successfully.")
 			eventsChannel <- es.NewEvent(
 				ctx,
-				events.ClusterOperatorCertificateRequestIssued,
+				events.ClusterOperatorCertificateIssued,
 				es.ToEventDataFromProto(&eventdata.ClusterCertificateIssued{
 					Ca:          ca,
 					Certificate: cert,
@@ -102,6 +102,7 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 				event.AggregateType(),
 				event.AggregateID(),
 				event.AggregateVersion()+1)
+			break
 		} else if err != certificatemanagement.ErrRequestPending {
 			r.log.Error(err, "Certificate reconciliation failed.")
 			break
