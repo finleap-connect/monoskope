@@ -18,6 +18,10 @@ lint:helm:
 chart:deliver:
   stage: chart
   extends: .helm
+  only:
+    - web
+    - tags
+    - develop
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
