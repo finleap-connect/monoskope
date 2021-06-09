@@ -20,6 +20,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -107,6 +108,9 @@ var _ = Describe("package reactors", func() {
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuer, expectedDuration))
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")
+
+				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
+					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
 
 				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
