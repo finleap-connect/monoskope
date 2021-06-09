@@ -88,3 +88,11 @@ keySecret:
   name: ""
   # -- field of the secret containing the private key (PEM or DER-encoded)
   field: "tls.key"
+
+certificates:
+  # -- cluster certificate validity duration
+  duration: 48h
+  # -- cert-manager issuer type to use to issue cluster certificates
+  issuerType: Issuer
+  # -- cert-manager issuer to use to issue cluster certificates
+  issuerName: selfsigning-issuer
