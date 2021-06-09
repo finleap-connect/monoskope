@@ -35,7 +35,7 @@ func (p *domainProjector) projectModified(event es.Event, dp *projections.Domain
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
-		return nil
+		return err
 	}
 
 	dp.LastModified = timestamp.New(event.Timestamp())
@@ -50,7 +50,7 @@ func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainP
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
-		return nil
+		return err
 	}
 
 	dp.Created = timestamp.New(event.Timestamp())
@@ -65,7 +65,7 @@ func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainP
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
 		p.log.Info("Event metadata do not contain user information.", "EventType", event.EventType(), "AggregateType", event.AggregateType(), "AggregateID", event.AggregateID())
-		return nil
+		return err
 	}
 
 	dp.Deleted = timestamp.New(event.Timestamp())

@@ -181,6 +181,9 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+
+		Expect(tenant.Metadata.Created).NotTo(BeNil())
+
 	})
 	It("manage a cluster", func() {
 		clusterId := uuid.New()

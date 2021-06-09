@@ -93,7 +93,7 @@ include .protobuf-deps
 
 go-test: $(GENERATED_GO_FILES) go-rebuild-mocks
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -r -v -cover *
+	$(GINKGO) -keepGoing -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
