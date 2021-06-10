@@ -17,13 +17,15 @@ sequenceDiagram
  ES-->>MB: publish "ClusterCreated"
  MB-->>+R: push "ClusterCreated"
  R-->>K: create cert-manager "CertificateRequest"
- K-->>CM: reconcile "CertificateRequest"
+ K-->>+CM: reconcile "CertificateRequest"
  R-->>ES: emit "ClusterCertificateRequestIssued"
  ES-->>DB: store "ClusterCertificateRequestIssued" in DB
  ES-->>MB: publish "ClusterCertificateRequestIssued"
- CM-->>K: update "CertificateRequest"
+ CM-->>CM: issue certificate
+ CM-->>-K: update "CertificateRequest"
  K-->>R: get "CertificateRequest" status
  R-->>R: reconcile "CertificateRequest"
+ R-->>K: delete "CertificateRequest"
  R-->>-ES: emit "ClusterCertificateIssued"
  ES-->>DB: store "ClusterCertificateIssued" in DB
  ES-->>MB: publish "ClusterCertificateIssued"
