@@ -28,13 +28,6 @@ var (
 	}
 )
 
-// ComponentInformation are information about a service/component.
-type ComponentInformation struct {
-	Name    string
-	Version string
-	Commit  string
-}
-
 // UserInformation are identifying information about a user.
 type UserInformation struct {
 	Id     uuid.UUID

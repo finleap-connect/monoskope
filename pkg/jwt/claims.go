@@ -16,10 +16,6 @@ const (
 	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
-type ClusterBootstrapToken struct {
-	*jwt.Claims
-}
-
 type StandardClaims struct {
 	Name            string            `json:"name,omitempty"`           // User’s display name.
 	Email           string            `json:"email,omitempty"`          // The email of the user.
