@@ -29,6 +29,7 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /workdir/app .
 
+# Run as non root user
 USER 1001:1001
 
 CMD ["/app", "server"]
