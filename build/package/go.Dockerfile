@@ -29,6 +29,6 @@ ARG EXECUTABLE
 
 # Import from builder.
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /workdir/app /go/bin/app
+COPY --from=builder /workdir/app .
 
-CMD ["/go/bin/app", "server"]
+CMD ["/app", "server"]

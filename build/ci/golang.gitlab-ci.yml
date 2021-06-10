@@ -53,42 +53,6 @@ test:golang:
     reports:
       junit: ["reports/*.xml"]
 
-build:eventstore:
-  stage: build
-  extends: .gobase-no-push
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-eventstore
-  artifacts:
-    paths:
-      - eventstore
-    expire_in: 1 day
-  needs: []
-
-build:commandhandler:
-  stage: build
-  extends: .gobase-no-push
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-commandhandler
-  artifacts:
-    paths:
-      - commandhandler
-    expire_in: 1 day
-  needs: []
-
-build:queryhandler:
-  stage: build
-  extends: .gobase-no-push
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-queryhandler
-  artifacts:
-    paths:
-      - queryhandler
-    expire_in: 1 day
-  needs: []
-
 build:clboreactor:
   stage: build
   extends: .gobase-no-push
@@ -117,34 +81,37 @@ deliver:eventstore:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=eventstore
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/eventstore.Dockerfile -i eventstore --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:eventstore
 
 deliver:commandhandler:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=commandhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/commandhandler.Dockerfile -i commandhandler --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:commandhandler
 
 deliver:queryhandler:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=queryhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/queryhandler.Dockerfile -i queryhandler --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:queryhandler
 
 deliver:clboreactor:
   stage: deliver
