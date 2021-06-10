@@ -89,7 +89,7 @@ spec:
                   name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
                   key: oidc-nonce
           args:
-            - /gateway
+            - /app
             - server
             - --keep-alive={{ .Values.keepAlive }}
             - --grpc-api-addr=:{{ .Values.ports.grpcApi }}
