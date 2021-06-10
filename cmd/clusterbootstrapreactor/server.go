@@ -37,7 +37,7 @@ var (
 )
 
 var serveCmd = &cobra.Command{
-	Use:   "serve [flags]",
+	Use:   "server [flags]",
 	Short: "Starts the server",
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {

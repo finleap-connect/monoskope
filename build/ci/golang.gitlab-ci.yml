@@ -56,18 +56,6 @@ test:golang:
     when: always
     reports:
       junit: ["reports/*.xml"]
-
-build:clboreactor:
-  stage: build
-  extends: .gobase-no-push
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-clboreactor
-  artifacts:
-    paths:
-      - clboreactor
-    expire_in: 1 day
-  needs: []
   
 deliver:gateway:
   stage: deliver
@@ -117,16 +105,17 @@ deliver:queryhandler:
     - lint:golang
     - test:golang
 
-deliver:clboreactor:
+deliver:clusterbootstrapreactor:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=clusterbootstrapreactor
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/clboreactor.Dockerfile -i clboreactor --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:clboreactor
 
 scan:images:
   stage: scan

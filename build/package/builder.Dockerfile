@@ -1,4 +1,4 @@
-FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.16.2-buster
+FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.16-buster
 
 # ensure versions are synched with the Makefile!
 ARG PROTOC_IMPORTS_DIR=/include

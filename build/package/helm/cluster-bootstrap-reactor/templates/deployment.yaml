@@ -71,8 +71,8 @@ spec:
             - secretRef:
                 name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "cluster-bootstrap-reactor.fullname" .) "bus") }}
           args:
-            - /clboreactor
-            - serve
+            - /app
+            - server
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
             - --jwt-privatekey=/etc/reactor/signing.key
