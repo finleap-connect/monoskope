@@ -16,17 +16,14 @@ func SetupClusterBootstrapReactor(ctx context.Context, eventBus eventsourcing.Ev
 	// Set up JWT signer
 	signer := jwt.NewSigner("/etc/reactor/signing.key")
 
-	// Set up middleware
-	replayHandler := eventhandler.NewEventStoreReplayEventHandler(esClient)
+	// Set up reactor
 	reactorEventHandler := eventhandler.NewReactorEventHandler(esClient, reactors.NewClusterBootstrapReactor(signer, certManager))
-	//
-	reactorHandlerChain := eventsourcing.UseEventHandlerMiddleware(reactorEventHandler, replayHandler.AsMiddleware)
 
 	// Setup matcher for event bus
 	clusterCreatedMatcher := eventBus.Matcher().MatchEventType(events.ClusterCreated)
 
 	// Register event handler with event bus
-	if err := eventBus.AddHandler(ctx, reactorHandlerChain, clusterCreatedMatcher); err != nil {
+	if err := eventBus.AddHandler(ctx, reactorEventHandler, clusterCreatedMatcher); err != nil {
 		return err
 	}
 
