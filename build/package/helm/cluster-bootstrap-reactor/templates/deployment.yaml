@@ -75,6 +75,7 @@ spec:
             - serve
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
+            - --jwt-privatekey=/etc/reactor/signing.key
             - --certificate-issuer={{ .Values.certificates.issuerName }}
             - --certificate-issuer-type={{ .Values.certificates.issuerType }}
             - --certificate-duration={{ .Values.certificates.duration }}
