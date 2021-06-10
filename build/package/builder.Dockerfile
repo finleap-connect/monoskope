@@ -32,6 +32,3 @@ RUN curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$PR
     rm -rf /.protoc-unpack/ protoc-$PROTOC_VERSION-$ARCH.zip ;\
     go get -u google.golang.org/protobuf/cmd/protoc-gen-go@$PROTOC_GEN_GO_VERSION ;\
     go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@$PROTOC_GEN_GO_GRPC_VERSION
-
-# Run as non root user
-USER 1001:1001
