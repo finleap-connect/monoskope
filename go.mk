@@ -92,6 +92,9 @@ go-report:
 include .protobuf-deps
 
 go-test: $(GENERATED_GO_FILES) go-rebuild-mocks
+	make go-test-ci
+
+go-test-ci:
 	@find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -keepGoing -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
