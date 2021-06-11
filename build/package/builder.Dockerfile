@@ -16,8 +16,8 @@ ENV PROTOC     /tools/protoc
 WORKDIR /tmp/build
 
 # Install Docker
-RUN apt-get update && apt install unzip docker.io -y \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt install unzip docker.io -y \
+#    && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.39.0
 
