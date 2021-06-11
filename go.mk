@@ -91,7 +91,7 @@ go-report:
 
 include .protobuf-deps
 
-go-test: $(GENERATED_GO_FILES) go-rebuild-mocks
+go-test: $(GENERATED_GO_FILES)
 	make go-test-ci
 
 go-test-ci:
@@ -177,5 +177,5 @@ go-build-queryhandler: $(CMD_QUERYHANDLER)
 go-build-clboreactor: $(CMD_CLBOREACTOR)
 
 go-rebuild-mocks: .protobuf-deps
-	$(MOCKGEN) -package k8s -destination pkg/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
-	$(MOCKGEN) -package eventsourcing -destination pkg/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
+	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
+	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient

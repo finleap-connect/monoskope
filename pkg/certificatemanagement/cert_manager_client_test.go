@@ -11,7 +11,7 @@ import (
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
+	mock_k8s "gitlab.figo.systems/platform/monoskope/monoskope/test/k8s"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,7 +40,7 @@ var _ = Describe("package certificatemanagement", func() {
 			expectedCSR := []byte("some-csr-bytes")
 
 			It("returns no error", func() {
-				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 
 				cr := new(cmapi.CertificateRequest)
 				cr.Spec.Usages = append(cr.Spec.Usages, cmapi.UsageClientAuth)
@@ -69,7 +69,7 @@ var _ = Describe("package certificatemanagement", func() {
 			expectedCert := []byte("some-cert")
 
 			It("returns the issued cert with no error", func() {
-				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
 					apiutil.SetCertificateRequestCondition(cr, cmapi.CertificateRequestConditionReady, cmmeta.ConditionTrue, "Approved by test.", "Certificate ready.")
@@ -88,7 +88,7 @@ var _ = Describe("package certificatemanagement", func() {
 
 			// Checks the GetCertificate method returns the right errors based on the condition the CertificateRequest is in
 			checkErrorResponse := func(condition cmapi.CertificateRequestConditionType, expectedError error) {
-				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: expectedCSRID.String(), Namespace: expectedNamespace}, new(cmapi.CertificateRequest)).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
 					apiutil.SetCertificateRequestCondition(cr, condition, cmmeta.ConditionTrue, string(condition)+" set by test.", string(condition))

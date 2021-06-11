@@ -18,8 +18,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/k8s"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
+	mock_k8s "gitlab.figo.systems/platform/monoskope/monoskope/test/k8s"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,7 +66,7 @@ var _ = Describe("package reactors", func() {
 			It("emits a ClusterBootstrapTokenCreated event", func() {
 				eventChannel := make(chan eventsourcing.Event, 1)
 
-				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
@@ -104,7 +104,7 @@ var _ = Describe("package reactors", func() {
 			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
 				eventChannel := make(chan eventsourcing.Event, 2)
 
-				k8sClient := k8s.NewMockClient(mockCtrl)
+				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")

@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	apies "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	mock_eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/test/api/eventsourcing"
 )
 
 var _ = Describe("package eventhandler", func() {
@@ -33,8 +34,8 @@ var _ = Describe("package eventhandler", func() {
 			It("can handle event without errors", func() {
 				testReactor := newTestReactor()
 
-				esClient := apies.NewMockEventStoreClient(mockCtrl)
-				esStoreClient := apies.NewMockEventStore_StoreClient(mockCtrl)
+				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
+				esStoreClient := mock_eventsourcing.NewMockEventStore_StoreClient(mockCtrl)
 				esClient.EXPECT().Store(ctx).Return(esStoreClient, nil)
 				esStoreClient.EXPECT().Send(gomock.AssignableToTypeOf(new(apies.Event))).Return(nil)
 				esStoreClient.EXPECT().CloseAndRecv().Return(nil, nil)

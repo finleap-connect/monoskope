@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	grpc "google.golang.org/grpc"
 	metadata "google.golang.org/grpc/metadata"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -38,14 +39,14 @@ func (m *MockEventStoreClient) EXPECT() *MockEventStoreClientMockRecorder {
 }
 
 // Retrieve mocks base method.
-func (m *MockEventStoreClient) Retrieve(arg0 context.Context, arg1 *EventFilter, arg2 ...grpc.CallOption) (EventStore_RetrieveClient, error) {
+func (m *MockEventStoreClient) Retrieve(arg0 context.Context, arg1 *eventsourcing.EventFilter, arg2 ...grpc.CallOption) (eventsourcing.EventStore_RetrieveClient, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Retrieve", varargs...)
-	ret0, _ := ret[0].(EventStore_RetrieveClient)
+	ret0, _ := ret[0].(eventsourcing.EventStore_RetrieveClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -58,14 +59,14 @@ func (mr *MockEventStoreClientMockRecorder) Retrieve(arg0, arg1 interface{}, arg
 }
 
 // Store mocks base method.
-func (m *MockEventStoreClient) Store(arg0 context.Context, arg1 ...grpc.CallOption) (EventStore_StoreClient, error) {
+func (m *MockEventStoreClient) Store(arg0 context.Context, arg1 ...grpc.CallOption) (eventsourcing.EventStore_StoreClient, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
 	for _, a := range arg1 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Store", varargs...)
-	ret0, _ := ret[0].(EventStore_StoreClient)
+	ret0, _ := ret[0].(eventsourcing.EventStore_StoreClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -173,7 +174,7 @@ func (mr *MockEventStore_StoreClientMockRecorder) RecvMsg(arg0 interface{}) *gom
 }
 
 // Send mocks base method.
-func (m *MockEventStore_StoreClient) Send(arg0 *Event) error {
+func (m *MockEventStore_StoreClient) Send(arg0 *eventsourcing.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Send", arg0)
 	ret0, _ := ret[0].(error)
