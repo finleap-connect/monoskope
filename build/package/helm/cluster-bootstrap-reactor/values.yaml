@@ -7,7 +7,7 @@ global: {}
 replicaCount: 1
 
 image:
-  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/clboreactor
+  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/clusterbootstrapreactor
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
