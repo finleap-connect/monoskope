@@ -81,3 +81,12 @@ func (s *clusterServer) GetBootstrapToken(ctx context.Context, id *wrappers.Stri
 	}
 	return &wrapperspb.StringValue{Value: token}, nil
 }
+
+// GetCACertificateBundle returns the ca cert bundle issued for the cluster with the given UUID
+func (s *clusterServer) GetCACertificateBundle(ctx context.Context, id *wrappers.StringValue) (*wrappers.BytesValue, error) {
+	bundle, err := s.repoCluster.GetCACertificateBundle(ctx, id.GetValue())
+	if err != nil {
+		return nil, err
+	}
+	return &wrapperspb.BytesValue{Value: bundle}, nil
+}

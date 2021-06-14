@@ -19,7 +19,7 @@ var (
 	expectedClusterName = "the one cluster"
 	// expectedClusterLabel        = "one-cluster"
 	// expectedApiServerAddress    = "one.example.com"
-	// expectedClusterCACertBundle = []byte("This should be a certificate")
+	expectedClusterCACertBundle = []byte("This should be a certificate")
 )
 
 var _ = Describe("domain/cluster_repo", func() {
@@ -36,6 +36,7 @@ var _ = Describe("domain/cluster_repo", func() {
 
 	newCluster := projections.NewClusterProjection(clusterId)
 	newCluster.Name = expectedClusterName
+	newCluster.ClusterCACertBundle = expectedClusterCACertBundle
 	newCluster.Created = timestamp.New(time.Now())
 
 	It("can retrieve cluster by name", func() {
@@ -84,5 +85,26 @@ var _ = Describe("domain/cluster_repo", func() {
 
 		Expect(cluster.Name).To(Equal(expectedClusterName))
 		Expect(cluster.Created).NotTo(BeNil())
+	})
+	It("can query a cluster's ca bundle by cluster ID", func() {
+		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
+		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
+		Expect(err).NotTo(HaveOccurred())
+
+		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
+
+		inMemoryUserRepo := es_repos.NewInMemoryRepository()
+		userRepo := NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
+		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
+		Expect(err).NotTo(HaveOccurred())
+
+		inMemClusterRepo := es_repos.NewInMemoryRepository()
+		clusterRepo := NewClusterRepository(inMemClusterRepo, userRepo)
+
+		err = inMemClusterRepo.Upsert(context.Background(), newCluster)
+		Expect(err).NotTo(HaveOccurred())
+		bundle, err := clusterRepo.GetCACertificateBundle(context.Background(), clusterId.String())
+		Expect(err).NotTo(HaveOccurred())
+		Expect(bundle).To(Equal(expectedClusterCACertBundle))
 	})
 })
