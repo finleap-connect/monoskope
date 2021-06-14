@@ -93,6 +93,6 @@ certificates:
   # -- cluster certificate validity duration
   duration: 48h
   # -- cert-manager issuer type to use to issue cluster certificates
-  issuerType: Issuer
+  issuerKind: Issuer
   # -- cert-manager issuer to use to issue cluster certificates
   issuerName: selfsigning-issuer

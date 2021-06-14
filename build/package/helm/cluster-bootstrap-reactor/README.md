@@ -14,8 +14,8 @@ A Helm chart for the Monoskope Cluster Bootstrap Reactor
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | certificates.duration | string | `"48h"` | cluster certificate validity duration |
+| certificates.issuerKind | string | `"Issuer"` | cert-manager issuer type to use to issue cluster certificates |
 | certificates.issuerName | string | `"selfsigning-issuer"` | cert-manager issuer to use to issue cluster certificates |
-| certificates.issuerType | string | `"Issuer"` | cert-manager issuer type to use to issue cluster certificates |
 | eventStore | object | `{"host":"eventstore","port":8080,"prefix":""}` | API address of the event store |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |

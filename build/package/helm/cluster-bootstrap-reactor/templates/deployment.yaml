@@ -77,7 +77,7 @@ spec:
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
             - --jwt-privatekey=/etc/reactor/signing.key
             - --certificate-issuer={{ .Values.certificates.issuerName }}
-            - --certificate-issuer-type={{ .Values.certificates.issuerType }}
+            - --certificate-issuer-kind={{ .Values.certificates.issuerKind }}
             - --certificate-duration={{ .Values.certificates.duration }}
           env:
             - name: K8S_NAMESPACE
