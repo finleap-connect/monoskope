@@ -223,13 +223,6 @@ var _ = Describe("integration", func() {
 		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(firstCluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
 
-		By("getting a cluster's ca certificate by it's id")
-
-		caBundle, err := clusterServiceClient().GetCACertificateBundle(ctx, wrapperspb.String(firstCluster.Id))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(caBundle).ToNot(BeNil())
-		Expect(caBundle.GetValue()).To(Equal([]byte("This should be a certificate")))
-
 		By("by retrieving the bootstrap token")
 
 		// TODO ASAP! Needs reactors to work

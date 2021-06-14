@@ -536,16 +536,14 @@ var Tenant_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ClusterClient interface {
-	// GetAll returns all known clusters
+	// get all known clusters
 	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (Cluster_GetAllClient, error)
-	// GetById returns a cluster by its UUID
+	// get cluster by UUID
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
-	// GetByName returns a cluster by its name
+	// get cluster by name
 	GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
-	// GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
+	// get JWT token for cluster authentication by cluster UUID
 	GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
-	// GetCACertificateBundle returns the ca cert bundle issued for the cluster with the given UUID
-	GetCACertificateBundle(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
 }
 
 type clusterClient struct {
@@ -615,29 +613,18 @@ func (c *clusterClient) GetBootstrapToken(ctx context.Context, in *wrapperspb.St
 	return out, nil
 }
 
-func (c *clusterClient) GetCACertificateBundle(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error) {
-	out := new(wrapperspb.BytesValue)
-	err := c.cc.Invoke(ctx, "/domain.Cluster/GetCACertificateBundle", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ClusterServer is the server API for Cluster service.
 // All implementations must embed UnimplementedClusterServer
 // for forward compatibility
 type ClusterServer interface {
-	// GetAll returns all known clusters
+	// get all known clusters
 	GetAll(*GetAllRequest, Cluster_GetAllServer) error
-	// GetById returns a cluster by its UUID
+	// get cluster by UUID
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
-	// GetByName returns a cluster by its name
+	// get cluster by name
 	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
-	// GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
+	// get JWT token for cluster authentication by cluster UUID
 	GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error)
-	// GetCACertificateBundle returns the ca cert bundle issued for the cluster with the given UUID
-	GetCACertificateBundle(context.Context, *wrapperspb.StringValue) (*wrapperspb.BytesValue, error)
 	mustEmbedUnimplementedClusterServer()
 }
 
@@ -656,9 +643,6 @@ func (UnimplementedClusterServer) GetByName(context.Context, *wrapperspb.StringV
 }
 func (UnimplementedClusterServer) GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBootstrapToken not implemented")
-}
-func (UnimplementedClusterServer) GetCACertificateBundle(context.Context, *wrapperspb.StringValue) (*wrapperspb.BytesValue, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCACertificateBundle not implemented")
 }
 func (UnimplementedClusterServer) mustEmbedUnimplementedClusterServer() {}
 
@@ -748,24 +732,6 @@ func _Cluster_GetBootstrapToken_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cluster_GetCACertificateBundle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClusterServer).GetCACertificateBundle(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.Cluster/GetCACertificateBundle",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServer).GetCACertificateBundle(ctx, req.(*wrapperspb.StringValue))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Cluster_ServiceDesc is the grpc.ServiceDesc for Cluster service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -784,10 +750,6 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBootstrapToken",
 			Handler:    _Cluster_GetBootstrapToken_Handler,
-		},
-		{
-			MethodName: "GetCACertificateBundle",
-			Handler:    _Cluster_GetCACertificateBundle_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

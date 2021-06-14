@@ -31,8 +31,6 @@ type ReadOnlyClusterRepository interface {
 	GetAll(context.Context, bool) ([]*projections.Cluster, error)
 	// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID
 	GetBootstrapToken(context.Context, string) (string, error)
-	// GetCACertificateBundle returns the ca cert bundle issued for the cluster with the given UUID
-	GetCACertificateBundle(context.Context, string) ([]byte, error)
 }
 
 // WriteOnlyClusterRepository is a repository for writing cluster projections.
@@ -118,12 +116,4 @@ func (r *clusterRepository) GetBootstrapToken(ctx context.Context, id string) (s
 		return "", err
 	}
 	return cluster.BootstrapToken, nil
-}
-
-func (r *clusterRepository) GetCACertificateBundle(ctx context.Context, id string) ([]byte, error) {
-	cluster, err := r.ByClusterId(ctx, id)
-	if err != nil {
-		return make([]byte, 0), err
-	}
-	return cluster.ClusterCACertBundle, nil
 }
