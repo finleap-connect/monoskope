@@ -58,7 +58,7 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 		return nil, err
 	}
 
-	err = res.Expire(120)
+	err = res.Expire(60)
 	if err != nil {
 		return nil, err
 	}

@@ -13,11 +13,14 @@ A Helm chart for the Monoskope Cluster Bootstrap Reactor
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
+| certificates.duration | string | `"48h"` | cluster certificate validity duration |
+| certificates.issuerName | string | `"selfsigning-issuer"` | cert-manager issuer to use to issue cluster certificates |
+| certificates.issuerType | string | `"Issuer"` | cert-manager issuer type to use to issue cluster certificates |
 | eventStore | object | `{"host":"eventstore","port":8080,"prefix":""}` | API address of the event store |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
-| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/clboreactor"` |  |
+| image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/clusterbootstrapreactor"` |  |
 | image.tag | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | keySecret.field | string | `"tls.key"` | field of the secret containing the private key (PEM or DER-encoded) |

@@ -22,9 +22,8 @@ project.dict
 /.scannerwork
 /tmp/
 
-/tools/*
+/tools/
 /include/*
-!/tools/goget-wrapper
 *.coverprofile
 .protobuf-deps
 

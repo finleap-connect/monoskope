@@ -3,13 +3,18 @@ GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 
 GO             ?= go
 
+GOGET          ?= $(HACK_DIR)/goget-wrapper
+
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.15.2
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
 LINTER_VERSION ?= v1.39.0
 
-PROTOC 	   	           ?= $(TOOLS_DIR)/protoc
+MOCKGEN         ?= $(TOOLS_DIR)/mockgen
+GOMOCK_VERSION  ?= v1.5.0
+
+PROTOC 	   	           	   ?= $(TOOLS_DIR)/protoc
 PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
 PROTOC_VERSION             ?= 3.17.0
 PROTOC_GEN_GO_VERSION      ?= v1.26.0
@@ -87,6 +92,9 @@ go-report:
 include .protobuf-deps
 
 go-test: $(GENERATED_GO_FILES)
+	make go-test-ci
+
+go-test-ci:
 	@find . -name '*.coverprofile' -exec rm {} \;
 	$(GINKGO) -keepGoing -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
@@ -102,17 +110,13 @@ go-loc:
 	@gocloc .
 
 ginkgo-get:
-	$(shell $(TOOLS_DIR)/goget-wrapper github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
+	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get:
-	$(shell $(TOOLS_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
+	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
-
-ginkgo-clean:
-	rm -Rf $(TOOLS_DIR)/ginkgo
-
-golangci-lint-clean:
-	rm -Rf $(TOOLS_DIR)/golangci-lint
+gomock-get:
+	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
 protoc-get:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
@@ -121,16 +125,17 @@ protoc-get:
 	mkdir -p $(PROTOC_IMPORTS_DIR)/
 	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
 	rm -rf $(TOOLS_DIR)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
-	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
-	$(shell $(TOOLS_DIR)/goget-wrapper google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
+	$(shell $(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
+	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-go-tools: golangci-lint-get ginkgo-get protoc-get
+go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get
 
-go-clean: ginkgo-clean golangci-lint-clean go-build-clean
+go-clean: go-build-clean
 	rm  .protobuf-deps
 	rm -Rf reports/
+	rm -Rf $(TOOLS_DIR)/
+	mkdir $(TOOLS_DIR)
 	find . -name '*.coverprofile' -exec rm {} \;
-
 
 %.pb.go: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
@@ -170,3 +175,7 @@ go-build-commandhandler: $(CMD_COMMANDHANDLER)
 go-build-queryhandler: $(CMD_QUERYHANDLER)
 
 go-build-clboreactor: $(CMD_CLBOREACTOR)
+
+go-rebuild-mocks: .protobuf-deps
+	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
+	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient

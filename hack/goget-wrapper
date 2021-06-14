@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#
+# This script is a wrapper around the `go get` command.
+# It creates a new module in the temp folder, downloads a bianry with `go get` to that module
+# and moves the binaries in the local /tools directory.
+set -euo pipefail
+
+wd=$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../tools && pwd)
+pwd=$(pwd)
+tmp_dir=$(mktemp -d)
+function cleanup {
+    cd ${pwd}
+    rm -rf ${tmp_dir}
+}
+trap cleanup EXIT
+cd ${tmp_dir}
+
+go mod init tmp
+export GOBIN=${wd}
+go get $1
