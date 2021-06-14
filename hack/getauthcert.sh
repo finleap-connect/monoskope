@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+#
+# This script uses kubectl to get the secert containing the private/public key
+# with which JWTs are signed and validated by the Gateway.
 set -euo pipefail
 
 echo "Getting secrets from K8s..."
