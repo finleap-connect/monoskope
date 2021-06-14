@@ -48,6 +48,6 @@ dependencies: # A list of the chart requirements
     condition: rabbitmq.enabled,global.rabbitmq.enabled
   - name: ambassador
     version: 6.5.18
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
+    repository: https://getambassador.io
     condition: ambassador.enabled,global.ambassador.enabled
 
