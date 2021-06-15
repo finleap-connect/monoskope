@@ -13,6 +13,13 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
+const (
+	ISSUER                      = "cluster-bootstrap-reactor"
+	DOMAIN                      = "@monoskope.local"
+	RECONCILIATION_LOOP_TIME    = 5 * time.Second
+	RECONCILIATION_LOOP_RETRIES = 5
+)
+
 type clusterBootstrapReactor struct {
 	log         logger.Logger
 	signer      jwt.JWTSigner
@@ -37,13 +44,16 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			return err
 		}
 
+		r.log.Info("Generating bootstrap token...", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
 			Name:  data.Name,
-			Email: data.Name + "@monoskope.io",
-		}, uuid.New().String(), "cluster-bootstrap-reactor"))
+			Email: data.Label + DOMAIN,
+		}, uuid.New().String(), ISSUER))
 		if err != nil {
+			r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 			return err
 		}
+		r.log.Info("Generating bootstrap token succeeded.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 
 		eventData := &eventdata.ClusterBootstrapTokenCreated{
 			JWT: rawJWT,
@@ -63,9 +73,12 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			return err
 		}
 
+		r.log.Info("Generating certificate signing request...", "AggregateID", event.AggregateID())
 		if err := r.certManager.RequestCertificate(ctx, event.AggregateID(), data.GetCertificateSigningRequest()); err != nil {
+			r.log.Error(err, "Generating certificate signing request failed", "AggregateID", event.AggregateID())
 			return err
 		}
+		r.log.Info("Generating certificate signing request succeeded", "AggregateID", event.AggregateID())
 
 		eventsChannel <- es.NewEvent(
 			ctx,
@@ -85,7 +98,9 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event, eventsChannel chan<- es.Event) {
 	defer close(eventsChannel)
 
-	for {
+	var retries = RECONCILIATION_LOOP_RETRIES
+	for retries > 0 {
+		retries--
 		r.log.Info("Certificate reconciliation started...", "AggregateID", event.AggregateID())
 
 		ca, cert, err := r.certManager.GetCertificate(ctx, event.AggregateID())
@@ -102,13 +117,23 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 				event.AggregateType(),
 				event.AggregateID(),
 				event.AggregateVersion()+1)
-			break
+			return
 		} else if err != certificatemanagement.ErrRequestPending {
 			r.log.Error(err, "Certificate reconciliation failed.")
-			break
+			return
 		}
 
 		r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", err)
-		time.Sleep(time.Second * 5)
+		time.Sleep(RECONCILIATION_LOOP_TIME)
 	}
+
+	r.log.Info("Certificate reconciliation failed. Exceeded retry limit.", "RECONCILIATION_LOOP_RETRIES", RECONCILIATION_LOOP_RETRIES)
+	eventsChannel <- es.NewEvent(
+		ctx,
+		events.ClusterOperatorCertificateIssueingFailed,
+		nil,
+		time.Now().UTC(),
+		event.AggregateType(),
+		event.AggregateID(),
+		event.AggregateVersion()+1)
 }

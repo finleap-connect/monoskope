@@ -19,7 +19,6 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/int128/listener v1.1.0
 	github.com/jetstack/cert-manager v1.3.1
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -41,7 +40,6 @@ require (
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.26.0
-	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.21.1
