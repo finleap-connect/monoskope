@@ -7,7 +7,10 @@ import (
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/certificatemanagement"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -43,11 +46,13 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
+		var name = data.Name
+		var email = data.Label + DOMAIN
 
 		r.log.Info("Generating bootstrap token...", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
-			Name:  data.Name,
-			Email: data.Label + DOMAIN,
+			Name:  name,
+			Email: email,
 		}, uuid.New().String(), ISSUER))
 		if err != nil {
 			r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
@@ -55,18 +60,44 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 		}
 		r.log.Info("Generating bootstrap token succeeded.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 
-		eventData := &eventdata.ClusterBootstrapTokenCreated{
-			JWT: rawJWT,
-		}
-
 		eventsChannel <- es.NewEvent(
 			ctx,
 			events.ClusterBootstrapTokenCreated,
-			es.ToEventDataFromProto(eventData),
+			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
+				JWT: rawJWT,
+			}),
 			time.Now().UTC(),
 			event.AggregateType(),
 			event.AggregateID(),
 			event.AggregateVersion()+1)
+
+		userId := uuid.New()
+		r.log.Info("Creating user and rolebinding.", "AggregateID", userId, "Name", data.Name, "Email", email)
+		eventsChannel <- es.NewEvent(
+			ctx,
+			events.UserCreated,
+			es.ToEventDataFromProto(&eventdata.UserCreated{
+				Name:  name,
+				Email: email,
+			}),
+			time.Now().UTC(),
+			aggregates.User,
+			userId,
+			1)
+
+		eventsChannel <- es.NewEvent(
+			ctx,
+			events.UserRoleBindingCreated,
+			es.ToEventDataFromProto(&eventdata.UserRoleAdded{
+				UserId: userId.String(),
+				Role:   roles.K8sOperator.String(),
+				Scope:  scopes.System.String(),
+			}),
+			time.Now().UTC(),
+			aggregates.UserRoleBinding,
+			uuid.New(),
+			1)
+		r.log.Info("Creating user and rolebinding succeeded.", "AggregateID", userId, "Name", data.Name, "Email", email)
 	case events.ClusterCertificateRequested:
 		data := &eventdata.ClusterCertificateRequested{}
 		if err := event.Data().ToProto(data); err != nil {

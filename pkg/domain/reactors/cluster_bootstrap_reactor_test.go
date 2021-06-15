@@ -64,7 +64,7 @@ var _ = Describe("package reactors", func() {
 			}
 
 			It("emits a ClusterBootstrapTokenCreated,UserCreated,UserRoleBindingCreated event", func() {
-				eventChannel := make(chan eventsourcing.Event, 1)
+				eventChannel := make(chan eventsourcing.Event, 3)
 
 				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
