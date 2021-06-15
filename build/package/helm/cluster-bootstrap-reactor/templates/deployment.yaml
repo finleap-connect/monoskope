@@ -60,13 +60,6 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 8086
-              protocol: TCP
-            - name: http-metrics
-              containerPort: 9102
-              protocol: TCP
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "cluster-bootstrap-reactor.fullname" .) "bus") }}
@@ -82,17 +75,6 @@ spec:
           env:
             - name: K8S_NAMESPACE
               value: {{ .Release.Namespace }}
-          livenessProbe:
-            httpGet:
-              path: /live
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: http
-            periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

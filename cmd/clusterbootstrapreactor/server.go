@@ -3,14 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/heptiolabs/healthcheck"
-	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
@@ -26,8 +23,6 @@ import (
 )
 
 var (
-	healthAddr        string
-	metricsAddr       string
 	eventStoreAddr    string
 	msgbusPrefix      string
 	certIssuer        string
@@ -50,20 +45,6 @@ var serveCmd = &cobra.Command{
 		if k8sNamespace == "" {
 			return errors.New("K8S_NAMESPACE env variable not set")
 		}
-
-		// Add health check handling
-		ready := false
-		promRegistry := prom.NewRegistry()
-		healthCheckHandler := healthcheck.NewMetricsHandler(promRegistry, k8sNamespace)
-		healthCheckHandler.AddReadinessCheck("setup complete", func() error {
-			if !ready {
-				return errors.New("starting up...")
-			}
-			return nil
-		})
-		go func() {
-			log.Info(http.ListenAndServe(healthAddr, healthCheckHandler).Error())
-		}()
 
 		// Create EventStore client
 		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
@@ -108,9 +89,6 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
-		// Set ready
-		ready = true
-
 		// Wait for interrupt signal sent from terminal or on sigterm
 		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, os.Interrupt)
@@ -127,8 +105,6 @@ func init() {
 
 	// Local flags
 	flags := serveCmd.Flags()
-	flags.StringVarP(&healthAddr, "addr", "a", ":8086", "Address the health and readiness check http service will listen on")
-	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 	flags.StringVar(&jwtPrivateKeyFile, "jwt-privatekey", "/etc/clusterbootstrapreactor/signing.key", "Path to the private key for signing JWTs")
