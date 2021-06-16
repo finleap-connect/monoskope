@@ -134,6 +134,12 @@ var _ = Describe("package reactors", func() {
 					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 						crGet := obj.(*cmapi.CertificateRequest)
 						*crGet = *cr
+						apiutil.SetCertificateRequestCondition(crGet, cmapi.CertificateRequestConditionApproved, cmmeta.ConditionTrue, "Approved by test.", "Certificate approved.")
+						return nil
+					})
+					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
+						crGet := obj.(*cmapi.CertificateRequest)
+						*crGet = *cr
 						apiutil.SetCertificateRequestCondition(crGet, cmapi.CertificateRequestConditionReady, cmmeta.ConditionTrue, "Approved by test.", "Certificate ready.")
 						crGet.Status.Certificate = expectedCert
 						crGet.Status.CA = expectedCACert

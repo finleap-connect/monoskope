@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/certificatemanagement"
@@ -17,10 +18,9 @@ import (
 )
 
 const (
-	ISSUER                      = "cluster-bootstrap-reactor"
-	DOMAIN                      = "@monoskope.local"
-	RECONCILIATION_LOOP_TIME    = 5 * time.Second
-	RECONCILIATION_LOOP_RETRIES = 5
+	ISSUER                     = "cluster-bootstrap-reactor"
+	DOMAIN                     = "@monoskope.local"
+	RECONCILIATION_MAX_BACKOFF = 1 * time.Minute
 )
 
 type clusterBootstrapReactor struct {
@@ -129,42 +129,42 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event, eventsChannel chan<- es.Event) {
 	defer close(eventsChannel)
 
-	var retries = RECONCILIATION_LOOP_RETRIES
-	for retries > 0 {
-		retries--
-		r.log.Info("Certificate reconciliation started...", "AggregateID", event.AggregateID())
+	params := backoff.NewExponentialBackOff()
+	params.MaxElapsedTime = RECONCILIATION_MAX_BACKOFF
 
+	err := backoff.Retry(func() error {
+		r.log.Info("Certificate reconciliation started...", "AggregateID", event.AggregateID())
 		ca, cert, err := r.certManager.GetCertificate(ctx, event.AggregateID())
-		if err == nil {
-			r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", "Certificate issued successfully.")
-			eventsChannel <- es.NewEvent(
-				ctx,
-				events.ClusterOperatorCertificateIssued,
-				es.ToEventDataFromProto(&eventdata.ClusterCertificateIssued{
-					Ca:          ca,
-					Certificate: cert,
-				}),
-				time.Now().UTC(),
-				event.AggregateType(),
-				event.AggregateID(),
-				event.AggregateVersion()+1)
-			return
-		} else if err != certificatemanagement.ErrRequestPending {
-			r.log.Error(err, "Certificate reconciliation failed.")
-			return
+		if err != nil {
+			r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", err)
+			return err
 		}
 
-		r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", err)
-		time.Sleep(RECONCILIATION_LOOP_TIME)
-	}
+		r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", "certificate issued successfully")
+		eventsChannel <- es.NewEvent(
+			ctx,
+			events.ClusterOperatorCertificateIssued,
+			es.ToEventDataFromProto(&eventdata.ClusterCertificateIssued{
+				Ca:          ca,
+				Certificate: cert,
+			}),
+			time.Now().UTC(),
+			event.AggregateType(),
+			event.AggregateID(),
+			event.AggregateVersion()+1)
 
-	r.log.Info("Certificate reconciliation failed. Exceeded retry limit.", "RECONCILIATION_LOOP_RETRIES", RECONCILIATION_LOOP_RETRIES)
-	eventsChannel <- es.NewEvent(
-		ctx,
-		events.ClusterOperatorCertificateIssueingFailed,
-		nil,
-		time.Now().UTC(),
-		event.AggregateType(),
-		event.AggregateID(),
-		event.AggregateVersion()+1)
+		return nil
+	}, params)
+
+	if err != nil {
+		r.log.Error(err, "Certificate reconciliation failed.")
+		eventsChannel <- es.NewEvent(
+			ctx,
+			events.ClusterOperatorCertificateIssueingFailed,
+			nil,
+			time.Now().UTC(),
+			event.AggregateType(),
+			event.AggregateID(),
+			event.AggregateVersion()+1)
+	}
 }
