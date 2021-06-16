@@ -63,8 +63,8 @@ var _ = Describe("package reactors", func() {
 				CaCertificateBundle: []byte("somecabundle"),
 			}
 
-			It("emits a ClusterBootstrapTokenCreated event", func() {
-				eventChannel := make(chan eventsourcing.Event, 1)
+			It("emits a ClusterBootstrapTokenCreated,UserCreated,UserRoleBindingCreated event", func() {
+				eventChannel := make(chan eventsourcing.Event, 3)
 
 				k8sClient := mock_k8s.NewMockClient(mockCtrl)
 				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
@@ -79,6 +79,23 @@ var _ = Describe("package reactors", func() {
 				err = event.Data().ToProto(eventDataTokenCreated)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(eventDataTokenCreated.JWT).To(Not(BeEmpty()))
+
+				ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
+				defer cancel()
+
+				select {
+				case <-ctxWithTimeout.Done():
+					Fail("Context deadline exceeded waiting for event.")
+				case event = <-eventChannel:
+					Expect(event.EventType()).To(Equal(events.UserCreated))
+				}
+
+				select {
+				case <-ctxWithTimeout.Done():
+					Fail("Context deadline exceeded waiting for event.")
+				case event = <-eventChannel:
+					Expect(event.EventType()).To(Equal(events.UserRoleBindingCreated))
+				}
 			})
 		})
 		When("ClusterCertificateRequested event occurs", func() {
@@ -114,6 +131,12 @@ var _ = Describe("package reactors", func() {
 
 				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
 					cr := obj.(*cmapi.CertificateRequest)
+					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
+						crGet := obj.(*cmapi.CertificateRequest)
+						*crGet = *cr
+						apiutil.SetCertificateRequestCondition(crGet, cmapi.CertificateRequestConditionApproved, cmmeta.ConditionTrue, "Approved by test.", "Certificate approved.")
+						return nil
+					})
 					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 						crGet := obj.(*cmapi.CertificateRequest)
 						*crGet = *cr

@@ -31,4 +31,6 @@ const (
 	ClusterOperatorCertificateRequestIssued es.EventType = "ClusterOperatorCertificateRequestIssued"
 	// Event emitted when a certificate has been issued for a cluster
 	ClusterOperatorCertificateIssued es.EventType = "ClusterOperatorCertificateIssued"
+	// Event emitted when a certificate could not be issued for a cluster
+	ClusterOperatorCertificateIssueingFailed es.EventType = "ClusterOperatorCertificateIssueingFailed"
 )
