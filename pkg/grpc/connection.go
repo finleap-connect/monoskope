@@ -67,6 +67,15 @@ func (factory grpcConnectionFactory) WithTransportCredentials(pemServerCAFile, c
 	return factory
 }
 
+// WithPerRPCCredentials adds a DialOption which sets credentials and places auth state on each outbound RPC.
+func (factory grpcConnectionFactory) WithPerRPCCredentials(creds credentials.PerRPCCredentials) grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithPerRPCCredentials(creds))
+	return factory
+}
+
 // WithBlock adds a DialOption which makes caller of Dial blocks until the underlying connection is up. Without this, Dial returns immediately and connecting the server happens in background.
 func (factory grpcConnectionFactory) WithBlock() grpcConnectionFactory {
 	if factory.opts == nil {
