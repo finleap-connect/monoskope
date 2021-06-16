@@ -20,6 +20,8 @@ var (
 	expectedLabel               = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
+	expectedM8CA                = []byte("m8 CA")
+	expectedClusterCertificate  = []byte("This should also be a certificate")
 	expectedJWT                 = "thisisnotajwt"
 )
 
@@ -101,6 +103,46 @@ var _ = Describe("domain/cluster_repo", func() {
 
 		dp := cluster.DomainProjection
 		Expect(dp.LastModified).ToNot(BeNil())
-
 	})
+
+	It("can handle ClusterOperatorCertificateIssued events", func() {
+		clusterProjector := NewClusterProjector()
+		clusterProjection := clusterProjector.NewProjection(uuid.New())
+		protoClusterCreatedEventData := &eventdata.ClusterCreated{
+			Name:                expectedName,
+			Label:               expectedLabel,
+			ApiServerAddress:    expectedApiServerAddress,
+			CaCertificateBundle: expectedClusterCACertBundle,
+		}
+		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
+		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
+
+		cluster, ok := clusterProjection.(*projections.Cluster)
+		Expect(ok).To(BeTrue())
+		Expect(cluster.GetName()).To(Equal(expectedName))
+		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
+		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
+		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
+
+		protoClusterOperatorCertificateIssuedEventData := &eventdata.ClusterCertificateIssued{
+			Ca:          expectedM8CA,
+			Certificate: expectedClusterCertificate,
+		}
+		clusterOperatorCertificateIssuedEventData := es.ToEventDataFromProto(protoClusterOperatorCertificateIssuedEventData)
+		clusterProjection, err = clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterOperatorCertificateIssued, clusterOperatorCertificateIssuedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(clusterProjection.Version()).To(Equal(uint64(2)))
+		cluster, ok = clusterProjection.(*projections.Cluster)
+		Expect(ok).To(BeTrue())
+		certs := cluster.GetClusterCertificates()
+		Expect(certs.GetCa()).To(Equal(expectedM8CA))
+		Expect(certs.GetCertificate()).To(Equal(expectedClusterCertificate))
+
+		dp := cluster.DomainProjection
+		Expect(dp.LastModified).ToNot(BeNil())
+	})
+
 })
