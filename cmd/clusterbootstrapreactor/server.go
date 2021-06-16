@@ -56,11 +56,11 @@ var serveCmd = &cobra.Command{
 
 		// Init message bus consumer
 		log.Info("Setting up message bus consumer...")
-		ebConsumer, err := messagebus.NewEventBusConsumer("cluster-bootstrap-reactor", msgbusPrefix)
+		msgBus, err := messagebus.NewEventBusConsumer("cluster-bootstrap-reactor", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		defer ebConsumer.Close()
+		defer msgBus.Close()
 
 		// Set up K8s client
 		k8sClient, err := k8s.NewClient()
@@ -81,11 +81,8 @@ var serveCmd = &cobra.Command{
 		// Set up reactor
 		reactorEventHandler := eventhandler.NewReactorEventHandler(esClient, reactors.NewClusterBootstrapReactor(signer, certManager))
 
-		// Setup matcher for event bus
-		clusterCreatedMatcher := ebConsumer.Matcher().MatchEventType(events.ClusterCreated)
-
 		// Register event handler with event bus
-		if err := ebConsumer.AddHandler(ctx, reactorEventHandler, clusterCreatedMatcher); err != nil {
+		if err := msgBus.AddHandler(ctx, reactorEventHandler, msgBus.Matcher().MatchEventType(events.ClusterCreated), msgBus.Matcher().MatchEventType(events.ClusterCertificateRequested)); err != nil {
 			return err
 		}
 
