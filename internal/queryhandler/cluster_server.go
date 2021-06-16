@@ -81,3 +81,12 @@ func (s *clusterServer) GetBootstrapToken(ctx context.Context, id *wrappers.Stri
 	}
 	return &wrapperspb.StringValue{Value: token}, nil
 }
+
+// GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
+func (s *clusterServer) GetClusterCertificates(ctx context.Context, id *wrappers.StringValue) (*projections.ClusterCertificates, error) {
+	certs, err := s.repoCluster.GetClusterCertificates(ctx, id.GetValue())
+	if err != nil {
+		return nil, err
+	}
+	return certs, nil
+}
