@@ -62,7 +62,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetName()).To(Equal(expectedName))
 		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
-		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
+		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		dp := cluster.DomainProjection
 		Expect(dp.Created).ToNot(BeNil())
@@ -88,7 +88,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetName()).To(Equal(expectedName))
 		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
-		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
+		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		protoTokenCreatedEventData := &eventdata.ClusterBootstrapTokenCreated{
 			JWT: expectedJWT,
@@ -125,7 +125,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetName()).To(Equal(expectedName))
 		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
-		Expect(cluster.GetClusterCACertBundle()).To(Equal(expectedClusterCACertBundle))
+		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		protoClusterOperatorCertificateIssuedEventData := &eventdata.ClusterCertificateIssued{
 			Ca:          expectedM8CA,
@@ -137,7 +137,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(clusterProjection.Version()).To(Equal(uint64(2)))
 		cluster, ok = clusterProjection.(*projections.Cluster)
 		Expect(ok).To(BeTrue())
-		certs := cluster.GetClusterCertificates()
+		certs := cluster.GetCertificate()
 		Expect(certs.GetCa()).To(Equal(expectedM8CA))
 		Expect(certs.GetCertificate()).To(Equal(expectedClusterCertificate))
 

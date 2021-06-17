@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
+
+package projections;
+
+// Certificate
+message Certificate {
+  // CA Certificate
+  bytes ca = 1;
+  // Certificate
+  bytes certificate = 2;
+  // Certificate key
+  bytes key = 3;
+}

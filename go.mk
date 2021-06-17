@@ -91,6 +91,8 @@ go-report:
 
 include .protobuf-deps
 
+go-protobuf: $(GENERATED_GO_FILES)
+
 go-test: $(GENERATED_GO_FILES)
 	make go-test-ci
 
