@@ -22,11 +22,15 @@ var (
 	expectedLabel               = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
-	expectedJWT                 = "thisisnotajwt"
-	expectedCSR                 = []byte("This should be a CSR")
 )
 
 var _ = Describe("Unit Test for Cluster Aggregate", func() {
+
+	var (
+		expectedJWT = "thisisnotajwt"
+		expectedCSR = []byte("This should be a CSR")
+	)
+
 	It("should set the data from a command to the resultant event", func() {
 
 		ctx, err := makeMetadataContextWithSystemAdminUser()

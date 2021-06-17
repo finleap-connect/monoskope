@@ -9,7 +9,7 @@ import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
-import "api/domain/projections/messages.proto";
+import "api/domain/common/messages.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
 
@@ -55,8 +55,7 @@ service Cluster {
       returns (google.protobuf.StringValue);
   // GetCertificate returns the client certificate for the
   // m8 operator of the cluster with the given UUID
-  rpc GetCertificate(google.protobuf.StringValue)
-      returns (projections.Certificate);
+  rpc GetCertificate(google.protobuf.StringValue) returns (common.Certificate);
 }
 
 // K8sOperator is a service used by remote K8s Operators to query the Control

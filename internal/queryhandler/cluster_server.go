@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
@@ -83,7 +84,7 @@ func (s *clusterServer) GetBootstrapToken(ctx context.Context, id *wrappers.Stri
 }
 
 // GetCertificate returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
-func (s *clusterServer) GetCertificate(ctx context.Context, id *wrappers.StringValue) (*projections.Certificate, error) {
+func (s *clusterServer) GetCertificate(ctx context.Context, id *wrappers.StringValue) (*apiCommon.Certificate, error) {
 	certs, err := s.repoCluster.GetCertificate(ctx, id.GetValue())
 	if err != nil {
 		return nil, err

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	apiProjections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -33,7 +33,7 @@ type ReadOnlyClusterRepository interface {
 	// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID
 	GetBootstrapToken(context.Context, string) (string, error)
 	// GetCertificate returns the certificate issued for the m8 operator of the cluster with the given UUID
-	GetCertificate(context.Context, string) (*apiProjections.Certificate, error)
+	GetCertificate(context.Context, string) (*apiCommon.Certificate, error)
 }
 
 // WriteOnlyClusterRepository is a repository for writing cluster projections.
@@ -122,7 +122,7 @@ func (r *clusterRepository) GetBootstrapToken(ctx context.Context, id string) (s
 }
 
 // GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
-func (r *clusterRepository) GetCertificate(ctx context.Context, id string) (*apiProjections.Certificate, error) {
+func (r *clusterRepository) GetCertificate(ctx context.Context, id string) (*apiCommon.Certificate, error) {
 	cluster, err := r.ByClusterId(ctx, id)
 	if err != nil {
 		return nil, err

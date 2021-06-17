@@ -4,6 +4,7 @@ package domain
 
 import (
 	context "context"
+	common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	grpc "google.golang.org/grpc"
@@ -547,7 +548,7 @@ type ClusterClient interface {
 	GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
 	// GetCertificate returns the client certificate for the
 	// m8 operator of the cluster with the given UUID
-	GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Certificate, error)
+	GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.Certificate, error)
 }
 
 type clusterClient struct {
@@ -617,8 +618,8 @@ func (c *clusterClient) GetBootstrapToken(ctx context.Context, in *wrapperspb.St
 	return out, nil
 }
 
-func (c *clusterClient) GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Certificate, error) {
-	out := new(projections.Certificate)
+func (c *clusterClient) GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.Certificate, error) {
+	out := new(common.Certificate)
 	err := c.cc.Invoke(ctx, "/domain.Cluster/GetCertificate", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -641,7 +642,7 @@ type ClusterServer interface {
 	GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error)
 	// GetCertificate returns the client certificate for the
 	// m8 operator of the cluster with the given UUID
-	GetCertificate(context.Context, *wrapperspb.StringValue) (*projections.Certificate, error)
+	GetCertificate(context.Context, *wrapperspb.StringValue) (*common.Certificate, error)
 	mustEmbedUnimplementedClusterServer()
 }
 
@@ -661,7 +662,7 @@ func (UnimplementedClusterServer) GetByName(context.Context, *wrapperspb.StringV
 func (UnimplementedClusterServer) GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBootstrapToken not implemented")
 }
-func (UnimplementedClusterServer) GetCertificate(context.Context, *wrapperspb.StringValue) (*projections.Certificate, error) {
+func (UnimplementedClusterServer) GetCertificate(context.Context, *wrapperspb.StringValue) (*common.Certificate, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
 }
 func (UnimplementedClusterServer) mustEmbedUnimplementedClusterServer() {}
