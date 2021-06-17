@@ -2,10 +2,12 @@ package reactors
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/certificatemanagement"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
@@ -98,14 +100,17 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			uuid.New(),
 			1)
 		r.log.Info("Creating user and rolebinding succeeded.", "AggregateID", userId, "Name", data.Name, "Email", email)
-	case events.ClusterCertificateRequested:
-		data := &eventdata.ClusterCertificateRequested{}
+	case events.CertificateRequested:
+		data := &eventdata.CertificateRequested{}
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
+		if data.ReferencedAggregateType != aggregates.Cluster.String() {
+			return errors.New("event CertificateRequested only supported for aggregate Cluster")
+		}
 
 		r.log.Info("Generating certificate signing request...", "AggregateID", event.AggregateID())
-		if err := r.certManager.RequestCertificate(ctx, event.AggregateID(), data.GetCertificateSigningRequest()); err != nil {
+		if err := r.certManager.RequestCertificate(ctx, event.AggregateID(), data.GetSigningRequest()); err != nil {
 			r.log.Error(err, "Generating certificate signing request failed", "AggregateID", event.AggregateID())
 			return err
 		}
@@ -113,7 +118,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 
 		eventsChannel <- es.NewEvent(
 			ctx,
-			events.ClusterOperatorCertificateRequestIssued,
+			events.CertificateRequestIssued,
 			nil,
 			time.Now().UTC(),
 			event.AggregateType(),
@@ -143,10 +148,12 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 		r.log.Info("Certificate reconciliation finished.", "AggregateID", event.AggregateID(), "State", "certificate issued successfully")
 		eventsChannel <- es.NewEvent(
 			ctx,
-			events.ClusterOperatorCertificateIssued,
-			es.ToEventDataFromProto(&eventdata.ClusterCertificateIssued{
-				Ca:          ca,
-				Certificate: cert,
+			events.CertificateIssued,
+			es.ToEventDataFromProto(&eventdata.CertificateIssued{
+				Certificate: &common.Certificate{
+					Ca:          ca,
+					Certificate: cert,
+				},
 			}),
 			time.Now().UTC(),
 			event.AggregateType(),
@@ -160,7 +167,7 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 		r.log.Error(err, "Certificate reconciliation failed.")
 		eventsChannel <- es.NewEvent(
 			ctx,
-			events.ClusterOperatorCertificateIssueingFailed,
+			events.CertificateIssueingFailed,
 			nil,
 			time.Now().UTC(),
 			event.AggregateType(),
