@@ -28,7 +28,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 
 	var (
 		expectedJWT = "thisisnotajwt"
-		expectedCSR = []byte("This should be a CSR")
 	)
 
 	It("should set the data from a command to the resultant event", func() {
@@ -99,54 +98,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(agg.(*ClusterAggregate).bootstrapToken).To(Equal(expectedJWT))
-	})
-
-	It("should handle a ClusterCertificateRequested event", func() {
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
-
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCertificateRequested{
-			CertificateSigningRequest: expectedCSR,
-		})
-		esEvent := es.NewEvent(ctx, events.ClusterCertificateRequested, ed, time.Now().UTC(),
-			agg.Type(), agg.ID(), agg.Version())
-
-		err = agg.ApplyEvent(esEvent)
-		Expect(err).NotTo(HaveOccurred())
-
-		Expect(agg.(*ClusterAggregate).certificateSigningRequest).To(Equal(expectedCSR))
-	})
-
-	It("should set the data from a command to the resultant event", func() {
-
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
-
-		err = createCluster(ctx, agg)
-		Expect(err).NotTo(HaveOccurred())
-
-		esCommand, ok := cmd.NewRequestClusterCertificateCommand(uuid.New()).(*cmd.RequestClusterCertificateCommand)
-		Expect(ok).To(BeTrue())
-
-		esCommand.CertificateSigningRequest = expectedCSR
-
-		err = agg.HandleCommand(ctx, esCommand)
-		Expect(err).NotTo(HaveOccurred())
-
-		event := agg.UncommittedEvents()[1]
-
-		Expect(event.EventType()).To(Equal(events.ClusterCertificateRequested))
-
-		data := &eventdata.ClusterCertificateRequested{}
-		err = event.Data().ToProto(data)
-		Expect(err).NotTo(HaveOccurred())
-
-		Expect(data.CertificateSigningRequest).To(Equal(expectedCSR))
-
 	})
 })
 

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
@@ -55,16 +54,6 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 			return projection, err
 		}
 		p.BootstrapToken = data.GetJWT()
-		if err := c.projectModified(event, p.DomainProjection); err != nil {
-			return nil, err
-		}
-	case events.ClusterOperatorCertificateIssued:
-		data := &eventdata.ClusterCertificateIssued{}
-		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
-		}
-		p.Certificate = &apiCommon.Certificate{Ca: data.Ca, Certificate: data.Certificate}
-
 		if err := c.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}

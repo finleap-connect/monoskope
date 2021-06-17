@@ -41,9 +41,3 @@ message ClusterBootstrapTokenCreated {
   // JsonWebToken for cluster bootstrap
   string JWT = 1;
 }
-
-message ClusterCertificateRequested { bytes certificateSigningRequest = 1; }
-message ClusterCertificateIssued {
-  bytes certificate = 1;
-  bytes ca = 2;
-}

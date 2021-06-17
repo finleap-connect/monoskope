@@ -546,9 +546,6 @@ type ClusterClient interface {
 	// GetBootstrapToken returns the JWT token for cluster authentication for the
 	// cluster with the given UUID
 	GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
-	// GetCertificate returns the client certificate for the
-	// m8 operator of the cluster with the given UUID
-	GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.Certificate, error)
 }
 
 type clusterClient struct {
@@ -618,15 +615,6 @@ func (c *clusterClient) GetBootstrapToken(ctx context.Context, in *wrapperspb.St
 	return out, nil
 }
 
-func (c *clusterClient) GetCertificate(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.Certificate, error) {
-	out := new(common.Certificate)
-	err := c.cc.Invoke(ctx, "/domain.Cluster/GetCertificate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ClusterServer is the server API for Cluster service.
 // All implementations must embed UnimplementedClusterServer
 // for forward compatibility
@@ -640,9 +628,6 @@ type ClusterServer interface {
 	// GetBootstrapToken returns the JWT token for cluster authentication for the
 	// cluster with the given UUID
 	GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error)
-	// GetCertificate returns the client certificate for the
-	// m8 operator of the cluster with the given UUID
-	GetCertificate(context.Context, *wrapperspb.StringValue) (*common.Certificate, error)
 	mustEmbedUnimplementedClusterServer()
 }
 
@@ -661,9 +646,6 @@ func (UnimplementedClusterServer) GetByName(context.Context, *wrapperspb.StringV
 }
 func (UnimplementedClusterServer) GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBootstrapToken not implemented")
-}
-func (UnimplementedClusterServer) GetCertificate(context.Context, *wrapperspb.StringValue) (*common.Certificate, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
 }
 func (UnimplementedClusterServer) mustEmbedUnimplementedClusterServer() {}
 
@@ -753,24 +735,6 @@ func _Cluster_GetBootstrapToken_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cluster_GetCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClusterServer).GetCertificate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.Cluster/GetCertificate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServer).GetCertificate(ctx, req.(*wrapperspb.StringValue))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Cluster_ServiceDesc is the grpc.ServiceDesc for Cluster service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -790,10 +754,6 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetBootstrapToken",
 			Handler:    _Cluster_GetBootstrapToken_Handler,
 		},
-		{
-			MethodName: "GetCertificate",
-			Handler:    _Cluster_GetCertificate_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -802,6 +762,92 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
+// CertificateClient is the client API for Certificate service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CertificateClient interface {
+	GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error)
+}
+
+type certificateClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCertificateClient(cc grpc.ClientConnInterface) CertificateClient {
+	return &certificateClient{cc}
+}
+
+func (c *certificateClient) GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error) {
+	out := new(common.Certificate)
+	err := c.cc.Invoke(ctx, "/domain.Certificate/GetCertificate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CertificateServer is the server API for Certificate service.
+// All implementations must embed UnimplementedCertificateServer
+// for forward compatibility
+type CertificateServer interface {
+	GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error)
+	mustEmbedUnimplementedCertificateServer()
+}
+
+// UnimplementedCertificateServer must be embedded to have forward compatible implementations.
+type UnimplementedCertificateServer struct {
+}
+
+func (UnimplementedCertificateServer) GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
+}
+func (UnimplementedCertificateServer) mustEmbedUnimplementedCertificateServer() {}
+
+// UnsafeCertificateServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CertificateServer will
+// result in compilation errors.
+type UnsafeCertificateServer interface {
+	mustEmbedUnimplementedCertificateServer()
+}
+
+func RegisterCertificateServer(s grpc.ServiceRegistrar, srv CertificateServer) {
+	s.RegisterService(&Certificate_ServiceDesc, srv)
+}
+
+func _Certificate_GetCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCertificateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateServer).GetCertificate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Certificate/GetCertificate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateServer).GetCertificate(ctx, req.(*GetCertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Certificate_ServiceDesc is the grpc.ServiceDesc for Certificate service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Certificate_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.Certificate",
+	HandlerType: (*CertificateServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetCertificate",
+			Handler:    _Certificate_GetCertificate_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 

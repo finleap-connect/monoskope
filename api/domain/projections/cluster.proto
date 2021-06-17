@@ -3,7 +3,6 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "api/domain/common/messages.proto";
 import "api/domain/projections/metadata.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
@@ -27,6 +26,4 @@ message Cluster {
   LifecycleMetadata metadata = 6;
   // Bootstrap token for cluster authentication
   string bootstrap_token = 7;
-  // Client certificate of the cluster
-  common.Certificate certificate = 8;
 }

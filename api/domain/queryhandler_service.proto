@@ -53,9 +53,10 @@ service Cluster {
   // cluster with the given UUID
   rpc GetBootstrapToken(google.protobuf.StringValue)
       returns (google.protobuf.StringValue);
-  // GetCertificate returns the client certificate for the
-  // m8 operator of the cluster with the given UUID
-  rpc GetCertificate(google.protobuf.StringValue) returns (common.Certificate);
+}
+
+service Certificate {
+  rpc GetCertificate(GetCertificateRequest) returns (common.Certificate);
 }
 
 // K8sOperator is a service used by remote K8s Operators to query the Control
@@ -66,3 +67,10 @@ service K8sOperator {
 }
 
 message GetAllRequest { bool includeDeleted = 1; }
+
+message GetCertificateRequest {
+  // Unique identifier of the aggregate referenced (UUID 128-bit number)
+  string raggregate_id = 1;
+  // Type of the aggregate referenced
+  string aggregate_type = 2;
+}
