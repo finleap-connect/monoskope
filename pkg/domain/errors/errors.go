@@ -37,13 +37,27 @@ var (
 	ErrClusterNotFound = errors.New("cluster not found")
 	// ErrClusterAlreadyExists is when a cluster does already exist.
 	ErrClusterAlreadyExists = errors.New("cluster already exists")
+
+	// ErrCertificateAlreadyExists is when a cert does already exist.
+	ErrCertificateAlreadyExists = errors.New("certificate already exists")
 )
 
 var (
 	errorMap = map[codes.Code][]error{
-		codes.NotFound:         {ErrUserNotFound, ErrTenantNotFound, ErrClusterRegistrationNotFound, ErrClusterNotFound},
+		codes.NotFound: {
+			ErrUserNotFound,
+			ErrTenantNotFound,
+			ErrClusterRegistrationNotFound,
+			ErrClusterNotFound,
+		},
+		codes.AlreadyExists: {
+			ErrUserAlreadyExists,
+			ErrTenantAlreadyExists,
+			ErrClusterRegistrationAlreadyExists,
+			ErrClusterAlreadyExists,
+			ErrCertificateAlreadyExists,
+		},
 		codes.PermissionDenied: {ErrUnauthorized},
-		codes.AlreadyExists:    {ErrUserAlreadyExists, ErrTenantAlreadyExists, ErrClusterRegistrationAlreadyExists, ErrClusterAlreadyExists},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

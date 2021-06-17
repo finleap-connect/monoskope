@@ -62,7 +62,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
-		agg.IncrementVersion()
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
 			Name:                expectedName,
@@ -89,7 +88,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
-		agg.IncrementVersion()
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
 			JWT: expectedJWT,
@@ -108,7 +106,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
-		agg.IncrementVersion()
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCertificateRequested{
 			CertificateSigningRequest: expectedCSR,

@@ -2,6 +2,7 @@ package aggregates
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -20,7 +21,7 @@ var (
 )
 
 var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
-	It("should set the data from a command to the resultant event", func() {
+	It("should handle RequestCertificateCommand correctly", func() {
 
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
@@ -41,6 +42,29 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		Expect(data.SigningRequest).To(Equal(expectedCSR))
 		Expect(data.ReferencedAggregateId).To(Equal(expectedReferencedAggregateId.String()))
 		Expect(data.ReferencedAggregateType).To(Equal(expectedReferencedAggregateType.String()))
+	})
+
+	It("should handle CertificateRequested event correctly", func() {
+
+		ctx, err := makeMetadataContextWithSystemAdminUser()
+		Expect(err).NotTo(HaveOccurred())
+
+		agg := NewCertificateAggregate(uuid.New())
+
+		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
+			ReferencedAggregateId:   expectedReferencedAggregateId.String(),
+			ReferencedAggregateType: expectedReferencedAggregateType.String(),
+			SigningRequest:          expectedCSR,
+		})
+		esEvent := es.NewEvent(ctx, events.CertificateRequested, ed, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err = agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(agg.(*CertificateAggregate).signingRequest).To(Equal(expectedCSR))
+		Expect(agg.(*CertificateAggregate).relatedAggregateId).To(Equal(expectedReferencedAggregateId))
+		Expect(agg.(*CertificateAggregate).relatedAggregateType).To(Equal(expectedReferencedAggregateType))
 	})
 })
 

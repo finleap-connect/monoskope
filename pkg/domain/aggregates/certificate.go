@@ -9,6 +9,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
@@ -18,9 +19,6 @@ type CertificateAggregate struct {
 	relatedAggregateId   uuid.UUID
 	relatedAggregateType es.AggregateType
 	signingRequest       []byte
-	ca                   []byte
-	certificate          []byte
-	key                  []byte
 }
 
 // CertificateAggregate creates a new CertificateAggregate
@@ -40,6 +38,9 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 
 	switch cmd := cmd.(type) {
 	case *commands.RequestCertificateCommand:
+		if a.Exists() {
+			return errors.ErrCertificateAlreadyExists
+		}
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   cmd.GetReferencedAggregateId(),
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
