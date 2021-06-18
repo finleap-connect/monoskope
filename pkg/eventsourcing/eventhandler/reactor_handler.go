@@ -35,6 +35,7 @@ func (m *reactorEventHandler) HandleEvent(ctx context.Context, event es.Event) e
 	return m.reactor.HandleEvent(ctx, event, eventsChannel)
 }
 
+// Stop waits for all goroutines to finish
 func (m *reactorEventHandler) Stop() {
 	m.waitGroup.Wait()
 }
