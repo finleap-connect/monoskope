@@ -64,6 +64,7 @@ func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*
 	userInfo := &api.AuthResponse{
 		AccessToken: signedToken,
 		Expiry:      timestamppb.New(rawToken.Expiry.Time()),
+		Username:    user.Name,
 	}
 
 	s.log.Info("User authenticated successfully.", "User", upstreamClaims.Email, "Expiry", userInfo.Expiry)

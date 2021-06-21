@@ -31,4 +31,5 @@ message AuthCode {
 message AuthResponse {
   string AccessToken = 1;
   google.protobuf.Timestamp Expiry = 2;
+  string Username = 3;
 }

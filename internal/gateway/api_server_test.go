@@ -83,6 +83,7 @@ var _ = Describe("Gateway", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authResponse).ToNot(BeNil())
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
+		Expect(authResponse.GetUsername()).ToNot(Equal(""))
 		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetExpiry().AsTime())
 	})
 })
