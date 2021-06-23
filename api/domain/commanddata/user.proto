@@ -21,6 +21,7 @@ message CreateUserRoleBindingCommandData {
   string role = 2;
   // Scope of the role
   string scope = 3;
-  // Affected resource within scope
+  // Unique identifier of the affected resource within scope (UUID 128-bit
+  // number)
   string resource = 4;
 }
