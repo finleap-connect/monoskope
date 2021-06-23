@@ -7,20 +7,34 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package commanddata;
 
+// used by the M8 Cluster Operator to register itself
 message RequestClusterRegistration {
   // Unique name of the cluster
   string name = 1;
-  // Address of the clusters KubeAPIServer
-  string apiServerAddress = 2;
-  // CA certificate of the cluster
-  bytes clusterCACert = 3;
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
+  string label = 2;
+  // DNS name or IP address of the clusters KubeAPIServer
+  string apiServerAddress = 3;
+  // CA certificates bundle of the cluster, PEM encoded
+  bytes clusterCACertBundle = 4;
 }
 
+// Command issued by an admin via monoctl to create information about a new
+// cluster
 message CreateCluster {
-  // Unique name of the cluster
+  // Unique name of the cluster, to be presented to humans
   string name = 1;
-  // Address of the clusters KubeAPIServer
-  string apiServerAddress = 2;
-  // CA certificate of the cluster
-  bytes clusterCACert = 3;
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
+  string label = 2;
+  // DNS name or IP address of the clusters KubeAPIServer
+  string apiServerAddress = 3;
+  // Bundle of CA certificates of the cluster, PEM encoded
+  bytes clusterCACertBundle = 4;
+}
+
+// Command issued to request a new certificate by an operator
+message RequestClusterOperatorCertificate {
+  bytes certificateSigningRequest = 1;
 }

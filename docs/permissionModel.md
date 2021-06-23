@@ -1,3 +1,7 @@
+**[[Back To Overview]](README.md)**
+
+---
+
 # Monoskope Permission Model
 
 ## Commands & Aggregates
@@ -20,20 +24,18 @@
 
 The permissions shown here are auto generated from code.
 
-|          COMMAND           |     ROLE     | SCOPE  | RESOURCEMATCH |
-|----------------------------|--------------|--------|---------------|
-| ApproveClusterRegistration | admin        | system | false         |
-| CreateCluster              | admin        | system | false         |
-| CreateTenant               | admin        | system | false         |
-| CreateUser                 | admin        | system | false         |
-| CreateUserRoleBinding      | admin        | system | false         |
-|                            | admin        | tenant | true          |
-| DeleteCluster              | admin        | system | false         |
-| DeleteTenant               | admin        | system | false         |
-| DeleteUserRoleBinding      | admin        | system | false         |
-|                            | admin        | tenant | true          |
-| DenyClusterRegistration    | admin        | system | false         |
-| RequestClusterRegistration | k8s-operator | *      | false         |
-| UpdateTenant               | admin        | system | false         |
-
-* RESOURCEMATCH - means that the permission to execute the command is only granted if the resource/scope combination matches, e.g. a tenant admin can only create a role binding for the same tenant resource.
+|          COMMAND           |     ROLE     | SCOPE  |
+|----------------------------|--------------|--------|
+| ApproveClusterRegistration | admin        | system |
+| CreateCluster              | admin        | system |
+| CreateTenant               | admin        | system |
+| CreateUser                 | admin        | system |
+| CreateUserRoleBinding      | admin        | system |
+|                            | admin        | tenant |
+| DeleteCluster              | admin        | system |
+| DeleteTenant               | admin        | system |
+| DeleteUserRoleBinding      | admin        | system |
+|                            | admin        | tenant |
+| DenyClusterRegistration    | admin        | system |
+| RequestClusterRegistration | k8s-operator | *      |
+| UpdateTenant               | admin        | system |

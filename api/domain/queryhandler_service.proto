@@ -35,6 +35,23 @@ service Tenant {
   rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
   // GetByName returns the tenant found by the given name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetUsers returns users belonging to the given tenant id.
+  rpc GetUsers(google.protobuf.StringValue)
+      returns (stream projections.TenantUser);
+}
+
+// Cluster is a service to query information about known clusters.
+service Cluster {
+  // GetAll returns all known clusters
+  rpc GetAll(GetAllRequest) returns (stream projections.Cluster);
+  // GetById returns a cluster by its UUID
+  rpc GetById(google.protobuf.StringValue) returns (projections.Cluster);
+  // GetByName returns a cluster by its name
+  rpc GetByName(google.protobuf.StringValue) returns (projections.Cluster);
+  // GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
+  rpc GetBootstrapToken(google.protobuf.StringValue) returns (google.protobuf.StringValue);
+  // GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
+  rpc GetClusterCertificates(google.protobuf.StringValue) returns (projections.ClusterCertificates);
 }
 
 // ClusterRegistration is a service to query ClusterRegistrations.

@@ -11,7 +11,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -56,7 +55,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		var resource uuid.UUID
 		// Get all aggregates of same type
 		if userId, err = uuid.Parse(cmd.GetUserId()); err != nil {
-			return errors.ErrInvalidArgument("user id is invalid")
+			return domainErrors.ErrInvalidArgument("user id is invalid")
 		}
 		if err := roles.ValidateRole(cmd.GetRole()); err != nil {
 			return err

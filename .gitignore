@@ -12,6 +12,8 @@ project.dict
 *.njsproj
 *.sln
 *.sw?
+*~
+.\#*
 
 #
 /cache/
@@ -20,9 +22,10 @@ project.dict
 /.scannerwork
 /tmp/
 
-/tools/*
-!/tools/goget-wrapper
+/tools/
+/include/*
 *.coverprofile
+.protobuf-deps
 
 /gateway
 

@@ -28,7 +28,8 @@ gateway:
   enabled: true
   replicaCount: 2
   auth:
-    issuerURL: https://gitlab.figo.systems
+    identityProviderName: gitlab
+    identityProviderURL: https://gitlab.figo.systems
   resources:
     limits:
       cpu: 2000m
@@ -38,10 +39,9 @@ gateway:
       memory: 64Mi
 
 eventstore:
-  replicaCount: 2
   enabled: true
+  replicaCount: 2
   messageBus:
-    caSecret: m8-trust-anchor
     tlsSecret: monoskope-rabbitmq-auth-admin
   storeDatabase:
     tlsSecret: monoskope-crdb-auth-evenstore
@@ -70,8 +70,8 @@ eventstore:
       backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
 
 commandhandler:
-  replicaCount: 2
   enabled: true
+  replicaCount: 2
   resources:
     limits:
       cpu: 2000m
@@ -89,8 +89,8 @@ commandhandler:
     - lutz.behnke@finleap.com
 
 queryhandler:
-  replicaCount: 2
   enabled: true
+  replicaCount: 2
   resources:
     limits:
       cpu: 2000m
@@ -106,3 +106,16 @@ ambassador:
   replicaCount: 2
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+
+cluster-bootstrap-reactor:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  messageBus:
+    tlsSecret: monoskope-rabbitmq-auth-admin

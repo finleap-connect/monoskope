@@ -71,7 +71,7 @@ spec:
             - secretRef:
                 name: {{ .Values.storeDatabase.existingSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
           args:
-            - /eventstore
+            - /app
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}

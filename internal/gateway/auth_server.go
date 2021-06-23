@@ -17,6 +17,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/util"
 )
@@ -38,10 +40,11 @@ type authServer struct {
 	log         logger.Logger
 	shutdown    *util.ShutdownWaitGroup
 	authHandler *auth.Handler
+	userRepo    repositories.ReadOnlyUserRepository
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(authHandler *auth.Handler) *authServer {
+func NewAuthServer(authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
 		api:         &http.Server{Handler: engine},
@@ -49,6 +52,7 @@ func NewAuthServer(authHandler *auth.Handler) *authServer {
 		log:         logger.WithName("auth-server"),
 		shutdown:    util.NewShutdownWaitGroup(),
 		authHandler: authHandler,
+		userRepo:    userRepo,
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
@@ -97,12 +101,31 @@ func (s *authServer) ServeFromListener(apiLis net.Listener) error {
 	return nil
 }
 
+// Tell the server to shutdown
+func (s *authServer) Shutdown() {
+	s.shutdown.Expect()
+}
+
 // registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
 	r.POST("/auth/*route", s.auth)
+	r.GET("/.well-known/openid-configuration", s.discovery)
+	r.GET("/keys", s.keys)
+}
+
+func (s *authServer) discovery(c *gin.Context) {
+	c.JSON(http.StatusOK, &auth.OpenIdConfiguration{
+		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
+		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
+	})
+}
+
+func (s *authServer) keys(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authHandler.KeyExpiration().Seconds())))
+	c.JSON(http.StatusOK, s.authHandler.Keys())
 }
 
 // auth serves as handler for the auth route of the server.
@@ -115,40 +138,55 @@ func (s *authServer) auth(c *gin.Context) {
 		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
 	}
 
-	var claims *auth.Claims
-	if claims = s.tokenValidation(c); claims != nil {
-		s.writeSuccess(c, claims)
+	var authToken *jwt.AuthToken
+	if authToken = s.tokenValidationFromContext(c); authToken != nil {
+		s.writeSuccess(c, authToken)
 		return
 	}
-	if claims = s.certValidation(c); claims != nil {
-		s.writeSuccess(c, claims)
+	if authToken = s.certValidation(c); authToken != nil {
+		s.writeSuccess(c, authToken)
 		return
 	}
 
 	c.String(http.StatusUnauthorized, "authorization failed")
 }
 
-// tokenValidation validates the token provided within the authorization
-func (s *authServer) tokenValidation(c *gin.Context) *auth.Claims {
+func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool) {
+	user, err := s.userRepo.ByEmail(c, email)
+	if err != nil {
+		return "", false
+	}
+	return user.Id, true
+}
+
+// tokenValidationFromContext validates the token provided within the authorization flow from gin context
+func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
+	return s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+}
+
+// tokenValidation validates the token provided within the authorization flow
+func (s *authServer) tokenValidation(ctx context.Context, token string, expectedAudience ...string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
-	token := defaultBearerTokenFromRequest(c.Request)
 	if token == "" {
 		s.log.Info("Token validation failed.", "error", "token is empty")
 		return nil
 	}
 
-	if claims, err := s.authHandler.Authorize(c.Request.Context(), token); err != nil {
+	authToken := &jwt.AuthToken{}
+	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
-	} else {
-		s.log.Info("Token validation successful.", "User", claims.Email)
-		return claims
 	}
+	if err := authToken.Validate(expectedAudience...); err != nil {
+		s.log.Info("Token validation failed.", "error", err.Error())
+		return nil
+	}
+	return authToken
 }
 
 // tokenValidation validates the client certificate provided within the forwarded client secret header
-func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
+func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 	s.log.Info("Validating client certificate...")
 
 	cert, err := clientCertificateFromRequest(c.Request)
@@ -157,18 +195,22 @@ func (s *authServer) certValidation(c *gin.Context) *auth.Claims {
 		return nil
 	}
 
-	claims := &auth.Claims{
-		Name:   cert.Subject.CommonName,
-		Email:  cert.EmailAddresses[0],
-		Issuer: cert.Issuer.CommonName,
+	if userId, ok := s.retrieveUserId(c, cert.EmailAddresses[0]); !ok {
+		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
+		return nil
+	} else {
+		claims := jwt.NewAuthToken(&jwt.StandardClaims{
+			Name:  cert.Subject.CommonName,
+			Email: cert.EmailAddresses[0],
+		}, userId, "mtls")
+		claims.Issuer = cert.Issuer.CommonName
+		s.log.Info("Client certificate validation successful.", "User", claims.Email)
+		return claims
 	}
-	s.log.Info("Client certificate validation successful.", "User", claims.Email)
-
-	return claims
 }
 
 // writeSuccess writes all request headers back to the response along with information got from the upstream IdP and sends an http status ok
-func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims) {
+func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
 	// Copy request headers to response
 	for k := range c.Request.Header {
 		// Avoid copying the original Content-Length header from the client
@@ -179,6 +221,7 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *auth.Claims) {
 	}
 
 	// Set headers with auth info
+	c.Writer.Header().Set(HeaderAuthId, claims.Subject)
 	c.Writer.Header().Set(HeaderAuthName, claims.Name)
 	c.Writer.Header().Set(HeaderAuthEmail, claims.Email)
 	c.Writer.Header().Set(HeaderAuthIssuer, claims.Issuer)

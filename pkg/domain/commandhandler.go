@@ -35,7 +35,7 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
 	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
 
 	// Cluster
-	es.DefaultAggregateRegistry.RegisterAggregate(aggregates.NewClusterAggregate)
+	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewClusterAggregate(id, aggregateManager) })
 
 	return aggregateManager
 }
@@ -113,25 +113,6 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 	return nil
 }
 
-func setupOperatorUser(ctx context.Context, handler es.CommandHandler) error {
-	k8sOperator := os.Getenv("K8S_OPERATOR")
-	if len(k8sOperator) == 0 {
-		return nil
-	}
-
-	userId, err := setupUser(ctx, "m8operator", k8sOperator, handler)
-	if err != nil {
-		return err
-	}
-
-	err = setupRoleBinding(ctx, userId, roles.K8sOperator.String(), string(scopes.System), handler)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // setupUsers creates default users/rolebindings
 func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 	metadataMgr, err := metadata.NewDomainMetadataManager(ctx)
@@ -145,9 +126,6 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 	ctx = metadataMgr.GetContext()
 
 	if err := setupSuperUsers(ctx, handler); err != nil {
-		return err
-	}
-	if err := setupOperatorUser(ctx, handler); err != nil {
 		return err
 	}
 	return nil

@@ -1,4 +1,5 @@
 variables:
+  GO_MODULE: gitlab.figo.systems/platform/monoskope/monoskope
   RABBITMQ_DEFAULT_USER: guest
   RABBITMQ_DEFAULT_PASS: guest
   AMQP_URL: "amqp://guest:guest@127.0.0.1:5672"
@@ -24,6 +25,10 @@ variables:
   extends: .gobase
   cache:
     policy: pull
+  only:
+    - web
+    - tags
+    - develop
 
 lint:golang:
   stage: test
@@ -44,119 +49,81 @@ test:golang:
       alias: minio
       command: ["server", "/data"]
   script:
-    - GINKGO=ginkgo make go-test
+    - GINKGO=ginkgo make go-test-ci
     - make go-coverage
   artifacts:
     name: "Go Tests"
     when: always
     reports:
       junit: ["reports/*.xml"]
-
-build:gateway:
-  stage: build
-  extends: .gobase-no-push
-  only:
-    - web
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-gateway
-  artifacts:
-    paths:
-      - gateway
-    expire_in: 1 day
-  needs: []
-
-build:eventstore:
-  stage: build
-  extends: .gobase-no-push
-  only:
-    - web
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-eventstore
-  artifacts:
-    paths:
-      - eventstore
-    expire_in: 1 day
-  needs: []
-
-build:commandhandler:
-  stage: build
-  extends: .gobase-no-push
-  only:
-    - web
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-commandhandler
-  artifacts:
-    paths:
-      - commandhandler
-    expire_in: 1 day
-  needs: []
-
-build:queryhandler:
-  stage: build
-  extends: .gobase-no-push
-  only:
-    - web
-  script:
-    - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - VERSION=$VERSION make go-build-queryhandler
-  artifacts:
-    paths:
-      - queryhandler
-    expire_in: 1 day
-  needs: []
-
+  
 deliver:gateway:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=gateway
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/gateway.Dockerfile -i gateway --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:gateway
 
 deliver:eventstore:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=eventstore
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/eventstore.Dockerfile -i eventstore --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:eventstore
 
 deliver:commandhandler:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=commandhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/commandhandler.Dockerfile -i commandhandler --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:commandhandler
 
 deliver:queryhandler:
   stage: deliver
   extends: .docker-builder
   script:
+    - APP=queryhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
-    - build-image --file build/package/queryhandler.Dockerfile -i queryhandler --tag $VERSION
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
     - lint:golang
     - test:golang
-    - build:queryhandler
+
+deliver:clusterbootstrapreactor:
+  stage: deliver
+  extends: .docker-builder
+  script:
+    - APP=clusterbootstrapreactor
+    - VERSION=$(sh ./build/ci/configure_versions.sh)
+    - COMMIT=$(git rev-parse --short HEAD)
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+  dependencies:
+    - lint:golang
+    - test:golang
 
 scan:images:
   stage: scan
   image: gitlab.figo.systems/platform/dependency_proxy/containers/curlimages/curl:7.76.1
   only:
     - web
+    - tags
+    - develop
   script:
     - export VERSION=$(sh ./build/ci/configure_versions.sh)
     - sh ./build/ci/scan_images.sh

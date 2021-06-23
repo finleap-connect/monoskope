@@ -68,7 +68,7 @@ spec:
             - secretRef:
                 name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
           args:
-            - /queryhandler
+            - /app
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
@@ -97,6 +97,7 @@ spec:
           volumeMounts:
             - name: buscerts
               mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
