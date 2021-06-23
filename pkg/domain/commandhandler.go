@@ -57,10 +57,7 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 	}
 
 	if err := handler.HandleCommand(ctx, cmd); err != nil {
-		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
-			return userId, nil
-		}
-		return userId, err
+		return uuid.Nil, err
 	}
 	return userId, nil
 }
@@ -101,6 +98,9 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 
 		userId, err := setupUser(ctx, userInfo[0], superUser, handler)
 		if err != nil {
+			if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+				return nil
+			}
 			return err
 		}
 
