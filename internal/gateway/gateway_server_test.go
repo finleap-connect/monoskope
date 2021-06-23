@@ -14,13 +14,12 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var (
-	ctx = context.Background()
-)
-
 var _ = Describe("Gateway", func() {
+	var (
+		ctx = context.Background()
+	)
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
@@ -31,7 +30,7 @@ var _ = Describe("Gateway", func() {
 		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwcAuth := api.NewGatewayClient(conn)
@@ -47,7 +46,7 @@ var _ = Describe("Gateway", func() {
 		Expect(authInfo).ToNot(BeNil())
 
 		var innerErr error
-		res, err := httpClient.Get(authInfo.AuthCodeURL)
+		res, err := env.HttpClient.Get(authInfo.AuthCodeURL)
 		Expect(err).NotTo(HaveOccurred())
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
@@ -68,7 +67,7 @@ var _ = Describe("Gateway", func() {
 			defer GinkgoRecover()
 			env.Log.Info("wait for oidc client server to get ready...")
 			<-ready
-			res, err = httpClient.PostForm(formAction, url.Values{
+			res, err = env.HttpClient.PostForm(formAction, url.Values{
 				"login": {"admin@monoskope.io"}, "password": {"password"},
 			})
 			if err == nil {
@@ -89,8 +88,11 @@ var _ = Describe("Gateway", func() {
 })
 
 var _ = Describe("HealthCheck", func() {
+	var (
+		ctx = context.Background()
+	)
 	It("can do health checks", func() {
-		conn, err := CreateInsecureGatewayConnection(ctx, apiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

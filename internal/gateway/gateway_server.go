@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type apiServer struct {
+type gatewayApiServer struct {
 	api.UnimplementedGatewayServer
 	// Logger interface
 	log logger.Logger
@@ -22,8 +22,8 @@ type apiServer struct {
 	userRepo    repositories.ReadOnlyUserRepository
 }
 
-func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *apiServer {
-	s := &apiServer{
+func NewGatewayAPIServer(authConfig *auth.Config, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) api.GatewayServer {
+	s := &gatewayApiServer{
 		log:         logger.WithName("server"),
 		authConfig:  authConfig,
 		authHandler: authHandler,
@@ -32,7 +32,7 @@ func NewApiServer(authConfig *auth.Config, authHandler *auth.Handler, userRepo r
 	return s
 }
 
-func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
+func (s *gatewayApiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
 	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, s.authConfig.Scopes)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
@@ -41,7 +41,7 @@ func (s *apiServer) GetAuthInformation(ctx context.Context, state *api.AuthState
 	return &api.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
 }
 
-func (s *apiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
+func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
 	s.log.Info("Authenticating user...")
 
 	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackURL)

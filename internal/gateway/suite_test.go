@@ -41,19 +41,20 @@ const (
 
 var (
 	env *oAuthTestEnv
-
-	apiListenerAPIServer  net.Listener
-	apiListenerAuthServer net.Listener
-	httpClient            *http.Client
-	grpcServer            *grpc.Server
-	localAuthServer       *authServer
 )
 
 type oAuthTestEnv struct {
 	*test.TestEnv
-	JwtTestEnv          *jwt.TestEnv
-	AuthConfig          *auth.Config
-	IdentityProviderURL string
+	JwtTestEnv            *jwt.TestEnv
+	AuthConfig            *auth.Config
+	IdentityProviderURL   string
+	ApiListenerAPIServer  net.Listener
+	ApiListenerAuthServer net.Listener
+	HttpClient            *http.Client
+	GrpcServer            *grpc.Server
+	LocalAuthServer       *authServer
+	ClusterRepo           repositories.ClusterRepository
+	AdminUser             *projections.User
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -171,50 +172,65 @@ var _ = BeforeSuite(func(done Done) {
 
 	// Setup user repo
 	userId := uuid.New()
-	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
+	env.AdminUser = &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-	adminRoleBinding.UserId = adminUser.Id
+	adminRoleBinding.UserId = env.AdminUser.Id
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
 	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
-	err = inMemoryUserRepo.Upsert(ctx, adminUser)
+	err = inMemoryUserRepo.Upsert(ctx, env.AdminUser)
 	Expect(err).ToNot(HaveOccurred())
 	err = inMemoryUserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
 	Expect(err).ToNot(HaveOccurred())
 
+	// Setup cluster repo
+	clusterId := uuid.New()
+	testCluster := projections.NewClusterProjection(clusterId)
+	testCluster.Name = "test-cluster"
+	testCluster.Label = "test-cluster"
+	testCluster.ApiServerAddress = "https://somecluster.io"
+	testCluster.CaCertBundle = []byte("some-bundle")
+
+	inMemoryClusterRepo := es_repos.NewInMemoryRepository()
+	err = inMemoryClusterRepo.Upsert(ctx, testCluster)
+	Expect(err).ToNot(HaveOccurred())
+
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	gatewayApiServer := NewApiServer(env.AuthConfig, authHandler, userRepo)
+	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo, userRepo)
+	gatewayApiServer := NewGatewayAPIServer(env.AuthConfig, authHandler, userRepo)
+	authApiServer := NewClusterAuthAPIServer(signer, userRepo, env.ClusterRepo)
 
 	// Create gRPC server and register implementation
-	grpcServer = grpc.NewServer("gateway-grpc", false)
-	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
+	env.GrpcServer = grpc.NewServer("gateway-grpc", false)
+	env.GrpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterGatewayServer(s, gatewayApiServer)
+		api.RegisterClusterAuthServer(s, authApiServer)
 		api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 	})
 
-	apiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
+	env.ApiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := grpcServer.ServeFromListener(apiListenerAPIServer, nil)
+		err := env.GrpcServer.ServeFromListener(env.ApiListenerAPIServer, nil)
 		if err != nil {
 			panic(err)
 		}
 	}()
 
-	localAuthServer = NewAuthServer(authHandler, userRepo)
-	apiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
+	env.LocalAuthServer = NewAuthServer(authHandler, userRepo)
+	env.ApiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
-		err := localAuthServer.ServeFromListener(apiListenerAuthServer)
+		err := env.LocalAuthServer.ServeFromListener(env.ApiListenerAuthServer)
 		if err != nil {
 			panic(err)
 		}
 	}()
 
 	// Setup HTTP client
-	httpClient = &http.Client{}
+	env.HttpClient = &http.Client{}
 }, 60)
 
 var _ = AfterSuite(func() {
@@ -223,9 +239,9 @@ var _ = AfterSuite(func() {
 	err = env.Shutdown()
 	Expect(err).To(BeNil())
 
-	grpcServer.Shutdown()
-	localAuthServer.Shutdown()
+	env.GrpcServer.Shutdown()
+	env.LocalAuthServer.Shutdown()
 
-	defer apiListenerAPIServer.Close()
-	defer apiListenerAuthServer.Close()
+	defer env.ApiListenerAPIServer.Close()
+	defer env.ApiListenerAuthServer.Close()
 })

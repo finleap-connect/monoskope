@@ -21,14 +21,22 @@ type StandardClaims struct {
 	Email           string            `json:"email,omitempty"`          // The email of the user.
 	EmailVerified   bool              `json:"email_verified,omitempty"` // If the upstream provider has verified the email.
 	Groups          []string          `json:"groups,omitempty"`         // A list of strings representing the groups a user is a member of.
-	FederatedSub    string            `json:"sub"`
-	FederatedClaims map[string]string `json:"federated_claims,omitempty"` // The connector ID and the user ID assigned to the user at the provider.
+	FederatedSub    string            `json:"sub"`                      // The connector ID and the user ID assigned to the user at the provider.
+	FederatedClaims map[string]string `json:"federated_claims,omitempty"`
+}
+
+type ClusterClaim struct {
+	Id       string `json:"id,omitempty"`        // Id of the cluster.
+	Name     string `json:"name,omitempty"`      // Name of the cluster.
+	UserName string `json:"user_name,omitempty"` // Name of the user in the cluster.
+	Role     string `json:"role,omitempty"`      // Role the user has in the cluster.
 }
 
 type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
-	ConnectorId string `json:"connector_id,omitempty"`
+	ClusterClaim *ClusterClaim `json:"cluster_claims,omitempty"`
+	ConnectorId  string        `json:"connector_id,omitempty"`
 }
 
 func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
@@ -46,6 +54,25 @@ func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken
 		},
 		StandardClaims: claims,
 		ConnectorId:    connectorId,
+	}
+}
+
+func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, userId string, validity time.Duration) *AuthToken {
+	now := time.Now().UTC()
+
+	return &AuthToken{
+		Claims: &jwt.Claims{
+			ID:        uuid.New().String(),
+			Issuer:    MonoskopeIssuer,
+			Subject:   userId,
+			Expiry:    jwt.NewNumericDate(now.Add(validity)),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
+			Audience:  jwt.Audience{AudienceK8sAuth},
+		},
+		StandardClaims: claims,
+		ClusterClaim:   clusterClaim,
+		ConnectorId:    MonoskopeIssuer,
 	}
 }
 

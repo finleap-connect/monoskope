@@ -102,7 +102,7 @@ var serverCmd = &cobra.Command{
 		authServer := gateway.NewAuthServer(authHandler, userRepo)
 
 		// Gateway API server
-		gws := gateway.NewApiServer(&authConfig, authHandler, userRepo)
+		gws := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
