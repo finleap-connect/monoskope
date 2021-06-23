@@ -64,7 +64,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 			return err
 		}
 		if resource, err = uuid.Parse(cmd.GetResource()); err != nil && cmd.GetResource() != "" {
-			return errors.ErrInvalidArgument("resource id is invalid")
+			return domainErrors.ErrInvalidArgument("resource id is invalid")
 		}
 		if err := a.Authorize(ctx, cmd, resource); err != nil {
 			return err
