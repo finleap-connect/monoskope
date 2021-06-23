@@ -13,9 +13,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://artifactory.figo.systems/artifactory/virtual_helm | ambassador | 6.5.18 |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
+| https://getambassador.io | ambassador | 6.5.18 |
 
 ## Values
 
@@ -78,6 +78,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | fullnameOverride | string | `""` |  |
 | gateway.auth.issuerURL | string | `"https://your-idp.com"` |  |
 | gateway.enabled | bool | `true` |  |
+| gateway.keySecret.name | string | `"m8-authentication"` |  |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |

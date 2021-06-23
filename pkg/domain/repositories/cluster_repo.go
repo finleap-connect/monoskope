@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	apiProjections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -31,6 +32,8 @@ type ReadOnlyClusterRepository interface {
 	GetAll(context.Context, bool) ([]*projections.Cluster, error)
 	// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID
 	GetBootstrapToken(context.Context, string) (string, error)
+	// GetClusterCertificate returns the certificate issued for the m8 operator of the cluster with the given UUID
+	GetClusterCertificates(context.Context, string) (*apiProjections.ClusterCertificates, error)
 }
 
 // WriteOnlyClusterRepository is a repository for writing cluster projections.
@@ -61,21 +64,24 @@ func (r *clusterRepository) ByClusterId(ctx context.Context, id string) (*projec
 		return nil, esErrors.ErrInvalidProjectionType
 	}
 
+	err = r.addMetadata(ctx, cluster.DomainProjection)
+	if err != nil {
+		return nil, err
+	}
+
 	return cluster, nil
 }
 
 // ByClusterName searches for a cluster projection by its name.
 func (r *clusterRepository) ByClusterName(ctx context.Context, clusterName string) (*projections.Cluster, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.GetAll(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, p := range ps {
-		if t, ok := p.(*projections.Cluster); ok {
-			if clusterName == t.Name {
-				return t, nil
-			}
+	for _, c := range ps {
+		if clusterName == c.Name {
+			return c, nil
 		}
 	}
 
@@ -113,4 +119,13 @@ func (r *clusterRepository) GetBootstrapToken(ctx context.Context, id string) (s
 		return "", err
 	}
 	return cluster.BootstrapToken, nil
+}
+
+// GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
+func (r *clusterRepository) GetClusterCertificates(ctx context.Context, id string) (*apiProjections.ClusterCertificates, error) {
+	cluster, err := r.ByClusterId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return cluster.GetClusterCertificates(), nil
 }

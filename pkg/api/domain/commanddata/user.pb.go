@@ -88,7 +88,8 @@ type CreateUserRoleBindingCommandData struct {
 	Role string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	// Scope of the role
 	Scope string `protobuf:"bytes,3,opt,name=scope,proto3" json:"scope,omitempty"`
-	// Affected resource within scope
+	// Unique identifier of the affected resource within scope (UUID 128-bit
+	// number)
 	Resource string `protobuf:"bytes,4,opt,name=resource,proto3" json:"resource,omitempty"`
 }
 

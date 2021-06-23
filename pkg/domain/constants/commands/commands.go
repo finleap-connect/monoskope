@@ -22,4 +22,6 @@ const (
 	CreateCluster es.CommandType = "CreateCluster"
 	// Command to delete a Cluster
 	DeleteCluster es.CommandType = "DeleteCluster"
+	// Command to request a certificate for a cluster
+	RequestClusterCertificate es.CommandType = "RequestClusterCertificate"
 )

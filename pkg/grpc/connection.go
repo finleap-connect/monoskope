@@ -25,18 +25,21 @@ type grpcConnectionFactory struct {
 	tlsConf *tlsConf
 }
 
+// NewGrpcConnectionFactory creates a new factory for gRPC connections.
 func NewGrpcConnectionFactory(url string) grpcConnectionFactory {
 	return grpcConnectionFactory{
 		url: url,
 	}
 }
 
+// NewGrpcConnectionFactoryWithDefaults creates a new factory for gRPC connections and adds the following dial options: WithInsecure, WithBlock.
 func NewGrpcConnectionFactoryWithDefaults(url string) grpcConnectionFactory {
 	return NewGrpcConnectionFactory(url).
 		WithInsecure().
 		WithBlock()
 }
 
+// WithInsecure adds a DialOption which disables transport security for this connection. Note that transport security is required unless WithInsecure is set.
 func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)
@@ -45,6 +48,16 @@ func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
 	return factory
 }
 
+// WithOSCaTransportCredentials adds a DialOption which configures a connection level security credentials (e.g., TLS/SSL) using the CAs known to the OS.
+func (factory grpcConnectionFactory) WithOSCaTransportCredentials() grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+	return factory
+}
+
+// WithTransportCredentials adds a DialOption which configures a connection level security credentials (e.g., TLS/SSL) using the given certificates.
 func (factory grpcConnectionFactory) WithTransportCredentials(pemServerCAFile, certFile, keyFile string) grpcConnectionFactory {
 	factory.tlsConf = &tlsConf{
 		pemServerCAFile: pemServerCAFile,
@@ -54,6 +67,16 @@ func (factory grpcConnectionFactory) WithTransportCredentials(pemServerCAFile, c
 	return factory
 }
 
+// WithPerRPCCredentials adds a DialOption which sets credentials and places auth state on each outbound RPC.
+func (factory grpcConnectionFactory) WithPerRPCCredentials(creds credentials.PerRPCCredentials) grpcConnectionFactory {
+	if factory.opts == nil {
+		factory.opts = make([]grpc.DialOption, 0)
+	}
+	factory.opts = append(factory.opts, grpc.WithPerRPCCredentials(creds))
+	return factory
+}
+
+// WithBlock adds a DialOption which makes caller of Dial blocks until the underlying connection is up. Without this, Dial returns immediately and connecting the server happens in background.
 func (factory grpcConnectionFactory) WithBlock() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)
@@ -62,6 +85,7 @@ func (factory grpcConnectionFactory) WithBlock() grpcConnectionFactory {
 	return factory
 }
 
+// WithRetry adds retrying with exponential backoff using the default retryable codes from grpc_retry.DefaultRetriableCodes.
 func (factory grpcConnectionFactory) WithRetry() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)
@@ -79,6 +103,7 @@ func (factory grpcConnectionFactory) WithRetry() grpcConnectionFactory {
 	return factory
 }
 
+// Connect creates a client connection based on the factory.
 func (factory grpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientConn, error) {
 	if factory.tlsConf != nil {
 		tlsCredentials, err := factory.loadTLSCredentials()
@@ -91,6 +116,7 @@ func (factory grpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientC
 	return grpc.DialContext(ctx, factory.url, factory.opts...)
 }
 
+// ConnectWithTimeout creates a client connection based on the factory with a given timeout.
 func (factory grpcConnectionFactory) ConnectWithTimeout(ctx context.Context, timeout time.Duration) (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

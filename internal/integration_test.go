@@ -181,6 +181,9 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
 		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+
+		Expect(tenant.Metadata.Created).NotTo(BeNil())
+
 	})
 	It("manage a cluster", func() {
 		clusterId := uuid.New()
@@ -202,9 +205,33 @@ var _ = Describe("integration", func() {
 		Expect(cluster.GetName()).To(Equal("my awesome cluster"))
 		Expect(cluster.GetLabel()).To(Equal("mac"))
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(cluster.GetClusterCACert()).To(Equal([]byte("This should be a certificate")))
+		Expect(cluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
 
-		// TODO add reactor to test env for bootstrap token creation
+		By("getting all existing clusters")
+
+		clusterStream, err := clusterServiceClient().GetAll(ctx, &domainApi.GetAllRequest{
+			IncludeDeleted: true,
+		})
+		Expect(err).ToNot(HaveOccurred())
+		// Read next
+		firstCluster, err := clusterStream.Recv()
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(firstCluster).ToNot(BeNil())
+		Expect(firstCluster.GetName()).To(Equal("my awesome cluster"))
+		Expect(firstCluster.GetLabel()).To(Equal("mac"))
+		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
+		Expect(firstCluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
+
+		By("getting a cluster's certificates by its id")
+
+		By("by retrieving the bootstrap token")
+
+		// TODO ASAP! Needs reactors to work
+		// tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
+		// Expect(err).ToNot(HaveOccurred())
+		// Expect(tokenValue.GetValue()).ToNot(Equal(""))
+
 	})
 })
 

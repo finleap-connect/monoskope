@@ -10,14 +10,11 @@ import (
 const (
 	MonoskopeIssuer               = "Monoskope"
 	AudienceMonoctl               = "monoctl"
+	AudienceK8sAuth               = "k8sauth"
 	AudienceM8Operator            = "m8operator"
 	AuthTokenValidity             = 12 * time.Hour
 	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
-
-type ClusterBootstrapToken struct {
-	*jwt.Claims
-}
 
 type StandardClaims struct {
 	Name            string            `json:"name,omitempty"`           // User’s display name.
@@ -71,8 +68,21 @@ func NewClusterBootstrapToken(claims *StandardClaims, userId, connectorId string
 }
 
 // IsValid returns if the token is not used too early or is expired
-func (t *AuthToken) Validate() error {
+func (t *AuthToken) Validate(expectedAudience ...string) error {
+	if len(expectedAudience) > 0 {
+		for i := 0; i < len(expectedAudience); i++ {
+			if t.validate(expectedAudience[i]) == nil {
+				return nil
+			}
+		}
+	}
+	return t.validate(expectedAudience...)
+}
+
+func (t *AuthToken) validate(expectedAudience ...string) error {
 	return t.ValidateWithLeeway(jwt.Expected{
-		Issuer: MonoskopeIssuer,
+		Issuer:   MonoskopeIssuer,
+		Audience: expectedAudience,
+		Time:     time.Now().UTC(),
 	}, jwt.DefaultLeeway)
 }

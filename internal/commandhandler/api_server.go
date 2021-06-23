@@ -98,10 +98,9 @@ func (s *apiServer) GetPolicyOverview(ctx context.Context, in *empty.Empty) (*ap
 
 		for _, p := range policies {
 			policyOverview.Policies = append(policyOverview.Policies, &api_domain.Policy{
-				Command:       cmdType.String(),
-				Role:          p.Role().String(),
-				Scope:         p.Scope().String(),
-				ResourceMatch: p.ResourceMatch(),
+				Command: cmdType.String(),
+				Role:    p.Role().String(),
+				Scope:   p.Scope().String(),
 			})
 		}
 	}

@@ -1,7 +1,6 @@
 stages:
   - prepare
   - test
-  - build
   - deliver
   - scan
   - chart
@@ -16,6 +15,8 @@ include:
   image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.2
   only:
     - web
+    - tags
+    - develop
 
 prepare:builder:
   stage: prepare
@@ -27,4 +28,4 @@ prepare:builder:
     - schedules
     - web
   script:
-    - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
+    - build-image --file build/package/builder.Dockerfile --tag ${CI_COMMIT_SHORT_SHA} --image-suffix builder

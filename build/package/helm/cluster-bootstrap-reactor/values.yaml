@@ -7,7 +7,7 @@ global: {}
 replicaCount: 1
 
 image:
-  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/clboreactor
+  repository: registry.gitlab.figo.systems/platform/monoskope/monoskope/clusterbootstrapreactor
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -88,3 +88,11 @@ keySecret:
   name: ""
   # -- field of the secret containing the private key (PEM or DER-encoded)
   field: "tls.key"
+
+certificates:
+  # -- cluster certificate validity duration
+  duration: 48h
+  # -- cert-manager issuer type to use to issue cluster certificates
+  issuerKind: Issuer
+  # -- cert-manager issuer to use to issue cluster certificates
+  issuerName: selfsigning-issuer

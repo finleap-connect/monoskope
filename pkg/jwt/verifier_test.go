@@ -57,5 +57,8 @@ var _ = Describe("jwt/verifier", func() {
 		err = verifier.Verify(rawJWT, &claimsFromJWT)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(claims).To(Equal(claimsFromJWT))
+
+		jwks := verifier.JWKS()
+		Expect(jwks).ToNot(BeNil())
 	})
 })

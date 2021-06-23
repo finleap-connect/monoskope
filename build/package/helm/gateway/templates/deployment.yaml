@@ -89,15 +89,15 @@ spec:
                   name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
                   key: oidc-nonce
           args:
-            - /gateway
+            - /app
             - server
             - --keep-alive={{ .Values.keepAlive }}
             - --grpc-api-addr=:{{ .Values.ports.grpcApi }}
             - --http-api-addr=:{{ .Values.ports.httpApi }}
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - --metrics-addr=:{{ .Values.ports.metrics }}
-            - --issuer-identifier={{ .Values.auth.issuerIdentifier }}
-            - --issuer-url={{ .Values.auth.issuerURL }}
+            - --identity-provider-name={{ .Values.auth.identityProviderName }}
+            - --identity-provider-url={{ .Values.auth.identityProviderURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
           {{- if .Values.livenessProbe.enabled }}

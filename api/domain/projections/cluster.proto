@@ -43,10 +43,17 @@ message Cluster {
   string label = 3;
   // Address of the clusters KubeAPIServer
   string apiServerAddress = 4;
-  // CA certificate of the cluster
-  bytes clusterCACert = 5;
+  // CA certificates of the cluster
+  bytes clusterCACertBundle = 5;
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
   // Bootstrap token for cluster authentication
   string bootstrapToken = 7;
+  // M8 CA and cluster certificate
+  ClusterCertificates clusterCertificates = 8;
+}
+
+message ClusterCertificates {
+  bytes ca = 1;
+  bytes certificate = 2;
 }
