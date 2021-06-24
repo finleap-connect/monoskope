@@ -8,4 +8,4 @@ RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/i
 RUN go get -u github.com/onsi/ginkgo/ginkgo@v1.15.2
 
 RUN curl -sSfL https://get.helm.sh/helm-v3.6.1-linux-amd64.tar.gz | tar -xvzf - && \
-    mv linux-arm64/helm $(go env GOPATH)/bin/helm3 ; rm -rf linux-arm64
+    mv linux-amd64/helm $(go env GOPATH)/bin/helm3 ; rm -rf linux-amd64
