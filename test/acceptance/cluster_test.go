@@ -3,8 +3,11 @@ package acceptance
 import (
 	"context"
 	"log"
+	"testing"
 
 	"github.com/cucumber/godog"
+	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
@@ -28,20 +31,19 @@ var (
 	testEnv     *internal.TestEnv
 )
 
-/* func TestQueryHandler(t *testing.T) {
+func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../reports/internal-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "integration", []Reporter{junitReporter})
 }
-*/
-/*
- var _ = BeforeSuite(func(done Done) {
+
+var _ = BeforeSuite(func(done Done) {
 	defer close(done)
 	var err error
 
 	By("bootstrapping test env")
 	baseTestEnv = test.NewTestEnv("integration-testenv")
-	testEnv, err = NewTestEnv(baseTestEnv)
+	testEnv, err = internal.NewTestEnv(baseTestEnv)
 	Expect(err).To(Not(HaveOccurred()))
 }, 120)
 
@@ -51,7 +53,6 @@ var _ = AfterSuite(func() {
 	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
 	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
 })
-*/
 
 func NewM8Client() (*M8Client, error) {
 	var err error
