@@ -1,4 +1,4 @@
-package aggregates_test
+package usecases_test
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAggregates(t *testing.T) {
+func TestUsecases(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../../reports/aggregates-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Aggregates Suite", []Reporter{junitReporter})
+	RunSpecsWithDefaultAndCustomReporters(t, "Usecases Suite", []Reporter{junitReporter})
 }

@@ -187,7 +187,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	// Setup cluster repo
 	clusterId := uuid.New()
-	testCluster := projections.NewClusterProjection(clusterId)
+	testCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
 	testCluster.Name = "test-cluster"
 	testCluster.Label = "test-cluster"
 	testCluster.ApiServerAddress = "https://somecluster.io"
