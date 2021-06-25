@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	apies "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	mock_eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/test/api/eventsourcing"
 )
@@ -42,6 +43,7 @@ var _ = Describe("package eventhandler", func() {
 
 				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
 				handler := NewReactorEventHandler(esClient, testReactor)
+
 				err := handler.HandleEvent(ctx, event)
 				Expect(err).NotTo(HaveOccurred())
 			})
@@ -57,6 +59,14 @@ func newTestReactor() eventsourcing.Reactor {
 
 func (r *testReactor) HandleEvent(ctx context.Context, event eventsourcing.Event, events chan<- eventsourcing.Event) error {
 	defer close(events)
+
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	Expect(err).NotTo(HaveOccurred())
+	userInfo := metadataManager.GetUserInformation()
+	userInfo.Id = uuid.NewSHA1(uuid.NameSpaceURL, []byte("clusterbootstrapreactor.monoskope.local"))
+	metadataManager.SetUserInformation(userInfo)
+	ctx = metadataManager.GetContext()
+
 	events <- eventsourcing.NewEvent(ctx, event.EventType(), nil, time.Now().UTC(), event.AggregateType(), event.AggregateID(), event.AggregateVersion()+1)
 	return nil
 }

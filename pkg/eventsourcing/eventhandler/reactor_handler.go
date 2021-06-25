@@ -3,6 +3,8 @@ package eventhandler
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -33,7 +35,12 @@ func (m *reactorEventHandler) HandleEvent(ctx context.Context, event es.Event) e
 func (m *reactorEventHandler) handle(ctx context.Context, events <-chan es.Event) {
 	for ev := range events { // Read events from channel
 		for {
-			err := m.storeEvent(ctx, ev)
+			err := checkUserId(ev)
+			if err != nil {
+				m.log.Error(err, "Event metadata do not contain user information.")
+				break
+			}
+			err = m.storeEvent(ctx, ev)
 			if err != nil {
 				m.log.Error(err, "Failed to send event to EventStore. Retrying...")
 			} else {
@@ -68,4 +75,9 @@ func (m *reactorEventHandler) storeEvent(ctx context.Context, event es.Event) er
 	}
 
 	return nil
+}
+
+func checkUserId(event es.Event) error {
+	_, err := uuid.Parse(event.Metadata()[gateway.HeaderAuthId])
+	return err
 }
