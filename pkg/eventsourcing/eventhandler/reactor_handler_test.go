@@ -46,6 +46,21 @@ var _ = Describe("package eventhandler", func() {
 
 				err := handler.HandleEvent(ctx, event)
 				Expect(err).NotTo(HaveOccurred())
+				time.Sleep(1000 * time.Millisecond)
+			})
+			It("does not store events without a valid user ID", func() {
+				testReactor := newOtherTestReactor()
+				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
+				esStoreClient := mock_eventsourcing.NewMockEventStore_StoreClient(mockCtrl)
+
+				esClient.EXPECT().Store(ctx).MaxTimes(0)
+				esStoreClient.EXPECT().Send(gomock.AssignableToTypeOf(new(apies.Event))).MaxTimes(0)
+
+				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
+				handler := NewReactorEventHandler(esClient, testReactor)
+
+				err := handler.HandleEvent(ctx, event)
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})
@@ -66,6 +81,19 @@ func (r *testReactor) HandleEvent(ctx context.Context, event eventsourcing.Event
 	userInfo.Id = uuid.NewSHA1(uuid.NameSpaceURL, []byte("clusterbootstrapreactor.monoskope.local"))
 	metadataManager.SetUserInformation(userInfo)
 	ctx = metadataManager.GetContext()
+
+	events <- eventsourcing.NewEvent(ctx, event.EventType(), nil, time.Now().UTC(), event.AggregateType(), event.AggregateID(), event.AggregateVersion()+1)
+	return nil
+}
+
+type otherTestReactor struct{}
+
+func newOtherTestReactor() eventsourcing.Reactor {
+	return new(otherTestReactor)
+}
+
+func (r *otherTestReactor) HandleEvent(ctx context.Context, event eventsourcing.Event, events chan<- eventsourcing.Event) error {
+	defer close(events)
 
 	events <- eventsourcing.NewEvent(ctx, event.EventType(), nil, time.Now().UTC(), event.AggregateType(), event.AggregateID(), event.AggregateVersion()+1)
 	return nil
