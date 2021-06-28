@@ -89,7 +89,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-			JWT: expectedJWT,
+			Jwt: expectedJWT,
 		})
 		esEvent := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())

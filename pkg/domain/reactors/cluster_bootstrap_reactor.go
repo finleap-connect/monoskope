@@ -66,7 +66,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 			ctx,
 			events.ClusterBootstrapTokenCreated,
 			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-				JWT: rawJWT,
+				Jwt: rawJWT,
 			}),
 			time.Now().UTC(),
 			event.AggregateType(),

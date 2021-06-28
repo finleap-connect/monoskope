@@ -20,17 +20,17 @@ message User {
   // Roles of the user
   repeated UserRoleBinding roles = 4;
   // When it has been created
-  google.protobuf.Timestamp Created = 5;
+  google.protobuf.Timestamp created = 5;
   // By whom it has been created
-  string CreatedById = 6;
+  string created_by_id = 6;
   // When it has been last modified
-  google.protobuf.Timestamp LastModified = 7;
+  google.protobuf.Timestamp last_modified = 7;
   // By whom it has been last modified
-  string LastModifiedById = 8;
+  string last_modified_by_id = 8;
   // When it has been deleted
-  google.protobuf.Timestamp Deleted = 9;
+  google.protobuf.Timestamp deleted = 9;
   // By whom it has been deleted
-  User DeletedBy = 10;
+  User deleted_by = 10;
 }
 
 message UserRoleBinding {
@@ -45,15 +45,15 @@ message UserRoleBinding {
   // Target resource of the role
   string resource = 5;
   // When it has been created
-  google.protobuf.Timestamp Created = 6;
+  google.protobuf.Timestamp created = 6;
   // By whom it has been created
-  string CreatedById = 7;
+  string created_by_id = 7;
   // When it has been last modified
-  google.protobuf.Timestamp LastModified = 8;
+  google.protobuf.Timestamp last_modified = 8;
   // By whom it has been last modified
-  string LastModifiedById = 9;
+  string last_modified_by_id = 9;
   // When it has been deleted
-  google.protobuf.Timestamp Deleted = 10;
+  google.protobuf.Timestamp deleted = 10;
   // By whom it has been deleted
-  User DeletedBy = 11;
+  User deleted_by = 11;
 }

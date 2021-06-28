@@ -66,7 +66,7 @@ service K8sOperator {
   rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
 }
 
-message GetAllRequest { bool includeDeleted = 1; }
+message GetAllRequest { bool include_deleted = 1; }
 
 message GetCertificateRequest {
   // Unique identifier of the aggregate referenced (UUID 128-bit number)

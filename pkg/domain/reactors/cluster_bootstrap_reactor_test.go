@@ -78,7 +78,7 @@ var _ = Describe("package reactors", func() {
 				eventDataTokenCreated := &eventdata.ClusterBootstrapTokenCreated{}
 				err = event.Data().ToProto(eventDataTokenCreated)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(eventDataTokenCreated.JWT).To(Not(BeEmpty()))
+				Expect(eventDataTokenCreated.Jwt).To(Not(BeEmpty()))
 
 				ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 				defer cancel()

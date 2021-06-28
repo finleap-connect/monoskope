@@ -39,5 +39,5 @@ message ClusterCreated {
 
 message ClusterBootstrapTokenCreated {
   // JsonWebToken for cluster bootstrap
-  string JWT = 1;
+  string jwt = 1;
 }

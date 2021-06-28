@@ -115,7 +115,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
-		a.bootstrapToken = data.GetJWT()
+		a.bootstrapToken = data.GetJwt()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:

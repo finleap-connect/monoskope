@@ -89,7 +89,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		protoTokenCreatedEventData := &eventdata.ClusterBootstrapTokenCreated{
-			JWT: expectedJWT,
+			Jwt: expectedJWT,
 		}
 		tokenCreatedEventData := es.ToEventDataFromProto(protoTokenCreatedEventData)
 		clusterProjection, err = clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, tokenCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)

@@ -53,7 +53,7 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
-		p.BootstrapToken = data.GetJWT()
+		p.BootstrapToken = data.GetJwt()
 		if err := c.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
