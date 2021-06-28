@@ -38,6 +38,11 @@ messageBus:
 
 monitoring:
   tenant: &tenant finleap-cloud
+  alerting:
+    enabled: true
+  dashboards:
+    enabled: true
+    
 
 gateway:
   enabled: true

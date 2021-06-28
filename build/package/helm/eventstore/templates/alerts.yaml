@@ -1,4 +1,4 @@
-{{- if and .Values.backup.enabled  .Values.backup.alerting.enabled }}
+{{- if and (and .Values.backup.enabled  .Values.backup.alerting.enabled) .Values.monitoring.alerting.enabled }}
 {{- $release := .Release.Name -}}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule

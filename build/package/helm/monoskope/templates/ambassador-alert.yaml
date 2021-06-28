@@ -1,4 +1,4 @@
-{{- if .Values.ambassador.enabled }}
+{{- if and .Values.ambassador.enabled .Values.monitoring.alerting.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:

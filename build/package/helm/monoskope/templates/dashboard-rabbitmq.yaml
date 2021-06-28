@@ -1,4 +1,4 @@
-{{- if and .Values.rabbitmq.metrics.enabled .Values.rabbitmq.metrics.grafanaDashboard.enabled }}
+{{- if and (and .Values.rabbitmq.metrics.enabled .Values.rabbitmq.metrics.grafanaDashboard.enabled) .Values.monitoring.dashboards.enabled}}
 ---
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDashboard
