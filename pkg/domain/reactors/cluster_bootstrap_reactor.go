@@ -14,6 +14,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/users"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
@@ -188,7 +189,9 @@ func addUserInfo(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 	userInfo := metadataManager.GetUserInformation()
-	userInfo.Id = uuid.NewSHA1(uuid.NameSpaceURL, []byte("clusterbootstrapreactor.monoskope.local"))
+	userInfo.Id = users.ReactorUser.ID
+	userInfo.Name = users.ReactorUser.Name
+	userInfo.Email = users.ReactorUser.Email
 	metadataManager.SetUserInformation(userInfo)
 	return metadataManager.GetContext(), nil
 }

@@ -15,6 +15,7 @@ import (
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/users"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	domainHandlers "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/handler"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
@@ -120,8 +121,9 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 		return err
 	}
 	metadataMgr.SetUserInformation(&metadata.UserInformation{
-		Name:  "system",
-		Email: "system@monoskope.io",
+		Id:    users.CommandHandlerUser.ID,
+		Name:  users.CommandHandlerUser.Name,
+		Email: users.CommandHandlerUser.Email,
 	})
 	ctx = metadataMgr.GetContext()
 
