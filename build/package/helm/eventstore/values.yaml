@@ -101,6 +101,12 @@ storeDatabase:
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
 
+monitoring:
+  alerting:
+    enabled: true
+  dashboards:
+    enabled: true
+
 backup:
   # -- Enables automated backups for the eventstore
   enabled: false
