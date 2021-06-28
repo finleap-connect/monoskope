@@ -14,8 +14,8 @@ global:
 pki:
   enabled: true
   certificates:
-    duration: 48h
-    renewBefore: 23h
+    duration: 90d
+    renewBefore: 60d
   issuer:
     ca:
       enabled: true
