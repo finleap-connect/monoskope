@@ -24,6 +24,4 @@ message Certificate {
   bytes ca = 1;
   // Certificate
   bytes certificate = 2;
-  // Certificate key
-  bytes key = 3;
 }
