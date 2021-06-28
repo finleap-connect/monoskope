@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -22,9 +22,9 @@ var (
 		componentName,
 		componentCommit,
 		componentVersion,
-		gateway.HeaderAuthEmail,
-		gateway.HeaderAuthId,
-		gateway.HeaderAuthIssuer,
+		auth.HeaderAuthEmail,
+		auth.HeaderAuthId,
+		auth.HeaderAuthIssuer,
 	}
 )
 
@@ -107,25 +107,25 @@ func (m *DomainMetadataManager) GetRoleBindings() []*projections.UserRoleBinding
 
 // SetUserInformation sets the UserInformation in the metadata.
 func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformation) {
-	m.Set(gateway.HeaderAuthName, userInformation.Name)
-	m.Set(gateway.HeaderAuthEmail, userInformation.Email)
-	m.Set(gateway.HeaderAuthIssuer, userInformation.Issuer)
-	m.Set(gateway.HeaderAuthId, userInformation.Id.String())
+	m.Set(auth.HeaderAuthName, userInformation.Name)
+	m.Set(auth.HeaderAuthEmail, userInformation.Email)
+	m.Set(auth.HeaderAuthIssuer, userInformation.Issuer)
+	m.Set(auth.HeaderAuthId, userInformation.Id.String())
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
 func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 	userInfo := &UserInformation{}
-	if header, ok := m.Get(gateway.HeaderAuthName); ok {
+	if header, ok := m.Get(auth.HeaderAuthName); ok {
 		userInfo.Name = header
 	}
-	if header, ok := m.Get(gateway.HeaderAuthEmail); ok {
+	if header, ok := m.Get(auth.HeaderAuthEmail); ok {
 		userInfo.Email = header
 	}
-	if header, ok := m.Get(gateway.HeaderAuthIssuer); ok {
+	if header, ok := m.Get(auth.HeaderAuthIssuer); ok {
 		userInfo.Issuer = header
 	}
-	if header, ok := m.Get(gateway.HeaderAuthId); ok {
+	if header, ok := m.Get(auth.HeaderAuthId); ok {
 		id, err := uuid.Parse(header)
 		if err == nil {
 			userInfo.Id = id

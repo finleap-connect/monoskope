@@ -25,12 +25,13 @@ const (
 	ClusterDeleted es.EventType = "ClusterDeleted"
 	// Event emitted when a bootstrap token has been created
 	ClusterBootstrapTokenCreated es.EventType = "ClusterBootstrapTokenCreated"
-	// Event emitted when a certificate has been requested for a cluster
-	ClusterCertificateRequested es.EventType = "ClusterCertificateRequested"
+
+	// Event emitted when a certificate has been requested
+	CertificateRequested es.EventType = "CertificateRequested"
 	// Event emitted when a certificate request has been issued
-	ClusterOperatorCertificateRequestIssued es.EventType = "ClusterOperatorCertificateRequestIssued"
-	// Event emitted when a certificate has been issued for a cluster
-	ClusterOperatorCertificateIssued es.EventType = "ClusterOperatorCertificateIssued"
-	// Event emitted when a certificate could not be issued for a cluster
-	ClusterOperatorCertificateIssueingFailed es.EventType = "ClusterOperatorCertificateIssueingFailed"
+	CertificateRequestIssued es.EventType = "CertificateRequestIssued"
+	// Event emitted when a certificate has been issued
+	CertificateIssued es.EventType = "CertificateIssued"
+	// Event emitted when a certificate could not be issued
+	CertificateIssueingFailed es.EventType = "CertificateIssueingFailed"
 )

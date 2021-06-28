@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 )
 
 var _ = Describe("Managing Metadata", func() {
@@ -25,7 +25,7 @@ var _ = Describe("Managing Metadata", func() {
 			Issuer: "monoskope",
 		})
 
-		Expect(mdManager.GetMetadata()[gateway.HeaderAuthId]).To(Equal(expectedUserId.String()))
+		Expect(mdManager.GetMetadata()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
 
 	})
 })

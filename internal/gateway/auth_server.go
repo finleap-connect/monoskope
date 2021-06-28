@@ -25,12 +25,6 @@ import (
 
 const (
 	HeaderAuthorization = "Authorization"
-
-	HeaderAuthId              = "x-auth-id"
-	HeaderAuthName            = "x-auth-name"
-	HeaderAuthEmail           = "x-auth-email"
-	HeaderAuthIssuer          = "x-auth-issuer"
-	HeaderForwardedClientCert = "x-forwarded-client-cert"
 )
 
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
@@ -221,10 +215,10 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
 	}
 
 	// Set headers with auth info
-	c.Writer.Header().Set(HeaderAuthId, claims.Subject)
-	c.Writer.Header().Set(HeaderAuthName, claims.Name)
-	c.Writer.Header().Set(HeaderAuthEmail, claims.Email)
-	c.Writer.Header().Set(HeaderAuthIssuer, claims.Issuer)
+	c.Writer.Header().Set(auth.HeaderAuthId, claims.Subject)
+	c.Writer.Header().Set(auth.HeaderAuthName, claims.Name)
+	c.Writer.Header().Set(auth.HeaderAuthEmail, claims.Email)
+	c.Writer.Header().Set(auth.HeaderAuthIssuer, claims.Issuer)
 
 	c.Writer.WriteHeader(http.StatusOK)
 }
@@ -241,7 +235,7 @@ func defaultBearerTokenFromRequest(r *http.Request) string {
 
 // clientCertificateFromRequest extracts the client certificate from header
 func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
-	pemData := r.Header.Get(HeaderForwardedClientCert)
+	pemData := r.Header.Get(auth.HeaderForwardedClientCert)
 	if pemData == "" {
 		return nil, errors.New("cert header is empty")
 	}

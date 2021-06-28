@@ -4,6 +4,7 @@ package domain
 
 import (
 	context "context"
+	common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	grpc "google.golang.org/grpc"
@@ -542,10 +543,9 @@ type ClusterClient interface {
 	GetById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
 	// GetByName returns a cluster by its name
 	GetByName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.Cluster, error)
-	// GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
+	// GetBootstrapToken returns the JWT token for cluster authentication for the
+	// cluster with the given UUID
 	GetBootstrapToken(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
-	// GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
-	GetClusterCertificates(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.ClusterCertificates, error)
 }
 
 type clusterClient struct {
@@ -615,15 +615,6 @@ func (c *clusterClient) GetBootstrapToken(ctx context.Context, in *wrapperspb.St
 	return out, nil
 }
 
-func (c *clusterClient) GetClusterCertificates(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.ClusterCertificates, error) {
-	out := new(projections.ClusterCertificates)
-	err := c.cc.Invoke(ctx, "/domain.Cluster/GetClusterCertificates", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ClusterServer is the server API for Cluster service.
 // All implementations must embed UnimplementedClusterServer
 // for forward compatibility
@@ -634,10 +625,9 @@ type ClusterServer interface {
 	GetById(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
 	// GetByName returns a cluster by its name
 	GetByName(context.Context, *wrapperspb.StringValue) (*projections.Cluster, error)
-	// GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
+	// GetBootstrapToken returns the JWT token for cluster authentication for the
+	// cluster with the given UUID
 	GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error)
-	// GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
-	GetClusterCertificates(context.Context, *wrapperspb.StringValue) (*projections.ClusterCertificates, error)
 	mustEmbedUnimplementedClusterServer()
 }
 
@@ -656,9 +646,6 @@ func (UnimplementedClusterServer) GetByName(context.Context, *wrapperspb.StringV
 }
 func (UnimplementedClusterServer) GetBootstrapToken(context.Context, *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBootstrapToken not implemented")
-}
-func (UnimplementedClusterServer) GetClusterCertificates(context.Context, *wrapperspb.StringValue) (*projections.ClusterCertificates, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClusterCertificates not implemented")
 }
 func (UnimplementedClusterServer) mustEmbedUnimplementedClusterServer() {}
 
@@ -748,24 +735,6 @@ func _Cluster_GetBootstrapToken_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cluster_GetClusterCertificates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClusterServer).GetClusterCertificates(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.Cluster/GetClusterCertificates",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServer).GetClusterCertificates(ctx, req.(*wrapperspb.StringValue))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Cluster_ServiceDesc is the grpc.ServiceDesc for Cluster service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -785,10 +754,6 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetBootstrapToken",
 			Handler:    _Cluster_GetBootstrapToken_Handler,
 		},
-		{
-			MethodName: "GetClusterCertificates",
-			Handler:    _Cluster_GetClusterCertificates_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -800,183 +765,89 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
-// ClusterRegistrationClient is the client API for ClusterRegistration service.
+// CertificateClient is the client API for Certificate service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ClusterRegistrationClient interface {
-	// GetAll returns all registration requests.
-	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error)
-	// GetPending returns all pending registration requests.
-	GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error)
+type CertificateClient interface {
+	GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error)
 }
 
-type clusterRegistrationClient struct {
+type certificateClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewClusterRegistrationClient(cc grpc.ClientConnInterface) ClusterRegistrationClient {
-	return &clusterRegistrationClient{cc}
+func NewCertificateClient(cc grpc.ClientConnInterface) CertificateClient {
+	return &certificateClient{cc}
 }
 
-func (c *clusterRegistrationClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (ClusterRegistration_GetAllClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[0], "/domain.ClusterRegistration/GetAll", opts...)
+func (c *certificateClient) GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error) {
+	out := new(common.Certificate)
+	err := c.cc.Invoke(ctx, "/domain.Certificate/GetCertificate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &clusterRegistrationGetAllClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
 
-type ClusterRegistration_GetAllClient interface {
-	Recv() (*projections.ClusterRegistration, error)
-	grpc.ClientStream
-}
-
-type clusterRegistrationGetAllClient struct {
-	grpc.ClientStream
-}
-
-func (x *clusterRegistrationGetAllClient) Recv() (*projections.ClusterRegistration, error) {
-	m := new(projections.ClusterRegistration)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *clusterRegistrationClient) GetPending(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterRegistration_GetPendingClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterRegistration_ServiceDesc.Streams[1], "/domain.ClusterRegistration/GetPending", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &clusterRegistrationGetPendingClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type ClusterRegistration_GetPendingClient interface {
-	Recv() (*projections.ClusterRegistration, error)
-	grpc.ClientStream
-}
-
-type clusterRegistrationGetPendingClient struct {
-	grpc.ClientStream
-}
-
-func (x *clusterRegistrationGetPendingClient) Recv() (*projections.ClusterRegistration, error) {
-	m := new(projections.ClusterRegistration)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// ClusterRegistrationServer is the server API for ClusterRegistration service.
-// All implementations must embed UnimplementedClusterRegistrationServer
+// CertificateServer is the server API for Certificate service.
+// All implementations must embed UnimplementedCertificateServer
 // for forward compatibility
-type ClusterRegistrationServer interface {
-	// GetAll returns all registration requests.
-	GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error
-	// GetPending returns all pending registration requests.
-	GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error
-	mustEmbedUnimplementedClusterRegistrationServer()
+type CertificateServer interface {
+	GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error)
+	mustEmbedUnimplementedCertificateServer()
 }
 
-// UnimplementedClusterRegistrationServer must be embedded to have forward compatible implementations.
-type UnimplementedClusterRegistrationServer struct {
+// UnimplementedCertificateServer must be embedded to have forward compatible implementations.
+type UnimplementedCertificateServer struct {
 }
 
-func (UnimplementedClusterRegistrationServer) GetAll(*GetAllRequest, ClusterRegistration_GetAllServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetAll not implemented")
+func (UnimplementedCertificateServer) GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
 }
-func (UnimplementedClusterRegistrationServer) GetPending(*emptypb.Empty, ClusterRegistration_GetPendingServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetPending not implemented")
-}
-func (UnimplementedClusterRegistrationServer) mustEmbedUnimplementedClusterRegistrationServer() {}
+func (UnimplementedCertificateServer) mustEmbedUnimplementedCertificateServer() {}
 
-// UnsafeClusterRegistrationServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ClusterRegistrationServer will
+// UnsafeCertificateServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CertificateServer will
 // result in compilation errors.
-type UnsafeClusterRegistrationServer interface {
-	mustEmbedUnimplementedClusterRegistrationServer()
+type UnsafeCertificateServer interface {
+	mustEmbedUnimplementedCertificateServer()
 }
 
-func RegisterClusterRegistrationServer(s grpc.ServiceRegistrar, srv ClusterRegistrationServer) {
-	s.RegisterService(&ClusterRegistration_ServiceDesc, srv)
+func RegisterCertificateServer(s grpc.ServiceRegistrar, srv CertificateServer) {
+	s.RegisterService(&Certificate_ServiceDesc, srv)
 }
 
-func _ClusterRegistration_GetAll_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetAllRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Certificate_GetCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCertificateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(ClusterRegistrationServer).GetAll(m, &clusterRegistrationGetAllServer{stream})
-}
-
-type ClusterRegistration_GetAllServer interface {
-	Send(*projections.ClusterRegistration) error
-	grpc.ServerStream
-}
-
-type clusterRegistrationGetAllServer struct {
-	grpc.ServerStream
-}
-
-func (x *clusterRegistrationGetAllServer) Send(m *projections.ClusterRegistration) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _ClusterRegistration_GetPending_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(emptypb.Empty)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+	if interceptor == nil {
+		return srv.(CertificateServer).GetCertificate(ctx, in)
 	}
-	return srv.(ClusterRegistrationServer).GetPending(m, &clusterRegistrationGetPendingServer{stream})
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.Certificate/GetCertificate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateServer).GetCertificate(ctx, req.(*GetCertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type ClusterRegistration_GetPendingServer interface {
-	Send(*projections.ClusterRegistration) error
-	grpc.ServerStream
-}
-
-type clusterRegistrationGetPendingServer struct {
-	grpc.ServerStream
-}
-
-func (x *clusterRegistrationGetPendingServer) Send(m *projections.ClusterRegistration) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-// ClusterRegistration_ServiceDesc is the grpc.ServiceDesc for ClusterRegistration service.
+// Certificate_ServiceDesc is the grpc.ServiceDesc for Certificate service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ClusterRegistration_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "domain.ClusterRegistration",
-	HandlerType: (*ClusterRegistrationServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
+var Certificate_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.Certificate",
+	HandlerType: (*CertificateServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
-			StreamName:    "GetAll",
-			Handler:       _ClusterRegistration_GetAll_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "GetPending",
-			Handler:       _ClusterRegistration_GetPending_Handler,
-			ServerStreams: true,
+			MethodName: "GetCertificate",
+			Handler:    _Certificate_GetCertificate_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 

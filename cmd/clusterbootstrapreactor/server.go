@@ -80,9 +80,10 @@ var serveCmd = &cobra.Command{
 
 		// Set up reactor
 		reactorEventHandler := eventhandler.NewReactorEventHandler(esClient, reactors.NewClusterBootstrapReactor(signer, certManager))
+		defer reactorEventHandler.Stop()
 
 		// Register event handler with event bus
-		if err := msgBus.AddHandler(ctx, reactorEventHandler, msgBus.Matcher().MatchEventType(events.ClusterCreated), msgBus.Matcher().MatchEventType(events.ClusterCertificateRequested)); err != nil {
+		if err := msgBus.AddHandler(ctx, reactorEventHandler, msgBus.Matcher().MatchEventType(events.ClusterCreated), msgBus.Matcher().MatchEventType(events.CertificateRequested)); err != nil {
 			return err
 		}
 

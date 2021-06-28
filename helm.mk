@@ -20,7 +20,7 @@ install-%:
 	@rm $(HELM_VALUES_FILE).tag
 
 install-from-repo-%:
-	@$(MAKE) helm-dep-$*
+	@$(HELM) repo update
 	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds --atomic --timeout 10m
 
 uninstall-%: 

@@ -14,28 +14,28 @@ import (
 )
 
 func init() {
-	es.DefaultCommandRegistry.RegisterCommand(NewRequestClusterCertificateCommand)
+	es.DefaultCommandRegistry.RegisterCommand(NewRequestCertificateCommand)
 }
 
-// RequestClusterCertificateCommand is a command for creating a cluster.
-type RequestClusterCertificateCommand struct {
+// RequestCertificateCommand is a command for creating a cluster.
+type RequestCertificateCommand struct {
 	*es.BaseCommand
-	cmdData.RequestClusterOperatorCertificate
+	cmdData.RequestCertificate
 }
 
-// NewRequestClusterCertificateCommand creates a RequestClusterCertificateCommand.
-func NewRequestClusterCertificateCommand(id uuid.UUID) es.Command {
-	return &RequestClusterCertificateCommand{
-		BaseCommand: es.NewBaseCommand(id, aggregates.Cluster, commands.RequestClusterCertificate),
+// NewRequestCertificateCommand creates a RequestCertificateCommand.
+func NewRequestCertificateCommand(id uuid.UUID) es.Command {
+	return &RequestCertificateCommand{
+		BaseCommand: es.NewBaseCommand(id, aggregates.Certificate, commands.RequestCertificate),
 	}
 }
 
-func (c *RequestClusterCertificateCommand) SetData(a *anypb.Any) error {
-	return a.UnmarshalTo(&c.RequestClusterOperatorCertificate)
+func (c *RequestCertificateCommand) SetData(a *anypb.Any) error {
+	return a.UnmarshalTo(&c.RequestCertificate)
 }
 
 // Policies returns the Role/Scope/Resource combination allowed to execute.
-func (c *RequestClusterCertificateCommand) Policies(ctx context.Context) []es.Policy {
+func (c *RequestCertificateCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
 		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),       // Allows system admins
 		es.NewPolicy().WithRole(roles.K8sOperator).WithScope(scopes.System), // Allows k8s operators

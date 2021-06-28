@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
@@ -29,7 +29,7 @@ var _ = Describe("domain/user_repo", func() {
 		}
 		eventData := eventsourcing.ToEventDataFromProto(protoEventData)
 		event := eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1)
-		event.Metadata()[gateway.HeaderAuthId] = userId.String()
+		event.Metadata()[auth.HeaderAuthId] = userId.String()
 		userProjection, err := userProjector.Project(context.Background(), event, userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.Version()).To(Equal(uint64(1)))

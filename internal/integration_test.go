@@ -205,7 +205,7 @@ var _ = Describe("integration", func() {
 		Expect(cluster.GetName()).To(Equal("my awesome cluster"))
 		Expect(cluster.GetLabel()).To(Equal("mac"))
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(cluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
+		Expect(cluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
 
 		By("getting all existing clusters")
 
@@ -221,7 +221,7 @@ var _ = Describe("integration", func() {
 		Expect(firstCluster.GetName()).To(Equal("my awesome cluster"))
 		Expect(firstCluster.GetLabel()).To(Equal("mac"))
 		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(firstCluster.GetClusterCACertBundle()).To(Equal([]byte("This should be a certificate")))
+		Expect(firstCluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
 
 		By("getting a cluster's certificates by its id")
 

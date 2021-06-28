@@ -9,51 +9,21 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package projections;
 
-// ClusterRegistration within Monoskope
-message ClusterRegistration {
-  // Unique identifier (UUID 128-bit number)
-  string id = 1;
-  // Unique name of the cluster
-  string name = 2;
-  // Address of the clusters KubeAPIServer
-  string apiServerAddress = 3;
-  // CA certificate of the cluster
-  bytes clusterCACert = 4;
-  // Status of the request
-  Status status = 5;
-  // Metadata about the lifecycle of the projection
-  LifecycleMetadata metadata = 6;
-  // Metadata about the approval of the projection
-  ApprovalMetadata approvalMetadata = 7;
-
-  enum Status {
-    REQUESTED = 0;
-    APPROVED = 1;
-    DENIED = 2;
-  }
-}
-
 // Cluster is the information the Control Plane has about a cluster
 message Cluster {
   // Unique identifier of the cluster (UUID 128-bit number)
   string id = 1;
   // Unique name of the cluster
   string name = 2;
-  // Unique label of the cluster, to be utilized for generating unique labels and symbols, e.g. with metrics.
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
   string label = 3;
   // Address of the clusters KubeAPIServer
-  string apiServerAddress = 4;
+  string api_server_address = 4;
   // CA certificates of the cluster
-  bytes clusterCACertBundle = 5;
+  bytes ca_cert_bundle = 5;
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
   // Bootstrap token for cluster authentication
-  string bootstrapToken = 7;
-  // M8 CA and cluster certificate
-  ClusterCertificates clusterCertificates = 8;
-}
-
-message ClusterCertificates {
-  bytes ca = 1;
-  bytes certificate = 2;
+  string bootstrap_token = 7;
 }

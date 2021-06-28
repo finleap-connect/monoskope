@@ -78,9 +78,9 @@ go-run-%:
 
 go-report:
 	@echo
-	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report commands $(ARGS)
+	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) cmd/commandhandler/*.go report commands $(ARGS)
 	@echo
-	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/pkg/logger.logMode=noop" cmd/commandhandler/*.go report permissions $(ARGS)
+	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) cmd/commandhandler/*.go report permissions $(ARGS)
 	@echo
 
 .protobuf-deps: $(PROTO_FILES)
@@ -90,6 +90,8 @@ go-report:
 	echo >>.protobuf-deps
 
 include .protobuf-deps
+
+go-protobuf: $(GENERATED_GO_FILES)
 
 go-test: $(GENERATED_GO_FILES)
 	make go-test-ci
@@ -179,3 +181,5 @@ go-build-clboreactor: $(CMD_CLBOREACTOR)
 go-rebuild-mocks: .protobuf-deps
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
+	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
+	

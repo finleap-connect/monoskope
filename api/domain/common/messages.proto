@@ -17,3 +17,11 @@ message ServiceInformation {
   // commit hash of the service
   string commit = 3;
 }
+
+// Certificate
+message Certificate {
+  // CA Certificate
+  bytes ca = 1;
+  // Certificate
+  bytes certificate = 2;
+}

@@ -3,6 +3,7 @@ package projections
 import (
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 type Cluster struct {
@@ -10,7 +11,7 @@ type Cluster struct {
 	*projections.Cluster
 }
 
-func NewClusterProjection(id uuid.UUID) *Cluster {
+func NewClusterProjection(id uuid.UUID) eventsourcing.Projection {
 	dp := NewDomainProjection()
 	return &Cluster{
 		DomainProjection: dp,

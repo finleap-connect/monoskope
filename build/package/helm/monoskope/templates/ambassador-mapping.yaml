@@ -22,6 +22,23 @@ spec:
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-clusterauth-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /gateway.ClusterAuth/
+  rewrite: /gateway.ClusterAuth/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-version-mapping
   namespace: {{ .Release.Namespace }}
   labels:
