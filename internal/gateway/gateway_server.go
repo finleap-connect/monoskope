@@ -38,13 +38,13 @@ func (s *gatewayApiServer) GetAuthInformation(ctx context.Context, state *api.Au
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
 
-	return &api.AuthInformation{AuthCodeURL: url, State: encodedState}, nil
+	return &api.AuthInformation{AuthCodeUrl: url, State: encodedState}, nil
 }
 
 func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
 	s.log.Info("Authenticating user...")
 
-	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackURL)
+	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackUrl)
 	if err != nil {
 		s.log.Error(err, "User authentication failed.")
 		return nil, err

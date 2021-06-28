@@ -24,10 +24,10 @@ var _ = Describe("Gateway", func() {
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
 
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &api.AuthState{CallbackURL: "http://localhost:8000"})
+		authInfo, err := gwc.GetAuthInformation(context.Background(), &api.AuthState{CallbackUrl: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
-		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeURL)
+		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeUrl)
 	})
 	It("can go through oidc-flow with existing user", func() {
 		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
@@ -41,12 +41,12 @@ var _ = Describe("Gateway", func() {
 		defer oidcClientServer.Close()
 
 		env.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
-		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api.AuthState{CallbackURL: oidcClientServer.RedirectURI})
+		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api.AuthState{CallbackUrl: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authInfo).ToNot(BeNil())
 
 		var innerErr error
-		res, err := env.HttpClient.Get(authInfo.AuthCodeURL)
+		res, err := env.HttpClient.Get(authInfo.AuthCodeUrl)
 		Expect(err).NotTo(HaveOccurred())
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
@@ -60,7 +60,7 @@ var _ = Describe("Gateway", func() {
 		eg.Go(func() error {
 			defer GinkgoRecover()
 			var innerErr error
-			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeURL, authInfo.State)
+			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeUrl, authInfo.State)
 			return innerErr
 		})
 		eg.Go(func() error {
@@ -78,7 +78,7 @@ var _ = Describe("Gateway", func() {
 		Expect(eg.Wait()).NotTo(HaveOccurred())
 		Expect(statusCode).To(Equal(http.StatusOK))
 
-		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackURL: oidcClientServer.RedirectURI})
+		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackUrl: oidcClientServer.RedirectURI})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authResponse).ToNot(BeNil())
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))

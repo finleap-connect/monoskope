@@ -208,12 +208,12 @@ func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardCl
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
 func (n *Handler) GetAuthCodeURL(state *api.AuthState, scopes []string) (string, string, error) {
-	if !n.redirectUrlAllowed(state.GetCallbackURL()) {
+	if !n.redirectUrlAllowed(state.GetCallbackUrl()) {
 		return "", "", errors.New("callback url not allowed")
 	}
 
 	// Encode state and calculate nonce
-	encoded, err := (&State{Callback: state.GetCallbackURL()}).Encode()
+	encoded, err := (&State{Callback: state.GetCallbackUrl()}).Encode()
 	if err != nil {
 		return "", "", err
 	}
@@ -223,9 +223,9 @@ func (n *Handler) GetAuthCodeURL(state *api.AuthState, scopes []string) (string,
 	var authCodeURL string
 	if n.config.OfflineAsScope {
 		scopes = append(scopes, oidc.ScopeOfflineAccess)
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce))
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackUrl()).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else {
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackURL()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
+		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackUrl()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	}
 
 	return authCodeURL, encoded, nil

@@ -20,23 +20,23 @@ service ClusterAuth {
   rpc GetAuthToken(ClusterAuthTokenRequest) returns (ClusterAuthTokenResponse);
 }
 
-message AuthState { string CallbackURL = 1; }
+message AuthState { string callback_url = 1; }
 
 message AuthInformation {
-  string AuthCodeURL = 1;
-  string State = 2;
+  string auth_code_url = 1;
+  string state = 2;
 }
 
 message AuthCode {
-  string Code = 1;
-  string State = 2;
-  string CallbackURL = 3;
+  string code = 1;
+  string state = 2;
+  string callback_url = 3;
 }
 
 message AuthResponse {
-  string AccessToken = 1;
-  google.protobuf.Timestamp Expiry = 2;
-  string Username = 3;
+  string access_token = 1;
+  google.protobuf.Timestamp expiry = 2;
+  string username = 3;
 }
 
 // ClusterAuthTokenRequest is send in order to retrieve an auth token valid to
@@ -51,6 +51,6 @@ message ClusterAuthTokenRequest {
 // ClusterAuthTokenResponse contains an auth token valid to
 // authenticate against a certain cluster with a specific role
 message ClusterAuthTokenResponse {
-  string AccessToken = 1;
-  google.protobuf.Timestamp Expiry = 2;
+  string access_token = 1;
+  google.protobuf.Timestamp expiry = 2;
 }
