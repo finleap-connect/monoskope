@@ -9,6 +9,7 @@ import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
+import "api/domain/common/messages.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
 
@@ -48,19 +49,14 @@ service Cluster {
   rpc GetById(google.protobuf.StringValue) returns (projections.Cluster);
   // GetByName returns a cluster by its name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Cluster);
-  // GetBootstrapToken returns the JWT token for cluster authentication for the cluster with the given UUID
-  rpc GetBootstrapToken(google.protobuf.StringValue) returns (google.protobuf.StringValue);
-  // GetClusterCertificates returns the m8 CA and the certificate issued for the m8 operator of the cluster with the given UUID
-  rpc GetClusterCertificates(google.protobuf.StringValue) returns (projections.ClusterCertificates);
+  // GetBootstrapToken returns the JWT token for cluster authentication for the
+  // cluster with the given UUID
+  rpc GetBootstrapToken(google.protobuf.StringValue)
+      returns (google.protobuf.StringValue);
 }
 
-// ClusterRegistration is a service to query ClusterRegistrations.
-service ClusterRegistration {
-  // GetAll returns all registration requests.
-  rpc GetAll(GetAllRequest) returns (stream projections.ClusterRegistration);
-  // GetPending returns all pending registration requests.
-  rpc GetPending(google.protobuf.Empty)
-      returns (stream projections.ClusterRegistration);
+service Certificate {
+  rpc GetCertificate(GetCertificateRequest) returns (common.Certificate);
 }
 
 // K8sOperator is a service used by remote K8s Operators to query the Control
@@ -70,4 +66,11 @@ service K8sOperator {
   rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
 }
 
-message GetAllRequest { bool includeDeleted = 1; }
+message GetAllRequest { bool include_deleted = 1; }
+
+message GetCertificateRequest {
+  // Unique identifier of the aggregate referenced (UUID 128-bit number)
+  string aggregate_id = 1;
+  // Type of the aggregate referenced
+  string aggregate_type = 2;
+}

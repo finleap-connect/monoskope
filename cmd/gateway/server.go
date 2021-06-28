@@ -97,17 +97,26 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		defer conn.Close()
+
+		conn, clusterSvcClient, err := queryhandler.NewClusterClient(context.Background(), queryHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
 		userRepo := repositories.NewRemoteUserRepository(userSvcClient)
+		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
+		// API servers
 		authServer := gateway.NewAuthServer(authHandler, userRepo)
-
-		// Gateway API server
-		gws := gateway.NewApiServer(&authConfig, authHandler, userRepo)
+		gatewayApiServer := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(signer, userRepo, clusterRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterGatewayServer(s, gws)
+			api.RegisterGatewayServer(s, gatewayApiServer)
+			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

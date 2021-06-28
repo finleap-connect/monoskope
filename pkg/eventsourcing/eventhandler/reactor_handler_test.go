@@ -2,6 +2,7 @@ package eventhandler
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang/mock/gomock"
@@ -38,6 +39,8 @@ var _ = Describe("package eventhandler", func() {
 				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
 				esStoreClient := mock_eventsourcing.NewMockEventStore_StoreClient(mockCtrl)
 				esClient.EXPECT().Store(gomock.Any()).Return(esStoreClient, nil)
+				esStoreClient.EXPECT().Send(gomock.AssignableToTypeOf(new(apies.Event))).Return(errors.New("test backoff"))
+				esClient.EXPECT().Store(gomock.Any()).Return(esStoreClient, nil)
 				esStoreClient.EXPECT().Send(gomock.AssignableToTypeOf(new(apies.Event))).Return(nil)
 				esStoreClient.EXPECT().CloseAndRecv().Return(nil, nil)
 
@@ -61,6 +64,7 @@ var _ = Describe("package eventhandler", func() {
 
 				err := handler.HandleEvent(ctx, event)
 				Expect(err).NotTo(HaveOccurred())
+				handler.Stop()
 			})
 		})
 	})

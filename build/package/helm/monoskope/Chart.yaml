@@ -47,7 +47,7 @@ dependencies: # A list of the chart requirements
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled,global.rabbitmq.enabled
   - name: ambassador
-    version: 6.5.18
+    version: 6.7.11
     repository: https://getambassador.io
     condition: ambassador.enabled,global.ambassador.enabled
 

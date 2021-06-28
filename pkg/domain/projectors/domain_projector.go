@@ -2,7 +2,7 @@ package projectors
 
 import (
 	"github.com/google/uuid"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -22,7 +22,7 @@ func NewDomainProjector() *domainProjector {
 
 // getUserIdFromEvent gets the UserID from event metadata
 func (*domainProjector) getUserIdFromEvent(event es.Event) (uuid.UUID, error) {
-	userId, err := uuid.Parse(event.Metadata()[gateway.HeaderAuthId])
+	userId, err := uuid.Parse(event.Metadata()[auth.HeaderAuthId])
 	if err != nil {
 		return uuid.Nil, err
 	}

@@ -28,15 +28,11 @@ type Policy interface {
 	Role() Role
 	// Scope returns the scope this policy accepts.
 	Scope() Scope
-	// ResourceMatch returns if the resource must match the requested resource.
-	ResourceMatch() bool
 
 	// WithRole sets the role this policy accepts to the given value.
 	WithRole(Role) Policy
 	// WithScope sets the scope this policy accepts to the given value.
 	WithScope(Scope) Policy
-	// WithResourceMatch sets if the resource must match the requested resource.
-	WithResourceMatch(bool) Policy
 
 	// AcceptsRole checks if the policy accepts the given role.
 	AcceptsRole(Role) bool
@@ -47,22 +43,19 @@ type Policy interface {
 	String() string
 }
 
-// Policy describes which Role/Scope/Resource combination is allowed to execute a certain Command.
+// Policy describes which Role/Scope combination is allowed to execute a certain Command.
 type policy struct {
 	// Role is the Role a user must have due to the policy.
 	role Role
 	// Scope is the Scope of the Role a user must have due to the policy.
 	scope Scope
-	// resourceMatch is if the resource must match the requested resource.
-	resourceMatch bool
 }
 
 // NewPolicy creates a new policy which accepts anything.
 func NewPolicy() Policy {
 	return &policy{
-		role:          AnyRole,
-		scope:         AnyScope,
-		resourceMatch: false,
+		role:  AnyRole,
+		scope: AnyScope,
 	}
 }
 
@@ -78,12 +71,6 @@ func (p *policy) WithScope(scope Scope) Policy {
 	return p
 }
 
-// WithResource sets the resource of this policy accepts to the given value.
-func (p *policy) WithResourceMatch(mustMatch bool) Policy {
-	p.resourceMatch = mustMatch
-	return p
-}
-
 // Role returns the role this policy accepts.
 func (p *policy) Role() Role {
 	return p.role
@@ -92,11 +79,6 @@ func (p *policy) Role() Role {
 // Scope returns the scope this policy accepts.
 func (p *policy) Scope() Scope {
 	return p.scope
-}
-
-// ResourceMatch returns if the resource must match the requested resource.
-func (p *policy) ResourceMatch() bool {
-	return p.resourceMatch
 }
 
 // AcceptsRole checks if the policy accepts the given role.
@@ -111,5 +93,5 @@ func (p *policy) AcceptsScope(scope Scope) bool {
 
 // String returns a string representation of the policy.
 func (p *policy) String() string {
-	return fmt.Sprintf("RO:%s|SC:%s|REM:%v", p.role, p.scope, p.resourceMatch)
+	return fmt.Sprintf("RO:%s|SC:%s", p.role, p.scope)
 }

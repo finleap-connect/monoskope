@@ -2,18 +2,22 @@ package eventhandler
 
 import (
 	"context"
+	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type reactorEventHandler struct {
-	log      logger.Logger
-	esClient apiEs.EventStoreClient
-	reactor  es.Reactor
+	log       logger.Logger
+	esClient  apiEs.EventStoreClient
+	reactor   es.Reactor
+	waitGroup sync.WaitGroup
 }
 
 // NewReactorEventHandler creates an EventHandler which automates storing Events in the EventStore when a Reactor has emitted any.
@@ -27,25 +31,37 @@ func NewReactorEventHandler(esClient apiEs.EventStoreClient, reactor es.Reactor)
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (m *reactorEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
+	m.waitGroup.Add(1)
 	eventsChannel := make(chan es.Event)
 	go m.handle(ctx, eventsChannel)
 	return m.reactor.HandleEvent(ctx, event, eventsChannel)
 }
 
+// Stop waits for all goroutines to finish
+func (m *reactorEventHandler) Stop() {
+	m.waitGroup.Wait()
+}
+
 func (m *reactorEventHandler) handle(ctx context.Context, events <-chan es.Event) {
+	defer m.waitGroup.Done()
 	for ev := range events { // Read events from channel
-		for {
+		params := backoff.NewExponentialBackOff()
+		params.MaxElapsedTime = 60 * time.Second
+		err := backoff.Retry(func() error {
 			err := checkUserId(ev)
 			if err != nil {
 				m.log.Error(err, "Event metadata do not contain user information.")
-				break
+				return err
 			}
-			err = m.storeEvent(ctx, ev)
-			if err != nil {
-				m.log.Error(err, "Failed to send event to EventStore. Retrying...")
-			} else {
-				break
+			if err := m.storeEvent(ctx, ev); err != nil {
+				m.log.Error(err, "Failed to send event to EventStore. Retrying...", "AggregateID", ev.AggregateID(), "AggregateType", ev.AggregateType(), "EventType", ev.EventType())
+				return err
 			}
+			return nil
+		}, params)
+
+		if err != nil {
+			m.log.Error(err, "Failed to send event to EventStore")
 		}
 	}
 }
@@ -78,6 +94,6 @@ func (m *reactorEventHandler) storeEvent(ctx context.Context, event es.Event) er
 }
 
 func checkUserId(event es.Event) error {
-	_, err := uuid.Parse(event.Metadata()[gateway.HeaderAuthId])
+	_, err := uuid.Parse(event.Metadata()[auth.HeaderAuthId])
 	return err
 }

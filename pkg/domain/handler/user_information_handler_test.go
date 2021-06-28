@@ -50,7 +50,7 @@ var _ = Describe("domain/handler", func() {
 	tenantBase := es.NewBaseCommand(uuid.New(), aggregates.Tenant, commands.CreateTenant)
 	roleBindingBase := es.NewBaseCommand(uuid.New(), aggregates.UserRoleBinding, commands.CreateUserRoleBinding)
 
-	handler := NewAuthorizationHandler(userRepo)
+	handler := NewUserInformationHandler(userRepo)
 
 	It("system admin can create users", func() {
 		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
@@ -110,5 +110,4 @@ var _ = Describe("domain/handler", func() {
 		err = handler.HandleCommand(manager.GetContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 	})
-
 })

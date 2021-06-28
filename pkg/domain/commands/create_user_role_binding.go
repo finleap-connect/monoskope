@@ -33,7 +33,7 @@ func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 }
 func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                         // System admin
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResourceMatch(true), // Tenant admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant), // Tenant admin
 	}
 }

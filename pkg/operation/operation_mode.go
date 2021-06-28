@@ -14,7 +14,7 @@ const (
 )
 
 // GetOperationMode returns the operation mode specified via the env var M8_OPERATION_MODE.
-// (defaults is RELEASE)
+// (default is RELEASE)
 func GetOperationMode() OperationMode {
 	operationMode := OperationMode(os.Getenv("M8_OPERATION_MODE"))
 

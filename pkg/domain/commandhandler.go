@@ -57,10 +57,7 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 	}
 
 	if err := handler.HandleCommand(ctx, cmd); err != nil {
-		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
-			return userId, nil
-		}
-		return userId, err
+		return uuid.Nil, err
 	}
 	return userId, nil
 }
@@ -101,6 +98,9 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 
 		userId, err := setupUser(ctx, userInfo[0], superUser, handler)
 		if err != nil {
+			if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+				return nil
+			}
 			return err
 		}
 
@@ -140,7 +140,7 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	userRepo := repositories.NewRemoteUserRepository(userService)
 
 	// Create command handler
-	authorizationHandler := domainHandlers.NewAuthorizationHandler(userRepo)
+	authorizationHandler := domainHandlers.NewUserInformationHandler(userRepo)
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
 			aggregateManager,
@@ -154,9 +154,14 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	}
 
 	// Create default and super users
-	cancel := authorizationHandler.BypassAuthorization()
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return err
+	}
+
+	cancel := metadataManager.BypassAuthorization()
 	defer cancel()
-	if err := setupUsers(ctx, handler); err != nil {
+	if err := setupUsers(metadataManager.GetContext(), handler); err != nil {
 		return err
 	}
 

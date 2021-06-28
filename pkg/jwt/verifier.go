@@ -158,7 +158,7 @@ func (v *jwtVerifier) Verify(rawJWT string, claims interface{}) error {
 	}
 
 	// none of the known keys could verify claims
-	return errors.New("failed to very claims")
+	return errors.New("failed to verify claims")
 }
 
 func (v *jwtVerifier) JWKS() *jose.JSONWebKeySet {

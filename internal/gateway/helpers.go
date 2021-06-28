@@ -7,7 +7,10 @@ import (
 	ggrpc "google.golang.org/grpc"
 )
 
-func CreateInsecureGatewayConnection(ctx context.Context, url string) (*ggrpc.ClientConn, error) {
-	factory := grpc.NewGrpcConnectionFactory(url).WithInsecure()
-	return factory.WithRetry().WithBlock().Connect(ctx)
+func CreateInsecureConnection(ctx context.Context, url string) (*ggrpc.ClientConn, error) {
+	return grpc.NewGrpcConnectionFactory(url).
+		WithInsecure().
+		WithRetry().
+		WithBlock().
+		Connect(ctx)
 }

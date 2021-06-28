@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	apiProjections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -36,15 +35,6 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 
 	// Apply the changes for the event.
 	switch event.EventType() {
-	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
-		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
-		}
-		p.BootstrapToken = data.GetJWT()
-		if err := c.projectModified(event, p.DomainProjection); err != nil {
-			return nil, err
-		}
 	case events.ClusterCreated:
 		data := &eventdata.ClusterCreated{}
 		if err := event.Data().ToProto(data); err != nil {
@@ -53,19 +43,18 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		p.Name = data.GetName()
 		p.Label = data.GetLabel()
 		p.ApiServerAddress = data.GetApiServerAddress()
-		p.ClusterCACertBundle = data.GetCaCertificateBundle()
+		p.CaCertBundle = data.GetCaCertificateBundle()
 
 		if err := c.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
-	case events.ClusterOperatorCertificateIssued:
-		data := &eventdata.ClusterCertificateIssued{}
+	case events.ClusterBootstrapTokenCreated:
+		data := &eventdata.ClusterBootstrapTokenCreated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
-		p.ClusterCertificates = &apiProjections.ClusterCertificates{Ca: data.Ca, Certificate: data.Certificate}
-
-		if err := c.projectCreated(event, p.DomainProjection); err != nil {
+		p.BootstrapToken = data.GetJwt()
+		if err := c.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:

@@ -33,8 +33,3 @@ message CreateCluster {
   // Bundle of CA certificates of the cluster, PEM encoded
   bytes clusterCACertBundle = 4;
 }
-
-// Command issued to request a new certificate by an operator
-message RequestClusterOperatorCertificate {
-  bytes certificateSigningRequest = 1;
-}
