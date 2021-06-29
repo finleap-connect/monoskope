@@ -1,3 +1,6 @@
+
+TOOLS_DIR ?= $(shell cd tools && pwd)
+
 HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
