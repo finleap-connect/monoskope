@@ -19,6 +19,7 @@ test:helm:
   stage: test
   extends: .gobase
   script:
+    - pwd
     - make helm-test
   except:
     - schedules
