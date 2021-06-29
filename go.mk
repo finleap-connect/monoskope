@@ -1,5 +1,4 @@
 BUILD_PATH ?= $(shell pwd)
-TOOLS_DIR ?= $(shell cd tools && pwd)
 
 GO_MODULE ?= gitlab.figo.systems/platform/monoskope/monoskope
 

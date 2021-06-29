@@ -1,4 +1,5 @@
 
+SHELL := bash
 TOOLS_DIR ?= $(shell cd tools && pwd)
 
 HELM                		?= helm3
