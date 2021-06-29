@@ -189,7 +189,7 @@ func addUserInfo(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 	userInfo := metadataManager.GetUserInformation()
-	userInfo.Id = users.ReactorUser.ID
+	userInfo.Id = users.ReactorUser.ID()
 	userInfo.Name = users.ReactorUser.Name
 	userInfo.Email = users.ReactorUser.Email
 	metadataManager.SetUserInformation(userInfo)

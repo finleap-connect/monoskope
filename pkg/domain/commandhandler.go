@@ -121,7 +121,7 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 		return err
 	}
 	metadataMgr.SetUserInformation(&metadata.UserInformation{
-		Id:    users.CommandHandlerUser.ID,
+		Id:    users.CommandHandlerUser.ID(),
 		Name:  users.CommandHandlerUser.Name,
 		Email: users.CommandHandlerUser.Email,
 	})

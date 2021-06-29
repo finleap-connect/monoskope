@@ -26,10 +26,7 @@ func findSystemUser(id uuid.UUID) *projections.User {
 	if !ok {
 		return nil
 	}
-	user := projections.NewUserProjection(sysUser.ID).(*projections.User)
-	user.Name = sysUser.Name
-	user.Email = sysUser.Email
-	return user
+	return sysUser
 }
 
 func (r *domainRepository) addMetadata(ctx context.Context, dp *projections.DomainProjection) error {

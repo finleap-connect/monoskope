@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 )
 
 const (
@@ -11,34 +14,36 @@ const (
 )
 
 var (
-	CommandHandlerUser *SystemUser
-	ReactorUser        *SystemUser
+	CommandHandlerUser *projections.User
+	ReactorUser        *projections.User
 )
 
-type SystemUser struct {
-	ID    uuid.UUID
-	Name  string
-	Email string
-}
-
 // A list of all existing system users.
-var AvailableSystemUsers map[uuid.UUID]*SystemUser
+var AvailableSystemUsers map[uuid.UUID]*projections.User
 
 func init() {
 	CommandHandlerUser = NewSystemUser("commandhandler")
 	ReactorUser = NewSystemUser("reactor")
 
-	AvailableSystemUsers = map[uuid.UUID]*SystemUser{
-		CommandHandlerUser.ID: CommandHandlerUser,
-		CommandHandlerUser.ID: ReactorUser,
+	AvailableSystemUsers = map[uuid.UUID]*projections.User{
+		CommandHandlerUser.ID(): CommandHandlerUser,
+		CommandHandlerUser.ID(): ReactorUser,
 	}
 }
 
-func NewSystemUser(name string) *SystemUser {
-	user := new(SystemUser)
+func NewSystemUser(name string) *projections.User {
+	userId := GenerateSystemUserUUID(name)
+
+	adminRoleBinding := projections.NewUserRoleBinding(uuid.Nil)
+	adminRoleBinding.UserId = userId.String()
+	adminRoleBinding.Role = string(roles.Admin)
+	adminRoleBinding.Scope = string(scopes.System)
+
+	user := projections.NewUserProjection(userId).(*projections.User)
 	user.Name = name
 	user.Email = GenerateSystemEmailAddress(name)
-	user.ID = GenerateSystemUserUUID(name)
+	user.Roles = append(user.Roles, adminRoleBinding.UserRoleBinding)
+
 	return user
 }
 
