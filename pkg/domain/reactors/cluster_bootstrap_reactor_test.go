@@ -128,7 +128,7 @@ var _ = Describe("package reactors", func() {
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")
 
-				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
+				k8sClient.EXPECT().Get(gomock.Any(), types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
 					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
 
 				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
