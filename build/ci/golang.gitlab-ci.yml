@@ -14,9 +14,9 @@ variables:
     - schedules
   variables:
     GOPATH: $CI_PROJECT_DIR/.go
+    TOOLS_DIR: /builds/platform/monoskope/monoskope/tools
   before_script:
     - mkdir -p .go
-    - pwd
     - make go-mod
   cache:
     paths:
