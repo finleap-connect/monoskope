@@ -98,7 +98,7 @@ go-test: $(GENERATED_GO_FILES)
 
 go-test-ci:
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover *
+	$(GINKGO) -skipPackage test/pkg -keepGoing -r -v -cover *
 	@echo "mode: set" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
@@ -182,4 +182,4 @@ go-rebuild-mocks: .protobuf-deps
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
-	
+
