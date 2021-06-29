@@ -20,6 +20,7 @@ test:helm:
   extends: .gobase
   script:
     - pwd
+    - type bash
     - make helm-test
   except:
     - schedules
