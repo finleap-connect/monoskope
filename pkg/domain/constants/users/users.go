@@ -24,8 +24,8 @@ var (
 var AvailableSystemUsers map[uuid.UUID]*projections.User
 
 func init() {
-	CommandHandlerUser = NewSystemUser("commandhandler")
-	ReactorUser = NewSystemUser("reactor")
+	CommandHandlerUser = newSystemUser("commandhandler")
+	ReactorUser = newSystemUser("reactor")
 
 	AvailableSystemUsers = map[uuid.UUID]*projections.User{
 		CommandHandlerUser.ID(): CommandHandlerUser,
@@ -33,9 +33,9 @@ func init() {
 	}
 }
 
-// NewSystemUser creates a new system user with a reproducible name based on the name and an admin rolebinding
-func NewSystemUser(name string) *projections.User {
-	userId := GenerateSystemUserUUID(name)
+// newSystemUser creates a new system user with a reproducible name based on the name and an admin rolebinding
+func newSystemUser(name string) *projections.User {
+	userId := generateSystemUserUUID(name)
 
 	// Create admin rolebinding
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.Nil)
@@ -46,19 +46,19 @@ func NewSystemUser(name string) *projections.User {
 	// Create system user
 	user := projections.NewUserProjection(userId).(*projections.User)
 	user.Name = name
-	user.Email = GenerateSystemEmailAddress(name)
+	user.Email = generateSystemEmailAddress(name)
 	user.Roles = append(user.Roles, adminRoleBinding.UserRoleBinding)
 
 	return user
 }
 
-// Generates an email address with the name and the base domain constant
-func GenerateSystemEmailAddress(name string) string {
+// generateSystemEmailAddress generates an email address with the name and the base domain constant
+func generateSystemEmailAddress(name string) string {
 	return fmt.Sprintf("%s@%s", name, BASE_DOMAIN)
 }
 
-// GenerateSystemUserUUID creates a reproducible UUID based on the name
-func GenerateSystemUserUUID(name string) uuid.UUID {
-	userMailAddress := GenerateSystemEmailAddress(name)
+// generateSystemUserUUID creates a reproducible UUID based on the name
+func generateSystemUserUUID(name string) uuid.UUID {
+	userMailAddress := generateSystemEmailAddress(name)
 	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(userMailAddress))
 }
