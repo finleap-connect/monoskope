@@ -14,6 +14,8 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/users"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/jwt"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -42,6 +44,11 @@ func NewClusterBootstrapReactor(signer jwt.JWTSigner, certManager certificateman
 
 // HandleEvent handles a given event returns 0..* Events in reaction or an error
 func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Event, eventsChannel chan<- es.Event) error {
+	ctx, err := addUserInfo(ctx)
+	if err != nil {
+		return err
+	}
+
 	switch event.EventType() {
 	case events.ClusterCreated:
 		data := &eventdata.ClusterCreated{}
@@ -174,4 +181,17 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 			event.AggregateID(),
 			event.AggregateVersion()+1)
 	}
+}
+
+func addUserInfo(ctx context.Context) (context.Context, error) {
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	userInfo := metadataManager.GetUserInformation()
+	userInfo.Id = users.ReactorUser.ID()
+	userInfo.Name = users.ReactorUser.Name
+	userInfo.Email = users.ReactorUser.Email
+	metadataManager.SetUserInformation(userInfo)
+	return metadataManager.GetContext(), nil
 }
