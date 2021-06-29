@@ -62,3 +62,8 @@ set-version-all:
 
 docs:
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
+
+.PHONY: test
+test:
+	bash $(TOOLS_DIR)/render_all_fixtures.sh ./test/pkg/templates_unit_test/testdata
+	go test ./test/pkg/templates_unit_test/

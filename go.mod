@@ -29,6 +29,7 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.24.0 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/streadway/amqp v1.0.0
 	github.com/ugorji/go v1.2.4 // indirect

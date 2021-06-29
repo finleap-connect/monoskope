@@ -1,0 +1,30 @@
+---
+# Source: monoskope/templates/ambassador-alert.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: RELEASE-NAME-ambassador-alerts
+  namespace: the-namespace
+  labels:
+    helm.sh/chart: monoskope-0.0.1
+    app.kubernetes.io/name: monoskope
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: monoskope
+    app: prometheus-operator
+    release: monitoring
+    tenant: finleap-cloud
+spec:
+  groups:
+  - name: the-namespace.rules
+    rules:
+    - alert: CertificateExpiringSoon
+      expr: min(envoy_server_days_until_first_cert_expiring{namespace="the-namespace"}) <= 20
+      for: 1m
+      labels:
+        installed_by: the-namespace
+        severity: critical
+      annotations:
+        description: The ambassador cert in namespace the-namespace is expiring in <=20 days.
+        summary:  The ambassador cert in namespace the-namespace is expiring in <=20 days.
