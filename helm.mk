@@ -1,6 +1,6 @@
 
 SHELL := bash
-TOOLS_DIR ?= $(shell cd tools && pwd)
+TOOLS_DIR := $(shell cd tools && pwd)
 
 HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
