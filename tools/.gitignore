@@ -1,0 +1,5 @@
+ginkgo
+golangci-lint
+protoc
+protoc-gen-go
+protoc-gen-go-grpc

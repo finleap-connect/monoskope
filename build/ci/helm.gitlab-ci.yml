@@ -19,9 +19,6 @@ test:helm:
   stage: test
   extends: .gobase
   script:
-    - pwd
-    - type bash
-    - ls -la ./ tools/
     - make helm-test
   except:
     - schedules
