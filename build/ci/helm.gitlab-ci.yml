@@ -21,6 +21,7 @@ test:helm:
   script:
     - pwd
     - type bash
+    - ls -la tools
     - make helm-test
   except:
     - schedules
