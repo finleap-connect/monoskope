@@ -21,9 +21,17 @@ type SystemUser struct {
 	Email string
 }
 
+// A list of all existing system users.
+var AvailableSystemUsers map[uuid.UUID]*SystemUser
+
 func init() {
 	CommandHandlerUser = NewSystemUser("commandhandler")
 	ReactorUser = NewSystemUser("reactor")
+
+	AvailableSystemUsers = map[uuid.UUID]*SystemUser{
+		CommandHandlerUser.ID: CommandHandlerUser,
+		CommandHandlerUser.ID: ReactorUser,
+	}
 }
 
 func NewSystemUser(name string) *SystemUser {
