@@ -16,6 +16,7 @@ variables:
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:
     - mkdir -p .go
+    - pwd
     - make go-mod
   cache:
     paths:
