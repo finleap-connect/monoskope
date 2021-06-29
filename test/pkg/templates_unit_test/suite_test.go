@@ -141,6 +141,10 @@ func writeRejects(t *testing.T, fileName string, data []byte) {
 // readTestdata reads a file and returns the contents of that file as a string.
 func readTestdata(t *testing.T, fileName string) string {
 	file, err := os.Open(fileName)
+	// if the file does not exist, this is the same as it not being there. We may want this to be true.
+	if os.IsNotExist(err) {
+		return ""
+	}
 	if err != nil {
 		t.Fatalf("Failed to open expected input file: %v", err)
 	}
