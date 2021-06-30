@@ -4,21 +4,10 @@
 
 # Monoskope Documentation Overview
 
-* [Development documentation](development/)
-
-* [Makefile](development/Makefile.md)
-* [Flow charts](flow-charts/README.md)
-* [Development guide](development/README.md)
-
-## Deploying documentation
-
-* [Certificate Management](deployment/certificate-management.md)
-* [Deployment](deployment/deployment.md)
-
-## Operational documentation
-
-* [Permission Model](operation/permissionModel.md)
-* [EventStore Backup & Restore](operation/eventstore-backup.md)
+* [Diagrams](diagrams/)
+* [Development](development/)
+* [Deployment](deployment/)
+* [Operation](operation/)
 
 ## Helm Charts documentation
 
