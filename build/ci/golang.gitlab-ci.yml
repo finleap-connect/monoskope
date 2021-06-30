@@ -9,7 +9,7 @@ variables:
   MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
-  image: registry.gitlab.figo.systems/platform/monoskope/monoskope/builder:156227
+  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.1
   except:
     - schedules
   variables:
