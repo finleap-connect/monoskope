@@ -2,8 +2,9 @@
 
 ---
 
-# Monoskope Documentation Overview
+# Overview
 
+* [Architecture decisions](architecture-decisions/)
 * [Diagrams](diagrams/)
 * [Development](development/)
 * [Deployment](deployment/)

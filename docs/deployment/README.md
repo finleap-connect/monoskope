@@ -2,9 +2,7 @@
 
 ---
 
-# Monoskope Documentation Overview
-
-## Prerequisites
+# Prerequisites
 
 The following things must be set up in your target K8s Cluster:
 
