@@ -69,7 +69,7 @@
   ```bash
   helm3 repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
   helm3 repo update
-  ``'
+  ```
 
 * deploy helm charts
   `VERSION="v0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
