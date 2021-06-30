@@ -49,7 +49,7 @@
 
 ## Prerequisites
 
-## Go
+### Go
 
 * Execute `make go-tools` to get linter and testing binaries
 
@@ -65,24 +65,14 @@
 * pick up configuration for kubectl and check nodes of newly created cluster
   'export KUBECONFIG="$KUBECONFIG:$HOME/.kube/kind-m8kind-config"
 * ensure the finleap helm repo has been added to your local configuration
-  ```
+
+  ```bash
   helm3 repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
   helm3 repo update
   ``'
+
 * deploy helm charts
-  `VERSION="0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
-
-
-
-## To create a new aggregate
-
-1. Add command messages (command data, to be more specific) to separate file in `api/domain/commanddata/` folder
-1. add code to handle new command to separate file in `pkg/domain/commands/` folder. Ideally copy and apapt existing examples.
-1. add aggregate to separate file in `pkg/domain/aggregates/` folder.
-1. Add service with query functions to `api/domain/queryhandler_service.proto`
-1. Add messages for projection in `api/domain/projections` (ideally in separate `.proto` file)
-1. Implement query functiosn in new projection repository in `pkg/domain/repositories/`.
-1. Implment projector in `pkg/domain/projectors/` folder. There should be at least one projector per aggregate, but there may be multiple projectors. In order to have one projector handle events by multiple Aggregate types, simply register multiple matchers on the same projector. See `pkg/domain/queryhandler.go` for details. (TODO: create more elaborate examples for later use)
+  `VERSION="v0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
 
 ## Event Sourcing & CQRS
 
