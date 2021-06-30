@@ -43,6 +43,8 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.WithName("serverCmd")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		log.Info("Reading environment...")
 		// Some options can be provided by env variables
@@ -92,13 +94,13 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create UserService client
-		conn, userSvcClient, err := queryhandler.NewUserClient(context.Background(), queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
-		conn, clusterSvcClient, err := queryhandler.NewClusterClient(context.Background(), queryHandlerAddr)
+		conn, clusterSvcClient, err := queryhandler.NewClusterClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}

@@ -42,32 +42,41 @@ func (s *gatewayApiServer) GetAuthInformation(ctx context.Context, state *api.Au
 }
 
 func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
-	s.log.Info("Authenticating user...")
-
+	// Exchange auth code with upstream identity provider
+	s.log.Info("Exchanging auth code with issuer...")
 	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackUrl)
 	if err != nil {
 		s.log.Error(err, "User authentication failed.")
 		return nil, err
 	}
+	s.log.Info("Exchanged successful, received upstream claims.", "name", upstreamClaims.Name, "email", upstreamClaims.Email)
 
+	// Check that a user exists in monoskope
+	s.log.Info("Checking user exists...", "email", upstreamClaims.Email)
 	user, err := s.userRepo.ByEmail(ctx, upstreamClaims.Email)
 	if err != nil {
 		return nil, err
 	}
+	s.log.Info("User exists!", "name", user.Name, "email", user.Email, "id", user.ID())
 
-	signedToken, rawToken, err := s.authHandler.IssueToken(ctx, upstreamClaims, user.Id)
+	// Override upstream name
+	upstreamClaims.Name = user.Name
+
+	// Issue token
+	signedToken, rawToken, err := s.authHandler.IssueToken(ctx, upstreamClaims, user.ID().String())
 	if err != nil {
 		s.log.Error(err, "Issueing token failed.")
 		return nil, err
 	}
 
+	// Create response
 	userInfo := &api.AuthResponse{
 		AccessToken: signedToken,
 		Expiry:      timestamppb.New(rawToken.Expiry.Time()),
 		Username:    user.Name,
 	}
 
-	s.log.Info("User authenticated successfully.", "User", upstreamClaims.Email, "Expiry", userInfo.Expiry)
+	s.log.Info("User authenticated successfully.", "User", upstreamClaims.Email, "Expiry", userInfo.Expiry.AsTime().String())
 
 	return userInfo, nil
 }

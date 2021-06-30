@@ -42,17 +42,23 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		return err
 	}
 	userInfo := metadataManager.GetUserInformation()
+
+	s.Log.V(logger.DebugLevel).Info("Getting current user by id...", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
 	user, err := s.userRepo.ByUserId(ctx, userInfo.Id)
 	if err != nil {
 		return err
 	}
 
-	cluster, err := s.clusterRepo.ByClusterId(ctx, s.request.ClusterId)
+	clusterId := s.request.GetClusterId()
+	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
+	cluster, err := s.clusterRepo.ByClusterId(ctx, clusterId)
 	if err != nil {
 		return err
 	}
 
-	if err := k8s.ValidateRole(s.request.GetRole()); err != nil {
+	k8sRole := s.request.GetRole()
+	s.Log.V(logger.DebugLevel).Info("Validating role exists...", "role", k8sRole)
+	if err := k8s.ValidateRole(k8sRole); err != nil {
 		return err
 	}
 
@@ -61,6 +67,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		username = fmt.Sprintf("%s-%s", username, s.request.GetRole())
 	}
 
+	s.Log.V(logger.DebugLevel).Info("Generating token for k8s user...", "username", username)
 	token := jwt.NewKubernetesAuthToken(&jwt.StandardClaims{
 		Name:          user.GetName(),
 		Email:         user.GetEmail(),
