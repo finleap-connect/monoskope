@@ -1,8 +1,5 @@
 # Dev cluster environment values for monoskope.
 
-nameOverride: ""
-fullnameOverride: ""
-
 imageTag: &imageTag "0.0.1-local"
 
 global:
@@ -10,28 +7,17 @@ global:
     - name: gitlab-registry
 
 vaultOperator:
-  enabled: &vaultOperatorEnabled true
-  basePath: &vaultOperatorBasePath app/{{ .Release.Namespace }}
+  enabled: true
+  basePath: app/{{ .Release.Namespace }}
   
 hosting:
   issuer: letsencrypt-production
-  domain: &domain monoskope.dev.finleap.cloud
+  domain: monoskope.dev.finleap.cloud
 
-cockroachdb:
-  enabled: true
+# cockroachdb:
   # dropExistingDatabase: true
-  statefulset:
-    replicas: 3
-  storage:
-    persistentVolume:
-      size: "1Gi"
-
-rabbitmq:
-  enabled: true
-  replicaCount: 3
 
 gateway:
-  enabled: true
   replicaCount: 1
   image:
     tag: *imageTag
@@ -45,19 +31,11 @@ gateway:
     requests:
       cpu: 500m
       memory: 64Mi
-  oidcSecret:
-    vaultOperator:
-      enabled: true
 
 eventstore:
-  enabled: true
   replicaCount: 1
   image:
     tag: *imageTag
-  messageBus:
-    tlsSecret: m8-rabbitmq-auth-admin
-  storeDatabase:
-    tlsSecret: m8-crdb-auth-evenstore
   resources:
     limits:
       cpu: 2000m
@@ -83,8 +61,6 @@ eventstore:
       backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
 
 commandhandler:
-  enabled: true
-  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -104,8 +80,6 @@ commandhandler:
     - lutz.behnke@finleap.com
 
 queryhandler:
-  enabled: true
-  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -115,18 +89,12 @@ queryhandler:
     requests:
       cpu: 500m
       memory: 64Mi
-  messageBus:
-    tlsSecret: m8-rabbitmq-auth-admin
 
 ambassador:
-  enabled: true
-  replicaCount: 1
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
 
 cluster-bootstrap-reactor:
-  enabled: true
-  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -136,5 +104,3 @@ cluster-bootstrap-reactor:
     requests:
       cpu: 500m
       memory: 64Mi
-  messageBus:
-    tlsSecret: m8-rabbitmq-auth-admin

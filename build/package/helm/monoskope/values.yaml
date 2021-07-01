@@ -12,8 +12,8 @@ global:
     app.kubernetes.io/part-of: *name
 
 vaultOperator:
-  enabled: &vaultOperatorEnabled false
-  basePath: &vaultOperatorBasePath "app/{{ .Release.Namespace }}"
+  enabled: false
+  basePath: "app/{{ .Release.Namespace }}"
 
 pki:
   enabled: true
@@ -32,14 +32,11 @@ pki:
 
 hosting:
   issuer: ""
-  domain: &domain monoskope.io
+  domain: ""
 
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
-
-monitoring:
-  tenant: &tenant finleap-cloud
 
 gateway:
   enabled: true
@@ -65,7 +62,7 @@ eventstore:
   messageBus:
     existingSecret: *msgBusClientConfigSecretName
   storeDatabase:
-    existingSecret: m8-eventstore-db-config
+    existingSecret: m8-crdb-auth-evenstore
 
 commandhandler:
   enabled: true
@@ -121,22 +118,19 @@ cockroachdb:
       clientRootSecret: m8-crdb-root
       # Secret name for node cert.
       nodeSecret: m8-crdb-node
-  labels:
-    app.kubernetes.io/part-of: *name
+  labels: &extraLabels
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
-    enabled: true
+    enabled: false
     labels:
-      tenant: *tenant
       release: monitoring
-      app.kubernetes.io/part-of: *name
     annotations: {}
     interval: 1m
     scrapeTimeout: 10s
 
 rabbitmq:
   enabled: true
-  replicaCount: 1
+  replicaCount: 3
   persistence:
     enabled: false
   image:
@@ -158,8 +152,6 @@ rabbitmq:
     create: false
   service:
     tlsPort: 5671
-    labels:
-      app.kubernetes.io/part-of: *name
   auth:
     username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
@@ -171,28 +163,21 @@ rabbitmq:
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
       existingSecret: m8-rabbitmq-leaf
-  statefulsetLabels:
-    app.kubernetes.io/part-of: *name
   podAnnotations:
     linkerd.io/inject: disabled
-  podLabels:
-    app.kubernetes.io/part-of: *name
+  podLabels: &extraLabels
   metrics:
-    enabled: true
+    enabled: false
     grafanaDashboard:
-      enabled: true
-      extraLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      enabled: false
+      extraLabels: &extraLabels
     serviceMonitor:
-      enabled: true
-      additionalLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      enabled: false
+      additionalLabels: &extraLabels
 
 ambassador:
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
     tag: 1.12.4
@@ -216,11 +201,11 @@ ambassador:
     serviceMonitor:
       enabled: true
       selector:
-        tenant: *tenant
         release: monitoring
 
 cluster-bootstrap-reactor:
   enabled: true
+  replicaCount: 1
   keySecret:
     name: *authKeySecretName
   messageBus:

@@ -28,9 +28,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.image.tag | string | `"1.12.4"` |  |
 | ambassador.metrics.serviceMonitor.enabled | bool | `true` |  |
 | ambassador.metrics.serviceMonitor.selector.release | string | `"monitoring"` |  |
-| ambassador.metrics.serviceMonitor.selector.tenant | string | `"finleap-cloud"` |  |
 | ambassador.rbac.create | bool | `false` |  |
-| ambassador.replicaCount | int | `3` |  |
+| ambassador.replicaCount | int | `1` |  |
 | ambassador.resources.limits.cpu | int | `4` |  |
 | ambassador.resources.limits.memory | string | `"1000Mi"` |  |
 | ambassador.resources.requests.cpu | string | `"100m"` |  |
@@ -40,6 +39,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cluster-bootstrap-reactor.enabled | bool | `true` |  |
 | cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
 | cluster-bootstrap-reactor.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.replicaCount | int | `1` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
 | cockroachdb.dropExistingDatabase | bool | `false` |  |
@@ -48,13 +48,11 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach"` |  |
 | cockroachdb.image.tag | string | `"v21.1.4"` |  |
 | cockroachdb.init.annotations."linkerd.io/inject" | string | `"disabled"` |  |
-| cockroachdb.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| cockroachdb.labels | string | `nil` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
-| cockroachdb.serviceMonitor.enabled | bool | `true` |  |
+| cockroachdb.serviceMonitor.enabled | bool | `false` |  |
 | cockroachdb.serviceMonitor.interval | string | `"1m"` |  |
-| cockroachdb.serviceMonitor.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | cockroachdb.serviceMonitor.labels.release | string | `"monitoring"` |  |
-| cockroachdb.serviceMonitor.labels.tenant | string | `"finleap-cloud"` |  |
 | cockroachdb.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | cockroachdb.statefulset.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.statefulset.maxUnavailable | int | `1` |  |
@@ -74,7 +72,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | eventstore.enabled | bool | `true` |  |
 | eventstore.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | eventstore.replicaCount | int | `1` |  |
-| eventstore.storeDatabase.existingSecret | string | `"m8-eventstore-db-config"` |  |
+| eventstore.storeDatabase.existingSecret | string | `"m8-crdb-auth-evenstore"` |  |
 | fullnameOverride | string | `""` |  |
 | gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
@@ -85,11 +83,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| hosting.domain | string | `"monoskope.io"` |  |
+| hosting.domain | string | `""` |  |
 | hosting.issuer | string | `""` |  |
 | messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
 | messageBus.routingKeyPrefix | string | `"m8"` |  |
-| monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
@@ -118,22 +115,18 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
 | rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
-| rabbitmq.metrics.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
+| rabbitmq.metrics.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.extraLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.additionalLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.enabled | bool | `false` |  |
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.podAnnotations."linkerd.io/inject" | string | `"disabled"` |  |
-| rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.podLabels | string | `nil` |  |
 | rabbitmq.rbac.create | bool | `false` |  |
-| rabbitmq.replicaCount | int | `1` |  |
-| rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.tlsPort | int | `5671` |  |
 | rabbitmq.serviceAccount.create | bool | `false` |  |
-| rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | vaultOperator.basePath | string | `"app/{{ .Release.Namespace }}"` |  |
 | vaultOperator.enabled | bool | `false` |  |
 
