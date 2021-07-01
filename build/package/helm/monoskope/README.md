@@ -13,8 +13,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
+| https://charts.cockroachdb.com/ | cockroachdb | 6.0.5 |
 | https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values
@@ -46,7 +46,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.enabled | bool | `true` |  |
 | cockroachdb.image.imagePullPolicy | string | `"Always"` |  |
 | cockroachdb.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach"` |  |
-| cockroachdb.image.tag | string | `"v20.2.2"` |  |
+| cockroachdb.image.tag | string | `"v21.1.4"` |  |
 | cockroachdb.init.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
@@ -76,9 +76,13 @@ Monoskope implements the management and operation of tenants, users and their ro
 | eventstore.replicaCount | int | `1` |  |
 | eventstore.storeDatabase.existingSecret | string | `"m8-eventstore-db-config"` |  |
 | fullnameOverride | string | `""` |  |
-| gateway.auth.issuerURL | string | `"https://your-idp.com"` |  |
+| gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
+| gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
 | gateway.enabled | bool | `true` |  |
-| gateway.keySecret.name | string | `"m8-authentication"` |  |
+| gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
+| gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
+| gateway.oidcSecret | object | `{"name":"m8-gateway-oidc","vaultOperator":{"enabled":false,"path":"app/{{ .Release.Namespace }}/gateway"}}` | The secret where the gateway finds the OIDC secrets. |
+| gateway.oidcSecret.vaultOperator | object | `{"enabled":false,"path":"app/{{ .Release.Namespace }}/gateway"}` | Let secret be fetched by VaultOperator from Vault. |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
@@ -116,7 +120,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.image.registry | string | `"gitlab.figo.systems/platform/dependency_proxy/containers"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
-| rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |
+| rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
 | rabbitmq.metrics.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
 | rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
