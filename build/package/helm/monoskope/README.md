@@ -15,7 +15,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../queryhandler | queryhandler |  |
 | https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://getambassador.io | ambassador | 6.5.18 |
+| https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values
 
@@ -64,8 +64,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.statefulset.resources.requests.cpu | string | `"500m"` |  |
 | cockroachdb.statefulset.resources.requests.memory | string | `"1Gi"` |  |
 | cockroachdb.storage.persistentVolume.size | string | `"1Gi"` |  |
-| cockroachdb.tls.certs.clientRootSecret | string | `"monoskope-crdb-root"` |  |
-| cockroachdb.tls.certs.nodeSecret | string | `"monoskope-crdb-node"` |  |
+| cockroachdb.tls.certs.clientRootSecret | string | `"m8-crdb-root"` |  |
+| cockroachdb.tls.certs.nodeSecret | string | `"m8-crdb-node"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
 | cockroachdb.tls.certs.tlsSecret | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
@@ -90,8 +90,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
-| pki.certificates.duration | string | `"48h"` |  |
-| pki.certificates.renewBefore | string | `"23h"` |  |
+| pki.certificates.duration | string | `"2160h"` |  |
+| pki.certificates.renewBefore | string | `"1440h"` |  |
 | pki.enabled | bool | `true` |  |
 | pki.issuer.ca.enabled | bool | `true` |  |
 | pki.issuer.ca.existingTrustAnchorSecretName | string | `"m8-trust-anchor"` |  |
@@ -102,10 +102,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | queryhandler.enabled | bool | `true` |  |
 | queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | queryhandler.replicaCount | int | `1` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` |  |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
-| rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
+| rabbitmq.auth.tls.existingSecret | string | `"m8-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
 | rabbitmq.auth.username | string | `"eventstore"` |  |

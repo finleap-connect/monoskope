@@ -14,3 +14,12 @@ The following things must be set up in your target K8s Cluster:
   * RabbitMQ
   * Gateway
   from your HashiCorp Vault
+
+# Step-by-step setup
+
+1. Make sure you have both available in your target cluster:
+    * jetstack/cert-manager
+    * finleap-connect/vaultoperator
+1. Create m8 PKI.
+See [certificate management](01-certificate-management.md).
+1. Deploy Monoskope Helm Chart.

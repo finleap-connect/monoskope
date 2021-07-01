@@ -106,9 +106,9 @@ cockroachdb:
       provided: true
       tlsSecret: true
       # Secret name for the client root cert.
-      clientRootSecret: monoskope-crdb-root
+      clientRootSecret: m8-crdb-root
       # Secret name for node cert.
-      nodeSecret: monoskope-crdb-node
+      nodeSecret: m8-crdb-node
   labels:
     app.kubernetes.io/part-of: *name
   # CockroachDB's Prometheus operator ServiceMonitor support
@@ -151,12 +151,12 @@ rabbitmq:
   auth:
     username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
-    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
+    existingErlangSecret: m8-rabbitmq-erlang-cookie
     tls:
       enabled: true
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
-      existingSecret: monoskope-rabbitmq-leaf
+      existingSecret: m8-rabbitmq-leaf
   statefulsetLabels:
     app.kubernetes.io/part-of: *name
   podAnnotations:

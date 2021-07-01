@@ -48,9 +48,9 @@ eventstore:
   image:
     tag: *imageTag
   messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-admin
+    tlsSecret: m8-rabbitmq-auth-admin
   storeDatabase:
-    tlsSecret: monoskope-crdb-auth-evenstore
+    tlsSecret: m8-crdb-auth-evenstore
   resources:
     limits:
       cpu: 2000m
@@ -64,7 +64,7 @@ eventstore:
       enabled: false
     schedule: "0 22 * * *"
     retentionCount: 7
-    existingSecretName: eventstore-backup-credentials
+    existingSecretName: m8-eventstore-backup-credentials
     prometheusPushgatewayUrl: http://monitoring-prometheus-pushgateway.monitoring:9091
     destination:
       s3:
@@ -109,7 +109,7 @@ queryhandler:
       cpu: 500m
       memory: 64Mi
   messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-admin
+    tlsSecret: m8-rabbitmq-auth-admin
 
 ambassador:
   enabled: true
@@ -130,4 +130,4 @@ cluster-bootstrap-reactor:
       cpu: 500m
       memory: 64Mi
   messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-admin
+    tlsSecret: m8-rabbitmq-auth-admin
