@@ -8,7 +8,7 @@ global:
 
 vaultOperator:
   enabled: true
-  basePath: app/{{ .Release.Namespace }}
+  basePath: app/{{ .Release.Namespace }}/monoskope
   
 hosting:
   issuer: letsencrypt-production
