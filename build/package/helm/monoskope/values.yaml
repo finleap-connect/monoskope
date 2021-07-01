@@ -43,10 +43,22 @@ gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: https://your-idp.com
+    # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
+    identityProviderName: ""
+    # -- The URL of the issuer to use for OIDC
+    identityProviderURL: ""
+  # -- The secret containing private key for signing JWTs.
   keySecret:
+    # -- Name of the secret to be used by the gateway, required
     name: *authKeySecretName
-    
+  # -- The secret where the gateway finds the OIDC secrets.
+  oidcSecret:
+    name: m8-gateway-oidc
+    # -- Let secret be fetched by VaultOperator from Vault.
+    vaultOperator:
+      enabled: false
+      path: app/{{ .Release.Namespace }}/gateway
+
 eventstore:
   enabled: true
   replicaCount: 1
@@ -70,7 +82,7 @@ cockroachdb:
   dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
-    tag: v20.2.2
+    tag: v21.1.4
     imagePullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
@@ -133,7 +145,7 @@ rabbitmq:
     pullPolicy: Always
   loadDefinition:
     enabled: true
-    existingSecret: monoskope-rabbitmq-load-definition
+    existingSecret: m8-rabbitmq-load-definition
   extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json

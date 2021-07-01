@@ -76,17 +76,17 @@ spec:
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-clientid
             - name: OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-clientsecret
             - name: OIDC_NONCE
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-nonce
           args:
             - /app
@@ -96,8 +96,8 @@ spec:
             - --http-api-addr=:{{ .Values.ports.httpApi }}
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - --metrics-addr=:{{ .Values.ports.metrics }}
-            - --identity-provider-name={{ .Values.auth.identityProviderName }}
-            - --identity-provider-url={{ .Values.auth.identityProviderURL }}
+            - --identity-provider-name={{ required "A valid .Values.auth.identityProviderName entry is required!" .Values.auth.identityProviderName }}
+            - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!"  .Values.auth.identityProviderURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
           {{- if .Values.livenessProbe.enabled }}

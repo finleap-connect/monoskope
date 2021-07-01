@@ -37,6 +37,9 @@ gateway:
     requests:
       cpu: 500m
       memory: 64Mi
+  oidcSecret:
+    vaultOperator:
+      enabled: true
 
 eventstore:
   enabled: true

@@ -32,8 +32,8 @@ gateway:
   image:
     tag: *imageTag
   auth:
-    issuerIdentifier: gitlab
-    issuerURL: https://gitlab.figo.systems
+    identityProviderName: gitlab
+    identityProviderURL: https://gitlab.figo.systems
   resources:
     limits:
       cpu: 2000m
@@ -41,6 +41,9 @@ gateway:
     requests:
       cpu: 500m
       memory: 64Mi
+  oidcSecret:
+    vaultOperator:
+      enabled: true
 
 eventstore:
   enabled: true
