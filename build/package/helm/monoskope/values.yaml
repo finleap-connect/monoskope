@@ -54,6 +54,8 @@ gateway:
     # -- Name of the secret to be used by the gateway, required
     name: *authKeySecretName
   # -- The secret where the gateway finds the OIDC secrets.
+  # If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc
+  # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
   oidcSecret:
     name: m8-gateway-oidc
 

@@ -81,7 +81,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | gateway.enabled | bool | `true` |  |
 | gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
 | gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
-| gateway.oidcSecret | object | `{"name":"m8-gateway-oidc"}` | The secret where the gateway finds the OIDC secrets. |
+| gateway.oidcSecret | object | `{"name":"m8-gateway-oidc"}` | The secret where the gateway finds the OIDC secrets. If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically. |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
@@ -103,7 +103,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | queryhandler.enabled | bool | `true` |  |
 | queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
 | queryhandler.replicaCount | int | `1` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` | Name of the secret containing the erlang secret If vaultOperator.enabled:true the secret will eb auto generated |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
 | rabbitmq.auth.tls.existingSecret | string | `"m8-rabbitmq-leaf"` |  |
