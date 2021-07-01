@@ -53,7 +53,7 @@ Create a root CA certificate which we call the trust anchor:
 
 ```bash
 step certificate create root.monoskope.cluster.local ca.crt ca.key \
-  --profile root-ca --no-password --insecure
+  --profile root-ca --no-password --insecure --not-after=87600h
 ```
 
 This trust anchor must be made available to [cert-manager](https://cert-manager.io) to let it issue certificates based on that trust anchor.
@@ -73,13 +73,13 @@ pki:
   issuer:
     ca:
       enabled: true
-      existingTrustAnchorSecretName: "m8-trust-anchor" # name of secret in K8s where you have to provide the root ca
+      existingTrustAnchorSecretName: "monoskope-trust-anchor" # name of secret in K8s where you have to provide the root ca
 ```
 
 Create secret containing the generated trust anchor as in the namespace you're about to deploy Monoskope:
 
 ```bash
-kubectl -n monoskope create secret tls m8-trust-anchor --cert=ca.crt --key=ca.key
+kubectl -n monoskope create secret tls monoskope-trust-anchor --cert=ca.crt --key=ca.key
 ```
 
 After storing the trust anchor in a K8s secret you can delete your local copy or store it in a save location.
