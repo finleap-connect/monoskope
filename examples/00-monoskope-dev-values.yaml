@@ -9,6 +9,10 @@ global:
   imagePullSecrets:
     - name: gitlab-registry
 
+vaultOperator:
+  enabled: &vaultOperatorEnabled true
+  basePath: &vaultOperatorBasePath app/{{ .Release.Namespace }}
+  
 hosting:
   issuer: letsencrypt-production
   domain: &domain monoskope.dev.finleap.cloud
