@@ -11,6 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+vaultOperator:
+  enabled: &vaultOperatorEnabled false
+  basePath: &vaultOperatorBasePath app/{{ .Release.Namespace }}
+
 pki:
   enabled: true
   certificates:
@@ -23,8 +27,6 @@ pki:
       secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
     vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
       enabled: false
-      path: pki_int/sign/example-dot-com
-      server: https://vault.local
   authentication:
     keySecretName: &authKeySecretName "m8-authentication"
 
@@ -54,10 +56,6 @@ gateway:
   # -- The secret where the gateway finds the OIDC secrets.
   oidcSecret:
     name: m8-gateway-oidc
-    # -- Let secret be fetched by VaultOperator from Vault.
-    vaultOperator:
-      enabled: false
-      path: app/{{ .Release.Namespace }}/gateway
 
 eventstore:
   enabled: true
