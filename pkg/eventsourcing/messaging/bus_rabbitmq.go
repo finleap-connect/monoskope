@@ -64,8 +64,8 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 	return b, nil
 }
 
-// Connect starts automatic reconnect with rabbitmq
-func (b *rabbitEventBus) Connect(ctx context.Context) error {
+// Open starts automatic reconnect with rabbitmq
+func (b *rabbitEventBus) Open(ctx context.Context) error {
 	go b.handleReconnect(b.conf.url)
 	for !b.isConnected {
 		select {
@@ -105,7 +105,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 		select {
 		case confirmed := <-b.notifyPublish:
 			if confirmed.Ack {
-				b.log.Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
+				b.log.V(logger.DebugLevel).Info("Publish confirmed.", "DeliveryTag", confirmed.DeliveryTag)
 				return nil
 			} else {
 				b.log.Info("Publish wasn't confirmed. Retrying...", "resends left", resendsLeft, "DeliveryTag", confirmed.DeliveryTag)
@@ -129,7 +129,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 // publishEvent will push to the queue without checking for
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
-// recieve the message.
+// receive the message.
 func (b *rabbitEventBus) publishEvent(event evs.Event) error {
 	if !b.isConnected {
 		return errors.ErrMessageNotConnected
@@ -438,7 +438,7 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName string, msgs <-chan amqp.Delivery, handler evs.EventHandler) {
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' started.", qName))
 	for d := range msgs {
-		b.log.Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
+		b.log.V(logger.DebugLevel).Info(fmt.Sprintf("Handler received event from queue '%s'.", qName))
 
 		re := &rabbitEvent{}
 		err := json.Unmarshal(d.Body, re)
@@ -463,7 +463,7 @@ func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, qName strin
 	b.log.Info(fmt.Sprintf("Handler for queue '%s' stopped.", qName))
 }
 
-// rabbitEvent implements the message body transfered via rabbitmq
+// rabbitEvent implements the message body transferred via rabbitmq
 type rabbitMessage struct {
 	EventType        evs.EventType
 	Data             evs.EventData
@@ -499,7 +499,7 @@ func (e rabbitEvent) AggregateType() evs.AggregateType {
 	return e.rabbitMessage.AggregateType
 }
 
-// AggrgateID implements the AggrgateID method of the Event interface.
+// AggregateID implements the AggregateID method of the Event interface.
 func (e rabbitEvent) AggregateID() uuid.UUID {
 	return e.rabbitMessage.AggregateID
 }

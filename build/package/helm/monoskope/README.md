@@ -8,137 +8,132 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../cluster-bootstrap-reactor | cluster-bootstrap-reactor |  |
 | file://../commandhandler | commandhandler |  |
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://kubism.github.io/charts | dex | 1.0.18 |
+| https://charts.cockroachdb.com/ | cockroachdb | 6.0.5 |
+| https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| ambassador.crds.create | bool | `false` |  |
+| ambassador.enableAES | bool | `false` |  |
+| ambassador.enabled | bool | `true` |  |
+| ambassador.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador"` |  |
+| ambassador.image.tag | string | `"1.12.4"` |  |
+| ambassador.metrics.serviceMonitor.enabled | bool | `true` |  |
+| ambassador.metrics.serviceMonitor.selector.release | string | `"monitoring"` |  |
+| ambassador.rbac.create | bool | `false` |  |
+| ambassador.replicaCount | int | `1` |  |
+| ambassador.resources.limits.cpu | int | `4` |  |
+| ambassador.resources.limits.memory | string | `"1000Mi"` |  |
+| ambassador.resources.requests.cpu | string | `"100m"` |  |
+| ambassador.resources.requests.memory | string | `"512Mi"` |  |
+| ambassador.scope.singleNamespace | bool | `true` |  |
+| ambassador.serviceAccount.create | bool | `false` |  |
+| cluster-bootstrap-reactor.enabled | bool | `true` |  |
+| cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
+| cluster-bootstrap-reactor.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
+| cluster-bootstrap-reactor.replicaCount | int | `1` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
+| cockroachdb.dropExistingDatabase | bool | `false` |  |
 | cockroachdb.enabled | bool | `true` |  |
 | cockroachdb.image.imagePullPolicy | string | `"Always"` |  |
 | cockroachdb.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach"` |  |
-| cockroachdb.image.tag | string | `"v20.2.2"` |  |
+| cockroachdb.image.tag | string | `"v21.1.4"` |  |
 | cockroachdb.init.annotations."linkerd.io/inject" | string | `"disabled"` |  |
-| cockroachdb.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| cockroachdb.labels | string | `nil` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
-| cockroachdb.serviceMonitor.enabled | bool | `true` |  |
-| cockroachdb.serviceMonitor.interval | string | `"30s"` |  |
-| cockroachdb.serviceMonitor.labels | object | `{}` |  |
+| cockroachdb.serviceMonitor.enabled | bool | `false` |  |
+| cockroachdb.serviceMonitor.interval | string | `"1m"` |  |
+| cockroachdb.serviceMonitor.labels.release | string | `"monitoring"` |  |
+| cockroachdb.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | cockroachdb.statefulset.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.statefulset.maxUnavailable | int | `1` |  |
 | cockroachdb.statefulset.replicas | int | `3` |  |
-| cockroachdb.statefulset.resources.limits.cpu | int | `1` |  |
+| cockroachdb.statefulset.resources.limits.cpu | int | `2` |  |
 | cockroachdb.statefulset.resources.limits.memory | string | `"2Gi"` |  |
 | cockroachdb.statefulset.resources.requests.cpu | string | `"500m"` |  |
 | cockroachdb.statefulset.resources.requests.memory | string | `"1Gi"` |  |
-| cockroachdb.storage.persistentVolume.size | string | `"20Gi"` |  |
-| cockroachdb.tls.certs.clientRootSecret | string | `"monoskope-crdb-root"` |  |
-| cockroachdb.tls.certs.nodeSecret | string | `"monoskope-crdb-node"` |  |
+| cockroachdb.storage.persistentVolume.size | string | `"1Gi"` |  |
+| cockroachdb.tls.certs.clientRootSecret | string | `"m8-crdb-root"` |  |
+| cockroachdb.tls.certs.nodeSecret | string | `"m8-crdb-node"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
 | cockroachdb.tls.certs.tlsSecret | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
 | commandhandler.enabled | bool | `true` |  |
 | commandhandler.replicaCount | int | `1` |  |
-| dex.certs.grpc.create | bool | `false` |  |
-| dex.certs.web.create | bool | `false` |  |
-| dex.config.connectors | list | `[]` |  |
-| dex.config.enablePasswordDB | bool | `false` |  |
-| dex.config.existingSecret | string | `"monoskope-dex-config"` | Name of the secret containing the dex config |
-| dex.config.issuer | string | `"https://monoskope.io/dex"` | Domain of the issuer (dex) |
-| dex.config.logger.level | string | `"debug"` |  |
-| dex.config.oauth2.alwaysShowLoginScreen | bool | `false` |  |
-| dex.config.oauth2.skipApprovalScreen | bool | `true` |  |
-| dex.config.staticClients[0].id | string | `"gateway"` |  |
-| dex.config.staticClients[0].name | string | `"Monoskope Gateway"` |  |
-| dex.config.staticClients[0].redirectURIs[0] | string | `"http://localhost:8000"` |  |
-| dex.config.staticClients[0].redirectURIs[1] | string | `"http://localhost:18000"` |  |
-| dex.config.staticClients[0].secret | string | `"{{ .gatewayAppSecret }}"` |  |
-| dex.config.storage.config.database | string | `"dex_db"` |  |
-| dex.config.storage.config.port | int | `26257` |  |
-| dex.config.storage.config.secret | string | `"monoskope-crdb-client-dex"` | Secret containing the certificates to communicate with the storage backend |
-| dex.config.storage.config.ssl.caFile | string | `"/etc/dex/certs/ca.crt"` |  |
-| dex.config.storage.config.ssl.certFile | string | `"/etc/dex/certs/client.crt"` |  |
-| dex.config.storage.config.ssl.keyFile | string | `"/etc/dex/certs/client.key"` |  |
-| dex.config.storage.config.ssl.mode | string | `"verify-ca"` |  |
-| dex.config.storage.config.user | string | `"dex"` |  |
-| dex.config.storage.type | string | `"postgres"` |  |
-| dex.config.web.address | string | `"0.0.0.0"` |  |
-| dex.crd.present | bool | `true` |  |
-| dex.enabled | bool | `false` |  |
-| dex.grpc | bool | `false` |  |
-| dex.https | bool | `false` |  |
-| dex.image | string | `"ghcr.io/dexidp/dex"` |  |
-| dex.imagePullPolicy | string | `"Always"` |  |
-| dex.imageTag | string | `"v2.27.0"` |  |
-| dex.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| dex.ports.web.containerPort | int | `5556` |  |
-| dex.rbac.create | bool | `false` |  |
-| dex.replicas | int | `1` |  |
-| dex.resources.limits.cpu | string | `"500m"` |  |
-| dex.resources.limits.memory | string | `"100Mi"` |  |
-| dex.resources.requests.cpu | string | `"100m"` |  |
-| dex.resources.requests.memory | string | `"50Mi"` |  |
-| dex.serviceAccount.create | bool | `false` |  |
-| dex.telemetry | bool | `true` |  |
 | eventstore.enabled | bool | `true` |  |
-| eventstore.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | eventstore.replicaCount | int | `1` |  |
-| eventstore.storeDatabase.existingSecret | string | `"m8-eventstore-db-config"` |  |
+| eventstore.storeDatabase.configSecret | string | `"m8-db-client-config"` |  |
+| eventstore.storeDatabase.tlsSecret | string | `"m8-db-client-auth-cert"` |  |
 | fullnameOverride | string | `""` |  |
-| gateway.auth.issuerURL | string | `"https://monoskope.io/dex"` |  |
+| gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
+| gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
 | gateway.enabled | bool | `true` |  |
+| gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
+| gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
+| gateway.oidcSecret | object | `{"name":"m8-gateway-oidc"}` | The secret where the gateway finds the OIDC secrets. If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically. |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| ingress.enabled | bool | `false` |  |
-| ingress.host | string | `"monoskope.io"` |  |
+| hosting.domain | string | `""` |  |
+| hosting.issuer | string | `""` |  |
+| messageBus.clientAuthCertSecretName | string | `"m8-messagebus-client-auth-cert"` |  |
 | messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
 | messageBus.routingKeyPrefix | string | `"m8"` |  |
-| monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
+| pki.authentication.keySecretName | string | `"m8-authentication"` |  |
+| pki.certificates.duration | string | `"2160h"` |  |
+| pki.certificates.renewBefore | string | `"1440h"` |  |
+| pki.enabled | bool | `true` |  |
+| pki.issuer.ca.enabled | bool | `true` |  |
+| pki.issuer.ca.existingTrustAnchorSecretName | string | `"m8-trust-anchor"` |  |
+| pki.issuer.ca.secretVersion | int | `1` |  |
+| pki.issuer.vault.enabled | bool | `false` |  |
 | queryhandler.enabled | bool | `true` |  |
-| queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | queryhandler.replicaCount | int | `1` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` | Name of the secret containing the erlang secret If vaultOperator.enabled:true the secret will eb auto generated |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
-| rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
+| rabbitmq.auth.tls.existingSecret | string | `"m8-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
-| rabbitmq.auth.username | string | `"admin"` |  |
+| rabbitmq.auth.username | string | `"eventstore"` |  |
 | rabbitmq.enabled | bool | `true` |  |
-| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name"` |  |
+| rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name\nssl_options.depth = 2"` |  |
 | rabbitmq.extraPlugins | string | `"rabbitmq_auth_mechanism_ssl"` |  |
 | rabbitmq.image.pullPolicy | string | `"Always"` |  |
-| rabbitmq.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq"` |  |
+| rabbitmq.image.registry | string | `"gitlab.figo.systems/platform/dependency_proxy/containers"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
-| rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |
-| rabbitmq.metrics.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
+| rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
+| rabbitmq.metrics.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.extraLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.additionalLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.enabled | bool | `false` |  |
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.podAnnotations."linkerd.io/inject" | string | `"disabled"` |  |
-| rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.podLabels | string | `nil` |  |
 | rabbitmq.rbac.create | bool | `false` |  |
 | rabbitmq.replicaCount | int | `3` |  |
-| rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | rabbitmq.service.tlsPort | int | `5671` |  |
 | rabbitmq.serviceAccount.create | bool | `false` |  |
-| rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| vaultOperator.basePath | string | `"app/{{ .Release.Namespace }}"` |  |
+| vaultOperator.enabled | bool | `false` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.4.0](https://github.com/norwoodj/helm-docs/releases/v1.4.0)

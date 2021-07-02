@@ -46,7 +46,7 @@ func NewEventBusConsumerFromConfig(rabbitConf *esMessaging.RabbitEventBusConfig)
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
-	err = consumer.Connect(ctx)
+	err = consumer.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func NewEventBusPublisher(name, msgbusPrefix string) (eventsourcing.EventBusPubl
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
-	err = publisher.Connect(ctx)
+	err = publisher.Open(ctx)
 	if err != nil {
 		return nil, err
 	}

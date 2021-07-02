@@ -2,66 +2,117 @@ package aggregates
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
-	ed "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	aggregates "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	domainErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
-	repos "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
-	*es.BaseAggregate
-	userRepo repos.ReadOnlyUserRepository
-	Email    string
-	Name     string
+	DomainAggregateBase
+	aggregateManager es.AggregateStore
+	Email            string
+	Name             string
 }
 
 // NewUserAggregate creates a new UserAggregate
-func NewUserAggregate(id uuid.UUID, userRepo repos.ReadOnlyUserRepository) *UserAggregate {
+func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &UserAggregate{
-		BaseAggregate: es.NewBaseAggregate(aggregates.User, id),
-		userRepo:      userRepo,
+		DomainAggregateBase: DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.User, id),
+		},
+		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
+		return err
+	}
+	if err := a.validate(ctx, cmd); err != nil {
+		return err
+	}
+	return a.execute(ctx, cmd)
+}
+
+func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) error {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
-		_, err := a.userRepo.ByEmail(ctx, cmd.GetEmail())
-		if err != nil && errors.Is(err, domainErrors.ErrUserNotFound) {
-			if ed, err := es.ToEventDataFromProto(&ed.UserCreatedEventData{Email: cmd.GetEmail(), Name: cmd.GetName()}); err != nil {
-				return err
-			} else if err = a.ApplyEvent(a.AppendEvent(ctx, events.UserCreated, ed)); err != nil {
-				return err
-			}
-			return nil
-		} else {
+		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
+			Email: cmd.GetEmail(),
+			Name:  cmd.GetName(),
+		}))
+		return nil
+	}
+	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+}
+
+func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateUserCommand:
+		if a.Exists() {
 			return domainErrors.ErrUserAlreadyExists
 		}
+
+		// Get all aggregates of same type
+		aggregates, err := a.aggregateManager.All(ctx, a.Type())
+		if err != nil {
+			return err
+		}
+
+		// Check if user already exists
+		if containsUser(aggregates, cmd.GetEmail()) {
+			return domainErrors.ErrUserAlreadyExists
+		}
+		return nil
+	default:
+		return a.Validate(ctx, cmd)
 	}
-	return fmt.Errorf("couldn't handle command")
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.UserCreated:
-		data := &ed.UserCreatedEventData{}
-		if err := event.Data().ToProto(data); err != nil {
+		err := a.userCreated(event)
+		if err != nil {
 			return err
 		}
-		a.Email = data.Email
-		a.Name = data.Name
 	default:
-		return fmt.Errorf("couldn't handle event")
+		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
+
 	return nil
+}
+
+// userCreated handle the event
+func (a *UserAggregate) userCreated(event es.Event) error {
+	data := &eventdata.UserCreated{}
+	if err := event.Data().ToProto(data); err != nil {
+		return err
+	}
+
+	a.Email = data.Email
+	a.Name = data.Name
+
+	return nil
+}
+
+func containsUser(values []es.Aggregate, emailAddress string) bool {
+	for _, value := range values {
+		d, ok := value.(*UserAggregate)
+		if ok {
+			if d.Email == emailAddress {
+				return true
+			}
+		}
+	}
+	return false
 }

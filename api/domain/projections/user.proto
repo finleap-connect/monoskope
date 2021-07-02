@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
+
+package projections;
+
+// User within Monoskope
+message User {
+  // Unique identifier of the user (UUID 128-bit number)
+  string id = 1;
+  // Name of the user
+  string name = 2;
+  // Email address of the user
+  string email = 3;
+  // Roles of the user
+  repeated UserRoleBinding roles = 4;
+  // When it has been created
+  google.protobuf.Timestamp created = 5;
+  // By whom it has been created
+  string created_by_id = 6;
+  // When it has been last modified
+  google.protobuf.Timestamp last_modified = 7;
+  // By whom it has been last modified
+  string last_modified_by_id = 8;
+  // When it has been deleted
+  google.protobuf.Timestamp deleted = 9;
+  // By whom it has been deleted
+  User deleted_by = 10;
+}
+
+message UserRoleBinding {
+  // Unique identifier of the user role binding (UUID 128-bit number)
+  string id = 1;
+  // Unique identifier of the user (UUID 128-bit number)
+  string user_id = 2;
+  // Name of the role
+  string role = 3;
+  // Scope of the role
+  string scope = 4;
+  // Target resource of the role
+  string resource = 5;
+  // When it has been created
+  google.protobuf.Timestamp created = 6;
+  // By whom it has been created
+  string created_by_id = 7;
+  // When it has been last modified
+  google.protobuf.Timestamp last_modified = 8;
+  // By whom it has been last modified
+  string last_modified_by_id = 9;
+  // When it has been deleted
+  google.protobuf.Timestamp deleted = 10;
+  // By whom it has been deleted
+  User deleted_by = 11;
+}

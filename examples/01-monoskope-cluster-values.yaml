@@ -1,50 +1,25 @@
 # Dev cluster environment values for monoskope.
 
-nameOverride: ""
-fullnameOverride: ""
-
 global:
   imagePullSecrets:
     - name: gitlab-registry
 
-dex:
+vaultOperator:
   enabled: true
-  replicas: 3
-  config:
-    issuer: &issuer https://monoskope.dev.finleap.cloud/dex
-    enablePasswordDB: false
-    connectors:
-      - type: gitlab
-        id: gitlab-dev
-        name: GitLab DEV
-        config:
-          baseURL: "https://gitlab.figo.systems"
-          clientID: "{{ .gitlabClientId }}"
-          clientSecret: "{{ .gitlabClientSecret }}"
-          redirectURI: https://monoskope.dev.finleap.cloud/dex/callback
-          groups:
-            - "wolke7"
-          use_login_as_id: false
+  basePath: app/{{ .Release.Namespace }}
+  
+hosting:
+  issuer: letsencrypt-production
+  domain: monoskope.dev.finleap.cloud
 
-cockroachdb:
-  enabled: true
-  statefulset:
-    replicas: 5
-  storage:
-    persistentVolume:
-      size: "1Gi"
-
-rabbitmq:
-  enabled: true
-  replicaCount: 5
+# cockroachdb:
+  # dropExistingDatabase: true
 
 gateway:
-  replicaCount: 3
+  replicaCount: 2
   auth:
-    issuerURL: *issuer
-  ingress:
-    enabled: true
-    host: api.monoskope.dev.finleap.cloud
+    identityProviderName: gitlab
+    identityProviderURL: https://gitlab.figo.systems
   resources:
     limits:
       cpu: 2000m
@@ -54,12 +29,7 @@ gateway:
       memory: 64Mi
 
 eventstore:
-  replicaCount: 3
-  enabled: true
-  messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-admin
-  storeDatabase:
-    tlsSecret: monoskope-crdb-auth-evenstore
+  replicaCount: 2
   resources:
     limits:
       cpu: 2000m
@@ -67,10 +37,11 @@ eventstore:
     requests:
       cpu: 500m
       memory: 64Mi
+  backup:
+    enabled: false
 
 commandhandler:
-  replicaCount: 3
-  enabled: true
+  replicaCount: 2
   resources:
     limits:
       cpu: 2000m
@@ -78,10 +49,17 @@ commandhandler:
     requests:
       cpu: 500m
       memory: 64Mi
+  # -- List of email addresses to identify superusers.
+  superusers:
+    - alexander.stielau@finleap.com
+    - carolin.dohmen@finleap.com
+    - christian.huening@finleap.com
+    - jan.steffen@finleap.com
+    - lukas.grundmann@finleap.com
+    - lutz.behnke@finleap.com
 
 queryhandler:
-  replicaCount: 3
-  enabled: true
+  replicaCount: 2
   resources:
     limits:
       cpu: 2000m
@@ -89,9 +67,18 @@ queryhandler:
     requests:
       cpu: 500m
       memory: 64Mi
-  messageBus:
-    tlsSecret: monoskope-rabbitmq-auth-admin
 
-ingress:
-  enabled: true
-  host: monoskope.dev.finleap.cloud
+ambassador:
+  replicaCount: 2
+  service:
+    loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+
+cluster-bootstrap-reactor:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi

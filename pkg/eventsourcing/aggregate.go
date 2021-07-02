@@ -24,12 +24,18 @@ type Aggregate interface {
 	ID() uuid.UUID
 	// Version is the version of the aggregate.
 	Version() uint64
-	// Events returns the events that built up the aggregate.
-	Events() []Event
+	// SetDeleted sets the deleted flag of the aggregate to true
+	SetDeleted(bool)
+	// Deleted indicates whether the aggregate resource has been deleted
+	Deleted() bool
+	// UncommittedEvents returns outstanding events that need to persisted. They are cleared on reading them.
+	UncommittedEvents() []Event
 	// ApplyEvent applies an Event on the aggregate.
 	ApplyEvent(Event) error
 	// IncrementVersion increments the version of the Aggregate.
 	IncrementVersion()
+	// Exists returns if the version of the aggregate is >0
+	Exists() bool
 }
 
 // BaseAggregate is the base implementation for all aggregates
@@ -37,6 +43,7 @@ type BaseAggregate struct {
 	id            uuid.UUID
 	aggregateType AggregateType
 	version       uint64
+	deleted       bool
 	events        []Event
 }
 
@@ -63,8 +70,23 @@ func (a *BaseAggregate) Version() uint64 {
 	return a.version
 }
 
-// Events implements the Events method of the Aggregate interface.
-func (a *BaseAggregate) Events() []Event {
+// SetDeleted implements the SetDeleted method of the Aggregate interface.
+func (a *BaseAggregate) SetDeleted(deleted bool) {
+	a.deleted = deleted
+}
+
+// Deleted implements the Deleted method of the Aggregate interface.
+func (a *BaseAggregate) Deleted() bool {
+	return a.deleted
+}
+
+// Exists returns if the version of the aggregate is >0
+func (a *BaseAggregate) Exists() bool {
+	return a.version > 0
+}
+
+// UncommittedEvents implements the UncommittedEvents method of the Aggregate interface.
+func (a *BaseAggregate) UncommittedEvents() []Event {
 	defer func() {
 		a.events = nil
 	}()

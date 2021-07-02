@@ -2,60 +2,81 @@ package usecases
 
 import (
 	"context"
+	"io"
+	"time"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type StoreEventsUseCase struct {
-	UseCaseBase
+	*usecase.UseCaseBase
 
-	store  es.Store
-	bus    es.EventBusPublisher
-	events []*esApi.Event
+	store   es.EventStore
+	bus     es.EventBusPublisher
+	stream  esApi.EventStore_StoreServer
+	metrics *metrics.EventStoreMetrics
 }
 
 // NewStoreEventsUseCase creates a new usecase which stores all events in the store
 // and broadcasts these events via the message bus
-func NewStoreEventsUseCase(ctx context.Context, store es.Store, bus es.EventBusPublisher, events []*esApi.Event) UseCase {
+func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.EventStore, bus es.EventBusPublisher, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &StoreEventsUseCase{
-		UseCaseBase: UseCaseBase{
-			log: logger.WithName("store-events-use-case"),
-			ctx: ctx,
-		},
-		store:  store,
-		bus:    bus,
-		events: events,
+		UseCaseBase: usecase.NewUseCaseBase("store-events"),
+		store:       store,
+		bus:         bus,
+		stream:      stream,
+		metrics:     metrics,
 	}
 	return useCase
 }
 
-func (u *StoreEventsUseCase) Run() error {
-	// Convert from proto events to storage events
-	var storageEvents []es.Event
-	for _, v := range u.events {
-		ev, err := es.NewEventFromProto(v)
+func (u *StoreEventsUseCase) Run(ctx context.Context) error {
+	for {
+		startTime := time.Now()
+
+		// Read next event
+		event, err := u.stream.Recv()
+
+		// End of stream
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil { // Some other error
+			return errors.TranslateToGrpcError(err)
+		}
+
+		// Count transmitted event
+		u.metrics.TransmittedTotalCounter.WithLabelValues(event.Type, event.AggregateType).Inc()
+
+		// Convert from proto events to storage events
+		ev, err := es.NewEventFromProto(event)
 		if err != nil {
 			return err
 		}
-		storageEvents = append(storageEvents, ev)
-	}
 
-	// Store events in Event Store
-	u.log.Info("Saving events in the store...")
-	err := u.store.Save(u.ctx, storageEvents)
-	if err != nil {
-		return err
-	}
-
-	u.log.Info("Sending events to the message bus...")
-	for _, event := range storageEvents {
-		err := u.bus.PublishEvent(u.ctx, event)
-		if err != nil {
+		// Store events in database
+		u.Log.V(logger.DebugLevel).Info("Saving events in the store...")
+		if err := u.store.Save(ctx, []es.Event{ev}); err != nil {
 			return err
 		}
+
+		// Count successfully stored event
+		u.metrics.StoredTotalCounter.WithLabelValues(event.Type, event.AggregateType).Inc()
+
+		// Send events to message bus
+		u.Log.V(logger.DebugLevel).Info("Sending events to the message bus...")
+		if err := u.bus.PublishEvent(ctx, ev); err != nil {
+			return err
+		}
+		u.metrics.StoredHistogram.WithLabelValues(event.Type, event.AggregateType).Observe(time.Since(startTime).Seconds())
 	}
 
-	return nil
+	return u.stream.SendAndClose(&emptypb.Empty{})
 }

@@ -1,0 +1,19 @@
+{{- if and .Values.rabbitmq.metrics.enabled .Values.rabbitmq.metrics.grafanaDashboard.enabled }}
+---
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: {{ include "monoskope.fullname" . }}-rabbitmq-dashboard
+  labels:
+    {{- if .Values.rabbitmq.metrics.grafanaDashboard.extraLabels }}
+      {{ toYaml .Values.rabbitmq.metrics.grafanaDashboard.extraLabels | trim | nindent 4 }}
+    {{- end }}
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  name: rabbitmq-dashboard.json
+  datasources:
+    - inputName: "DS_PROMETHEUS"
+      datasourceName: "Prometheus"
+  json: |-
+{{ .Files.Get "dashboards/rabbitmq-dashboard.json" | indent 4 }}
+{{ end }}

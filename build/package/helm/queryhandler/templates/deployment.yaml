@@ -66,9 +66,9 @@ spec:
             containerPort: {{ .Values.ports.metrics }}
           envFrom:
             - secretRef:
-                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
           args:
-            - /queryhandler
+            - /app
             - server
             - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
@@ -96,7 +96,8 @@ spec:
           {{- if .Values.messageBus.tlsSecret }}
           volumeMounts:
             - name: buscerts
-              mountPath: /etc/eventstore/certs/bus
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -115,11 +116,4 @@ spec:
         - name: buscerts
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
-            items:
-              - key: ca.crt
-                path: ca.crt
-              - key: tls.crt
-                path: tls.crt
-              - key: tls.key
-                path: tls.key
       {{- end }}

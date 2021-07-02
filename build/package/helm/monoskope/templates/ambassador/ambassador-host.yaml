@@ -1,0 +1,47 @@
+{{- if .Values.ambassador.enabled }}
+{{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
+{{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
+{{- if ne $tlsDomain "" }}
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: {{ include "monoskope.fullname" . }}-tls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  hostname: {{ $tlsDomain }}
+  acmeProvider:
+    authority: none
+  tlsSecret:
+    name: {{ $tlsSecretName }}
+  tls:
+    min_tls_version: v1.2
+---
+{{- end }}
+{{- if ne $mtlsDomain "" }}
+apiVersion: getambassador.io/v2
+kind: TLSContext
+metadata:
+  name: {{ include "monoskope.fullname" . }}-mtls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  hosts:
+  - {{ $mtlsDomain }}
+  - {{ $mtlsDomain }}:443
+  secret: {{ $mtlsSecretName }}
+  ca_secret: {{ .Values.pki.issuer.ca.existingTrustAnchorSecretName | default (printf "%s-trust-anchor" (include "monoskope.fullname" .)) }}
+  cert_required: true
+  min_tls_version: v1.2
+{{- end }}
+{{- end }}

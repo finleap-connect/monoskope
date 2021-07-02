@@ -13,19 +13,18 @@ lint:helm:
     - make helm-lint-queryhandler
     - make helm-dep-monoskope
     - make helm-lint-monoskope
-  needs: []
 
-deliver:chart:
-  stage: deliver
+chart:deliver:
+  stage: chart
   extends: .helm
   only:
+    - web
     - tags
+    - develop
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
     - build-chart --chart-dir build/package/helm/monoskope --promote-version $VERSION
-  needs:
-    - lint:helm
 
 deploy:monoskope:
   stage: deploy
@@ -33,7 +32,7 @@ deploy:monoskope:
   environment:
     name: figo-dev
   only:
-    - tags
+    - develop
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
@@ -50,4 +49,3 @@ deploy:monoskope:latest_tag:
     - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope
-  needs: []

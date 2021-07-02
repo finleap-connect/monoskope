@@ -16,7 +16,11 @@ import (
 var _ = Describe("domain/user_repo", func() {
 	userId := uuid.New()
 	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
-	adminRoleBinding := &projections.UserRoleBinding{UserRoleBinding: projectionsApi.UserRoleBinding{Id: uuid.New().String(), UserId: adminUser.Id, Role: roles.Admin.String(), Scope: scopes.System.String()}}
+
+	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	adminRoleBinding.UserId = adminUser.Id
+	adminRoleBinding.Role = roles.Admin.String()
+	adminRoleBinding.Scope = scopes.System.String()
 
 	It("can read/write projections", func() {
 		inMemoryRoleRepo := es_repos.NewInMemoryRepository()

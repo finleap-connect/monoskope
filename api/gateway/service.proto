@@ -3,8 +3,7 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "api/eventsourcing/commands/command.proto";
-import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway";
 
@@ -12,6 +11,46 @@ package gateway;
 
 // API of the Monoskope Gateway.
 service Gateway {
-  // Executes a command and returns the execution result
-  rpc Execute(commands.Command) returns (google.protobuf.Empty);
+  rpc GetAuthInformation(AuthState) returns (AuthInformation);
+  rpc ExchangeAuthCode(AuthCode) returns (AuthResponse);
+}
+
+// ClusterAuth is the API to request token for cluster authentication from
+service ClusterAuth {
+  rpc GetAuthToken(ClusterAuthTokenRequest) returns (ClusterAuthTokenResponse);
+}
+
+message AuthState { string callback_url = 1; }
+
+message AuthInformation {
+  string auth_code_url = 1;
+  string state = 2;
+}
+
+message AuthCode {
+  string code = 1;
+  string state = 2;
+  string callback_url = 3;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expiry = 2;
+  string username = 3;
+}
+
+// ClusterAuthTokenRequest is send in order to retrieve an auth token valid to
+// authenticate against a certain cluster with a specific role
+message ClusterAuthTokenRequest {
+  // Unique identifier of the cluster (UUID 128-bit number)
+  string cluster_id = 1;
+  // Kubernetes role name
+  string role = 2;
+}
+
+// ClusterAuthTokenResponse contains an auth token valid to
+// authenticate against a certain cluster with a specific role
+message ClusterAuthTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expiry = 2;
 }

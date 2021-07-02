@@ -44,8 +44,9 @@ A Helm chart for the Monoskope CommandHandler
 | service.metrics.port | int | `9102` |  |
 | service.type | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
+| serviceAccount.create | bool | `false` |  |
 | serviceAccount.name | string | `""` |  |
+| superusers | list | `[]` | List of email addresses to identify superusers. |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

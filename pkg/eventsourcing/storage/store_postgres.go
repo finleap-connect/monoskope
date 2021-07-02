@@ -80,7 +80,7 @@ func (s *postgresEventStore) newEventRecord(ctx context.Context, event evs.Event
 }
 
 // NewPostgresEventStore creates a new EventStore.
-func NewPostgresEventStore(config *postgresStoreConfig) (evs.Store, error) {
+func NewPostgresEventStore(config *postgresStoreConfig) (evs.EventStore, error) {
 	err := config.Validate()
 	if err != nil {
 		return nil, err
@@ -95,8 +95,8 @@ func NewPostgresEventStore(config *postgresStoreConfig) (evs.Store, error) {
 	return s, nil
 }
 
-// Connect starts automatic reconnect with postgres db
-func (s *postgresEventStore) Connect(ctx context.Context) error {
+// Open starts automatic reconnect with postgres db
+func (s *postgresEventStore) Open(ctx context.Context) error {
 	go s.handleReconnect()
 	for !s.isConnected {
 		select {
@@ -171,7 +171,8 @@ func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error
 		return errors.ErrCouldNotSaveEvents
 	}
 
-	s.log.Info("Saved event(s) successullfy", "eventCount", len(eventRecords))
+	s.log.V(logger.DebugLevel).Info("Saved event(s) successfully", "eventCount", len(eventRecords))
+
 	return nil
 }
 
@@ -196,12 +197,12 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 }
 
 // Load implements the Load method of the EventStore interface.
-func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) ([]evs.Event, error) {
+func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	eventStream := evs.NewEventStream()
+
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
 	}
-
-	var events []evs.Event
 
 	// Basic query to query all events
 	dbQuery := s.db.
@@ -212,26 +213,29 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuer
 	// Translate the abstrace query to a postgres query
 	mapStoreQuery(storeQuery, dbQuery)
 
-	err := dbQuery.ForEach(func(e *eventRecord) (err error) {
-		events = append(events, pgEvent{
-			eventRecord: *e,
+	go func() {
+		defer eventStream.Done()
+		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
+			eventStream.Send(pgEvent{
+				eventRecord: *e,
+			})
+			return nil
 		})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return events, nil
+		eventStream.Error(err)
+	}()
+	return eventStream, nil
 }
 
 func (s *postgresEventStore) Close() error {
 	s.log.Info("Shutting down...")
 
 	s.cancel()
-	err := s.db.Close()
-	if err != nil {
-		return err
+
+	if s.db != nil {
+		err := s.db.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	s.log.Info("Shutdown complete.")
@@ -239,7 +243,7 @@ func (s *postgresEventStore) Close() error {
 	return nil
 }
 
-// mapStoreQuery maps the generic query struct to a postgress orm query
+// mapStoreQuery maps the generic query struct to a postgres orm query
 func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 	if storeQuery == nil {
 		return
@@ -269,6 +273,7 @@ func mapStoreQuery(storeQuery *evs.StoreQuery, dbQuery *orm.Query) {
 
 // Clear clears the event storage. This is only for testing purposes.
 func (s *postgresEventStore) clear(ctx context.Context) error {
+	s.log.Info("Clearing store...")
 	return s.db.
 		RunInTransaction(ctx, func(tx *pg.Tx) (err error) {
 			_, err = tx.Model((*eventRecord)(nil)).Where("1=1").Delete()
@@ -379,7 +384,7 @@ func (e pgEvent) AggregateType() evs.AggregateType {
 	return e.eventRecord.AggregateType
 }
 
-// AggrgateID implements the AggrgateID method of the Event interface.
+// AggregateID implements the AggregateID method of the Event interface.
 func (e pgEvent) AggregateID() uuid.UUID {
 	return e.eventRecord.AggregateID
 }

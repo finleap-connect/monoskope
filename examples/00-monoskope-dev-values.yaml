@@ -1,53 +1,106 @@
-# Local dev environment values for monoskope.
+# Dev cluster environment values for monoskope.
 
-nameOverride: ""
-fullnameOverride: ""
+imageTag: &imageTag "0.0.1-local"
 
 global:
   imagePullSecrets:
-    - gitlab-registry
+    - name: gitlab-registry
 
-dex:
+vaultOperator:
   enabled: true
-  replicas: 1
-  config:
-    storage:
-      type: sqlite3
-      config:
-        file: /tmp/dex.db
-    enablePasswordDB: true
-    staticPasswords:
-      - email: "admin@example.com"
-        # bcrypt hash of the string "password"
-        hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-        username: "admin"
-        userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+  basePath: app/{{ .Release.Namespace }}/monoskope
+  
+hosting:
+  issuer: letsencrypt-production
+  domain: monoskope.dev.finleap.cloud
 
-monoskope-gateway:
+# cockroachdb:
+  # dropExistingDatabase: true
+
+gateway:
   replicaCount: 1
-
-ingress:
-  enabled: true
-
-rabbitmq:
-  enabled: true
-  replicaCount: 3
-  persistence:
-    enabled: false
   image:
-    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
-    tag: 3.8.9
-  loadDefinition:
-    enabled: true
-    existingSecret: rabbitmq-load-definition
-  extraConfiguration: |-
-    load_definitions = /app/rabbitmq-definitions.json
+    tag: *imageTag
   auth:
-    username: admin
-    password: foo # this will be overwritten by a real password but needs to be set initially
-    existingErlangSecret: rabbitmq-erlang-cookie
-    tls:
-      enabled: true
-      existingSecret: rabbitmq-leaf
-  podAnnotations:
-    linkerd.io/inject: disabled
+    identityProviderName: gitlab
+    identityProviderURL: https://gitlab.figo.systems
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+eventstore:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  backup:
+    enabled: false
+    alerting:
+      enabled: false
+    schedule: "0 22 * * *"
+    retentionCount: 7
+    existingSecretName: m8-eventstore-backup-credentials
+    prometheusPushgatewayUrl: http://monitoring-prometheus-pushgateway.monitoring:9091
+    destination:
+      s3:
+        endpoint: s3.es1.fra.optimist.innovo.cloud
+        bucket: devcluster-bkp
+        region: us-east-1
+    restore:
+      enabled: false
+      backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
+
+commandhandler:
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  # -- List of email addresses to identify superusers.
+  superusers:
+    - alexander.stielau@finleap.com
+    - carolin.dohmen@finleap.com
+    - christian.huening@finleap.com
+    - jan.steffen@finleap.com
+    - lukas.grundmann@finleap.com
+    - lutz.behnke@finleap.com
+
+queryhandler:
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+ambassador:
+  service:
+    loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+
+cluster-bootstrap-reactor:
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi

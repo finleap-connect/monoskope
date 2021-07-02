@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "api/domain/projections/metadata.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
+
+package projections;
+
+// Cluster is the information the Control Plane has about a cluster
+message Cluster {
+  // Unique identifier of the cluster (UUID 128-bit number)
+  string id = 1;
+  // Unique name of the cluster
+  string name = 2;
+  // Unique label of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
+  string label = 3;
+  // Address of the clusters KubeAPIServer
+  string api_server_address = 4;
+  // CA certificates of the cluster
+  bytes ca_cert_bundle = 5;
+  // Metadata about the projection
+  LifecycleMetadata metadata = 6;
+  // Bootstrap token for cluster authentication
+  string bootstrap_token = 7;
+}

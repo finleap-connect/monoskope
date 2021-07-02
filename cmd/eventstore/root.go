@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/version"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	_ "go.uber.org/automaxprocs"
 )
 
 var rootCmd = &cobra.Command{

@@ -11,10 +11,10 @@ import (
 	_ "gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
 )
 
-func TestProjectors(t *testing.T) {
+func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-projectors-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestProjectors", []Reporter{junitReporter})
+	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/projectors", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {

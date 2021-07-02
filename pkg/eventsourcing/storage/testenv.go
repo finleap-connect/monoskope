@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -21,15 +22,12 @@ const (
 type TestEnv struct {
 	*test.TestEnv
 	*postgresStoreConfig
+	Store evs.EventStore
 }
 
-func (t *TestEnv) GetStoreConfig() *postgresStoreConfig {
-	return t.postgresStoreConfig
-}
-
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("StorageTestEnv"),
+		TestEnv: parent,
 	}
 
 	if err := env.CreateDockerPool(); err != nil {
@@ -58,7 +56,7 @@ func NewTestEnv() (*TestEnv, error) {
 		// Start single node crdb
 		container, err := env.Run(&dockertest.RunOptions{
 			Name:       "cockroach",
-			Repository: "gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach",
+			Repository: "artifactory.figo.systems/public_docker/cockroachdb/cockroach",
 			Tag:        "v20.2.2",
 			Cmd: []string{
 				"start-single-node", "--insecure",
@@ -90,9 +88,29 @@ func NewTestEnv() (*TestEnv, error) {
 		env.postgresStoreConfig = conf
 	}
 
+	store, err := NewPostgresEventStore(env.postgresStoreConfig)
+	if err != nil {
+		return nil, err
+	}
+	env.Store = store
+
 	return env, nil
 }
 
+func (env *TestEnv) ClearStore(ctx context.Context) {
+	if pgStore, ok := env.Store.(*postgresEventStore); ok {
+		if err := pgStore.clear(ctx); err != nil {
+			panic(err)
+		}
+	} else {
+		panic("that thing is not a pgstore")
+	}
+}
+
 func (env *TestEnv) Shutdown() error {
+	if err := env.Store.Close(); err != nil {
+		return err
+	}
+
 	return env.TestEnv.Shutdown()
 }

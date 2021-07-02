@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 
+	api_domain "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	api_common "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
@@ -36,7 +38,7 @@ var serverCmd = &cobra.Command{
 		log := logger.WithName("server-cmd")
 
 		// Create EventStore client
-		log.Info("Connectin event store...", "eventStoreAddr", eventStoreAddr)
+		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
 		conn, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
@@ -44,8 +46,8 @@ var serverCmd = &cobra.Command{
 		defer conn.Close()
 
 		// Create UserService client
-		log.Info("Connectin query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := queryhandler.NewUserServiceClient(ctx, queryHandlerAddr)
+		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
@@ -53,7 +55,7 @@ var serverCmd = &cobra.Command{
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
 		if err != nil {
 			return err
 		}
@@ -62,8 +64,10 @@ var serverCmd = &cobra.Command{
 		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
 
+		commandHandlerApiServer := commandhandler.NewApiServer(es.DefaultCommandRegistry)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterCommandHandlerServer(s, commandhandler.NewApiServer(cmdRegistry))
+			api.RegisterCommandHandlerServer(s, commandHandlerApiServer)
+			api_domain.RegisterCommandHandlerExtensionsServer(s, commandHandlerApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

@@ -4,10 +4,10 @@ package common
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ServiceInformationServiceClient interface {
 	// Get information about the service. This can include information for other
 	// services additionally.
-	GetServiceInformation(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error)
+	GetServiceInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error)
 }
 
 type serviceInformationServiceClient struct {
@@ -32,7 +32,7 @@ func NewServiceInformationServiceClient(cc grpc.ClientConnInterface) ServiceInfo
 	return &serviceInformationServiceClient{cc}
 }
 
-func (c *serviceInformationServiceClient) GetServiceInformation(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error) {
+func (c *serviceInformationServiceClient) GetServiceInformation(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ServiceInformationService_GetServiceInformationClient, error) {
 	stream, err := c.cc.NewStream(ctx, &ServiceInformationService_ServiceDesc.Streams[0], "/common.ServiceInformationService/GetServiceInformation", opts...)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (x *serviceInformationServiceGetServiceInformationClient) Recv() (*ServiceI
 type ServiceInformationServiceServer interface {
 	// Get information about the service. This can include information for other
 	// services additionally.
-	GetServiceInformation(*empty.Empty, ServiceInformationService_GetServiceInformationServer) error
+	GetServiceInformation(*emptypb.Empty, ServiceInformationService_GetServiceInformationServer) error
 	mustEmbedUnimplementedServiceInformationServiceServer()
 }
 
@@ -78,7 +78,7 @@ type ServiceInformationServiceServer interface {
 type UnimplementedServiceInformationServiceServer struct {
 }
 
-func (UnimplementedServiceInformationServiceServer) GetServiceInformation(*empty.Empty, ServiceInformationService_GetServiceInformationServer) error {
+func (UnimplementedServiceInformationServiceServer) GetServiceInformation(*emptypb.Empty, ServiceInformationService_GetServiceInformationServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetServiceInformation not implemented")
 }
 func (UnimplementedServiceInformationServiceServer) mustEmbedUnimplementedServiceInformationServiceServer() {
@@ -96,7 +96,7 @@ func RegisterServiceInformationServiceServer(s grpc.ServiceRegistrar, srv Servic
 }
 
 func _ServiceInformationService_GetServiceInformation_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(empty.Empty)
+	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

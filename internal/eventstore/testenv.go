@@ -17,24 +17,25 @@ import (
 type TestEnv struct {
 	*test.TestEnv
 	apiListener      net.Listener
+	MetricsListener  net.Listener
 	grpcServer       *grpc.Server
 	messagingTestEnv *messaging.TestEnv
 	storageTestEnv   *storage.TestEnv
 	publisher        es.EventBusPublisher
-	store            es.Store
 }
 
 func (t *TestEnv) GetMessagingTestEnv() *messaging.TestEnv {
 	return t.messagingTestEnv
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	var err error
+
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("EventStoreTestEnv"),
+		TestEnv: testEnv,
 	}
 
-	env.messagingTestEnv, err = messaging.NewTestEnv()
+	env.messagingTestEnv, err = messaging.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -45,21 +46,17 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	err = env.publisher.Connect(context.Background())
+	err = env.publisher.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	env.storageTestEnv, err = storage.NewTestEnv()
+	env.storageTestEnv, err = storage.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.store, err = storage.NewPostgresEventStore(env.storageTestEnv.GetStoreConfig())
-	if err != nil {
-		return nil, err
-	}
-	err = env.store.Connect(context.Background())
+	err = env.storageTestEnv.Store.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +64,7 @@ func NewTestEnv() (*TestEnv, error) {
 	// Create server
 	env.grpcServer = grpc.NewServer("eventstore_grpc", false)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterEventStoreServer(s, NewApiServer(env.store, env.publisher))
+		api.RegisterEventStoreServer(s, NewApiServer(env.storageTestEnv.Store, env.publisher))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -75,9 +72,14 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
+	env.MetricsListener, err = net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return nil, err
+	}
+
 	// Start server
 	go func() {
-		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, env.MetricsListener)
 		if err != nil {
 			panic(err)
 		}
@@ -95,10 +97,6 @@ func (env *TestEnv) Shutdown() error {
 		return err
 	}
 
-	if err := env.store.Close(); err != nil {
-		return err
-	}
-
 	if err := env.messagingTestEnv.Shutdown(); err != nil {
 		return err
 	}
@@ -112,5 +110,5 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.apiListener.Close(); err != nil {
 		return err
 	}
-	return env.TestEnv.Shutdown()
+	return nil
 }

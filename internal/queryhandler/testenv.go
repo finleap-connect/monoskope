@@ -28,12 +28,12 @@ type TestEnv struct {
 	esClient          esApi.EventStoreClient
 }
 
-func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
+func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	var err error
 	ctx := context.Background()
 
 	env := &TestEnv{
-		TestEnv:           test.NewTestEnv("QueryHandlerTestEnv"),
+		TestEnv:           testeEnv,
 		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
@@ -49,7 +49,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup domain
-	userRepo, err := domain.SetupQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	qhDomain, err := domain.NewQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +58,9 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	grpcServer := grpc.NewServer("queryhandler_grpc", false)
 	env.grpcServer = grpcServer
 	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-		api.RegisterUserServiceServer(s, NewUserServiceServer(userRepo))
-		api.RegisterTenantServiceServer(s, NewTenantServiceServer())
+		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
+		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
+		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
@@ -96,5 +97,6 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.apiListener.Close(); err != nil {
 		return err
 	}
-	return env.TestEnv.Shutdown()
+
+	return nil
 }

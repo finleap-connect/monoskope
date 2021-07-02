@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata";
+
+package commanddata;
+
+// Command issued to request a new certificate
+message RequestCertificate {
+  // Unique identifier of the aggregate referenced (UUID 128-bit number)
+  string referenced_aggregate_id = 1;
+  // Type of the aggregate referenced
+  string referenced_aggregate_type = 2;
+  // Certificate signing request
+  bytes signing_request = 3;
+}

@@ -3,26 +3,29 @@ package projections
 import (
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 type User struct {
+	*DomainProjection
 	*projections.User
-	version uint64
+	*projections.LifecycleMetadata
+}
+
+func NewUserProjection(id uuid.UUID) eventsourcing.Projection {
+	dp := NewDomainProjection()
+	return &User{
+		DomainProjection: dp,
+		User: &projections.User{
+			Id: id.String(),
+		},
+		LifecycleMetadata: &dp.LifecycleMetadata,
+	}
 }
 
 // ID implements the ID method of the Aggregate interface.
 func (p *User) ID() uuid.UUID {
-	return uuid.MustParse(p.GetId())
-}
-
-// Version implements the Version method of the Aggregate interface.
-func (p *User) Version() uint64 {
-	return p.version
-}
-
-// IncrementVersion implements the IncrementVersion method of the Projection interface.
-func (p *User) IncrementVersion() {
-	p.version++
+	return uuid.MustParse(p.Id)
 }
 
 // Proto gets the underlying proto representation.

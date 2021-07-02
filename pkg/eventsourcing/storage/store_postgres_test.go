@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,9 +44,7 @@ var _ = Describe("storage/postgres", func() {
 	}
 
 	createTestEventData := func(something string) evs.EventData {
-		ed, err := evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
-		Expect(err).ToNot(HaveOccurred())
-		return ed
+		return evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
 	}
 
 	createTestEvents := func() []evs.Event {
@@ -63,7 +62,7 @@ var _ = Describe("storage/postgres", func() {
 
 		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
-		err = es.Connect(ctxWithTimeout)
+		err = es.Open(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
@@ -120,10 +119,21 @@ var _ = Describe("storage/postgres", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		aggregateId := events[0].AggregateID()
-		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
+		eventStream, err := es.Load(ctx, &evs.StoreQuery{
 			AggregateId: &aggregateId,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		var storeEvents []evs.Event
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
@@ -139,10 +149,21 @@ var _ = Describe("storage/postgres", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		aggregateType := evs.AggregateType(testAggregate)
-		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
+		eventStream, err := es.Load(ctx, &evs.StoreQuery{
 			AggregateType: &aggregateType,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		var storeEvents []evs.Event
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 		Expect(len(storeEvents)).To(BeNumerically("==", len(ev)))
@@ -154,10 +175,21 @@ var _ = Describe("storage/postgres", func() {
 
 		minVersion := uint64(1)
 		maxVersion := uint64(1)
-		storeEvents, err := es.Load(ctx, &evs.StoreQuery{
+		eventStream, err := es.Load(ctx, &evs.StoreQuery{
 			MinVersion: &minVersion,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		var storeEvents []evs.Event
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 
@@ -165,10 +197,21 @@ var _ = Describe("storage/postgres", func() {
 			Expect(ev.AggregateVersion()).To(BeNumerically(">=", 1))
 		}
 
-		storeEvents, err = es.Load(ctx, &evs.StoreQuery{
+		eventStream, err = es.Load(ctx, &evs.StoreQuery{
 			MaxVersion: &maxVersion,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		storeEvents = make([]evs.Event, 0)
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 
@@ -176,11 +219,22 @@ var _ = Describe("storage/postgres", func() {
 			Expect(ev.AggregateVersion()).To(BeNumerically("<=", 1))
 		}
 
-		storeEvents, err = es.Load(ctx, &evs.StoreQuery{
+		eventStream, err = es.Load(ctx, &evs.StoreQuery{
 			MinVersion: &minVersion,
 			MaxVersion: &maxVersion,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		storeEvents = make([]evs.Event, 0)
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
 		Expect(storeEvents).ToNot(BeNil())
 		Expect(storeEvents).ToNot(BeEmpty())
 

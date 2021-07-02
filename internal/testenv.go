@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"net"
+	"os"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
@@ -12,34 +12,30 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	apiListener           net.Listener
 	eventStoreTestEnv     *eventstore.TestEnv
 	queryHandlerTestEnv   *queryhandler.TestEnv
 	commandHandlerTestEnv *commandhandler.TestEnv
 }
 
-func NewTestEnv() (*TestEnv, error) {
+func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	var err error
 	env := &TestEnv{
-		TestEnv: test.NewTestEnv("IntegrationTestEnv"),
+		TestEnv: testEnv,
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnv()
+	os.Setenv("SUPER_USERS", "admin@monoskope.io")
+
+	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnv(env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
 	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.queryHandlerTestEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, err
 	}
@@ -60,5 +56,5 @@ func (env *TestEnv) Shutdown() error {
 		return err
 	}
 
-	return env.TestEnv.Shutdown()
+	return nil
 }

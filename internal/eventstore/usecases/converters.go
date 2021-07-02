@@ -41,5 +41,7 @@ func NewStoreQueryFromProto(protoFilter *esApi.EventFilter) (*es.StoreQuery, err
 		storeQuery.MaxTimestamp = &val
 	}
 
+	storeQuery.ExcludeDeleted = protoFilter.GetExcludeDeleted()
+
 	return storeQuery, nil
 }

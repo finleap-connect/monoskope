@@ -19,6 +19,12 @@ type aggregateRegistry struct {
 	aggregates map[AggregateType]func(id uuid.UUID) Aggregate
 }
 
+var DefaultAggregateRegistry AggregateRegistry
+
+func init() {
+	DefaultAggregateRegistry = NewAggregateRegistry()
+}
+
 // NewAggregateRegistry creates a new aggregate registry
 func NewAggregateRegistry() AggregateRegistry {
 	return &aggregateRegistry{
@@ -33,13 +39,13 @@ func NewAggregateRegistry() AggregateRegistry {
 // An example would be:
 //     RegisterAggregate(func() Aggregate { return &MyAggregate{} })
 func (r *aggregateRegistry) RegisterAggregate(factory func(id uuid.UUID) Aggregate) {
-	cmd := factory(uuid.Nil)
-	if cmd == nil {
+	aggregate := factory(uuid.Nil)
+	if aggregate == nil {
 		r.log.Info("factory does not create aggregates")
 		panic(errors.ErrFactoryInvalid)
 	}
 
-	aggregateType := cmd.Type()
+	aggregateType := aggregate.Type()
 	if aggregateType.String() == "" {
 		r.log.Info("attempt to register empty aggregate type")
 		panic(errors.ErrEmptyAggregateType)

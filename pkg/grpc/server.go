@@ -8,6 +8,7 @@ import (
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/metrics"
@@ -44,8 +45,15 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		shutdown: util.NewShutdownWaitGroup(),
 	}
 
-	unaryServerInterceptors = append(unaryServerInterceptors, grpc_prometheus.UnaryServerInterceptor)    // add prometheus metrics interceptors
-	streamServerInterceptors = append(streamServerInterceptors, grpc_prometheus.StreamServerInterceptor) // add prometheus metrics interceptors
+	// Add default interceptors
+	unaryServerInterceptors = append(unaryServerInterceptors,
+		grpc_prometheus.UnaryServerInterceptor, // add prometheus metrics interceptors
+		grpc_recovery.UnaryServerInterceptor(), // add recovery from panics
+	)
+	streamServerInterceptors = append(streamServerInterceptors,
+		grpc_prometheus.StreamServerInterceptor, // add prometheus metrics interceptors
+		grpc_recovery.StreamServerInterceptor(), // add recovery from panics
+	)
 
 	// Configure gRPC server
 	opts := []grpc.ServerOption{
@@ -62,8 +70,11 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 
 	// Add grpc health check service
 	healthpb.RegisterHealthServer(s.grpc, health.NewServer())
+
 	// Register the metric interceptors with prometheus
 	grpc_prometheus.Register(s.grpc)
+	grpc_prometheus.EnableHandlingTimeHistogram()
+
 	// Enable reflection API
 	reflection.Register(s.grpc)
 

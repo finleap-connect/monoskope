@@ -1,8 +1,9 @@
 stages:
   - prepare
   - test
-  - build
   - deliver
+  - scan
+  - chart
   - deploy
 
 include:
@@ -11,20 +12,11 @@ include:
   # - template: Security/SAST.gitlab-ci.yml
 
 .docker-builder:
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.5.4
-  services:
-    - gitlab.figo.systems/platform/dependency_proxy/containers/docker:18-dind
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.6
   only:
+    - web
     - tags
-
-prepare:builder:
-  stage: prepare
-  extends: .docker-builder
-  only:
-    changes:
-      - build/package/builder.Dockerfile
-  except:
-    - schedules
-    - tags
-  script:
-    - build-image --file build/package/builder.Dockerfile --tag $CI_PIPELINE_ID --image-suffix builder
+    - develop
+  cache:
+    paths:
+      - /var/lib/buildkit

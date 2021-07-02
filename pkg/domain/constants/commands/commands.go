@@ -8,4 +8,21 @@ const (
 
 	// Command to create a new UserRoleBinding
 	CreateUserRoleBinding es.CommandType = "CreateUserRoleBinding"
+	// Command to delete a UserRoleBinding
+	DeleteUserRoleBinding es.CommandType = "DeleteUserRoleBinding"
+
+	// Event emitted when a Tenant has been created
+	CreateTenant es.CommandType = "CreateTenant"
+	// Command to update a Tenant
+	UpdateTenant es.CommandType = "UpdateTenant"
+	// Command to delete a Tenant
+	DeleteTenant es.CommandType = "DeleteTenant"
+
+	// Command to create a Cluster
+	CreateCluster es.CommandType = "CreateCluster"
+	// Command to delete a Cluster
+	DeleteCluster es.CommandType = "DeleteCluster"
+
+	// Command to request a certificate
+	RequestCertificate es.CommandType = "RequestCertificate"
 )

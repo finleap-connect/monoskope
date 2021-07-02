@@ -34,9 +34,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 	testCount := 0
 
 	createTestEventData := func(something string) evs.EventData {
-		ed, err := evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
-		Expect(err).ToNot(HaveOccurred())
-		return ed
+		return evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
 	}
 	createEvent := func() evs.Event {
 		eventType := evs.EventType("TestEvent")
@@ -78,7 +76,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 30*time.Second)
 		defer cancelFunc()
-		err = publisher.Connect(ctxWithTimeout)
+		err = publisher.Open(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		// init consumer
@@ -86,7 +84,7 @@ var _ = Describe("messaging/rabbitmq", func() {
 		Expect(err).ToNot(HaveOccurred())
 		ctxWithTimeout, cancelFunc = context.WithTimeout(ctx, 30*time.Second)
 		defer cancelFunc()
-		err = consumer.Connect(ctxWithTimeout)
+		err = consumer.Open(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		testCount++

@@ -5,12 +5,15 @@ cover.out
 .idea
 .vscode
 .project
+*.test
 project.dict
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*~
+.\#*
 
 #
 /cache/
@@ -19,11 +22,11 @@ project.dict
 /.scannerwork
 /tmp/
 
-/tools/*
-!/tools/goget-wrapper
+/tools/
+/include/*
 *.coverprofile
+.protobuf-deps
 
-/monoctl
 /gateway
 
 build/package/helm/monoskope/Chart.lock

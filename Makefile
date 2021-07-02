@@ -2,6 +2,7 @@ SHELL := bash
 
 # Directory, where all required tools are located (absolute path required)
 TOOLS_DIR ?= $(shell cd tools && pwd)
+HACK_DIR ?= $(shell cd hack && pwd)
 
 VERSION   ?= 0.0.1-local
 KUBE_NAMESPACE ?= platform-monoskope-monoskope
@@ -14,9 +15,7 @@ export
 clean: go-clean helm-clean tools-clean
 
 # go
-
-go-%:
-	@$(MAKE) -f go.mk $*
+include go.mk
 
 # helm
 
@@ -36,5 +35,6 @@ tools: go-ginkgo-get go-golangci-lint-get
 
 tools-clean: go-ginkgo-clean go-golangci-lint-clean
 
-echo-%:
-	@echo $($*)
+get-latest:
+	@echo LATEST_REV: $(LATEST_REV)
+	@echo LATEST_TAG: $(LATEST_TAG)

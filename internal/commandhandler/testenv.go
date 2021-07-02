@@ -9,6 +9,7 @@ import (
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -24,7 +25,9 @@ type TestEnv struct {
 	esConn              *ggrpc.ClientConn
 	esClient            esApi.EventStoreClient
 	userServiceConn     *ggrpc.ClientConn
-	userSvcClient       domainApi.UserServiceClient
+	userSvcClient       domainApi.UserClient
+	tenantServiceConn   *ggrpc.ClientConn
+	tenantSvcClient     domainApi.TenantClient
 }
 
 func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *queryhandler.TestEnv) (*TestEnv, error) {
@@ -42,12 +45,17 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	env.userServiceConn, env.userSvcClient, err = queryhandler.NewUserServiceClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	env.userServiceConn, env.userSvcClient, err = queryhandler.NewUserClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
 
-	cmdRegistry, err := domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
+	env.tenantServiceConn, env.tenantSvcClient, err = queryhandler.NewTenantClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	if err != nil {
+		return nil, err
+	}
+
+	err = domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +63,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 	// Create server
 	env.grpcServer = grpc.NewServer("commandhandler_grpc", false)
 
-	commandHandler := NewApiServer(cmdRegistry)
+	commandHandler := NewApiServer(es.DefaultCommandRegistry)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		esApi.RegisterCommandHandlerServer(s, commandHandler)
 	})
@@ -86,6 +94,10 @@ func (env *TestEnv) Shutdown() error {
 	}
 
 	if err := env.userServiceConn.Close(); err != nil {
+		return err
+	}
+
+	if err := env.tenantServiceConn.Close(); err != nil {
 		return err
 	}
 

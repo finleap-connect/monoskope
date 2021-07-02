@@ -23,10 +23,6 @@ version: 0.0.1
 appVersion: 0.0.1
 
 dependencies: # A list of the chart requirements
-  - name: dex
-    version: 1.0.18
-    repository: https://kubism.github.io/charts
-    condition: dex.enabled,global.dex.enabled
   - name: gateway
     repository: "file://../gateway"
     condition: gateway.enabled,global.gateway.enabled
@@ -39,11 +35,19 @@ dependencies: # A list of the chart requirements
   - name: queryhandler
     repository: "file://../queryhandler"
     condition: queryhandler.enabled,global.queryhandler.enabled
+  - name: cluster-bootstrap-reactor
+    repository: "file://../cluster-bootstrap-reactor"
+    condition: cluster-bootstrap-reactor.enabled,global.cluster-bootstrap-reactor.enabled
   - name: cockroachdb
-    version: 5.0.2
-    repository: https://artifactory.figo.systems/artifactory/virtual_helm
+    version: 6.0.5
+    repository: https://charts.cockroachdb.com/
     condition: cockroachdb.enabled,global.cockroachdb.enabled
   - name: rabbitmq
     version: 8.6.1
     repository: https://charts.bitnami.com/bitnami
-    condition: rabbitmq.enabled
+    condition: rabbitmq.enabled,global.rabbitmq.enabled
+  - name: ambassador
+    version: 6.7.11
+    repository: https://getambassador.io
+    condition: ambassador.enabled,global.ambassador.enabled
+

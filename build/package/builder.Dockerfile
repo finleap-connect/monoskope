@@ -1,7 +1,11 @@
-FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.15.7-buster
+FROM gitlab.figo.systems/platform/dependency_proxy/containers/golang:1.16-buster
 
-WORKDIR /tmp/build
+# ensure versions are synched with the Makefile!
+ENV GINKGO     ginkgo
+ENV LINTER     golangci-lint
 
-# Install Docker
-RUN apt-get update && apt install docker.io -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.39.0
+RUN go get -u github.com/onsi/ginkgo/ginkgo@v1.15.2
+
+RUN curl -sSfL https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz | tar -xvzf - && \
+    mv linux-amd64/helm $(go env GOPATH)/bin/helm3 ; rm -rf linux-amd64

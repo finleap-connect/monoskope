@@ -26,12 +26,14 @@ type UserRepository interface {
 // ReadOnlyUserRepository is a repository for reading user projections.
 type ReadOnlyUserRepository interface {
 	// ById searches for the a user projection by it's id.
-	ByUserId(context.Context, string) (*projections.User, error)
+	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
+	// GetAll searches for all user projection.
+	GetAll(context.Context, bool) ([]*projections.User, error)
 }
 
-// WriteOnlyUserRepository is a repository for reading user projections.
+// WriteOnlyUserRepository is a repository for writing user projections.
 type WriteOnlyUserRepository interface {
 }
 
@@ -50,6 +52,7 @@ func (r *userRepository) addRolesToUser(ctx context.Context, user *projections.U
 		return err
 	}
 	user.Roles = toProtoRoles(roles)
+
 	return nil
 }
 
@@ -62,13 +65,8 @@ func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRo
 }
 
 // ById searches for the a user projection by it's id.
-func (r *userRepository) ByUserId(ctx context.Context, id string) (*projections.User, error) {
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return nil, err
-	}
-
-	projection, err := r.ById(ctx, uuid)
+func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
+	projection, err := r.ById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -88,29 +86,37 @@ func (r *userRepository) ByUserId(ctx context.Context, id string) (*projections.
 
 // ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
+	ps, err := r.GetAll(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, u := range ps {
+		if email == u.Email {
+			return u, nil
+		}
+	}
+
+	return nil, errors.ErrUserNotFound
+}
+
+// All searches for all user projections.
+func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
 	ps, err := r.All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var user *projections.User
+	var users []*projections.User
 	for _, p := range ps {
 		if u, ok := p.(*projections.User); ok {
-			if email == u.Email {
-				// User found
-				user = u
+			// Find roles of user
+			err = r.addRolesToUser(ctx, u)
+			if err != nil {
+				return nil, err
 			}
+			users = append(users, u)
 		}
 	}
-
-	if user != nil {
-		// Find roles of user
-		err = r.addRolesToUser(ctx, user)
-		if err != nil {
-			return nil, err
-		}
-		return user, nil
-	}
-
-	return nil, errors.ErrUserNotFound
+	return users, nil
 }

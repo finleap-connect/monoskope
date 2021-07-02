@@ -62,28 +62,49 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
+          - name: grpc
+            containerPort: {{ .Values.ports.grpcApi }}
           - name: http
-            containerPort: {{ .Values.ports.api }}
+            containerPort: {{ .Values.ports.httpApi }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
           env:
+            - name: M8_OPERATION_MODE
+              value: release
+            - name: GIN_MODE
+              value: release
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
+                  key: oidc-clientid
             - name: OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name | default (include "gateway.fullname" .) }}
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-clientsecret
+            - name: OIDC_NONCE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
+                  key: oidc-nonce
           args:
-            - /gateway
+            - /app
             - server
-            - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
-            - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
-            - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
-            - {{ (printf "--issuer-url=%s" .Values.auth.issuerURL ) }}
+            - --keep-alive={{ .Values.keepAlive }}
+            - --grpc-api-addr=:{{ .Values.ports.grpcApi }}
+            - --http-api-addr=:{{ .Values.ports.httpApi }}
+            - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
+            - --metrics-addr=:{{ .Values.ports.metrics }}
+            - --identity-provider-name={{ required "A valid .Values.auth.identityProviderName entry is required!" .Values.auth.identityProviderName }}
+            - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!"  .Values.auth.identityProviderURL }}
+            - --scopes={{ join "," .Values.auth.scopes }}
+            - --redirect-uris={{ join "," .Values.auth.redirectUris }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
           {{- end }}
@@ -91,12 +112,16 @@ spec:
           readinessProbe:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: key-secret
+              mountPath: /etc/gateway/jwt
+              readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -109,3 +134,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: key-secret
+          secret:
+            secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}

@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func NewEventStore() (eventsourcing.Store, error) {
+func NewEventStore() (eventsourcing.EventStore, error) {
 	var dbUrl string
 
 	if v := os.Getenv("DB_URL"); v != "" {
@@ -36,7 +36,7 @@ func NewEventStore() (eventsourcing.Store, error) {
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
-	err = store.Connect(ctx)
+	err = store.Open(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,66 @@
+{{- if .Values.cockroachdb.enabled }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init") -}}
+{{- if .Values.cockroachdb.dropExistingDatabase }}
+{{- $fullname = (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init-with-drop") -}}
+{{- end }}
+{{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 60
+  completions: 1
+  parallelism: 1
+  selector:
+    matchLabels:
+      job-name: {{ $fullname }}
+  template:
+    metadata:
+      labels:
+        job-name: {{ $fullname }}
+      annotations:
+        linkerd.io/inject: disabled
+    spec:
+      containers:
+      - args:
+        - sql
+        - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
+{{- if .Values.cockroachdb.dropExistingDatabase }}
+        - --execute=DROP DATABASE IF EXISTS eventstore;
+{{- end }}
+        - --execute=CREATE USER IF NOT EXISTS eventstore;
+        - --execute=CREATE DATABASE IF NOT EXISTS eventstore;
+        - --execute=GRANT ALL ON DATABASE eventstore TO eventstore;
+        image: {{ .Values.cockroachdb.image.repository }}:{{ .Values.cockroachdb.image.tag }}
+        imagePullPolicy: Always
+        name: {{ include "monoskope.name" . }}
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: certs
+        projected:
+          sources:
+          - secret:
+              name: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
+              items:
+              - key: ca.crt
+                path: ca.crt
+                mode: 0400
+              - key: tls.crt
+                path: root.crt
+                mode: 0400
+              - key: tls.key
+                path: root.key
+                mode: 0400
+{{- end }}

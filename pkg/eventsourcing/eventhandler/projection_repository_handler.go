@@ -2,12 +2,23 @@ package eventhandler
 
 import (
 	"context"
+	"fmt"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
+	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
+type ProjectionOutdatedError struct {
+	ProjectionVersion uint64
+}
+
+func (e *ProjectionOutdatedError) Error() string {
+	return fmt.Sprintf("projection version %v is outdated", e.ProjectionVersion)
+}
+
 type projectionRepoEventHandler struct {
+	log        logger.Logger
 	projector  es.Projector
 	repository es.Repository
 }
@@ -15,6 +26,7 @@ type projectionRepoEventHandler struct {
 // NewProjectingEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
 func NewProjectingEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
 	return &projectionRepoEventHandler{
+		log:        logger.WithName("projection-repo-middleware"),
 		projector:  projector,
 		repository: repository,
 	}
@@ -22,11 +34,13 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
+	h.log.V(logger.DebugLevel).Info("Projecting event...", "EventType", event.EventType(), "AggregateType", event.AggregateType())
+
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 
 	// If error is not found create new projection.
 	if err != nil {
-		if err == errors.ErrProjectionNotFound {
+		if err == esErrors.ErrProjectionNotFound {
 			projection = h.projector.NewProjection(event.AggregateID())
 		} else {
 			return err
@@ -40,7 +54,7 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	}
 	if projection.Version()+1 != event.AggregateVersion() {
 		// Version of event is not exactly one higher than the projection.
-		return errors.ErrProjectionOutdated
+		return &ProjectionOutdatedError{ProjectionVersion: projection.Version()}
 	}
 
 	// Apply event on projection.
@@ -52,14 +66,9 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	// Check version again.
 	if projection.Version() != event.AggregateVersion() {
 		// Project version and Event version do not match after projection.
-		return errors.ErrIncorrectAggregateVersion
+		return esErrors.ErrIncorrectAggregateVersion
 	}
 
-	if projection == nil {
-		// Remove projection from repo.
-		return h.repository.Remove(ctx, event.AggregateID())
-	} else {
-		// Upsert projection in repo.
-		return h.repository.Upsert(ctx, projection)
-	}
+	// Upsert projection in repo.
+	return h.repository.Upsert(ctx, projection)
 }

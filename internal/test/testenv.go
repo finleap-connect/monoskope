@@ -12,9 +12,9 @@ import (
 )
 
 type TestEnv struct {
-	pool      *dockertest.Pool
-	resources map[string]*dockertest.Resource
-	Log       logger.Logger
+	pool     *dockertest.Pool
+	Log      logger.Logger
+	shutdown bool
 }
 
 func IsRunningInCI() bool {
@@ -46,17 +46,22 @@ func (t *TestEnv) Retry(op func() error) error {
 func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error) {
 	res, present := t.pool.ContainerByName(opts.Name)
 	if present {
-		if err := t.pool.Purge(res); err != nil {
-			return nil, err
-		}
+		return res, nil
 	}
 
 	t.Log.Info(fmt.Sprintf("Starting docker container %s:%s ...", opts.Repository, opts.Tag))
-	res, err := t.pool.RunWithOptions(opts)
+	res, err := t.pool.RunWithOptions(opts, func(config *dc.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = dc.NeverRestart()
+	})
 	if err != nil {
 		return nil, err
 	}
-	t.resources[res.Container.Name] = res
+
+	err = res.Expire(60)
+	if err != nil {
+		return nil, err
+	}
 
 	containerLogger := logWriter{}
 	logOptions := dc.LogsOptions{
@@ -81,25 +86,20 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 func NewTestEnv(envName string) *TestEnv {
 	log := logger.WithName(envName)
 	env := &TestEnv{
-		Log:       log,
-		resources: make(map[string]*dockertest.Resource),
+		Log: log,
 	}
 	log.Info("Setting up testenv...")
 	return env
 }
 
 func (env *TestEnv) Shutdown() error {
+	if env.shutdown {
+		return nil
+	}
+
+	env.shutdown = true
 	log := env.Log
 	log.Info("Tearing down testenv...")
-
-	if env.resources != nil {
-		for key, element := range env.resources {
-			log.Info("Tearing down docker resource", "resource", key)
-			if err := env.pool.Purge(element); err != nil {
-				return err
-			}
-		}
-	}
 
 	return nil
 }

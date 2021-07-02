@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/google/uuid"
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
@@ -11,19 +12,23 @@ import (
 )
 
 type remoteUserRepository struct {
-	userService api.UserServiceClient
+	userService api.UserClient
 }
 
 // NewRemoteUserRepository creates a repository for reading user projections.
-func NewRemoteUserRepository(userService api.UserServiceClient) ReadOnlyUserRepository {
+func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository {
 	return &remoteUserRepository{
 		userService: userService,
 	}
 }
 
+func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
+	panic("not implemented")
+}
+
 // ById searches for the a user projection by it's id.
-func (r *remoteUserRepository) ByUserId(ctx context.Context, id string) (*projections.User, error) {
-	userProto, err := r.userService.GetById(ctx, wrapperspb.String(id))
+func (r *remoteUserRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
+	userProto, err := r.userService.GetById(ctx, wrapperspb.String(id.String()))
 	if err != nil {
 		return nil, errors.TranslateFromGrpcError(err)
 	}

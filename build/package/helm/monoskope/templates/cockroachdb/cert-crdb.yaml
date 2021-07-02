@@ -1,0 +1,42 @@
+{{ if .Values.cockroachdb.enabled }}
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-crdb-node
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ .Values.cockroachdb.tls.certs.nodeSecret }}
+  duration: {{ .Values.pki.certificates.duration }}
+  renewBefore: {{ .Values.pki.certificates.renewBefore }}
+  issuerRef:
+    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+    kind: Issuer
+  commonName: node
+  ipAddresses:
+  - 127.0.0.1
+  - '::'
+  dnsNames:
+  - localhost
+  - {{.Release.Name}}-cockroachdb-public
+  - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}
+  - {{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local
+  - "*.{{.Release.Name}}-cockroachdb-public"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb-public.{{.Release.Namespace}}.svc.cluster.local"
+  - {{.Release.Name}}-cockroachdb
+  - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}
+  - {{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local
+  - "*.{{.Release.Name}}-cockroachdb"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}"
+  - "*.{{.Release.Name}}-cockroachdb.{{.Release.Namespace}}.svc.cluster.local"
+  subject:
+    organizations:
+      - Monoskope
+  usages:
+  - client auth
+  - server auth
+{{ end }}

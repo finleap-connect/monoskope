@@ -2,6 +2,7 @@ HELM                		?= helm3
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
 HELM_REGISTRY_ALIAS			?= finleap
+HELM_RELEASE                ?= m8
 
 .PHONY: template-clean dependency-update install uninstall template docs
 
@@ -15,26 +16,25 @@ lint-%:
 	@$(HELM) lint $(HELM_PATH)/$*
 
 install-%:
-	@$(HELM) upgrade --install m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --atomic --timeout 5m
+	@cat $(HELM_VALUES_FILE) | sed "s/0.0.1-local/$(VERSION)/g" > $(HELM_VALUES_FILE).tag
+	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE).tag --skip-crds
+	@rm $(HELM_VALUES_FILE).tag
 
 install-from-repo-%:
-	@$(MAKE) helm-dep-$*
-	@$(HELM) upgrade --install m8dev $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --atomic --timeout 10m
+	@$(HELM) repo update
+	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds --atomic --timeout 10m
 
 uninstall-%: 
-	@$(HELM) uninstall m8dev --namespace $(KUBE_NAMESPACE)
+	@$(HELM) uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
 
 template-%: clean
 	@mkdir -p $(HELM_OUTPUT_DIR)
-	@$(HELM) template m8dev $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+	@$(HELM) template $(HELM_RELEASE) $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
 	@echo "ATTENTION:"
 	@echo "If you want to have the latest dependencies (e.g. gateway chart changes)"
 	@echo "execute the following command prior to the current command:"
 	@echo "$$ $(MAKE) helm-dep-$*"
 	@echo
-
-add-kubism:
-	@$(HELM) repo add kubism.io https://kubism.github.io/charts/
 
 add-finleap:
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
@@ -59,6 +59,7 @@ set-version-all:
 	@$(MAKE) helm-set-version-eventstore
 	@$(MAKE) helm-set-version-commandhandler
 	@$(MAKE) helm-set-version-queryhandler
+	@$(MAKE) helm-set-version-cluster-bootstrap-reactor
 
 docs:
-	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) gitlab.figo.systems/platform/dependency_proxy/containers/jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
+	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl

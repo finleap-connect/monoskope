@@ -11,11 +11,15 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.api.port }}
+    - port: {{ .Values.service.grpcApiPort }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+    - port: {{ .Values.service.httpApiPort }}
       targetPort: http
       protocol: TCP
       name: http
-    - port: {{ .Values.service.metrics.port }}
+    - port: {{ .Values.service.metricsPort }}
       targetPort: http-metrics
       protocol: TCP
       name: http-metrics

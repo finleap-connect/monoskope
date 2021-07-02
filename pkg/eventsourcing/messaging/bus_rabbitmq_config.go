@@ -17,6 +17,9 @@ const (
 	DefaultReInitDelay    = 5 * time.Second  // When setting up the channel after a channel exception
 	DefaultResendDelay    = 5 * time.Second  // When resending messages the server didn't confirm
 	DefaultMaxResends     = 5                // How many times resending messages the server didn't confirm
+	CACertPath            = "/etc/eventstore/certs/buscerts/ca.crt"
+	TLSCertPath           = "/etc/eventstore/certs/buscerts/tls.crt"
+	TLSKeyPath            = "/etc/eventstore/certs/buscerts/tls.key"
 )
 
 type RabbitEventBusConfig struct {
@@ -52,24 +55,31 @@ func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) *RabbitEventBus
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) ConfigureTLS() error {
+	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+	if err := loadCertificates(conf.amqpConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadCertificates(amqpConfig *amqp.Config) error {
 	cfg := &tls.Config{
 		RootCAs: x509.NewCertPool(),
 	}
-	if ca, err := ioutil.ReadFile("/etc/eventstore/certs/bus/ca.crt"); err != nil {
+
+	if ca, err := ioutil.ReadFile(CACertPath); err != nil {
 		return err
 	} else {
 		cfg.RootCAs.AppendCertsFromPEM(ca)
 	}
 
-	if cert, err := tls.LoadX509KeyPair("/etc/eventstore/certs/bus/tls.crt", "/etc/eventstore/certs/bus/tls.key"); err != nil {
+	if cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath); err != nil {
 		return err
 	} else {
 		cfg.Certificates = append(cfg.Certificates, cert)
 	}
 
-	conf.amqpConfig.Heartbeat = DefaultHeartbeat
-	conf.amqpConfig.TLSClientConfig = cfg
-	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+	amqpConfig.TLSClientConfig = cfg
 
 	return nil
 }

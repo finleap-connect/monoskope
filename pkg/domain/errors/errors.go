@@ -8,29 +8,66 @@ import (
 )
 
 var (
+	// ErrNotFound is when an aggregate is not known to the system.
+	ErrNotFound = errors.New("not found")
+	// ErrDeleted is when an aggregate has been deleted.
+	ErrDeleted = errors.New("deleted")
+
 	// ErrUnauthorized is when a requested command can not be executed because the current user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
-
 	// ErrUserNotFound is when a user is not known to the system.
 	ErrUserNotFound = errors.New("user not found")
-
 	// ErrUserAlreadyExists is when a user does already exist.
 	ErrUserAlreadyExists = errors.New("user already exists")
+
+	// ErrUserRoleBindingAlreadyExists is when a userrolebinding does already exist.
+	ErrUserRoleBindingAlreadyExists = errors.New("userrolebinding already exists")
+
+	// ErrTenantNotFound is when a tenant is not known to the system.
+	ErrTenantNotFound = errors.New("tenant not found")
+	// ErrTenantAlreadyExists is when a tenant does already exist.
+	ErrTenantAlreadyExists = errors.New("tenant already exists")
+
+	// ErrClusterRegistrationNotFound is when a cluster registration is not known to the system.
+	ErrClusterRegistrationNotFound = errors.New("cluster registration not found")
+	// ErrClusterRegistrationAlreadyExists is when an aggregate does already exist.
+	ErrClusterRegistrationAlreadyExists = errors.New("cluster registration already exists")
+
+	// ErrClusterNotFound is when a cluster is not known to the system.
+	ErrClusterNotFound = errors.New("cluster not found")
+	// ErrClusterAlreadyExists is when a cluster does already exist.
+	ErrClusterAlreadyExists = errors.New("cluster already exists")
+
+	// ErrCertificateAlreadyExists is when a cert does already exist.
+	ErrCertificateAlreadyExists = errors.New("certificate already exists")
 )
 
 var (
-	errorMap = map[codes.Code]error{
-		codes.NotFound:         ErrUserNotFound,
-		codes.PermissionDenied: ErrUnauthorized,
-		codes.AlreadyExists:    ErrUserAlreadyExists,
+	errorMap = map[codes.Code][]error{
+		codes.NotFound: {
+			ErrUserNotFound,
+			ErrTenantNotFound,
+			ErrClusterRegistrationNotFound,
+			ErrClusterNotFound,
+		},
+		codes.AlreadyExists: {
+			ErrUserAlreadyExists,
+			ErrTenantAlreadyExists,
+			ErrClusterRegistrationAlreadyExists,
+			ErrClusterAlreadyExists,
+			ErrCertificateAlreadyExists,
+		},
+		codes.PermissionDenied: {ErrUnauthorized},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )
 
-func reverseMap(m map[codes.Code]error) map[error]codes.Code {
+func reverseMap(m map[codes.Code][]error) map[error]codes.Code {
 	n := make(map[error]codes.Code)
 	for k, v := range m {
-		n[v] = k
+		for _, e := range v {
+			n[e] = k
+		}
 	}
 	return n
 }
@@ -44,7 +81,11 @@ func TranslateFromGrpcError(err error) error {
 	}
 
 	if mappedErr, ok := errorMap[s.Code()]; ok {
-		return mappedErr
+		for _, e := range mappedErr {
+			if TranslateToGrpcError(e).Error() == err.Error() {
+				return e
+			}
+		}
 	}
 
 	return err
@@ -55,5 +96,15 @@ func TranslateToGrpcError(err error) error {
 	if code, ok := reverseErrorMap[err]; ok {
 		return status.Error(code, err.Error())
 	}
-	return err
+	return status.Error(codes.Internal, err.Error())
+}
+
+// Returns a gRPC status error with InvalidArgument code
+func ErrInvalidArgument(msg string) error {
+	return status.Error(codes.InvalidArgument, msg)
+}
+
+// Returns a gRPC status error with FailedPrecondition code
+func ErrFailedPrecondition(msg string) error {
+	return status.Error(codes.FailedPrecondition, msg)
 }

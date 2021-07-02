@@ -11,104 +11,61 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+vaultOperator:
+  enabled: false
+  basePath: "app/{{ .Release.Namespace }}"
+
+pki:
+  enabled: true
+  certificates:
+    duration: 2160h # 90d
+    renewBefore: 1440h # 60d
+  issuer:
+    ca:
+      enabled: true
+      existingTrustAnchorSecretName: "m8-trust-anchor"
+      secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
+    vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
+      enabled: false
+  authentication:
+    keySecretName: &authKeySecretName "m8-authentication"
+
+hosting:
+  issuer: ""
+  domain: ""
+
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
-
-monitoring:
-  tenant: &tenant finleap-cloud
-
-ingress:
-  enabled: false
-  host: monoskope.io
-
-dex: # OIDC Provider
-  enabled: false
-  replicas: 1
-  image: ghcr.io/dexidp/dex
-  imageTag: "v2.27.0"
-  imagePullPolicy: "Always"
-  config:
-    # -- Name of the secret containing the dex config
-    existingSecret: monoskope-dex-config
-    # -- Domain of the issuer (dex)
-    issuer: &issuer https://monoskope.io/dex
-    storage:
-      type: postgres
-      config:
-        port: 26257
-        database: dex_db
-        user: dex
-        # -- Secret containing the certificates to communicate with the storage backend
-        secret: monoskope-crdb-client-dex
-        ssl:
-          mode: verify-ca
-          caFile: /etc/dex/certs/ca.crt
-          certFile: /etc/dex/certs/client.crt
-          keyFile: /etc/dex/certs/client.key
-    logger:
-      level: debug
-    web:
-      address: 0.0.0.0
-    oauth2:
-      alwaysShowLoginScreen: false
-      skipApprovalScreen: true
-    enablePasswordDB: false
-    connectors: []
-    staticClients:
-      - id: gateway
-        secret: "{{ .gatewayAppSecret }}"
-        name: "Monoskope Gateway"
-        redirectURIs:
-          - "http://localhost:8000" # callback from dex to monoctl
-          - "http://localhost:18000"
-  https: false
-  ports:
-    web:
-      containerPort: 5556
-  grpc: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 100Mi
-    requests:
-      cpu: 100m
-      memory: 50Mi
-  telemetry: true
-  certs:
-    web:
-      create: false
-    grpc:
-      create: false
-  rbac:
-    # Specifies whether RBAC resources should be created
-    create: false
-  crd:
-    # Specifies whether dex's CRDs are already present (if not cluster role and cluster role binding will be created
-    # to enable dex to create them). Depends on rbac.create
-    present: true
-  serviceAccount:
-    # Specifies whether a ServiceAccount should be created
-    create: false
-    # The name of the ServiceAccount to use.
-  # frontend:
-  #   logoURL: https://example.com/yourlogo.png
-  labels:
-    app.kubernetes.io/part-of: *name
+  clientAuthCertSecretName: &msgBusClientAuthCertSecretName "m8-messagebus-client-auth-cert"
 
 gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: *issuer
+    # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
+    identityProviderName: ""
+    # -- The URL of the issuer to use for OIDC
+    identityProviderURL: ""
+  # -- The secret containing private key for signing JWTs.
+  keySecret:
+    # -- Name of the secret to be used by the gateway, required
+    name: *authKeySecretName
+  # -- The secret where the gateway finds the OIDC secrets.
+  # If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc
+  # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
+  oidcSecret:
+    name: m8-gateway-oidc
 
 eventstore:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
   storeDatabase:
-    existingSecret: m8-eventstore-db-config
+    configSecret: "m8-db-client-config"
+    tlsSecret:  "m8-db-client-auth-cert"
 
 commandhandler:
   enabled: true
@@ -118,23 +75,25 @@ queryhandler:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 cockroachdb:
   enabled: true
+  dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
-    tag: v20.2.2
+    tag: v21.1.4
     imagePullPolicy: Always
   statefulset:
-    replicas: 3 # Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
+    replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
     maxUnavailable: 1
     resources:
       requests:
         cpu: 500m
         memory: 1Gi
       limits:
-        cpu: 1
+        cpu: 2
         memory: 2Gi
     annotations:
       linkerd.io/inject: disabled
@@ -143,7 +102,7 @@ cockroachdb:
       linkerd.io/inject: disabled
   storage:
     persistentVolume:
-      size: "20Gi" # ATTENTION: Increase for PROD according to your use-case
+      size: "1Gi" # ATTENTION: Increase for PROD according to your use-case
   conf:
     # Total size in bytes for caches, shared evenly if there are multiple
     # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
@@ -160,18 +119,18 @@ cockroachdb:
       provided: true
       tlsSecret: true
       # Secret name for the client root cert.
-      clientRootSecret: monoskope-crdb-root
+      clientRootSecret: m8-crdb-root
       # Secret name for node cert.
-      nodeSecret: monoskope-crdb-node
-  labels:
-    app.kubernetes.io/part-of: *name
+      nodeSecret: m8-crdb-node
+  labels: &extraLabels
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
-    enabled: true
-    labels: {}
+    enabled: false
+    labels:
+      release: monitoring
     annotations: {}
-    interval: 30s
-    # scrapeTimeout: 10s
+    interval: 1m
+    scrapeTimeout: 10s
 
 rabbitmq:
   enabled: true
@@ -179,49 +138,80 @@ rabbitmq:
   persistence:
     enabled: false
   image:
-    repository: gitlab.figo.systems/platform/dependency_proxy/containers/bitnami/rabbitmq
+    registry: gitlab.figo.systems/platform/dependency_proxy/containers
     tag: 3.8.9
     pullPolicy: Always
   loadDefinition:
     enabled: true
-    existingSecret: monoskope-rabbitmq-load-definition
+    existingSecret: m8-rabbitmq-load-definition
   extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
     auth_mechanisms.1 = EXTERNAL
     ssl_cert_login_from = common_name
+    ssl_options.depth = 2
   serviceAccount:
     create: false
   rbac:
     create: false
   service:
     tlsPort: 5671
-    labels:
-      app.kubernetes.io/part-of: *name
   auth:
-    username: admin # admin user with read/write access
+    username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
-    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
+    # -- Name of the secret containing the erlang secret
+    # If vaultOperator.enabled:true the secret will eb auto generated
+    existingErlangSecret: m8-rabbitmq-erlang-cookie
     tls:
       enabled: true
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
-      existingSecret: monoskope-rabbitmq-leaf
-  statefulsetLabels:
-    app.kubernetes.io/part-of: *name
+      existingSecret: m8-rabbitmq-leaf
   podAnnotations:
     linkerd.io/inject: disabled
-  podLabels:
-    app.kubernetes.io/part-of: *name
+  podLabels: &extraLabels
   metrics:
-    enabled: true
+    enabled: false
     grafanaDashboard:
-      enabled: true
-      extraLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      enabled: false
+      extraLabels: &extraLabels
+    serviceMonitor:
+      enabled: false
+      additionalLabels: &extraLabels
+
+ambassador:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
+    tag: 1.12.4
+  enableAES: false
+  crds:
+    create: false
+  rbac:
+    create: false
+  serviceAccount:
+    create: false
+  scope:
+    singleNamespace: true
+  resources:
+    limits:
+      cpu: 4
+      memory: 1000Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  metrics:
     serviceMonitor:
       enabled: true
-      additionalLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      selector:
+        release: monitoring
+
+cluster-bootstrap-reactor:
+  enabled: true
+  replicaCount: 1
+  keySecret:
+    name: *authKeySecretName
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName

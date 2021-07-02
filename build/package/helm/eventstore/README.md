@@ -13,6 +13,19 @@ A Helm chart for the Monoskope EventStore
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
+| backup.alerting.alertAfter | string | `"1h"` |  |
+| backup.alerting.enabled | bool | `false` | Enables alerting for failed backups |
+| backup.alerting.secondsSinceLastSuccessfulBackup | int | `86400` |  |
+| backup.destination | object | `{}` | Backup destination, e.g. s3 |
+| backup.enabled | bool | `false` | Enables automated backups for the eventstore |
+| backup.existingSecretName | string | `""` | Secret containing destination specific secrets, e.g. credentials to s3. The secret will be mounted as environment. |
+| backup.prometheusPushgatewayUrl | string | `""` | Prometheus push gateway to push metrics to |
+| backup.restore.backupIdentifier | string | `""` | Identifier of the backup to restore. |
+| backup.restore.enabled | bool | `false` | Enabling this will deploy a job which restores the backup set up in backupIdentifier from the backup.destination specified earlier. |
+| backup.restore.timeout | string | `"1h"` | Timeout for restore job |
+| backup.retentionCount | int | `7` | Number of most recent backups to keep |
+| backup.schedule | string | `"0 22 * * *"` | CRON expression defining the backup schedule |
+| backup.timeout | string | `"1h"` | Timeout for backup job |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
@@ -25,9 +38,9 @@ A Helm chart for the Monoskope EventStore
 | livenessProbe.failureThreshold | int | `10` |  |
 | livenessProbe.initialDelaySeconds | int | `10` |  |
 | livenessProbe.periodSeconds | int | `5` |  |
-| messageBus.existingSecret | string | `""` | Name of the configmap containing the config for the eventstore messagebus |
+| messageBus.configSecret | string | `""` | Name of the configmap containing the config for the eventstore messagebus |
 | messageBus.routingKeyPrefix | string | `"m8"` | Prefix for routing messages via message bus |
-| messageBus.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
+| messageBus.tlsSecret | string | `""` | Name of the secret containing the tls certificate/key to access the messagebus |
 | messageBus.url | string | `"amqps://127.0.0.1:5672/"` | URL of the bus |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
@@ -45,9 +58,9 @@ A Helm chart for the Monoskope EventStore
 | service.api.port | int | `8080` |  |
 | service.metrics.port | int | `9102` |  |
 | service.type | string | `"ClusterIP"` |  |
-| storeDatabase.existingSecret | string | `""` | Name of the secret containing the config for the eventstore database |
+| storeDatabase.configSecret | string | `""` | Name of the secret containing the config for the eventstore database |
 | storeDatabase.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
-| storeDatabase.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` |  |
+| storeDatabase.url | string | `"postgres://root@127.0.0.1:26257/test?sslmode=disable"` | URL of the database |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

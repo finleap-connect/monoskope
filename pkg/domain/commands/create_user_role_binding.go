@@ -13,32 +13,27 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// AddRoleToUser is a command for adding a role to a user.
+func init() {
+	es.DefaultCommandRegistry.RegisterCommand(NewCreateUserRoleBindingCommand)
+}
+
+// CreateUserRoleBindingCommand is a command for adding a role to a user.
 type CreateUserRoleBindingCommand struct {
-	aggregateId uuid.UUID
+	*es.BaseCommand
 	cmdData.CreateUserRoleBindingCommandData
 }
 
-func NewCreateUserRoleBindingCommand() *CreateUserRoleBindingCommand {
+func NewCreateUserRoleBindingCommand(id uuid.UUID) es.Command {
 	return &CreateUserRoleBindingCommand{
-		aggregateId:                      uuid.New(),
-		CreateUserRoleBindingCommandData: cmdData.CreateUserRoleBindingCommandData{},
+		BaseCommand: es.NewBaseCommand(id, aggregates.UserRoleBinding, commands.CreateUserRoleBinding),
 	}
-}
-
-func (c *CreateUserRoleBindingCommand) AggregateID() uuid.UUID { return c.aggregateId }
-func (c *CreateUserRoleBindingCommand) AggregateType() es.AggregateType {
-	return aggregates.UserRoleBinding
-}
-func (c *CreateUserRoleBindingCommand) CommandType() es.CommandType {
-	return commands.CreateUserRoleBinding
 }
 func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateUserRoleBindingCommandData)
 }
 func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System),                          // System admin
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant).WithResource(c.Resource), // Tenant admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
+		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant), // Tenant admin
 	}
 }
