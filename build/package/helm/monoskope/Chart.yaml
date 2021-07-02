@@ -49,5 +49,5 @@ dependencies: # A list of the chart requirements
   - name: ambassador
     version: 6.7.11
     repository: https://getambassador.io
-    condition: ambassador.enabled,global.ambassador.enabled
+    condition: ambassador.deploy,global.ambassador.deploy
 
