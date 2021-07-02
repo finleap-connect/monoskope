@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
+	"github.com/google/uuid"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
@@ -43,9 +45,15 @@ func (m *reactorEventHandler) Stop() {
 func (m *reactorEventHandler) handle(ctx context.Context, events <-chan es.Event) {
 	defer m.waitGroup.Done()
 	for ev := range events { // Read events from channel
+		err := checkUserId(ev)
+		if err != nil {
+			m.log.Error(err, "Event metadata do not contain user information.")
+			continue
+		}
+
 		params := backoff.NewExponentialBackOff()
 		params.MaxElapsedTime = 60 * time.Second
-		err := backoff.Retry(func() error {
+		err = backoff.Retry(func() error {
 			if err := m.storeEvent(ctx, ev); err != nil {
 				m.log.Error(err, "Failed to send event to EventStore. Retrying...", "AggregateID", ev.AggregateID(), "AggregateType", ev.AggregateType(), "EventType", ev.EventType())
 				return err
@@ -84,4 +92,9 @@ func (m *reactorEventHandler) storeEvent(ctx context.Context, event es.Event) er
 	}
 
 	return nil
+}
+
+func checkUserId(event es.Event) error {
+	_, err := uuid.Parse(event.Metadata()[auth.HeaderAuthId])
+	return err
 }

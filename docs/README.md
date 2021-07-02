@@ -2,7 +2,7 @@
 
 ---
 
-# Monoskope Documentation Overview
+# Overview
 
 ## Installation Quickstart
 
@@ -15,27 +15,24 @@ Monoskope requires a Kubernetes cluster with a number of componenents already in
 
 It will install a number of packages as a dedicated instance:
 
-* Ambassador, provided the required CRDs are already installed. Set `ambassador.crds.create=true` in the helm `values.yaml` to roll them out with monoskope.
+* Ambassador, provided the required CRDs are already installed. Set `ambassador.crds.create=true` 
+  in the helm `values.yaml` to roll them out with monoskope.
 * CockroachDB
 * RabbitMQ
 
 
 ## Docs for development
+* [Architecture decisions](architecture-decisions/)
+* [Diagrams](diagrams/)
+* [Development](development/)
+* [Deployment](deployment/)
+* [Operation](operation/)
 
-* [Makefile](Makefile.md)
-* [Flow charts](flow-charts/README.md)
-* [Get started](development/README.md)
-
-## Using Monoskope
-
-* [Permission Model](permissionModel.md)
-* [EventStore Backup & Restore](eventstore-backup.md)
-* [Certificate Management](certificate-management.md)
-
-## Docs on Monoskope Helm Charts
+## Helm Charts documentation
 
 * `gateway` helm chart [readme](build/package/helm/gateway/README.md)
 * `eventstore` helm chart [readme](build/package/helm/eventstore/README.md)
 * `commandhandler` helm chart [readme](build/package/helm/commandhandler/README.md)
 * `queryhandler` helm chart [readme](build/package/helm/queryhandler/README.md)
+* `cluster-bootstrap-reactor` helm chart [readme](build/package/helm/cluster-bootstrap-reactor/README.md)
 * `monoskope` helm chart [readme](build/package/helm/monoskope/README.md)

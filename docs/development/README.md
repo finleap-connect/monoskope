@@ -49,7 +49,7 @@
 
 ## Prerequisites
 
-## Go
+### Go
 
 * Execute `make go-tools` to get linter and testing binaries
 
@@ -65,24 +65,22 @@
 * pick up configuration for kubectl and check nodes of newly created cluster
   'export KUBECONFIG="$KUBECONFIG:$HOME/.kube/kind-m8kind-config"
 * ensure the finleap helm repo has been added to your local configuration
-  ```
+
+  ```bash
   helm3 repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
   helm3 repo update
-  ``'
+  ```
+
 * deploy helm charts
-  `VERSION="0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
+  `VERSION="v0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
 
+## Testing
 
+There are three general areas of testing within the code:
 
-## To create a new aggregate
-
-1. Add command messages (command data, to be more specific) to separate file in `api/domain/commanddata/` folder
-1. add code to handle new command to separate file in `pkg/domain/commands/` folder. Ideally copy and apapt existing examples.
-1. add aggregate to separate file in `pkg/domain/aggregates/` folder.
-1. Add service with query functions to `api/domain/queryhandler_service.proto`
-1. Add messages for projection in `api/domain/projections` (ideally in separate `.proto` file)
-1. Implement query functiosn in new projection repository in `pkg/domain/repositories/`.
-1. Implment projector in `pkg/domain/projectors/` folder. There should be at least one projector per aggregate, but there may be multiple projectors. In order to have one projector handle events by multiple Aggregate types, simply register multiple matchers on the same projector. See `pkg/domain/queryhandler.go` for details. (TODO: create more elaborate examples for later use)
+* **Unit Tests**, that are co-located with the functions that they are testing. These are implemented using [Ginkgo](https://github.com/onsi/ginkgo) and [Gomega](https://github.com/onsi/gomega) to aid in readability. These should be implemented using TDD and BDD principles.
+* **Integration Tests**, the reconstruct the complete software stack automatically. These should be used as the primary test environment for developers to verify that new modules fit with the rest of the system. They are also implemented using Ginkgo and Gomega.
+* **Acceptance Tests**, they ensure that the business rules are correctly implemented. They are written in Gherkin and use [godog](https://github.com/cucumber/godog) to validate against the code.
 
 ## Event Sourcing & CQRS
 
@@ -108,14 +106,19 @@
 | EventStore | The storage where the `Events` of the system are persisted. |
 | Reactor | A component that reacts to `Events` and does any arbitrary action. For example, think of sending an welcoming email to a user after an `UserCreated` event has been observed. |
 
-### Command/Write Side
+### Command / Write Side
 
-* [Events](events.md)
-* [Commands](commands.md)
-* [Aggregates](aggregates.md)
+* [Events](01-events.md)
+* [Commands](02-commands.md)
+* [Aggregates](03-aggregates.md)
 
-### Query/Read Side
+### Query / Read Side
 
-* [Projections](projections.md)
-* [Projectors](projectors.md)
-* [Repositories](repositories.md)
+* [Projections](04-projections.md)
+* [Projectors](05-projectors.md)
+* [Repositories](06-repositories.md)
+* [Query Handler](08-queryhandler.md)
+
+### Reactors
+
+* [Reactors](07-reactors.md)

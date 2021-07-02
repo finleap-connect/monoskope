@@ -11,11 +11,15 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
 
+vaultOperator:
+  enabled: false
+  basePath: "app/{{ .Release.Namespace }}"
+
 pki:
   enabled: true
   certificates:
-    duration: 90d
-    renewBefore: 60d
+    duration: 2160h # 90d
+    renewBefore: 1440h # 60d
   issuer:
     ca:
       enabled: true
@@ -23,18 +27,17 @@ pki:
       secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
     vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
       enabled: false
-      path: pki_int/sign/example-dot-com
-      server: https://vault.local
   authentication:
     keySecretName: &authKeySecretName "m8-authentication"
 
 hosting:
   issuer: ""
-  domain: &domain monoskope.io
+  domain: ""
 
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
+  clientAuthCertSecretName: &msgBusClientAuthCertSecretName "m8-messagebus-client-auth-cert"
 
 monitoring:
   tenant: &tenant finleap-cloud
@@ -42,23 +45,34 @@ monitoring:
     enabled: &alertingEnabled true
   dashboards:
     enabled: true
-    
 
 gateway:
   enabled: true
   replicaCount: 1
   auth:
-    issuerURL: https://your-idp.com
+    # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
+    identityProviderName: ""
+    # -- The URL of the issuer to use for OIDC
+    identityProviderURL: ""
+  # -- The secret containing private key for signing JWTs.
   keySecret:
+    # -- Name of the secret to be used by the gateway, required
     name: *authKeySecretName
-    
+  # -- The secret where the gateway finds the OIDC secrets.
+  # If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc
+  # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
+  oidcSecret:
+    name: m8-gateway-oidc
+
 eventstore:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
   storeDatabase:
-    existingSecret: m8-eventstore-db-config
+    configSecret: "m8-db-client-config"
+    tlsSecret:  "m8-db-client-auth-cert"
   monitoring:
     alerting:
       enabled: *alertingEnabled
@@ -71,14 +85,15 @@ queryhandler:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 cockroachdb:
   enabled: true
   dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
-    tag: v20.2.2
+    tag: v21.1.4
     imagePullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
@@ -114,25 +129,22 @@ cockroachdb:
       provided: true
       tlsSecret: true
       # Secret name for the client root cert.
-      clientRootSecret: monoskope-crdb-root
+      clientRootSecret: m8-crdb-root
       # Secret name for node cert.
-      nodeSecret: monoskope-crdb-node
-  labels:
-    app.kubernetes.io/part-of: *name
+      nodeSecret: m8-crdb-node
+  labels: &extraLabels
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
-    enabled: true
+    enabled: false
     labels:
-      tenant: *tenant
       release: monitoring
-      app.kubernetes.io/part-of: *name
     annotations: {}
     interval: 1m
     scrapeTimeout: 10s
 
 rabbitmq:
   enabled: true
-  replicaCount: 1
+  replicaCount: 3
   persistence:
     enabled: false
   image:
@@ -141,7 +153,7 @@ rabbitmq:
     pullPolicy: Always
   loadDefinition:
     enabled: true
-    existingSecret: monoskope-rabbitmq-load-definition
+    existingSecret: m8-rabbitmq-load-definition
   extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
     load_definitions = /app/rabbitmq-definitions.json
@@ -154,39 +166,33 @@ rabbitmq:
     create: false
   service:
     tlsPort: 5671
-    labels:
-      app.kubernetes.io/part-of: *name
   auth:
     username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
-    existingErlangSecret: monoskope-rabbitmq-erlang-cookie
+    # -- Name of the secret containing the erlang secret
+    # If vaultOperator.enabled:true the secret will eb auto generated
+    existingErlangSecret: m8-rabbitmq-erlang-cookie
     tls:
       enabled: true
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
-      existingSecret: monoskope-rabbitmq-leaf
-  statefulsetLabels:
-    app.kubernetes.io/part-of: *name
+      existingSecret: m8-rabbitmq-leaf
   podAnnotations:
     linkerd.io/inject: disabled
-  podLabels:
-    app.kubernetes.io/part-of: *name
+  podLabels: &extraLabels
   metrics:
-    enabled: true
+    enabled: false
     grafanaDashboard:
-      enabled: true
-      extraLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      enabled: false
+      extraLabels: &extraLabels
     serviceMonitor:
-      enabled: true
-      additionalLabels:
-        tenant: *tenant
-        app.kubernetes.io/part-of: *name
+      enabled: false
+      additionalLabels: &extraLabels
 
 ambassador:
   enabled: true
-  replicaCount: 3
+  deploy: true
+  replicaCount: 1
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
     tag: 1.12.4
@@ -210,12 +216,13 @@ ambassador:
     serviceMonitor:
       enabled: true
       selector:
-        tenant: *tenant
         release: monitoring
 
 cluster-bootstrap-reactor:
   enabled: true
+  replicaCount: 1
   keySecret:
     name: *authKeySecretName
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName

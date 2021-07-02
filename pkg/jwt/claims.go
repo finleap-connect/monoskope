@@ -21,7 +21,6 @@ type StandardClaims struct {
 	Email           string            `json:"email,omitempty"`          // The email of the user.
 	EmailVerified   bool              `json:"email_verified,omitempty"` // If the upstream provider has verified the email.
 	Groups          []string          `json:"groups,omitempty"`         // A list of strings representing the groups a user is a member of.
-	FederatedSub    string            `json:"sub"`                      // The connector ID and the user ID assigned to the user at the provider.
 	FederatedClaims map[string]string `json:"federated_claims,omitempty"`
 }
 

@@ -13,6 +13,7 @@ spec:
   auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
   path_prefix: /auth
   allowed_authorization_headers:
+    - "x-auth-id"
     - "x-auth-name"
     - "x-auth-email"
     - "x-auth-issuer"

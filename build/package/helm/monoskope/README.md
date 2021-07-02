@@ -13,9 +13,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://artifactory.figo.systems/artifactory/virtual_helm | cockroachdb | 5.0.2 |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://getambassador.io | ambassador | 6.5.18 |
+| https://charts.cockroachdb.com/ | cockroachdb | 6.0.5 |
+| https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values
 
@@ -28,9 +28,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.image.tag | string | `"1.12.4"` |  |
 | ambassador.metrics.serviceMonitor.enabled | bool | `true` |  |
 | ambassador.metrics.serviceMonitor.selector.release | string | `"monitoring"` |  |
-| ambassador.metrics.serviceMonitor.selector.tenant | string | `"finleap-cloud"` |  |
 | ambassador.rbac.create | bool | `false` |  |
-| ambassador.replicaCount | int | `3` |  |
+| ambassador.replicaCount | int | `1` |  |
 | ambassador.resources.limits.cpu | int | `4` |  |
 | ambassador.resources.limits.memory | string | `"1000Mi"` |  |
 | ambassador.resources.requests.cpu | string | `"100m"` |  |
@@ -39,22 +38,22 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.serviceAccount.create | bool | `false` |  |
 | cluster-bootstrap-reactor.enabled | bool | `true` |  |
 | cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
-| cluster-bootstrap-reactor.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
+| cluster-bootstrap-reactor.replicaCount | int | `1` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
 | cockroachdb.dropExistingDatabase | bool | `false` |  |
 | cockroachdb.enabled | bool | `true` |  |
 | cockroachdb.image.imagePullPolicy | string | `"Always"` |  |
 | cockroachdb.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach"` |  |
-| cockroachdb.image.tag | string | `"v20.2.2"` |  |
+| cockroachdb.image.tag | string | `"v21.1.4"` |  |
 | cockroachdb.init.annotations."linkerd.io/inject" | string | `"disabled"` |  |
-| cockroachdb.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| cockroachdb.labels | string | `nil` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
-| cockroachdb.serviceMonitor.enabled | bool | `true` |  |
+| cockroachdb.serviceMonitor.enabled | bool | `false` |  |
 | cockroachdb.serviceMonitor.interval | string | `"1m"` |  |
-| cockroachdb.serviceMonitor.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | cockroachdb.serviceMonitor.labels.release | string | `"monitoring"` |  |
-| cockroachdb.serviceMonitor.labels.tenant | string | `"finleap-cloud"` |  |
 | cockroachdb.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | cockroachdb.statefulset.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.statefulset.maxUnavailable | int | `1` |  |
@@ -64,48 +63,52 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.statefulset.resources.requests.cpu | string | `"500m"` |  |
 | cockroachdb.statefulset.resources.requests.memory | string | `"1Gi"` |  |
 | cockroachdb.storage.persistentVolume.size | string | `"1Gi"` |  |
-| cockroachdb.tls.certs.clientRootSecret | string | `"monoskope-crdb-root"` |  |
-| cockroachdb.tls.certs.nodeSecret | string | `"monoskope-crdb-node"` |  |
+| cockroachdb.tls.certs.clientRootSecret | string | `"m8-crdb-root"` |  |
+| cockroachdb.tls.certs.nodeSecret | string | `"m8-crdb-node"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
 | cockroachdb.tls.certs.tlsSecret | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
 | commandhandler.enabled | bool | `true` |  |
 | commandhandler.replicaCount | int | `1` |  |
 | eventstore.enabled | bool | `true` |  |
-| eventstore.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | eventstore.replicaCount | int | `1` |  |
-| eventstore.storeDatabase.existingSecret | string | `"m8-eventstore-db-config"` |  |
+| eventstore.storeDatabase.configSecret | string | `"m8-db-client-config"` |  |
+| eventstore.storeDatabase.tlsSecret | string | `"m8-db-client-auth-cert"` |  |
 | fullnameOverride | string | `""` |  |
-| gateway.auth.issuerURL | string | `"https://your-idp.com"` |  |
+| gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
+| gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
 | gateway.enabled | bool | `true` |  |
-| gateway.keySecret.name | string | `"m8-authentication"` |  |
+| gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
+| gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
+| gateway.oidcSecret | object | `{"name":"m8-gateway-oidc"}` | The secret where the gateway finds the OIDC secrets. If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically. |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| hosting.domain | string | `"monoskope.io"` |  |
+| hosting.domain | string | `""` |  |
 | hosting.issuer | string | `""` |  |
+| messageBus.clientAuthCertSecretName | string | `"m8-messagebus-client-auth-cert"` |  |
 | messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
 | messageBus.routingKeyPrefix | string | `"m8"` |  |
-| monitoring.tenant | string | `"finleap-cloud"` |  |
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
-| pki.certificates.duration | string | `"48h"` |  |
-| pki.certificates.renewBefore | string | `"23h"` |  |
+| pki.certificates.duration | string | `"2160h"` |  |
+| pki.certificates.renewBefore | string | `"1440h"` |  |
 | pki.enabled | bool | `true` |  |
 | pki.issuer.ca.enabled | bool | `true` |  |
 | pki.issuer.ca.existingTrustAnchorSecretName | string | `"m8-trust-anchor"` |  |
 | pki.issuer.ca.secretVersion | int | `1` |  |
 | pki.issuer.vault.enabled | bool | `false` |  |
-| pki.issuer.vault.path | string | `"pki_int/sign/example-dot-com"` |  |
-| pki.issuer.vault.server | string | `"https://vault.local"` |  |
 | queryhandler.enabled | bool | `true` |  |
-| queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | queryhandler.replicaCount | int | `1` |  |
-| rabbitmq.auth.existingErlangSecret | string | `"monoskope-rabbitmq-erlang-cookie"` |  |
+| rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` | Name of the secret containing the erlang secret If vaultOperator.enabled:true the secret will eb auto generated |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
 | rabbitmq.auth.tls.enabled | bool | `true` |  |
-| rabbitmq.auth.tls.existingSecret | string | `"monoskope-rabbitmq-leaf"` |  |
+| rabbitmq.auth.tls.existingSecret | string | `"m8-rabbitmq-leaf"` |  |
 | rabbitmq.auth.tls.failIfNoPeerCert | bool | `true` |  |
 | rabbitmq.auth.tls.sslOptionsVerify | string | `"verify_peer"` |  |
 | rabbitmq.auth.username | string | `"eventstore"` |  |
@@ -116,23 +119,21 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.image.registry | string | `"gitlab.figo.systems/platform/dependency_proxy/containers"` |  |
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
-| rabbitmq.loadDefinition.existingSecret | string | `"monoskope-rabbitmq-load-definition"` |  |
-| rabbitmq.metrics.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.enabled | bool | `true` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.grafanaDashboard.extraLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
-| rabbitmq.metrics.serviceMonitor.additionalLabels.tenant | string | `"finleap-cloud"` |  |
-| rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
+| rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
+| rabbitmq.metrics.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.enabled | bool | `false` |  |
+| rabbitmq.metrics.grafanaDashboard.extraLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.additionalLabels | string | `nil` |  |
+| rabbitmq.metrics.serviceMonitor.enabled | bool | `false` |  |
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.podAnnotations."linkerd.io/inject" | string | `"disabled"` |  |
-| rabbitmq.podLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.podLabels | string | `nil` |  |
 | rabbitmq.rbac.create | bool | `false` |  |
-| rabbitmq.replicaCount | int | `1` |  |
-| rabbitmq.service.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.tlsPort | int | `5671` |  |
 | rabbitmq.serviceAccount.create | bool | `false` |  |
-| rabbitmq.statefulsetLabels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| vaultOperator.basePath | string | `"app/{{ .Release.Namespace }}"` |  |
+| vaultOperator.enabled | bool | `false` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.4.0](https://github.com/norwoodj/helm-docs/releases/v1.4.0)

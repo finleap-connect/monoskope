@@ -26,7 +26,7 @@ A Helm chart for the Monoskope Cluster Bootstrap Reactor
 | keySecret.field | string | `"tls.key"` | field of the secret containing the private key (PEM or DER-encoded) |
 | keySecret.name | string | `""` | secret containing private key |
 | labels | object | `{}` |  |
-| messageBus.existingSecret | string | `""` | Name of the configmap containing the config for the messagebus |
+| messageBus.configSecret | string | `""` | Name of the configmap containing the config for the messagebus |
 | messageBus.routingKeyPrefix | string | `"m8"` | Prefix for routing messages via message bus |
 | messageBus.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
 | messageBus.url | string | `"amqps://127.0.0.1:5672/"` | URL of the bus |

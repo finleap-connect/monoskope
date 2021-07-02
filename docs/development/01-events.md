@@ -11,7 +11,7 @@ The `Event` types are defined as constants of type [`EventType`](../../pkg/event
 
 ## Prerequisites
 
-`Events` alone won't make the system work. They only make sense in combination with [`Commands`](commands.md) executed on [`Aggregates`](aggregates.md) which emit [`Event(s)`](events.md).
+`Events` alone won't make the system work. They only make sense in combination with [`Commands`](02-commands.md) executed on [`Aggregates`](aggregates.md) which emit `Event(s)`.
 So before adding a new `Event` you might have a look at the docs about them first.
 
 ## Steps to add a new `Event`
@@ -32,7 +32,7 @@ When adding a new `Event` you need to do the following:
 1. Add a new `EventData` definition for your new `Event`:
     * For the `UserNameChanged` event you need `EventData` containing the new name of the user.
     * `EventData` are defined as [proto files](https://developers.google.com/protocol-buffers/docs/proto3), see [`api/domain/eventdata`](../../api/domain/eventdata).
-    * Use the [Makefile](../Makefile.md) to generate code from the [proto files](https://developers.google.com/protocol-buffers/docs/proto3) with `make go-protobuf` after you've changed something here.
+    * Use the [Makefile](../../Makefile.md) to generate code from the [proto files](https://developers.google.com/protocol-buffers/docs/proto3) with `make go-protobuf` after you've changed something here.
     * Attention: Not every new `Event` you introduce needs `EventData`. For example the deletion of a user can be free of additional `EventData`.
 
     ```protobuf
@@ -42,7 +42,7 @@ When adding a new `Event` you need to do the following:
     }
     ```
 
-1. Add the handling for the new `Event` on your [Aggregate](aggregates.md):
+1. Add the handling for the new `Event` on your [Aggregate](03-aggregates.md):
     * When an `UserNameChanged` event occurs, the [`User`](../../pkg/domain/aggregates/user.go) `Aggregate` needs to update the name field.
     * Make yourself clear that applying an event to an `Aggregate` needs no validation whatsoever since this already happened before the `Command` on the `Aggregate` has been executed.
 
@@ -66,10 +66,10 @@ When adding a new `Event` you need to do the following:
 
 1. Add the handling for the new `Event` on your `Projector`:
     * When the `UserProjector` handles the new `UserNameChanged` event, it needs to update the name of the `UserProjection`.
-    * See the docs on [Projections](projections.md) and [Projectors](projectors.md) for this.
+    * See the docs on [Projections](04-projections.md) and [Projectors](05-projectors.md) for this.
 
 1. Now when will this `Event` be emitted?
 Right!
 Until now nowhere.
 You need to create a new `Command` which changes the user's name.
-Head over to the docs about creating [Commands](commands.md) for this.
+Head over to the docs about creating [Commands](02-commands.md) for this.

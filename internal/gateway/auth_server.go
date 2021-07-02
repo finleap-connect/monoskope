@@ -145,8 +145,8 @@ func (s *authServer) auth(c *gin.Context) {
 	c.String(http.StatusUnauthorized, "authorization failed")
 }
 
-func (s *authServer) retrieveUserId(c *gin.Context, email string) (string, bool) {
-	user, err := s.userRepo.ByEmail(c, email)
+func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
+	user, err := s.userRepo.ByEmail(ctx, email)
 	if err != nil {
 		return "", false
 	}
@@ -176,6 +176,9 @@ func (s *authServer) tokenValidation(ctx context.Context, token string, expected
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
+
+	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email)
+
 	return authToken
 }
 
@@ -197,6 +200,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
 		}, userId, "mtls")
+		claims.Subject = userId
 		claims.Issuer = cert.Issuer.CommonName
 		s.log.Info("Client certificate validation successful.", "User", claims.Email)
 		return claims

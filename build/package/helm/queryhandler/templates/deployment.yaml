@@ -66,7 +66,7 @@ spec:
             containerPort: {{ .Values.ports.metrics }}
           envFrom:
             - secretRef:
-                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
           args:
             - /app
             - server

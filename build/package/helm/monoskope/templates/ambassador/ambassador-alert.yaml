@@ -11,7 +11,6 @@ metadata:
     {{- end }}
     app: prometheus-operator
     release: monitoring
-    tenant: {{ .Values.monitoring.tenant }}
 spec:
   groups:
   - name: {{ .Release.Namespace }}.rules
