@@ -17,4 +17,6 @@ include:
     - web
     - tags
     - develop
-
+  cache:
+    paths:
+      - /var/lib/buildkit
