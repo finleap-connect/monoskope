@@ -67,9 +67,9 @@ spec:
             containerPort: {{ .Values.ports.metrics }}
           envFrom:
             - secretRef:
-                name: {{ .Values.messageBus.existingSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "bus") }}
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "bus") }}
             - secretRef:
-                name: {{ .Values.storeDatabase.existingSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
+                name: {{ .Values.storeDatabase.configSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
           args:
             - /app
             - server

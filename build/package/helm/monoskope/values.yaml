@@ -37,6 +37,7 @@ hosting:
 messageBus:
   routingKeyPrefix: "m8"
   clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
+  clientAuthCertSecretName: &msgBusClientAuthCertSecretName "m8-messagebus-client-auth-cert"
 
 gateway:
   enabled: true
@@ -60,9 +61,11 @@ eventstore:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: "m8-messagebus-client-cert"
   storeDatabase:
-    existingSecret: m8-crdb-auth-evenstore
+    configSecret: "m8-db-client-config"
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 commandhandler:
   enabled: true
@@ -72,7 +75,8 @@ queryhandler:
   enabled: true
   replicaCount: 1
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 cockroachdb:
   enabled: true
@@ -209,4 +213,5 @@ cluster-bootstrap-reactor:
   keySecret:
     name: *authKeySecretName
   messageBus:
-    existingSecret: *msgBusClientConfigSecretName
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName

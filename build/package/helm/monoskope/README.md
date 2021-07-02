@@ -38,7 +38,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.serviceAccount.create | bool | `false` |  |
 | cluster-bootstrap-reactor.enabled | bool | `true` |  |
 | cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
-| cluster-bootstrap-reactor.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| cluster-bootstrap-reactor.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | cluster-bootstrap-reactor.replicaCount | int | `1` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
@@ -70,9 +71,11 @@ Monoskope implements the management and operation of tenants, users and their ro
 | commandhandler.enabled | bool | `true` |  |
 | commandhandler.replicaCount | int | `1` |  |
 | eventstore.enabled | bool | `true` |  |
-| eventstore.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-cert"` |  |
 | eventstore.replicaCount | int | `1` |  |
-| eventstore.storeDatabase.existingSecret | string | `"m8-crdb-auth-evenstore"` |  |
+| eventstore.storeDatabase.configSecret | string | `"m8-db-client-config"` |  |
+| eventstore.storeDatabase.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | fullnameOverride | string | `""` |  |
 | gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
@@ -85,6 +88,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
 | hosting.domain | string | `""` |  |
 | hosting.issuer | string | `""` |  |
+| messageBus.clientAuthCertSecretName | string | `"m8-messagebus-client-auth-cert"` |  |
 | messageBus.clientConfigSecretName | string | `"m8-messagebus-client-config"` |  |
 | messageBus.routingKeyPrefix | string | `"m8"` |  |
 | name | string | `"monoskope"` |  |
@@ -98,7 +102,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | pki.issuer.ca.secretVersion | int | `1` |  |
 | pki.issuer.vault.enabled | bool | `false` |  |
 | queryhandler.enabled | bool | `true` |  |
-| queryhandler.messageBus.existingSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| queryhandler.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | queryhandler.replicaCount | int | `1` |  |
 | rabbitmq.auth.existingErlangSecret | string | `"m8-rabbitmq-erlang-cookie"` | Name of the secret containing the erlang secret If vaultOperator.enabled:true the secret will eb auto generated |
 | rabbitmq.auth.password | string | `"w1!!b3r3pl4c3d"` |  |
