@@ -3,7 +3,6 @@
 {{- if .Values.cockroachdb.dropExistingDatabase }}
 {{- $fullname = (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init-with-drop") -}}
 {{- end }}
-{{- $crdbName := (printf "%s-%s" (include "monoskope.name" .) "crdb") -}}
 {{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
 apiVersion: batch/v1
 kind: Job
@@ -53,7 +52,7 @@ spec:
         projected:
           sources:
           - secret:
-              name: {{ $crdbName }}-root
+              name: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
               items:
               - key: ca.crt
                 path: ca.crt

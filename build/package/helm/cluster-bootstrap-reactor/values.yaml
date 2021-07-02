@@ -79,7 +79,7 @@ messageBus:
   # -- URL of the bus
   url: amqps://127.0.0.1:5672/
   # -- Name of the configmap containing the config for the messagebus
-  existingSecret: ""
+  configSecret: ""
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
   
