@@ -44,7 +44,7 @@ eventstore:
       cpu: 500m
       memory: 64Mi
   backup:
-    enabled: true
+    enabled: false
     alerting:
       enabled: false
     schedule: "0 22 * * *"
