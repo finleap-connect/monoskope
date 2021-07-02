@@ -19,4 +19,4 @@ include:
     - develop
   cache:
     paths:
-      - /var/lib/buildkit
+      - /home/user/.local/share/img
