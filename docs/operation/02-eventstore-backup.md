@@ -13,6 +13,12 @@ Additionally the backups are AES encrypted and do not depend on the underlying d
 
 The helm chart of the EventStore allows to schedule automated backups.
 At the moment of writing only S3 is available as backup destination.
+In the following example an K8s secret is available in the namespace where the EventStore is running called `my-s3-credentails` containing the following fields:
+
+* `S3_ACCESS_KEY` - required, S3 credentials access key
+* `S3_SECRET_KEY` - required, S3 credentials secret key
+* `S3_ENCRYPTION_KEY` - optional, AES 32 bytes for encryption of backups
+
 In the following yaml snippet you can see the available options:
 
 ```yaml
