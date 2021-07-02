@@ -22,4 +22,6 @@ The following things must be set up in your target K8s Cluster:
     * finleap-connect/vaultoperator
 1. Create m8 PKI.
 See [certificate management](01-certificate-management.md).
+1. Configure an identity provider.
+See [identity provider setup](02-identity-provider-setup.md).
 1. Deploy [Helm Chart](../../build/package/helm/monoskope/README.md).
