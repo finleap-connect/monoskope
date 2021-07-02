@@ -4,14 +4,13 @@ global:
   imagePullSecrets:
     - name: gitlab-registry
 
-
 vaultOperator:
   enabled: true
   basePath: app/{{ .Release.Namespace }}
   
 hosting:
   issuer: letsencrypt-production
-  domain: &domain monoskope.dev.finleap.cloud
+  domain: monoskope.dev.finleap.cloud
 
 # cockroachdb:
   # dropExistingDatabase: true

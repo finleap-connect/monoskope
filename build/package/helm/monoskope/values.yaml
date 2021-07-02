@@ -62,10 +62,10 @@ eventstore:
   replicaCount: 1
   messageBus:
     configSecret: *msgBusClientConfigSecretName
-    tlsSecret: "m8-messagebus-client-cert"
+    tlsSecret: *msgBusClientAuthCertSecretName
   storeDatabase:
     configSecret: "m8-db-client-config"
-    tlsSecret: *msgBusClientAuthCertSecretName
+    tlsSecret:  "m8-db-client-auth-cert"
 
 commandhandler:
   enabled: true

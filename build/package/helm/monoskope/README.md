@@ -72,10 +72,10 @@ Monoskope implements the management and operation of tenants, users and their ro
 | commandhandler.replicaCount | int | `1` |  |
 | eventstore.enabled | bool | `true` |  |
 | eventstore.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
-| eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-cert"` |  |
+| eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | eventstore.replicaCount | int | `1` |  |
 | eventstore.storeDatabase.configSecret | string | `"m8-db-client-config"` |  |
-| eventstore.storeDatabase.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
+| eventstore.storeDatabase.tlsSecret | string | `"m8-db-client-auth-cert"` |  |
 | fullnameOverride | string | `""` |  |
 | gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
