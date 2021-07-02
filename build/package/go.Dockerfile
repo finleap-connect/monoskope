@@ -24,7 +24,6 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 COPY pkg/ pkg/
 
-RUN echo "Building commit ${COMMIT} with version ${VERSION} of ${SRC}"
 RUN CGO_ENABLED=0 GOOS=linux go build -o app -a -installsuffix cgo --tags release -ldflags "-X=${GO_MODULE}/internal/version.Version=${VERSION} -X=${GO_MODULE}/internal/version.Commit=${COMMIT}" ${SRC}
 
 FROM scratch
