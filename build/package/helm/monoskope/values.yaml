@@ -181,6 +181,7 @@ rabbitmq:
 
 ambassador:
   enabled: true
+  deploy: true
   replicaCount: 1
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
