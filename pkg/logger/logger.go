@@ -14,6 +14,7 @@ type Logger = logr.Logger
 var (
 	zapLog        *zap.Logger
 	operationMode operation.OperationMode
+	logMode       string
 )
 
 const (
@@ -26,6 +27,13 @@ const (
 func init() {
 	var err error
 
+	// from build flag
+	if logMode == "noop" {
+		zapLog = zap.NewNop()
+		return
+	}
+
+	// from env
 	operationMode = operation.GetOperationMode()
 	switch operationMode {
 	case operation.DEVELOPMENT:

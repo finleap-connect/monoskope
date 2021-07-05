@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("Gateway Auth Server", func() {
 	It("can retrieve openid conf", func() {
-		res, err := httpClient.Get(fmt.Sprintf("http://%s/.well-known/openid-configuration", localAddrAuthServer))
+		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/.well-known/openid-configuration", localAddrAuthServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 
@@ -24,7 +24,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(docText).NotTo(BeEmpty())
 	})
 	It("can retrieve jwks", func() {
-		res, err := httpClient.Get(fmt.Sprintf("http://%s/keys", localAddrAuthServer))
+		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/keys", localAddrAuthServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 
@@ -42,7 +42,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
-		res, err := httpClient.Do(req)
+		res, err := env.HttpClient.Do(req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 	})
@@ -51,7 +51,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", "notavalidjwt"))
-		res, err := httpClient.Do(req)
+		res, err := env.HttpClient.Do(req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
@@ -68,7 +68,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
-		res, err := httpClient.Do(req)
+		res, err := env.HttpClient.Do(req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
@@ -76,7 +76,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 var _ = Describe("Checks", func() {
 	It("can do readiness checks", func() {
-		res, err := httpClient.Get(fmt.Sprintf("http://%s/readyz", localAddrAuthServer))
+		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/readyz", localAddrAuthServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 	})

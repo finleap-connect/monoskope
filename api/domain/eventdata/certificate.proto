@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "api/domain/common/messages.proto";
+
+option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata";
+
+package eventdata;
+
+message CertificateRequested {
+  // Unique identifier of the aggregate referenced (UUID 128-bit number)
+  string referenced_aggregate_id = 1;
+  // Type of the aggregate referenced
+  string referenced_aggregate_type = 4;
+  // Certificate signing request
+  bytes signing_request = 3;
+}
+
+message CertificateIssued { common.Certificate certificate = 1; }

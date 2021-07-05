@@ -29,5 +29,4 @@ message Policy {
   string command = 1;
   string role = 2;
   string scope = 3;
-  bool resourceMatch = 4;
 }

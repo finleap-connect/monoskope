@@ -43,6 +43,8 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.WithName("serverCmd")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		log.Info("Reading environment...")
 		// Some options can be provided by env variables
@@ -92,22 +94,31 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create UserService client
-		conn, userSvcClient, err := queryhandler.NewUserClient(context.Background(), queryHandlerAddr)
+		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
+
+		conn, clusterSvcClient, err := queryhandler.NewClusterClient(ctx, queryHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
 		userRepo := repositories.NewRemoteUserRepository(userSvcClient)
+		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
+		// API servers
 		authServer := gateway.NewAuthServer(authHandler, userRepo)
-
-		// Gateway API server
-		gws := gateway.NewApiServer(&authConfig, authHandler, userRepo)
+		gatewayApiServer := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(signer, userRepo, clusterRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
-			api.RegisterGatewayServer(s, gws)
+			api.RegisterGatewayServer(s, gatewayApiServer)
+			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

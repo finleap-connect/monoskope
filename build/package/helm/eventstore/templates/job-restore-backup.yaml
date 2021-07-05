@@ -75,7 +75,7 @@ spec:
             mountPath: /etc/eventstore/backup
         envFrom:
           - secretRef:
-              name: {{ .Values.storeDatabase.existingSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
+              name: {{ .Values.storeDatabase.configSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
           - secretRef:
               name: {{ .Values.backup.existingSecretName | default (printf "%s-%s" (include "eventstore.fullname" .) "backup") }}
         env:

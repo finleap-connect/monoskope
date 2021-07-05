@@ -135,3 +135,89 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/gateway/service.proto",
 }
+
+// ClusterAuthClient is the client API for ClusterAuth service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ClusterAuthClient interface {
+	GetAuthToken(ctx context.Context, in *ClusterAuthTokenRequest, opts ...grpc.CallOption) (*ClusterAuthTokenResponse, error)
+}
+
+type clusterAuthClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewClusterAuthClient(cc grpc.ClientConnInterface) ClusterAuthClient {
+	return &clusterAuthClient{cc}
+}
+
+func (c *clusterAuthClient) GetAuthToken(ctx context.Context, in *ClusterAuthTokenRequest, opts ...grpc.CallOption) (*ClusterAuthTokenResponse, error) {
+	out := new(ClusterAuthTokenResponse)
+	err := c.cc.Invoke(ctx, "/gateway.ClusterAuth/GetAuthToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ClusterAuthServer is the server API for ClusterAuth service.
+// All implementations must embed UnimplementedClusterAuthServer
+// for forward compatibility
+type ClusterAuthServer interface {
+	GetAuthToken(context.Context, *ClusterAuthTokenRequest) (*ClusterAuthTokenResponse, error)
+	mustEmbedUnimplementedClusterAuthServer()
+}
+
+// UnimplementedClusterAuthServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterAuthServer struct {
+}
+
+func (UnimplementedClusterAuthServer) GetAuthToken(context.Context, *ClusterAuthTokenRequest) (*ClusterAuthTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAuthToken not implemented")
+}
+func (UnimplementedClusterAuthServer) mustEmbedUnimplementedClusterAuthServer() {}
+
+// UnsafeClusterAuthServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterAuthServer will
+// result in compilation errors.
+type UnsafeClusterAuthServer interface {
+	mustEmbedUnimplementedClusterAuthServer()
+}
+
+func RegisterClusterAuthServer(s grpc.ServiceRegistrar, srv ClusterAuthServer) {
+	s.RegisterService(&ClusterAuth_ServiceDesc, srv)
+}
+
+func _ClusterAuth_GetAuthToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClusterAuthTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterAuthServer).GetAuthToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.ClusterAuth/GetAuthToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterAuthServer).GetAuthToken(ctx, req.(*ClusterAuthTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ClusterAuth_ServiceDesc is the grpc.ServiceDesc for ClusterAuth service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ClusterAuth_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gateway.ClusterAuth",
+	HandlerType: (*ClusterAuthServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetAuthToken",
+			Handler:    _ClusterAuth_GetAuthToken_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/gateway/service.proto",
+}

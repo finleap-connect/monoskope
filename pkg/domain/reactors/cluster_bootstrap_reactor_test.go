@@ -78,7 +78,7 @@ var _ = Describe("package reactors", func() {
 				eventDataTokenCreated := &eventdata.ClusterBootstrapTokenCreated{}
 				err = event.Data().ToProto(eventDataTokenCreated)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(eventDataTokenCreated.JWT).To(Not(BeEmpty()))
+				Expect(eventDataTokenCreated.Jwt).To(Not(BeEmpty()))
 
 				ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 				defer cancel()
@@ -98,12 +98,14 @@ var _ = Describe("package reactors", func() {
 				}
 			})
 		})
-		When("ClusterCertificateRequested event occurs", func() {
+		When("CertificateRequested event occurs", func() {
 			aggregateId := uuid.New()
 			aggregateVersion := uint64(2)
-			eventType := events.ClusterCertificateRequested
-			eventData := &eventdata.ClusterCertificateRequested{
-				CertificateSigningRequest: expectedCSR,
+			eventType := events.CertificateRequested
+			eventData := &eventdata.CertificateRequested{
+				SigningRequest:          expectedCSR,
+				ReferencedAggregateId:   aggregateId.String(),
+				ReferencedAggregateType: aggregates.Cluster.String(),
 			}
 
 			cr := new(cmapi.CertificateRequest)
@@ -118,7 +120,7 @@ var _ = Describe("package reactors", func() {
 				Duration: expectedDuration,
 			}
 
-			It("emits a ClusterOperatorCertificateRequestIssued event", func() {
+			It("emits a CertificateRequestIssued event", func() {
 				eventChannel := make(chan eventsourcing.Event, 2)
 
 				k8sClient := mock_k8s.NewMockClient(mockCtrl)
@@ -126,7 +128,7 @@ var _ = Describe("package reactors", func() {
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")
 
-				k8sClient.EXPECT().Get(ctx, types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
+				k8sClient.EXPECT().Get(gomock.Any(), types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
 					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
 
 				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
@@ -156,11 +158,11 @@ var _ = Describe("package reactors", func() {
 
 					event := <-eventChannel
 					Expect(event).NotTo(BeNil())
-					Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateRequestIssued))
+					Expect(event.EventType()).To(Equal(events.CertificateRequestIssued))
 
 					event = <-eventChannel
 					Expect(event).NotTo(BeNil())
-					Expect(event.EventType()).To(Equal(events.ClusterOperatorCertificateIssued))
+					Expect(event.EventType()).To(Equal(events.CertificateIssued))
 				}()
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)

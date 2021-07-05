@@ -16,13 +16,12 @@ import (
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
 	DomainAggregateBase
-	aggregateManager          es.AggregateStore
-	name                      string
-	label                     string
-	apiServerAddr             string
-	caCertBundle              []byte
-	bootstrapToken            string
-	certificateSigningRequest []byte
+	aggregateManager es.AggregateStore
+	name             string
+	label            string
+	apiServerAddr    string
+	caCertBundle     []byte
+	bootstrapToken   string
 }
 
 // ClusterAggregate creates a new ClusterAggregate
@@ -56,12 +55,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 		return nil
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
-		return nil
-	case *commands.RequestClusterCertificateCommand:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCertificateRequested{
-			CertificateSigningRequest: cmd.GetCertificateSigningRequest(),
-		})
-		_ = a.AppendEvent(ctx, events.ClusterCertificateRequested, ed)
 		return nil
 	default:
 		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
@@ -116,20 +109,13 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.label = data.GetLabel()
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
-	case events.ClusterCertificateRequested:
-		data := &eventdata.ClusterCertificateRequested{}
-		err := event.Data().ToProto(data)
-		if err != nil {
-			return err
-		}
-		a.certificateSigningRequest = data.GetCertificateSigningRequest()
 	case events.ClusterBootstrapTokenCreated:
 		data := &eventdata.ClusterBootstrapTokenCreated{}
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
 		}
-		a.bootstrapToken = data.GetJWT()
+		a.bootstrapToken = data.GetJwt()
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:

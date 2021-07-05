@@ -11,4 +11,6 @@ const (
 	Tenant es.AggregateType = "Tenant"
 	// Type for the ClusterAggregate
 	Cluster es.AggregateType = "Cluster"
+	// Type for the CertificateAggregate
+	Certificate es.AggregateType = "Certificate"
 )

@@ -95,7 +95,7 @@ Usage:
 {{- end }}
 
 {{- define "monoskope.domain" -}}
-{{- .Values.hosting.domain }}
+{{- required "a value for .Values.hosting.domain has to be provided" .Values.hosting.domain }}
 {{- end }}
 
 {{- define "monoskope.mtlsDomain" -}}

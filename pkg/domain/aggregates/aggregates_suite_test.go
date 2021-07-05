@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
 func TestAggregates(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Aggregates Suite")
+	junitReporter := reporters.NewJUnitReporter("../../../reports/aggregates-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "Aggregates Suite", []Reporter{junitReporter})
 }
