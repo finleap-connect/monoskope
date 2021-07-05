@@ -1,6 +1,6 @@
 {{ if and .Values.cockroachdb.enabled .Values.eventstore.storeDatabase.tlsSecret }}
 {{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb") -}}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Certificate
 metadata:
   name: {{ $fullname }}-auth-eventstore
