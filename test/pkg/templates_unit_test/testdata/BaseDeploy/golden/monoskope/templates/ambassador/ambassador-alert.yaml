@@ -1,5 +1,5 @@
 ---
-# Source: monoskope/templates/ambassador-alert.yaml
+# Source: monoskope/templates/ambassador/ambassador-alert.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -14,7 +14,6 @@ metadata:
     app.kubernetes.io/part-of: monoskope
     app: prometheus-operator
     release: monitoring
-    tenant: finleap-cloud
 spec:
   groups:
   - name: the-namespace.rules
