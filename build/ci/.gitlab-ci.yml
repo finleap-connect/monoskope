@@ -12,11 +12,11 @@ include:
   # - template: Security/SAST.gitlab-ci.yml
 
 .docker-builder:
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.6
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8-rc0
   only:
     - web
     - tags
     - develop
   cache:
     paths:
-      - /home/user/.local/share/img
+      - /var/lib/img
