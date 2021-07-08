@@ -17,8 +17,6 @@ include:
     - web
     - tags
     - develop
-  before_script:
-    - img build -h
   cache:
     paths:
       - /home/user/.local/share/img/
