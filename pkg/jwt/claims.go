@@ -34,8 +34,8 @@ type ClusterClaim struct {
 type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
-	*ClusterClaim `json:"cluster_claims,omitempty"`
-	ConnectorId   string `json:"connector_id,omitempty"`
+	*ClusterClaim
+	ConnectorId string `json:"connector_id,omitempty"`
 }
 
 func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
