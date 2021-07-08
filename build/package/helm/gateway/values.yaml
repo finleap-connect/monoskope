@@ -115,3 +115,5 @@ oidcSecret:
 keySecret:
   # -- Name of the secret to be used by the gateway, required
   name: ""
+  # -- How long to cache public key's
+  validity: 24h
