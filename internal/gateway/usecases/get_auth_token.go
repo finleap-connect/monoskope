@@ -73,10 +73,10 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		Email:         user.GetEmail(),
 		EmailVerified: true,
 	}, &jwt.ClusterClaim{
-		Id:       cluster.GetId(),
-		Name:     cluster.GetName(),
-		UserName: username,
-		Role:     s.request.Role,
+		ClusterId:       cluster.GetId(),
+		ClusterName:     cluster.GetName(),
+		ClusterUserName: username,
+		ClusterRole:     s.request.Role,
 	}, user.Id, jwt.AuthTokenValidity)
 	s.Log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 

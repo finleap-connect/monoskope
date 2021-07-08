@@ -25,17 +25,17 @@ type StandardClaims struct {
 }
 
 type ClusterClaim struct {
-	Id       string `json:"id,omitempty"`        // Id of the cluster.
-	Name     string `json:"name,omitempty"`      // Name of the cluster.
-	UserName string `json:"user_name,omitempty"` // Name of the user in the cluster.
-	Role     string `json:"role,omitempty"`      // Role the user has in the cluster.
+	ClusterId       string `json:"cluster_id,omitempty"`       // Id of the cluster.
+	ClusterName     string `json:"cluster_name,omitempty"`     // Name of the cluster.
+	ClusterUserName string `json:"cluster_username,omitempty"` // Name of the user in the cluster.
+	ClusterRole     string `json:"cluster_role,omitempty"`     // Role the user has in the cluster.
 }
 
 type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
-	ClusterClaim *ClusterClaim `json:"cluster_claims,omitempty"`
-	ConnectorId  string        `json:"connector_id,omitempty"`
+	*ClusterClaim `json:"cluster_claims,omitempty"`
+	ConnectorId   string `json:"connector_id,omitempty"`
 }
 
 func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
