@@ -21,4 +21,4 @@ include:
     - img build -h
   cache:
     paths:
-      - /home/user/.local/share/img
+      - /home/user/.local/share/img/
