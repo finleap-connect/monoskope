@@ -22,6 +22,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | ambassador.crds.create | bool | `false` |  |
+| ambassador.deploy | bool | `true` |  |
 | ambassador.enableAES | bool | `false` |  |
 | ambassador.enabled | bool | `true` |  |
 | ambassador.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador"` |  |
@@ -79,6 +80,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | fullnameOverride | string | `""` |  |
 | gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
+| gateway.auth.selfURL | string | `""` | The URL of the issuer to Gateway itself |
 | gateway.enabled | bool | `true` |  |
 | gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
 | gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
@@ -94,6 +96,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
+| pki.certificates.certManagerApiVersion | string | `"v1"` | Specify which apiVersion cert-manager resources must have. |
 | pki.certificates.duration | string | `"2160h"` |  |
 | pki.certificates.renewBefore | string | `"1440h"` |  |
 | pki.enabled | bool | `true` |  |
