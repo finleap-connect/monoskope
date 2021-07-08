@@ -9,21 +9,23 @@ import (
 )
 
 var _ = Describe("jwt/claims", func() {
+	expectedIssuer := "https://localhost"
+
 	It("validate cluster bootstrap token", func() {
-		t := NewClusterBootstrapToken(&StandardClaims{}, "me", "test")
-		Expect(t.Validate(AudienceM8Operator, AudienceMonoctl)).ToNot(HaveOccurred())
+		t := NewClusterBootstrapToken(&StandardClaims{}, expectedIssuer, "me", "test")
+		Expect(t.Validate(expectedIssuer, AudienceM8Operator, AudienceMonoctl)).ToNot(HaveOccurred())
 	})
 	It("validate auth token", func() {
-		t := NewAuthToken(&StandardClaims{}, "me", "test")
-		Expect(t.Validate(AudienceMonoctl, AudienceM8Operator)).ToNot(HaveOccurred())
+		t := NewAuthToken(&StandardClaims{}, expectedIssuer, "me", "test")
+		Expect(t.Validate(expectedIssuer, AudienceMonoctl, AudienceM8Operator)).ToNot(HaveOccurred())
 	})
 	It("validate auth token", func() {
-		t := NewAuthToken(&StandardClaims{}, "me", "test")
-		Expect(t.Validate(AudienceK8sAuth)).To(HaveOccurred())
+		t := NewAuthToken(&StandardClaims{}, expectedIssuer, "me", "test")
+		Expect(t.Validate(expectedIssuer, AudienceK8sAuth)).To(HaveOccurred())
 	})
 	It("fail validate auth token", func() {
-		t := NewAuthToken(&StandardClaims{}, "me", "test")
+		t := NewAuthToken(&StandardClaims{}, expectedIssuer, "me", "test")
 		t.Expiry = jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * -12))
-		Expect(t.Validate(AudienceMonoctl)).To(HaveOccurred())
+		Expect(t.Validate(expectedIssuer, AudienceMonoctl)).To(HaveOccurred())
 	})
 })

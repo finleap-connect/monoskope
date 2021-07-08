@@ -10,6 +10,7 @@ import (
 type Config struct {
 	IdentityProvider     string
 	IdentityProviderName string
+	URL                  string
 	Scopes               []string
 	OfflineAsScope       bool
 	Nonce                string

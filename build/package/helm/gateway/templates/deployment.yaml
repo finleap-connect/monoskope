@@ -101,6 +101,7 @@ spec:
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
             - --key-cache-duration={{ .Values.keySecret.validity }}
+            - --gateway-url={{ include "monoskope.tlsDomain" . }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

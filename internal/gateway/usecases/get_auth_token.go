@@ -22,9 +22,10 @@ type getAuthTokenUsecase struct {
 	signer      jwt.JWTSigner
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
+	issuer      string
 }
 
-func NewGetAuthTokenUsecase(request *api.ClusterAuthTokenRequest, result *api.ClusterAuthTokenResponse, signer jwt.JWTSigner, userRepo repositories.ReadOnlyUserRepository, clusterRepo repositories.ReadOnlyClusterRepository) usecase.UseCase {
+func NewGetAuthTokenUsecase(request *api.ClusterAuthTokenRequest, result *api.ClusterAuthTokenResponse, signer jwt.JWTSigner, userRepo repositories.ReadOnlyUserRepository, clusterRepo repositories.ReadOnlyClusterRepository, issuer string) usecase.UseCase {
 	useCase := &getAuthTokenUsecase{
 		UseCaseBase: usecase.NewUseCaseBase("get-auth-token"),
 		request:     request,
@@ -32,6 +33,7 @@ func NewGetAuthTokenUsecase(request *api.ClusterAuthTokenRequest, result *api.Cl
 		signer:      signer,
 		userRepo:    userRepo,
 		clusterRepo: clusterRepo,
+		issuer:      issuer,
 	}
 	return useCase
 }
@@ -77,7 +79,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		ClusterName:     cluster.GetName(),
 		ClusterUserName: username,
 		ClusterRole:     s.request.Role,
-	}, user.Id, jwt.AuthTokenValidity)
+	}, s.issuer, user.Id, jwt.AuthTokenValidity)
 	s.Log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := s.signer.GenerateSignedToken(token)

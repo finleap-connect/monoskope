@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	MonoskopeIssuer               = "Monoskope"
 	AudienceMonoctl               = "monoctl"
 	AudienceK8sAuth               = "k8sauth"
 	AudienceM8Operator            = "m8operator"
@@ -38,13 +37,13 @@ type AuthToken struct {
 	ConnectorId string `json:"connector_id,omitempty"`
 }
 
-func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
+func NewAuthToken(claims *StandardClaims, issuer, userId, connectorId string) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
 			Expiry:    jwt.NewNumericDate(now.Add(AuthTokenValidity)),
 			NotBefore: jwt.NewNumericDate(now),
@@ -56,13 +55,13 @@ func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken
 	}
 }
 
-func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, userId string, validity time.Duration) *AuthToken {
+func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, issuer, userId string, validity time.Duration) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
 			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
@@ -71,17 +70,17 @@ func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, 
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
-		ConnectorId:    MonoskopeIssuer,
+		ConnectorId:    issuer,
 	}
 }
 
-func NewClusterBootstrapToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
+func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId, connectorId string) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
 			Expiry:    jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
 			NotBefore: jwt.NewNumericDate(now),
@@ -94,20 +93,20 @@ func NewClusterBootstrapToken(claims *StandardClaims, userId, connectorId string
 }
 
 // IsValid returns if the token is not used too early or is expired
-func (t *AuthToken) Validate(expectedAudience ...string) error {
+func (t *AuthToken) Validate(issuer string, expectedAudience ...string) error {
 	if len(expectedAudience) > 0 {
 		for i := 0; i < len(expectedAudience); i++ {
-			if t.validate(expectedAudience[i]) == nil {
+			if t.validate(issuer, expectedAudience[i]) == nil {
 				return nil
 			}
 		}
 	}
-	return t.validate(expectedAudience...)
+	return t.validate(issuer, expectedAudience...)
 }
 
-func (t *AuthToken) validate(expectedAudience ...string) error {
+func (t *AuthToken) validate(issuer string, expectedAudience ...string) error {
 	return t.ValidateWithLeeway(jwt.Expected{
-		Issuer:   MonoskopeIssuer,
+		Issuer:   issuer,
 		Audience: expectedAudience,
 		Time:     time.Now().UTC(),
 	}, jwt.DefaultLeeway)

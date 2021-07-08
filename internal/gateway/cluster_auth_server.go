@@ -18,21 +18,23 @@ type clusterAuthApiServer struct {
 	signer      jwt.JWTSigner
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
+	url         string
 }
 
-func NewClusterAuthAPIServer(signer jwt.JWTSigner, userRepo repositories.ReadOnlyUserRepository, clusterRepo repositories.ReadOnlyClusterRepository) api.ClusterAuthServer {
+func NewClusterAuthAPIServer(url string, signer jwt.JWTSigner, userRepo repositories.ReadOnlyUserRepository, clusterRepo repositories.ReadOnlyClusterRepository) api.ClusterAuthServer {
 	s := &clusterAuthApiServer{
 		log:         logger.WithName("server"),
 		signer:      signer,
 		userRepo:    userRepo,
 		clusterRepo: clusterRepo,
+		url:         url,
 	}
 	return s
 }
 
 func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.ClusterAuthTokenRequest) (*api.ClusterAuthTokenResponse, error) {
 	result := new(api.ClusterAuthTokenResponse)
-	uc := usecases.NewGetAuthTokenUsecase(request, result, s.signer, s.userRepo, s.clusterRepo)
+	uc := usecases.NewGetAuthTokenUsecase(request, result, s.signer, s.userRepo, s.clusterRepo, s.url)
 	err := uc.Run(ctx)
 	if err != nil {
 		return nil, err
