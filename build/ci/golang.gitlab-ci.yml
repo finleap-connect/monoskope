@@ -67,6 +67,7 @@ deliver:gateway:
     - IMG_BASE=${CI_REGISTRY}/${CI_PROJECT_PATH}/${APP}
     - IMG_LATEST=${IMG_BASE}:latest
     - IMG_CURRENT=${IMG_BASE}:${VERSION}
+    - login --username "${CI_REGISTRY_USER}" --password "${CI_JOB_TOKEN}" ${CI_REGISTRY}
     - img pull ${IMG_LATEST}
     - img build --file build/package/go.Dockerfile --tag ${IMG_CURRENT} --build-arg VERSION=$VERSION --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ${IMG_LATEST} --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
   dependencies:
