@@ -18,10 +18,15 @@ include:
     - tags
     - develop
   before_script:
-    - mkdir -p .img
+    - mkdir -p .img/
+    - mkdir -p /home/user/.local/share/img/
     - cp -R .img/ /home/user/.local/share/img/
+    - find .img/
+    - find /home/user/.local/share/img/
   after_script:
+    - find /home/user/.local/share/img/
     - cp -R /home/user/.local/share/img/ .img/
+    - find .img/
   cache:
     paths:
       - .img/
