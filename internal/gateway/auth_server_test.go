@@ -33,7 +33,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(doc.Text()).NotTo(BeEmpty())
 	})
 	It("can authenticate with JWT", func() {
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me", "test")
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me")
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
@@ -56,7 +56,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
 	It("fails authentication with expired JWT", func() {
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me", "test")
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me")
 		token.Expiry = josejwt.NewNumericDate(time.Now().UTC().Add(-30 * time.Minute))
 		token.NotBefore = josejwt.NewNumericDate(time.Now().UTC().Add(-1 * time.Hour))
 

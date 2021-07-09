@@ -34,10 +34,9 @@ type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
 	*ClusterClaim
-	ConnectorId string `json:"connector_id,omitempty"`
 }
 
-func NewAuthToken(claims *StandardClaims, issuer, userId, connectorId string) *AuthToken {
+func NewAuthToken(claims *StandardClaims, issuer, userId string) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
@@ -51,7 +50,6 @@ func NewAuthToken(claims *StandardClaims, issuer, userId, connectorId string) *A
 			Audience:  jwt.Audience{AudienceMonoctl},
 		},
 		StandardClaims: claims,
-		ConnectorId:    connectorId,
 	}
 }
 
@@ -70,11 +68,10 @@ func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, 
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
-		ConnectorId:    issuer,
 	}
 }
 
-func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId, connectorId string) *AuthToken {
+func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId string) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
@@ -88,7 +85,6 @@ func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId, connectorI
 			Audience:  jwt.Audience{AudienceM8Operator},
 		},
 		StandardClaims: claims,
-		ConnectorId:    connectorId,
 	}
 }
 
