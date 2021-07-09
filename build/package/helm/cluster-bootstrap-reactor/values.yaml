@@ -96,3 +96,6 @@ certificates:
   issuerKind: Issuer
   # -- cert-manager issuer to use to issue cluster certificates
   issuerName: selfsigning-issuer
+
+# -- The URL of the Monoskope issuer (Gateway)
+issuerUrl: ""

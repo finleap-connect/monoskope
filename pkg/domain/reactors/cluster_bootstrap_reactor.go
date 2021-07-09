@@ -22,21 +22,22 @@ import (
 )
 
 const (
-	ISSUER                     = "cluster-bootstrap-reactor"
 	DOMAIN                     = "@monoskope.local"
 	RECONCILIATION_MAX_BACKOFF = 1 * time.Minute
 )
 
 type clusterBootstrapReactor struct {
 	log         logger.Logger
+	issuerURL   string
 	signer      jwt.JWTSigner
 	certManager certificatemanagement.CertificateManager
 }
 
 // NewClusterBootstrapReactor creates a new Reactor.
-func NewClusterBootstrapReactor(signer jwt.JWTSigner, certManager certificatemanagement.CertificateManager) es.Reactor {
+func NewClusterBootstrapReactor(issuerURL string, signer jwt.JWTSigner, certManager certificatemanagement.CertificateManager) es.Reactor {
 	return &clusterBootstrapReactor{
 		log:         logger.WithName("clusterBootstrapReactor"),
+		issuerURL:   issuerURL,
 		signer:      signer,
 		certManager: certManager,
 	}
@@ -62,7 +63,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
 			Name:  name,
 			Email: email,
-		}, ISSUER, uuid.New().String(), ISSUER))
+		}, r.issuerURL, uuid.New().String()))
 		if err != nil {
 			r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 			return err

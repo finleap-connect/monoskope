@@ -201,7 +201,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 		claims := jwt.NewAuthToken(&jwt.StandardClaims{
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
-		}, s.url, userId, "mtls")
+		}, s.url, userId)
 		claims.Subject = userId
 		claims.Issuer = cert.Issuer.CommonName
 		s.log.Info("Client certificate validation successful.", "User", claims.Email)

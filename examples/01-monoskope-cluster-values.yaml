@@ -88,3 +88,4 @@ cluster-bootstrap-reactor:
     requests:
       cpu: 500m
       memory: 64Mi
+  issuerUrl: https://api.monoskope.dev.finleap.cloud
