@@ -33,7 +33,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(doc.Text()).NotTo(BeEmpty())
 	})
 	It("can authenticate with JWT", func() {
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me")
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, localAddrAPIServer, "me")
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
