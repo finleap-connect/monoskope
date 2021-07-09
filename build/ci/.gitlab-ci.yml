@@ -17,6 +17,3 @@ include:
     - web
     - tags
     - develop
-  cache:
-    paths:
-      - /home/user/.local/share/img/
