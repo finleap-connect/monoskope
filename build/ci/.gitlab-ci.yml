@@ -17,3 +17,12 @@ include:
     - web
     - tags
     - develop
+  before_script:
+    - mkdir -p .img
+    - cp -R .img/ /home/user/.local/share/img/
+  after_script:
+    - cp -R /home/user/.local/share/img/ .img/
+  cache:
+    paths:
+      - .img/
+  
