@@ -62,7 +62,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
 			Name:  name,
 			Email: email,
-		}, uuid.New().String(), ISSUER))
+		}, ISSUER, uuid.New().String(), ISSUER))
 		if err != nil {
 			r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
 			return err

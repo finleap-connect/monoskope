@@ -110,9 +110,9 @@ var serverCmd = &cobra.Command{
 		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
 		// API servers
-		authServer := gateway.NewAuthServer(authHandler, userRepo)
+		authServer := gateway.NewAuthServer(authConfig.URL, authHandler, userRepo)
 		gatewayApiServer := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(signer, userRepo, clusterRepo)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(authConfig.URL, signer, userRepo, clusterRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
@@ -152,4 +152,7 @@ func init() {
 
 	flags.StringVar(&authConfig.IdentityProvider, "identity-provider-url", "", "Identity provider URL")
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-url"))
+
+	flags.StringVar(&authConfig.URL, "gateway-url", "", "URL of the gateway itself")
+	util.PanicOnError(serverCmd.MarkFlagRequired("gateway-url"))
 }

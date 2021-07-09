@@ -23,6 +23,7 @@ pki:
 gateway:
   replicaCount: 2
   auth:
+    selfURL: https://api.monoskope.dev.finleap.cloud
     identityProviderName: gitlab
     identityProviderURL: https://gitlab.figo.systems
   resources:

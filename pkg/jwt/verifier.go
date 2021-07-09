@@ -115,7 +115,7 @@ func (v *jwtVerifier) removeExpiredKeys() {
 	var validKeys []jwkWithExpiry
 	for _, k := range v.jsonWebKeys {
 		// check if expired and give a little extra time to verify
-		if k.expiry.Before(time.Now().UTC().Add(1 * time.Minute)) {
+		if k.expiry.Before(time.Now().UTC().Add(1*time.Minute)) && len(v.jsonWebKeys) > 1 {
 			v.log.Info("Public key expired. Removing from list.", "Expiry", k.expiry, "KeyCount", len(v.jsonWebKeys))
 		} else {
 			validKeys = append(validKeys, k)
