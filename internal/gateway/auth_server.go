@@ -35,10 +35,11 @@ type authServer struct {
 	shutdown    *util.ShutdownWaitGroup
 	authHandler *auth.Handler
 	userRepo    repositories.ReadOnlyUserRepository
+	url         string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(url string, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
 		api:         &http.Server{Handler: engine},
@@ -47,6 +48,7 @@ func NewAuthServer(authHandler *auth.Handler, userRepo repositories.ReadOnlyUser
 		shutdown:    util.NewShutdownWaitGroup(),
 		authHandler: authHandler,
 		userRepo:    userRepo,
+		url:         url,
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
@@ -172,7 +174,7 @@ func (s *authServer) tokenValidation(ctx context.Context, token string, expected
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
-	if err := authToken.Validate(expectedAudience...); err != nil {
+	if err := authToken.Validate(s.url, expectedAudience...); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
@@ -199,7 +201,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 		claims := jwt.NewAuthToken(&jwt.StandardClaims{
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
-		}, userId, "mtls")
+		}, s.url, userId)
 		claims.Subject = userId
 		claims.Issuer = cert.Issuer.CommonName
 		s.log.Info("Client certificate validation successful.", "User", claims.Email)

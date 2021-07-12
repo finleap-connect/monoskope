@@ -1,5 +1,5 @@
 {{- if .Values.rabbitmq.auth.tls.enabled }}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Certificate
 metadata:
   name: {{ include "monoskope.fullname" . }}-rabbitmq-leaf

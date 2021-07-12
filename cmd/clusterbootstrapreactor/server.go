@@ -29,6 +29,7 @@ var (
 	certIssuerKind    string
 	certDuration      string
 	jwtPrivateKeyFile string
+	issuerURL         string
 )
 
 var serveCmd = &cobra.Command{
@@ -79,7 +80,7 @@ var serveCmd = &cobra.Command{
 		signer := jwt.NewSigner(jwtPrivateKeyFile)
 
 		// Set up reactor
-		reactorEventHandler := eventhandler.NewReactorEventHandler(esClient, reactors.NewClusterBootstrapReactor(signer, certManager))
+		reactorEventHandler := eventhandler.NewReactorEventHandler(esClient, reactors.NewClusterBootstrapReactor(issuerURL, signer, certManager))
 		defer reactorEventHandler.Stop()
 
 		// Register event handler with event bus
@@ -112,4 +113,7 @@ func init() {
 
 	flags.StringVarP(&certIssuer, "certificate-issuer", "i", "", "Certificate issuer name to request certificates from")
 	util.PanicOnError(cobra.MarkFlagRequired(flags, "certificate-issuer"))
+
+	flags.StringVar(&issuerURL, "issuer-url", "", "The URL of the Monoskope issuer (Gateway)")
+	util.PanicOnError(cobra.MarkFlagRequired(flags, "issuer-url"))
 }

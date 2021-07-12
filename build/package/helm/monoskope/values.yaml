@@ -18,6 +18,8 @@ vaultOperator:
 pki:
   enabled: true
   certificates:
+    # -- Specify which apiVersion cert-manager resources must have.
+    certManagerApiVersion: v1
     duration: 2160h # 90d
     renewBefore: 1440h # 60d
   issuer:
@@ -43,6 +45,8 @@ gateway:
   enabled: true
   replicaCount: 1
   auth:
+    # -- The URL of the issuer to Gateway itself
+    selfURL: ""
     # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
     identityProviderName: ""
     # -- The URL of the issuer to use for OIDC

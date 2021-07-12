@@ -15,9 +15,15 @@ hosting:
 # cockroachdb:
   # dropExistingDatabase: true
 
+pki:
+  certificates:
+    # -- Specify which apiVersion cert-manager resources must have.
+    certManagerApiVersion: v1alpha3
+    
 gateway:
   replicaCount: 2
   auth:
+    selfURL: https://api.monoskope.dev.finleap.cloud
     identityProviderName: gitlab
     identityProviderURL: https://gitlab.figo.systems
   resources:
@@ -82,3 +88,4 @@ cluster-bootstrap-reactor:
     requests:
       cpu: 500m
       memory: 64Mi
+  issuerURL: https://api.monoskope.dev.finleap.cloud
