@@ -7,6 +7,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	messages "github.com/cucumber/messages-go/v10"
+	"github.com/onsi/gomega"
 	flag "github.com/spf13/pflag"
 )
 
@@ -23,16 +24,25 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
 
+	gomega.RegisterFailHandler(Fail)
+
 	status := godog.TestSuite{
-		Name:                 "monoskope",
-		TestSuiteInitializer: InitializeTestSuite,
-		ScenarioInitializer:  InitializeScenario,
+		Name:                 "cluster",
+		TestSuiteInitializer: ClusterInitializeTestSuite,
+		ScenarioInitializer:  ClusterInitializeScenario,
 		Options:              &opts,
 	}.Run()
 
 	os.Exit(status)
 }
 
-func InitializeTestSuite(ctx *godog.TestSuiteContext) {
-	ctx.BeforeSuite(func() {})
+func Fail(message string, callerSkip ...int) {
+	// skip := 0
+	// if len(callerSkip) > 0 {
+	// 	skip = callerSkip[0]
+	// }
+
+	// global.Failer.Fail(message, codelocation.New(skip+1))
+	panic(message)
+
 }

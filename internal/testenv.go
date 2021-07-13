@@ -58,3 +58,15 @@ func (env *TestEnv) Shutdown() error {
 
 	return nil
 }
+
+func (env *TestEnv) GetQueryHandlerEnv() *queryhandler.TestEnv {
+	return env.queryHandlerTestEnv
+}
+
+func (env *TestEnv) GetComandHandlerEnv() *commandhandler.TestEnv {
+	return env.commandHandlerTestEnv
+}
+
+func (env *TestEnv) GetEventStoreEnv() *eventstore.TestEnv {
+	return env.eventStoreTestEnv
+}

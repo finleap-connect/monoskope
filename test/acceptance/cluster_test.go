@@ -3,11 +3,9 @@ package acceptance
 import (
 	"context"
 	"log"
-	"testing"
 
 	"github.com/cucumber/godog"
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
+	messages "github.com/cucumber/messages-go/v10"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
@@ -18,7 +16,7 @@ import (
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 )
 
-type M8Client struct {
+type M8TestEnv struct {
 	mdManager            *metadata.DomainMetadataManager
 	commandHandlerClient func() es.CommandHandlerClient
 	userServiceClient    func() domainApi.UserClient
@@ -31,60 +29,91 @@ var (
 	testEnv     *internal.TestEnv
 )
 
-func TestQueryHandler(t *testing.T) {
-	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../reports/internal-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "integration", []Reporter{junitReporter})
+func ClusterInitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {})
 }
 
-var _ = BeforeSuite(func(done Done) {
-	defer close(done)
+func ClusterInitializeScenario(ctx *godog.ScenarioContext) {
+	RegisterFailHandler(Fail)
+
+	ctx.BeforeScenario(func(*godog.Scenario) {
+	})
+
+	client, err := NewM8TestEnv()
+	if err != nil {
+		fail(err)
+	}
+
+	ctx.Step(`^I create a cluster with the dns address "([^"]*)"$`, client.iCreateAClusterWithTheDnsAddress)
+	ctx.Step(`^I create a cluster with the dns address "([^"]*)" and the name "([^"]*)"$`, client.iCreateAClusterWithTheDnsAddressAndTheName)
+
+	ctx.Step(`^there is an empty list of clusters$`, client.MustEmptyListOfClusters)
+	ctx.Step(`^there should be a cluster with the name "([^"]*)" in the list of clusters$`, client.thereShouldBeAClusterWithTheNameInTheListOfClusters)
+	ctx.Step(`^there should be a cluster with the dns address "([^"]*)" in the list of clusters$`, client.thereShouldBeAClusterWithTheDnsAddressInTheListOfClusters)
+
+	ctx.Step(`^the command should fail\.$`, client.theCommandShouldFail)
+	ctx.Step(`^there are clusters with the dns addresses of:$`, client.mustAllClustersFromList)
+	ctx.Step(`^there should be a role binding for the user "([^"]*)" and the role "([^"]*)" for the scope "([^"]*)" and resource "([^"]*)"$`, client.thereShouldBeARoleBindingForTheUserAndTheRoleForTheScopeAndResource)
+	ctx.Step(`^there should be a user with the name "([^"]*)" in the list of users$`, client.thereShouldBeAUserWithTheNameInTheListOfUsers)
+	ctx.Step(`^my name is "([^"]*)", my email is "([^"]*)" and have a token issued by "([^"]*)"$`, client.myNameIsMyEmailIsAndHaveATokenIssuedBy)
+	ctx.Step(`^there are clusters with the names of:$`, client.thereAreClustersWithTheNamesOf)
+	ctx.Step(`^there should be a JWT token available for the cluster that is valid for the the name "([^"]*)"$`, client.thereShouldBeAJWTTokenAvailableForTheClusterThatIsValidForTheTheName)
+}
+
+func beforeSuite() {
 	var err error
 
-	By("bootstrapping test env")
-	baseTestEnv = test.NewTestEnv("integration-testenv")
+	baseTestEnv = test.NewTestEnv("acceptance-stenv")
 	testEnv, err = internal.NewTestEnv(baseTestEnv)
-	Expect(err).To(Not(HaveOccurred()))
-}, 120)
+	if err != nil {
+		fail(err)
+	}
 
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
+}
 
-	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
-	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
-})
+func afterSuite() {
+	err := testEnv.Shutdown()
+	if err != nil {
+		fail(err)
+	}
+	err = baseTestEnv.Shutdown()
+	if err != nil {
+		fail(err)
+	}
 
-func NewM8Client() (*M8Client, error) {
+}
+
+func NewM8TestEnv() (*M8TestEnv, error) {
 	var err error
-	client := &M8Client{}
+	client := &M8TestEnv{}
 	ctx := context.Background()
 
 	client.mdManager, err = metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	client.commandHandlerClient = func() es.CommandHandlerClient {
-		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		addr := testEnv.GetComandHandlerEnv().GetApiAddr()
+		_, chClient, err := ch.NewServiceClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	client.userServiceClient = func() domainApi.UserClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
+		addr := testEnv.GetComandHandlerEnv().GetApiAddr()
 		_, client, err := queryhandler.NewUserClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	client.tenantServiceClient = func() domainApi.TenantClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
+		addr := testEnv.GetComandHandlerEnv().GetApiAddr()
 		_, client, err := queryhandler.NewTenantClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	client.clusterServiceClient = func() domainApi.ClusterClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
+		addr := testEnv.GetComandHandlerEnv().GetApiAddr()
 		_, client, err := queryhandler.NewClusterClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
@@ -93,48 +122,53 @@ func NewM8Client() (*M8Client, error) {
 	return client, nil
 }
 
-func (client *M8Client) iCreateAClusterWithTheDnsAddress(arg1 string) error {
+func (client *M8TestEnv) iCreateAClusterWithTheDnsAddressAndTheName(arg1, arg2 string) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) theCommandShouldFail() error {
+func (client *M8TestEnv) myNameIsMyEmailIsAndHaveATokenIssuedBy(arg1, arg2, arg3 string) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) thereIsAnEmptyListOfClusters() error {
+func (client *M8TestEnv) mustAllClustersFromList(arg1 *messages.PickleStepArgument_PickleTable) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) thereAreClustersWithTheDnsAddressesOf(tbl *Table) error {
+func (client *M8TestEnv) thereShouldBeAClusterWithTheDnsAddressInTheListOfClusters(arg1 string) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) thereShouldBeAClusterWithTheNameInTheListOfClusters(arg1 string) error {
+func (client *M8TestEnv) thereShouldBeAJWTTokenAvailableForTheClusterThatIsValidForTheTheName(arg1 string) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) thereShouldBeARoleBindingForTheUserAndTheRoleForTheScopeAndResource(arg1, arg2, arg3, arg4 string) error {
+func (client *M8TestEnv) iCreateAClusterWithTheDnsAddress(arg1 string) error {
 	return godog.ErrPending
 }
 
-func (client *M8Client) thereShouldBeAUserWithTheNameInTheListOfUsers(arg1 string) error {
+func (client *M8TestEnv) theCommandShouldFail() error {
 	return godog.ErrPending
 }
 
-func InitializeScenario(ctx *godog.ScenarioContext) {
-	client, err := NewM8Client()
-	if err != nil {
-		log.Fatal(err)
-	}
+func (client *M8TestEnv) MustEmptyListOfClusters() error {
 
-	ctx.Step(`^I create a cluster with the dns address "([^"]*)"$`, client.iCreateAClusterWithTheDnsAddress)
-	ctx.Step(`^the command should fail\.$`, client.theCommandShouldFail)
-	ctx.Step(`^there is an empty list of clusters$`, client.thereIsAnEmptyListOfClusters)
-	ctx.Step(`^there are clusters with the dns addresses of:$`, client.thereAreClustersWithTheDnsAddressesOf)
-	ctx.Step(`^there should be a cluster with the name "([^"]*)" in the list of clusters\.$`, client.thereShouldBeAClusterWithTheNameInTheListOfClusters)
-	ctx.Step(`^there should be a cluster with the name "([^"]*)" in the list of clusters$`, client.thereShouldBeAClusterWithTheNameInTheListOfClusters)
-	ctx.Step(`^there should be a role binding for the user "([^"]*)" and the role "([^"]*)" for the scope "([^"]*)" and resource "([^"]*)"$`, client.thereShouldBeARoleBindingForTheUserAndTheRoleForTheScopeAndResource)
-	ctx.Step(`^there should be a user with the name "([^"]*)" in the list of users$`, client.thereShouldBeAUserWithTheNameInTheListOfUsers)
+	return godog.ErrPending
+}
+
+func (client *M8TestEnv) thereAreClustersWithTheDnsAddressesOf(tbl *Table) error {
+	return godog.ErrPending
+}
+
+func (client *M8TestEnv) thereShouldBeAClusterWithTheNameInTheListOfClusters(arg1 string) error {
+	return godog.ErrPending
+}
+
+func (client *M8TestEnv) thereShouldBeARoleBindingForTheUserAndTheRoleForTheScopeAndResource(arg1, arg2, arg3, arg4 string) error {
+	return godog.ErrPending
+}
+
+func (client *M8TestEnv) thereShouldBeAUserWithTheNameInTheListOfUsers(arg1 string) error {
+	return godog.ErrPending
 }
 
 // client.mdManager.SetUserInformation(&metadata.UserInformation{
@@ -142,3 +176,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 // 	Email:  "admin@monoskope.io",
 // 	Issuer: "monoskope",
 // })
+
+func fail(err error) {
+	log.Fatal(err)
+}
