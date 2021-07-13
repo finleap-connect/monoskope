@@ -105,3 +105,19 @@ caBundle: |-
     #   CA which issues the cert for https://api.monoskope.your-domain.io
     #   -----END CERTIFICATE-----
 ```
+
+## Do a login
+
+```shell
+$ monoctl create kubeconfig
+Your kubeconfig has been generated/updated.
+Use `kubectl config get-contexts` to see available contexts.
+Use `kubectl config use-context <CONTEXTNAME>` to switch between clusters.
+$ kubectl config use-context test-cluster-default
+Switched to context "test-cluster-default".
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"16", GitVersion:"v1.16.15", GitCommit:"2adc8d7091e89b6e3ca8d048140618ec89b39369", GitTreeState:"clean", BuildDate:"2020-09-02T11:40:00Z", GoVersion:"go1.13.15", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"20", GitVersion:"v1.20.7", GitCommit:"132a687512d7fb058d0f5890f07d4121b3f0a2e2", GitTreeState:"clean", BuildDate:"2021-05-12T12:32:49Z", GoVersion:"go1.15.12", Compiler:"gc", Platform:"linux/amd64"}
+```
+
+You're good to go!
