@@ -7,7 +7,6 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	messages "github.com/cucumber/messages-go/v10"
-	"github.com/onsi/gomega"
 	flag "github.com/spf13/pflag"
 )
 
@@ -23,8 +22,6 @@ func init() {
 func TestMain(m *testing.M) {
 	flag.Parse()
 	opts.Paths = flag.Args()
-
-	gomega.RegisterFailHandler(Fail)
 
 	status := godog.TestSuite{
 		Name:                 "cluster",
