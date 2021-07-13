@@ -10,7 +10,7 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 package projections;
 
 // Certficates can exist for any aggregate and are mainted by the control plane.
-message Cluster {
+message Certificate {
   // Unique identifier of the cluster (UUID 128-bit number)
   string referenced_aggregate_id = 1;
   // Type of the aggregate referenced

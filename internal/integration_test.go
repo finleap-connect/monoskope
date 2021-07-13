@@ -23,6 +23,10 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+var (
+	expectedClusterName = "my awesome cluster"
+)
+
 var _ = Describe("integration", func() {
 	ctx := context.Background()
 
@@ -59,6 +63,13 @@ var _ = Describe("integration", func() {
 	clusterServiceClient := func() domainApi.ClusterClient {
 		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
 		_, client, err := queryhandler.NewClusterClient(ctx, addr)
+		Expect(err).ToNot(HaveOccurred())
+		return client
+	}
+
+	certificateServiceClient := func() domainApi.CertificateClient {
+		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
+		_, client, err := queryhandler.NewCertificateClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
@@ -189,7 +200,7 @@ var _ = Describe("integration", func() {
 		clusterId := uuid.New()
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(clusterId, commandTypes.CreateCluster),
-			&cmdData.CreateCluster{Name: "my awesome cluster", Label: "mac", ApiServerAddress: "my.awesome.cluster", ClusterCACertBundle: []byte("This should be a certificate")},
+			&cmdData.CreateCluster{Name: expectedClusterName, Label: "mac", ApiServerAddress: "my.awesome.cluster", ClusterCACertBundle: []byte("This should be a certificate")},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -199,10 +210,10 @@ var _ = Describe("integration", func() {
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
 
-		cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String("my awesome cluster"))
+		cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cluster).ToNot(BeNil())
-		Expect(cluster.GetName()).To(Equal("my awesome cluster"))
+		Expect(cluster.GetName()).To(Equal(expectedClusterName))
 		Expect(cluster.GetLabel()).To(Equal("mac"))
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(cluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
@@ -218,12 +229,10 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(firstCluster).ToNot(BeNil())
-		Expect(firstCluster.GetName()).To(Equal("my awesome cluster"))
+		Expect(firstCluster.GetName()).To(Equal(expectedClusterName))
 		Expect(firstCluster.GetLabel()).To(Equal("mac"))
 		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(firstCluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
-
-		By("getting a cluster's certificates by its id")
 
 		By("by retrieving the bootstrap token")
 
@@ -231,6 +240,22 @@ var _ = Describe("integration", func() {
 		// tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		// Expect(err).ToNot(HaveOccurred())
 		// Expect(tokenValue.GetValue()).ToNot(Equal(""))
+
+	})
+	It("can create and query a certificate", func() {
+		// get the uuid of the cluster with the name "my aweseome cluster"
+		clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(clusterInfo).ToNot(BeNil())
+
+		certificate, err := certificateServiceClient().GetCertificate(ctx,
+			&domainApi.GetCertificateRequest{
+				AggregateId:   clusterInfo.GetId(),
+				AggregateType: "Cluster",
+			})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(certificate.GetCertificate()).ToNot(BeNil())
+		Expect(certificate.GetCa()).ToNot(BeNil())
 
 	})
 })
