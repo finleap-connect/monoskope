@@ -46,11 +46,6 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	err = env.publisher.Open(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	env.storageTestEnv, err = storage.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err

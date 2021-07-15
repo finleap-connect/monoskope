@@ -32,6 +32,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/streadway/amqp v1.0.0
 	github.com/ugorji/go v1.2.4 // indirect
+	github.com/wagslane/go-rabbitmq v0.6.2
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43

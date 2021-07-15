@@ -74,17 +74,9 @@ var _ = Describe("messaging/rabbitmq", func() {
 		// init publisher
 		publisher, err = NewRabbitEventBusPublisher(conf)
 		Expect(err).ToNot(HaveOccurred())
-		ctxWithTimeout, cancelFunc := context.WithTimeout(ctx, 30*time.Second)
-		defer cancelFunc()
-		err = publisher.Open(ctxWithTimeout)
-		Expect(err).ToNot(HaveOccurred())
 
 		// init consumer
 		consumer, err = NewRabbitEventBusConsumer(conf)
-		Expect(err).ToNot(HaveOccurred())
-		ctxWithTimeout, cancelFunc = context.WithTimeout(ctx, 30*time.Second)
-		defer cancelFunc()
-		err = consumer.Open(ctxWithTimeout)
 		Expect(err).ToNot(HaveOccurred())
 
 		testCount++
