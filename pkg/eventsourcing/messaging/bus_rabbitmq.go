@@ -162,7 +162,6 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 		routingKeys,
 		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.exchangeName),
 		rabbitmq.WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
-		rabbitmq.WithConsumeOptionsQuorum,
 		rabbitmq.WithConsumeOptionsBindingExchangeAutoDelete,
 		rabbitmq.WithConsumeOptionsQueueExclusive,
 	)

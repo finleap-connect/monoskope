@@ -16,10 +16,15 @@ variables:
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:
     - mkdir -p .go
-    - make go-mod
   cache:
     paths:
       - .go/pkg/mod/
+
+cache:golang:
+  stage: prepare
+  extends: .gobase
+  script:
+    - make go-mod
 
 .gobase-no-push:
   extends: .gobase
@@ -32,13 +37,13 @@ variables:
 
 lint:golang:
   stage: test
-  extends: .gobase
+  extends: .gobase-no-push
   script:
     - LINTER=golangci-lint make -j go-vet go-lint
 
 test:golang:
   stage: test
-  extends: .gobase
+  extends: .gobase-no-push
   services:
     - name: gitlab.figo.systems/platform/dependency_proxy/containers/rabbitmq:3.8.10-alpine
       alias: rabbitmq
