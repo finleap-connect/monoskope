@@ -769,7 +769,7 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CertificateClient interface {
-	GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error)
+	GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.CertificateChain, error)
 }
 
 type certificateClient struct {
@@ -780,8 +780,8 @@ func NewCertificateClient(cc grpc.ClientConnInterface) CertificateClient {
 	return &certificateClient{cc}
 }
 
-func (c *certificateClient) GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.Certificate, error) {
-	out := new(common.Certificate)
+func (c *certificateClient) GetCertificate(ctx context.Context, in *GetCertificateRequest, opts ...grpc.CallOption) (*common.CertificateChain, error) {
+	out := new(common.CertificateChain)
 	err := c.cc.Invoke(ctx, "/domain.Certificate/GetCertificate", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -793,7 +793,7 @@ func (c *certificateClient) GetCertificate(ctx context.Context, in *GetCertifica
 // All implementations must embed UnimplementedCertificateServer
 // for forward compatibility
 type CertificateServer interface {
-	GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error)
+	GetCertificate(context.Context, *GetCertificateRequest) (*common.CertificateChain, error)
 	mustEmbedUnimplementedCertificateServer()
 }
 
@@ -801,7 +801,7 @@ type CertificateServer interface {
 type UnimplementedCertificateServer struct {
 }
 
-func (UnimplementedCertificateServer) GetCertificate(context.Context, *GetCertificateRequest) (*common.Certificate, error) {
+func (UnimplementedCertificateServer) GetCertificate(context.Context, *GetCertificateRequest) (*common.CertificateChain, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
 }
 func (UnimplementedCertificateServer) mustEmbedUnimplementedCertificateServer() {}

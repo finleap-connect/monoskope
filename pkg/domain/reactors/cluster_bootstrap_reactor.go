@@ -158,7 +158,7 @@ func (r *clusterBootstrapReactor) reconcile(ctx context.Context, event es.Event,
 			ctx,
 			events.CertificateIssued,
 			es.ToEventDataFromProto(&eventdata.CertificateIssued{
-				Certificate: &common.Certificate{
+				Certificate: &common.CertificateChain{
 					Ca:          ca,
 					Certificate: cert,
 				},

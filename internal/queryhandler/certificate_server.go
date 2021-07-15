@@ -5,7 +5,7 @@ import (
 	"time"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
-	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
+	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
@@ -38,7 +38,7 @@ func NewCertificateClient(ctx context.Context, queryHandlerAddr string) (*grpc.C
 }
 
 // GetById returns the tenant found by the given id.
-func (s *certificateServer) GetCertificate(ctx context.Context, gcreq *api.GetCertificateRequest) (*projections.Certificate, error) {
+func (s *certificateServer) GetCertificate(ctx context.Context, gcreq *api.GetCertificateRequest) (*apiCommon.CertificateChain, error) {
 	certificate, err := s.repoCertificate.GetCertificate(ctx, gcreq)
 	if err != nil {
 		return nil, err

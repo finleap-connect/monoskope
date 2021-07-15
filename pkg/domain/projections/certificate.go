@@ -9,6 +9,7 @@ import (
 type Certificate struct {
 	*DomainProjection
 	*projections.Certificate
+	SigningRequest []byte
 }
 
 func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {

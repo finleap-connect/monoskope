@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/google/uuid"
 	domApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -22,7 +23,7 @@ type CertificateRepository interface {
 
 // ReadOnlyTenantRepository is a repository for reading tenant projections.
 type ReadOnlyCertificateRepository interface {
-	// ById searches for the a tenant projection by it's id.
+	// GetCertificate retrieves certificates by aggregate type and id
 	GetCertificate(context.Context, *domApi.GetCertificateRequest) (*projections.Certificate, error)
 }
 
@@ -39,20 +40,25 @@ func NewCertificateRepository(repository es.Repository, userRepo UserRepository)
 
 // Retrieve certificates for a specified aggregate ID and type.
 func (r *certificateRepository) GetCertificate(ctx context.Context, req *domApi.GetCertificateRequest) (*projections.Certificate, error) {
-	projection, err := r.ById(ctx, uuid)
+	id, err := uuid.Parse(req.AggregateId)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant, ok := projection.(*projections.Tenant)
+	projection, err := r.ById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	certificate, ok := projection.(*projections.Certificate)
 	if !ok {
 		return nil, esErrors.ErrInvalidProjectionType
 	}
 
-	err = r.addMetadata(ctx, tenant.DomainProjection)
+	err = r.addMetadata(ctx, certificate.DomainProjection)
 	if err != nil {
 		return nil, err
 	}
 
-	return tenant, nil
+	return certificate, nil
 }
