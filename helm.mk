@@ -22,7 +22,7 @@ install-%:
 
 install-from-repo-%:
 	@$(HELM) repo update
-	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds --atomic --timeout 10m
+	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds
 
 uninstall-%: 
 	@$(HELM) uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
