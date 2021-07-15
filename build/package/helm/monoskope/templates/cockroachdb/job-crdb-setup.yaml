@@ -1,7 +1,7 @@
 {{- if .Values.cockroachdb.enabled }}
-{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init") -}}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "db-init") -}}
 {{- if .Values.cockroachdb.dropExistingDatabase }}
-{{- $fullname = (printf "%s-%s" (include "monoskope.fullname" .) "crdb-init-with-drop") -}}
+{{- $fullname = (printf "%s-%s" (include "monoskope.fullname" .) "db-reinit") -}}
 {{- end }}
 {{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
 apiVersion: batch/v1
@@ -13,6 +13,9 @@ metadata:
     {{- with (.Values.labels | default .Values.global.labels) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 60
