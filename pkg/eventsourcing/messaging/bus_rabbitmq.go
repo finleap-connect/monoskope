@@ -39,6 +39,11 @@ func newRabbitEventBus(conf *RabbitEventBusConfig) (*rabbitEventBus, error) {
 	}, nil
 }
 
+// Printf implements the interface method for  rabbitmq.Logger
+func (b *rabbitEventBus) Printf(format string, v ...interface{}) {
+	b.log.Info(fmt.Sprintf(format, v...))
+}
+
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublisher, error) {
 	b, err := newRabbitEventBus(conf)
@@ -46,7 +51,7 @@ func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublish
 		return nil, err
 	}
 
-	publisher, returns, err := rabbitmq.NewPublisher(conf.url, *conf.amqpConfig)
+	publisher, returns, err := rabbitmq.NewPublisher(conf.url, *conf.amqpConfig, rabbitmq.WithPublisherOptionsLogger(b))
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +113,13 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 			rabbitmq.WithPublishOptionsContentType("application/json"),
 			rabbitmq.WithPublishOptionsExchange(b.conf.exchangeName),
 		)
-		if err != nil {
+		if pubErr != nil {
 			b.log.Info("Failed to publish event. Retrying...", "event", event.String(), "error", err.Error())
 		}
 		return pubErr
 	}, params)
 	if err != nil {
-		b.log.Error(err, errors.ErrCouldNotPublishEvent.Error())
+		b.log.Error(err, errors.ErrCouldNotPublishEvent.Error(), "event", event.String())
 		return errors.ErrCouldNotPublishEvent
 	}
 
