@@ -61,6 +61,16 @@ func (conf *RabbitEventBusConfig) configureTLS() error {
 	return nil
 }
 
+// getClientCertificate returns the loaded certificate for use by
+// the TLSConfig fields getClientCertificate.
+func getClientCertificate(hello *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	return &cert, nil
+}
+
 func loadCertificates(amqpConfig *amqp.Config) error {
 	var err error
 	caCertPool := x509.NewCertPool()
@@ -71,14 +81,9 @@ func loadCertificates(amqpConfig *amqp.Config) error {
 	}
 	caCertPool.AppendCertsFromPEM(ca)
 
-	cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath)
-	if err != nil {
-		return err
-	}
-
 	amqpConfig.TLSClientConfig = &tls.Config{
-		RootCAs:      caCertPool,
-		Certificates: []tls.Certificate{cert},
+		RootCAs:              caCertPool,
+		GetClientCertificate: getClientCertificate,
 	}
 
 	return nil
