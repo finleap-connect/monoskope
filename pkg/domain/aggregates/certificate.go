@@ -16,17 +16,21 @@ import (
 // CertificateAggregate is an aggregate for certificates.
 type CertificateAggregate struct {
 	DomainAggregateBase
-	relatedAggregateId   uuid.UUID
-	relatedAggregateType es.AggregateType
-	signingRequest       []byte
+	aggregateManager        es.AggregateStore
+	referencedAggregateId   uuid.UUID
+	referencedAggregateType es.AggregateType
+	signingRequest          []byte
+	certificate             []byte
+	caCertBundle            []byte
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate(id uuid.UUID) es.Aggregate {
+func NewCertificateAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &CertificateAggregate{
 		DomainAggregateBase: DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Certificate, id),
 		},
+		aggregateManager: aggregateManager,
 	}
 }
 
@@ -68,9 +72,21 @@ func (a *CertificateAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 
-		a.relatedAggregateId = id
-		a.relatedAggregateType = es.AggregateType(data.GetReferencedAggregateType())
+		a.referencedAggregateId = id
+		a.referencedAggregateType = es.AggregateType(data.GetReferencedAggregateType())
 		a.signingRequest = data.GetSigningRequest()
+	case events.CertificateIssued:
+		data := &eventdata.CertificateIssued{}
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		a.certificate = data.Certificate.GetCertificate()
+		a.caCertBundle = data.Certificate.GetCa()
+	case events.CertificateRequestIssued:
+		// ignored as it does not update the aggregate. TODO: the state of the signing should be tracked in the aggregate, and thus in the projection.
+	case events.CertificateIssueingFailed:
+		// ignored as it does not update the aggregate. TODO: the state of the signing should be tracked in the aggregate, and thus in the projection.
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}

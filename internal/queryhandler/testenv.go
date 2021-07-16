@@ -61,6 +61,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
 		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
+		api.RegisterCertificateServer(s, NewCertificateServer(qhDomain.CertificateRepository))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

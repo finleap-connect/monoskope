@@ -19,7 +19,7 @@ import (
 var (
 	expectedCert          = []byte("this is a certificate")
 	expectedCACert        = []byte("this is the CA certificate")
-	expectedAggregateType = "cluster"
+	expectedAggregateType = "certificate"
 )
 
 var _ = Describe("domain/certificate_repo", func() {

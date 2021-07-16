@@ -248,6 +248,23 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(clusterInfo).ToNot(BeNil())
 
+		certificateId := uuid.New()
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(certificateId, commandTypes.RequestCertificate),
+			&cmdData.RequestCertificate{
+				ReferencedAggregateId:   clusterInfo.Id,
+				ReferencedAggregateType: "cluster",
+				SigningRequest:          []byte("this is  a CSR"),
+			},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
+
 		certificate, err := certificateServiceClient().GetCertificate(ctx,
 			&domainApi.GetCertificateRequest{
 				AggregateId:   clusterInfo.GetId(),
@@ -255,7 +272,7 @@ var _ = Describe("integration", func() {
 			})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(certificate.GetCertificate()).ToNot(BeNil())
-		Expect(certificate.GetCa()).ToNot(BeNil())
+		Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
 
 	})
 })

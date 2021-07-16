@@ -14,20 +14,20 @@ type certificateRepository struct {
 	*domainRepository
 }
 
-// TenantRepository is a repository for reading and writing tenant projections.
+// CertificateRepository is a repository for reading and writing certificate projections.
 type CertificateRepository interface {
 	es.Repository
 	ReadOnlyCertificateRepository
 	WriteOnlyCertificateRepository
 }
 
-// ReadOnlyTenantRepository is a repository for reading tenant projections.
+// ReadOnlyCertificateRepository is a repository for reading certificate projections.
 type ReadOnlyCertificateRepository interface {
 	// GetCertificate retrieves certificates by aggregate type and id
 	GetCertificate(context.Context, *domApi.GetCertificateRequest) (*projections.Certificate, error)
 }
 
-// WriteOnlyTenantRepository is a repository for writing tenant projections.
+// WriteOnlyCertificateRepository is a repository for writing certificate projections.
 type WriteOnlyCertificateRepository interface {
 }
 
