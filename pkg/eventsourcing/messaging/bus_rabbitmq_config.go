@@ -62,23 +62,24 @@ func (conf *RabbitEventBusConfig) configureTLS() error {
 }
 
 func loadCertificates(amqpConfig *amqp.Config) error {
-	cfg := &tls.Config{
-		RootCAs: x509.NewCertPool(),
-	}
+	var err error
+	caCertPool := x509.NewCertPool()
 
-	if ca, err := ioutil.ReadFile(CACertPath); err != nil {
+	ca, err := ioutil.ReadFile(CACertPath)
+	if err != nil {
 		return err
-	} else {
-		cfg.RootCAs.AppendCertsFromPEM(ca)
 	}
+	caCertPool.AppendCertsFromPEM(ca)
 
-	if cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath); err != nil {
+	cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath)
+	if err != nil {
 		return err
-	} else {
-		cfg.Certificates = append(cfg.Certificates, cert)
 	}
 
-	amqpConfig.TLSClientConfig = cfg
+	amqpConfig.TLSClientConfig = &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{cert},
+	}
 
 	return nil
 }
