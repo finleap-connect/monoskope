@@ -75,7 +75,7 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 		return nil, err
 	}
 
-	consumer, err := rabbitmq.NewConsumer(conf.url, conf.amqpConfig)
+	consumer, err := rabbitmq.NewConsumer(conf.url, conf.amqpConfig, rabbitmq.WithConsumerOptionsLogger(b))
 	if err != nil {
 		return nil, err
 	}
