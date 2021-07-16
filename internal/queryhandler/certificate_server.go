@@ -5,21 +5,21 @@ import (
 	"time"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
-	apiCommon "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories"
 	grpcUtil "gitlab.figo.systems/platform/monoskope/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
 )
 
-// tenantServer is the implementation of the TenantService API
+// certificateServer is the implementation of the CertificateService API
 type certificateServer struct {
 	api.UnimplementedCertificateServer
 
 	repoCertificate repositories.ReadOnlyCertificateRepository
 }
 
-// NewTenantServiceServer returns a new configured instance of tenantServiceServer
+// NewCertificateServiceServer returns a new configured instance of certificateServiceServer
 func NewCertificateServer(certificateRepo repositories.ReadOnlyCertificateRepository) *certificateServer {
 	return &certificateServer{
 		repoCertificate: certificateRepo,
@@ -37,8 +37,8 @@ func NewCertificateClient(ctx context.Context, queryHandlerAddr string) (*grpc.C
 	return conn, api.NewCertificateClient(conn), nil
 }
 
-// GetById returns the tenant found by the given id.
-func (s *certificateServer) GetCertificate(ctx context.Context, gcreq *api.GetCertificateRequest) (*apiCommon.CertificateChain, error) {
+// GetById returns the certificate found by the given id.
+func (s *certificateServer) GetCertificate(ctx context.Context, gcreq *api.GetCertificateRequest) (*projections.Certificate, error) {
 	certificate, err := s.repoCertificate.GetCertificate(ctx, gcreq)
 	if err != nil {
 		return nil, err

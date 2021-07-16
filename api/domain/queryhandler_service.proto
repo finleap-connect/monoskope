@@ -7,9 +7,9 @@ import "google/protobuf/empty.proto";
 import "api/domain/projections/user.proto";
 import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
+import "api/domain/projections/certificate.proto";
 import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
-import "api/domain/common/messages.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain";
 
@@ -56,7 +56,7 @@ service Cluster {
 }
 
 service Certificate {
-  rpc GetCertificate(GetCertificateRequest) returns (common.CertificateChain);
+  rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
 }
 
 // K8sOperator is a service used by remote K8s Operators to query the Control
