@@ -36,9 +36,9 @@ func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateStor
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *UserRoleBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.validate(ctx, cmd); err != nil {
-		return err
+		return nil, err
 	}
 	return a.execute(ctx, cmd)
 }
@@ -91,7 +91,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 	}
 }
 
-func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) error {
+func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
 		eventData := &eventdata.UserRoleAdded{
@@ -104,9 +104,13 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 	case *commands.DeleteUserRoleBindingCommand:
 		_ = a.AppendEvent(ctx, events.UserRoleBindingDeleted, nil)
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
-	return nil
+	reply := &es.CommandReply{
+		Id:      a.ID(),
+		Version: a.Version(),
+	}
+	return reply, nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

@@ -95,7 +95,6 @@ func (a *BaseAggregate) UncommittedEvents() []Event {
 
 // AppendEvent appends an event to the events the aggregate was build upon.
 func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, eventData EventData) Event {
-	a.version++
 	newEvent := NewEvent(
 		ctx,
 		eventType,
@@ -103,7 +102,7 @@ func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, ev
 		time.Now().UTC(),
 		a.Type(),
 		a.ID(),
-		a.Version())
+		a.version+uint64(len(a.events))+1)
 	a.events = append(a.events, newEvent)
 	return newEvent
 }

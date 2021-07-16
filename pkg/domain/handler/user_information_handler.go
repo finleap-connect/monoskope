@@ -30,11 +30,11 @@ func (m *userInformationHandler) Middleware(h es.CommandHandler) es.CommandHandl
 }
 
 // HandleCommand implements the CommandHandler interface
-func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	// Gather context
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	userInfo := metadataManager.GetUserInformation()
 
@@ -47,7 +47,7 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
 	if err != nil {
 		h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		return domainErrors.ErrUnauthorized
+		return nil, domainErrors.ErrUnauthorized
 	}
 
 	// Enrich context with rolebindings and user information
@@ -60,6 +60,6 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 	if h.nextHandlerInChain != nil {
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	} else {
-		return nil
+		return &es.CommandReply{}, nil
 	}
 }

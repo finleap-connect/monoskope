@@ -32,26 +32,30 @@ func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggre
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 	if err := a.validate(ctx, cmd); err != nil {
-		return err
+		return nil, err
 	}
 	return a.execute(ctx, cmd)
 }
 
-func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) error {
+func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
 		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
 			Email: cmd.GetEmail(),
 			Name:  cmd.GetName(),
 		}))
-		return nil
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	}
-	return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+	return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
 
 func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {

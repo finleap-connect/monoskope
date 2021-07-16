@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	expectedName                = "the one cluster"
+	expectedClusterName         = "the one cluster"
 	expectedLabel               = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
@@ -35,10 +35,13 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
+		inID := uuid.New()
+		agg := NewClusterAggregate(inID, NewTestAggregateManager())
 
-		err = createCluster(ctx, agg)
+		reply, err := createCluster(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
+		Expect(reply.Id).ToNot(Equal(inID))
+		Expect(reply.Version).To(Equal(0))
 
 		event := agg.UncommittedEvents()[0]
 
@@ -48,7 +51,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		err = event.Data().ToProto(data)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(data.Name).To(Equal(expectedName))
+		Expect(data.Name).To(Equal(expectedClusterName))
 		Expect(data.Label).To(Equal(expectedLabel))
 		Expect(data.ApiServerAddress).To(Equal(expectedApiServerAddress))
 		Expect(data.CaCertificateBundle).To(Equal(expectedClusterCACertBundle))
@@ -63,7 +66,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
-			Name:                expectedName,
+			Name:                expectedClusterName,
 			Label:               expectedLabel,
 			ApiServerAddress:    expectedApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,
@@ -74,7 +77,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		err = agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(agg.(*ClusterAggregate).name).To(Equal(expectedName))
+		Expect(agg.(*ClusterAggregate).name).To(Equal(expectedClusterName))
 		Expect(agg.(*ClusterAggregate).label).To(Equal(expectedLabel))
 		Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedApiServerAddress))
 		Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedClusterCACertBundle))
@@ -101,11 +104,11 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 	})
 })
 
-func createCluster(ctx context.Context, agg es.Aggregate) error {
+func createCluster(ctx context.Context, agg es.Aggregate) (*es.CommandReply, error) {
 	esCommand, ok := cmd.NewCreateClusterCommand(uuid.New()).(*cmd.CreateClusterCommand)
 	Expect(ok).To(BeTrue())
 
-	esCommand.CreateCluster.Name = expectedName
+	esCommand.CreateCluster.Name = expectedClusterName
 	esCommand.CreateCluster.Label = expectedLabel
 	esCommand.CreateCluster.ApiServerAddress = expectedApiServerAddress
 	esCommand.CreateCluster.ClusterCACertBundle = expectedClusterCACertBundle

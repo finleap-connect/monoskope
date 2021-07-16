@@ -40,6 +40,13 @@ type Command interface {
 	Policies(ctx context.Context) []Policy
 }
 
+// CommandReply is a internal representation of the gRPC struct to avoid constant
+// parsing and rendering of UUIDs
+type CommandReply struct {
+	Id      uuid.UUID
+	Version uint64
+}
+
 // BaseCommand is the base implementation for all commands
 type BaseCommand struct {
 	aggregateID   uuid.UUID
