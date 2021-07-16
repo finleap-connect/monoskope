@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
@@ -54,10 +54,20 @@ func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBu
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) configureTLS() error {
-	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
-	if err := loadCertificates(conf.amqpConfig); err != nil {
+	var err error
+	caCertPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(CACertPath)
+	if err != nil {
 		return err
 	}
+	caCertPool.AppendCertsFromPEM(ca)
+
+	conf.amqpConfig.TLSClientConfig = &tls.Config{
+		RootCAs:              caCertPool,
+		GetClientCertificate: getClientCertificate,
+	}
+	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+
 	return nil
 }
 
@@ -69,24 +79,6 @@ func getClientCertificate(hello *tls.CertificateRequestInfo) (*tls.Certificate, 
 		return nil, err
 	}
 	return &cert, nil
-}
-
-func loadCertificates(amqpConfig *amqp.Config) error {
-	var err error
-	caCertPool := x509.NewCertPool()
-
-	ca, err := ioutil.ReadFile(CACertPath)
-	if err != nil {
-		return err
-	}
-	caCertPool.AppendCertsFromPEM(ca)
-
-	amqpConfig.TLSClientConfig = &tls.Config{
-		RootCAs:              caCertPool,
-		GetClientCertificate: getClientCertificate,
-	}
-
-	return nil
 }
 
 // Validate validates the configuration

@@ -20,6 +20,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/int128/listener v1.1.0
+	github.com/iss0/go-rabbitmq v1.0.0-rc0
 	github.com/jetstack/cert-manager v1.3.1
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
@@ -29,10 +30,9 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.24.0 // indirect
+	github.com/rabbitmq/amqp091-go v0.0.0-20210714180937-de74e8a7d0e0
 	github.com/spf13/cobra v1.1.1
-	github.com/streadway/amqp v1.0.0
 	github.com/ugorji/go v1.2.4 // indirect
-	github.com/wagslane/go-rabbitmq v0.6.2
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
