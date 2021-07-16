@@ -40,7 +40,11 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	conf := messaging.NewRabbitEventBusConfig("eventstore", env.messagingTestEnv.AmqpURL, "")
+	conf, err := messaging.NewRabbitEventBusConfig("eventstore", env.messagingTestEnv.AmqpURL, "")
+	if err != nil {
+		return nil, err
+	}
+
 	env.publisher, err = messaging.NewRabbitEventBusPublisher(conf)
 	if err != nil {
 		return nil, err

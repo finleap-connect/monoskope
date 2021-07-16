@@ -25,22 +25,35 @@ type RabbitEventBusConfig struct {
 }
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
-func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) *RabbitEventBusConfig {
+func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBusConfig, error) {
 	if routingKeyPrefix == "" {
 		routingKeyPrefix = "m8"
 	}
 
-	return &RabbitEventBusConfig{
+	uri, err := amqp.ParseURI(url)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &RabbitEventBusConfig{
 		name:             name,
 		url:              url,
 		routingKeyPrefix: routingKeyPrefix,
 		exchangeName:     DefaultExchangeName,
 		amqpConfig:       &amqp.Config{},
 	}
+
+	if uri.Scheme == "amqps" {
+		if err := conf.configureTLS(); err != nil {
+			return nil, err
+		}
+	}
+
+	return conf, nil
 }
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
-func (conf *RabbitEventBusConfig) ConfigureTLS() error {
+func (conf *RabbitEventBusConfig) configureTLS() error {
 	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
 	if err := loadCertificates(conf.amqpConfig); err != nil {
 		return err
