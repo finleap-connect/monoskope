@@ -75,8 +75,7 @@ func (consumer Consumer) StartConsuming(
 // IMPORTANT: If this method is executed before StopConsuming, it could cause unexpected behavior
 // such as messages being processed, but not being acknowledged, thus being requeued by the broker
 func (consumer Consumer) Disconnect() {
-	consumer.chManager.channel.Close()
-	consumer.chManager.connection.Close()
+	consumer.chManager.stop()
 }
 
 // StopConsuming stops the consumption of messages.

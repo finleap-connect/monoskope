@@ -12,9 +12,11 @@ import (
 )
 
 type TestEnv struct {
-	pool     *dockertest.Pool
-	Log      logger.Logger
-	shutdown bool
+	pool         *dockertest.Pool
+	Log          logger.Logger
+	shutdown     bool
+	keepExisting bool
+	resources    map[string]*dockertest.Resource
 }
 
 func IsRunningInCI() bool {
@@ -22,7 +24,7 @@ func IsRunningInCI() bool {
 	return runningInCi
 }
 
-func (t *TestEnv) CreateDockerPool() error {
+func (t *TestEnv) CreateDockerPool(keepExisting bool) error {
 	// Running in CI, no docker necessary
 	if IsRunningInCI() {
 		return nil
@@ -36,6 +38,8 @@ func (t *TestEnv) CreateDockerPool() error {
 	}
 
 	t.pool = pool
+	t.keepExisting = keepExisting
+
 	return nil
 }
 
@@ -46,7 +50,13 @@ func (t *TestEnv) Retry(op func() error) error {
 func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error) {
 	res, present := t.pool.ContainerByName(opts.Name)
 	if present {
-		return res, nil
+		if t.keepExisting {
+			return res, nil
+		} else {
+			if err := t.pool.Purge(res); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	t.Log.Info(fmt.Sprintf("Starting docker container %s:%s ...", opts.Repository, opts.Tag))
@@ -57,10 +67,13 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 	if err != nil {
 		return nil, err
 	}
+	t.resources[res.Container.Name] = res
 
-	err = res.Expire(60)
-	if err != nil {
-		return nil, err
+	if t.keepExisting {
+		err = res.Expire(500)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	containerLogger := logWriter{}
@@ -86,7 +99,8 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 func NewTestEnv(envName string) *TestEnv {
 	log := logger.WithName(envName)
 	env := &TestEnv{
-		Log: log,
+		Log:       log,
+		resources: make(map[string]*dockertest.Resource),
 	}
 	log.Info("Setting up testenv...")
 	return env
@@ -95,6 +109,17 @@ func NewTestEnv(envName string) *TestEnv {
 func (env *TestEnv) Shutdown() error {
 	if env.shutdown {
 		return nil
+	}
+
+	if !env.keepExisting {
+		if env.resources != nil {
+			for key, element := range env.resources {
+				env.Log.Info("Tearing down docker resource", "resource", key)
+				if err := env.pool.Purge(element); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	env.shutdown = true

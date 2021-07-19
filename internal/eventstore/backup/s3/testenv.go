@@ -46,7 +46,7 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	if err := env.CreateDockerPool(); err != nil {
+	if err := env.CreateDockerPool(false); err != nil {
 		return nil, err
 	}
 

@@ -69,7 +69,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 	}
 	env.JwtTestEnv = jwtTestEnv
 
-	err = env.CreateDockerPool()
+	err = env.CreateDockerPool(false)
 	if err != nil {
 		_ = env.Shutdown()
 		return nil, err

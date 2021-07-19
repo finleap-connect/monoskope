@@ -177,8 +177,7 @@ func (publisher *Publisher) Publish(
 // StopPublishing stops the publishing of messages.
 // The publisher should be discarded as it's not safe for re-use
 func (publisher Publisher) StopPublishing() {
-	publisher.chManager.channel.Close()
-	publisher.chManager.connection.Close()
+	publisher.chManager.stop()
 }
 
 func (publisher *Publisher) startNotifyHandlers() {

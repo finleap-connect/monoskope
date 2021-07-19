@@ -1,4 +1,4 @@
-package messaging
+package rabbitmq
 
 import (
 	"testing"
@@ -7,33 +7,31 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/rabbitmq"
 )
 
 var (
 	baseTestEnv *test.TestEnv
-	env         *rabbitmq.TestEnv
+	env         *TestEnv
 )
 
-func TestMessageBus(t *testing.T) {
+func TestRabbitmq(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/event-sourcing-messaging-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "eventsourcing/messaging", []Reporter{junitReporter})
+	junitReporter := reporters.NewJUnitReporter("../../reports/jwt-junit.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "Rabbitmq Suite", []Reporter{junitReporter})
 }
 
 var _ = BeforeSuite(func(done Done) {
-	var err error
 	defer close(done)
-
 	By("bootstrapping test env")
+
+	var err error
 	baseTestEnv = test.NewTestEnv("messaging-testenv")
-	env, err = rabbitmq.NewTestEnvWithParent(baseTestEnv)
+	env, err = NewTestEnvWithParent(baseTestEnv)
 	Expect(err).ToNot(HaveOccurred())
 }, 60)
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-
 	Expect(env.Shutdown()).To(Not(HaveOccurred()))
 	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
 })
