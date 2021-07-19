@@ -19,6 +19,7 @@ variables:
   cache:
     paths:
       - .go/pkg/mod/
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
 
 cache:golang:
   stage: prepare
