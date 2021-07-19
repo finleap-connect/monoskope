@@ -15,17 +15,19 @@ var _ = Describe("Pkg/Rabbitmq/Channel", func() {
 		Expect(chanManager).ToNot(BeNil())
 		Expect(chanManager.channel.IsClosed()).To(BeFalse())
 
-		err = env.StopRabbitMQ()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(chanManager.channel.IsClosed()).To(BeTrue())
-		Expect(chanManager.isReconnecting).To(BeTrue())
+		if !env.ExternalRabbitMQ {
+			err = env.stopRabbitMQ()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(chanManager.channel.IsClosed()).To(BeTrue())
+			Expect(chanManager.isReconnecting).To(BeTrue())
 
-		err = env.StartRabbitMQ()
-		Expect(err).ToNot(HaveOccurred())
+			err = env.startRabbitMQ()
+			Expect(err).ToNot(HaveOccurred())
 
-		for chanManager.isReconnecting {
-			time.Sleep(300 * time.Millisecond)
+			for chanManager.isReconnecting {
+				time.Sleep(300 * time.Millisecond)
+			}
+			Expect(chanManager.channel.IsClosed()).To(BeFalse())
 		}
-		Expect(chanManager.channel.IsClosed()).To(BeFalse())
 	})
 })

@@ -13,7 +13,8 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	AmqpURL string
+	AmqpURL          string
+	ExternalRabbitMQ bool
 }
 
 func (env *TestEnv) Shutdown() error {
@@ -29,22 +30,26 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	if err := env.StartRabbitMQ(); err != nil {
+	if err := env.startRabbitMQ(); err != nil {
 		return nil, err
 	}
 
 	return env, nil
 }
 
-func (env *TestEnv) StopRabbitMQ() error {
-	return env.Purge("rabbitmq")
+func (env *TestEnv) stopRabbitMQ() error {
+	if !env.ExternalRabbitMQ {
+		return env.Purge("rabbitmq")
+	}
+	return nil
 }
 
-func (env *TestEnv) StartRabbitMQ() error {
+func (env *TestEnv) startRabbitMQ() error {
 	var err error
 
 	if v := os.Getenv("AMQP_URL"); v != "" {
 		env.AmqpURL = v // running in ci pipeline
+		env.ExternalRabbitMQ = true
 	} else {
 		// Start rabbitmq
 		_, err := env.Run(&dockertest.RunOptions{
@@ -63,7 +68,6 @@ func (env *TestEnv) StartRabbitMQ() error {
 		}
 
 		// Build connection string
-		// env.AmqpURL = fmt.Sprintf("amqp://user:bitnami@127.0.0.1:%s", container.GetPort("5672/tcp"))
 		env.AmqpURL = "amqp://user:bitnami@127.0.0.1:5672"
 	}
 
