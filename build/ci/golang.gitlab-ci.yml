@@ -31,6 +31,14 @@ cache:golang:
   cache:
     policy: pull
 
+.docker-builder:
+  extends: .gobase-no-push
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8-rc3
+  only:
+    - web
+    - tags
+    - develop
+    
 lint:golang:
   stage: test
   extends: .gobase-no-push
