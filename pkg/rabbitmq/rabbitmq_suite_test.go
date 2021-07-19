@@ -16,7 +16,7 @@ var (
 
 func TestRabbitmq(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/jwt-junit.xml")
+	junitReporter := reporters.NewJUnitReporter("../../reports/rabbitmq-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "Rabbitmq Suite", []Reporter{junitReporter})
 }
 
