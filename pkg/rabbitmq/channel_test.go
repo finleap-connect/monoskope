@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Pkg/Rabbitmq/Channel", func() {
 	It("can connect", func() {
-		chanManager, err := newChannelManager(env.AmqpURL, &amqp091.Config{}, time.Second*60)
+		chanManager, err := newChannelManager(env.AmqpURL, &amqp091.Config{}, 0)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(chanManager).ToNot(BeNil())
 		Expect(chanManager.channel.IsClosed()).To(BeFalse())

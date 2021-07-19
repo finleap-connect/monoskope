@@ -37,7 +37,7 @@ type PublishOptions struct {
 	// Expiration time in ms that a message will expire from a queue.
 	// See https://www.rabbitmq.com/ttl.html#per-message-ttl-in-publishers
 	Expiration string
-	Headers    Table
+	Headers    amqp.Table
 }
 
 // WithPublishOptionsExchange returns a function that sets the exchange to publish to
@@ -83,7 +83,7 @@ func WithPublishOptionsExpiration(expiration string) func(options *PublishOption
 }
 
 // WithPublishOptionsHeaders returns a function that sets message header values, i.e. "msg-id"
-func WithPublishOptionsHeaders(headers Table) func(*PublishOptions) {
+func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
 	return func(options *PublishOptions) {
 		options.Headers = headers
 	}
@@ -156,7 +156,7 @@ func (publisher *Publisher) Publish(
 		message.ContentType = options.ContentType
 		message.DeliveryMode = options.DeliveryMode
 		message.Body = data
-		message.Headers = tableToAMQPTable(options.Headers)
+		message.Headers = options.Headers
 		message.Expiration = options.Expiration
 
 		// Actual publish.

@@ -1,5 +1,7 @@
 package rabbitmq
 
+import amqp "github.com/rabbitmq/amqp091-go"
+
 // getDefaultConsumeOptions describes the options that will be used when a value isn't provided
 func getDefaultConsumeOptions() ConsumeOptions {
 	return ConsumeOptions{
@@ -29,10 +31,10 @@ type ConsumeOptions struct {
 	QueueAutoDelete   bool
 	QueueExclusive    bool
 	QueueNoWait       bool
-	QueueArgs         Table
+	QueueArgs         amqp.Table
 	BindingExchange   *BindingExchangeOptions
 	BindingNoWait     bool
-	BindingArgs       Table
+	BindingArgs       amqp.Table
 	Concurrency       int
 	QOSPrefetch       int
 	QOSGlobal         bool
@@ -41,7 +43,7 @@ type ConsumeOptions struct {
 	ConsumerExclusive bool
 	ConsumerNoWait    bool
 	ConsumerNoLocal   bool
-	ConsumerArgs      Table
+	ConsumerArgs      amqp.Table
 }
 
 // getBindingExchangeOptionsOrSetDefault returns pointer to current BindingExchange options. if no BindingExchange options are set yet, it will set it with default values.
@@ -69,7 +71,7 @@ type BindingExchangeOptions struct {
 	AutoDelete   bool
 	Internal     bool
 	NoWait       bool
-	ExchangeArgs Table
+	ExchangeArgs amqp.Table
 }
 
 // WithConsumeOptionsQueueDurable sets the queue to durable, which means it won't
@@ -105,7 +107,7 @@ func WithConsumeOptionsQueueNoWait(options *ConsumeOptions) {
 // in the cluster will have the messages distributed amongst them for higher reliability
 func WithConsumeOptionsQuorum(options *ConsumeOptions) {
 	if options.QueueArgs == nil {
-		options.QueueArgs = Table{}
+		options.QueueArgs = amqp.Table{}
 	}
 	options.QueueArgs["x-queue-type"] = "quorum"
 }
@@ -145,7 +147,7 @@ func WithConsumeOptionsBindingExchangeNoWait(options *ConsumeOptions) {
 }
 
 // WithConsumeOptionsBindingExchangeArgs returns a function that sets the binding exchange arguments that are specific to the server's implementation of the exchange
-func WithConsumeOptionsBindingExchangeArgs(args Table) func(*ConsumeOptions) {
+func WithConsumeOptionsBindingExchangeArgs(args amqp.Table) func(*ConsumeOptions) {
 	return func(options *ConsumeOptions) {
 		getBindingExchangeOptionsOrSetDefault(options).ExchangeArgs = args
 	}

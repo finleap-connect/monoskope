@@ -96,7 +96,7 @@ func (chManager *channelManager) startNotifyCancelOrClosed() {
 }
 
 // reconnectWithBackoff continuously attempts to reconnect with an
-// exponential backoff strategy
+// exponential backoff strategy, it never stops if maximumBackoff is set to zero.
 func (chManager *channelManager) reconnectWithBackoff() {
 	chManager.isReconnecting = true
 	defer func() { chManager.isReconnecting = false }()

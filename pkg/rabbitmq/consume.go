@@ -140,7 +140,7 @@ func (consumer Consumer) startGoroutines(
 		consumeOptions.QueueAutoDelete,
 		consumeOptions.QueueExclusive,
 		consumeOptions.QueueNoWait,
-		tableToAMQPTable(consumeOptions.QueueArgs),
+		consumeOptions.QueueArgs,
 	)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (consumer Consumer) startGoroutines(
 			exchange.AutoDelete,
 			exchange.Internal,
 			exchange.NoWait,
-			tableToAMQPTable(exchange.ExchangeArgs),
+			exchange.ExchangeArgs,
 		)
 		if err != nil {
 			return err
@@ -169,7 +169,7 @@ func (consumer Consumer) startGoroutines(
 				routingKey,
 				exchange.Name,
 				consumeOptions.BindingNoWait,
-				tableToAMQPTable(consumeOptions.BindingArgs),
+				consumeOptions.BindingArgs,
 			)
 			if err != nil {
 				return err
@@ -193,7 +193,7 @@ func (consumer Consumer) startGoroutines(
 		consumeOptions.ConsumerExclusive,
 		consumeOptions.ConsumerNoLocal, // no-local is not supported by RabbitMQ
 		consumeOptions.ConsumerNoWait,
-		tableToAMQPTable(consumeOptions.ConsumerArgs),
+		consumeOptions.ConsumerArgs,
 	)
 	if err != nil {
 		return err
