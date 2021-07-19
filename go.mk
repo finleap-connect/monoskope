@@ -101,7 +101,7 @@ go-test: $(GENERATED_GO_FILES) ## run all tests
 
 go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover -trace *
+	$(GINKGO) -keepGoing -r -v -cover -trace -compilers 8 *
 	@echo "mode: atomic" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
