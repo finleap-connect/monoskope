@@ -441,8 +441,6 @@ github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANyt
 github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod h1:qj24IKcXYK6Iy9ceXlo3Tc+vtHo9lIhSX5JddghvEPo=
 github.com/int128/listener v1.1.0 h1:2Jb41DWLpkQ3I9bIdBzO8H/tNwMvyl/OBZWtCV5Pjuw=
 github.com/int128/listener v1.1.0/go.mod h1:68WkmTN8PQtLzc9DucIaagAKeGVyMnyyKIkW4Xn47UA=
-github.com/iss0/go-rabbitmq v1.0.0-rc0 h1:wD9tRuEWC5KZy7Vr1xs9B9qVc+VrITReS539TSPcwds=
-github.com/iss0/go-rabbitmq v1.0.0-rc0/go.mod h1:A/RQv4ql/KNs39dsX93zg2a2da1Igo/jrB2AzfrxvBQ=
 github.com/jetstack/cert-manager v1.3.1 h1:B2dUYeBzo/ah7d8Eo954oFuffCvthliIdaeBI2pseY8=
 github.com/jetstack/cert-manager v1.3.1/go.mod h1:Hfe4GE3QuRzbrsuReQD5R3PXZqrdfJ2kZ42K67V/V0w=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=

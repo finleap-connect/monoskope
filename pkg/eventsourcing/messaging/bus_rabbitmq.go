@@ -8,11 +8,11 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
-	rabbitmq "github.com/iss0/go-rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
+	rabbitmq "gitlab.figo.systems/platform/monoskope/monoskope/pkg/rabbitmq"
 )
 
 const (
@@ -25,7 +25,7 @@ type rabbitEventBus struct {
 	conf      *RabbitEventBusConfig
 	publisher *rabbitmq.Publisher
 	consumer  *rabbitmq.Consumer
-	returns   <-chan rabbitmq.Return
+	returns   <-chan amqp.Return
 }
 
 func newRabbitEventBus(conf *RabbitEventBusConfig) (*rabbitEventBus, error) {
@@ -39,11 +39,6 @@ func newRabbitEventBus(conf *RabbitEventBusConfig) (*rabbitEventBus, error) {
 	}, nil
 }
 
-// Printf implements the interface method for  rabbitmq.Logger
-func (b *rabbitEventBus) Printf(format string, v ...interface{}) {
-	b.log.Info(fmt.Sprintf(format, v...))
-}
-
 // NewRabbitEventBusPublisher creates a new EventBusPublisher for rabbitmq.
 func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublisher, error) {
 	b, err := newRabbitEventBus(conf)
@@ -51,7 +46,7 @@ func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublish
 		return nil, err
 	}
 
-	publisher, returns, err := rabbitmq.NewPublisher(conf.url, conf.amqpConfig, rabbitmq.WithPublisherOptionsLogger(b))
+	publisher, returns, err := rabbitmq.NewPublisher(conf.url, conf.amqpConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +70,7 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 		return nil, err
 	}
 
-	consumer, err := rabbitmq.NewConsumer(conf.url, conf.amqpConfig, rabbitmq.WithConsumerOptionsLogger(b))
+	consumer, err := rabbitmq.NewConsumer(conf.url, conf.amqpConfig)
 	if err != nil {
 		return nil, err
 	}
