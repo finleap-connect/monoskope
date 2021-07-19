@@ -6,17 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	evs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	rabbitmq "gitlab.figo.systems/platform/monoskope/monoskope/pkg/rabbitmq"
-)
-
-const (
-	MAX_BACKOFF_PUBLISH = 1 * time.Minute
 )
 
 // rabbitEventBus implements an EventBus using RabbitMQ.
@@ -98,21 +93,12 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 		return errors.ErrCouldNotMarshalEvent
 	}
 
-	params := backoff.NewExponentialBackOff()
-	params.MaxElapsedTime = MAX_BACKOFF_PUBLISH
-
-	err = backoff.Retry(func() error {
-		pubErr := b.publisher.Publish(
-			rabbitMessageBytes,
-			[]string{b.generateRoutingKey(event)},
-			rabbitmq.WithPublishOptionsContentType("application/json"),
-			rabbitmq.WithPublishOptionsExchange(b.conf.exchangeName),
-		)
-		if pubErr != nil {
-			b.log.Info("Failed to publish event. Retrying...", "event", event.String(), "error", err.Error())
-		}
-		return pubErr
-	}, params)
+	err = b.publisher.Publish(
+		rabbitMessageBytes,
+		[]string{b.generateRoutingKey(event)},
+		rabbitmq.WithPublishOptionsContentType("application/json"),
+		rabbitmq.WithPublishOptionsExchange(b.conf.exchangeName),
+	)
 	if err != nil {
 		b.log.Error(err, errors.ErrCouldNotPublishEvent.Error(), "event", event.String())
 		return errors.ErrCouldNotPublishEvent

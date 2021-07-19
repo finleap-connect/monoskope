@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore/metrics"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
@@ -12,6 +13,10 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/usecase"
 	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+const (
+	MAX_BACKOFF_PUBLISH = 1 * time.Minute
 )
 
 type StoreEventsUseCase struct {
@@ -72,7 +77,14 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 
 		// Send events to message bus
 		u.Log.V(logger.DebugLevel).Info("Sending events to the message bus...")
-		if err := u.bus.PublishEvent(ctx, ev); err != nil {
+
+		params := backoff.NewExponentialBackOff()
+		params.MaxElapsedTime = MAX_BACKOFF_PUBLISH
+
+		err = backoff.Retry(func() error {
+			return u.bus.PublishEvent(ctx, ev)
+		}, params)
+		if err != nil {
 			return err
 		}
 		u.metrics.StoredHistogram.WithLabelValues(event.Type, event.AggregateType).Observe(time.Since(startTime).Seconds())
