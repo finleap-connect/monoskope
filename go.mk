@@ -60,23 +60,26 @@ endef
 
 .PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
 
-go-mod:
+##@ Go
+go-all: go-mod go-fmt go-vet go-lint go-test
+
+go-mod: ## go mod download and verify
 	$(GO) mod download
 	$(GO) mod verify
 
-go-fmt:
+go-fmt:  ## go fmt
 	$(GO) fmt ./...
 
-go-vet:
+go-vet: ## go vet
 	$(GO) vet ./...
 
-go-lint:
+go-lint: ## go lint
 	$(LINTER) run -v --no-config --deadline=5m
 
-go-run-%:
+go-run-%: ## run command
 	$(call go-run,$*)
 
-go-report:
+go-report: ## create report of commands and permission
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) cmd/commandhandler/*.go report commands $(ARGS)
 	@echo
@@ -93,23 +96,20 @@ include .protobuf-deps
 
 go-protobuf: $(GENERATED_GO_FILES)
 
-go-test: $(GENERATED_GO_FILES)
+go-test: $(GENERATED_GO_FILES) ## run all tests
 	make go-test-ci
 
-go-test-ci:
+go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover *
-	@echo "mode: set" > ./monoskope.coverprofile
+	$(GINKGO) -keepGoing -r -v -cover -trace *
+	@echo "mode: atomic" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
 	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
-go-coverage:
+go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
-
-go-loc:
-	@gocloc .
 
 ginkgo-get:
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
@@ -130,9 +130,9 @@ protoc-get:
 	$(shell $(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get
+go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get ## download needed go tools
 
-go-clean: go-build-clean
+go-clean: go-build-clean ## clean up all go parts
 	rm  .protobuf-deps
 	rm -Rf reports/
 	rm -Rf $(TOOLS_DIR)/
