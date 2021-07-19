@@ -15,10 +15,11 @@ ENV GRPC_HEALTH_PROBE_VERSION=v0.3.5
 RUN wget -qOgrpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x grpc-health-probe
 
+RUN mkdir -p .go/pkg/mod/ 
+
 COPY go.mod .
 COPY go.sum .
-
-RUN go mod download
+COPY .go/pkg/mod/ .go/pkg/mod/
 
 COPY cmd/ cmd/
 COPY internal/ internal/
