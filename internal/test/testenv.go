@@ -96,6 +96,16 @@ func (t *TestEnv) Run(opts *dockertest.RunOptions) (*dockertest.Resource, error)
 	return res, err
 }
 
+func (t *TestEnv) Purge(resource string) error {
+	res, present := t.pool.ContainerByName(resource)
+	if present {
+		return t.pool.Purge(res)
+	}
+	delete(t.resources, resource)
+
+	return nil
+}
+
 func NewTestEnv(envName string) *TestEnv {
 	log := logger.WithName(envName)
 	env := &TestEnv{

@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"errors"
+	"io"
 	"sync"
 	"time"
 
@@ -19,17 +20,21 @@ type channelManager struct {
 	config              *amqp.Config
 	channelMux          *sync.RWMutex
 	notifyCancelOrClose chan error
+	isReconnecting      bool
 	maximumBackoff      time.Duration
 }
 
 func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Duration) (*channelManager, error) {
+	log := logger.WithName("rabbitmq-channel-manager")
+	log.Info("attempting to connect to amqp server", "server", url)
+
 	conn, ch, err := getNewChannel(url, conf)
 	if err != nil {
 		return nil, err
 	}
 
 	chManager := channelManager{
-		logger:              logger.WithName("rabbitmq-channel-manager"),
+		logger:              log,
 		url:                 url,
 		connection:          conn,
 		channel:             ch,
@@ -39,6 +44,8 @@ func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Durati
 		maximumBackoff:      maximumBackoff,
 	}
 	go chManager.startNotifyCancelOrClosed()
+	log.Info("connected to amqp server!", "url", url)
+
 	return &chManager, nil
 }
 
@@ -74,7 +81,7 @@ func (chManager *channelManager) startNotifyCancelOrClosed() {
 		}
 	case err := <-notifyCloseConn:
 		// If the connection close is triggered by the Server, a reconnection takes place
-		if err != nil && err.Server {
+		if err != nil && (err.Server || err.Reason == io.EOF.Error()) {
 			chManager.logger.Info("attempting to reconnect to amqp server after connection close")
 			chManager.reconnectWithBackoff()
 			chManager.logger.Info("successfully reconnected to amqp server after connection close")
@@ -91,12 +98,15 @@ func (chManager *channelManager) startNotifyCancelOrClosed() {
 // reconnectWithBackoff continuously attempts to reconnect with an
 // exponential backoff strategy
 func (chManager *channelManager) reconnectWithBackoff() {
+	chManager.isReconnecting = true
+	defer func() { chManager.isReconnecting = false }()
+
 	params := backoff.NewExponentialBackOff()
 	params.MaxElapsedTime = chManager.maximumBackoff
 	err := backoff.Retry(func() error {
 		reconnectErr := chManager.reconnect()
 		if reconnectErr != nil {
-			chManager.logger.Info("waiting to attempt to reconnect to amqp server", "error", reconnectErr.Error())
+			chManager.logger.Info("waiting to attempt to reconnect to amqp server", "backoff", params.NextBackOff(), "error", reconnectErr.Error())
 		}
 		return reconnectErr
 	}, params)
