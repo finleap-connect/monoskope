@@ -5,7 +5,7 @@ TOOLS_DIR ?= $(shell cd tools && pwd)
 HACK_DIR ?= $(shell cd hack && pwd)
 
 VERSION   ?= 0.0.1-local
-LATEST_REV=$(shell git rev-list --tags --max-count=1)
+COMMIT     	   := $(shell git rev-parse --short HEAD)
 LATEST_TAG=$(shell git describe --tags $(LATEST_REV))
 
 export
@@ -23,9 +23,12 @@ include helm.mk
 # tools
 tools: go-ginkgo-get go-golangci-lint-get ## Phony target to install all required tools into ${TOOLS_DIR}
 tools-clean: go-ginkgo-clean go-golangci-lint-clean ## Phony target to clean all required tools
-get-latest: ## Echos the latest revision and tag of this repo
-	@echo LATEST_REV: $(LATEST_REV)
-	@echo LATEST_TAG: $(LATEST_TAG)
+
+commit-hash: ## Echos the current commit hash
+	@echo $(COMMIT)
+
+latest-tag: ## Echos the latest tag
+	@echo $(LATEST_TAG)
 
 ##@ General
 

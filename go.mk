@@ -23,7 +23,6 @@ PROTO_FILES                != find api -name "*.proto"
 
 CURL          ?= curl
 
-COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 
