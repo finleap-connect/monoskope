@@ -15,7 +15,7 @@ import (
 
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	name             string
 	label            string
@@ -27,7 +27,7 @@ type ClusterAggregate struct {
 // ClusterAggregate creates a new ClusterAggregate
 func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
-		DomainAggregateBase: DomainAggregateBase{
+		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
 		},
 		aggregateManager: aggregateManager,

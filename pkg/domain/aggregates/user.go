@@ -15,7 +15,7 @@ import (
 
 // UserAggregate is an aggregate for Users.
 type UserAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	Email            string
 	Name             string
@@ -24,7 +24,7 @@ type UserAggregate struct {
 // NewUserAggregate creates a new UserAggregate
 func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &UserAggregate{
-		DomainAggregateBase: DomainAggregateBase{
+		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.User, id),
 		},
 		aggregateManager: aggregateManager,

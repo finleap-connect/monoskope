@@ -17,7 +17,7 @@ import (
 
 // UserRoleBindingAggregate is an aggregate for UserRoleBindings.
 type UserRoleBindingAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	userId           uuid.UUID // User to add a role to
 	role             es.Role   // Role to add to the user
@@ -28,7 +28,7 @@ type UserRoleBindingAggregate struct {
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
 func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &UserRoleBindingAggregate{
-		DomainAggregateBase: DomainAggregateBase{
+		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding, id),
 		},
 		aggregateManager: aggregateManager,

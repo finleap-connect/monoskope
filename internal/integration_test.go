@@ -64,19 +64,18 @@ var _ = Describe("integration", func() {
 	}
 
 	It("can manage a user", func() {
-		userId := uuid.New()
 		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(userId, commandTypes.CreateUser),
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
 			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(userId.String()).ToNot(Equal(reply.AggregateId))
+		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
 		// update userId, as the "create" command will have changed it.
-		userId = uuid.MustParse(reply.AggregateId)
+		userId := uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -87,21 +86,19 @@ var _ = Describe("integration", func() {
 		Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
 		Expect(user.Id).To(Equal(userId.String()))
 
-		userRoleBindingId := uuid.New()
 		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
 			&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
 
 		// Creating the same rolebinding again should fail
-		command.Id = uuid.New().String()
 		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).To(HaveOccurred())
 
@@ -111,7 +108,7 @@ var _ = Describe("integration", func() {
 		Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
 		Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(uuid.MustParse(reply.AggregateId), commandTypes.DeleteUserRoleBinding))
 		Expect(err).ToNot(HaveOccurred())
 
 		// Wait to propagate
@@ -136,15 +133,15 @@ var _ = Describe("integration", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
-		tenantId := uuid.New()
 		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
 			&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		tenantId := uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -154,10 +151,10 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetName()).To(Equal("Tenant X"))
 		Expect(tenant.GetPrefix()).To(Equal("tx"))
-		Expect(tenant.Id).ToNot(Equal(tenantId.String()))
+		Expect(tenant.GetId()).To(Equal(reply.AggregateId))
 
 		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+			cmd.CreateCommand(uuid.MustParse(reply.AggregateId), commandTypes.UpdateTenant),
 			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
 		)
 		Expect(err).ToNot(HaveOccurred())

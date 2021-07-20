@@ -13,14 +13,14 @@ func newTestProjection(id uuid.UUID) *testProjection {
 	}
 }
 
-func (t testProjection) ID() uuid.UUID {
+func (t *testProjection) ID() uuid.UUID {
 	return t.id
 }
 
-func (t testProjection) Version() uint64 {
+func (t *testProjection) Version() uint64 {
 	return t.version
 }
 
-func (t testProjection) IncrementVersion() {
+func (t *testProjection) IncrementVersion() {
 	t.version++
 }
