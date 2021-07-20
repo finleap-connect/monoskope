@@ -60,6 +60,6 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 	if h.nextHandlerInChain != nil {
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	} else {
-		return &es.CommandReply{}, nil
+		return nil, nil
 	}
 }
