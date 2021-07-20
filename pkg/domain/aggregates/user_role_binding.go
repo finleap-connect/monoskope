@@ -47,7 +47,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
 		if a.Exists() {
-			return domainErrors.ErrTenantAlreadyExists
+			return domainErrors.ErrUserRoleBindingAlreadyExists
 		}
 
 		var err error
@@ -100,6 +100,11 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 			Scope:    cmd.GetScope(),
 			Resource: cmd.GetResource(),
 		}
+
+		// this is a create command. Update the aggregate ID, so that any input
+		// from the user will be ignored, and new event will use the new ID
+		a.resetId()
+
 		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
 	case *commands.DeleteUserRoleBindingCommand:
 		_ = a.AppendEvent(ctx, events.UserRoleBindingDeleted, nil)

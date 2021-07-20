@@ -51,6 +51,11 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
+
+		// this is a create command. Update the aggregate ID, so that any input
+		// from the user will be ignored, and new event will use the new ID
+		a.resetId()
+
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
 		reply := &es.CommandReply{
 			Id:      a.ID(),

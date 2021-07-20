@@ -63,7 +63,7 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	It("manage a user", func() {
+	It("can manage a user", func() {
 		userId := uuid.New()
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(userId, commandTypes.CreateUser),
@@ -71,8 +71,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(userId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update userId, as the "create" command will have changed it.
+		userId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -128,7 +132,7 @@ var _ = Describe("integration", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
-	It("manage a tenant", func() {
+	It("can manage a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
@@ -150,7 +154,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetName()).To(Equal("Tenant X"))
 		Expect(tenant.GetPrefix()).To(Equal("tx"))
-		Expect(tenant.Id).To(Equal(tenantId.String()))
+		Expect(tenant.Id).ToNot(Equal(tenantId.String()))
 
 		command, err = cmd.AddCommandData(
 			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),

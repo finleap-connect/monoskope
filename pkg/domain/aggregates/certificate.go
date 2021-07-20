@@ -46,6 +46,11 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
+
+		// this is a create command. Update the aggregate ID, so that any input
+		// from the user will be ignored, and new event will use the new ID
+		a.resetId()
+
 		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
 
 		reply := &es.CommandReply{

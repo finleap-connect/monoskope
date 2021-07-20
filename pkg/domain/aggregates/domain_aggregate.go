@@ -66,3 +66,10 @@ func (a *DomainAggregateBase) Validate(ctx context.Context, cmd es.Command) erro
 	}
 	return nil
 }
+
+// resetId must be called for each command that will create a new aggregate, so that
+// subsequent events will not reference the user supplied (possibly empty) ID.
+func (a *DomainAggregateBase) resetId() {
+	atype := a.BaseAggregate.Type()
+	a.BaseAggregate = es.NewBaseAggregate(atype, uuid.New())
+}

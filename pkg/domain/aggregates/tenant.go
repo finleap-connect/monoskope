@@ -77,13 +77,6 @@ func containsTenant(values []es.Aggregate, name string) bool {
 	return false
 }
 
-// resetId must be called for each command that will create a new aggregate, so that
-// subsequent events will not reference the user supplied (possibly empty) ID.
-func (a *TenantAggregate) resetId() {
-	a.DomainAggregateBase = DomainAggregateBase{
-		BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, uuid.New())}
-}
-
 // execute executes the command after it has successfully been validated
 func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {

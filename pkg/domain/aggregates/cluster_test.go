@@ -10,9 +10,11 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	meta "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
@@ -41,7 +43,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		reply, err := createCluster(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(reply.Id).ToNot(Equal(inID))
-		Expect(reply.Version).To(Equal(0))
+		Expect(reply.Version).To(Equal(uint64(0)))
 
 		event := agg.UncommittedEvents()[0]
 
@@ -147,21 +149,82 @@ func makeMetadataContextWithSystemAdminUser() (context.Context, error) {
 }
 
 type aggregateTestStore struct {
+	bindings map[uuid.UUID]es.Aggregate
+	users    map[uuid.UUID]es.Aggregate
 }
 
 // NewTestAggregateManager creates a new dummy AggregateHandler which allows observing interactions and injecting test data.
 func NewTestAggregateManager() es.AggregateStore {
-	return &aggregateTestStore{}
+	return &aggregateTestStore{
+		bindings: make(map[uuid.UUID]es.Aggregate),
+		users:    make(map[uuid.UUID]es.Aggregate),
+	}
+}
+
+func (tas *aggregateTestStore) Add(agg es.Aggregate) {
+	switch agg.Type() {
+	case aggregates.User:
+		tas.users[agg.ID()] = agg
+	case aggregates.UserRoleBinding:
+		tas.bindings[agg.ID()] = agg
+	}
 }
 
 // Get returns the most recent version of all aggregate of a given type.
-func (tas *aggregateTestStore) All(context.Context, es.AggregateType) ([]es.Aggregate, error) {
-	return []es.Aggregate{}, nil
+func (tas *aggregateTestStore) All(ctx context.Context, atype es.AggregateType) ([]es.Aggregate, error) {
+	var retmap map[uuid.UUID]es.Aggregate
+
+	switch atype {
+	case aggregates.Certificate:
+		return []es.Aggregate{}, nil
+	case aggregates.Cluster:
+		return []es.Aggregate{}, nil
+	case aggregates.Tenant:
+		return []es.Aggregate{}, nil
+	case aggregates.UserRoleBinding:
+		retmap = tas.bindings
+	case aggregates.User:
+		retmap = tas.users
+	}
+
+	values := make([]es.Aggregate, 0, len(retmap))
+	for _, aggr := range retmap {
+		values = append(values, aggr)
+	}
+
+	return values, nil
 }
 
 // Get returns the most recent version of an aggregate.
-func (tas *aggregateTestStore) Get(context.Context, es.AggregateType, uuid.UUID) (es.Aggregate, error) {
-	return nil, nil
+func (tas *aggregateTestStore) Get(ctx context.Context, atype es.AggregateType, id uuid.UUID) (es.Aggregate, error) {
+	var (
+		retmap      map[uuid.UUID]es.Aggregate
+		notFoundVal error
+	)
+
+	switch atype {
+	case aggregates.Certificate:
+		return nil, nil // this will break if the aggregate is actually used. Implement if needed
+	case aggregates.Cluster:
+		return nil, nil // this will break if the aggregate is actually used. Implement if needed
+	case aggregates.Tenant:
+		return nil, nil // this will break if the aggregate is actually used. Implement if needed
+	case aggregates.UserRoleBinding:
+		retmap = tas.bindings
+		notFoundVal = errors.ErrUserRoleBindingNotFound
+	case aggregates.User:
+		retmap = tas.users
+		notFoundVal = errors.ErrUserNotFound
+	default:
+		return nil, errors.ErrUnknownAggregateType
+	}
+
+	ret := retmap[id]
+	if ret == nil {
+		return nil, notFoundVal
+	}
+	return ret, nil
+
 }
 
 // Update stores all in-flight events for an aggregate.
