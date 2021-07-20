@@ -15,7 +15,7 @@ import (
 
 // CertificateAggregate is an aggregate for certificates.
 type CertificateAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	relatedAggregateId   uuid.UUID
 	relatedAggregateType es.AggregateType
 	signingRequest       []byte
@@ -24,7 +24,7 @@ type CertificateAggregate struct {
 // CertificateAggregate creates a new CertificateAggregate
 func NewCertificateAggregate(id uuid.UUID) es.Aggregate {
 	return &CertificateAggregate{
-		DomainAggregateBase: DomainAggregateBase{
+		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
 		},
 	}

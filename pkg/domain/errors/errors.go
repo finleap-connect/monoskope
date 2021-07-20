@@ -9,11 +9,11 @@ import (
 
 var (
 	// ErrNotFound is returned when an aggregate is not known to the system.
-	ErrNotFound = errors.New("not found")
+	ErrNotFound = errors.New("aggregate not found")
 	// ErrDeleted is returned when an aggregate has been deleted.
-	ErrDeleted = errors.New("deleted")
+	ErrDeleted = errors.New("aggregate is deleted")
 	// ErrUnknownAggregateType is returned returned when an unknown or invalid aggregate type is used.
-	ErrUnknownAggregateType = errors.New("aggregte type unknown")
+	ErrUnknownAggregateType = errors.New("aggregate type unknown")
 
 	// ErrUnauthorized is returned when a requested command can not be executed because the current user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
