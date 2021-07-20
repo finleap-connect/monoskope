@@ -35,15 +35,15 @@ import (
 )
 
 type channelManager struct {
-	logger              logger.Logger
-	url                 string
-	channel             *amqp.Channel
-	connection          *amqp.Connection
-	config              *amqp.Config
-	channelMux          *sync.RWMutex
-	notifyCancelOrClose chan error
-	isReconnecting      bool
-	maximumBackoff      time.Duration
+	logger                       logger.Logger
+	url                          string
+	channel                      *amqp.Channel
+	connection                   *amqp.Connection
+	config                       *amqp.Config
+	channelMux                   *sync.RWMutex
+	notifyCancelOrCloseBroadcast []chan<- error
+	isReconnecting               bool
+	maximumBackoff               time.Duration
 }
 
 func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Duration) (*channelManager, error) {
@@ -56,14 +56,13 @@ func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Durati
 	}
 
 	chManager := channelManager{
-		logger:              log,
-		url:                 url,
-		connection:          conn,
-		channel:             ch,
-		channelMux:          &sync.RWMutex{},
-		config:              conf,
-		notifyCancelOrClose: make(chan error),
-		maximumBackoff:      maximumBackoff,
+		logger:         log,
+		url:            url,
+		connection:     conn,
+		channel:        ch,
+		channelMux:     &sync.RWMutex{},
+		config:         conf,
+		maximumBackoff: maximumBackoff,
 	}
 	go chManager.startNotifyCancelOrClosed()
 	log.Info("connected to amqp server!", "url", url)
@@ -98,13 +97,13 @@ func (chManager *channelManager) startNotifyCancelOrClosed() {
 			chManager.logger.Info("attempting to reconnect to amqp server after channel close")
 			chManager.reconnectWithBackoff()
 			chManager.logger.Info("successfully reconnected to amqp server after channel close")
-			chManager.notifyCancelOrClose <- err
+			chManager.notifyListener(err)
 		}
 	case err := <-notifyCancelChan:
 		chManager.logger.Info("attempting to reconnect to amqp server after cancel")
 		chManager.reconnectWithBackoff()
 		chManager.logger.Info("successfully reconnected to amqp server after cancel")
-		chManager.notifyCancelOrClose <- errors.New(err)
+		chManager.notifyListener(errors.New(err))
 	}
 }
 
@@ -151,4 +150,14 @@ func (chManager *channelManager) reconnect() error {
 func (chManager *channelManager) stop() {
 	chManager.channel.Close()
 	chManager.connection.Close()
+}
+
+func (chManager *channelManager) registerNotify(errChan chan<- error) {
+	chManager.notifyCancelOrCloseBroadcast = append(chManager.notifyCancelOrCloseBroadcast, errChan)
+}
+
+func (chManager *channelManager) notifyListener(err error) {
+	for _, listener := range chManager.notifyCancelOrCloseBroadcast {
+		listener <- err
+	}
 }

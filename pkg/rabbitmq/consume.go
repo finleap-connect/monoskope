@@ -24,29 +24,33 @@ package rabbitmq
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/cenkalti/backoff"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 // Consumer allows you to create and connect to queues for data consumption.
 type Consumer struct {
-	chManager *channelManager
-	logger    logger.Logger
+	chManager               *channelManager
+	notifyCancelOrCloseChan chan error
+	logger                  logger.Logger
 }
 
 // NewConsumer returns a new Consumer connected to the given rabbitmq server
-func NewConsumer(url string, config *amqp.Config) (Consumer, error) {
+func NewConsumer(url string, config *amqp.Config) (*Consumer, error) {
 	chManager, err := newChannelManager(url, config, 0)
 	if err != nil {
-		return Consumer{}, err
+		return nil, err
 	}
 	consumer := Consumer{
-		chManager: chManager,
-		logger:    logger.WithName("rabbitmq-consumer"),
+		chManager:               chManager,
+		logger:                  logger.WithName("rabbitmq-consumer"),
+		notifyCancelOrCloseChan: make(chan error),
 	}
-	return consumer, nil
+	chManager.registerNotify(consumer.notifyCancelOrCloseChan)
+
+	return &consumer, nil
 }
 
 // StartConsuming starts n goroutines where n="ConsumeOptions.QosOptions.Concurrency".
@@ -79,7 +83,7 @@ func (consumer Consumer) StartConsuming(
 	}
 
 	go func() {
-		for err := range consumer.chManager.notifyCancelOrClose {
+		for err := range consumer.notifyCancelOrCloseChan {
 			consumer.logger.Info("consume cancel/close handler triggered", "error", err)
 			consumer.startGoroutinesWithRetries(
 				handler,
@@ -125,11 +129,8 @@ func (consumer Consumer) startGoroutinesWithRetries(
 	routingKeys []string,
 	consumeOptions ConsumeOptions,
 ) {
-	backoffTime := time.Second
-	for {
-		consumer.logger.Info("waiting to attempt to start consumer goroutines", "seconds", backoffTime)
-		time.Sleep(backoffTime)
-		backoffTime *= 2
+	params := backoff.NewExponentialBackOff()
+	_ = backoff.Retry(func() error {
 		err := consumer.startGoroutines(
 			handler,
 			queue,
@@ -138,10 +139,9 @@ func (consumer Consumer) startGoroutinesWithRetries(
 		)
 		if err != nil {
 			consumer.logger.Info("couldn't start consumer goroutines", "error", err)
-			continue
 		}
-		break
-	}
+		return err
+	}, params)
 }
 
 // startGoroutines declares the queue if it doesn't exist,

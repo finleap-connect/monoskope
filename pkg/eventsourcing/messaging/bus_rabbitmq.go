@@ -45,7 +45,7 @@ func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublish
 	if err != nil {
 		return nil, err
 	}
-	b.publisher = &publisher
+	b.publisher = publisher
 	b.returns = returns
 	b.log = logger.WithName("publisher").WithValues("name", conf.name)
 
@@ -69,7 +69,7 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 	if err != nil {
 		return nil, err
 	}
-	b.consumer = &consumer
+	b.consumer = consumer
 	b.log = logger.WithName("consumer").WithValues("name", conf.name)
 
 	return b, nil

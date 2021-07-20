@@ -115,7 +115,8 @@ func WithPublishOptionsHeaders(headers amqp.Table) func(*PublishOptions) {
 type Publisher struct {
 	chManager *channelManager
 
-	notifyReturnChan chan amqp.Return
+	notifyReturnChan        chan amqp.Return
+	notifyCancelOrCloseChan chan error
 
 	disablePublishDueToFlow    bool
 	disablePublishDueToFlowMux *sync.RWMutex
@@ -128,29 +129,31 @@ type Publisher struct {
 // on the channel of Returns that you should setup a listener on.
 // Flow controls are automatically handled as they are sent from the server, and publishing
 // will fail with an error when the server is requesting a slowdown
-func NewPublisher(url string, config *amqp.Config) (Publisher, <-chan amqp.Return, error) {
+func NewPublisher(url string, config *amqp.Config) (*Publisher, <-chan amqp.Return, error) {
 	chManager, err := newChannelManager(url, config, 0)
 	if err != nil {
-		return Publisher{}, nil, err
+		return nil, nil, err
 	}
 
 	publisher := Publisher{
 		chManager:                  chManager,
 		notifyReturnChan:           make(chan amqp.Return, 1),
+		notifyCancelOrCloseChan:    make(chan error),
 		disablePublishDueToFlow:    false,
 		disablePublishDueToFlowMux: &sync.RWMutex{},
 		logger:                     logger.WithName("rabbitmq-publisher"),
 	}
+	chManager.registerNotify(publisher.notifyCancelOrCloseChan)
 
 	go func() {
 		publisher.startNotifyHandlers()
-		for err := range publisher.chManager.notifyCancelOrClose {
+		for err := range publisher.notifyCancelOrCloseChan {
 			publisher.logger.Error(err, "publish cancel/close handler triggered")
 			publisher.startNotifyHandlers()
 		}
 	}()
 
-	return publisher, publisher.notifyReturnChan, nil
+	return &publisher, publisher.notifyReturnChan, nil
 }
 
 // Publish publishes the provided data to the given routing keys over the connection
