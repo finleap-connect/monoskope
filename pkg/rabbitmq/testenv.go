@@ -39,12 +39,14 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 
 func (env *TestEnv) stopRabbitMQ() error {
 	if !env.ExternalRabbitMQ {
+		env.Log.Info("Purging rabbitmq...")
 		return env.Purge("rabbitmq")
 	}
 	return nil
 }
 
 func (env *TestEnv) startRabbitMQ() error {
+	env.Log.Info("Starting rabbitmq...")
 	var err error
 
 	if v := os.Getenv("AMQP_URL"); v != "" {
@@ -81,5 +83,10 @@ func (env *TestEnv) startRabbitMQ() error {
 		return err
 	}, params)
 
+	if err != nil {
+		env.Log.Error(err, "Starting rabbitmq failed!")
+	} else {
+		env.Log.Info("Started rabbitmq!")
+	}
 	return err
 }

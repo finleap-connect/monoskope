@@ -18,6 +18,8 @@ var _ = Describe("Pkg/Rabbitmq/Channel", func() {
 		if !env.ExternalRabbitMQ {
 			err = env.stopRabbitMQ()
 			Expect(err).ToNot(HaveOccurred())
+			time.Sleep(10 * time.Second)
+
 			Expect(chanManager.channel.IsClosed()).To(BeTrue())
 			Expect(chanManager.isReconnecting).To(BeTrue())
 
