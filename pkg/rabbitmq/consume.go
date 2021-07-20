@@ -32,9 +32,8 @@ import (
 
 // Consumer allows you to create and connect to queues for data consumption.
 type Consumer struct {
-	chManager               *channelManager
-	notifyCancelOrCloseChan chan error
-	logger                  logger.Logger
+	chManager *channelManager
+	logger    logger.Logger
 }
 
 // NewConsumer returns a new Consumer connected to the given rabbitmq server
@@ -44,11 +43,9 @@ func NewConsumer(url string, config *amqp.Config) (*Consumer, error) {
 		return nil, err
 	}
 	consumer := Consumer{
-		chManager:               chManager,
-		logger:                  logger.WithName("rabbitmq-consumer"),
-		notifyCancelOrCloseChan: make(chan error),
+		chManager: chManager,
+		logger:    logger.WithName("rabbitmq-consumer"),
 	}
-	chManager.registerNotify(consumer.notifyCancelOrCloseChan)
 
 	return &consumer, nil
 }
@@ -72,6 +69,9 @@ func (consumer Consumer) StartConsuming(
 		options.Concurrency = defaultOptions.Concurrency
 	}
 
+	notifyCancelOrCloseChan := make(chan error)
+	consumer.chManager.registerNotify(notifyCancelOrCloseChan)
+
 	err := consumer.startGoroutines(
 		handler,
 		queue,
@@ -83,7 +83,7 @@ func (consumer Consumer) StartConsuming(
 	}
 
 	go func() {
-		for err := range consumer.notifyCancelOrCloseChan {
+		for err := range notifyCancelOrCloseChan {
 			consumer.logger.Info("consume cancel/close handler triggered", "error", err)
 			consumer.startGoroutinesWithRetries(
 				handler,
