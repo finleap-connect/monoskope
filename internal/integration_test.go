@@ -94,8 +94,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(userRoleBindingId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update userRolebBindingId, as the "create" command will have changed it.
+		userRoleBindingId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -143,8 +147,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update tenantId, as the "create" command will have changed it.
+		tenantId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -154,7 +162,7 @@ var _ = Describe("integration", func() {
 		Expect(tenant).ToNot(BeNil())
 		Expect(tenant.GetName()).To(Equal("Tenant X"))
 		Expect(tenant.GetPrefix()).To(Equal("tx"))
-		Expect(tenant.Id).ToNot(Equal(tenantId.String()))
+		Expect(tenant.Id).To(Equal(tenantId.String()))
 
 		command, err = cmd.AddCommandData(
 			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
@@ -197,8 +205,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(clusterId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update clusterId, as the "create" command will have changed it.
+		clusterId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
