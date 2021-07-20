@@ -98,4 +98,4 @@ certificates:
   issuerName: selfsigning-issuer
 
 # -- The URL of the Monoskope issuer (Gateway)
-issuerUrl: ""
+issuerURL: ""

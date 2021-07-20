@@ -194,7 +194,11 @@ func (n *Handler) Exchange(ctx context.Context, code, state, redirectURL string)
 
 // IssueToken wraps the upstream claims in a JWT signed by Monoskope
 func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardClaims, userId string) (string, *jwt.AuthToken, error) {
+	if upstreamClaims.FederatedClaims == nil {
+		upstreamClaims.FederatedClaims = make(map[string]string)
+	}
 	upstreamClaims.FederatedClaims["connector_id"] = n.config.IdentityProviderName
+
 	token := jwt.NewAuthToken(upstreamClaims, n.config.URL, userId)
 	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 

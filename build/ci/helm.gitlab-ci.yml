@@ -13,6 +13,7 @@ lint:helm:
     - make helm-lint-queryhandler
     - make helm-dep-monoskope
     - make helm-lint-monoskope
+  needs: []
 
 chart:deliver:
   stage: chart
