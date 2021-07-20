@@ -15,7 +15,7 @@ import (
 
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	name             string
 	label            string
@@ -27,7 +27,7 @@ type ClusterAggregate struct {
 // ClusterAggregate creates a new ClusterAggregate
 func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
-		DomainAggregateBase: DomainAggregateBase{
+		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
 		},
 		aggregateManager: aggregateManager,
@@ -35,12 +35,12 @@ func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Ag
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 	if err := a.validate(ctx, cmd); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch cmd := cmd.(type) {
@@ -51,13 +51,29 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
+
+		// this is a create command. Update the aggregate ID, so that any input
+		// from the user will be ignored, and new event will use the new ID
+		a.resetId()
+
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
-		return nil
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
+
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
-		return nil
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+
+		return reply, nil
+
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 }
 

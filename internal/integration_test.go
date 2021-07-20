@@ -63,7 +63,7 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	It("manage a user", func() {
+	It("can manage a user", func() {
 		userId := uuid.New()
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(userId, commandTypes.CreateUser),
@@ -71,8 +71,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(userId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update userId, as the "create" command will have changed it.
+		userId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -90,8 +94,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(userRoleBindingId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update userRolebBindingId, as the "create" command will have changed it.
+		userRoleBindingId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -117,6 +125,17 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user).ToNot(BeNil())
 	})
+	It("can accept Nil as an Id when creating a user", func() {
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe2@monoskope.io"},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+	})
 	It("fail to create a user which already exists", func() {
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
@@ -128,7 +147,8 @@ var _ = Describe("integration", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
-	It("manage a tenant", func() {
+
+	It("can manage a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
 
@@ -139,8 +159,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update tenantId, as the "create" command will have changed it.
+		tenantId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -185,6 +209,17 @@ var _ = Describe("integration", func() {
 		Expect(tenant.Metadata.Created).NotTo(BeNil())
 
 	})
+	It("can accept Nil as ID when creating a tenant", func() {
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+			&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+	})
 	It("manage a cluster", func() {
 		clusterId := uuid.New()
 		command, err := cmd.AddCommandData(
@@ -193,8 +228,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(clusterId.String()).ToNot(Equal(reply.AggregateId))
+
+		// update clusterId, as the "create" command will have changed it.
+		clusterId = uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -232,6 +271,22 @@ var _ = Describe("integration", func() {
 		// Expect(err).ToNot(HaveOccurred())
 		// Expect(tokenValue.GetValue()).ToNot(Equal(""))
 
+	})
+	It("can accept Nil as ID when creating a cluster", func() {
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			&cmdData.CreateCluster{
+				Name:                "my awesome cluster 2",
+				Label:               "mac2",
+				ApiServerAddress:    "my.awesome2.cluster",
+				ClusterCACertBundle: []byte("This should be a certificate"),
+			},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 	})
 })
 

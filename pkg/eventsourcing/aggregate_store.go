@@ -190,6 +190,8 @@ func (r *aggregateStore) Update(ctx context.Context, aggregate Aggregate) error 
 		if err != nil {
 			return err
 		}
+
+		aggregate.IncrementVersion()
 	}
 	_, err = stream.CloseAndRecv()
 	return err

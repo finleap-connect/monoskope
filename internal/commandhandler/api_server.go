@@ -48,7 +48,7 @@ func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.Cli
 }
 
 // Execute implements the API method Execute
-func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*empty.Empty, error) {
+func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*api.CommandReply, error) {
 	id, err := uuid.Parse(command.GetId())
 	if err != nil {
 		return nil, errors.ErrInvalidArgument(fmt.Sprintf("Failed to parse id of command: %s", err.Error()))
@@ -64,12 +64,16 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*em
 		return nil, errors.TranslateToGrpcError(err)
 	}
 
-	err = s.cmdRegistry.HandleCommand(m.GetContext(), cmd)
+	esReply, err := s.cmdRegistry.HandleCommand(m.GetContext(), cmd)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
 	}
 
-	return &empty.Empty{}, nil
+	reply := &api.CommandReply{
+		AggregateId: esReply.Id.String(),
+		Version:     esReply.Version,
+	}
+	return reply, nil
 }
 
 // GetPermissionModel implements API method GetPermissionModel

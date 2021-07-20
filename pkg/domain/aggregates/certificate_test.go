@@ -26,10 +26,13 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewCertificateAggregate(uuid.New())
+		inAggId := uuid.New()
+		agg := NewCertificateAggregate(inAggId)
 
-		err = newRequestCertificateCommand(ctx, agg)
+		reply, err := newRequestCertificateCommand(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
+		// This is a create command and should set a new ID, regardless of what was passed in.
+		Expect(reply.Id).ToNot(Equal(inAggId))
 
 		event := agg.UncommittedEvents()[0]
 
@@ -68,7 +71,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	})
 })
 
-func newRequestCertificateCommand(ctx context.Context, agg es.Aggregate) error {
+func newRequestCertificateCommand(ctx context.Context, agg es.Aggregate) (*es.CommandReply, error) {
 	esCommand, ok := commands.NewRequestCertificateCommand(uuid.New()).(*commands.RequestCertificateCommand)
 	Expect(ok).To(BeTrue())
 

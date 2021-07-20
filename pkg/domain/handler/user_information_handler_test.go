@@ -61,7 +61,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
+		_, err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserCommand{
 			BaseCommand:           userBase,
 			CreateUserCommandData: cmddata.CreateUserCommandData{Email: someUser.Email},
 		})
@@ -73,7 +73,7 @@ var _ = Describe("domain/handler", func() {
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
 
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateTenantCommand{
+		_, err = handler.HandleCommand(manager.GetContext(), &cmd.CreateTenantCommand{
 			BaseCommand:             tenantBase,
 			CreateTenantCommandData: cmddata.CreateTenantCommandData{Name: "dieter", Prefix: "dt"},
 		})
@@ -84,7 +84,7 @@ var _ = Describe("domain/handler", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		manager.SetUserInformation(&metadata.UserInformation{Email: adminUser.Email})
-		err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
+		_, err = handler.HandleCommand(manager.GetContext(), &cmd.CreateUserRoleBindingCommand{
 			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
@@ -107,7 +107,7 @@ var _ = Describe("domain/handler", func() {
 				Scope:  scopes.System.String(),
 			},
 		}
-		err = handler.HandleCommand(manager.GetContext(), command)
+		_, err = handler.HandleCommand(manager.GetContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })
