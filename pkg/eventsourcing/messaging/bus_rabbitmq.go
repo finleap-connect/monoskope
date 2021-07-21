@@ -149,7 +149,6 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.exchangeName),
 		rabbitmq.WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
 		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
-		rabbitmq.WithConsumeOptionsBindingExchangeAutoDelete,
 		rabbitmq.WithConsumeOptionsQueueExclusive,
 	)
 	if err != nil {
