@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
+	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
@@ -228,6 +229,12 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
+		// set up reactor for checking JWTs later
+		testReactor, err := testReactor.NewTestReactor()
+		Expect(err).ToNot(HaveOccurred())
+		err = testReactor.Setup()
+		Expect(err).ToNot(HaveOccurred())
+
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(clusterId.String()).ToNot(Equal(reply.AggregateId))
@@ -265,6 +272,7 @@ var _ = Describe("integration", func() {
 		By("getting a cluster's certificates by its id")
 
 		By("by retrieving the bootstrap token")
+		Expect(len(testReactor.GetObservedEvents())).ToNot(Equal(0))
 
 		// TODO ASAP! Needs reactors to work
 		// tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
