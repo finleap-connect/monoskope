@@ -40,7 +40,7 @@ dependencies: # A list of the chart requirements
     condition: cluster-bootstrap-reactor.enabled,global.cluster-bootstrap-reactor.enabled
   - name: cockroachdb
     version: 6.0.7+finleap
-    repository: https://artifactory.figo.systems/artifactory/virtual-helm/
+    repository: https://artifactory.figo.systems/artifactory/virtual_helm/
     condition: cockroachdb.enabled,global.cockroachdb.enabled
     #- name: cockroachdb
     #  version: 6.0.5
