@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
@@ -21,6 +22,7 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
+	ggrpc "google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -62,6 +64,13 @@ var _ = Describe("integration", func() {
 		_, client, err := queryhandler.NewClusterClient(ctx, addr)
 		Expect(err).ToNot(HaveOccurred())
 		return client
+	}
+
+	eventStoreClient := func() (*ggrpc.ClientConn, es.EventStoreClient) {
+		addr := testEnv.eventStoreTestEnv.GetApiAddr()
+		conn, client, err := eventstore.NewEventStoreClient(ctx, addr)
+		Expect(err).ToNot(HaveOccurred())
+		return conn, client
 	}
 
 	It("can manage a user", func() {
@@ -232,7 +241,8 @@ var _ = Describe("integration", func() {
 		// set up reactor for checking JWTs later
 		testReactor, err := testReactor.NewTestReactor()
 		Expect(err).ToNot(HaveOccurred())
-		err = testReactor.Setup()
+		esConn, esClient := eventStoreClient()
+		err = testReactor.Setup(ctx, esConn, esClient)
 		Expect(err).ToNot(HaveOccurred())
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
