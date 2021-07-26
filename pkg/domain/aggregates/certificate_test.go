@@ -33,6 +33,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		Expect(err).NotTo(HaveOccurred())
 		// This is a create command and should set a new ID, regardless of what was passed in.
 		Expect(reply.Id).ToNot(Equal(inAggId))
+		Expect(reply.Id).ToNot(Equal(expectedReferencedAggregateId))
 
 		event := agg.UncommittedEvents()[0]
 
