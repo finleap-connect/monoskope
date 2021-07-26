@@ -20,7 +20,7 @@ hosting:
 pki:
   certificates:
     # -- Specify which apiVersion cert-manager resources must have.
-    certManagerApiVersion: v1alpha3
+    certManagerApiVersion: v1
     
 gateway:
   replicaCount: 1
