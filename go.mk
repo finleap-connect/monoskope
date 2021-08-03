@@ -95,7 +95,7 @@ include .protobuf-deps
 
 go-protobuf: $(GENERATED_GO_FILES)
 
-go-test: $(GENERATED_GO_FILES) ## run all tests
+go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 	make go-test-ci
 
 go-test-ci: ## run all tests without generation go files from protobuf
@@ -110,8 +110,9 @@ go-test-ci: ## run all tests without generation go files from protobuf
 go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-ginkgo-get:
+ginkgo-get $(GINKGO):
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
+	ln -s $(GOPATH)/bin/ginkgo $(GINKGO)
 
 golangci-lint-get:
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
@@ -119,7 +120,7 @@ golangci-lint-get:
 gomock-get:
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
-protoc-get:
+protoc-get $(TOOLS_DIR)/protoc:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
 	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
@@ -130,6 +131,10 @@ protoc-get:
 	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
 go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get ## download needed go tools
+
+go-tools-clean:
+	rm -Rf $(TOOLS_DIR)/
+	mkdir $(TOOLS_DIR)
 
 go-clean: go-build-clean ## clean up all go parts
 	rm  .protobuf-deps

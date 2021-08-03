@@ -21,8 +21,8 @@ HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
 include helm.mk
 
 # tools
-tools: go-ginkgo-get go-golangci-lint-get ## Phony target to install all required tools into ${TOOLS_DIR}
-tools-clean: go-ginkgo-clean go-golangci-lint-clean ## Phony target to clean all required tools
+tools: go-tools ## Phony target to install all required tools into ${TOOLS_DIR}
+tools-clean: go-tools-clean ## Phony target to clean all required tools
 
 commit-hash: ## Echos the current commit hash
 	@echo $(COMMIT)
