@@ -199,7 +199,7 @@ func (n *Handler) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardCl
 	}
 	upstreamClaims.FederatedClaims["connector_id"] = n.config.IdentityProviderName
 
-	token := jwt.NewAuthToken(upstreamClaims, n.config.URL, userId)
+	token := jwt.NewAuthToken(upstreamClaims, n.config.URL, userId, n.config.TokenValidity)
 	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := n.signer.GenerateSignedToken(token)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"time"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	ClientId             string
 	ClientSecret         string
 	RedirectURIs         []string
+	TokenValidity        time.Duration
 }
 
 func (conf *Config) String() string {
