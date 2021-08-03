@@ -26,16 +26,17 @@ import (
 )
 
 var (
-	grpcApiAddr      string
-	httpApiAddr      string
-	queryHandlerAddr string
-	metricsAddr      string
-	keyCacheDuration string
-	keepAlive        bool
-	authConfig       = auth.Config{}
-	scopes           string
-	redirectUris     string
-	k8sTokenValidity string
+	grpcApiAddr       string
+	httpApiAddr       string
+	queryHandlerAddr  string
+	metricsAddr       string
+	keyCacheDuration  string
+	keepAlive         bool
+	authConfig        = auth.Config{}
+	scopes            string
+	redirectUris      string
+	k8sTokenValidity  string
+	authTokenValidity string
 )
 
 var serverCmd = &cobra.Command{
@@ -87,6 +88,11 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create interceptor for auth
+		authTokenValidityDuration, err := time.ParseDuration(authTokenValidity)
+		if err != nil {
+			return err
+		}
+		authConfig.TokenValidity = authTokenValidityDuration
 		authHandler := auth.NewHandler(&authConfig, signer, verifier)
 
 		// Setup OIDC
@@ -153,6 +159,7 @@ func init() {
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
 	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")
 	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
+	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
 	flags.StringVar(&authConfig.IdentityProviderName, "identity-provider-name", "", "Identity provider name")
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))

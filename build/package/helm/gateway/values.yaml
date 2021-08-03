@@ -122,3 +122,6 @@ keySecret:
 
 # -- Duration for which issued K8s auth tokens are valid
 k8sTokenValidity: 10s
+
+# -- Duration for which issued Monoskope auth tokens are valid
+authTokenValidity: 12h

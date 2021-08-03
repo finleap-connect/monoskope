@@ -13,8 +13,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://charts.cockroachdb.com/ | cockroachdb | 6.0.5 |
+| https://artifactory.figo.systems/artifactory/virtual_helm/ | cockroachdb | 6.0.7+finleap.1 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.17.0 |
 | https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values

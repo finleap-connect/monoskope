@@ -102,6 +102,7 @@ spec:
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
             - --key-cache-duration={{ .Values.keySecret.validity }}
             - --k8s-token-validity={{ .Values.k8sTokenValidity }}
+            - --auth-token-validity={{ .Values.authTokenValidity }}
             - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
