@@ -3,7 +3,6 @@
 {{- if .Values.cockroachdb.dropExistingDatabase }}
 {{- $fullname = (printf "%s-%s" (include "monoskope.fullname" .) "db-reinit") -}}
 {{- end }}
-{{- $url := (printf "%s-%s" (include "call-nested" (list . "cockroachdb" "cockroachdb.fullname")) "public") -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -31,7 +30,7 @@ spec:
       containers:
       - args:
         - sql
-        - --url=postgres://{{ $url }}:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
+        - --url=postgres://{{ .Release.Name }}-cockroachdb-public:26257/?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/root.crt&sslkey=/certs/root.key&sslmode=verify-full
 {{- if .Values.cockroachdb.dropExistingDatabase }}
         - --execute=DROP DATABASE IF EXISTS eventstore;
 {{- end }}
@@ -52,7 +51,7 @@ spec:
         projected:
           sources:
           - secret:
-              name: {{ .Values.cockroachdb.tls.certs.clientRootSecret }}
+              name: cockroachdb-root
               items:
               - key: ca.crt
                 path: ca.crt
