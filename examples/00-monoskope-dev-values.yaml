@@ -17,11 +17,6 @@ hosting:
 # cockroachdb:
   # dropExistingDatabase: true
 
-pki:
-  certificates:
-    # -- Specify which apiVersion cert-manager resources must have.
-    certManagerApiVersion: v1
-    
 gateway:
   replicaCount: 1
   image:
