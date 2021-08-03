@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/gateway"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
@@ -23,9 +24,18 @@ type getAuthTokenUsecase struct {
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
 	issuer      string
+	validity    time.Duration
 }
 
-func NewGetAuthTokenUsecase(request *api.ClusterAuthTokenRequest, result *api.ClusterAuthTokenResponse, signer jwt.JWTSigner, userRepo repositories.ReadOnlyUserRepository, clusterRepo repositories.ReadOnlyClusterRepository, issuer string) usecase.UseCase {
+func NewGetAuthTokenUsecase(
+	request *api.ClusterAuthTokenRequest,
+	result *api.ClusterAuthTokenResponse,
+	signer jwt.JWTSigner,
+	userRepo repositories.ReadOnlyUserRepository,
+	clusterRepo repositories.ReadOnlyClusterRepository,
+	issuer string,
+	validity time.Duration,
+) usecase.UseCase {
 	useCase := &getAuthTokenUsecase{
 		UseCaseBase: usecase.NewUseCaseBase("get-auth-token"),
 		request:     request,
@@ -34,6 +44,7 @@ func NewGetAuthTokenUsecase(request *api.ClusterAuthTokenRequest, result *api.Cl
 		userRepo:    userRepo,
 		clusterRepo: clusterRepo,
 		issuer:      issuer,
+		validity:    validity,
 	}
 	return useCase
 }
@@ -79,7 +90,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		ClusterName:     cluster.GetName(),
 		ClusterUserName: username,
 		ClusterRole:     s.request.Role,
-	}, s.issuer, user.Id, jwt.AuthTokenValidity)
+	}, s.issuer, user.Id, s.validity)
 	s.Log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := s.signer.GenerateSignedToken(token)

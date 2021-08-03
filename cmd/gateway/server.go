@@ -35,6 +35,7 @@ var (
 	authConfig       = auth.Config{}
 	scopes           string
 	redirectUris     string
+	k8sTokenValidity string
 )
 
 var serverCmd = &cobra.Command{
@@ -112,7 +113,12 @@ var serverCmd = &cobra.Command{
 		// API servers
 		authServer := gateway.NewAuthServer(authConfig.URL, authHandler, userRepo)
 		gatewayApiServer := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(authConfig.URL, signer, userRepo, clusterRepo)
+
+		k8sTokenValidityDuration, err := time.ParseDuration(k8sTokenValidity)
+		if err != nil {
+			return err
+		}
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(authConfig.URL, signer, userRepo, clusterRepo, k8sTokenValidityDuration)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
@@ -146,6 +152,7 @@ func init() {
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
 	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")
+	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
 
 	flags.StringVar(&authConfig.IdentityProviderName, "identity-provider-name", "", "Identity provider name")
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))
