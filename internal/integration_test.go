@@ -10,19 +10,20 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
-	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
+	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/errors"
 	metadata "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/metadata"
-	ggrpc "google.golang.org/grpc"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -38,7 +39,7 @@ var _ = Describe("integration", func() {
 		Issuer: "monoskope",
 	})
 
-	commandHandlerClient := func() es.CommandHandlerClient {
+	commandHandlerClient := func() esApi.CommandHandlerClient {
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
 		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
 		Expect(err).ToNot(HaveOccurred())
@@ -66,12 +67,12 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	eventStoreClient := func() (*ggrpc.ClientConn, es.EventStoreClient) {
-		addr := testEnv.eventStoreTestEnv.GetApiAddr()
-		conn, client, err := eventstore.NewEventStoreClient(ctx, addr)
-		Expect(err).ToNot(HaveOccurred())
-		return conn, client
-	}
+	//	eventStoreClient := func() (*ggrpc.ClientConn, es.EventStoreClient) {
+	//		addr := testEnv.eventStoreTestEnv.GetApiAddr()
+	//		conn, client, err := eventstore.NewEventStoreClient(ctx, addr)
+	//		Expect(err).ToNot(HaveOccurred())
+	//		return conn, client
+	//	}
 
 	It("can manage a user", func() {
 		userId := uuid.New()
@@ -241,8 +242,7 @@ var _ = Describe("integration", func() {
 		// set up reactor for checking JWTs later
 		testReactor, err := testReactor.NewTestReactor()
 		Expect(err).ToNot(HaveOccurred())
-		esConn, esClient := eventStoreClient()
-		err = testReactor.Setup(ctx, esConn, esClient)
+		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv)
 		Expect(err).ToNot(HaveOccurred())
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
@@ -282,12 +282,20 @@ var _ = Describe("integration", func() {
 		By("getting a cluster's certificates by its id")
 
 		By("by retrieving the bootstrap token")
-		Expect(len(testReactor.GetObservedEvents())).ToNot(Equal(0))
+		observed := testReactor.GetObservedEvents()
+		Expect(len(observed)).ToNot(Equal(0))
 
-		// TODO ASAP! Needs reactors to work
-		// tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
-		// Expect(err).ToNot(HaveOccurred())
-		// Expect(tokenValue.GetValue()).ToNot(Equal(""))
+		err = testReactor.Emit(es.NewEvent(ctx, events.ClusterBootstrapTokenCreated,
+			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
+				Jwt: "this is a valid JWT, honest!",
+			}), time.Now().UTC(),
+			observed[0].AggregateType(), observed[0].AggregateID(),
+			observed[0].AggregateVersion()+1))
+		Expect(err).ToNot(HaveOccurred())
+
+		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, hones!"))
 
 	})
 	It("can accept Nil as ID when creating a cluster", func() {

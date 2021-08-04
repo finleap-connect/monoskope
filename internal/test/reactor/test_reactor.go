@@ -3,22 +3,19 @@ package reactor
 import (
 	"context"
 
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
-	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
-	ggrpc "google.golang.org/grpc"
+	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
 )
 
 const (
-	reactorName    = "test-reactor"
-	msgbusPrefix   = "m8"
-	eventStoreAddr = ":8001"
+	reactorName  = "test-reactor"
+	msgbusPrefix = "m8"
 )
 
 type testReactor struct {
-	esConnection *ggrpc.ClientConn
-	esClient     esApi.EventStoreClient
-	msgBus       es.EventBusConsumer
+	msgBus es.EventBusConsumer
 
 	observedEvents []es.Event
 }
@@ -39,14 +36,15 @@ func (*testReactor) init() error {
 	return nil
 }
 
-func (r *testReactor) Setup(ctx context.Context, esConn *ggrpc.ClientConn, esClient esApi.EventStoreClient) error {
+func (r *testReactor) Setup(ctx context.Context, env *eventstore.TestEnv) error {
 	var err error
 
-	// Create EventStore client
-	r.esConnection = esConn
-	r.esClient = esClient
+	rabbitConf, err := esMessaging.NewRabbitEventBusConfig("queryhandler", env.GetMessagingTestEnv().AmqpURL, "")
+	if err != nil {
+		return err
+	}
 
-	r.msgBus, err = messagebus.NewEventBusConsumer(reactorName, msgbusPrefix)
+	r.msgBus, err = messagebus.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return err
 	}
@@ -60,7 +58,6 @@ func (r *testReactor) Setup(ctx context.Context, esConn *ggrpc.ClientConn, esCli
 }
 
 func (r *testReactor) Close() {
-	r.esConnection.Close()
 	r.msgBus.Close()
 }
 
@@ -73,4 +70,8 @@ func (r *testReactor) HandleEvent(ctx context.Context, event es.Event) error {
 
 func (r *testReactor) GetObservedEvents() []es.Event {
 	return r.observedEvents
+}
+
+func (r *testReactor) Emit(event es.Event) error {
+	return nil
 }
