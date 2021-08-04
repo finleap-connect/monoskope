@@ -30,9 +30,9 @@ helm-install-from-repo-%: ## install helm chart from build artifact
 helm-uninstall-%: ## uninstall helm chart
 	@$(HELM) uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
 
-helm-template-%: clean ## template helm chart
+helm-template-%: helm-clean ## template helm chart
 	@mkdir -p $(HELM_OUTPUT_DIR)
-	@$(HELM) template $(HELM_RELEASE) $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds --debug
+	@$(HELM) template $(HELM_RELEASE) $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR) --include-crds
 	@echo "ATTENTION:"
 	@echo "If you want to have the latest dependencies (e.g. gateway chart changes)"
 	@echo "execute the following command prior to the current command:"

@@ -14,6 +14,7 @@ Monoskope Gateway
 | auth.redirectUris | list | `["http://localhost:8000","http://localhost:18000"]` | The allowed redirect URIs for authentication flow |
 | auth.scopes | list | `["openid","profile","email"]` | Additional scopes to request from upstream IDP |
 | auth.selfURL | string | `""` | The URL of the issuer to Gateway itself |
+| authTokenValidity | string | `"12h"` | Duration for which issued Monoskope auth tokens are valid |
 | autoscaling.enabled | bool | `false` |  |
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
@@ -24,6 +25,7 @@ Monoskope Gateway
 | image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/gateway"` |  |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` |  |
+| k8sTokenValidity | string | `"10s"` | Duration for which issued K8s auth tokens are valid |
 | keepAlive | bool | `false` |  |
 | keySecret | object | `{"name":"","validity":"24h"}` | The secret containing private key for signing JWTs. Must contain tls.key containing the private key for signing and tls.crt containing public key for verification. |
 | keySecret.name | string | `""` | Name of the secret to be used by the gateway, required |

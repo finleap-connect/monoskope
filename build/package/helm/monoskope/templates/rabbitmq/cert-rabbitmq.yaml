@@ -13,14 +13,13 @@ spec:
   duration: {{ .Values.pki.certificates.duration }}
   renewBefore: {{ .Values.pki.certificates.renewBefore }}
   issuerRef:
-    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+    name: {{ .Values.pki.issuer.name }}
     kind: Issuer
   commonName: leaf
   ipAddresses:
-    - 127.0.0.1
-    - '::'
   dnsNames:
     - localhost
+    - 127.0.0.1
     - {{.Release.Name}}-rabbitmq
     - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}
     - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}.svc.cluster.local
@@ -30,4 +29,6 @@ spec:
   usages:
   - client auth
   - server auth
+  keySize: 2048
+  keyAlgorithm: rsa
 {{- end }}
