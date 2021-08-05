@@ -10,6 +10,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
+	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
@@ -67,12 +69,12 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	//	eventStoreClient := func() (*ggrpc.ClientConn, es.EventStoreClient) {
-	//		addr := testEnv.eventStoreTestEnv.GetApiAddr()
-	//		conn, client, err := eventstore.NewEventStoreClient(ctx, addr)
-	//		Expect(err).ToNot(HaveOccurred())
-	//		return conn, client
-	//	}
+	eventStoreClient := func() esApi.EventStoreClient {
+		addr := testEnv.eventStoreTestEnv.GetApiAddr()
+		_, client, err := eventstore.NewEventStoreClient(ctx, addr)
+		Expect(err).ToNot(HaveOccurred())
+		return client
+	}
 
 	It("can manage a user", func() {
 		userId := uuid.New()
@@ -242,7 +244,7 @@ var _ = Describe("integration", func() {
 		// set up reactor for checking JWTs later
 		testReactor, err := testReactor.NewTestReactor()
 		Expect(err).ToNot(HaveOccurred())
-		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv)
+		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
 		Expect(err).ToNot(HaveOccurred())
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
@@ -285,17 +287,22 @@ var _ = Describe("integration", func() {
 		observed := testReactor.GetObservedEvents()
 		Expect(len(observed)).ToNot(Equal(0))
 
-		err = testReactor.Emit(es.NewEvent(ctx, events.ClusterBootstrapTokenCreated,
+		time.Sleep(10 * time.Second)
+
+		event := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated,
 			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
 				Jwt: "this is a valid JWT, honest!",
 			}), time.Now().UTC(),
 			observed[0].AggregateType(), observed[0].AggregateID(),
-			observed[0].AggregateVersion()+1))
+			observed[0].AggregateVersion()+1)
+		event.Metadata()[auth.HeaderAuthId] = uuid.New().String()
+
+		err = testReactor.Emit(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
 
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())
-		Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, hones!"))
+		Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, honest!"))
 
 	})
 	It("can accept Nil as ID when creating a cluster", func() {
