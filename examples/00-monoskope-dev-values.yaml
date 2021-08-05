@@ -82,6 +82,11 @@ queryhandler:
 ambassador:
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+  metrics:
+    serviceMonitor:
+      enabled: true
+      selector:
+        release: monitoring
 
 cluster-bootstrap-reactor:
   replicaCount: 1
@@ -95,3 +100,9 @@ cluster-bootstrap-reactor:
       cpu: 500m
       memory: 64Mi
   issuerURL: https://api.monoskope.dev.finleap.cloud
+
+rabbitmq:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
