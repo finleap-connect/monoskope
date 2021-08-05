@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 	ch "gitlab.figo.systems/platform/monoskope/monoskope/internal/commandhandler"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/queryhandler"
 	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
@@ -77,19 +76,18 @@ var _ = Describe("integration", func() {
 	}
 
 	It("can manage a user", func() {
-		userId := uuid.New()
 		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(userId, commandTypes.CreateUser),
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
 			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(userId.String()).ToNot(Equal(reply.AggregateId))
+		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
 		// update userId, as the "create" command will have changed it.
-		userId = uuid.MustParse(reply.AggregateId)
+		userId := uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -234,9 +232,8 @@ var _ = Describe("integration", func() {
 		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 	})
 	It("manage a cluster", func() {
-		clusterId := uuid.New()
 		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(clusterId, commandTypes.CreateCluster),
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
 			&cmdData.CreateCluster{Name: "my awesome cluster", Label: "mac", ApiServerAddress: "my.awesome.cluster", ClusterCACertBundle: []byte("This should be a certificate")},
 		)
 		Expect(err).ToNot(HaveOccurred())
@@ -249,10 +246,10 @@ var _ = Describe("integration", func() {
 
 		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(clusterId.String()).ToNot(Equal(reply.AggregateId))
+		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
 		// update clusterId, as the "create" command will have changed it.
-		clusterId = uuid.MustParse(reply.AggregateId)
+		clusterId := uuid.MustParse(reply.AggregateId)
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
@@ -286,19 +283,24 @@ var _ = Describe("integration", func() {
 		By("by retrieving the bootstrap token")
 		observed := testReactor.GetObservedEvents()
 		Expect(len(observed)).ToNot(Equal(0))
+		Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
+		fmt.Printf("%v", observed)
 		time.Sleep(10 * time.Second)
 
-		event := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated,
+		eventMD := observed[0].Metadata()
+		event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
 			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
 				Jwt: "this is a valid JWT, honest!",
 			}), time.Now().UTC(),
 			observed[0].AggregateType(), observed[0].AggregateID(),
-			observed[0].AggregateVersion()+1)
-		event.Metadata()[auth.HeaderAuthId] = uuid.New().String()
+			observed[0].AggregateVersion()+1,
+			eventMD)
 
 		err = testReactor.Emit(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
+
+		time.Sleep(10 * time.Second)
 
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())
