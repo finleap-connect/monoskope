@@ -101,6 +101,9 @@ cockroachdb:
       limits:
         cpu: 2
         memory: 2Gi
+  init:
+    annotations:
+      linkerd.io/inject: disabled
   storage:
     persistentVolume:
       size: "1Gi" # ATTENTION: Increase for PROD according to your use-case
