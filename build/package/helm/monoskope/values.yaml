@@ -89,10 +89,11 @@ cockroachdb:
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
     tag: v21.1.4
-    imagePullPolicy: Always
+    pullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
-    maxUnavailable: 1
+    budget:
+      maxUnavailable: 1
     resources:
       requests:
         cpu: 500m
@@ -100,8 +101,6 @@ cockroachdb:
       limits:
         cpu: 2
         memory: 2Gi
-    annotations:
-      linkerd.io/inject: disabled
   init:
     annotations:
       linkerd.io/inject: disabled
@@ -129,7 +128,6 @@ cockroachdb:
       # Enable if you run cert-manager >=1.0 on K8s <=1.15 with legacy CRDs
       # Legacy CRDs only support cert-manager.io/v1 API Versions
       useCertManagerV1CRDs: true
-  labels: &extraLabels
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
     enabled: false
@@ -174,17 +172,9 @@ rabbitmq:
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
       existingSecret: m8-rabbitmq-leaf
-  podAnnotations:
-    linkerd.io/inject: disabled
-  podLabels: &extraLabels
   metrics:
-    enabled: false
     grafanaDashboard:
       enabled: false
-      extraLabels: &extraLabels
-    serviceMonitor:
-      enabled: false
-      additionalLabels: &extraLabels
 
 ambassador:
   enabled: true
@@ -209,11 +199,6 @@ ambassador:
     requests:
       cpu: 100m
       memory: 512Mi
-  metrics:
-    serviceMonitor:
-      enabled: true
-      selector:
-        release: monitoring
 
 cluster-bootstrap-reactor:
   enabled: true
