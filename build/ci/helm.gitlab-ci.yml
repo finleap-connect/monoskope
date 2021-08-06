@@ -1,5 +1,5 @@
 .helm:
-  image: registry.gitlab.figo.systems/platform/helm-builder:2.0.0
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/helm-builder:2.0.0
 
 lint:helm:
   stage: test
