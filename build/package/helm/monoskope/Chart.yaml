@@ -24,6 +24,7 @@ appVersion: 0.0.1
 
 dependencies: # A list of the chart requirements
   - name: gateway
+    version: 0.0.1
     repository: "file://../gateway"
     condition: gateway.enabled,global.gateway.enabled
   - name: eventstore
