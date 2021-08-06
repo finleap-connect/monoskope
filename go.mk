@@ -72,7 +72,7 @@ go-fmt:  ## go fmt
 go-vet: ## go vet
 	$(GO) vet ./...
 
-go-lint: ## go lint
+go-lint: $(LINTER) ## go lint
 	$(LINTER) run -v --no-config --deadline=5m
 
 go-run-%: ## run command
@@ -114,7 +114,7 @@ ginkgo-get $(GINKGO):
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 	ln -s $(GOPATH)/bin/ginkgo $(GINKGO)
 
-golangci-lint-get:
+golangci-lint-get $(LINTER):
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
 gomock-get:
