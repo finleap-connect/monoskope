@@ -15,11 +15,6 @@ import (
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
-const (
-	reactorName  = "test-reactor"
-	msgbusPrefix = "m8"
-)
-
 type testReactor struct {
 	log      logger.Logger
 	msgBus   es.EventBusConsumer
