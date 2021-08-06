@@ -66,7 +66,7 @@ To enable Monoskope as OAuth2 provider, configure the following flags on the API
 
     `--oidc-issuer-url "https://api.monoskope.your-domain.io"`
 
-* Tokens issued by Monoskope will have `k8sauth' as the audience:
+* Tokens issued by Monoskope will have `k8sauth` as the audience:
 
     `--oidc-client-id "k8sauth"`
 
@@ -84,7 +84,8 @@ To enable Monoskope as OAuth2 provider, configure the following flags on the API
 
 ## You are using SAP Gardener
 
-If you're using SAP Gardener you might not be able to directly configure this on the KubeAPIServer, but there are different ways to do this:
+If you are using SAP Gardener you might not be able to directly configure this
+on the KubeAPIServer, but there are different ways to do this:
 
 * [ClusterOpenIDConnectPreset](https://github.com/gardener/gardener/blob/master/docs/usage/openidconnect-presets.md#clusteropenidconnectpreset) and [OpenIDConnectPreset](https://github.com/gardener/gardener/blob/master/docs/usage/openidconnect-presets.md#openidconnectpreset) resources can be used.
 * Shoots can be configured directly via the `core.gardener.cloud/v1beta1/Shoot` [resource](https://github.com/gardener/gardener/blob/master/example/90-shoot.yaml#L137).
@@ -94,7 +95,7 @@ If you're configuring it directly via the Gardener Shoot resource the following 
 When you're using the Presets this has to be put under `spec.server`.
 
 ```yaml
-issuerURL: "https://api.monoskope.your-domain.io"
+issuerURL: "<https://api.monoskope.your-domain.io>"
 clientID: k8sauth
 usernameClaim: cluster_username
 groupsClaim: cluster_role
@@ -104,6 +105,12 @@ caBundle: |-
     #   -----BEGIN CERTIFICATE-----
     #   CA which issues the cert for https://api.monoskope.your-domain.io
     #   -----END CERTIFICATE-----
+```
+
+## Connect the cluster to monoskope
+
+```shell
+$ monoctl create cluster https://<api.cluster.name> -f <ca-certs-file.pem> -n <cluster-name> -l <cluster-name>
 ```
 
 ## Do a login
