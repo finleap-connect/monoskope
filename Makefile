@@ -1,8 +1,8 @@
 SHELL := bash
 
 # Directory, where all required tools are located (absolute path required)
-TOOLS_DIR ?= $(shell cd tools && pwd)
-HACK_DIR ?= $(shell cd hack && pwd)
+TOOLS_DIR ?= $(shell cd tools 2>/dev/null && pwd)
+HACK_DIR ?= $(shell cd hack 2>/dev/null && pwd)
 
 VERSION   ?= 0.0.1-local
 COMMIT     	   := $(shell git rev-parse --short HEAD)
