@@ -99,7 +99,7 @@ clientID: k8sauth
 usernameClaim: cluster_username
 groupsClaim: cluster_role
 requiredClaims:
-    cluster_name: your_cluster
+    cluster_name: <your_cluster> 
 caBundle: |-
     #   -----BEGIN CERTIFICATE-----
     #   CA which issues the cert for https://api.monoskope.your-domain.io
