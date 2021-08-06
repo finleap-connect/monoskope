@@ -67,8 +67,8 @@
 * ensure the finleap helm repo has been added to your local configuration
 
   ```bash
-  helm3 repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
-  helm3 repo update
+  helm repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
+  helm repo update
   ```
 
 * deploy helm charts

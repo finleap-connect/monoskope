@@ -1,9 +1,9 @@
-HELM                		?= helm3
+HELM                        ?= helm
 HELM_OUTPUT_DIR             ?= tmp
-HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
-HELM_REGISTRY_ALIAS			?= finleap
+HELM_REGISTRY               ?= https://artifactory.figo.systems/artifactory/virtual_helm
+HELM_REGISTRY_ALIAS         ?= finleap
 HELM_RELEASE                ?= m8
-KUBE_NAMESPACE ?= platform-monoskope-monoskope
+KUBE_NAMESPACE              ?= platform-monoskope-monoskope
 
 .PHONY: template-clean dependency-update install uninstall template docs
 

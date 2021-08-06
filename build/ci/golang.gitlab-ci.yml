@@ -9,7 +9,7 @@ variables:
   MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
-  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.1
+  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.2
   except:
     - schedules
   variables:
@@ -44,7 +44,7 @@ lint:golang:
   stage: test
   extends: .gobase-no-push
   script:
-    - LINTER=$(go env GOPATH)/bin/golangci-lint make -j go-vet go-lint
+    - LINTER=/go/bin/golangci-lint make -j go-vet go-lint
 
 test:golang:
   stage: test
