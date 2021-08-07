@@ -28,15 +28,19 @@ dependencies: # A list of the chart requirements
     repository: "file://../gateway"
     condition: gateway.enabled,global.gateway.enabled
   - name: eventstore
+    version: 0.0.1
     repository: "file://../eventstore"
     condition: eventstore.enabled,global.eventstore.enabled
   - name: commandhandler
+    version: 0.0.1
     repository: "file://../commandhandler"
     condition: commandhandler.enabled,global.commandhandler.enabled
   - name: queryhandler
+    version: 0.0.1
     repository: "file://../queryhandler"
     condition: queryhandler.enabled,global.queryhandler.enabled
   - name: cluster-bootstrap-reactor
+    version: 0.0.1
     repository: "file://../cluster-bootstrap-reactor"
     condition: cluster-bootstrap-reactor.enabled,global.cluster-bootstrap-reactor.enabled
   - name: cockroachdb
