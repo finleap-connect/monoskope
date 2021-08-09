@@ -4,6 +4,7 @@ HELM_REGISTRY               ?= https://artifactory.figo.systems/artifactory/virt
 HELM_REGISTRY_ALIAS         ?= finleap
 HELM_RELEASE                ?= m8
 KUBE_NAMESPACE              ?= platform-monoskope-monoskope
+YQ							?= yq
 
 .PHONY: template-clean dependency-update install uninstall template docs
 
@@ -43,19 +44,19 @@ helm-add-finleap: ## add finleap helm chart repo
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 helm-set-chart-version-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
+	@$(YQ) e --inplace '.version = "$(VERSION)"' $(HELM_PATH)/$*/Chart.yaml
 
 helm-set-app-version-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
-	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
+	@$(YQ) e --inplace '.appVersion = "$(VERSION)"' $(HELM_PATH)/$*/Chart.yaml 
+	@$(YQ) e --inplace '.image.tag = "$(VERSION)"' $(HELM_PATH)/$*/values.yaml 
 
 helm-set-version-%:
 	@$(MAKE) helm-set-chart-version-$*
 	@$(MAKE) helm-set-app-version-$*
 
 helm-set-app-version-latest-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(LATEST_TAG)" --inplace
-	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(LATEST_TAG)" --inplace
+	@$(YQ) e --inplace '.appVersion = "$(LATEST_TAG)"' $(HELM_PATH)/$*/Chart.yaml 
+	@$(YQ) e --inplace '.image.tag = "$(LATEST_TAG)"' $(HELM_PATH)/$*/values.yaml 
 
 helm-set-version-all:
 	@$(MAKE) helm-set-version-gateway
