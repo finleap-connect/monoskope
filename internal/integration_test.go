@@ -87,7 +87,6 @@ var _ = Describe("integration", func() {
 	}
 
 	It("can manage a user", func() {
-		userId := uuid.New()
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
 			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
@@ -353,6 +352,8 @@ var _ = Describe("integration", func() {
 
 		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
+
+		// TODO: there needs to be some testing reactor code here to actually fill the aggreate with a valid certificate
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
