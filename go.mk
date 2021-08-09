@@ -110,9 +110,8 @@ go-test-ci: ## run all tests without generation go files from protobuf
 go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-ginkgo-get $(GINKGO):
+ginkgo-get $(TOOLS_DIR)/ginkgo:
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
-	ln -fs $(GOPATH)/bin/ginkgo $(TOOLS_DIR)/ginkgo
 
 golangci-lint-get $(LINTER):
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
