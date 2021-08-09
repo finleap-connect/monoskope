@@ -112,12 +112,12 @@ go-coverage: ## print coverage from coverprofiles
 
 ginkgo-get $(GINKGO):
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
-	ln -s $(GOPATH)/bin/ginkgo $(GINKGO)
+	ln -fs $(GOPATH)/bin/ginkgo $(TOOLS_DIR)/ginkgo
 
 golangci-lint-get $(LINTER):
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
-gomock-get:
+gomock-get $(MOCKGEN):
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
 protoc-get $(TOOLS_DIR)/protoc:
@@ -182,8 +182,7 @@ go-build-queryhandler: $(CMD_QUERYHANDLER)
 
 go-build-clboreactor: $(CMD_CLBOREACTOR)
 
-go-rebuild-mocks: .protobuf-deps
+go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
-	
