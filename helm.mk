@@ -43,27 +43,10 @@ helm-template-%: helm-clean ## template helm chart
 helm-add-finleap: ## add finleap helm chart repo
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
-helm-set-chart-version-%:
-	@$(YQ) e --inplace '.version = "$(VERSION)"' $(HELM_PATH)/$*/Chart.yaml
-
-helm-set-app-version-%:
-	@$(YQ) e --inplace '.appVersion = "$(VERSION)"' $(HELM_PATH)/$*/Chart.yaml 
-	@$(YQ) e --inplace '.image.tag = "$(VERSION)"' $(HELM_PATH)/$*/values.yaml 
-
-helm-set-version-%:
-	@$(MAKE) helm-set-chart-version-$*
-	@$(MAKE) helm-set-app-version-$*
-
-helm-set-app-version-latest-%:
-	@$(YQ) e --inplace '.appVersion = "$(LATEST_TAG)"' $(HELM_PATH)/$*/Chart.yaml 
-	@$(YQ) e --inplace '.image.tag = "$(LATEST_TAG)"' $(HELM_PATH)/$*/values.yaml 
-
 helm-set-version-all:
-	@$(MAKE) helm-set-version-gateway
-	@$(MAKE) helm-set-version-eventstore
-	@$(MAKE) helm-set-version-commandhandler
-	@$(MAKE) helm-set-version-queryhandler
-	@$(MAKE) helm-set-version-cluster-bootstrap-reactor
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '.version = "$(VERSION)"' {} \;
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '.appVersion = "$(VERSION)"' {} \;
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '(.dependencies.[].version | select(. == "0.0.1-local")) |= "$(VERSION)"' {} \;
 
 helm-docs: ## update the auto generated docs of all helm charts
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl
