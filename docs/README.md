@@ -9,6 +9,7 @@
 * [Development](development/)
 * [Deployment](deployment/)
 * [Operation](operation/)
+* [Usage](usage/)
 
 ## Helm Charts documentation
 
