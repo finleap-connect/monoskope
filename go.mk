@@ -23,7 +23,6 @@ PROTO_FILES                != find api -name "*.proto"
 
 CURL          ?= curl
 
-COMMIT     	   := $(shell git rev-parse --short HEAD)
 LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
 BUILDFLAGS 	   += -installsuffix cgo --tags release
 
@@ -60,23 +59,26 @@ endef
 
 .PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
 
-go-mod:
+##@ Go
+go-all: go-mod go-fmt go-vet go-lint go-test
+
+go-mod: ## go mod download and verify
 	$(GO) mod download
 	$(GO) mod verify
 
-go-fmt:
+go-fmt:  ## go fmt
 	$(GO) fmt ./...
 
-go-vet:
+go-vet: ## go vet
 	$(GO) vet ./...
 
-go-lint:
+go-lint: $(LINTER) ## go lint
 	$(LINTER) run -v --no-config --deadline=5m
 
-go-run-%:
+go-run-%: ## run command
 	$(call go-run,$*)
 
-go-report:
+go-report: ## create report of commands and permission
 	@echo
 	@M8_OPERATION_MODE=cmdline $(GO) run -ldflags "$(LDFLAGS) cmd/commandhandler/*.go report commands $(ARGS)
 	@echo
@@ -93,34 +95,31 @@ include .protobuf-deps
 
 go-protobuf: $(GENERATED_GO_FILES)
 
-go-test: $(GENERATED_GO_FILES)
+go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 	make go-test-ci
 
-go-test-ci:
+go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover *
-	@echo "mode: set" > ./monoskope.coverprofile
+	$(GINKGO) -keepGoing -r -v -cover -covermode count -trace -compilers 8 *
+	@echo "mode: count" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
 	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
-go-coverage:
+go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-go-loc:
-	@gocloc .
-
-ginkgo-get:
+ginkgo-get $(TOOLS_DIR)/ginkgo:
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
-golangci-lint-get:
+golangci-lint-get $(LINTER):
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
-gomock-get:
+gomock-get $(MOCKGEN):
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
-protoc-get:
+protoc-get $(TOOLS_DIR)/protoc:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
 	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
@@ -130,9 +129,13 @@ protoc-get:
 	$(shell $(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
-go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get
+go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get ## download needed go tools
 
-go-clean: go-build-clean
+go-tools-clean:
+	rm -Rf $(TOOLS_DIR)/
+	mkdir $(TOOLS_DIR)
+
+go-clean: go-build-clean ## clean up all go parts
 	rm  .protobuf-deps
 	rm -Rf reports/
 	rm -Rf $(TOOLS_DIR)/
@@ -178,8 +181,7 @@ go-build-queryhandler: $(CMD_QUERYHANDLER)
 
 go-build-clboreactor: $(CMD_CLBOREACTOR)
 
-go-rebuild-mocks: .protobuf-deps
+go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
-	

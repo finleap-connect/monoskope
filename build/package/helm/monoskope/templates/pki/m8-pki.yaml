@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  name: {{ .Values.pki.issuer.name }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}
@@ -16,7 +16,7 @@ spec:
 apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  name: {{ .Values.pki.issuer.name }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}

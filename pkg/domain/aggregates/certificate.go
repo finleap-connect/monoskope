@@ -35,25 +35,35 @@ func NewCertificateAggregate(id uuid.UUID, aggregateManager es.AggregateStore) e
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch cmd := cmd.(type) {
 	case *commands.RequestCertificateCommand:
 		if a.Exists() {
-			return errors.ErrCertificateAlreadyExists
+			return nil, errors.ErrCertificateAlreadyExists
 		}
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   cmd.GetReferencedAggregateId(),
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
+
+		// this is a create command. Update the aggregate ID, so that any input
+		// from the user will be ignored, and new event will use the new ID
+		a.resetId()
+
 		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
-		return nil
+
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 }
 

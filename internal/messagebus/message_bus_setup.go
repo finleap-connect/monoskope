@@ -1,9 +1,7 @@
 package messagebus
 
 import (
-	"context"
 	"os"
-	"time"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esMessaging "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/messaging"
@@ -17,21 +15,16 @@ func getMsgBusUrl() string {
 	return msgbusUrl
 }
 
-func getRabbitConf(name, msgbusPrefix string, useTLS bool) (*esMessaging.RabbitEventBusConfig, error) {
-	rabbitConf := esMessaging.NewRabbitEventBusConfig(name, getMsgBusUrl(), msgbusPrefix)
-
-	if useTLS {
-		err := rabbitConf.ConfigureTLS()
-		if err != nil {
-			return nil, err
-		}
+func getRabbitConf(name, msgbusPrefix string) (*esMessaging.RabbitEventBusConfig, error) {
+	rabbitConf, err := esMessaging.NewRabbitEventBusConfig(name, getMsgBusUrl(), msgbusPrefix)
+	if err != nil {
+		return nil, err
 	}
-
 	return rabbitConf, nil
 }
 
 func NewEventBusConsumer(name, msgbusPrefix string) (eventsourcing.EventBusConsumer, error) {
-	rabbitConf, err := getRabbitConf(name, msgbusPrefix, true)
+	rabbitConf, err := getRabbitConf(name, msgbusPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -43,31 +36,16 @@ func NewEventBusConsumerFromConfig(rabbitConf *esMessaging.RabbitEventBusConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancelFunc()
-	err = consumer.Open(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return consumer, nil
 }
 
 func NewEventBusPublisher(name, msgbusPrefix string) (eventsourcing.EventBusPublisher, error) {
-	rabbitConf, err := getRabbitConf(name, msgbusPrefix, true)
+	rabbitConf, err := getRabbitConf(name, msgbusPrefix)
 	if err != nil {
 		return nil, err
 	}
 
 	publisher, err := esMessaging.NewRabbitEventBusPublisher(rabbitConf)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancelFunc()
-	err = publisher.Open(ctx)
 	if err != nil {
 		return nil, err
 	}

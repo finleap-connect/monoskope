@@ -60,10 +60,11 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 		return userId, err
 	}
 
-	if err := handler.HandleCommand(ctx, cmd); err != nil {
+	reply, err := handler.HandleCommand(ctx, cmd)
+	if err != nil {
 		return uuid.Nil, err
 	}
-	return userId, nil
+	return reply.Id, nil
 }
 
 // setupRoleBinding creates rolebindings
@@ -82,7 +83,7 @@ func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string,
 		return err
 	}
 
-	err = handler.HandleCommand(ctx, cmd)
+	_, err = handler.HandleCommand(ctx, cmd)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
 		return err
 	}

@@ -11,7 +11,6 @@ const (
 	AudienceMonoctl               = "monoctl"
 	AudienceK8sAuth               = "k8sauth"
 	AudienceM8Operator            = "m8operator"
-	AuthTokenValidity             = 12 * time.Hour
 	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
@@ -36,7 +35,7 @@ type AuthToken struct {
 	*ClusterClaim
 }
 
-func NewAuthToken(claims *StandardClaims, issuer, userId string) *AuthToken {
+func NewAuthToken(claims *StandardClaims, issuer, userId string, validity time.Duration) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
@@ -44,7 +43,7 @@ func NewAuthToken(claims *StandardClaims, issuer, userId string) *AuthToken {
 			ID:        uuid.New().String(),
 			Issuer:    issuer,
 			Subject:   userId,
-			Expiry:    jwt.NewNumericDate(now.Add(AuthTokenValidity)),
+			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
 			Audience:  jwt.Audience{AudienceMonoctl},

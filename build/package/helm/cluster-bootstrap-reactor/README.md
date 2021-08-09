@@ -23,7 +23,7 @@ A Helm chart for the Monoskope Cluster Bootstrap Reactor
 | image.repository | string | `"registry.gitlab.figo.systems/platform/monoskope/monoskope/clusterbootstrapreactor"` |  |
 | image.tag | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
-| issuerUrl | string | `""` | The URL of the Monoskope issuer (Gateway) |
+| issuerURL | string | `""` | The URL of the Monoskope issuer (Gateway) |
 | keySecret.field | string | `"tls.key"` | field of the secret containing the private key (PEM or DER-encoded) |
 | keySecret.name | string | `""` | secret containing private key |
 | labels | object | `{}` |  |

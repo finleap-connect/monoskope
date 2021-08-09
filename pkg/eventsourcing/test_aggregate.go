@@ -24,16 +24,20 @@ func newTestAggregate() *testAggregate {
 	}
 }
 
-func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
+func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) (*CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *testCommand:
 		ed := ToEventDataFromProto(&testEd.TestEventData{
 			Hello: cmd.TestCommandData.GetTest(),
 		})
-		_ = a.AppendEvent(ctx, testEventType, ed)
-		return nil
+		agg := a.AppendEvent(ctx, testEventType, ed)
+		ret := &CommandReply{
+			Id:      agg.AggregateID(),
+			Version: agg.AggregateVersion(),
+		}
+		return ret, nil
 	}
-	return fmt.Errorf("couldn't handle command")
+	return nil, fmt.Errorf("couldn't handle command")
 }
 
 func (a *testAggregate) ApplyEvent(ev Event) error {

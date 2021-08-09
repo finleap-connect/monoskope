@@ -98,7 +98,7 @@ func (r *commandRegistry) CreateCommand(id uuid.UUID, commandType CommandType, d
 }
 
 // HandleCommand handles a command with a handler capable of handling it.
-func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error {
+func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) (*CommandReply, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -107,7 +107,7 @@ func (r *commandRegistry) HandleCommand(ctx context.Context, cmd Command) error 
 	}
 
 	r.log.Info("trying to handle a command of non-registered type", "commandType", cmd.CommandType())
-	return errors.ErrHandlerNotFound
+	return nil, errors.ErrHandlerNotFound
 }
 
 // SetHandler adds a handler for a specific command.

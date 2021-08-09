@@ -37,7 +37,11 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		eventStoreTestEnv: eventStoreTestEnv,
 	}
 
-	rabbitConf := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
+	rabbitConf, err := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
+	if err != nil {
+		return nil, err
+	}
+
 	env.ebConsumer, err = messagebus.NewEventBusConsumerFromConfig(rabbitConf)
 	if err != nil {
 		return nil, err

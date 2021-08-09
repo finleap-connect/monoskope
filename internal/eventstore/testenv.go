@@ -5,6 +5,7 @@ import (
 	"net"
 
 	api "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/rabbitmq"
 	ggrpc "google.golang.org/grpc"
 
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
@@ -19,12 +20,12 @@ type TestEnv struct {
 	apiListener      net.Listener
 	MetricsListener  net.Listener
 	grpcServer       *grpc.Server
-	messagingTestEnv *messaging.TestEnv
+	messagingTestEnv *rabbitmq.TestEnv
 	storageTestEnv   *storage.TestEnv
 	publisher        es.EventBusPublisher
 }
 
-func (t *TestEnv) GetMessagingTestEnv() *messaging.TestEnv {
+func (t *TestEnv) GetMessagingTestEnv() *rabbitmq.TestEnv {
 	return t.messagingTestEnv
 }
 
@@ -35,18 +36,17 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		TestEnv: testEnv,
 	}
 
-	env.messagingTestEnv, err = messaging.NewTestEnvWithParent(testEnv)
+	env.messagingTestEnv, err = rabbitmq.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	conf := messaging.NewRabbitEventBusConfig("eventstore", env.messagingTestEnv.AmqpURL, "")
+	conf, err := messaging.NewRabbitEventBusConfig("eventstore", env.messagingTestEnv.AmqpURL, "")
+	if err != nil {
+		return nil, err
+	}
+
 	env.publisher, err = messaging.NewRabbitEventBusPublisher(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	err = env.publisher.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}

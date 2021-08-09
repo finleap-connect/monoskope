@@ -7,11 +7,12 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/test"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/rabbitmq"
 )
 
 var (
 	baseTestEnv *test.TestEnv
-	env         *TestEnv
+	env         *rabbitmq.TestEnv
 )
 
 func TestMessageBus(t *testing.T) {
@@ -26,7 +27,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	By("bootstrapping test env")
 	baseTestEnv = test.NewTestEnv("messaging-testenv")
-	env, err = NewTestEnvWithParent(baseTestEnv)
+	env, err = rabbitmq.NewTestEnvWithParent(baseTestEnv)
 	Expect(err).ToNot(HaveOccurred())
 }, 60)
 
