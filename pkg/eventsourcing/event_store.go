@@ -37,8 +37,6 @@ type StoreQuery struct {
 	MinTimestamp *time.Time
 	// Filter events with a Timestamp <= MaxTimestamp
 	MaxTimestamp *time.Time
-	// Filter events by aggregates that have not been deleted
-	ExcludeDeleted bool
 }
 
 type EventStreamReceiver interface {
