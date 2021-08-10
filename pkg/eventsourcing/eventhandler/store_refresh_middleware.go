@@ -13,27 +13,30 @@ import (
 )
 
 type eventStoreRefreshEventHandler struct {
-	log           logger.Logger
-	esClient      apiEs.EventStoreClient
-	handler       es.EventHandler
-	lastTimestamp time.Time
-	mutex         sync.Mutex
-	ticker        *time.Ticker
+	log             logger.Logger
+	esClient        apiEs.EventStoreClient
+	handler         es.EventHandler
+	lastTimestamp   time.Time
+	mutex           sync.Mutex
+	ticker          *time.Ticker
+	refreshInterval time.Duration
 }
 
 // NewEventStoreRefreshMiddleware creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
-func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient) es.EventHandlerMiddleware {
+func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInterval time.Duration) es.EventHandlerMiddleware {
 	m := &eventStoreRefreshEventHandler{
-		esClient: esClient,
+		esClient:        esClient,
+		refreshInterval: refreshInterval,
 	}
 	return m.middlewareFunc
 }
 
 func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
 	return &eventStoreRefreshEventHandler{
-		log:      logger.WithName("eventStoreRefreshEventHandler"),
-		esClient: m.esClient,
-		handler:  h,
+		log:             logger.WithName("eventStoreRefreshEventHandler"),
+		esClient:        m.esClient,
+		refreshInterval: m.refreshInterval,
+		handler:         h,
 	}
 }
 
@@ -53,7 +56,7 @@ func (m *eventStoreRefreshEventHandler) HandleEvent(ctx context.Context, event e
 // resetTicker starts a new ticker if not existing or resets the timer for the existing ticker.
 func (m *eventStoreRefreshEventHandler) resetTicker(ctx context.Context) {
 	if m.ticker == nil {
-		m.ticker = time.NewTicker(time.Minute * 1)
+		m.ticker = time.NewTicker(m.refreshInterval)
 		go func() {
 			for range m.ticker.C {
 				err := m.applyEventsFromStore(ctx)
@@ -63,7 +66,7 @@ func (m *eventStoreRefreshEventHandler) resetTicker(ctx context.Context) {
 			}
 		}()
 	}
-	m.ticker.Reset(time.Minute * 1)
+	m.ticker.Reset(m.refreshInterval)
 }
 
 func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context) error {

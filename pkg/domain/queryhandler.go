@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	eventsourcingApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
@@ -45,7 +46,7 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 
 	// Setup middleware
 	replayHandler := eventhandler.NewEventStoreReplayMiddleware(esClient)
-	refreshHandler := eventhandler.NewEventStoreRefreshMiddleware(esClient)
+	refreshHandler := eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30) // refresh every 30 seconds
 	//
 	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler, refreshHandler)
 	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler, refreshHandler)
