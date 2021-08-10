@@ -334,6 +334,12 @@ var _ = Describe("integration", func() {
 	})
 
 	It("can create and query a certificate", func() {
+		// set up reactor for checking JWTs later
+		testReactor, err := testReactor.NewTestReactor()
+		Expect(err).ToNot(HaveOccurred())
+		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+		Expect(err).ToNot(HaveOccurred())
+
 		// get the uuid of the cluster with the name "my aweseome cluster"
 		clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
 		Expect(err).ToNot(HaveOccurred())
@@ -350,13 +356,19 @@ var _ = Describe("integration", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
-
-		// TODO: there needs to be some testing reactor code here to actually fill the aggreate with a valid certificate
 
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
+
+		By("injecting a mock certificate")
+		observed := testReactor.GetObservedEvents()
+		Expect(len(observed)).ToNot(Equal(0))
+		Expect(observed[0].AggregateID()).To(Equal(reply.AggregateId))
+
+		fmt.Printf("%v", observed)
+		time.Sleep(10 * time.Second)
 
 		certificate, err := certificateServiceClient().GetCertificate(ctx,
 			&domainApi.GetCertificateRequest{
@@ -367,7 +379,7 @@ var _ = Describe("integration", func() {
 		Expect(certificate.GetCertificate()).ToNot(BeNil())
 		Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
 
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 	})
