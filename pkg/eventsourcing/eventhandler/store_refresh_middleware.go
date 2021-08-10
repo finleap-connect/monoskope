@@ -9,17 +9,18 @@ import (
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type eventStoreRefreshEventHandler struct {
 	log             logger.Logger
 	esClient        apiEs.EventStoreClient
 	handler         es.EventHandler
-	lastTimestamp   time.Time
+	lastVersion     uint64
 	mutex           sync.Mutex
 	ticker          *time.Ticker
 	refreshInterval time.Duration
+	aggregateType   es.AggregateType
 }
 
 // NewEventStoreRefreshMiddleware creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
@@ -47,7 +48,8 @@ func (m *eventStoreRefreshEventHandler) HandleEvent(ctx context.Context, event e
 
 	err := m.handler.HandleEvent(ctx, event)
 	if err == nil {
-		m.lastTimestamp = event.Timestamp()
+		m.lastVersion = event.AggregateVersion()
+		m.aggregateType = event.AggregateType()
 		m.resetTicker(ctx)
 	}
 	return err
@@ -77,7 +79,7 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		MinTimestamp: timestamppb.New(m.lastTimestamp),
+		MinVersion: wrapperspb.UInt64(m.lastVersion + 1),
 	})
 	if err != nil {
 		return err
@@ -109,7 +111,7 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 		if err != nil {
 			return err
 		}
-		m.lastTimestamp = esEvent.Timestamp()
+		m.lastVersion = esEvent.AggregateVersion()
 	}
 
 	return nil
