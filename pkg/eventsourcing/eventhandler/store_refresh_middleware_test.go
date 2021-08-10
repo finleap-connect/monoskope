@@ -34,19 +34,45 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 			It("does nothing", func() {
 				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
 				esRetrieveClient := mock_eventsourcing.NewMockEventStore_RetrieveClient(mockCtrl)
+
 				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil).AnyTimes()
 				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).AnyTimes()
 
-				middleware := NewEventStoreRefreshMiddleware(esClient, time.Second*1)
+				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100)
 				evHandler := middleware(NewLoggingEventHandler())
 				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
 				err := evHandler.HandleEvent(ctx, event)
 				Expect(err).ToNot(HaveOccurred())
-				time.Sleep(time.Second * 2)
+				time.Sleep(time.Millisecond * 150)
 			})
 		})
 		When("there are events gone missing", func() {
 			It("it queries and applies them", func() {
+				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
+				esRetrieveClient := mock_eventsourcing.NewMockEventStore_RetrieveClient(mockCtrl)
+
+				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil).AnyTimes()
+				esRetrieveClient.EXPECT().Recv().Return(
+					eventsourcing.NewProtoFromEvent(
+						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 2),
+					),
+					nil,
+				)
+				esRetrieveClient.EXPECT().Recv().Return(
+					eventsourcing.NewProtoFromEvent(
+						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 3),
+					),
+					nil,
+				)
+				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).AnyTimes()
+
+				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100)
+				evHandler := middleware(NewLoggingEventHandler())
+				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
+				err := evHandler.HandleEvent(ctx, event)
+				Expect(err).ToNot(HaveOccurred())
+
+				time.Sleep(time.Millisecond * 150)
 			})
 		})
 	})
