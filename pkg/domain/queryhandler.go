@@ -44,13 +44,13 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, d.ClusterRepository)
 
 	// Setup middleware
-	replayHandler := eventhandler.NewEventStoreReplayEventHandler(esClient)
-	refreshHandler := eventhandler.NewEventStoreRefreshEventHandler(esClient)
+	replayHandler := eventhandler.NewEventStoreReplayMiddleware(esClient)
+	refreshHandler := eventhandler.NewEventStoreRefreshMiddleware(esClient)
 	//
-	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler.AsMiddleware, refreshHandler.AsMiddleware)
-	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler.AsMiddleware, refreshHandler.AsMiddleware)
-	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler.AsMiddleware, refreshHandler.AsMiddleware)
-	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, replayHandler.AsMiddleware, refreshHandler.AsMiddleware)
+	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler, refreshHandler)
+	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler, refreshHandler)
+	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler, refreshHandler)
+	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, replayHandler, refreshHandler)
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)

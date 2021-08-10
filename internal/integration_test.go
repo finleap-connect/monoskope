@@ -286,7 +286,7 @@ var _ = Describe("integration", func() {
 		Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
 		fmt.Printf("%v", observed)
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		eventMD := observed[0].Metadata()
 		event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
@@ -300,7 +300,7 @@ var _ = Describe("integration", func() {
 		err = testReactor.Emit(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())

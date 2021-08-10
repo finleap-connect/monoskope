@@ -21,14 +21,15 @@ type eventStoreRefreshEventHandler struct {
 	ticker        *time.Ticker
 }
 
-// NewEventStoreRefreshEventHandler creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
-func NewEventStoreRefreshEventHandler(esClient apiEs.EventStoreClient) *eventStoreRefreshEventHandler {
-	return &eventStoreRefreshEventHandler{
+// NewEventStoreRefreshMiddleware creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
+func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient) es.EventHandlerMiddleware {
+	m := &eventStoreRefreshEventHandler{
 		esClient: esClient,
 	}
+	return m.middlewareFunc
 }
 
-func (m *eventStoreRefreshEventHandler) AsMiddleware(h es.EventHandler) es.EventHandler {
+func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
 	return &eventStoreRefreshEventHandler{
 		log:      logger.WithName("eventStoreRefreshEventHandler"),
 		esClient: m.esClient,
