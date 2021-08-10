@@ -7,10 +7,12 @@ import (
 
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type eventStoreReplayEventHandler struct {
+	log      logger.Logger
 	esClient apiEs.EventStoreClient
 	handler  es.EventHandler
 }
@@ -24,6 +26,7 @@ func NewEventStoreReplayEventHandler(esClient apiEs.EventStoreClient) *eventStor
 
 func (m *eventStoreReplayEventHandler) AsMiddleware(h es.EventHandler) es.EventHandler {
 	return &eventStoreReplayEventHandler{
+		log:      logger.WithName("eventStoreReplayEventHandler"),
 		esClient: m.esClient,
 		handler:  h,
 	}
@@ -34,6 +37,7 @@ func (m *eventStoreReplayEventHandler) HandleEvent(ctx context.Context, event es
 	var outdatedError *ProjectionOutdatedError
 	if err := m.handler.HandleEvent(ctx, event); errors.As(err, &outdatedError) {
 		// If the next handler in the chain tells that the projection is outdated
+		m.log.Info("Gap in event stream found. Replaying missing events from store.", "event", event.String())
 		if err := m.applyEventsFromStore(ctx, event, outdatedError.ProjectionVersion); err != nil {
 			return err
 		}
