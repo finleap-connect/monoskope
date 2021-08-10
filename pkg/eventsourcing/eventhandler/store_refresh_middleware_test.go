@@ -34,8 +34,8 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 			It("does nothing", func() {
 				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
 				esRetrieveClient := mock_eventsourcing.NewMockEventStore_RetrieveClient(mockCtrl)
-				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil)
-				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF)
+				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil).AnyTimes()
+				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).AnyTimes()
 
 				middleware := NewEventStoreRefreshMiddleware(esClient, time.Second*1)
 				evHandler := middleware(NewLoggingEventHandler())

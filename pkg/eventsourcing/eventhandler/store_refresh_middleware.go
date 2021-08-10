@@ -73,6 +73,8 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	m.log.Info("Querying eventstore to fetch events which might got lost...")
+
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
 		MinTimestamp: timestamppb.New(m.lastTimestamp),
