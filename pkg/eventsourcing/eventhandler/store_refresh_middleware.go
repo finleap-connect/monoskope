@@ -34,9 +34,10 @@ func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInte
 
 func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
 	return &eventStoreRefreshEventHandler{
-		log:             logger.WithName("eventStoreRefreshEventHandler"),
+		log:             logger.WithName("refresh-middleware").WithValues("AggregateType", m.aggregateType),
 		esClient:        m.esClient,
 		refreshInterval: m.refreshInterval,
+		aggregateType:   m.aggregateType,
 		handler:         h,
 	}
 }
@@ -75,8 +76,6 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	m.log.Info("Querying eventstore to fetch events which might got lost...")
-
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
 		MinVersion: wrapperspb.UInt64(m.lastVersion + 1),
@@ -99,19 +98,19 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 		}
 
 		// Convert event from api to es
-		esEvent, err := es.NewEventFromProto(protoEvent)
+		event, err := es.NewEventFromProto(protoEvent)
 		if err != nil {
 			return err
 		}
 
-		m.log.Info("Applying event which got lost from store.", "event", esEvent.String())
+		m.log.Info("Applying event which wasn't received via bus from store.", "last", m.lastVersion, "event", event.String())
 
 		// Let the next handler in the chain handle the event
-		err = m.handler.HandleEvent(ctx, esEvent)
+		err = m.handler.HandleEvent(ctx, event)
 		if err != nil {
 			return err
 		}
-		m.lastVersion = esEvent.AggregateVersion()
+		m.lastVersion = event.AggregateVersion()
 	}
 
 	return nil

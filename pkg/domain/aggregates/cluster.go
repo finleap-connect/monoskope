@@ -69,7 +69,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			Id:      a.ID(),
 			Version: a.Version(),
 		}
-
 		return reply, nil
 
 	default:
@@ -116,7 +115,7 @@ func containsCluster(values []es.Aggregate, name string) bool {
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &eventdata.ClusterCreated{}
+		data := new(eventdata.ClusterCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
@@ -126,7 +125,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
 	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
+		data := new(eventdata.ClusterBootstrapTokenCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
