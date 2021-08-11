@@ -57,7 +57,7 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf
 
 ##@ Go
 go-all: go-mod go-fmt go-vet go-lint go-test

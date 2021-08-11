@@ -11,13 +11,16 @@ type TenantUser struct {
 }
 
 func NewTenantUserProjection(tenantId uuid.UUID, user *User, rolebinding *UserRoleBinding) *TenantUser {
+	dp := NewDomainProjection()
 	return &TenantUser{
+		DomainProjection: dp,
 		TenantUser: &projections.TenantUser{
 			Id:         user.Id,
 			Name:       user.Name,
 			Email:      user.Email,
 			TenantRole: rolebinding.Role,
 			TenantId:   tenantId.String(),
+			Metadata:   &dp.LifecycleMetadata,
 		},
 	}
 }

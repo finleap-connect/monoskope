@@ -34,10 +34,9 @@ func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInte
 
 func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
 	return &eventStoreRefreshEventHandler{
-		log:             logger.WithName("refresh-middleware").WithValues("AggregateType", m.aggregateType),
+		log:             logger.WithName("refresh-middleware"),
 		esClient:        m.esClient,
 		refreshInterval: m.refreshInterval,
-		aggregateType:   m.aggregateType,
 		handler:         h,
 	}
 }

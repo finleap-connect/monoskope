@@ -202,8 +202,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy().Id).To(Equal(user.Id))
+		Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
 
 		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
@@ -214,8 +213,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+		Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
 
 		Expect(tenant.Metadata.Created).NotTo(BeNil())
 

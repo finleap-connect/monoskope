@@ -198,7 +198,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo, userRepo)
+	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 	gatewayApiServer := NewGatewayAPIServer(env.AuthConfig, authHandler, userRepo)
 	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, time.Hour*1)
 
