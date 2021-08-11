@@ -80,18 +80,16 @@ func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) (
 		var ok bool
 		if aggregate, ok = aggregates[event.AggregateID()]; !ok {
 			// Create new empty aggregate of type.
-			aggregate, err = r.registry.CreateAggregate(aggregateType, event.AggregateID())
+			aggregate, err = r.registry.CreateAggregate(aggregateType)
 			if err != nil {
 				return nil, err
 			}
-			aggregates[event.AggregateID()] = aggregate
 		}
-
 		if err := aggregate.ApplyEvent(event); err != nil {
 			return nil, err
 		}
-
 		aggregate.IncrementVersion()
+		aggregates[event.AggregateID()] = aggregate
 	}
 
 	return toAggregateArray(aggregates), nil
@@ -139,7 +137,7 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 	}
 
 	// Create new empty aggregate of type.
-	aggregate, err := r.registry.CreateAggregate(aggregateType, id)
+	aggregate, err := r.registry.CreateAggregate(aggregateType)
 	if err != nil {
 		return nil, err
 	}

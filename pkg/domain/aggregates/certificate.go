@@ -22,10 +22,10 @@ type CertificateAggregate struct {
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate(id uuid.UUID) es.Aggregate {
+func NewCertificateAggregate() es.Aggregate {
 	return &CertificateAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 	}
 }
@@ -47,10 +47,6 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
 
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
-
 		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
 
 		reply := &es.CommandReply{
@@ -65,6 +61,8 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *CertificateAggregate) ApplyEvent(event es.Event) error {
+	_ = a.BaseAggregate.ApplyEvent(event)
+
 	switch event.EventType() {
 	case events.CertificateRequested:
 		data := &eventdata.CertificateRequested{}

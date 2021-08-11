@@ -34,7 +34,7 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
-	h.log.V(logger.DebugLevel).Info("Projecting event...", "EventType", event.EventType(), "AggregateType", event.AggregateType())
+	h.log.Info("Projecting event...", "event", event.String())
 
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 

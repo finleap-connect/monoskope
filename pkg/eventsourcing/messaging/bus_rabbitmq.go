@@ -222,41 +222,41 @@ type rabbitEvent struct {
 }
 
 // EventType implements the EventType method of the Event interface.
-func (e rabbitEvent) EventType() evs.EventType {
+func (e *rabbitEvent) EventType() evs.EventType {
 	return e.rabbitMessage.EventType
 }
 
 // Data implements the Data method of the Event interface.
-func (e rabbitEvent) Data() evs.EventData {
+func (e *rabbitEvent) Data() evs.EventData {
 	return e.rabbitMessage.Data
 }
 
 // Timestamp implements the Timestamp method of the Event interface.
-func (e rabbitEvent) Timestamp() time.Time {
+func (e *rabbitEvent) Timestamp() time.Time {
 	return e.rabbitMessage.Timestamp
 }
 
 // AggregateType implements the AggregateType method of the Event interface.
-func (e rabbitEvent) AggregateType() evs.AggregateType {
+func (e *rabbitEvent) AggregateType() evs.AggregateType {
 	return e.rabbitMessage.AggregateType
 }
 
 // AggregateID implements the AggregateID method of the Event interface.
-func (e rabbitEvent) AggregateID() uuid.UUID {
+func (e *rabbitEvent) AggregateID() uuid.UUID {
 	return e.rabbitMessage.AggregateID
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e rabbitEvent) AggregateVersion() uint64 {
+func (e *rabbitEvent) AggregateVersion() uint64 {
 	return e.rabbitMessage.AggregateVersion
 }
 
 // AggregateVersion implements the AggregateVersion method of the Event interface.
-func (e rabbitEvent) Metadata() map[string]string {
+func (e *rabbitEvent) Metadata() map[string]string {
 	return e.rabbitMessage.Metadata
 }
 
 // String implements the String method of the Event interface.
-func (e rabbitEvent) String() string {
-	return fmt.Sprintf("%s@%d", e.rabbitMessage.EventType, e.rabbitMessage.AggregateVersion)
+func (e *rabbitEvent) String() string {
+	return fmt.Sprintf("%s:%s<-%s@%d", e.AggregateID().String(), e.AggregateType().String(), e.EventType(), e.AggregateVersion())
 }

@@ -37,12 +37,11 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		inID := uuid.New()
-		agg := NewClusterAggregate(inID, NewTestAggregateManager())
+		agg := NewClusterAggregate(NewTestAggregateManager())
 
 		reply, err := createCluster(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(reply.Id).ToNot(Equal(inID))
+		Expect(reply.Id).ToNot(Equal(uuid.Nil))
 		Expect(reply.Version).To(Equal(uint64(0)))
 
 		event := agg.UncommittedEvents()[0]
@@ -65,7 +64,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
+		agg := NewClusterAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
 			Name:                expectedClusterName,
@@ -91,7 +90,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewClusterAggregate(uuid.New(), NewTestAggregateManager())
+		agg := NewClusterAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
 			Jwt: expectedJWT,

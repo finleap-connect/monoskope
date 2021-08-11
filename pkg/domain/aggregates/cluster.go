@@ -25,10 +25,10 @@ type ClusterAggregate struct {
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -51,10 +51,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
 
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
 		reply := &es.CommandReply{
@@ -113,6 +109,8 @@ func containsCluster(values []es.Aggregate, name string) bool {
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
+	_ = a.BaseAggregate.ApplyEvent(event)
+
 	switch event.EventType() {
 	case events.ClusterCreated:
 		data := new(eventdata.ClusterCreated)

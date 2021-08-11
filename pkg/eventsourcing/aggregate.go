@@ -48,9 +48,9 @@ type BaseAggregate struct {
 }
 
 // NewBaseAggregate creates an aggregate.
-func NewBaseAggregate(t AggregateType, id uuid.UUID) *BaseAggregate {
+func NewBaseAggregate(t AggregateType) *BaseAggregate {
 	return &BaseAggregate{
-		id:            id,
+		id:            uuid.New(),
 		aggregateType: t,
 	}
 }
@@ -110,4 +110,12 @@ func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, ev
 // IncrementVersion implements the IncrementVersion method of the Aggregate interface.
 func (a *BaseAggregate) IncrementVersion() {
 	a.version++
+}
+
+// ApplyEvent implements the ApplyEvent method of the Aggregate interface.
+func (a *BaseAggregate) ApplyEvent(event Event) error {
+	if a.version == 0 {
+		a.id = event.AggregateID()
+	}
+	return nil
 }
