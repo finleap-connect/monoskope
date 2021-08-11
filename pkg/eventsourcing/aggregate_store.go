@@ -3,6 +3,7 @@ package eventsourcing
 import (
 	"context"
 	"io"
+	"sync"
 
 	"github.com/google/uuid"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
@@ -27,6 +28,7 @@ type AggregateStore interface {
 type aggregateStore struct {
 	registry AggregateRegistry
 	esClient esApi.EventStoreClient
+	mutex    sync.Mutex
 }
 
 // NewAggregateManager creates a new AggregateHandler which loads/updates Aggregates with the given EventStore.
@@ -39,6 +41,9 @@ func NewAggregateManager(aggregateRegistry AggregateRegistry, eventStoreClient e
 
 // Get returns the most recent version of an aggregate.
 func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) ([]Aggregate, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateType: wrapperspb.String(aggregateType.String()),
@@ -88,6 +93,12 @@ func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) (
 		if err := aggregate.ApplyEvent(event); err != nil {
 			return nil, err
 		}
+
+		// Set aggregates id to the first event's id
+		if aggregate.Version() == 0 {
+			aggregate.setId(event.AggregateID())
+		}
+
 		aggregate.IncrementVersion()
 		aggregates[event.AggregateID()] = aggregate
 	}
@@ -105,6 +116,9 @@ func toAggregateArray(aggregateMap map[uuid.UUID]Aggregate) []Aggregate {
 
 // Get returns the most recent version of an aggregate.
 func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, id uuid.UUID) (Aggregate, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateId:   wrapperspb.String(id.String()),
@@ -152,6 +166,11 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 			return nil, err
 		}
 
+		// Set aggregates id to the first event's id
+		if aggregate.Version() == 0 {
+			aggregate.setId(event.AggregateID())
+		}
+
 		aggregate.IncrementVersion()
 	}
 
@@ -160,6 +179,9 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 
 // Update stores all in-flight events for an aggregate.
 func (r *aggregateStore) Update(ctx context.Context, aggregate Aggregate) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	events := aggregate.UncommittedEvents()
 
 	// Check that there are events in-flight.

@@ -61,8 +61,6 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *CertificateAggregate) ApplyEvent(event es.Event) error {
-	_ = a.BaseAggregate.ApplyEvent(event)
-
 	switch event.EventType() {
 	case events.CertificateRequested:
 		data := &eventdata.CertificateRequested{}

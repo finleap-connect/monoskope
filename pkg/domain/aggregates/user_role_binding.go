@@ -115,8 +115,6 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserRoleBindingAggregate) ApplyEvent(event es.Event) error {
-	_ = a.BaseAggregate.ApplyEvent(event)
-
 	switch event.EventType() {
 	case events.UserRoleBindingCreated:
 		err := a.userRoleBindingCreated(event)

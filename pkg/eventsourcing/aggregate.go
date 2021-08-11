@@ -18,6 +18,7 @@ func (t AggregateType) String() string {
 // Aggregate is the interface definition for all aggregates
 type Aggregate interface {
 	CommandHandler
+	setId(id uuid.UUID)
 	// Type is the type of the aggregate that the event can be applied to.
 	Type() AggregateType
 	// ID is the id of the aggregate that the event should be applied to.
@@ -112,10 +113,7 @@ func (a *BaseAggregate) IncrementVersion() {
 	a.version++
 }
 
-// ApplyEvent implements the ApplyEvent method of the Aggregate interface.
-func (a *BaseAggregate) ApplyEvent(event Event) error {
-	if a.version == 0 {
-		a.id = event.AggregateID()
-	}
-	return nil
+// setId implements the private method to set Aggregate id.
+func (a *BaseAggregate) setId(id uuid.UUID) {
+	a.id = id
 }

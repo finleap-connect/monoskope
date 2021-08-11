@@ -83,8 +83,6 @@ func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserAggregate) ApplyEvent(event es.Event) error {
-	_ = a.BaseAggregate.ApplyEvent(event)
-
 	switch event.EventType() {
 	case events.UserCreated:
 		err := a.userCreated(event)
