@@ -34,7 +34,7 @@ cache:golang:
 
 .docker-builder:
   extends: .gobase-no-push
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8-rc4
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8
   only:
     - web
     - tags
