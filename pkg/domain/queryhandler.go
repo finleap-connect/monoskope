@@ -45,12 +45,11 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, d.ClusterRepository)
 
 	// Setup middleware
-	replayHandler := eventhandler.NewEventStoreReplayMiddleware(esClient)
-	//
-	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler, eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30, aggregates.User))
-	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler, eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30, aggregates.UserRoleBinding))
-	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler, eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30, aggregates.Tenant))
-	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, replayHandler, eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30, aggregates.Cluster))
+	refreshDuration := time.Second * 30
+	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)

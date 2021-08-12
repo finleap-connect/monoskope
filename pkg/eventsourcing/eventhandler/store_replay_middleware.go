@@ -22,17 +22,15 @@ type eventStoreReplayEventHandler struct {
 // NewEventStoreReplayMiddleware creates an EventHandler which automates querying the EventStore in case of gaps in AggregateVersion found in other EventHandlers later in the chain of EventHandlers.
 func NewEventStoreReplayMiddleware(esClient apiEs.EventStoreClient) es.EventHandlerMiddleware {
 	m := &eventStoreReplayEventHandler{
+		log:      logger.WithName("replay-middleware"),
 		esClient: esClient,
 	}
 	return m.middlewareFunc
 }
 
 func (m *eventStoreReplayEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
-	return &eventStoreReplayEventHandler{
-		log:      logger.WithName("replay-middleware"),
-		esClient: m.esClient,
-		handler:  h,
-	}
+	m.handler = h
+	return m
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.

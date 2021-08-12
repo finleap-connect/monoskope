@@ -38,7 +38,7 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil).AnyTimes()
 				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).AnyTimes()
 
-				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100, expectedAggregateType)
+				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100)
 				evHandler := middleware(NewLoggingEventHandler())
 				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
 				err := evHandler.HandleEvent(ctx, event)
@@ -66,7 +66,7 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 				)
 				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).AnyTimes()
 
-				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100, expectedAggregateType)
+				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100)
 				evHandler := middleware(NewLoggingEventHandler())
 
 				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
