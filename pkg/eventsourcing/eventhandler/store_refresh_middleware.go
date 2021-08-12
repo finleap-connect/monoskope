@@ -25,14 +25,13 @@ type eventStoreRefreshEventHandler struct {
 
 // NewEventStoreRefreshMiddleware creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
 func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInterval time.Duration) es.EventHandlerMiddleware {
-	m := &eventStoreRefreshEventHandler{
-		log:             logger.WithName("refresh-middleware"),
-		esClient:        esClient,
-		refreshInterval: refreshInterval,
-	}
 	return func(h es.EventHandler) es.EventHandler {
-		m.handler = h
-		return m
+		return &eventStoreRefreshEventHandler{
+			log:             logger.WithName("refresh-middleware"),
+			esClient:        esClient,
+			refreshInterval: refreshInterval,
+			handler:         h,
+		}
 	}
 }
 
