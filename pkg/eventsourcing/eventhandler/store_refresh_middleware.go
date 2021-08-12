@@ -71,7 +71,8 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		MinVersion: wrapperspb.UInt64(m.lastVersion + 1),
+		MinVersion:    wrapperspb.UInt64(m.lastVersion + 1),
+		AggregateType: wrapperspb.String(m.aggregateType.String()),
 	})
 	if err != nil {
 		return err
@@ -96,7 +97,7 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 			return err
 		}
 
-		m.log.Info("Applying event which wasn't received via bus from store.", "last", m.lastVersion, "event", event.String())
+		m.log.Info("Applying event which wasn't received via bus from store.", "event", event.String())
 
 		// Let the next handler in the chain handle the event
 		err = m.handler.HandleEvent(ctx, event)
