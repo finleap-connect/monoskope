@@ -24,19 +24,21 @@ type eventStoreRefreshEventHandler struct {
 }
 
 // NewEventStoreRefreshMiddleware creates an EventHandler which automates periodic querying of the EventStore to keep up-to-date.
-func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInterval time.Duration) es.EventHandlerMiddleware {
+func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInterval time.Duration, aggregateType es.AggregateType) es.EventHandlerMiddleware {
 	m := &eventStoreRefreshEventHandler{
 		esClient:        esClient,
 		refreshInterval: refreshInterval,
+		aggregateType:   aggregateType,
 	}
 	return m.middlewareFunc
 }
 
 func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
 	return &eventStoreRefreshEventHandler{
-		log:             logger.WithName("refresh-middleware"),
+		log:             logger.WithName("refresh-middleware").WithValues("AggregateType", m.aggregateType),
 		esClient:        m.esClient,
 		refreshInterval: m.refreshInterval,
+		aggregateType:   m.aggregateType,
 		handler:         h,
 	}
 }
@@ -49,7 +51,6 @@ func (m *eventStoreRefreshEventHandler) HandleEvent(ctx context.Context, event e
 	err := m.handler.HandleEvent(ctx, event)
 	if err == nil {
 		m.lastVersion = event.AggregateVersion()
-		m.aggregateType = event.AggregateType()
 		m.resetTicker(ctx)
 	}
 	return err
