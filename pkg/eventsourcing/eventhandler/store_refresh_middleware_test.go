@@ -54,13 +54,13 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 				esClient.EXPECT().Retrieve(gomock.Any(), gomock.Any(), gomock.Any()).Return(esRetrieveClient, nil).AnyTimes()
 				esRetrieveClient.EXPECT().Recv().Return(
 					eventsourcing.NewProtoFromEvent(
-						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 2),
+						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 3),
 					),
 					nil,
 				)
 				esRetrieveClient.EXPECT().Recv().Return(
 					eventsourcing.NewProtoFromEvent(
-						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 3),
+						eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 4),
 					),
 					nil,
 				)
@@ -68,8 +68,13 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 
 				middleware := NewEventStoreRefreshMiddleware(esClient, time.Millisecond*100)
 				evHandler := middleware(NewLoggingEventHandler())
+
 				event := eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)
 				err := evHandler.HandleEvent(ctx, event)
+				Expect(err).ToNot(HaveOccurred())
+
+				event = eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 2)
+				err = evHandler.HandleEvent(ctx, event)
 				Expect(err).ToNot(HaveOccurred())
 
 				time.Sleep(time.Millisecond * 150)
