@@ -48,10 +48,10 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	replayHandler := eventhandler.NewEventStoreReplayMiddleware(esClient)
 	refreshHandler := eventhandler.NewEventStoreRefreshMiddleware(esClient, time.Second*30) // refresh every 30 seconds
 	//
-	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, refreshHandler, replayHandler)
-	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, refreshHandler, replayHandler)
-	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, refreshHandler, replayHandler)
-	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, refreshHandler, replayHandler)
+	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, replayHandler, refreshHandler)
+	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, replayHandler, refreshHandler)
+	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, replayHandler, refreshHandler)
+	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, replayHandler, refreshHandler)
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)
