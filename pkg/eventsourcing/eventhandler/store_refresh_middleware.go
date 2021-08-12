@@ -30,12 +30,10 @@ func NewEventStoreRefreshMiddleware(esClient apiEs.EventStoreClient, refreshInte
 		esClient:        esClient,
 		refreshInterval: refreshInterval,
 	}
-	return m.middlewareFunc
-}
-
-func (m *eventStoreRefreshEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
-	m.handler = h
-	return m
+	return func(h es.EventHandler) es.EventHandler {
+		m.handler = h
+		return m
+	}
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.

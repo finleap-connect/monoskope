@@ -25,12 +25,10 @@ func NewEventStoreReplayMiddleware(esClient apiEs.EventStoreClient) es.EventHand
 		log:      logger.WithName("replay-middleware"),
 		esClient: esClient,
 	}
-	return m.middlewareFunc
-}
-
-func (m *eventStoreReplayEventHandler) middlewareFunc(h es.EventHandler) es.EventHandler {
-	m.handler = h
-	return m
+	return func(h es.EventHandler) es.EventHandler {
+		m.handler = h
+		return m
+	}
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
