@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sync"
 
 	apiEs "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -15,6 +16,7 @@ type eventStoreReplayEventHandler struct {
 	log      logger.Logger
 	esClient apiEs.EventStoreClient
 	handler  es.EventHandler
+	mutex    sync.Mutex
 }
 
 // NewEventStoreReplayMiddleware creates an EventHandler which automates querying the EventStore in case of gaps in AggregateVersion found in other EventHandlers later in the chain of EventHandlers.
@@ -35,6 +37,9 @@ func (m *eventStoreReplayEventHandler) middlewareFunc(h es.EventHandler) es.Even
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (m *eventStoreReplayEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	var outdatedError *ProjectionOutdatedError
 	if err := m.handler.HandleEvent(ctx, event); errors.As(err, &outdatedError) {
 		// If the next handler in the chain tells that the projection is outdated
