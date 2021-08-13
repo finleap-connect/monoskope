@@ -72,7 +72,7 @@ Now you can either:
 
 ```bash
 $: HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-template-monoskope
-$: kubectl apply -f tmp/monoskope/templates/job-crdb-setup.yaml
+$: kubectl apply -f tmp/monoskope/templates/cockroachdb/job-crdb-setup.yaml
 ```
 
 After this job has run through, the database is new and shiny without any events.
