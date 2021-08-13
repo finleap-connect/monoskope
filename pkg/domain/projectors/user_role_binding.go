@@ -57,6 +57,9 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 		return nil, errors.ErrInvalidEventType
 	}
 
+	if err := u.projectModified(event, p.DomainProjection); err != nil {
+		return nil, err
+	}
 	p.IncrementVersion()
 
 	return p, nil

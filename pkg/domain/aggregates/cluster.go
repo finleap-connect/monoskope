@@ -25,10 +25,10 @@ type ClusterAggregate struct {
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -52,10 +52,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
 
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
-
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
 		reply := &es.CommandReply{
 			Id:      a.ID(),
@@ -69,7 +65,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			Id:      a.ID(),
 			Version: a.Version(),
 		}
-
 		return reply, nil
 
 	default:
@@ -116,7 +111,7 @@ func containsCluster(values []es.Aggregate, name string) bool {
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &eventdata.ClusterCreated{}
+		data := new(eventdata.ClusterCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
@@ -126,7 +121,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
 	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
+		data := new(eventdata.ClusterBootstrapTokenCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err

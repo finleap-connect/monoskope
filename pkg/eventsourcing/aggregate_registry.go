@@ -3,20 +3,19 @@ package eventsourcing
 import (
 	"sync"
 
-	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/logger"
 )
 
 type AggregateRegistry interface {
-	RegisterAggregate(func(id uuid.UUID) Aggregate)
-	CreateAggregate(AggregateType, uuid.UUID) (Aggregate, error)
+	RegisterAggregate(func() Aggregate)
+	CreateAggregate(AggregateType) (Aggregate, error)
 }
 
 type aggregateRegistry struct {
 	log        logger.Logger
 	mutex      sync.RWMutex
-	aggregates map[AggregateType]func(id uuid.UUID) Aggregate
+	aggregates map[AggregateType]func() Aggregate
 }
 
 var DefaultAggregateRegistry AggregateRegistry
@@ -29,7 +28,7 @@ func init() {
 func NewAggregateRegistry() AggregateRegistry {
 	return &aggregateRegistry{
 		log:        logger.WithName("aggregate-registry"),
-		aggregates: make(map[AggregateType]func(id uuid.UUID) Aggregate),
+		aggregates: make(map[AggregateType]func() Aggregate),
 	}
 }
 
@@ -38,8 +37,8 @@ func NewAggregateRegistry() AggregateRegistry {
 //
 // An example would be:
 //     RegisterAggregate(func() Aggregate { return &MyAggregate{} })
-func (r *aggregateRegistry) RegisterAggregate(factory func(id uuid.UUID) Aggregate) {
-	aggregate := factory(uuid.Nil)
+func (r *aggregateRegistry) RegisterAggregate(factory func() Aggregate) {
+	aggregate := factory()
 	if aggregate == nil {
 		r.log.Info("factory does not create aggregates")
 		panic(errors.ErrFactoryInvalid)
@@ -65,11 +64,11 @@ func (r *aggregateRegistry) RegisterAggregate(factory func(id uuid.UUID) Aggrega
 
 // CreateAggregate creates an aggregate of a type with an ID using the factory
 // registered with RegisterAggregate.
-func (r *aggregateRegistry) CreateAggregate(aggregateType AggregateType, id uuid.UUID) (Aggregate, error) {
+func (r *aggregateRegistry) CreateAggregate(aggregateType AggregateType) (Aggregate, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	if factory, ok := r.aggregates[aggregateType]; ok {
-		return factory(id), nil
+		return factory(), nil
 	}
 	r.log.Info("trying to create a aggregate of non-registered type", "aggregateType", aggregateType)
 	return nil, errors.ErrAggregateNotRegistered

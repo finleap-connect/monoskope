@@ -15,7 +15,7 @@ import (
 	mock_eventsourcing "gitlab.figo.systems/platform/monoskope/monoskope/test/api/eventsourcing"
 )
 
-var _ = Describe("package eventhandler", func() {
+var _ = Describe("Pkg/Eventsourcing/Eventhandler/ReactorEventHandler", func() {
 	var mockCtrl *gomock.Controller
 	ctx := context.Background()
 
