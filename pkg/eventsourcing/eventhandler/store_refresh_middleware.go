@@ -72,7 +72,7 @@ func (m *eventStoreRefreshEventHandler) applyEventsFromStore(ctx context.Context
 
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		MinTimestamp:  timestamppb.New(m.lastTimestamp.Add(time.Nanosecond * 1)),
+		MinTimestamp:  timestamppb.New(m.lastTimestamp.Add(time.Millisecond * 1)),
 		AggregateType: wrapperspb.String(m.aggregateType.String()),
 	})
 	if err != nil {
