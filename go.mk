@@ -72,7 +72,7 @@ go-fmt:  ## go fmt
 go-vet: ## go vet
 	$(GO) vet ./...
 
-go-lint: ## go lint
+go-lint: $(LINTER) ## go lint
 	$(LINTER) run -v --no-config --deadline=5m
 
 go-run-%: ## run command
@@ -95,7 +95,7 @@ include .protobuf-deps
 
 go-protobuf: $(GENERATED_GO_FILES)
 
-go-test: $(GENERATED_GO_FILES) ## run all tests
+go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 	make go-test-ci
 
 go-test-ci: ## run all tests without generation go files from protobuf
@@ -110,16 +110,16 @@ go-test-ci: ## run all tests without generation go files from protobuf
 go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-ginkgo-get:
+ginkgo-get $(TOOLS_DIR)/ginkgo:
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
-golangci-lint-get:
+golangci-lint-get $(LINTER):
 	$(shell $(HACK_DIR)/golangci-lint.sh -b $(TOOLS_DIR) $(LINTER_VERSION))
 
-gomock-get:
+gomock-get $(MOCKGEN):
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
-protoc-get:
+protoc-get $(TOOLS_DIR)/protoc:
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
 	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
@@ -130,6 +130,10 @@ protoc-get:
 	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
 
 go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get ## download needed go tools
+
+go-tools-clean:
+	rm -Rf $(TOOLS_DIR)/
+	mkdir $(TOOLS_DIR)
 
 go-clean: go-build-clean ## clean up all go parts
 	rm  .protobuf-deps
@@ -177,8 +181,7 @@ go-build-queryhandler: $(CMD_QUERYHANDLER)
 
 go-build-clboreactor: $(CMD_CLBOREACTOR)
 
-go-rebuild-mocks: .protobuf-deps
+go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
-	

@@ -1,8 +1,8 @@
 SHELL := bash
 
 # Directory, where all required tools are located (absolute path required)
-TOOLS_DIR ?= $(shell cd tools && pwd)
-HACK_DIR ?= $(shell cd hack && pwd)
+TOOLS_DIR ?= $(shell cd tools 2>/dev/null && pwd)
+HACK_DIR ?= $(shell cd hack 2>/dev/null && pwd)
 
 VERSION   ?= 0.0.1-local
 COMMIT     	   := $(shell git rev-parse --short HEAD)
@@ -21,8 +21,8 @@ HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
 include helm.mk
 
 # tools
-tools: go-ginkgo-get go-golangci-lint-get ## Phony target to install all required tools into ${TOOLS_DIR}
-tools-clean: go-ginkgo-clean go-golangci-lint-clean ## Phony target to clean all required tools
+tools: go-tools ## Phony target to install all required tools into ${TOOLS_DIR}
+tools-clean: go-tools-clean ## Phony target to clean all required tools
 
 commit-hash: ## Echos the current commit hash
 	@echo $(COMMIT)

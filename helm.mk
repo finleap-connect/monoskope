@@ -1,9 +1,10 @@
-HELM                		?= helm3
+HELM                        ?= helm
 HELM_OUTPUT_DIR             ?= tmp
-HELM_REGISTRY 				?= https://artifactory.figo.systems/artifactory/virtual_helm
-HELM_REGISTRY_ALIAS			?= finleap
+HELM_REGISTRY               ?= https://artifactory.figo.systems/artifactory/virtual_helm
+HELM_REGISTRY_ALIAS         ?= finleap
 HELM_RELEASE                ?= m8
-KUBE_NAMESPACE ?= platform-monoskope-monoskope
+KUBE_NAMESPACE              ?= platform-monoskope-monoskope
+YQ							?= yq
 
 .PHONY: template-clean dependency-update install uninstall template docs
 
@@ -42,27 +43,10 @@ helm-template-%: helm-clean ## template helm chart
 helm-add-finleap: ## add finleap helm chart repo
 	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
-helm-set-chart-version-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml version "$(VERSION)" --inplace
-
-helm-set-app-version-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(VERSION)" --inplace
-	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(VERSION)" --inplace
-
-helm-set-version-%:
-	@$(MAKE) helm-set-chart-version-$*
-	@$(MAKE) helm-set-app-version-$*
-
-helm-set-app-version-latest-%:
-	@yq write $(HELM_PATH)/$*/Chart.yaml appVersion "$(LATEST_TAG)" --inplace
-	@yq write $(HELM_PATH)/$*/values.yaml image.tag "$(LATEST_TAG)" --inplace
-
 helm-set-version-all:
-	@$(MAKE) helm-set-version-gateway
-	@$(MAKE) helm-set-version-eventstore
-	@$(MAKE) helm-set-version-commandhandler
-	@$(MAKE) helm-set-version-queryhandler
-	@$(MAKE) helm-set-version-cluster-bootstrap-reactor
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '.version = "$(VERSION)"' {} \;
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '.appVersion = "$(VERSION)"' {} \;
+	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '(.dependencies.[].version | select(. == "0.0.1-local")) |= "$(VERSION)"' {} \;
 
 helm-docs: ## update the auto generated docs of all helm charts
 	@docker run --rm --volume "$(PWD):/helm-docs" -u $(shell id -u) jnorwood/helm-docs:v1.4.0 --template-files=./README.md.gotmpl

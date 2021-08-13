@@ -24,6 +24,7 @@ package rabbitmq
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cenkalti/backoff"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -38,7 +39,18 @@ type Consumer struct {
 
 // NewConsumer returns a new Consumer connected to the given rabbitmq server
 func NewConsumer(url string, config *amqp.Config) (*Consumer, error) {
-	chManager, err := newChannelManager(url, config, 0)
+	params := backoff.NewExponentialBackOff()
+	params.MaxElapsedTime = 60 * time.Second
+
+	var chManager *channelManager
+
+	err := backoff.Retry(func() error {
+		var localErr error
+
+		chManager, localErr = newChannelManager(url, config, 0)
+
+		return localErr
+	}, params)
 	if err != nil {
 		return nil, err
 	}
