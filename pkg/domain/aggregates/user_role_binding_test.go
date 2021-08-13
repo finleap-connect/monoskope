@@ -26,7 +26,6 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 
 	var (
 		aggManager = NewTestAggregateManager()
-		bindingId  uuid.UUID
 	)
 
 	It("should set the data from a command to the resultant event", func() {
@@ -34,26 +33,21 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		inID := uuid.New()
-
 		// prepare a valid user
-		user_agg := NewUserAggregate(expectedUserId, aggManager)
+		user_agg := NewUserAggregate(aggManager)
 		ret, err := createUser(ctx, user_agg)
 		Expect(err).NotTo(HaveOccurred())
-		// fake user aggregate to be valid
 		user_agg.IncrementVersion()
 		aggManager.(*aggregateTestStore).Add(user_agg)
 		expectedUserId = ret.Id
 
-		agg := NewUserRoleBindingAggregate(inID, aggManager)
+		agg := NewUserRoleBindingAggregate(aggManager)
 
-		reply, err := createUserRoleBinding(ctx, agg, user_agg.ID())
+		reply, err := createUserRoleBinding(ctx, agg, ret.Id)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(reply.Id).ToNot(Equal(inID))
+		Expect(reply.Id).ToNot(Equal(uuid.Nil))
 		Expect(reply.Version).To(Equal(uint64(0)))
 
-		//save for later
-		bindingId = reply.Id
 		agg.IncrementVersion() // otherwise it will not be validated.
 		aggManager.(*aggregateTestStore).Add(agg)
 
@@ -77,7 +71,7 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewUserRoleBindingAggregate(uuid.New(), NewTestAggregateManager())
+		agg := NewUserRoleBindingAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.UserRoleAdded{
 			UserId:   expectedUserId.String(),
@@ -96,30 +90,6 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 		Expect(agg.(*UserRoleBindingAggregate).scope).To(Equal(expectedScope))
 		Expect(agg.(*UserRoleBindingAggregate).userId).To(Equal(expectedUserId))
 
-	})
-
-	It("should allow deleting a user role binding and issue the correct event", func() {
-
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewUserRoleBindingAggregate(bindingId, aggManager)
-		// make valid
-		agg.IncrementVersion()
-
-		esCommand, ok := cmd.NewDeleteUserRoleBindingCommand(bindingId).(*cmd.DeleteUserRoleBindingCommand)
-		Expect(ok).To(BeTrue())
-		Expect(esCommand.AggregateID()).To(Equal(bindingId))
-
-		reply, err := agg.HandleCommand(ctx, esCommand)
-		Expect(err).NotTo(HaveOccurred())
-
-		// this is not a create command, so the ID should be the same.
-		Expect(reply.Id).To(Equal(bindingId))
-
-		event := agg.UncommittedEvents()[0]
-
-		Expect(event.EventType()).To(Equal(events.UserRoleBindingDeleted))
 	})
 
 })

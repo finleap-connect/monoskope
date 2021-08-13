@@ -21,16 +21,14 @@ var (
 var _ = Describe("Unit Test for User Aggregate", func() {
 
 	It("should set the data from a command to the resultant event", func() {
-
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		inID := uuid.New()
-		agg := NewUserAggregate(inID, NewTestAggregateManager())
+		agg := NewUserAggregate(NewTestAggregateManager())
 
 		reply, err := createUser(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(reply.Id).ToNot(Equal(inID))
+		Expect(reply.Id).ToNot(Equal(uuid.Nil))
 		Expect(reply.Version).To(Equal(uint64(0)))
 
 		event := agg.UncommittedEvents()[0]
@@ -51,7 +49,7 @@ var _ = Describe("Unit Test for User Aggregate", func() {
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewUserAggregate(uuid.New(), NewTestAggregateManager())
+		agg := NewUserAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.UserCreated{
 			Name:  expectedUserName,

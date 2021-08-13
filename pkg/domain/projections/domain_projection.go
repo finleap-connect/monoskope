@@ -1,16 +1,12 @@
 package projections
 
 import (
-	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 )
 
 type DomainProjection struct {
 	projections.LifecycleMetadata
-	version          uint64
-	CreatedById      uuid.UUID
-	LastModifiedById uuid.UUID
-	DeletedById      uuid.UUID
+	version uint64
 }
 
 func NewDomainProjection() *DomainProjection {

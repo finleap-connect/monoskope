@@ -9,7 +9,7 @@ variables:
   MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
-  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.2
+  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.3
   except:
     - schedules
   variables:
@@ -19,7 +19,7 @@ variables:
   cache:
     paths:
       - .go/pkg/mod/
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    key: "$CI_COMMIT_REF_SLUG"
 
 cache:golang:
   stage: prepare
@@ -34,7 +34,7 @@ cache:golang:
 
 .docker-builder:
   extends: .gobase-no-push
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8-rc3
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8
   only:
     - web
     - tags
@@ -44,7 +44,7 @@ lint:golang:
   stage: test
   extends: .gobase-no-push
   script:
-    - LINTER=/go/bin/golangci-lint make -j go-vet go-lint
+    - LINTER=golangci-lint make -j go-vet go-lint
 
 test:golang:
   stage: test

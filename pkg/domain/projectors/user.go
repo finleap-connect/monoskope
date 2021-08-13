@@ -25,7 +25,7 @@ func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {
 	return projections.NewUserProjection(id)
 }
 
-// Project updates the state of the projection occording to the given event.
+// Project updates the state of the projection according to the given event.
 func (u *userProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
 	p, ok := projection.(*projections.User)
@@ -41,7 +41,6 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 			return projection, err
 		}
 
-		p.Id = event.AggregateID().String()
 		p.Email = data.GetEmail()
 		p.Name = data.GetName()
 
@@ -52,6 +51,9 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 		return nil, errors.ErrInvalidEventType
 	}
 
+	if err := u.projectModified(event, p.DomainProjection); err != nil {
+		return nil, err
+	}
 	p.IncrementVersion()
 
 	return p, nil

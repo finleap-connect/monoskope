@@ -36,10 +36,11 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &eventdata.ClusterCreated{}
+		data := new(eventdata.ClusterCreated)
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return nil, err
 		}
+
 		p.Name = data.GetName()
 		p.Label = data.GetLabel()
 		p.ApiServerAddress = data.GetApiServerAddress()
@@ -49,18 +50,18 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 			return nil, err
 		}
 	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
+		data := new(eventdata.ClusterBootstrapTokenCreated)
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
-		}
-		p.BootstrapToken = data.GetJwt()
-		if err := c.projectModified(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
+		p.BootstrapToken = data.GetJwt()
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
 
+	if err := c.projectModified(event, p.DomainProjection); err != nil {
+		return nil, err
+	}
 	p.IncrementVersion()
 
 	return p, nil

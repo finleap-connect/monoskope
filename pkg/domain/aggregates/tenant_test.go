@@ -19,14 +19,12 @@ var (
 )
 
 var _ = Describe("Unit Test for the Tenant Aggregate", func() {
-
 	It("should set the data from a command to the resultant event", func() {
-
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
 		inID := uuid.Nil
-		agg := NewTenantAggregate(inID, NewTestAggregateManager())
+		agg := NewTenantAggregate(NewTestAggregateManager())
 
 		reply, err := createTenant(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
@@ -47,11 +45,10 @@ var _ = Describe("Unit Test for the Tenant Aggregate", func() {
 	})
 
 	It("should apply the data from an event to the aggregate", func() {
-
 		ctx, err := makeMetadataContextWithSystemAdminUser()
 		Expect(err).NotTo(HaveOccurred())
 
-		agg := NewTenantAggregate(uuid.New(), NewTestAggregateManager())
+		agg := NewTenantAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{
 			Name:   expectedTenantName,

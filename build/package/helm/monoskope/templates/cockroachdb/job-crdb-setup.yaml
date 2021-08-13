@@ -27,6 +27,10 @@ spec:
       annotations:
         linkerd.io/inject: disabled
     spec:
+      {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - args:
         - sql

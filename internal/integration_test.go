@@ -202,8 +202,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy().Id).To(Equal(user.Id))
+		Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
 
 		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
@@ -214,8 +213,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+		Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
 
 		Expect(tenant.Metadata.Created).NotTo(BeNil())
 
@@ -286,7 +284,7 @@ var _ = Describe("integration", func() {
 		Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
 		fmt.Printf("%v", observed)
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		eventMD := observed[0].Metadata()
 		event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
@@ -300,7 +298,7 @@ var _ = Describe("integration", func() {
 		err = testReactor.Emit(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())

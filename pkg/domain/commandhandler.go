@@ -29,14 +29,14 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
 	aggregateManager := es.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
 
 	// User
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewUserAggregate(aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewUserRoleBindingAggregate(aggregateManager) })
 
 	// Tenant
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewTenantAggregate(aggregateManager) })
 
 	// Cluster
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewClusterAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewClusterAggregate(aggregateManager) })
 
 	return aggregateManager
 }

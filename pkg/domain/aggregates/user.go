@@ -22,10 +22,10 @@ type UserAggregate struct {
 }
 
 // NewUserAggregate creates a new UserAggregate
-func NewUserAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewUserAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &UserAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.User, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.User),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -45,11 +45,6 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.
 func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
-
 		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
 			Email: cmd.GetEmail(),
 			Name:  cmd.GetName(),

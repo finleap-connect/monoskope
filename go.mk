@@ -57,7 +57,7 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf
 
 ##@ Go
 go-all: go-mod go-fmt go-vet go-lint go-test
@@ -183,5 +183,5 @@ go-build-clboreactor: $(CMD_CLBOREACTOR)
 
 go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
-	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
+	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository

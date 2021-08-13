@@ -22,10 +22,10 @@ type TenantAggregate struct {
 }
 
 // NewTenantAggregate creates a new TenantAggregate
-func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewTenantAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &TenantAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -84,10 +84,6 @@ func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comm
 		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{
 			Name:   cmd.GetName(),
 			Prefix: cmd.GetPrefix()})
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
 
 		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
 
