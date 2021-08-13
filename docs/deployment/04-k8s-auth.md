@@ -55,7 +55,12 @@ Flags:
   -n, --name string            Name of the cluster
 ```
 
-The CA certificate bundle has to be the CA of your KubeAPIServer so when `monoctl` updates your `kubeconfig` the CA is known to `kubectl` when talking to your KubeAPIServer.
+The URL is the api-server address with protocol, e.g.
+https://api.kubernetes.your.mom. Take it from the kubeconfig file for this cluster. 
+
+The CA certificate bundle has to be the CA of your KubeAPIServer so when
+`monoctl` updates your `kubeconfig` the CA is known to `kubectl` when talking
+to your KubeAPIServer. Take it from the kubeconfig file for this cluster.
 
 ## You have control over the KubeAPIServer
 
