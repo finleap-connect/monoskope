@@ -18,9 +18,12 @@ vaultOperator:
 pki:
   enabled: true
   certificates:
+    # -- Specify which apiVersion cert-manager resources must have.
+    certManagerApiVersion: v1
     duration: 2160h # 90d
     renewBefore: 1440h # 60d
   issuer:
+    name: &rootIssuerName "m8-root-ca-issuer"
     ca:
       enabled: true
       existingTrustAnchorSecretName: "m8-trust-anchor"
@@ -43,6 +46,8 @@ gateway:
   enabled: true
   replicaCount: 1
   auth:
+    # -- The URL of the issuer to Gateway itself
+    selfURL: ""
     # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
     identityProviderName: ""
     # -- The URL of the issuer to use for OIDC
@@ -84,10 +89,11 @@ cockroachdb:
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/cockroachdb/cockroach
     tag: v21.1.4
-    imagePullPolicy: Always
+    pullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
-    maxUnavailable: 1
+    budget:
+      maxUnavailable: 1
     resources:
       requests:
         cpu: 500m
@@ -95,8 +101,6 @@ cockroachdb:
       limits:
         cpu: 2
         memory: 2Gi
-    annotations:
-      linkerd.io/inject: disabled
   init:
     annotations:
       linkerd.io/inject: disabled
@@ -117,12 +121,13 @@ cockroachdb:
     enabled: true
     certs:
       provided: true
-      tlsSecret: true
-      # Secret name for the client root cert.
-      clientRootSecret: m8-crdb-root
-      # Secret name for node cert.
-      nodeSecret: m8-crdb-node
-  labels: &extraLabels
+      certManager: true
+      certManagerIssuer:
+        kind: Issuer
+        name: *rootIssuerName
+      # Enable if you run cert-manager >=1.0 on K8s <=1.15 with legacy CRDs
+      # Legacy CRDs only support cert-manager.io/v1 API Versions
+      useCertManagerV1CRDs: true
   # CockroachDB's Prometheus operator ServiceMonitor support
   serviceMonitor:
     enabled: false
@@ -158,7 +163,7 @@ rabbitmq:
     tlsPort: 5671
   auth:
     username: eventstore # admin user with read/write access
-    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition wich takes the password from a generated secret
+    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition which takes the password from a generated secret
     # -- Name of the secret containing the erlang secret
     # If vaultOperator.enabled:true the secret will eb auto generated
     existingErlangSecret: m8-rabbitmq-erlang-cookie
@@ -167,20 +172,13 @@ rabbitmq:
       failIfNoPeerCert: true
       sslOptionsVerify: verify_peer
       existingSecret: m8-rabbitmq-leaf
-  podAnnotations:
-    linkerd.io/inject: disabled
-  podLabels: &extraLabels
   metrics:
-    enabled: false
     grafanaDashboard:
       enabled: false
-      extraLabels: &extraLabels
-    serviceMonitor:
-      enabled: false
-      additionalLabels: &extraLabels
 
 ambassador:
   enabled: true
+  deploy: true
   replicaCount: 1
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
@@ -201,11 +199,6 @@ ambassador:
     requests:
       cpu: 100m
       memory: 512Mi
-  metrics:
-    serviceMonitor:
-      enabled: true
-      selector:
-        release: monitoring
 
 cluster-bootstrap-reactor:
   enabled: true

@@ -39,21 +39,10 @@ var _ = Describe("domain/cluster_repo", func() {
 	newCluster.Created = timestamp.New(time.Now())
 
 	It("can retrieve cluster by name", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
-		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
-		Expect(err).NotTo(HaveOccurred())
-
-		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
-
-		inMemoryUserRepo := es_repos.NewInMemoryRepository()
-		userRepo := NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
-		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
-		Expect(err).NotTo(HaveOccurred())
-
 		inMemClusterRepo := es_repos.NewInMemoryRepository()
-		clusterRepo := NewClusterRepository(inMemClusterRepo, userRepo)
+		clusterRepo := NewClusterRepository(inMemClusterRepo)
 
-		err = inMemClusterRepo.Upsert(context.Background(), newCluster)
+		err := inMemClusterRepo.Upsert(context.Background(), newCluster)
 		Expect(err).NotTo(HaveOccurred())
 		cluster, err := clusterRepo.ByClusterName(context.Background(), expectedClusterName)
 		Expect(err).NotTo(HaveOccurred())
@@ -63,21 +52,10 @@ var _ = Describe("domain/cluster_repo", func() {
 	})
 
 	It("can retrieve cluster by ID", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
-		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
-		Expect(err).NotTo(HaveOccurred())
-
-		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
-
-		inMemoryUserRepo := es_repos.NewInMemoryRepository()
-		userRepo := NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
-		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
-		Expect(err).NotTo(HaveOccurred())
-
 		inMemClusterRepo := es_repos.NewInMemoryRepository()
-		clusterRepo := NewClusterRepository(inMemClusterRepo, userRepo)
+		clusterRepo := NewClusterRepository(inMemClusterRepo)
 
-		err = inMemClusterRepo.Upsert(context.Background(), newCluster)
+		err := inMemClusterRepo.Upsert(context.Background(), newCluster)
 		Expect(err).NotTo(HaveOccurred())
 		cluster, err := clusterRepo.ByClusterId(context.Background(), clusterId.String())
 		Expect(err).NotTo(HaveOccurred())

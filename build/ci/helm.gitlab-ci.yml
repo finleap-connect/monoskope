@@ -1,5 +1,5 @@
 .helm:
-  image: registry.gitlab.figo.systems/platform/helm-builder:1.14.3-rc1
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/helm-builder:2.0.0
 
 lint:helm:
   stage: test
@@ -13,6 +13,7 @@ lint:helm:
     - make helm-lint-queryhandler
     - make helm-dep-monoskope
     - make helm-lint-monoskope
+  needs: []
 
 chart:deliver:
   stage: chart
@@ -47,5 +48,6 @@ deploy:monoskope:latest_tag:
     - schedules
   script:
     - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+    - echo "installing version $VERSION"
     - make helm-add-finleap
     - VERSION=$VERSION HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope

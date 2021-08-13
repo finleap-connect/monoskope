@@ -8,37 +8,41 @@ import (
 )
 
 var (
-	// ErrNotFound is when an aggregate is not known to the system.
-	ErrNotFound = errors.New("not found")
-	// ErrDeleted is when an aggregate has been deleted.
-	ErrDeleted = errors.New("deleted")
+	// ErrNotFound is returned when an aggregate is not known to the system.
+	ErrNotFound = errors.New("aggregate not found")
+	// ErrDeleted is returned when an aggregate has been deleted.
+	ErrDeleted = errors.New("aggregate is deleted")
+	// ErrUnknownAggregateType is returned returned when an unknown or invalid aggregate type is used.
+	ErrUnknownAggregateType = errors.New("aggregate type unknown")
 
-	// ErrUnauthorized is when a requested command can not be executed because the current user is unauthorized.
+	// ErrUnauthorized is returned when a requested command can not be executed because the current user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
-	// ErrUserNotFound is when a user is not known to the system.
+	// ErrUserNotFound is returned when a user is not known to the system.
 	ErrUserNotFound = errors.New("user not found")
-	// ErrUserAlreadyExists is when a user does already exist.
+	// ErrUserAlreadyExists is returned when a user does already exist.
 	ErrUserAlreadyExists = errors.New("user already exists")
 
-	// ErrUserRoleBindingAlreadyExists is when a userrolebinding does already exist.
+	// ErrUserRoleBindingAlreadyExists is returned when a userrolebinding does already exist.
 	ErrUserRoleBindingAlreadyExists = errors.New("userrolebinding already exists")
+	// ErrUserRoleBindingNotFound is returned when a binding by that name or id cannot be found.
+	ErrUserRoleBindingNotFound = errors.New("userrolebinding not found")
 
-	// ErrTenantNotFound is when a tenant is not known to the system.
+	// ErrTenantNotFound is returned when a tenant is not known to the system.
 	ErrTenantNotFound = errors.New("tenant not found")
-	// ErrTenantAlreadyExists is when a tenant does already exist.
+	// ErrTenantAlreadyExists is returned when a tenant does already exist.
 	ErrTenantAlreadyExists = errors.New("tenant already exists")
 
-	// ErrClusterRegistrationNotFound is when a cluster registration is not known to the system.
+	// ErrClusterRegistrationNotFound is returned when a cluster registration is not known to the system.
 	ErrClusterRegistrationNotFound = errors.New("cluster registration not found")
-	// ErrClusterRegistrationAlreadyExists is when an aggregate does already exist.
+	// ErrClusterRegistrationAlreadyExists is returned when an aggregate does already exist.
 	ErrClusterRegistrationAlreadyExists = errors.New("cluster registration already exists")
 
-	// ErrClusterNotFound is when a cluster is not known to the system.
+	// ErrClusterNotFound is returned when a cluster is not known to the system.
 	ErrClusterNotFound = errors.New("cluster not found")
-	// ErrClusterAlreadyExists is when a cluster does already exist.
+	// ErrClusterAlreadyExists is returned when a cluster does already exist.
 	ErrClusterAlreadyExists = errors.New("cluster already exists")
 
-	// ErrCertificateAlreadyExists is when a cert does already exist.
+	// ErrCertificateAlreadyExists is returned when a cert does already exist.
 	ErrCertificateAlreadyExists = errors.New("certificate already exists")
 )
 

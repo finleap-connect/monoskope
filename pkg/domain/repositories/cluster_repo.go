@@ -11,7 +11,7 @@ import (
 )
 
 type clusterRepository struct {
-	*domainRepository
+	es.Repository
 }
 
 // ClusterRepository is a repository for reading and writing cluster projections.
@@ -38,9 +38,9 @@ type WriteOnlyClusterRepository interface {
 }
 
 // NewClusterRepository creates a repository for reading and writing cluster projections.
-func NewClusterRepository(repository es.Repository, userRepo UserRepository) ClusterRepository {
+func NewClusterRepository(repository es.Repository) ClusterRepository {
 	return &clusterRepository{
-		domainRepository: NewDomainRepository(repository, userRepo),
+		Repository: repository,
 	}
 }
 
@@ -59,11 +59,6 @@ func (r *clusterRepository) ByClusterId(ctx context.Context, id string) (*projec
 	cluster, ok := projection.(*projections.Cluster)
 	if !ok {
 		return nil, esErrors.ErrInvalidProjectionType
-	}
-
-	err = r.addMetadata(ctx, cluster.DomainProjection)
-	if err != nil {
-		return nil, err
 	}
 
 	return cluster, nil
@@ -95,11 +90,6 @@ func (r *clusterRepository) GetAll(ctx context.Context, includeDeleted bool) ([]
 	for _, p := range ps {
 		if c, ok := p.(*projections.Cluster); ok {
 			if !c.GetDeleted().IsValid() || includeDeleted {
-				// Add metadata
-				err = r.addMetadata(ctx, c.DomainProjection)
-				if err != nil {
-					return nil, err
-				}
 				clusters = append(clusters, c)
 			}
 		} else {

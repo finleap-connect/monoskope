@@ -8,7 +8,6 @@ import (
 type UserRoleBinding struct {
 	*DomainProjection
 	*projections.UserRoleBinding
-	*projections.LifecycleMetadata
 }
 
 func NewUserRoleBinding(id uuid.UUID) *UserRoleBinding {
@@ -16,9 +15,9 @@ func NewUserRoleBinding(id uuid.UUID) *UserRoleBinding {
 	return &UserRoleBinding{
 		DomainProjection: dp,
 		UserRoleBinding: &projections.UserRoleBinding{
-			Id: id.String(),
+			Id:       id.String(),
+			Metadata: &dp.LifecycleMetadata,
 		},
-		LifecycleMetadata: &dp.LifecycleMetadata,
 	}
 }
 

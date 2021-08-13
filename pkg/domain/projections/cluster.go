@@ -16,7 +16,8 @@ func NewClusterProjection(id uuid.UUID) eventsourcing.Projection {
 	return &Cluster{
 		DomainProjection: dp,
 		Cluster: &projections.Cluster{
-			Id: id.String(),
+			Id:       id.String(),
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }

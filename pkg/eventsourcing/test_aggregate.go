@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	testEd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/eventdata"
 )
 
@@ -20,20 +19,24 @@ type testAggregate struct {
 
 func newTestAggregate() *testAggregate {
 	return &testAggregate{
-		BaseAggregate: NewBaseAggregate(testAggregateType, uuid.New()),
+		BaseAggregate: NewBaseAggregate(testAggregateType),
 	}
 }
 
-func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) error {
+func (a *testAggregate) HandleCommand(ctx context.Context, cmd Command) (*CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *testCommand:
 		ed := ToEventDataFromProto(&testEd.TestEventData{
 			Hello: cmd.TestCommandData.GetTest(),
 		})
-		_ = a.AppendEvent(ctx, testEventType, ed)
-		return nil
+		agg := a.AppendEvent(ctx, testEventType, ed)
+		ret := &CommandReply{
+			Id:      agg.AggregateID(),
+			Version: agg.AggregateVersion(),
+		}
+		return ret, nil
 	}
-	return fmt.Errorf("couldn't handle command")
+	return nil, fmt.Errorf("couldn't handle command")
 }
 
 func (a *testAggregate) ApplyEvent(ev Event) error {

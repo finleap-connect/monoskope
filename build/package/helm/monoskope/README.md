@@ -13,8 +13,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore |  |
 | file://../gateway | gateway |  |
 | file://../queryhandler | queryhandler |  |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.6.1 |
-| https://charts.cockroachdb.com/ | cockroachdb | 6.0.5 |
+| https://artifactory.figo.systems/artifactory/virtual_helm/ | cockroachdb | 6.0.7+finleap.1 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.17.0 |
 | https://getambassador.io | ambassador | 6.7.11 |
 
 ## Values
@@ -22,6 +22,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | ambassador.crds.create | bool | `false` |  |
+| ambassador.deploy | bool | `true` |  |
 | ambassador.enableAES | bool | `false` |  |
 | ambassador.enabled | bool | `true` |  |
 | ambassador.image.repository | string | `"gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador"` |  |
@@ -63,10 +64,11 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.statefulset.resources.requests.cpu | string | `"500m"` |  |
 | cockroachdb.statefulset.resources.requests.memory | string | `"1Gi"` |  |
 | cockroachdb.storage.persistentVolume.size | string | `"1Gi"` |  |
-| cockroachdb.tls.certs.clientRootSecret | string | `"m8-crdb-root"` |  |
-| cockroachdb.tls.certs.nodeSecret | string | `"m8-crdb-node"` |  |
+| cockroachdb.tls.certs.certManager | bool | `true` |  |
+| cockroachdb.tls.certs.certManagerIssuer.kind | string | `"Issuer"` |  |
+| cockroachdb.tls.certs.certManagerIssuer.name | string | `"m8-root-ca-issuer"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
-| cockroachdb.tls.certs.tlsSecret | bool | `true` |  |
+| cockroachdb.tls.certs.useCertManagerV1CRDs | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
 | commandhandler.enabled | bool | `true` |  |
 | commandhandler.replicaCount | int | `1` |  |
@@ -79,6 +81,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | fullnameOverride | string | `""` |  |
 | gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
+| gateway.auth.selfURL | string | `""` | The URL of the issuer to Gateway itself |
 | gateway.enabled | bool | `true` |  |
 | gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
 | gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
@@ -94,12 +97,14 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
+| pki.certificates.certManagerApiVersion | string | `"v1"` | Specify which apiVersion cert-manager resources must have. |
 | pki.certificates.duration | string | `"2160h"` |  |
 | pki.certificates.renewBefore | string | `"1440h"` |  |
 | pki.enabled | bool | `true` |  |
 | pki.issuer.ca.enabled | bool | `true` |  |
 | pki.issuer.ca.existingTrustAnchorSecretName | string | `"m8-trust-anchor"` |  |
 | pki.issuer.ca.secretVersion | int | `1` |  |
+| pki.issuer.name | string | `"m8-root-ca-issuer"` |  |
 | pki.issuer.vault.enabled | bool | `false` |  |
 | queryhandler.enabled | bool | `true` |  |
 | queryhandler.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |

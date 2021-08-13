@@ -8,11 +8,9 @@ import (
 )
 
 const (
-	MonoskopeIssuer               = "Monoskope"
 	AudienceMonoctl               = "monoctl"
 	AudienceK8sAuth               = "k8sauth"
 	AudienceM8Operator            = "m8operator"
-	AuthTokenValidity             = 12 * time.Hour
 	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
@@ -25,44 +23,42 @@ type StandardClaims struct {
 }
 
 type ClusterClaim struct {
-	Id       string `json:"id,omitempty"`        // Id of the cluster.
-	Name     string `json:"name,omitempty"`      // Name of the cluster.
-	UserName string `json:"user_name,omitempty"` // Name of the user in the cluster.
-	Role     string `json:"role,omitempty"`      // Role the user has in the cluster.
+	ClusterId       string `json:"cluster_id,omitempty"`       // Id of the cluster.
+	ClusterName     string `json:"cluster_name,omitempty"`     // Name of the cluster.
+	ClusterUserName string `json:"cluster_username,omitempty"` // Name of the user in the cluster.
+	ClusterRole     string `json:"cluster_role,omitempty"`     // Role the user has in the cluster.
 }
 
 type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
-	ClusterClaim *ClusterClaim `json:"cluster_claims,omitempty"`
-	ConnectorId  string        `json:"connector_id,omitempty"`
+	*ClusterClaim
 }
 
-func NewAuthToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
+func NewAuthToken(claims *StandardClaims, issuer, userId string, validity time.Duration) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
-			Expiry:    jwt.NewNumericDate(now.Add(AuthTokenValidity)),
+			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
 			Audience:  jwt.Audience{AudienceMonoctl},
 		},
 		StandardClaims: claims,
-		ConnectorId:    connectorId,
 	}
 }
 
-func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, userId string, validity time.Duration) *AuthToken {
+func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, issuer, userId string, validity time.Duration) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
 			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
@@ -71,17 +67,16 @@ func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, 
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
-		ConnectorId:    MonoskopeIssuer,
 	}
 }
 
-func NewClusterBootstrapToken(claims *StandardClaims, userId, connectorId string) *AuthToken {
+func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId string) *AuthToken {
 	now := time.Now().UTC()
 
 	return &AuthToken{
 		Claims: &jwt.Claims{
 			ID:        uuid.New().String(),
-			Issuer:    MonoskopeIssuer,
+			Issuer:    issuer,
 			Subject:   userId,
 			Expiry:    jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
 			NotBefore: jwt.NewNumericDate(now),
@@ -89,25 +84,24 @@ func NewClusterBootstrapToken(claims *StandardClaims, userId, connectorId string
 			Audience:  jwt.Audience{AudienceM8Operator},
 		},
 		StandardClaims: claims,
-		ConnectorId:    connectorId,
 	}
 }
 
 // IsValid returns if the token is not used too early or is expired
-func (t *AuthToken) Validate(expectedAudience ...string) error {
+func (t *AuthToken) Validate(issuer string, expectedAudience ...string) error {
 	if len(expectedAudience) > 0 {
 		for i := 0; i < len(expectedAudience); i++ {
-			if t.validate(expectedAudience[i]) == nil {
+			if t.validate(issuer, expectedAudience[i]) == nil {
 				return nil
 			}
 		}
 	}
-	return t.validate(expectedAudience...)
+	return t.validate(issuer, expectedAudience...)
 }
 
-func (t *AuthToken) validate(expectedAudience ...string) error {
+func (t *AuthToken) validate(issuer string, expectedAudience ...string) error {
 	return t.ValidateWithLeeway(jwt.Expected{
-		Issuer:   MonoskopeIssuer,
+		Issuer:   issuer,
 		Audience: expectedAudience,
 		Time:     time.Now().UTC(),
 	}, jwt.DefaultLeeway)

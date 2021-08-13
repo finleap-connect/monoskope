@@ -15,7 +15,7 @@ import (
 
 // ClusterAggregate is an aggregate for K8s Clusters.
 type ClusterAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	name             string
 	label            string
@@ -25,22 +25,22 @@ type ClusterAggregate struct {
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
-		DomainAggregateBase: DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+		DomainAggregateBase: &DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 	if err := a.validate(ctx, cmd); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch cmd := cmd.(type) {
@@ -51,13 +51,24 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) er
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetClusterCACertBundle(),
 		})
+
 		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
-		return nil
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
+
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
-		return nil
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
+
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 }
 
@@ -100,7 +111,7 @@ func containsCluster(values []es.Aggregate, name string) bool {
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &eventdata.ClusterCreated{}
+		data := new(eventdata.ClusterCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
@@ -110,7 +121,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.apiServerAddr = data.GetApiServerAddress()
 		a.caCertBundle = data.GetCaCertificateBundle()
 	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
+		data := new(eventdata.ClusterBootstrapTokenCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err

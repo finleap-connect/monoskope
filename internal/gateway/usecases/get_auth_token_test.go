@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -26,6 +27,8 @@ var _ = Describe("GetAuthToken", func() {
 	expectedUserId := uuid.New()
 	expectedUserName := "admin"
 	expectedUserEmail := "admin@monoskope.io"
+	expectedIssuer := "https://someissuer.io"
+	expectedValidity := time.Hour * 1
 
 	jwtTestEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestReactors"))
 	Expect(err).NotTo(HaveOccurred())
@@ -51,7 +54,7 @@ var _ = Describe("GetAuthToken", func() {
 			Role:      string(k8s.DefaultRole),
 		}
 		result := new(api.ClusterAuthTokenResponse)
-		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), userRepo, clusterRepo)
+		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), userRepo, clusterRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
 			Id:    expectedUserId,

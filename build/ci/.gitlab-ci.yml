@@ -11,12 +11,3 @@ include:
   - local: build/ci/helm.gitlab-ci.yml
   # - template: Security/SAST.gitlab-ci.yml
 
-.docker-builder:
-  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.6
-  only:
-    - web
-    - tags
-    - develop
-  cache:
-    paths:
-      - /var/lib/buildkit

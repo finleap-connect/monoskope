@@ -15,41 +15,47 @@ import (
 
 // CertificateAggregate is an aggregate for certificates.
 type CertificateAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	relatedAggregateId   uuid.UUID
 	relatedAggregateType es.AggregateType
 	signingRequest       []byte
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate(id uuid.UUID) es.Aggregate {
+func NewCertificateAggregate() es.Aggregate {
 	return &CertificateAggregate{
-		DomainAggregateBase: DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+		DomainAggregateBase: &DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 
 	switch cmd := cmd.(type) {
 	case *commands.RequestCertificateCommand:
 		if a.Exists() {
-			return errors.ErrCertificateAlreadyExists
+			return nil, errors.ErrCertificateAlreadyExists
 		}
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   cmd.GetReferencedAggregateId(),
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
+
 		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
-		return nil
+
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 }
 

@@ -4,84 +4,81 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
-	"time"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
 )
 
 const (
-	DefaultExchangeName   = "m8_events" // name of the monoskope exchange
-	DefaultHeartbeat      = 10 * time.Second
-	DefaultReconnectDelay = 10 * time.Second // When reconnecting to the server after connection failure
-	DefaultReInitDelay    = 5 * time.Second  // When setting up the channel after a channel exception
-	DefaultResendDelay    = 5 * time.Second  // When resending messages the server didn't confirm
-	DefaultMaxResends     = 5                // How many times resending messages the server didn't confirm
-	CACertPath            = "/etc/eventstore/certs/buscerts/ca.crt"
-	TLSCertPath           = "/etc/eventstore/certs/buscerts/tls.crt"
-	TLSKeyPath            = "/etc/eventstore/certs/buscerts/tls.key"
+	DefaultExchangeName = "m8_events" // name of the monoskope exchange
+	CACertPath          = "/etc/eventstore/certs/buscerts/ca.crt"
+	TLSCertPath         = "/etc/eventstore/certs/buscerts/tls.crt"
+	TLSKeyPath          = "/etc/eventstore/certs/buscerts/tls.key"
 )
 
 type RabbitEventBusConfig struct {
-	name             string        // Name of the client, required
-	url              string        // Connection string, required
-	routingKeyPrefix string        // Prefix for routing of messages
-	exchangeName     string        // Name of the exchange to initialize/use
-	reconnectDelay   time.Duration // When reconnecting to the server after connection failure
-	resendDelay      time.Duration // When resending messages the server didn't confirm
-	maxResends       int           // How many times resending messages the server didn't confirm
-	reInitDelay      time.Duration // When setting up the channel after a channel exception
+	name             string // Name of the client, required
+	url              string // Connection string, required
+	routingKeyPrefix string // Prefix for routing of messages
+	exchangeName     string // Name of the exchange to initialize/use
 	amqpConfig       *amqp.Config
 }
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
-func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) *RabbitEventBusConfig {
+func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBusConfig, error) {
 	if routingKeyPrefix == "" {
 		routingKeyPrefix = "m8"
 	}
 
-	return &RabbitEventBusConfig{
+	uri, err := amqp.ParseURI(url)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &RabbitEventBusConfig{
 		name:             name,
 		url:              url,
 		routingKeyPrefix: routingKeyPrefix,
 		exchangeName:     DefaultExchangeName,
-		reconnectDelay:   DefaultReconnectDelay,
-		resendDelay:      DefaultResendDelay,
-		maxResends:       DefaultMaxResends,
-		reInitDelay:      DefaultReInitDelay,
 		amqpConfig:       &amqp.Config{},
 	}
+
+	if uri.Scheme == "amqps" {
+		if err := conf.configureTLS(); err != nil {
+			return nil, err
+		}
+	}
+
+	return conf, nil
 }
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
-func (conf *RabbitEventBusConfig) ConfigureTLS() error {
-	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
-	if err := loadCertificates(conf.amqpConfig); err != nil {
+func (conf *RabbitEventBusConfig) configureTLS() error {
+	var err error
+	caCertPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(CACertPath)
+	if err != nil {
 		return err
 	}
+	caCertPool.AppendCertsFromPEM(ca)
+
+	conf.amqpConfig.TLSClientConfig = &tls.Config{
+		RootCAs:              caCertPool,
+		GetClientCertificate: getClientCertificate,
+	}
+	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+
 	return nil
 }
 
-func loadCertificates(amqpConfig *amqp.Config) error {
-	cfg := &tls.Config{
-		RootCAs: x509.NewCertPool(),
+// getClientCertificate returns the loaded certificate for use by
+// the TLSConfig fields getClientCertificate.
+func getClientCertificate(hello *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath)
+	if err != nil {
+		return nil, err
 	}
-
-	if ca, err := ioutil.ReadFile(CACertPath); err != nil {
-		return err
-	} else {
-		cfg.RootCAs.AppendCertsFromPEM(ca)
-	}
-
-	if cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath); err != nil {
-		return err
-	} else {
-		cfg.Certificates = append(cfg.Certificates, cert)
-	}
-
-	amqpConfig.TLSClientConfig = cfg
-
-	return nil
+	return &cert, nil
 }
 
 // Validate validates the configuration

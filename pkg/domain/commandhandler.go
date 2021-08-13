@@ -29,14 +29,14 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
 	aggregateManager := es.NewAggregateManager(es.DefaultAggregateRegistry, esClient)
 
 	// User
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserAggregate(id, aggregateManager) })
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewUserRoleBindingAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewUserAggregate(aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewUserRoleBindingAggregate(aggregateManager) })
 
 	// Tenant
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewTenantAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewTenantAggregate(aggregateManager) })
 
 	// Cluster
-	es.DefaultAggregateRegistry.RegisterAggregate(func(id uuid.UUID) es.Aggregate { return aggregates.NewClusterAggregate(id, aggregateManager) })
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewClusterAggregate(aggregateManager) })
 
 	return aggregateManager
 }
@@ -57,10 +57,11 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 		return userId, err
 	}
 
-	if err := handler.HandleCommand(ctx, cmd); err != nil {
+	reply, err := handler.HandleCommand(ctx, cmd)
+	if err != nil {
 		return uuid.Nil, err
 	}
-	return userId, nil
+	return reply.Id, nil
 }
 
 // setupRoleBinding creates rolebindings
@@ -79,7 +80,7 @@ func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string,
 		return err
 	}
 
-	err = handler.HandleCommand(ctx, cmd)
+	_, err = handler.HandleCommand(ctx, cmd)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
 		return err
 	}

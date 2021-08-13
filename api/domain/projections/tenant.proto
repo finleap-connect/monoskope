@@ -35,4 +35,6 @@ message TenantUser {
   string tenant_role = 4;
   // Unique identifier of the tenant (UUID 128-bit number)
   string tenant_id = 5;
+  // Metadata about the projection
+  LifecycleMetadata metadata = 6;
 }

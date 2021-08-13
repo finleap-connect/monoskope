@@ -1,5 +1,5 @@
 {{ if .Values.pki.enabled }}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Certificate
 metadata:
   name: {{ include "monoskope.fullname" . }}-authentication
@@ -15,18 +15,18 @@ spec:
   privateKey:
     rotationPolicy: Always
   issuerRef:
-    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+    name: {{ .Values.pki.issuer.name }}
     kind: Issuer
   commonName: m8-authentication
-  ipAddresses:
-  - 127.0.0.1
-  - '::'
   dnsNames:
   - localhost
   subject:
     organizations:
       - Monoskope
   usages:
-  - client auth
-  - server auth
+    - digital signature
+    - key encipherment
+    - client auth
+  keySize: 2048
+  keyAlgorithm: rsa
 {{ end }}

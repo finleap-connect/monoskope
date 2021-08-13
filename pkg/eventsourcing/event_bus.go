@@ -6,8 +6,6 @@ import (
 
 // EventBusConnector can open and close connections.
 type EventBusConnector interface {
-	// Open connects to the bus
-	Open(context.Context) error
 	// Close closes the underlying connections
 	Close() error
 }

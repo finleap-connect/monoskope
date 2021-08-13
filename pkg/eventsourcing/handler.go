@@ -7,7 +7,7 @@ import (
 // CommandHandler is an interface that all handlers of commands must implement.
 type CommandHandler interface {
 	// HandleCommand handles a command.
-	HandleCommand(context.Context, Command) error
+	HandleCommand(context.Context, Command) (*CommandReply, error)
 }
 
 // EventHandler is an interface that all handlers of events must implement.

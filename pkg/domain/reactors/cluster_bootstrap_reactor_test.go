@@ -47,6 +47,7 @@ var _ = Describe("package reactors", func() {
 		expectedIssuerKind := "ClusterIssuer"
 		expectedDuration := time.Hour * 48
 		expectedCSR := []byte("some-csr-bytes")
+		expectedIssuerUrl := "https://localhost"
 
 		testEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestReactors"))
 		Expect(err).NotTo(HaveOccurred())
@@ -67,7 +68,7 @@ var _ = Describe("package reactors", func() {
 				eventChannel := make(chan eventsourcing.Event, 3)
 
 				k8sClient := mock_k8s.NewMockClient(mockCtrl)
-				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
+				reactor := NewClusterBootstrapReactor(expectedIssuerUrl, testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 
 				err := reactor.HandleEvent(ctx, eventsourcing.NewEvent(ctx, eventType, eventsourcing.ToEventDataFromProto(eventData), time.Now().UTC(), aggregateType, aggregateId, aggregateVersion), eventChannel)
 				Expect(err).NotTo(HaveOccurred())
@@ -124,7 +125,7 @@ var _ = Describe("package reactors", func() {
 				eventChannel := make(chan eventsourcing.Event, 2)
 
 				k8sClient := mock_k8s.NewMockClient(mockCtrl)
-				reactor := NewClusterBootstrapReactor(testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
+				reactor := NewClusterBootstrapReactor(expectedIssuerUrl, testEnv.CreateSigner(), certificatemanagement.NewCertManagerClient(k8sClient, expectedNamespace, expectedIssuerKind, expectedIssuer, expectedDuration))
 				expectedCACert := []byte("some-ca-cert")
 				expectedCert := []byte("some-cert")
 

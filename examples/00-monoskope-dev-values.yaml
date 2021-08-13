@@ -8,7 +8,7 @@ global:
 
 vaultOperator:
   enabled: true
-  basePath: app/{{ .Release.Namespace }}/monoskope
+  basePath: app/{{ .Release.Namespace }}
   
 hosting:
   issuer: letsencrypt-production
@@ -22,6 +22,7 @@ gateway:
   image:
     tag: *imageTag
   auth:
+    selfURL: https://api.monoskope.dev.finleap.cloud
     identityProviderName: gitlab
     identityProviderURL: https://gitlab.figo.systems
   resources:
@@ -45,22 +46,9 @@ eventstore:
       memory: 64Mi
   backup:
     enabled: false
-    alerting:
-      enabled: false
-    schedule: "0 22 * * *"
-    retentionCount: 7
-    existingSecretName: m8-eventstore-backup-credentials
-    prometheusPushgatewayUrl: http://monitoring-prometheus-pushgateway.monitoring:9091
-    destination:
-      s3:
-        endpoint: s3.es1.fra.optimist.innovo.cloud
-        bucket: devcluster-bkp
-        region: us-east-1
-    restore:
-      enabled: false
-      backupIdentifier: "monoskope/eventstore/2021-04-07T13:23:57Z-75131c3e-c4da-465f-8540-cb851cb8e4b0.tar"
 
 commandhandler:
+  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -80,6 +68,7 @@ commandhandler:
     - lutz.behnke@finleap.com
 
 queryhandler:
+  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -93,8 +82,14 @@ queryhandler:
 ambassador:
   service:
     loadBalancerIP: 31.13.187.241 # https://finleap-connect.atlassian.net/wiki/spaces/FCP/pages/1391153020/Development+IP+Addresses
+  metrics:
+    serviceMonitor:
+      enabled: true
+      selector:
+        release: monitoring
 
 cluster-bootstrap-reactor:
+  replicaCount: 1
   image:
     tag: *imageTag
   resources:
@@ -104,3 +99,10 @@ cluster-bootstrap-reactor:
     requests:
       cpu: 500m
       memory: 64Mi
+  issuerURL: https://api.monoskope.dev.finleap.cloud
+
+rabbitmq:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

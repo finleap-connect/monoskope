@@ -21,6 +21,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/int128/listener v1.1.0
 	github.com/jetstack/cert-manager v1.3.1
+	github.com/kubism/testutil v0.1.0-alpha.2
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.14.2
@@ -29,8 +30,8 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.24.0 // indirect
-	github.com/spf13/cobra v1.1.1
-	github.com/streadway/amqp v1.0.0
+	github.com/rabbitmq/amqp091-go v0.0.0-20210714180937-de74e8a7d0e0
+	github.com/spf13/cobra v1.1.3
 	github.com/ugorji/go v1.2.4 // indirect
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
@@ -42,6 +43,7 @@ require (
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
+	helm.sh/helm/v3 v3.6.3
 	k8s.io/apimachinery v0.21.1
 	k8s.io/client-go v0.21.1
 	sigs.k8s.io/controller-runtime v0.6.2

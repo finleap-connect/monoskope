@@ -1,8 +1,8 @@
 {{- if and .Values.pki.enabled .Values.pki.issuer.ca.enabled }}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  name: {{ .Values.pki.issuer.name }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}
@@ -13,10 +13,10 @@ spec:
     secretName: {{ .Values.pki.issuer.ca.existingTrustAnchorSecretName | default (printf "%s-trust-anchor" (include "monoskope.fullname" .)) }}
 ---
 {{- else if .Values.pki.issuer.vault.enabled }}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Issuer
 metadata:
-  name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+  name: {{ .Values.pki.issuer.name }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}

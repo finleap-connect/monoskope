@@ -58,9 +58,13 @@ var _ = Describe("command_registry", func() {
 
 		registry.SetHandler(newTestCommandHandler(), testCommandType)
 
-		err := registry.HandleCommand(context.Background(), &testCommand{
+		inId := uuid.New()
+		reply, err := registry.HandleCommand(context.Background(), &testCommand{
+			aggregateId:     inId,
 			TestCommandData: cmdApi.TestCommandData{Test: "world!"},
 		})
 		Expect(err).ToNot(HaveOccurred())
+		Expect(reply.Id).ToNot(Equal(inId))
+		Expect(reply.Version).To(Equal(uint64(0)))
 	})
 })

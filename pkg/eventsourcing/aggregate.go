@@ -18,6 +18,7 @@ func (t AggregateType) String() string {
 // Aggregate is the interface definition for all aggregates
 type Aggregate interface {
 	CommandHandler
+	setId(id uuid.UUID)
 	// Type is the type of the aggregate that the event can be applied to.
 	Type() AggregateType
 	// ID is the id of the aggregate that the event should be applied to.
@@ -48,9 +49,9 @@ type BaseAggregate struct {
 }
 
 // NewBaseAggregate creates an aggregate.
-func NewBaseAggregate(t AggregateType, id uuid.UUID) *BaseAggregate {
+func NewBaseAggregate(t AggregateType) *BaseAggregate {
 	return &BaseAggregate{
-		id:            id,
+		id:            uuid.New(),
 		aggregateType: t,
 	}
 }
@@ -95,7 +96,6 @@ func (a *BaseAggregate) UncommittedEvents() []Event {
 
 // AppendEvent appends an event to the events the aggregate was build upon.
 func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, eventData EventData) Event {
-	a.version++
 	newEvent := NewEvent(
 		ctx,
 		eventType,
@@ -103,7 +103,7 @@ func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, ev
 		time.Now().UTC(),
 		a.Type(),
 		a.ID(),
-		a.Version())
+		a.version+uint64(len(a.events))+1)
 	a.events = append(a.events, newEvent)
 	return newEvent
 }
@@ -111,4 +111,9 @@ func (a *BaseAggregate) AppendEvent(ctx context.Context, eventType EventType, ev
 // IncrementVersion implements the IncrementVersion method of the Aggregate interface.
 func (a *BaseAggregate) IncrementVersion() {
 	a.version++
+}
+
+// setId implements the private method to set Aggregate id.
+func (a *BaseAggregate) setId(id uuid.UUID) {
+	a.id = id
 }

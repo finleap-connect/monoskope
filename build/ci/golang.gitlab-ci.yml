@@ -9,36 +9,46 @@ variables:
   MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
-  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.1
+  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.3
   except:
     - schedules
   variables:
     GOPATH: $CI_PROJECT_DIR/.go
   before_script:
     - mkdir -p .go
-    - make go-mod
   cache:
     paths:
       - .go/pkg/mod/
+    key: "$CI_COMMIT_REF_SLUG"
+
+cache:golang:
+  stage: prepare
+  extends: .gobase
+  script:
+    - make go-mod
 
 .gobase-no-push:
   extends: .gobase
   cache:
     policy: pull
+
+.docker-builder:
+  extends: .gobase-no-push
+  image: registry.gitlab.figo.systems/finleap-cloud-tools/docker-builder:1.6.8
   only:
     - web
     - tags
     - develop
-
+    
 lint:golang:
   stage: test
-  extends: .gobase
+  extends: .gobase-no-push
   script:
     - LINTER=golangci-lint make -j go-vet go-lint
 
 test:golang:
   stage: test
-  extends: .gobase
+  extends: .gobase-no-push
   services:
     - name: gitlab.figo.systems/platform/dependency_proxy/containers/rabbitmq:3.8.10-alpine
       alias: rabbitmq

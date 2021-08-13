@@ -3,7 +3,7 @@
 {{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 {{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Certificate
 metadata:
   name: {{ $tlsSecretName }}
@@ -21,7 +21,7 @@ spec:
   dnsNames:
   - {{ $tlsDomain }}
 ---
-apiVersion: cert-manager.io/v1alpha3
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
 kind: Certificate
 metadata:
   name: {{ $mtlsSecretName }}
@@ -36,7 +36,7 @@ spec:
   duration: {{ .Values.pki.certificates.duration }}
   renewBefore: {{ .Values.pki.certificates.renewBefore }}
   issuerRef:
-    name: {{ include "monoskope.fullname" . }}-root-ca-issuer
+    name: {{ .Values.pki.issuer.name }}
     kind: Issuer
   subject:
     organizations:

@@ -15,29 +15,29 @@ import (
 
 // TenantAggregate is an aggregate for Tenants.
 type TenantAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager es.AggregateStore
 	Name             string
 	Prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
-func NewTenantAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewTenantAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &TenantAggregate{
-		DomainAggregateBase: DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant, id),
+		DomainAggregateBase: &DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.Tenant),
 		},
 		aggregateManager: aggregateManager,
 	}
 }
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
-func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) error {
+func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return err
+		return nil, err
 	}
 	if err := a.validate(ctx, cmd); err != nil {
-		return err
+		return nil, err
 	}
 	return a.execute(ctx, cmd)
 }
@@ -78,23 +78,47 @@ func containsTenant(values []es.Aggregate, name string) bool {
 }
 
 // execute executes the command after it has successfully been validated
-func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) error {
+func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateTenantCommand:
-		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{Name: cmd.GetName(), Prefix: cmd.GetPrefix()})
+		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{
+			Name:   cmd.GetName(),
+			Prefix: cmd.GetPrefix()})
+
 		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
-		return nil
+
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+
+		return reply, nil
+
 	case *commands.UpdateTenantCommand:
 		ed := es.ToEventDataFromProto(&eventdata.TenantUpdated{
 			Name: cmd.GetName(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
-		return nil
+
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+
+		return reply, nil
+
 	case *commands.DeleteTenantCommand:
 		_ = a.AppendEvent(ctx, events.TenantDeleted, nil)
-		return nil
+
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+
+		return reply, nil
+
 	default:
-		return fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
+		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 }
 

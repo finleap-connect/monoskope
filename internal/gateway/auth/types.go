@@ -5,17 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"time"
 )
 
 type Config struct {
 	IdentityProvider     string
 	IdentityProviderName string
+	URL                  string
 	Scopes               []string
 	OfflineAsScope       bool
 	Nonce                string
 	ClientId             string
 	ClientSecret         string
 	RedirectURIs         []string
+	TokenValidity        time.Duration
 }
 
 func (conf *Config) String() string {

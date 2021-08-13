@@ -69,7 +69,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 	}
 	env.JwtTestEnv = jwtTestEnv
 
-	err = env.CreateDockerPool()
+	err = env.CreateDockerPool(false)
 	if err != nil {
 		_ = env.Shutdown()
 		return nil, err
@@ -198,9 +198,9 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo, userRepo)
+	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 	gatewayApiServer := NewGatewayAPIServer(env.AuthConfig, authHandler, userRepo)
-	authApiServer := NewClusterAuthAPIServer(signer, userRepo, env.ClusterRepo)
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, time.Hour*1)
 
 	// Create gRPC server and register implementation
 	env.GrpcServer = grpc.NewServer("gateway-grpc", false)
@@ -219,7 +219,7 @@ var _ = BeforeSuite(func(done Done) {
 		}
 	}()
 
-	env.LocalAuthServer = NewAuthServer(authHandler, userRepo)
+	env.LocalAuthServer = NewAuthServer(localAddrAPIServer, authHandler, userRepo)
 	env.ApiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
 	Expect(err).ToNot(HaveOccurred())
 	go func() {
