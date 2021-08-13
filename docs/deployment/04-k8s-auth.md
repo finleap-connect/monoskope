@@ -109,9 +109,7 @@ caBundle: |-
 
 ## Connect the cluster to monoskope
 
-```shell
-$ monoctl create cluster https://<api.cluster.name> -f <ca-certs-file.pem> -n <cluster-name> -l <cluster-name>
-```
+See [Register your Cluster](#register-your-cluster-with-monoskope)
 
 ## Do a login
 
