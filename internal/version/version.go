@@ -26,12 +26,10 @@ func NewVersionCmd(cmdName string) *cobra.Command {
 }
 
 func PrintVersion(cmdName string) {
-	fmt.Printf(`%s:
-		version     : %s
-		commit      : %s
-		go version  : %s
-		go compiler : %s
-		platform    : %s/%s
-	`, cmdName, Version, Commit, runtime.Version(), runtime.Compiler, runtime.GOOS, runtime.GOARCH)
-	fmt.Println()
+	fmt.Println(cmdName)
+	fmt.Printf(" version     : %s\n", Version)
+	fmt.Printf(" commit      : %s\n", Commit)
+	fmt.Printf(" go version  : %s\n", runtime.Version())
+	fmt.Printf(" go compiler : %s\n", runtime.Compiler)
+	fmt.Printf(" platform    : %s/%s\n", runtime.GOOS, runtime.GOARCH)
 }

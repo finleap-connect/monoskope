@@ -64,6 +64,7 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	// Apply event on projection.
 	projection, err = h.projector.Project(ctx, event, projection)
 	if err != nil {
+		h.log.Error(err, "Projecting event failed.", "event", event.String())
 		return err
 	}
 

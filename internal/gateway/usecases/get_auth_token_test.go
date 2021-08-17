@@ -70,7 +70,6 @@ var _ = Describe("GetAuthToken", func() {
 		clusterProjection := projections.NewClusterProjection(expectedClusterId).(*projections.Cluster)
 		clusterProjection.Id = expectedClusterId.String()
 		clusterProjection.Name = expectedClusterName
-		clusterProjection.Label = expectedClusterName
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()

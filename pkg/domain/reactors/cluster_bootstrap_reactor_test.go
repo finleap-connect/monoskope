@@ -56,10 +56,10 @@ var _ = Describe("package reactors", func() {
 		When("ClusterCreated event occurs", func() {
 			aggregateId := uuid.New()
 			aggregateVersion := uint64(1)
-			eventType := events.ClusterCreated
-			eventData := &eventdata.ClusterCreated{
-				Name:                "TestCluster",
-				Label:               "test-cluster",
+			eventType := events.ClusterCreatedV2
+			eventData := &eventdata.ClusterCreatedV2{
+				DisplayName:         "TestCluster",
+				Name:                "test-cluster",
 				ApiServerAddress:    "https://localhost",
 				CaCertificateBundle: []byte("somecabundle"),
 			}

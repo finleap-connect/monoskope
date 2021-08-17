@@ -34,7 +34,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can authenticate with JWT", func() {
 		expectedValidity := time.Hour * 1
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, localAddrAPIServer, "me", expectedValidity)
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
@@ -58,7 +58,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("fails authentication with expired JWT", func() {
 		expectedValidity := -30 * time.Minute
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: "me", Email: "me@monoskope.io"}, "issuer", "me", expectedValidity)
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		token.NotBefore = josejwt.NewNumericDate(time.Now().UTC().Add(-1 * time.Hour))
 
 		signer := env.JwtTestEnv.CreateSigner()
@@ -71,6 +71,21 @@ var _ = Describe("Gateway Auth Server", func() {
 		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
 		res, err := env.HttpClient.Do(req)
 		Expect(err).NotTo(HaveOccurred())
+		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
+	})
+	It("fails authentication with not existing user", func() {
+		expectedValidity := time.Hour * 1
+		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.NotExistingUser.Name, Email: env.NotExistingUser.Email}, localAddrAPIServer, env.NotExistingUser.Id, expectedValidity)
+		signer := env.JwtTestEnv.CreateSigner()
+		signedToken, err := signer.GenerateSignedToken(token)
+		Expect(err).NotTo(HaveOccurred())
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/auth/test", localAddrAuthServer), nil)
+		Expect(err).NotTo(HaveOccurred())
+
+		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
+		res, err := env.HttpClient.Do(req)
+		Expect(err).ToNot(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
 })

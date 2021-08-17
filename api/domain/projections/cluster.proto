@@ -13,11 +13,11 @@ package projections;
 message Cluster {
   // Unique identifier of the cluster (UUID 128-bit number)
   string id = 1;
-  // Unique name of the cluster
-  string name = 2;
-  // Unique label of the cluster, to be utilized for generating unique labels
+  // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string label = 3;
+  string name = 2;
+  // Display name of the cluster
+  string display_name = 3;
   // Address of the clusters KubeAPIServer
   string api_server_address = 4;
   // CA certificates of the cluster

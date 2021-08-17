@@ -157,7 +157,14 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
-	return s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+	if authToken != nil {
+		if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
+			s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
+			return nil
+		}
+	}
+	return authToken
 }
 
 // tokenValidation validates the token provided within the authorization flow
