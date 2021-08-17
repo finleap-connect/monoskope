@@ -38,7 +38,7 @@ cache:golang:
   only:
     - web
     - tags
-    - develop
+    - main
     
 lint:golang:
   stage: test
@@ -133,7 +133,7 @@ scan:images:
   only:
     - web
     - tags
-    - develop
+    - main
   script:
     - export VERSION=$(sh ./build/ci/configure_versions.sh)
     - sh ./build/ci/scan_images.sh
