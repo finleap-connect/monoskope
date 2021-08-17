@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	expectedName                = "the one cluster"
-	expectedLabel               = "one-cluster"
+	expectedDisplayName         = "the one cluster"
+	expectedName                = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
 	expectedJWT                 = "thisisnotajwt"
@@ -41,8 +41,8 @@ var _ = Describe("domain/cluster_repo", func() {
 		clusterProjector := NewClusterProjector()
 		clusterProjection := clusterProjector.NewProjection(uuid.New())
 		protoClusterCreatedEventData := &eventdata.ClusterCreated{
-			Name:                expectedName,
-			Label:               expectedLabel,
+			Name:                expectedDisplayName,
+			Label:               expectedName,
 			ApiServerAddress:    expectedApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,
 		}
@@ -57,8 +57,37 @@ var _ = Describe("domain/cluster_repo", func() {
 		cluster, ok := clusterProjection.(*projections.Cluster)
 		Expect(ok).To(BeTrue())
 
+		Expect(cluster.GetDisplayName()).To(Equal(expectedDisplayName))
 		Expect(cluster.GetName()).To(Equal(expectedName))
-		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
+		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
+		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
+
+		dp := cluster.DomainProjection
+		Expect(dp.Created).ToNot(BeNil())
+	})
+
+	It("can handle ClusterCreatedV2 events", func() {
+		clusterProjector := NewClusterProjector()
+		clusterProjection := clusterProjector.NewProjection(uuid.New())
+		protoClusterCreatedEventData := &eventdata.ClusterCreatedV2{
+			DisplayName:         expectedDisplayName,
+			Name:                expectedName,
+			ApiServerAddress:    expectedApiServerAddress,
+			CaCertificateBundle: expectedClusterCACertBundle,
+		}
+		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
+		event := es.NewEvent(ctx, events.ClusterCreatedV2, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1)
+
+		clusterProjection, err := clusterProjector.Project(context.Background(), event, clusterProjection)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
+
+		cluster, ok := clusterProjection.(*projections.Cluster)
+		Expect(ok).To(BeTrue())
+
+		Expect(cluster.GetDisplayName()).To(Equal(expectedDisplayName))
+		Expect(cluster.GetName()).To(Equal(expectedName))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
 		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
@@ -69,22 +98,22 @@ var _ = Describe("domain/cluster_repo", func() {
 	It("can handle ClusterBootstrapTokenCreated events", func() {
 		clusterProjector := NewClusterProjector()
 		clusterProjection := clusterProjector.NewProjection(uuid.New())
-		protoClusterCreatedEventData := &eventdata.ClusterCreated{
+		protoClusterCreatedEventData := &eventdata.ClusterCreatedV2{
+			DisplayName:         expectedDisplayName,
 			Name:                expectedName,
-			Label:               expectedLabel,
 			ApiServerAddress:    expectedApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,
 		}
 		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
-		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreated, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
+		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreatedV2, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
 
 		cluster, ok := clusterProjection.(*projections.Cluster)
 		Expect(ok).To(BeTrue())
+		Expect(cluster.GetDisplayName()).To(Equal(expectedDisplayName))
 		Expect(cluster.GetName()).To(Equal(expectedName))
-		Expect(cluster.GetLabel()).To(Equal(expectedLabel))
 		Expect(cluster.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
 		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 

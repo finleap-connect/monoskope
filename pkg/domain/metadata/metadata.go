@@ -63,7 +63,7 @@ func newDomainContext(ctx *DomainContext) *DomainContext {
 func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, error) {
 	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
-		nil,
+		newDomainContext(nil),
 	}
 
 	if len(m.GetMetadata()) == 0 {

@@ -52,6 +52,18 @@ backup:
 
 With this deployed Monoskope will automatically create backups every day at 10pm with a retention of 7 days to S3.
 
+### Directly pull events from EventStore via `grpcurl`
+
+If you have access with port-forward it is possible to use `grpcurl` to query the `EventStore`.
+The result will be the events in the `EventStore` as json.
+The following example expects that the relative path to the proto spec of the `EventStore` is at `api/eventsourcing/eventstore_service.proto`
+like it is when you're in the root of the projects source code.
+Another expectation is, that you've created a port-forward with 8080:8080 of the `EventStore` service.
+
+```bash
+grpcurl -proto api/eventsourcing/eventstore_service.proto -plaintext localhost:8080 eventsourcing.EventStore.Retrieve
+```
+
 ## Restore
 
 ### Drop existing database
