@@ -21,7 +21,7 @@ chart:deliver:
   only:
     - web
     - tags
-    - develop
+    - main
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - VERSION=$VERSION make helm-set-version-all
@@ -33,7 +33,7 @@ deploy:monoskope:
   environment:
     name: figo-dev
   only:
-    - develop
+    - main
   script:
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - make helm-add-finleap
