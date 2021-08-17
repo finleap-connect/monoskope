@@ -2,12 +2,14 @@ package commandhandler
 
 import (
 	"context"
+	"sync"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
 type storingAggregateHandler struct {
 	aggregateManager es.AggregateStore
+	mutex            sync.Mutex
 }
 
 // NewAggregateHandler creates a new CommandHandler which handles aggregates.
@@ -19,6 +21,9 @@ func NewAggregateHandler(aggregateManager es.AggregateStore) es.CommandHandler {
 
 // HandleCommand implements the CommandHandler interface
 func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	var err error
 	var aggregate es.Aggregate
 

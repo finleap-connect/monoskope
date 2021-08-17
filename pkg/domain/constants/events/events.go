@@ -18,9 +18,10 @@ const (
 	TenantDeleted es.EventType = "TenantDeleted"
 
 	// Event emitted when a Cluster has been created
-	ClusterCreated es.EventType = "ClusterCreated"
+	ClusterCreated   es.EventType = "ClusterCreated"
+	ClusterCreatedV2 es.EventType = "ClusterCreatedV2"
 	// Event emitted when a Cluster has been created
-	ClusterUpdate es.EventType = "ClusterUpdated"
+	ClusterUpdated es.EventType = "ClusterUpdated"
 	// Event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
 	// Event emitted when a bootstrap token has been created

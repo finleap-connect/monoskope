@@ -7,34 +7,37 @@ option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/do
 
 package eventdata;
 
-message ClusterRegistered {
-  // Name of the cluster, to be presented to humans
+message ClusterCreated {
+  // Display name of the cluster
   string name = 1;
-
-  // Unique label of the cluster, to be utilized for generating unique labels
+  // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
   string label = 2;
-
   // Address of the KubeApiServer
   string api_server_address = 3;
-
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
 
-message ClusterCreated {
-  // Name of the cluster, to be presented to humans
-  string name = 1;
-
-  // Unique label of the cluster, to be utilized for generating unique labels
+message ClusterCreatedV2 {
+  // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string label = 2;
-
+  string name = 1;
+  // Display name of the cluster
+  string display_name = 2;
   // Address of the KubeApiServer
   string api_server_address = 3;
-
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
+}
+
+message ClusterUpdated {
+  // Display name of the cluster
+  string display_name = 1;
+  // Address of the KubeApiServer
+  string api_server_address = 2;
+  // CA certificate of the K8s cluster
+  bytes ca_certificate_bundle = 3;
 }
 
 message ClusterBootstrapTokenCreated {

@@ -96,11 +96,17 @@ include .protobuf-deps
 go-protobuf: $(GENERATED_GO_FILES)
 
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
-	make go-test-ci
+	@find . -name '*.coverprofile' -exec rm {} \;
+	$(GINKGO) -r -v -cover -covermode count -trace -compilers 8 *
+	@echo "mode: count" > ./monoskope.coverprofile
+	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./pkg -name '*.coverprofile' -exec rm {} \;
+	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
 go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover -covermode count -trace -compilers 8 *
+	$(GINKGO) -r -v -cover -covermode count -trace -compilers 8 *
 	@echo "mode: count" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
@@ -151,19 +157,19 @@ go-clean: go-build-clean ## clean up all go parts
 	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
 
 $(CMD_GATEWAY):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_GATEWAY)" $(CMD_GATEWAY_SRC)
 
 $(CMD_EVENTSTORE):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_EVENTSTORE_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_EVENTSTORE)" $(CMD_EVENTSTORE_SRC)
 
 $(CMD_COMMANDHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_COMMANDHANDLER_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_COMMANDHANDLER)" $(CMD_COMMANDHANDLER_SRC)
 
 $(CMD_QUERYHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_QUERYHANDLER)" $(CMD_QUERYHANDLER_SRC)
 
 $(CMD_CLBOREACTOR):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_CLBOREACTOR_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_CLBOREACTOR)" $(CMD_CLBOREACTOR_SRC)
 
 go-build-clean: 
 	rm -Rf $(CMD_GATEWAY)
