@@ -6,7 +6,7 @@ To make build reactors easier, they can be implemented in-tree
 
 1. implement the behaviour in [`pkg/domain/reactors`](../../pkg/domain/reactors)
 
-1. implement an exutable command as subfolder of [`cmd`](../../cmd). As an example check [`cmd/clusterbootstrapreactor/serve.go`](../../cmd/clusterbootstrapreactor/serve.go). 
+1. implement an executable command as subfolder of [`cmd`](../../cmd). As an example check [`cmd/clusterbootstrapreactor/serve.go`](../../cmd/clusterbootstrapreactor/serve.go). 
    The actual code beyond the commandline interface is implemented [`internal/clusterbootstrapreactor/setup.go`](../../internal/clusterbootstrapreactor/setup.go)
    
 1. define a helm chart for deployment and make it a dependency for the Monoskope helm chart
