@@ -33,5 +33,11 @@ var _ = Describe("domain/user_repo", func() {
 		userProjection, err := userProjector.Project(context.Background(), event, userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.Version()).To(Equal(uint64(1)))
+
+		deleteEvent := eventsourcing.NewEvent(ctx, events.UserDeleted, nil, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 2)
+		deleteEvent.Metadata()[auth.HeaderAuthId] = userId.String()
+		userProjection, err = userProjector.Project(context.Background(), deleteEvent, userProjection)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(userProjection.Version()).To(Equal(uint64(2)))
 	})
 })

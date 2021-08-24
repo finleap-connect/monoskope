@@ -74,7 +74,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err != nil {
 			return err
 		}
-		if !userAggregate.Exists() {
+		if !userAggregate.Exists() || userAggregate.Deleted() {
 			return domainErrors.ErrUserNotFound
 		}
 

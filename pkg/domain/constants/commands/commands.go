@@ -5,6 +5,8 @@ import es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 const (
 	// Event emitted when a User has been created
 	CreateUser es.CommandType = "CreateUser"
+	// Command to delete a User
+	DeleteUser es.CommandType = "DeleteUser"
 
 	// Command to create a new UserRoleBinding
 	CreateUserRoleBinding es.CommandType = "CreateUserRoleBinding"
