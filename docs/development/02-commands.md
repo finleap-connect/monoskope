@@ -11,7 +11,7 @@ The `Command` types are defined as constants of type [`CommandType`](../../pkg/e
 
 ## Prerequisites
 
-`Commands` are executed on [`Aggregates`](aggregates.md) which emit [`Event(s)`](events.md).
+`Commands` are executed on [`Aggregates`](03-aggregates.md) which emit [`Event(s)`](01-events.md).
 So before adding a new `Command` you might have a look at the docs about them first.
 
 ## Steps to add a new `Command`
@@ -36,7 +36,7 @@ So before adding a new `Command` you might have a look at the docs about them fi
     }
     ```
 
-1. Add a new `Command` implementation at [`pkg/domain/commands`](./../pkg/domain/commands):
+1. Add a new `Command` implementation at [`pkg/domain/commands`](../../pkg/domain/commands):
     * The new `Command` must implement the interface defined in [`pkg/eventsourcing/command.go`](../../pkg/eventsourcing/command.go)
 
     ```go
@@ -75,7 +75,7 @@ So before adding a new `Command` you might have a look at the docs about them fi
     }
     ```
 
-1. Add the handling for the new `Command` on your [Aggregate](aggregates.md):
+1. Add the handling for the new `Command` on your [Aggregate](03-aggregates.md):
     * When an `UpdateUserName` `Command` is executed, the [`User`](../../pkg/domain/aggregates/user.go) `Aggregate` needs to check authorization and validate the new name.
 
     ```go

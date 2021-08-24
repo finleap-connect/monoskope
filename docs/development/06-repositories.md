@@ -4,11 +4,11 @@
 
 # Implementing Repositories
 
-`Repositories` are all about storing and retrieving [`Projections`](projections.md). They can be in-memory, a database behind them or whatever.
+`Repositories` are all about storing and retrieving [`Projections`](04-projections.md). They can be in-memory, a database behind them or whatever.
 
 ## Prerequisites
 
-`Repositories` store and load [`Projections`](projections.md) from in-memory or database or whatever you like.
+`Repositories` store and load [`Projections`](04-projections.md) from in-memory or database or whatever you like.
 
 ## Steps to add a new `Repository`
 
