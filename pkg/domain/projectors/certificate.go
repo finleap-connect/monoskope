@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	apiProjections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -54,10 +53,8 @@ func (c *certificateProjector) Project(ctx context.Context, event es.Event, proj
 			return projection, err
 		}
 		p.CaCertBundle = data.GetCertificate().GetCa()
-		p.Certificate = &apiProjections.Certificate{
-			Certificate:  data.Certificate.GetCertificate(),
-			CaCertBundle: data.Certificate.GetCa(),
-		}
+		p.Certificate.Certificate = data.Certificate.GetCertificate()
+		p.CaCertBundle = data.Certificate.GetCa()
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
