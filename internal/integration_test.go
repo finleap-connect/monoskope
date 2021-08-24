@@ -105,7 +105,7 @@ var _ = Describe("integration", func() {
 			userId := uuid.MustParse(reply.AggregateId)
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 			Expect(err).ToNot(HaveOccurred())
@@ -128,7 +128,7 @@ var _ = Describe("integration", func() {
 			userRoleBindingId = uuid.MustParse(reply.AggregateId)
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			// Creating the same rolebinding again should fail
 			command.Id = uuid.New().String()
@@ -145,7 +145,7 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 			Expect(err).ToNot(HaveOccurred())
@@ -195,7 +195,7 @@ var _ = Describe("integration", func() {
 			tenantId = uuid.MustParse(reply.AggregateId)
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Tenant X"))
 			Expect(err).ToNot(HaveOccurred())
@@ -214,7 +214,7 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 			Expect(err).ToNot(HaveOccurred())
@@ -225,7 +225,7 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 			Expect(err).ToNot(HaveOccurred())
@@ -258,8 +258,9 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// set up reactor for checking JWTs later
-			testReactor, err := testReactor.NewTestReactor()
-			Expect(err).ToNot(HaveOccurred())
+			testReactor := testReactor.NewTestReactor()
+			defer testReactor.Close()
+
 			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
@@ -271,7 +272,7 @@ var _ = Describe("integration", func() {
 			clusterId := uuid.MustParse(reply.AggregateId)
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
 			Expect(err).ToNot(HaveOccurred())
@@ -302,7 +303,7 @@ var _ = Describe("integration", func() {
 			Expect(len(observed)).ToNot(Equal(0))
 			Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 
 			eventMD := observed[0].Metadata()
 			event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
@@ -316,7 +317,7 @@ var _ = Describe("integration", func() {
 			err = testReactor.Emit(ctx, event)
 			Expect(err).ToNot(HaveOccurred())
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 
 			tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 			Expect(err).ToNot(HaveOccurred())
@@ -327,10 +328,10 @@ var _ = Describe("integration", func() {
 
 	Context("cert management", func() {
 		It("can create and query a certificate", func() {
+			testReactor := testReactor.NewTestReactor()
+			defer testReactor.Close()
 
-			testReactor, err := testReactor.NewTestReactor()
-			Expect(err).ToNot(HaveOccurred())
-			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
 			clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
@@ -351,10 +352,10 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			observed := testReactor.GetObservedEvents()
-			Expect(len(observed)).ToNot(Equal(0))
+			Expect(len(observed)).To(Equal(1))
 			certRequestedEvent := observed[0]
 			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
@@ -374,8 +375,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			// Wait to propagate
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 
 			certificate, err := certificateServiceClient().GetCertificate(ctx,
 				&domainApi.GetCertificateRequest{

@@ -24,15 +24,15 @@ type QueryHandlerDomain struct {
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
-	d := &QueryHandlerDomain{}
+	d := new(QueryHandlerDomain)
 
 	// Setup repositories
 	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
 	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
 	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository())
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
-	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
+	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
 
 	// Setup projectors
 	userProjector := projectors.NewUserProjector()

@@ -21,21 +21,11 @@ type testReactor struct {
 	observedEvents []es.Event
 }
 
-func NewTestReactor() (*testReactor, error) {
+func NewTestReactor() *testReactor {
 	r := &testReactor{
 		log: logger.WithName("reactorEventHandler"),
 	}
-
-	err := r.init()
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-func (*testReactor) init() error {
-	return nil
+	return r
 }
 
 func (r *testReactor) Setup(ctx context.Context, env *eventstore.TestEnv, client esApi.EventStoreClient) error {
@@ -77,7 +67,7 @@ func (r *testReactor) Emit(ctx context.Context, event es.Event) error {
 	params.MaxElapsedTime = 60 * time.Second
 	err := backoff.Retry(func() error {
 		if err := r.storeEvent(ctx, event); err != nil {
-			r.log.Error(err, "Failed to send event to EventStore. Retrying...", "AggregateID", event.AggregateID(), "AggregateType", event.AggregateType(), "EventType", event.EventType())
+			r.log.Error(err, "Failed to send event to EventStore. Retrying...", "Event", event.String())
 			return err
 		}
 		return nil

@@ -11,14 +11,16 @@ package projections;
 
 // Certficates can exist for any aggregate and are mainted by the control plane.
 message Certificate {
-  // Unique identifier of the cluster (UUID 128-bit number)
-  string referenced_aggregate_id = 1;
+  // Unique identifier of the certificate (UUID 128-bit number)
+  string id = 1;
+  // Unique identifier of the referenced aggregate (UUID 128-bit number)
+  string referenced_aggregate_id = 2;
   // Type of the aggregate referenced
-  string aggregate_type = 2;
+  string aggregate_type = 3;
   // actual certificate
-  bytes certificate = 3;
+  bytes certificate = 4;
   // bundle of CA certificates for the certificate managed
-  bytes ca_cert_bundle = 4;
+  bytes ca_cert_bundle = 5;
   // Metadata about the projection
-  LifecycleMetadata metadata = 5;
+  LifecycleMetadata metadata = 6;
 }

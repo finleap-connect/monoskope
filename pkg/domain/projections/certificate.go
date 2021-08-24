@@ -17,8 +17,8 @@ func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {
 	return &Certificate{
 		DomainProjection: dp,
 		Certificate: &projections.Certificate{
-			ReferencedAggregateId: id.String(),
-			Metadata:              &dp.LifecycleMetadata,
+			Id:       id.String(),
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
 }
