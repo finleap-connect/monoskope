@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/google/uuid"
 	domApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -40,20 +39,20 @@ func NewCertificateRepository(repository es.Repository) CertificateRepository {
 
 // Retrieve certificates for a specified aggregate ID and type.
 func (r *certificateRepository) GetCertificate(ctx context.Context, req *domApi.GetCertificateRequest) (*projections.Certificate, error) {
-	id, err := uuid.Parse(req.AggregateId)
+	ps, err := r.All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	projection, err := r.ById(ctx, id)
-	if err != nil {
-		return nil, err
+	for _, projection := range ps {
+		certificate, ok := projection.(*projections.Certificate)
+		if !ok {
+			return nil, esErrors.ErrInvalidProjectionType
+		}
+		if certificate.ReferencedAggregateId == req.AggregateId && certificate.AggregateType == req.AggregateType {
+			return certificate, nil
+		}
 	}
 
-	certificate, ok := projection.(*projections.Certificate)
-	if !ok {
-		return nil, esErrors.ErrInvalidProjectionType
-	}
-
-	return certificate, nil
+	return nil, esErrors.ErrProjectionNotFound
 }

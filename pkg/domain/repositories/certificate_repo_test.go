@@ -16,16 +16,16 @@ import (
 	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var (
-	expectedCert          = []byte("this is a certificate")
-	expectedCACert        = []byte("this is the CA certificate")
-	expectedAggregateType = "certificate"
-)
-
 var _ = Describe("domain/certificate_repo", func() {
 
-	certId := uuid.New()
+	var (
+		expectedCert          = []byte("this is a certificate")
+		expectedCACert        = []byte("this is the CA certificate")
+		expectedAggregateType = "someaggregate"
+	)
 
+	certId := uuid.New()
+	someAggregateId := uuid.New()
 	userId := uuid.New()
 	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
 
@@ -36,7 +36,7 @@ var _ = Describe("domain/certificate_repo", func() {
 
 	newCertificate := projections.NewCertificateProjection(certId).(*projections.Certificate)
 	newCertificate.Certificate = &projectionsApi.Certificate{
-		ReferencedAggregateId: certId.String(),
+		ReferencedAggregateId: someAggregateId.String(),
 		AggregateType:         expectedAggregateType,
 		Certificate:           expectedCert,
 		CaCertBundle:          expectedCACert,
@@ -51,7 +51,7 @@ var _ = Describe("domain/certificate_repo", func() {
 		Expect(err).NotTo(HaveOccurred())
 		cert, err := certRepo.GetCertificate(context.Background(),
 			&domain.GetCertificateRequest{
-				AggregateId:   certId.String(),
+				AggregateId:   someAggregateId.String(),
 				AggregateType: expectedAggregateType,
 			})
 		Expect(err).NotTo(HaveOccurred())

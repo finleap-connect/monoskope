@@ -302,8 +302,7 @@ var _ = Describe("integration", func() {
 			Expect(len(observed)).ToNot(Equal(0))
 			Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
-			fmt.Printf("%v", observed)
-			time.Sleep(3 * time.Second)
+			time.Sleep(1 * time.Second)
 
 			eventMD := observed[0].Metadata()
 			event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
@@ -338,9 +337,8 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(clusterInfo).ToNot(BeNil())
 
-			certificateId := uuid.New()
 			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(certificateId, commandTypes.RequestCertificate),
+				cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
 				&cmdData.RequestCertificate{
 					ReferencedAggregateId:   clusterInfo.Id,
 					ReferencedAggregateType: aggregates.Cluster.String(),
@@ -349,7 +347,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			certRequestCmdReply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait to propagate
@@ -357,9 +355,10 @@ var _ = Describe("integration", func() {
 
 			observed := testReactor.GetObservedEvents()
 			Expect(len(observed)).ToNot(Equal(0))
-			Expect(observed[0].AggregateID().String()).To(Equal(reply.AggregateId))
+			certRequestedEvent := observed[0]
+			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
-			certEv := es.NewEvent(
+			err = testReactor.Emit(ctx, es.NewEvent(
 				ctx,
 				events.CertificateIssued,
 				es.ToEventDataFromProto(&eventdata.CertificateIssued{
@@ -369,12 +368,13 @@ var _ = Describe("integration", func() {
 					},
 				}),
 				time.Now().UTC(),
-				observed[0].AggregateType(),
-				observed[0].AggregateID(),
-				observed[0].AggregateVersion()+1)
-			err = testReactor.Emit(ctx, certEv)
+				certRequestedEvent.AggregateType(),
+				certRequestedEvent.AggregateID(),
+				certRequestedEvent.AggregateVersion()+1),
+			)
 			Expect(err).ToNot(HaveOccurred())
 
+			// Wait to propagate
 			time.Sleep(1000 * time.Millisecond)
 
 			certificate, err := certificateServiceClient().GetCertificate(ctx,

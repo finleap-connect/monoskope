@@ -58,14 +58,13 @@ func (c *certificateProjector) Project(ctx context.Context, event es.Event, proj
 			Certificate:  data.Certificate.GetCertificate(),
 			CaCertBundle: data.Certificate.GetCa(),
 		}
-
-		if err := c.projectModified(event, p.DomainProjection); err != nil {
-			return nil, err
-		}
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
 
+	if err := c.projectModified(event, p.DomainProjection); err != nil {
+		return nil, err
+	}
 	p.IncrementVersion()
 
 	return p, nil

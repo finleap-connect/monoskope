@@ -32,7 +32,6 @@ func NewTestReactor() (*testReactor, error) {
 	}
 
 	return r, nil
-
 }
 
 func (*testReactor) init() error {
@@ -55,12 +54,7 @@ func (r *testReactor) Setup(ctx context.Context, env *eventstore.TestEnv, client
 	}
 
 	// Register event handler with event bus to consume all events
-	if err := r.msgBus.AddHandler(ctx, r, r.msgBus.Matcher().Any()); err != nil {
-		return err
-	}
-
-	return nil
-
+	return r.msgBus.AddHandler(ctx, r, r.msgBus.Matcher().Any())
 }
 
 func (r *testReactor) Close() {

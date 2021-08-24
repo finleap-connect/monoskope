@@ -51,11 +51,11 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
 
-		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
+		ev := a.AppendEvent(ctx, events.CertificateRequested, ed)
 
 		reply := &es.CommandReply{
 			Id:      a.ID(),
-			Version: a.Version(),
+			Version: ev.AggregateVersion(),
 		}
 		return reply, nil
 	default:
