@@ -26,10 +26,10 @@ type UserRoleBindingAggregate struct {
 }
 
 // NewUserRoleBindingAggregate creates a new UserRoleBindingAggregate
-func NewUserRoleBindingAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewUserRoleBindingAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &UserRoleBindingAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.UserRoleBinding),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -100,11 +100,6 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 			Scope:    cmd.GetScope(),
 			Resource: cmd.GetResource(),
 		}
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
-
 		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
 	case *commands.DeleteUserRoleBindingCommand:
 		_ = a.AppendEvent(ctx, events.UserRoleBindingDeleted, nil)

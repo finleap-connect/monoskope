@@ -213,8 +213,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedBy().Id).To(Equal(user.Id))
+		Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
 
 		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
@@ -225,8 +224,7 @@ var _ = Describe("integration", func() {
 		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy()).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedBy().GetId()).To(Equal(user.GetId()))
+		Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
 
 		Expect(tenant.Metadata.Created).NotTo(BeNil())
 
@@ -245,7 +243,7 @@ var _ = Describe("integration", func() {
 	It("manage a cluster", func() {
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-			&cmdData.CreateCluster{Name: expectedClusterName, Label: "mac", ApiServerAddress: "my.awesome.cluster", ClusterCACertBundle: []byte("This should be a certificate")},
+			&cmdData.CreateCluster{DisplayName: "my awesome cluster", Name: "mac", ApiServerAddress: "my.awesome.cluster", CaCertBundle: []byte("This should be a certificate")},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -265,11 +263,11 @@ var _ = Describe("integration", func() {
 		// Wait to propagate
 		time.Sleep(1000 * time.Millisecond)
 
-		cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
+		cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String("mac"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cluster).ToNot(BeNil())
-		Expect(cluster.GetName()).To(Equal(expectedClusterName))
-		Expect(cluster.GetLabel()).To(Equal("mac"))
+		Expect(cluster.GetDisplayName()).To(Equal("my awesome cluster"))
+		Expect(cluster.GetName()).To(Equal("mac"))
 		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(cluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
 
@@ -284,8 +282,8 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(firstCluster).ToNot(BeNil())
-		Expect(firstCluster.GetName()).To(Equal(expectedClusterName))
-		Expect(firstCluster.GetLabel()).To(Equal("mac"))
+		Expect(firstCluster.GetDisplayName()).To(Equal("my awesome cluster"))
+		Expect(firstCluster.GetName()).To(Equal("mac"))
 		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
 		Expect(firstCluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
 
@@ -295,7 +293,7 @@ var _ = Describe("integration", func() {
 		Expect(observed[0].AggregateID()).To(Equal(clusterId))
 
 		fmt.Printf("%v", observed)
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		eventMD := observed[0].Metadata()
 		event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
@@ -309,7 +307,7 @@ var _ = Describe("integration", func() {
 		err = testReactor.Emit(ctx, event)
 		Expect(err).ToNot(HaveOccurred())
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
 		Expect(err).ToNot(HaveOccurred())
@@ -320,10 +318,10 @@ var _ = Describe("integration", func() {
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
 			&cmdData.CreateCluster{
-				Name:                "my awesome cluster 2",
-				Label:               "mac2",
-				ApiServerAddress:    "my.awesome2.cluster",
-				ClusterCACertBundle: []byte("This should be a certificate"),
+				DisplayName:      "my awesome cluster 2",
+				Name:             "mac2",
+				ApiServerAddress: "my.awesome2.cluster",
+				CaCertBundle:     []byte("This should be a certificate"),
 			},
 		)
 		Expect(err).ToNot(HaveOccurred())

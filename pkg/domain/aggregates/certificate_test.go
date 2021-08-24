@@ -1,7 +1,6 @@
 package aggregates
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,33 +8,19 @@ import (
 	. "github.com/onsi/gomega"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
-	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 )
 
-var (
-	expectedCSR                     = []byte("This should be a CSR")
-	expectedReferencedAggregateId   = uuid.New()
-	expectedReferencedAggregateType = aggregates.Cluster
-	expectedCa                      = []byte("this should be the CA for the issued certificate")
-	expectedCertificate             = []byte("this should be the certificate")
-)
-
 var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle RequestCertificateCommand correctly", func() {
-
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		inAggId := uuid.New()
-		agg := NewCertificateAggregate(inAggId, NewTestAggregateManager())
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate()
 
 		reply, err := newRequestCertificateCommand(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
 		// This is a create command and should set a new ID, regardless of what was passed in.
-		Expect(reply.Id).ToNot(Equal(inAggId))
+		Expect(reply.Id).ToNot(Equal(uuid.Nil))
 		Expect(reply.Id).ToNot(Equal(expectedReferencedAggregateId))
 
 		event := agg.UncommittedEvents()[0]
@@ -52,11 +37,8 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	})
 
 	It("should handle CertificateRequested event correctly", func() {
-
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewCertificateAggregate(uuid.New(), NewTestAggregateManager())
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate()
 
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   expectedReferencedAggregateId.String(),
@@ -66,7 +48,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		esEvent := es.NewEvent(ctx, events.CertificateRequested, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
-		err = agg.ApplyEvent(esEvent)
+		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(agg.(*CertificateAggregate).signingRequest).To(Equal(expectedCSR))
@@ -75,23 +57,20 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	})
 	It("should handle CertificateRequestIssuer event correctly", func() {
 
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewCertificateAggregate(uuid.New(), NewTestAggregateManager())
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate()
 
 		esEvent := es.NewEvent(ctx, events.CertificateRequestIssued, nil, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
-		err = agg.ApplyEvent(esEvent)
+		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 	})
 	It("should handle CertificateIssued event correctly", func() {
 
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate()
 
-		agg := NewCertificateAggregate(uuid.New(), NewTestAggregateManager())
 		cagg := agg.(*CertificateAggregate)
 		cagg.signingRequest = expectedCSR
 		cagg.referencedAggregateId = expectedReferencedAggregateId
@@ -99,7 +78,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 
 		ed := es.ToEventDataFromProto(&eventdata.CertificateIssued{
 			Certificate: &common.CertificateChain{
-				Ca:          expectedCa,
+				Ca:          expectedClusterCACertBundle,
 				Certificate: expectedCertificate,
 			},
 		})
@@ -107,38 +86,25 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		esEvent := es.NewEvent(ctx, events.CertificateIssued, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
-		err = agg.ApplyEvent(esEvent)
+		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(cagg.signingRequest).To(Equal(expectedCSR))
 		Expect(cagg.referencedAggregateId).To(Equal(expectedReferencedAggregateId))
 		Expect(cagg.referencedAggregateType).To(Equal(expectedReferencedAggregateType))
-		Expect(cagg.caCertBundle).To(Equal(expectedCa))
+		Expect(cagg.caCertBundle).To(Equal(expectedClusterCACertBundle))
 		Expect(cagg.certificate).To(Equal(expectedCertificate))
 
 	})
 	It("should handle CertificateIssueingFailed event correctly", func() {
 
-		ctx, err := makeMetadataContextWithSystemAdminUser()
-		Expect(err).NotTo(HaveOccurred())
-
-		agg := NewCertificateAggregate(uuid.New(), NewTestAggregateManager())
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate()
 
 		esEvent := es.NewEvent(ctx, events.CertificateIssueingFailed, nil, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
-		err = agg.ApplyEvent(esEvent)
+		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 	})
 })
-
-func newRequestCertificateCommand(ctx context.Context, agg es.Aggregate) (*es.CommandReply, error) {
-	esCommand, ok := commands.NewRequestCertificateCommand(uuid.New()).(*commands.RequestCertificateCommand)
-	Expect(ok).To(BeTrue())
-
-	esCommand.SigningRequest = expectedCSR
-	esCommand.ReferencedAggregateId = expectedReferencedAggregateId.String()
-	esCommand.ReferencedAggregateType = expectedReferencedAggregateType.String()
-
-	return agg.HandleCommand(ctx, esCommand)
-}

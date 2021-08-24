@@ -4,7 +4,6 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/timestamp.proto";
-import "api/domain/projections/user.proto";
 
 option go_package = "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/projections";
 
@@ -14,24 +13,13 @@ message LifecycleMetadata {
   // When it has been created
   google.protobuf.Timestamp created = 1;
   // By whom it has been created
-  User created_by = 2;
+  string created_by_id = 2;
   // When it has been last modified
   google.protobuf.Timestamp last_modified = 3;
   // By whom it has been last modified
-  User last_modified_by = 4;
-  // When it has been deleted
-  google.protobuf.Timestamp deleted = 5;
+  string last_modified_by_id = 4;
   // By whom it has been deleted
-  User deleted_by = 6;
-}
-
-message ApprovalMetadata {
-  // When it has been approved
-  google.protobuf.Timestamp approved = 7;
-  // By whom it has been approved
-  User approved_by = 8;
-  // When it has been denied
-  google.protobuf.Timestamp denied = 9;
-  // By whom it has been denied
-  User denied_by = 10;
+  string deleted_by_id = 5;
+  // When it has been deleted
+  google.protobuf.Timestamp deleted = 6;
 }

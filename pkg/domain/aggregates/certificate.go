@@ -15,7 +15,7 @@ import (
 
 // CertificateAggregate is an aggregate for certificates.
 type CertificateAggregate struct {
-	DomainAggregateBase
+	*DomainAggregateBase
 	aggregateManager        es.AggregateStore
 	referencedAggregateId   uuid.UUID
 	referencedAggregateType es.AggregateType
@@ -25,12 +25,11 @@ type CertificateAggregate struct {
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewCertificateAggregate() es.Aggregate {
 	return &CertificateAggregate{
-		DomainAggregateBase: DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Certificate, id),
+		DomainAggregateBase: &DomainAggregateBase{
+			BaseAggregate: es.NewBaseAggregate(aggregates.Certificate),
 		},
-		aggregateManager: aggregateManager,
 	}
 }
 
@@ -50,10 +49,6 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
 
 		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
 

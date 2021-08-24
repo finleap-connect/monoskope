@@ -3,6 +3,7 @@ package eventhandler
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
 	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
@@ -21,6 +22,7 @@ type projectionRepoEventHandler struct {
 	log        logger.Logger
 	projector  es.Projector
 	repository es.Repository
+	mutex      sync.Mutex
 }
 
 // NewProjectingEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
@@ -34,7 +36,9 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
-	h.log.V(logger.DebugLevel).Info("Projecting event...", "EventType", event.EventType(), "AggregateType", event.AggregateType())
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	h.log.Info("Projecting event...", "event", event.String())
 
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 
@@ -60,6 +64,7 @@ func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.E
 	// Apply event on projection.
 	projection, err = h.projector.Project(ctx, event, projection)
 	if err != nil {
+		h.log.Error(err, "Projecting event failed.", "event", event.String())
 		return err
 	}
 

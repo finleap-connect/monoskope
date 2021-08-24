@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	testEd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing/eventdata"
 )
 
@@ -20,7 +19,7 @@ type testAggregate struct {
 
 func newTestAggregate() *testAggregate {
 	return &testAggregate{
-		BaseAggregate: NewBaseAggregate(testAggregateType, uuid.New()),
+		BaseAggregate: NewBaseAggregate(testAggregateType),
 	}
 }
 

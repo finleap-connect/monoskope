@@ -154,5 +154,5 @@ func (e event) Metadata() map[string]string {
 
 // String implements the String method of the Event interface.
 func (e event) String() string {
-	return fmt.Sprintf("%s@%d", e.eventType, e.aggregateVersion)
+	return fmt.Sprintf("%s:%s<-%s@%d", e.aggregateID.String(), e.aggregateType, e.eventType, e.aggregateVersion)
 }

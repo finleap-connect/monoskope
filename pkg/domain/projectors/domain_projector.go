@@ -39,7 +39,7 @@ func (p *domainProjector) projectModified(event es.Event, dp *projections.Domain
 	}
 
 	dp.LastModified = timestamp.New(event.Timestamp())
-	dp.LastModifiedById = userId
+	dp.LastModifiedById = userId.String()
 
 	return nil
 }
@@ -54,7 +54,7 @@ func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainP
 	}
 
 	dp.Created = timestamp.New(event.Timestamp())
-	dp.CreatedById = userId
+	dp.CreatedById = userId.String()
 
 	return p.projectModified(event, dp)
 }
@@ -69,7 +69,7 @@ func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainP
 	}
 
 	dp.Deleted = timestamp.New(event.Timestamp())
-	dp.DeletedById = userId
+	dp.DeletedById = userId.String()
 
 	return p.projectModified(event, dp)
 }

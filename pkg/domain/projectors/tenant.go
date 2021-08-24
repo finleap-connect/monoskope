@@ -36,10 +36,11 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.TenantCreated:
-		data := &eventdata.TenantCreated{}
+		data := new(eventdata.TenantCreated)
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
+
 		p.Name = data.GetName()
 		p.Prefix = data.GetPrefix()
 
@@ -47,14 +48,11 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 			return nil, err
 		}
 	case events.TenantUpdated:
-		data := &eventdata.TenantUpdated{}
+		data := new(eventdata.TenantUpdated)
 		if err := event.Data().ToProto(data); err != nil {
 			return projection, err
 		}
 		p.Name = data.GetName().GetValue()
-		if err := t.projectModified(event, p.DomainProjection); err != nil {
-			return nil, err
-		}
 	case events.TenantDeleted:
 		if err := t.projectDeleted(event, p.DomainProjection); err != nil {
 			return nil, err
@@ -63,6 +61,9 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 		return nil, errors.ErrInvalidEventType
 	}
 
+	if err := t.projectModified(event, p.DomainProjection); err != nil {
+		return nil, err
+	}
 	p.IncrementVersion()
 
 	return p, nil

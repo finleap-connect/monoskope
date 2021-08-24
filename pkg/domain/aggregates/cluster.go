@@ -1,6 +1,7 @@
 package aggregates
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -17,18 +18,18 @@ import (
 type ClusterAggregate struct {
 	*DomainAggregateBase
 	aggregateManager es.AggregateStore
+	displayName      string
 	name             string
-	label            string
 	apiServerAddr    string
 	caCertBundle     []byte
 	bootstrapToken   string
 }
 
 // ClusterAggregate creates a new ClusterAggregate
-func NewClusterAggregate(id uuid.UUID, aggregateManager es.AggregateStore) es.Aggregate {
+func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster, id),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
 		},
 		aggregateManager: aggregateManager,
 	}
@@ -45,33 +46,47 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 
 	switch cmd := cmd.(type) {
 	case *commands.CreateClusterCommand:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreated{
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
+			DisplayName:         cmd.GetDisplayName(),
 			Name:                cmd.GetName(),
-			Label:               cmd.GetLabel(),
 			ApiServerAddress:    cmd.GetApiServerAddress(),
-			CaCertificateBundle: cmd.GetClusterCACertBundle(),
+			CaCertificateBundle: cmd.GetCaCertBundle(),
 		})
-
-		// this is a create command. Update the aggregate ID, so that any input
-		// from the user will be ignored, and new event will use the new ID
-		a.resetId()
-
-		_ = a.AppendEvent(ctx, events.ClusterCreated, ed)
+		_ = a.AppendEvent(ctx, events.ClusterCreatedV2, ed)
 		reply := &es.CommandReply{
 			Id:      a.ID(),
 			Version: a.Version(),
 		}
 		return reply, nil
+	case *commands.UpdateClusterCommand:
+		ed := new(eventdata.ClusterUpdated)
 
+		displayName := cmd.GetDisplayName()
+		apiServerAddr := cmd.GetApiServerAddress()
+		caCertBundle := cmd.GetCaCertBundle()
+
+		if displayName != nil && a.displayName != displayName.Value {
+			ed.DisplayName = displayName.Value
+		}
+		if apiServerAddr != nil && a.apiServerAddr != apiServerAddr.Value {
+			ed.ApiServerAddress = apiServerAddr.Value
+		}
+		if caCertBundle != nil && bytes.Equal(a.caCertBundle, caCertBundle) {
+			ed.CaCertificateBundle = caCertBundle
+		}
+		_ = a.AppendEvent(ctx, events.ClusterUpdated, es.ToEventDataFromProto(ed))
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
 		reply := &es.CommandReply{
 			Id:      a.ID(),
 			Version: a.Version(),
 		}
-
 		return reply, nil
-
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
@@ -104,7 +119,7 @@ func containsCluster(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*ClusterAggregate)
 		if ok {
-			if d.name == name {
+			if d.displayName == name {
 				return true
 			}
 		}
@@ -116,22 +131,48 @@ func containsCluster(values []es.Aggregate, name string) bool {
 func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
 	case events.ClusterCreated:
-		data := &eventdata.ClusterCreated{}
-		err := event.Data().ToProto(data)
+		clusterCreatedV1 := new(eventdata.ClusterCreated)
+		err := event.Data().ToProto(clusterCreatedV1)
 		if err != nil {
 			return err
 		}
-		a.name = data.GetName()
-		a.label = data.GetLabel()
-		a.apiServerAddr = data.GetApiServerAddress()
-		a.caCertBundle = data.GetCaCertificateBundle()
+		a.displayName = clusterCreatedV1.GetName()
+		a.name = clusterCreatedV1.GetLabel()
+		a.apiServerAddr = clusterCreatedV1.GetApiServerAddress()
+		a.caCertBundle = clusterCreatedV1.GetCaCertificateBundle()
+	case events.ClusterCreatedV2:
+		clusterCreatedV2 := new(eventdata.ClusterCreatedV2)
+		err := event.Data().ToProto(clusterCreatedV2)
+		if err != nil {
+			return err
+		}
+		a.displayName = clusterCreatedV2.GetDisplayName()
+		a.name = clusterCreatedV2.GetName()
+		a.apiServerAddr = clusterCreatedV2.GetApiServerAddress()
+		a.caCertBundle = clusterCreatedV2.GetCaCertificateBundle()
 	case events.ClusterBootstrapTokenCreated:
-		data := &eventdata.ClusterBootstrapTokenCreated{}
+		data := new(eventdata.ClusterBootstrapTokenCreated)
 		err := event.Data().ToProto(data)
 		if err != nil {
 			return err
 		}
 		a.bootstrapToken = data.GetJwt()
+	case events.ClusterUpdated:
+		data := new(eventdata.ClusterUpdated)
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+
+		if len(data.GetDisplayName()) > 0 && a.displayName != data.GetDisplayName() {
+			a.displayName = data.GetDisplayName()
+		}
+		if len(data.GetApiServerAddress()) > 0 && a.apiServerAddr != data.GetApiServerAddress() {
+			a.apiServerAddr = data.GetApiServerAddress()
+		}
+		if len(data.GetCaCertificateBundle()) > 0 && bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
+			a.caCertBundle = data.GetCaCertificateBundle()
+		}
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:

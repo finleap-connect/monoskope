@@ -57,7 +57,7 @@ define go-run
 	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
 endef
 
-.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf
 
 ##@ Go
 go-all: go-mod go-fmt go-vet go-lint go-test
@@ -96,11 +96,17 @@ include .protobuf-deps
 go-protobuf: $(GENERATED_GO_FILES)
 
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
-	make go-test-ci
+	@find . -name '*.coverprofile' -exec rm {} \;
+	$(GINKGO) -r -v -cover -covermode count -trace -compilers 8 *
+	@echo "mode: count" > ./monoskope.coverprofile
+	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./pkg -name '*.coverprofile' -exec rm {} \;
+	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
+	@find ./internal -name '*.coverprofile' -exec rm {} \;
 
 go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	$(GINKGO) -keepGoing -r -v -cover -covermode count -trace -compilers 8 *
+	$(GINKGO) -r -v -cover -covermode count -trace -compilers 8 *
 	@echo "mode: count" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
@@ -151,19 +157,19 @@ go-clean: go-build-clean ## clean up all go parts
 	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=gitlab.figo.systems/platform/monoskope/monoskope --go_out=. {} \;
 
 $(CMD_GATEWAY):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_GATEWAY_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_GATEWAY)" $(CMD_GATEWAY_SRC)
 
 $(CMD_EVENTSTORE):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_EVENTSTORE_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_EVENTSTORE)" $(CMD_EVENTSTORE_SRC)
 
 $(CMD_COMMANDHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_COMMANDHANDLER_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_COMMANDHANDLER)" $(CMD_COMMANDHANDLER_SRC)
 
 $(CMD_QUERYHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_QUERYHANDLER_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_QUERYHANDLER)" $(CMD_QUERYHANDLER_SRC)
 
 $(CMD_CLBOREACTOR):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS)" $(CMD_CLBOREACTOR_SRC)
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_CLBOREACTOR)" $(CMD_CLBOREACTOR_SRC)
 
 go-build-clean: 
 	rm -Rf $(CMD_GATEWAY)
@@ -183,5 +189,5 @@ go-build-clboreactor: $(CMD_CLBOREACTOR)
 
 go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
-	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient
+	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/repositories UserRepository,ClusterRepository

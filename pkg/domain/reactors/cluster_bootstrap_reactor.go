@@ -56,58 +56,13 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		var name = data.Name
-		var email = data.Label + DOMAIN
-
-		r.log.Info("Generating bootstrap token...", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
-		rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
-			Name:  name,
-			Email: email,
-		}, r.issuerURL, uuid.New().String()))
-		if err != nil {
-			r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
+		return r.handleClusterCreated(ctx, data.Name, event, eventsChannel)
+	case events.ClusterCreatedV2:
+		data := &eventdata.ClusterCreatedV2{}
+		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		r.log.Info("Generating bootstrap token succeeded.", "AggregateID", event.AggregateID(), "Name", data.Name, "Label", data.Label)
-
-		eventsChannel <- es.NewEvent(
-			ctx,
-			events.ClusterBootstrapTokenCreated,
-			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-				Jwt: rawJWT,
-			}),
-			time.Now().UTC(),
-			event.AggregateType(),
-			event.AggregateID(),
-			event.AggregateVersion()+1)
-
-		userId := uuid.New()
-		r.log.Info("Creating user and rolebinding.", "AggregateID", userId, "Name", data.Name, "Email", email)
-		eventsChannel <- es.NewEvent(
-			ctx,
-			events.UserCreated,
-			es.ToEventDataFromProto(&eventdata.UserCreated{
-				Name:  name,
-				Email: email,
-			}),
-			time.Now().UTC(),
-			aggregates.User,
-			userId,
-			1)
-
-		eventsChannel <- es.NewEvent(
-			ctx,
-			events.UserRoleBindingCreated,
-			es.ToEventDataFromProto(&eventdata.UserRoleAdded{
-				UserId: userId.String(),
-				Role:   roles.K8sOperator.String(),
-				Scope:  scopes.System.String(),
-			}),
-			time.Now().UTC(),
-			aggregates.UserRoleBinding,
-			uuid.New(),
-			1)
-		r.log.Info("Creating user and rolebinding succeeded.", "AggregateID", userId, "Name", data.Name, "Email", email)
+		return r.handleClusterCreated(ctx, data.Name, event, eventsChannel)
 	case events.CertificateRequested:
 		data := &eventdata.CertificateRequested{}
 		if err := event.Data().ToProto(data); err != nil {
@@ -135,6 +90,61 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 
 		go r.reconcile(ctx, event, eventsChannel)
 	}
+
+	return nil
+}
+
+func (r *clusterBootstrapReactor) handleClusterCreated(ctx context.Context, name string, event es.Event, eventsChannel chan<- es.Event) error {
+	var email = name + DOMAIN
+	r.log.Info("Generating bootstrap token...", "AggregateID", event.AggregateID(), "Name", name)
+	rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
+		Name:  name,
+		Email: email,
+	}, r.issuerURL, uuid.New().String()))
+	if err != nil {
+		r.log.Error(err, "Generating bootstrap token failed.", "AggregateID", event.AggregateID(), "Name", name)
+		return err
+	}
+	r.log.Info("Generating bootstrap token succeeded.", "AggregateID", event.AggregateID(), "Name", name)
+
+	eventsChannel <- es.NewEvent(
+		ctx,
+		events.ClusterBootstrapTokenCreated,
+		es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
+			Jwt: rawJWT,
+		}),
+		time.Now().UTC(),
+		event.AggregateType(),
+		event.AggregateID(),
+		event.AggregateVersion()+1)
+
+	userId := uuid.New()
+	r.log.Info("Creating user and rolebinding.", "AggregateID", userId, "Name", name, "Email", email)
+	eventsChannel <- es.NewEvent(
+		ctx,
+		events.UserCreated,
+		es.ToEventDataFromProto(&eventdata.UserCreated{
+			Name:  name,
+			Email: email,
+		}),
+		time.Now().UTC(),
+		aggregates.User,
+		userId,
+		1)
+
+	eventsChannel <- es.NewEvent(
+		ctx,
+		events.UserRoleBindingCreated,
+		es.ToEventDataFromProto(&eventdata.UserRoleAdded{
+			UserId: userId.String(),
+			Role:   roles.K8sOperator.String(),
+			Scope:  scopes.System.String(),
+		}),
+		time.Now().UTC(),
+		aggregates.UserRoleBinding,
+		uuid.New(),
+		1)
+	r.log.Info("Creating user and rolebinding succeeded.", "AggregateID", userId, "Name", name, "Email", email)
 
 	return nil
 }

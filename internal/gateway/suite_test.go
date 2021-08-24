@@ -55,6 +55,8 @@ type oAuthTestEnv struct {
 	LocalAuthServer       *authServer
 	ClusterRepo           repositories.ClusterRepository
 	AdminUser             *projections.User
+	ExistingUser          *projections.User
+	NotExistingUser       *projections.User
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -171,25 +173,29 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup user repo
-	userId := uuid.New()
-	env.AdminUser = &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
+	env.AdminUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "admin", Email: "admin@monoskope.io"}}
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = env.AdminUser.Id
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
+	env.ExistingUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "someone", Email: "someone@monoskope.io"}}
+	env.NotExistingUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "nobody", Email: "nobody@monoskope.io"}}
+
 	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
+	Expect(inMemoryUserRepo.Upsert(ctx, env.AdminUser)).ToNot(HaveOccurred())
+	Expect(inMemoryUserRepo.Upsert(ctx, env.ExistingUser)).ToNot(HaveOccurred())
+	Expect(inMemoryUserRoleBindingRepo.Upsert(ctx, adminRoleBinding)).ToNot(HaveOccurred())
+
 	err = inMemoryUserRepo.Upsert(ctx, env.AdminUser)
-	Expect(err).ToNot(HaveOccurred())
-	err = inMemoryUserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup cluster repo
 	clusterId := uuid.New()
 	testCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
 	testCluster.Name = "test-cluster"
-	testCluster.Label = "test-cluster"
+	testCluster.DisplayName = "Test Cluster"
 	testCluster.ApiServerAddress = "https://somecluster.io"
 	testCluster.CaCertBundle = []byte("some-bundle")
 
@@ -198,7 +204,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo, userRepo)
+	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 	gatewayApiServer := NewGatewayAPIServer(env.AuthConfig, authHandler, userRepo)
 	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, time.Hour*1)
 

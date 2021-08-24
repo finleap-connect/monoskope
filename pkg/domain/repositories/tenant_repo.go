@@ -11,7 +11,7 @@ import (
 )
 
 type tenantRepository struct {
-	*domainRepository
+	es.Repository
 }
 
 // TenantRepository is a repository for reading and writing tenant projections.
@@ -36,9 +36,9 @@ type WriteOnlyTenantRepository interface {
 }
 
 // NewTenantRepository creates a repository for reading and writing tenant projections.
-func NewTenantRepository(repository es.Repository, userRepo UserRepository) TenantRepository {
+func NewTenantRepository(repository es.Repository) TenantRepository {
 	return &tenantRepository{
-		domainRepository: NewDomainRepository(repository, userRepo),
+		Repository: repository,
 	}
 }
 
@@ -57,11 +57,6 @@ func (r *tenantRepository) ByTenantId(ctx context.Context, id string) (*projecti
 	tenant, ok := projection.(*projections.Tenant)
 	if !ok {
 		return nil, esErrors.ErrInvalidProjectionType
-	}
-
-	err = r.addMetadata(ctx, tenant.DomainProjection)
-	if err != nil {
-		return nil, err
 	}
 
 	return tenant, nil
@@ -94,11 +89,6 @@ func (r *tenantRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*
 	for _, p := range ps {
 		if t, ok := p.(*projections.Tenant); ok {
 			if !t.GetDeleted().IsValid() || includeDeleted {
-				// Add metadata
-				err = r.addMetadata(ctx, t.DomainProjection)
-				if err != nil {
-					return nil, err
-				}
 				tenants = append(tenants, t)
 			}
 		} else {
