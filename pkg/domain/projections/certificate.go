@@ -25,7 +25,7 @@ func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {
 
 // ID implements the ID method of the Aggregate interface.
 func (p *Certificate) ID() uuid.UUID {
-	return uuid.MustParse(p.ReferencedAggregateId)
+	return uuid.MustParse(p.Id)
 }
 
 // Proto gets the underlying proto representation.
