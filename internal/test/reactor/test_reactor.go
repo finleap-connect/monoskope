@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -71,7 +69,7 @@ func (r *testReactor) Close() {
 
 // HandleEvent handles a given event returns 0..* Events in reaction or an error
 func (r *testReactor) HandleEvent(ctx context.Context, event es.Event) error {
-
+	r.log.Info("Event observed.", "Event", event.String())
 	r.observedEvents = append(r.observedEvents, event)
 	return nil
 }
@@ -81,15 +79,9 @@ func (r *testReactor) GetObservedEvents() []es.Event {
 }
 
 func (r *testReactor) Emit(ctx context.Context, event es.Event) error {
-	err := checkUserId(event)
-	if err != nil {
-		r.log.Error(err, "Event metadata do not contain user information.")
-		return err
-	}
-
 	params := backoff.NewExponentialBackOff()
 	params.MaxElapsedTime = 60 * time.Second
-	err = backoff.Retry(func() error {
+	err := backoff.Retry(func() error {
 		if err := r.storeEvent(ctx, event); err != nil {
 			r.log.Error(err, "Failed to send event to EventStore. Retrying...", "AggregateID", event.AggregateID(), "AggregateType", event.AggregateType(), "EventType", event.EventType())
 			return err
@@ -128,9 +120,4 @@ func (r *testReactor) storeEvent(ctx context.Context, event es.Event) error {
 	}
 
 	return nil
-}
-
-func checkUserId(event es.Event) error {
-	_, err := uuid.Parse(event.Metadata()[auth.HeaderAuthId])
-	return err
 }

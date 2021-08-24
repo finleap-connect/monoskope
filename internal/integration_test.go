@@ -15,9 +15,11 @@ import (
 	testReactor "gitlab.figo.systems/platform/monoskope/monoskope/internal/test/reactor"
 	domainApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
 	cmdData "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/commanddata"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	cmd "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/commands"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/commands"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/roles"
@@ -28,12 +30,13 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-var (
-	expectedClusterName = "my awesome cluster"
-)
-
 var _ = Describe("integration", func() {
 	ctx := context.Background()
+
+	expectedClusterDisplayName := "the one cluster"
+	expectedClusterName := "one-cluster"
+	expectedClusterApiServerAddress := "one.example.com"
+	expectedClusterCACertBundle := []byte("This should be a certificate")
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
@@ -86,300 +89,303 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	It("can manage a user", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
-		)
-		Expect(err).ToNot(HaveOccurred())
+	Context("user management", func() {
+		It("can manage a user", func() {
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+				&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
-		// update userId, as the "create" command will have changed it.
-		userId := uuid.MustParse(reply.AggregateId)
+			// update userId, as the "create" command will have changed it.
+			userId := uuid.MustParse(reply.AggregateId)
 
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
 
-		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(user).ToNot(BeNil())
-		Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
-		Expect(user.Id).To(Equal(userId.String()))
+			user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user).ToNot(BeNil())
+			Expect(user.GetEmail()).To(Equal("jane.doe@monoskope.io"))
+			Expect(user.Id).To(Equal(userId.String()))
 
-		userRoleBindingId := uuid.New()
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
-			&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
-		)
-		Expect(err).ToNot(HaveOccurred())
+			userRoleBindingId := uuid.New()
+			command, err = cmd.AddCommandData(
+				cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
+				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(userRoleBindingId.String()).ToNot(Equal(reply.AggregateId))
+			reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(userRoleBindingId.String()).ToNot(Equal(reply.AggregateId))
 
-		// update userRolebBindingId, as the "create" command will have changed it.
-		userRoleBindingId = uuid.MustParse(reply.AggregateId)
+			// update userRolebBindingId, as the "create" command will have changed it.
+			userRoleBindingId = uuid.MustParse(reply.AggregateId)
 
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
 
-		// Creating the same rolebinding again should fail
-		command.Id = uuid.New().String()
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).To(HaveOccurred())
+			// Creating the same rolebinding again should fail
+			command.Id = uuid.New().String()
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).To(HaveOccurred())
 
-		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(user).ToNot(BeNil())
-		Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
-		Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
+			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user).ToNot(BeNil())
+			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
+			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
-		Expect(err).ToNot(HaveOccurred())
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+			Expect(err).ToNot(HaveOccurred())
 
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
 
-		user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(user).ToNot(BeNil())
-	})
-	It("can accept Nil as an Id when creating a user", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe2@monoskope.io"},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
-	})
-	It("fail to create a user which already exists", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).To(HaveOccurred())
-		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
-	})
-
-	It("can manage a tenant", func() {
-		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-		Expect(err).ToNot(HaveOccurred())
-
-		tenantId := uuid.New()
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
-			&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
-
-		// update tenantId, as the "create" command will have changed it.
-		tenantId = uuid.MustParse(reply.AggregateId)
-
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
-
-		tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Tenant X"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.GetName()).To(Equal("Tenant X"))
-		Expect(tenant.GetPrefix()).To(Equal("tx"))
-		Expect(tenant.Id).To(Equal(tenantId.String()))
-
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
-			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
-
-		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
-
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
-		Expect(err).ToNot(HaveOccurred())
-
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
-
-		tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(tenant).ToNot(BeNil())
-		Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
-
-		Expect(tenant.Metadata.Created).NotTo(BeNil())
-
-	})
-	It("can accept Nil as ID when creating a tenant", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
-			&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
-	})
-	It("manage a cluster", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-			&cmdData.CreateCluster{DisplayName: "my awesome cluster", Name: "mac", ApiServerAddress: "my.awesome.cluster", CaCertBundle: []byte("This should be a certificate")},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		// set up reactor for checking JWTs later
-		testReactor, err := testReactor.NewTestReactor()
-		Expect(err).ToNot(HaveOccurred())
-		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
-		Expect(err).ToNot(HaveOccurred())
-
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
-
-		// update clusterId, as the "create" command will have changed it.
-		clusterId := uuid.MustParse(reply.AggregateId)
-
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
-
-		cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String("mac"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(cluster).ToNot(BeNil())
-		Expect(cluster.GetDisplayName()).To(Equal("my awesome cluster"))
-		Expect(cluster.GetName()).To(Equal("mac"))
-		Expect(cluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(cluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
-
-		By("getting all existing clusters")
-
-		clusterStream, err := clusterServiceClient().GetAll(ctx, &domainApi.GetAllRequest{
-			IncludeDeleted: true,
+			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user).ToNot(BeNil())
 		})
-		Expect(err).ToNot(HaveOccurred())
-		// Read next
-		firstCluster, err := clusterStream.Recv()
-		Expect(err).ToNot(HaveOccurred())
+		It("can accept Nil as an Id when creating a user", func() {
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+				&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe2@monoskope.io"},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		Expect(firstCluster).ToNot(BeNil())
-		Expect(firstCluster.GetDisplayName()).To(Equal("my awesome cluster"))
-		Expect(firstCluster.GetName()).To(Equal("mac"))
-		Expect(firstCluster.GetApiServerAddress()).To(Equal("my.awesome.cluster"))
-		Expect(firstCluster.GetCaCertBundle()).To(Equal([]byte("This should be a certificate")))
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+		})
+		It("fail to create a user which already exists", func() {
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
+				&cmdData.CreateUserCommandData{Name: "admin", Email: "admin@monoskope.io"},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		By("by retrieving the bootstrap token")
-		observed := testReactor.GetObservedEvents()
-		Expect(len(observed)).ToNot(Equal(0))
-		Expect(observed[0].AggregateID()).To(Equal(clusterId))
-
-		fmt.Printf("%v", observed)
-		time.Sleep(3 * time.Second)
-
-		eventMD := observed[0].Metadata()
-		event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
-			es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-				Jwt: "this is a valid JWT, honest!",
-			}), time.Now().UTC(),
-			observed[0].AggregateType(), observed[0].AggregateID(),
-			observed[0].AggregateVersion()+1,
-			eventMD)
-
-		err = testReactor.Emit(ctx, event)
-		Expect(err).ToNot(HaveOccurred())
-
-		time.Sleep(3 * time.Second)
-
-		tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, honest!"))
-
-	})
-	It("can accept Nil as ID when creating a cluster", func() {
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-			&cmdData.CreateCluster{
-				DisplayName:      "my awesome cluster 2",
-				Name:             "mac2",
-				ApiServerAddress: "my.awesome2.cluster",
-				CaCertBundle:     []byte("This should be a certificate"),
-			},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
+		})
 	})
 
-	It("can create and query a certificate", func() {
-		// set up reactor for checking JWTs later
-		testReactor, err := testReactor.NewTestReactor()
-		Expect(err).ToNot(HaveOccurred())
-		err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
-		Expect(err).ToNot(HaveOccurred())
+	Context("tenant management", func() {
+		It("can manage a tenant", func() {
+			user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+			Expect(err).ToNot(HaveOccurred())
 
-		// get the uuid of the cluster with the name "my aweseome cluster"
-		clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(clusterInfo).ToNot(BeNil())
+			tenantId := uuid.New()
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+				&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		certificateId := uuid.New()
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(certificateId, commandTypes.RequestCertificate),
-			&cmdData.RequestCertificate{
-				ReferencedAggregateId:   clusterInfo.Id,
-				ReferencedAggregateType: "cluster",
-				SigningRequest:          []byte("this is  a CSR"),
-			},
-		)
-		Expect(err).ToNot(HaveOccurred())
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
 
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
+			// update tenantId, as the "create" command will have changed it.
+			tenantId = uuid.MustParse(reply.AggregateId)
 
-		// Wait to propagate
-		time.Sleep(1000 * time.Millisecond)
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
 
-		By("injecting a mock certificate")
-		observed := testReactor.GetObservedEvents()
-		Expect(len(observed)).ToNot(Equal(0))
-		Expect(observed[0].AggregateID()).To(Equal(reply.AggregateId))
+			tenant, err := tenantServiceClient().GetByName(ctx, wrapperspb.String("Tenant X"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tenant).ToNot(BeNil())
+			Expect(tenant.GetName()).To(Equal("Tenant X"))
+			Expect(tenant.GetPrefix()).To(Equal("tx"))
+			Expect(tenant.Id).To(Equal(tenantId.String()))
 
-		fmt.Printf("%v", observed)
-		time.Sleep(10 * time.Second)
+			command, err = cmd.AddCommandData(
+				cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		certificate, err := certificateServiceClient().GetCertificate(ctx,
-			&domainApi.GetCertificateRequest{
-				AggregateId:   clusterInfo.GetId(),
-				AggregateType: "Cluster",
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
+
+			tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tenant).ToNot(BeNil())
+			Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
+
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+			Expect(err).ToNot(HaveOccurred())
+
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
+
+			tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tenant).ToNot(BeNil())
+			Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
+
+			Expect(tenant.Metadata.Created).NotTo(BeNil())
+
+		})
+		It("can accept Nil as ID when creating a tenant", func() {
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+				&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+		})
+	})
+
+	Context("cluster management", func() {
+
+		It("manage a cluster", func() {
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			// set up reactor for checking JWTs later
+			testReactor, err := testReactor.NewTestReactor()
+			Expect(err).ToNot(HaveOccurred())
+			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			Expect(err).ToNot(HaveOccurred())
+
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
+
+			// update clusterId, as the "create" command will have changed it.
+			clusterId := uuid.MustParse(reply.AggregateId)
+
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
+
+			cluster, err := clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cluster).ToNot(BeNil())
+			Expect(cluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
+			Expect(cluster.GetName()).To(Equal(expectedClusterName))
+			Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
+			Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
+
+			By("getting all existing clusters")
+
+			clusterStream, err := clusterServiceClient().GetAll(ctx, &domainApi.GetAllRequest{
+				IncludeDeleted: true,
 			})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(certificate.GetCertificate()).ToNot(BeNil())
-		Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
+			Expect(err).ToNot(HaveOccurred())
+			// Read next
+			firstCluster, err := clusterStream.Recv()
+			Expect(err).ToNot(HaveOccurred())
 
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+			Expect(firstCluster).ToNot(BeNil())
+			Expect(firstCluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
+			Expect(firstCluster.GetName()).To(Equal(expectedClusterName))
+			Expect(firstCluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
+			Expect(firstCluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
+
+			By("by retrieving the bootstrap token")
+			observed := testReactor.GetObservedEvents()
+			Expect(len(observed)).ToNot(Equal(0))
+			Expect(observed[0].AggregateID()).To(Equal(clusterId))
+
+			fmt.Printf("%v", observed)
+			time.Sleep(3 * time.Second)
+
+			eventMD := observed[0].Metadata()
+			event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
+				es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
+					Jwt: "this is a valid JWT, honest!",
+				}), time.Now().UTC(),
+				observed[0].AggregateType(), observed[0].AggregateID(),
+				observed[0].AggregateVersion()+1,
+				eventMD)
+
+			err = testReactor.Emit(ctx, event)
+			Expect(err).ToNot(HaveOccurred())
+
+			time.Sleep(3 * time.Second)
+
+			tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, honest!"))
+
+		})
+	})
+
+	Context("cert management", func() {
+		It("can create and query a certificate", func() {
+
+			testReactor, err := testReactor.NewTestReactor()
+			Expect(err).ToNot(HaveOccurred())
+			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			Expect(err).ToNot(HaveOccurred())
+
+			clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(clusterInfo).ToNot(BeNil())
+
+			certificateId := uuid.New()
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(certificateId, commandTypes.RequestCertificate),
+				&cmdData.RequestCertificate{
+					ReferencedAggregateId:   clusterInfo.Id,
+					ReferencedAggregateType: aggregates.Cluster.String(),
+					SigningRequest:          []byte("this is a CSR"),
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Wait to propagate
+			time.Sleep(1000 * time.Millisecond)
+
+			observed := testReactor.GetObservedEvents()
+			Expect(len(observed)).ToNot(Equal(0))
+			Expect(observed[0].AggregateID().String()).To(Equal(reply.AggregateId))
+
+			certEv := es.NewEvent(
+				ctx,
+				events.CertificateIssued,
+				es.ToEventDataFromProto(&eventdata.CertificateIssued{
+					Certificate: &common.CertificateChain{
+						Ca:          expectedClusterCACertBundle,
+						Certificate: []byte("this is a cert"),
+					},
+				}),
+				time.Now().UTC(),
+				observed[0].AggregateType(),
+				observed[0].AggregateID(),
+				observed[0].AggregateVersion()+1)
+			err = testReactor.Emit(ctx, certEv)
+			Expect(err).ToNot(HaveOccurred())
+
+			time.Sleep(1000 * time.Millisecond)
+
+			certificate, err := certificateServiceClient().GetCertificate(ctx,
+				&domainApi.GetCertificateRequest{
+					AggregateId:   clusterInfo.GetId(),
+					AggregateType: aggregates.Cluster.String(),
+				})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(certificate.GetCertificate()).ToNot(BeNil())
+			Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
+		})
 	})
 })
 
