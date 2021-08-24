@@ -15,7 +15,7 @@
 We're implementing a `User` repository.
 Every Repository must implement the interface [`Repository`](../../pkg/eventsourcing/repository.go).
 
-1. Add a new repository in [``](../../pkg/domain/repositories) called `UserRepository`.
+1. Add a new repository in [`Repositories`](../../pkg/domain/repositories) called `UserRepository`.
     * There are basic implementations like an in-memory repository.
     * This can be used as a quick start.
     * For more complex things like a database backed repository you have to implement it yourself.
