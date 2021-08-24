@@ -44,21 +44,10 @@ var _ = Describe("domain/certificate_repo", func() {
 	newCertificate.Created = timestamp.New(time.Now())
 
 	It("can retrieve the certificate", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
-		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
-		Expect(err).NotTo(HaveOccurred())
-
-		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
-
-		inMemoryUserRepo := es_repos.NewInMemoryRepository()
-		userRepo := NewUserRepository(inMemoryUserRepo, userRoleBindingRepo)
-		err = inMemoryUserRepo.Upsert(context.Background(), adminUser)
-		Expect(err).NotTo(HaveOccurred())
-
 		inMemCertRepo := es_repos.NewInMemoryRepository()
-		certRepo := NewCertificateRepository(inMemCertRepo, userRepo)
+		certRepo := NewCertificateRepository(inMemCertRepo)
 
-		err = inMemCertRepo.Upsert(context.Background(), newCertificate)
+		err := inMemCertRepo.Upsert(context.Background(), newCertificate)
 		Expect(err).NotTo(HaveOccurred())
 		cert, err := certRepo.GetCertificate(context.Background(),
 			&domain.GetCertificateRequest{

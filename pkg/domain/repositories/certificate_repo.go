@@ -11,7 +11,7 @@ import (
 )
 
 type certificateRepository struct {
-	*domainRepository
+	es.Repository
 }
 
 // CertificateRepository is a repository for reading and writing certificate projections.
@@ -32,9 +32,9 @@ type WriteOnlyCertificateRepository interface {
 }
 
 // NewCertificateRepository creates a repository for reading and writing certificate projections.
-func NewCertificateRepository(repository es.Repository, userRepo UserRepository) CertificateRepository {
+func NewCertificateRepository(repository es.Repository) CertificateRepository {
 	return &certificateRepository{
-		domainRepository: NewDomainRepository(repository, userRepo),
+		Repository: repository,
 	}
 }
 
@@ -53,11 +53,6 @@ func (r *certificateRepository) GetCertificate(ctx context.Context, req *domApi.
 	certificate, ok := projection.(*projections.Certificate)
 	if !ok {
 		return nil, esErrors.ErrInvalidProjectionType
-	}
-
-	err = r.addMetadata(ctx, certificate.DomainProjection)
-	if err != nil {
-		return nil, err
 	}
 
 	return certificate, nil

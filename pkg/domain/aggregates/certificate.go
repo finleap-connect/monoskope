@@ -25,11 +25,12 @@ type CertificateAggregate struct {
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate() es.Aggregate {
+func NewCertificateAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &CertificateAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
 			BaseAggregate: es.NewBaseAggregate(aggregates.Certificate),
 		},
+		aggregateManager: aggregateManager,
 	}
 }
 

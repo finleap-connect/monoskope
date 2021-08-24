@@ -15,7 +15,7 @@ import (
 var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle RequestCertificateCommand correctly", func() {
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		reply, err := newRequestCertificateCommand(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
@@ -38,7 +38,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 
 	It("should handle CertificateRequested event correctly", func() {
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   expectedReferencedAggregateId.String(),
@@ -58,7 +58,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle CertificateRequestIssuer event correctly", func() {
 
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		esEvent := es.NewEvent(ctx, events.CertificateRequestIssued, nil, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
@@ -69,7 +69,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle CertificateIssued event correctly", func() {
 
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		cagg := agg.(*CertificateAggregate)
 		cagg.signingRequest = expectedCSR
@@ -99,7 +99,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle CertificateIssueingFailed event correctly", func() {
 
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		esEvent := es.NewEvent(ctx, events.CertificateIssueingFailed, nil, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())

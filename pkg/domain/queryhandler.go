@@ -31,7 +31,7 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
 	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository())
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
-	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository(), d.UserRepository)
+	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
 
 	// Setup projectors
