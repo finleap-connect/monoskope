@@ -360,7 +360,7 @@ var _ = Describe("integration", func() {
 			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
 			err = testReactor.Emit(ctx, es.NewEvent(
-				ctx,
+				mdManager.GetOutgoingGrpcContext(),
 				events.CertificateIssued,
 				es.ToEventDataFromProto(&eventdata.CertificateIssued{
 					Certificate: &common.CertificateChain{
