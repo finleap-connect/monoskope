@@ -47,6 +47,10 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 		if err := u.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
+	case events.UserDeleted:
+		if err := u.projectDeleted(event, p.DomainProjection); err != nil {
+			return nil, err
+		}
 	default:
 		return nil, errors.ErrInvalidEventType
 	}

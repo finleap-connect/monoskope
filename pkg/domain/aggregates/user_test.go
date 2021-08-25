@@ -40,13 +40,21 @@ var _ = Describe("Unit Test for User Aggregate", func() {
 			Name:  expectedUserName,
 			Email: expectedEmail,
 		})
-		esEvent := es.NewEvent(ctx, events.UserCreated, ed, time.Now().UTC(),
+		createEvent := es.NewEvent(ctx, events.UserCreated, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
-		err := agg.ApplyEvent(esEvent)
+		err := agg.ApplyEvent(createEvent)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(agg.(*UserAggregate).Name).To(Equal(expectedUserName))
 		Expect(agg.(*UserAggregate).Email).To(Equal(expectedEmail))
+
+		deleteEvent := es.NewEvent(ctx, events.UserDeleted, nil, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err = agg.ApplyEvent(deleteEvent)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(agg.(*UserAggregate).Deleted()).To(BeTrue())
 	})
 })

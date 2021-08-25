@@ -54,6 +54,13 @@ func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comman
 			Version: a.Version(),
 		}
 		return reply, nil
+	case *commands.DeleteUserCommand:
+		_ = a.AppendEvent(ctx, events.UserDeleted, nil)
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	}
 	return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
@@ -89,6 +96,8 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+	case events.UserDeleted:
+		a.SetDeleted(true)
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
