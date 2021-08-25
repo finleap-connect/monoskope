@@ -158,7 +158,38 @@ var _ = Describe("integration", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 	})
+	It("can delete a user", func() {
+		createCommand, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			&cmdData.CreateUserCommandData{Name: "John Doe", Email: "john.doe@monoskope.io"},
+		)
+		Expect(err).ToNot(HaveOccurred())
 
+		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), createCommand)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
+
+		// update userId, as the "create" command will have changed it.
+		userId := uuid.MustParse(reply.AggregateId)
+
+		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userId, commandTypes.DeleteUser))
+		Expect(err).ToNot(HaveOccurred())
+
+		// Wait to propagate
+		time.Sleep(1000 * time.Millisecond)
+
+		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("john.doe@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(user).ToNot(BeNil())
+		Expect(user.GetEmail()).To(Equal("john.doe@monoskope.io"))
+		Expect(user.Id).To(Equal(userId.String()))
+
+		// Get admin user id to compare with metadata
+		admin, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
+		Expect(user.GetMetadata().GetDeletedById()).To(Equal(admin.GetId()))
+	})
 	It("can manage a tenant", func() {
 		user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
 		Expect(err).ToNot(HaveOccurred())
