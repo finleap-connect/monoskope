@@ -36,6 +36,7 @@ var _ = Describe("domain/certificate_repo", func() {
 
 	newCertificate := projections.NewCertificateProjection(certId).(*projections.Certificate)
 	newCertificate.Certificate = &projectionsApi.Certificate{
+		Id:                    certId.String(),
 		ReferencedAggregateId: someAggregateId.String(),
 		AggregateType:         expectedAggregateType,
 		Certificate:           expectedCert,
