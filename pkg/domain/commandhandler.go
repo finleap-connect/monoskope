@@ -38,6 +38,9 @@ func registerAggregates(esClient esApi.EventStoreClient) es.AggregateStore {
 	// Cluster
 	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewClusterAggregate(aggregateManager) })
 
+	// Certificate
+	es.DefaultAggregateRegistry.RegisterAggregate(func() es.Aggregate { return aggregates.NewCertificateAggregate(aggregateManager) })
+
 	return aggregateManager
 }
 

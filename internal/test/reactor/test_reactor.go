@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/eventstore"
-	"gitlab.figo.systems/platform/monoskope/monoskope/internal/gateway/auth"
 	"gitlab.figo.systems/platform/monoskope/monoskope/internal/messagebus"
 	esApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/eventsourcing"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -23,22 +21,11 @@ type testReactor struct {
 	observedEvents []es.Event
 }
 
-func NewTestReactor() (*testReactor, error) {
+func NewTestReactor() *testReactor {
 	r := &testReactor{
 		log: logger.WithName("reactorEventHandler"),
 	}
-
-	err := r.init()
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-
-}
-
-func (*testReactor) init() error {
-	return nil
+	return r
 }
 
 func (r *testReactor) Setup(ctx context.Context, env *eventstore.TestEnv, client esApi.EventStoreClient) error {
@@ -57,12 +44,7 @@ func (r *testReactor) Setup(ctx context.Context, env *eventstore.TestEnv, client
 	}
 
 	// Register event handler with event bus to consume all events
-	if err := r.msgBus.AddHandler(ctx, r, r.msgBus.Matcher().Any()); err != nil {
-		return err
-	}
-
-	return nil
-
+	return r.msgBus.AddHandler(ctx, r, r.msgBus.Matcher().Any())
 }
 
 func (r *testReactor) Close() {
@@ -71,7 +53,7 @@ func (r *testReactor) Close() {
 
 // HandleEvent handles a given event returns 0..* Events in reaction or an error
 func (r *testReactor) HandleEvent(ctx context.Context, event es.Event) error {
-
+	r.log.Info("Event observed.", "Event", event.String())
 	r.observedEvents = append(r.observedEvents, event)
 	return nil
 }
@@ -81,17 +63,11 @@ func (r *testReactor) GetObservedEvents() []es.Event {
 }
 
 func (r *testReactor) Emit(ctx context.Context, event es.Event) error {
-	err := checkUserId(event)
-	if err != nil {
-		r.log.Error(err, "Event metadata do not contain user information.")
-		return err
-	}
-
 	params := backoff.NewExponentialBackOff()
 	params.MaxElapsedTime = 60 * time.Second
-	err = backoff.Retry(func() error {
+	err := backoff.Retry(func() error {
 		if err := r.storeEvent(ctx, event); err != nil {
-			r.log.Error(err, "Failed to send event to EventStore. Retrying...", "AggregateID", event.AggregateID(), "AggregateType", event.AggregateType(), "EventType", event.EventType())
+			r.log.Error(err, "Failed to send event to EventStore. Retrying...", "Event", event.String())
 			return err
 		}
 		return nil
@@ -128,9 +104,4 @@ func (r *testReactor) storeEvent(ctx context.Context, event es.Event) error {
 	}
 
 	return nil
-}
-
-func checkUserId(event es.Event) error {
-	_, err := uuid.Parse(event.Metadata()[auth.HeaderAuthId])
-	return err
 }

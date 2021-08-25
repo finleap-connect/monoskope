@@ -18,4 +18,4 @@ message CertificateRequested {
   bytes signing_request = 3;
 }
 
-message CertificateIssued { common.Certificate certificate = 1; }
+message CertificateIssued { common.CertificateChain certificate = 1; }

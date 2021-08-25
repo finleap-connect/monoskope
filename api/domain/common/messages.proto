@@ -18,8 +18,8 @@ message ServiceInformation {
   string commit = 3;
 }
 
-// Certificate
-message Certificate {
+// Chain of certificates
+message CertificateChain {
   // CA Certificate
   bytes ca = 1;
   // Certificate

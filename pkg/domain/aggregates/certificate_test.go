@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/common"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain/eventdata"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/events"
 	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
@@ -14,7 +15,7 @@ import (
 var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 	It("should handle RequestCertificateCommand correctly", func() {
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		reply, err := newRequestCertificateCommand(ctx, agg)
 		Expect(err).NotTo(HaveOccurred())
@@ -37,7 +38,7 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 
 	It("should handle CertificateRequested event correctly", func() {
 		ctx := createSysAdminCtx()
-		agg := NewCertificateAggregate()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.CertificateRequested{
 			ReferencedAggregateId:   expectedReferencedAggregateId.String(),
@@ -51,7 +52,59 @@ var _ = Describe("Pkg/Domain/Aggregates/Certificate", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(agg.(*CertificateAggregate).signingRequest).To(Equal(expectedCSR))
-		Expect(agg.(*CertificateAggregate).relatedAggregateId).To(Equal(expectedReferencedAggregateId))
-		Expect(agg.(*CertificateAggregate).relatedAggregateType).To(Equal(expectedReferencedAggregateType))
+		Expect(agg.(*CertificateAggregate).referencedAggregateId).To(Equal(expectedReferencedAggregateId))
+		Expect(agg.(*CertificateAggregate).referencedAggregateType).To(Equal(expectedReferencedAggregateType))
+	})
+	It("should handle CertificateRequestIssuer event correctly", func() {
+
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
+
+		esEvent := es.NewEvent(ctx, events.CertificateRequestIssued, nil, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err := agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
+	})
+	It("should handle CertificateIssued event correctly", func() {
+
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
+
+		cagg := agg.(*CertificateAggregate)
+		cagg.signingRequest = expectedCSR
+		cagg.referencedAggregateId = expectedReferencedAggregateId
+		cagg.referencedAggregateType = expectedReferencedAggregateType
+
+		ed := es.ToEventDataFromProto(&eventdata.CertificateIssued{
+			Certificate: &common.CertificateChain{
+				Ca:          expectedClusterCACertBundle,
+				Certificate: expectedCertificate,
+			},
+		})
+
+		esEvent := es.NewEvent(ctx, events.CertificateIssued, ed, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err := agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(cagg.signingRequest).To(Equal(expectedCSR))
+		Expect(cagg.referencedAggregateId).To(Equal(expectedReferencedAggregateId))
+		Expect(cagg.referencedAggregateType).To(Equal(expectedReferencedAggregateType))
+		Expect(cagg.caCertBundle).To(Equal(expectedClusterCACertBundle))
+		Expect(cagg.certificate).To(Equal(expectedCertificate))
+
+	})
+	It("should handle CertificateIssueingFailed event correctly", func() {
+
+		ctx := createSysAdminCtx()
+		agg := NewCertificateAggregate(NewTestAggregateManager())
+
+		esEvent := es.NewEvent(ctx, events.CertificateIssueingFailed, nil, time.Now().UTC(),
+			agg.Type(), agg.ID(), agg.Version())
+
+		err := agg.ApplyEvent(esEvent)
+		Expect(err).NotTo(HaveOccurred())
 	})
 })

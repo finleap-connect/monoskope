@@ -16,17 +16,21 @@ import (
 // CertificateAggregate is an aggregate for certificates.
 type CertificateAggregate struct {
 	*DomainAggregateBase
-	relatedAggregateId   uuid.UUID
-	relatedAggregateType es.AggregateType
-	signingRequest       []byte
+	aggregateManager        es.AggregateStore
+	referencedAggregateId   uuid.UUID
+	referencedAggregateType es.AggregateType
+	signingRequest          []byte
+	certificate             []byte
+	caCertBundle            []byte
 }
 
 // CertificateAggregate creates a new CertificateAggregate
-func NewCertificateAggregate() es.Aggregate {
+func NewCertificateAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &CertificateAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
-			BaseAggregate: es.NewBaseAggregate(aggregates.Cluster),
+			BaseAggregate: es.NewBaseAggregate(aggregates.Certificate),
 		},
+		aggregateManager: aggregateManager,
 	}
 }
 
@@ -47,11 +51,11 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
 
-		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
+		ev := a.AppendEvent(ctx, events.CertificateRequested, ed)
 
 		reply := &es.CommandReply{
 			Id:      a.ID(),
-			Version: a.Version(),
+			Version: ev.AggregateVersion(),
 		}
 		return reply, nil
 	default:
@@ -74,9 +78,21 @@ func (a *CertificateAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 
-		a.relatedAggregateId = id
-		a.relatedAggregateType = es.AggregateType(data.GetReferencedAggregateType())
+		a.referencedAggregateId = id
+		a.referencedAggregateType = es.AggregateType(data.GetReferencedAggregateType())
 		a.signingRequest = data.GetSigningRequest()
+	case events.CertificateIssued:
+		data := &eventdata.CertificateIssued{}
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		a.certificate = data.Certificate.GetCertificate()
+		a.caCertBundle = data.Certificate.GetCa()
+	case events.CertificateRequestIssued:
+		// ignored as it does not update the aggregate. TODO: the state of the signing should be tracked in the aggregate, and thus in the projection.
+	case events.CertificateIssueingFailed:
+		// ignored as it does not update the aggregate. TODO: the state of the signing should be tracked in the aggregate, and thus in the projection.
 	default:
 		return fmt.Errorf("couldn't handle event of type '%s'", event.EventType())
 	}
