@@ -31,6 +31,7 @@ var (
 	expectedCSR                     = []byte("This should be a CSR")
 	expectedReferencedAggregateId   = uuid.New()
 	expectedReferencedAggregateType = aggregates.Cluster
+	expectedCertificate             = []byte("this should be the certificate")
 
 	expectedClusterDisplayName      = "the one cluster"
 	expectedClusterName             = "one-cluster"

@@ -17,7 +17,7 @@ func init() {
 	es.DefaultCommandRegistry.RegisterCommand(NewRequestCertificateCommand)
 }
 
-// RequestCertificateCommand is a command for creating a cluster.
+// RequestCertificateCommand is a command for requesting a certificate for a given aggregate.
 type RequestCertificateCommand struct {
 	*es.BaseCommand
 	cmdData.RequestCertificate

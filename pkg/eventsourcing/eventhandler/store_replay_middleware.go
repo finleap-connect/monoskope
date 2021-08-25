@@ -51,7 +51,8 @@ func (m *eventStoreReplayEventHandler) HandleEvent(ctx context.Context, event es
 func (m *eventStoreReplayEventHandler) applyEventsFromStore(ctx context.Context, event es.Event, projectionVersion uint64) error {
 	// Retrieve events from store
 	eventStream, err := m.esClient.Retrieve(ctx, &apiEs.EventFilter{
-		AggregateType: wrapperspb.String(event.AggregateID().String()),
+		AggregateId:   wrapperspb.String(event.AggregateID().String()),
+		AggregateType: wrapperspb.String(event.AggregateType().String()),
 		MaxVersion:    wrapperspb.UInt64(event.AggregateVersion()),
 		MinVersion:    wrapperspb.UInt64(projectionVersion),
 	})
