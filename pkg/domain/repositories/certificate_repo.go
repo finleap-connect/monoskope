@@ -1,0 +1,58 @@
+package repositories
+
+import (
+	"context"
+
+	domApi "gitlab.figo.systems/platform/monoskope/monoskope/pkg/api/domain"
+	projections "gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/projections"
+	es "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing"
+	esErrors "gitlab.figo.systems/platform/monoskope/monoskope/pkg/eventsourcing/errors"
+)
+
+type certificateRepository struct {
+	es.Repository
+}
+
+// CertificateRepository is a repository for reading and writing certificate projections.
+type CertificateRepository interface {
+	es.Repository
+	ReadOnlyCertificateRepository
+	WriteOnlyCertificateRepository
+}
+
+// ReadOnlyCertificateRepository is a repository for reading certificate projections.
+type ReadOnlyCertificateRepository interface {
+	// GetCertificate retrieves certificates by aggregate type and id
+	GetCertificate(context.Context, *domApi.GetCertificateRequest) (*projections.Certificate, error)
+}
+
+// WriteOnlyCertificateRepository is a repository for writing certificate projections.
+type WriteOnlyCertificateRepository interface {
+}
+
+// NewCertificateRepository creates a repository for reading and writing certificate projections.
+func NewCertificateRepository(repository es.Repository) CertificateRepository {
+	return &certificateRepository{
+		Repository: repository,
+	}
+}
+
+// Retrieve certificates for a specified aggregate ID and type.
+func (r *certificateRepository) GetCertificate(ctx context.Context, req *domApi.GetCertificateRequest) (*projections.Certificate, error) {
+	ps, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, projection := range ps {
+		certificate, ok := projection.(*projections.Certificate)
+		if !ok {
+			return nil, esErrors.ErrInvalidProjectionType
+		}
+		if certificate.ReferencedAggregateId == req.AggregateId && certificate.AggregateType == req.AggregateType {
+			return certificate, nil
+		}
+	}
+
+	return nil, esErrors.ErrProjectionNotFound
+}

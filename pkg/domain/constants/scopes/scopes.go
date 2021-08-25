@@ -1,3 +1,6 @@
+// Package scopes sets the scope of permissions granted to a role: System, Tenant or Cluster.
+// For the scopes Tenant and Cluster, a role binding will define to which specific tenant or cluster
+// the role should be aplied for a given user.
 package scopes
 
 import (
