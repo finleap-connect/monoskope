@@ -182,7 +182,7 @@ ambassador:
   replicaCount: 1
   image:
     repository: gitlab.figo.systems/platform/dependency_proxy/containers/datawire/ambassador
-    tag: 1.12.4
+    tag: 1.14.1
   enableAES: false
   crds:
     create: false
