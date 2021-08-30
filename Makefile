@@ -31,7 +31,7 @@ latest-tag: ## Echos the latest tag
 	@echo $(LATEST_TAG)
 
 add-license: ## Adds the license to every go file
-	docker run -it ghcr.io/google/addlicense -v ${PWD}:/. -c "Monoskope Authors" -l "apache" *.go
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" .
 
 ##@ General
 
