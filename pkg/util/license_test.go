@@ -28,6 +28,8 @@ import (
 
 var skipPaths = []string{
 	"../../pkg/api/",
+	"../../.go/",
+	"../../test/",
 }
 
 var _ = Describe("License", func() {
@@ -48,7 +50,7 @@ var _ = Describe("License", func() {
 			if err != nil {
 				return nil
 			}
-			if !bytes.HasPrefix(content, []byte("//")) {
+			if !bytes.HasPrefix(content, []byte("// Copyright")) {
 				return fmt.Errorf("%s: license header missing", path)
 			}
 			return nil
