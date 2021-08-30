@@ -9,8 +9,8 @@
 
 ## Acknowledgments
 
-* The implementation of CQRS/ES in Monoskope is not cloned, but inspired by [Event Horizon](https://github.com/looplab/eventhorizon) a CQRS/ES toolkit for Go.
-* The implementation of the auto-reconnect RabbitMQ Client is forked from [wagslane/go-rabbitmq](https://github.com/wagslane/go-rabbitmq).
+* The implementation of CQRS/ES in Monoskope is not cloned, but inspired by [looplab/eventhorizon](https://github.com/looplab/eventhorizon), a CQRS/ES toolkit for Go.
+* The implementation of the RabbitMQ client is forked from [wagslane/go-rabbitmq](https://github.com/wagslane/go-rabbitmq), a wrapper of streadway/amqp that provides reconnection logic.
 
 ## Documentation
 
