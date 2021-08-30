@@ -30,6 +30,9 @@ commit-hash: ## Echos the current commit hash
 latest-tag: ## Echos the latest tag
 	@echo $(LATEST_TAG)
 
+add-license: ## Adds the license to every go file
+	docker run -it ghcr.io/google/addlicense -v ${PWD}:/. -c "Monoskope Authors" -l "apache" *.go
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
