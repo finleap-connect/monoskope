@@ -30,6 +30,12 @@ commit-hash: ## Echos the current commit hash
 latest-tag: ## Echos the latest tag
 	@echo $(LATEST_TAG)
 
+add-license: ## Adds the license to every file
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v .
+
+check-license: ## Checks thath the license is set on every file
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v -check .
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
