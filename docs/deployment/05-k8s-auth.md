@@ -37,30 +37,9 @@ This depends on the current authentication state of `monoctl`.
 If a token is available which hasn't expired yet, no authentication flow is necessary here.
 * `monoctl cluster auth` call may return immediately without talking to the control plane if there is a cached token available.
 
-## Register your cluster with Monoskope
+## Prerequisites
 
-To be able to login you have to register the cluster with the m8 control plane first:
-
-```shell
-$ monoctl create cluster --help
-Creates a cluster. The name and label are derived from the dns-address given, and can be overridden by flags. This is most likely needed with the label as it should be relatively short (ideally less than 20 characters)
-
-Usage:
-  monoctl create cluster [URL] [flags]
-
-Flags:
-  -f, --ca-certs-from string   Read CA certificate bundle from given file
-  -h, --help                   help for cluster
-  -l, --label string           Short label of the cluster
-  -n, --name string            Name of the cluster
-```
-
-The URL is the api-server address with protocol, e.g.
-https://api.kubernetes.your.mom. Take it from the kubeconfig file for this cluster. 
-
-The CA certificate bundle has to be the CA of your KubeAPIServer so when
-`monoctl` updates your `kubeconfig` the CA is known to `kubectl` when talking
-to your KubeAPIServer. Take it from the kubeconfig file for this cluster.
+You need to [register your cluster](04-register-k8s-cluster.md) with the m8 control plane first.
 
 ## You have control over the KubeAPIServer
 
