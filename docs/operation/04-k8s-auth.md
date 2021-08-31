@@ -39,7 +39,7 @@ If a token is available which hasn't expired yet, no authentication flow is nece
 
 ## Prerequisites
 
-You need to [register your cluster](04-register-k8s-cluster.md) with the m8 control plane first.
+You need to [register your cluster](03-register-k8s-cluster.md) with the m8 control plane first.
 
 ## You have control over the KubeAPIServer
 
