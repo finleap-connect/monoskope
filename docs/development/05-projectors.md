@@ -4,16 +4,16 @@
 
 # Implementing Projectors
 
-`Projectors` contain the logic to process `EventStreams` and build up the state of [`Projections`](projections.md) out of it. They use [`Repositories`](repositories.md) to get cached [`Projections`](projections.md) and store them.
+`Projectors` contain the logic to process `EventStreams` and build up the state of [`Projections`](04-projections.md) out of it. They use [`Repositories`](06-repositories.md) to get cached [`Projections`](04-projections.md) and store them.
 
 ## Prerequisites
 
-`Projectors` handle [`Projections`](projections.md).
+`Projectors` handle [`Projections`](04-projections.md).
 So have a look at them first.
 
 ## Steps to add a new `Projector`
 
-In the guide we create a `Projector` for user [`Projections`](projections.md).
+In the guide we create a `Projector` for user [`Projections`](04-projections.md).
 
 1. Add implementation for your new projector at [`pkg/domain/projectors`](../../pkg/domain/projectors):
 

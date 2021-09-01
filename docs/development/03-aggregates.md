@@ -5,12 +5,12 @@
 # Implementing `Aggregates`
 
 An `Aggregate` is an entity in your business model (e.g. `User`) which has a state built from the `EventStream` belonging to it.
-[`Commands`](commands.md) can be applied to it and an `Aggregate` may emit [`Event(s)`](events.md) in reaction to a `Aggregate`.
+[`Commands`](02-commands.md) can be applied to it and an `Aggregate` may emit [`Event(s)`](01-events.md) in reaction to a `Aggregate`.
 
 ## Prerequisites
 
-[`Aggregates`](aggregates.md) emit [`Event(s)`](events.md).
-So before adding a new `Aggregate` you might have a look at the docs about [`Events`](events.md) first.
+[`Aggregates`](03-aggregates.md) emit [`Event(s)`](01-events.md).
+So before adding a new `Aggregate` you might have a look at the docs about [`Events`](01-events.md) first.
 
 ## Steps to add a new `Aggregate`
 
@@ -20,7 +20,7 @@ So before adding a new `Aggregate` you might have a look at the docs about [`Eve
     User es.AggregateType = "User"
     ```
 
-1. Add a new `Aggregate` implementation at [`pkg/domain/aggregates`](./../pkg/domain/aggregates):
+1. Add a new `Aggregate` implementation at [`pkg/domain/aggregates`](../../pkg/domain/aggregates):
     * The new `Aggregate` must implement the interface defined in [`pkg/eventsourcing/aggregate.go`](../../pkg/eventsourcing/aggregate.go)
 
     ```go
@@ -57,7 +57,7 @@ So before adding a new `Aggregate` you might have a look at the docs about [`Eve
 
 1. Register your new `Aggregate` with the [default registry](../../pkg/domain/commandhandler.go).
 
-1. Implement [`Commands`](commands.md) and [`Events`](events.md) to actually have some logic.
+1. Implement [`Commands`](02-commands.md) and [`Events`](01-events.md) to actually have some logic.
 
 <!-- 
 ## To create a new aggregate
