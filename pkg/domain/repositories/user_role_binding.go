@@ -36,6 +36,8 @@ type UserRoleBindingRepository interface {
 type ReadOnlyUserRoleBindingRepository interface {
 	// ByUserId searches for all UserRoleBinding projection's by the a user id.
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
+	// ByUserIdAndScope searches for all UserRoleBinding projection's by the a user id and the scope.
+	ByUserIdAndScope(context.Context, uuid.UUID, es.Scope) ([]*projections.UserRoleBinding, error)
 	// ByScopeAndResource returns all UserRoleBinding projections matching the given scope and resource.
 	ByScopeAndResource(context.Context, es.Scope, uuid.UUID) ([]*projections.UserRoleBinding, error)
 }
@@ -58,6 +60,24 @@ func (r *userRoleBindingRepository) ByUserId(ctx context.Context, userId uuid.UU
 	for _, projection := range ps {
 		if userRoleBinding, ok := projection.(*projections.UserRoleBinding); ok {
 			if userId.String() == userRoleBinding.GetUserId() {
+				userRoleBindings = append(userRoleBindings, userRoleBinding)
+			}
+		}
+	}
+	return userRoleBindings, nil
+}
+
+// ByUserIdAndScope searches for all UserRoleBinding projection's by the a user id and the scope.
+func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId uuid.UUID, scope es.Scope) ([]*projections.UserRoleBinding, error) {
+	ps, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var userRoleBindings []*projections.UserRoleBinding
+	for _, projection := range ps {
+		if userRoleBinding, ok := projection.(*projections.UserRoleBinding); ok {
+			if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == scope.String() {
 				userRoleBindings = append(userRoleBindings, userRoleBinding)
 			}
 		}

@@ -24,19 +24,22 @@ type TenantUser struct {
 	*projections.TenantUser
 }
 
-func NewTenantUserProjection(tenantId uuid.UUID, user *User, rolebinding *UserRoleBinding) *TenantUser {
+func NewTenantUserProjection(tenantId uuid.UUID, user *User, rolebindings []*UserRoleBinding) *TenantUser {
 	dp := NewDomainProjection()
-	return &TenantUser{
+	tu := &TenantUser{
 		DomainProjection: dp,
 		TenantUser: &projections.TenantUser{
-			Id:         user.Id,
-			Name:       user.Name,
-			Email:      user.Email,
-			TenantRole: rolebinding.Role,
-			TenantId:   tenantId.String(),
-			Metadata:   &dp.LifecycleMetadata,
+			Id:       user.Id,
+			Name:     user.Name,
+			Email:    user.Email,
+			TenantId: tenantId.String(),
+			Metadata: &dp.LifecycleMetadata,
 		},
 	}
+	for _, roleBinding := range rolebindings {
+		tu.TenantRoles = append(tu.TenantRoles, roleBinding.Role)
+	}
+	return tu
 }
 
 // ID implements the ID method of the Aggregate interface.

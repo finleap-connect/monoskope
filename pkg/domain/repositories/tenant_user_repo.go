@@ -16,7 +16,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"gitlab.figo.systems/platform/monoskope/monoskope/pkg/domain/constants/scopes"
@@ -49,7 +48,7 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 		return nil, err
 	}
 
-	userMap := make(map[string]*projections.TenantUser)
+	userMap := make(map[string]bool)
 	var tenantUsers []*projections.TenantUser
 
 	for _, binding := range roleBindings {
@@ -58,12 +57,13 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 			return nil, err
 		}
 
-		tu := projections.NewTenantUserProjection(id, user, binding)
-		if u, ok := userMap[user.Id]; ok {
-			u.TenantRole = fmt.Sprintf("%s,%s", tu.TenantRole, u.TenantRole)
-		} else {
-			userMap[user.Id] = tu
-			tenantUsers = append(tenantUsers, tu)
+		if _, ok := userMap[user.Id]; !ok {
+			bindings, err := r.userRoleBindingRepo.ByUserIdAndScope(ctx, user.ID(), scopes.Tenant)
+			if err != nil {
+				return nil, err
+			}
+			userMap[user.Id] = true
+			tenantUsers = append(tenantUsers, projections.NewTenantUserProjection(id, user, bindings))
 		}
 	}
 
