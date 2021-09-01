@@ -29,6 +29,9 @@ const (
 	// User role
 	User es.Role = "user"
 
+	// OnCall role
+	OnCall es.Role = "oncall"
+
 	// K8sOperator role
 	K8sOperator es.Role = "k8soperator"
 )
@@ -38,6 +41,7 @@ var AvailableRoles = []es.Role{
 	Admin,
 	User,
 	K8sOperator,
+	OnCall,
 }
 
 func ValidateRole(role string) error {

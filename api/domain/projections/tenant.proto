@@ -45,8 +45,8 @@ message TenantUser {
   string name = 2;
   // Email address of the user
   string email = 3;
-  // Role of the user within the tenant
-  string tenant_role = 4;
+  // Roles of the user within the tenant
+  repeated string tenant_roles = 4;
   // Unique identifier of the tenant (UUID 128-bit number)
   string tenant_id = 5;
   // Metadata about the projection

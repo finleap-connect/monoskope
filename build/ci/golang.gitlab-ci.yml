@@ -23,7 +23,7 @@ variables:
   MINIO_URL: "127.0.0.1:9000"
 
 .gobase:
-  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:v0.0.3
+  image: registry.gitlab.figo.systems/platform/monoskope/m8-builder:latest
   except:
     - schedules
   variables:
@@ -40,6 +40,9 @@ cache:golang:
   extends: .gobase
   script:
     - make go-mod
+  only:
+    changes:
+        - "go.sum"
 
 .gobase-no-push:
   extends: .gobase
@@ -87,7 +90,7 @@ deliver:gateway:
     - APP=gateway
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - COMMIT=$(git rev-parse --short HEAD)
-    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT --build-arg NAME=$APP
   dependencies:
     - lint:golang
     - test:golang
@@ -99,7 +102,7 @@ deliver:eventstore:
     - APP=eventstore
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - COMMIT=$(git rev-parse --short HEAD)
-    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT --build-arg NAME=$APP
   dependencies:
     - lint:golang
     - test:golang
@@ -111,7 +114,7 @@ deliver:commandhandler:
     - APP=commandhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - COMMIT=$(git rev-parse --short HEAD)
-    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT --build-arg NAME=$APP
   dependencies:
     - lint:golang
     - test:golang
@@ -123,7 +126,7 @@ deliver:queryhandler:
     - APP=queryhandler
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - COMMIT=$(git rev-parse --short HEAD)
-    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT --build-arg NAME=$APP
   dependencies:
     - lint:golang
     - test:golang
@@ -135,7 +138,7 @@ deliver:clusterbootstrapreactor:
     - APP=clusterbootstrapreactor
     - VERSION=$(sh ./build/ci/configure_versions.sh)
     - COMMIT=$(git rev-parse --short HEAD)
-    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT
+    - build-image --file build/package/go.Dockerfile -i $APP --tag $VERSION --build-arg VERSION=$VERSION --build-arg GO_MODULE=$GO_MODULE --build-arg SRC="cmd/$APP/*.go" --build-arg COMMIT=$COMMIT --build-arg NAME=$APP
   dependencies:
     - lint:golang
     - test:golang

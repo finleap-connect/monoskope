@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.gitlab.figo.systems/finleap-cloud-tools/golang-builder:1.16-alpine3.13 AS builder
+FROM registry.gitlab.figo.systems/platform/monoskope/m8-builder:latest AS builder
 
 ARG VERSION
 ARG GO_MODULE
 ARG SRC
 ARG COMMIT
-
-
-# Install SSL ca certificates.
-# Ca-certificates is required to call HTTPS endpoints.
-RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
+ARG NAME
 
 WORKDIR /workdir
 
 ENV GOPATH /workdir/.go
 ENV GRPC_HEALTH_PROBE_VERSION=v0.3.5
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
+
 RUN wget -qOgrpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x grpc-health-probe
 
@@ -39,7 +39,7 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 COPY pkg/ pkg/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o app -a -installsuffix cgo --tags release -ldflags "-X=${GO_MODULE}/internal/version.Version=${VERSION} -X=${GO_MODULE}/internal/version.Commit=${COMMIT}" ${SRC}
+RUN go build -o app --tags release -ldflags "-X=${GO_MODULE}/internal/version.Version=${VERSION} -X=${GO_MODULE}/internal/version.Commit=${COMMIT} -X=${GO_MODULE}/internal/version.Name=${NAME}" ${SRC}
 
 FROM scratch
 
