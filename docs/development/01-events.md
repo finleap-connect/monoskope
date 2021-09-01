@@ -11,7 +11,7 @@ The `Event` types are defined as constants of type [`EventType`](../../pkg/event
 
 ## Prerequisites
 
-`Events` alone won't make the system work. They only make sense in combination with [`Commands`](02-commands.md) executed on [`Aggregates`](aggregates.md) which emit `Event(s)`.
+`Events` alone won't make the system work. They only make sense in combination with [`Commands`](02-commands.md) executed on [`Aggregates`](03-aggregates.md) which emit `Event(s)`.
 So before adding a new `Event` you might have a look at the docs about them first.
 
 ## Steps to add a new `Event`

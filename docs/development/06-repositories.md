@@ -4,18 +4,18 @@
 
 # Implementing Repositories
 
-`Repositories` are all about storing and retrieving [`Projections`](projections.md). They can be in-memory, a database behind them or whatever.
+`Repositories` are all about storing and retrieving [`Projections`](04-projections.md). They can be in-memory, a database behind them or whatever.
 
 ## Prerequisites
 
-`Repositories` store and load [`Projections`](projections.md) from in-memory or database or whatever you like.
+`Repositories` store and load [`Projections`](04-projections.md) from in-memory or database or whatever you like.
 
 ## Steps to add a new `Repository`
 
 We're implementing a `User` repository.
 Every Repository must implement the interface [`Repository`](../../pkg/eventsourcing/repository.go).
 
-1. Add a new repository in [``](../../pkg/domain/repositories) called `UserRepository`.
+1. Add a new repository in [`Repositories`](../../pkg/domain/repositories) called `UserRepository`.
     * There are basic implementations like an in-memory repository.
     * This can be used as a quick start.
     * For more complex things like a database backed repository you have to implement it yourself.
