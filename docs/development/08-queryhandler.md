@@ -3,6 +3,3 @@
 1. create a new `service` in [`api/domain/queryhandler_service.proto`](../../api/domain/queryhandler_service.proto). The appropriate messages should be placed into the relevant [`api/domain/eventdata/`](../../api/domain/eventdata) and [`api/domain/projections/`](../../api/domain/projections) files.
 
 1. add mapping to the ambassador configuration in [`build/package/helm/monoskope/templates/ambassador/ambassador-mapping.yaml`](../../build/package/helm/monoskope/templates/ambassador/ambassador-mapping.yaml). The anem of the new service must be placed after the `/domain.` prefix both for the field `spec.prefix` and `spec.rewrite`
-
-This document must be rewritten once the query handler has been moved to its own package name. See ticket
-[FCLOUD-4174](https://finleap-connect.atlassian.net/browse/FCLOUD-4174) for details
