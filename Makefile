@@ -20,6 +20,9 @@ HELM_PATH 		            ?= build/package/helm
 HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
 include helm.mk
 
+# kind
+include kind.mk
+
 # tools
 tools: go-tools ## Phony target to install all required tools into ${TOOLS_DIR}
 tools-clean: go-tools-clean ## Phony target to clean all required tools

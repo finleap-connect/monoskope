@@ -1,0 +1,64 @@
+# kind cluster environment values for monoskope.
+
+imageTag: &imageTag "0.0.1-local"
+
+global:
+  imagePullSecrets:
+    - name: gitlab-registry
+
+vaultOperator:
+  enabled: false
+  
+hosting:
+  issuer: selfsigning-issuer
+  domain: gateway
+
+gateway:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  auth:
+    selfURL: https://gateway:8080
+    identityProviderName: dex
+    identityProviderURL: https://dex:8080
+
+eventstore:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  backup:
+    enabled: false
+
+commandhandler:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  # -- List of email addresses to identify superusers.
+  superusers:
+    - jan.steffen@finleap.com
+
+queryhandler:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+ambassador:
+  deploy: true
+  service:
+    loadBalancerIP: 127.0.0.1
+  metrics:
+    serviceMonitor:
+      enabled: false
+
+cluster-bootstrap-reactor:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  issuerURL: https://localhost

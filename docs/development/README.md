@@ -58,22 +58,6 @@
 * [Protocol Buffer Compiler Installation](https://grpc.io/docs/protoc-installation/)
 * [Quickstart - gRPC in Go](https://grpc.io/docs/languages/go/quickstart/)
 
-## Deploy to local KinD cluster
-
-* stand up a KinD cluster:
-  `kind create cluster --name m8kind --config build/deploy/kind/kubeadm_conf.yaml --kubeconfig $HOME/.kube/kind-m8kind-config`
-* pick up configuration for kubectl and check nodes of newly created cluster
-  'export KUBECONFIG="$KUBECONFIG:$HOME/.kube/kind-m8kind-config"
-* ensure the finleap helm repo has been added to your local configuration
-
-  ```bash
-  helm repo add finleap https://artifactory.figo.systems/artifactory/virtual_helm
-  helm repo update
-  ```
-
-* deploy helm charts
-  `VERSION="v0.0.15-dev3" HELM_VALUES_FILE=examples/01-monoskope-cluster-values.yaml make helm-install-from-repo-monoskope`
-
 ## Testing
 
 There are three general areas of testing within the code:
@@ -81,31 +65,6 @@ There are three general areas of testing within the code:
 * **Unit Tests**, that are co-located with the functions that they are testing. These are implemented using [Ginkgo](https://github.com/onsi/ginkgo) and [Gomega](https://github.com/onsi/gomega) to aid in readability. These should be implemented using TDD and BDD principles.
 * **Integration Tests**, the reconstruct the complete software stack automatically. These should be used as the primary test environment for developers to verify that new modules fit with the rest of the system. They are also implemented using Ginkgo and Gomega. They can be found in `internal/integration_test.go`
 * **Acceptance Tests**, they ensure that the business rules are correctly implemented. They are written in Gherkin and use [godog](https://github.com/cucumber/godog) to validate against the code.
-
-### Testing Caveats
-
-Sometimes, when the integration test is run repeatetly, the automatic startup and teardown can get stuck and cause the `BeforeSuite` function of that test to fail with the following error message:
-
-```
-Unexpected error:
-      <*amqp091.Error | 0xc0000aa1e0>: {
-          Code: 501,
-          Reason: "read tcp 127.0.0.1:40804->127.0.0.1:5672: read: connection reset by peer",
-          Server: false,
-          Recover: false,
-      }
-      Exception (501) Reason: "read tcp 127.0.0.1:40804->127.0.0.1:5672: read: connection reset by peer"
-  occurred
-```
-
-This can be remedied by stoping the relevant docker container running:
-
-```
-$ docker ps | head -n 1 ; docker ps | grep rabbitmq
-CONTAINER ID   IMAGE                                         COMMAND                  CREATED              STATUS              PORTS                                                                                                                                                    NAMES
-<CONTAINER-ID>   some.repo.example.com/bitnami/rabbitmq:3.8.19         "/opt/bitnami/script…"   About a minute ago   Up About a minute   0.0.0.0:5672->5672/tcp, 0.0.0.0:49923->4369/tcp, 0.0.0.0:49922->5671/tcp, 0.0.0.0:49921->15671/tcp, 0.0.0.0:49920->15672/tcp, 0.0.0.0:49919->25672/tcp   rabbitmq
-$ docker stop  <CONTAINER-ID>
-```
 
 ## Event Sourcing & CQRS
 
