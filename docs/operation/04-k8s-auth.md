@@ -93,7 +93,7 @@ caBundle: |-
 
 ## Connect the cluster to monoskope
 
-See [Register your Cluster](#register-your-cluster-with-monoskope)
+See [Register your Cluster](03-register-k8s-cluster.md)
 
 ## Do a login
 
