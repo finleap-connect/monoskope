@@ -24,8 +24,14 @@ Global Flags:
 ```
 
 The `<KUBE_API_SERVER_ADDRESS>` is the address of your KubeAPIServer with protocol, e.g.
-`https://api.kubernetes.your.domain`.
+`https://api.kubernetes.your.domain`. You will find the address in the kubeconfig file for this cluster as `server`.
 
-The CA certificate bundle has to be the CA of your KubeAPIServer so when
+The `<CA_CERT_FILE> has to be the CA of your KubeAPIServer so when
 `monoctl` updates your `kubeconfig` the CA is known to `kubectl` when talking
-to your KubeAPIServer.
+to your KubeAPIServer. You will find the CA in the kubeconfig file for this cluster as `certificate-authority-data`, you need to de-base64 it for monoctl.
+
+Example for the playground cluster: 
+* `grep certificate-authority-data ~/.kube/kubeconfig--bfs--playground.yaml | awk '{print $2}' | base64 -d > /tmp/bfs-playground-cluster-ca.crt`
+* `KUBE_API_SERVER_ADDRESS=$(grep server ~/.kube/kubeconfig--bfs--playground.yaml | awk '{print $2}')`
+* `monoctl create cluster $KUBE_API_SERVER_ADDRESS /tmp/bfs-playground-cluster-ca.crt`
+
