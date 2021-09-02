@@ -112,16 +112,24 @@ var _ = Describe("domain/cluster_repo", func() {
 	It("can handle ClusterBootstrapTokenCreated events", func() {
 		clusterProjector := NewClusterProjector()
 		clusterProjection := clusterProjector.NewProjection(uuid.New())
-		protoClusterCreatedEventData := &eventdata.ClusterCreatedV2{
-			DisplayName:         expectedDisplayName,
-			Name:                expectedName,
-			ApiServerAddress:    expectedApiServerAddress,
-			CaCertificateBundle: expectedClusterCACertBundle,
-		}
-		clusterCreatedEventData := es.ToEventDataFromProto(protoClusterCreatedEventData)
-		clusterProjection, err := clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterCreatedV2, clusterCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
-		Expect(err).NotTo(HaveOccurred())
 
+		clusterProjection, err := clusterProjector.Project(
+			context.Background(),
+			es.NewEvent(ctx,
+				events.ClusterCreatedV2,
+				es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
+					DisplayName:         expectedDisplayName,
+					Name:                expectedName,
+					ApiServerAddress:    expectedApiServerAddress,
+					CaCertificateBundle: expectedClusterCACertBundle,
+				}),
+				time.Now().UTC(),
+				aggregates.Cluster,
+				uuid.New(),
+				1),
+			clusterProjection,
+		)
+		Expect(err).NotTo(HaveOccurred())
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
 
 		cluster, ok := clusterProjection.(*projections.Cluster)
@@ -144,6 +152,58 @@ var _ = Describe("domain/cluster_repo", func() {
 
 		dp := cluster.DomainProjection
 		Expect(dp.LastModified).ToNot(BeNil())
+	})
+
+	It("can handle ClusterUpdated events", func() {
+		clusterProjector := NewClusterProjector()
+		clusterProjection := clusterProjector.NewProjection(uuid.New())
+
+		newDisplayName := "new-display-name"
+		newApiServerAddress := "https://new-api-server-address"
+		newClusterCaCertificate := []byte("new-ca-cert")
+
+		clusterProjection, err := clusterProjector.Project(
+			context.Background(),
+			es.NewEvent(ctx,
+				events.ClusterCreatedV2,
+				es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
+					DisplayName:         expectedDisplayName,
+					Name:                expectedName,
+					ApiServerAddress:    expectedApiServerAddress,
+					CaCertificateBundle: expectedClusterCACertBundle,
+				}),
+				time.Now().UTC(),
+				aggregates.Cluster,
+				uuid.New(),
+				1),
+			clusterProjection,
+		)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
+
+		clusterProjection, err = clusterProjector.Project(
+			context.Background(),
+			es.NewEvent(ctx,
+				events.ClusterUpdated,
+				es.ToEventDataFromProto(&eventdata.ClusterUpdated{
+					DisplayName:         newDisplayName,
+					ApiServerAddress:    newApiServerAddress,
+					CaCertificateBundle: newClusterCaCertificate,
+				}),
+				time.Now().UTC(),
+				aggregates.Cluster,
+				uuid.New(),
+				2),
+			clusterProjection,
+		)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(clusterProjection.Version()).To(Equal(uint64(2)))
+
+		cluster, ok := clusterProjection.(*projections.Cluster)
+		Expect(ok).To(BeTrue())
+		Expect(cluster.GetDisplayName()).To(Equal(newDisplayName))
+		Expect(cluster.GetApiServerAddress()).To(Equal(newApiServerAddress))
+		Expect(cluster.GetCaCertBundle()).To(Equal(newClusterCaCertificate))
 	})
 
 })

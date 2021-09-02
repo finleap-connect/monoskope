@@ -89,7 +89,7 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		if len(data.GetApiServerAddress()) > 0 && p.ApiServerAddress != data.GetApiServerAddress() {
 			p.ApiServerAddress = data.GetApiServerAddress()
 		}
-		if len(data.GetCaCertificateBundle()) > 0 && bytes.Equal(p.CaCertBundle, data.GetCaCertificateBundle()) {
+		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(p.CaCertBundle, data.GetCaCertificateBundle()) {
 			p.CaCertBundle = data.GetCaCertificateBundle()
 		}
 	case events.ClusterBootstrapTokenCreated:

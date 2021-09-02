@@ -93,19 +93,54 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(agg.(*ClusterAggregate).bootstrapToken).To(Equal(expectedJWT))
 	})
 
-	It("should update the cluster", func() {
-		ctx := createSysAdminCtx()
-		agg := NewClusterAggregate(NewTestAggregateManager())
+	Context("cluster update", func() {
+		It("should update the DisplayName", func() {
+			ctx := createSysAdminCtx()
+			agg := NewClusterAggregate(NewTestAggregateManager())
 
-		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-			Jwt: expectedJWT,
+			expectedNewName := "the-new-name"
+			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdated{
+				DisplayName: expectedNewName,
+			})
+			esEvent := es.NewEvent(ctx, events.ClusterUpdated, ed, time.Now().UTC(),
+				agg.Type(), agg.ID(), agg.Version()+1)
+
+			err := agg.ApplyEvent(esEvent)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(agg.(*ClusterAggregate).displayName).To(Equal(expectedNewName))
 		})
-		esEvent := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, ed, time.Now().UTC(),
-			agg.Type(), agg.ID(), agg.Version())
+		It("should update the ApiServerAddress", func() {
+			ctx := createSysAdminCtx()
+			agg := NewClusterAggregate(NewTestAggregateManager())
 
-		err := agg.ApplyEvent(esEvent)
-		Expect(err).NotTo(HaveOccurred())
+			expectedValue := "https://some-new-address.io"
+			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdated{
+				ApiServerAddress: expectedValue,
+			})
+			esEvent := es.NewEvent(ctx, events.ClusterUpdated, ed, time.Now().UTC(),
+				agg.Type(), agg.ID(), agg.Version()+1)
 
-		Expect(agg.(*ClusterAggregate).bootstrapToken).To(Equal(expectedJWT))
+			err := agg.ApplyEvent(esEvent)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedValue))
+		})
+		It("should update the CaCertificateBundle", func() {
+			ctx := createSysAdminCtx()
+			agg := NewClusterAggregate(NewTestAggregateManager())
+
+			expectedValue := []byte("some-shiny-new-ca-cert")
+			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdated{
+				CaCertificateBundle: expectedValue,
+			})
+			esEvent := es.NewEvent(ctx, events.ClusterUpdated, ed, time.Now().UTC(),
+				agg.Type(), agg.ID(), agg.Version()+1)
+
+			err := agg.ApplyEvent(esEvent)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedValue))
+		})
 	})
 })
