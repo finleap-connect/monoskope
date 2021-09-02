@@ -85,7 +85,7 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 		if apiServerAddr != nil && a.apiServerAddr != apiServerAddr.Value {
 			ed.ApiServerAddress = apiServerAddr.Value
 		}
-		if caCertBundle != nil && bytes.Equal(a.caCertBundle, caCertBundle) {
+		if caCertBundle != nil && !bytes.Equal(a.caCertBundle, caCertBundle) {
 			ed.CaCertificateBundle = caCertBundle
 		}
 		_ = a.AppendEvent(ctx, events.ClusterUpdated, es.ToEventDataFromProto(ed))
@@ -184,7 +184,7 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if len(data.GetApiServerAddress()) > 0 && a.apiServerAddr != data.GetApiServerAddress() {
 			a.apiServerAddr = data.GetApiServerAddress()
 		}
-		if len(data.GetCaCertificateBundle()) > 0 && bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
+		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
 			a.caCertBundle = data.GetCaCertificateBundle()
 		}
 	case events.ClusterDeleted:
