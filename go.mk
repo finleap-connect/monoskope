@@ -91,8 +91,6 @@ go-report: ## create report of commands and permission
 	for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
 	echo >>.protobuf-deps
 
-include .protobuf-deps
-
 go-protobuf: $(GENERATED_GO_FILES)
 
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
