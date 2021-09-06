@@ -290,6 +290,7 @@ var _ = Describe("integration", func() {
 			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
+			Expect(int(reply.Version)).To(BeNumerically("==", 1))
 		})
 	})
 

@@ -78,16 +78,15 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*ap
 		return nil, errors.TranslateToGrpcError(err)
 	}
 
-	esReply, err := s.cmdRegistry.HandleCommand(m.GetContext(), cmd)
+	result, err := s.cmdRegistry.HandleCommand(m.GetContext(), cmd)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
 	}
 
-	reply := &api.CommandReply{
-		AggregateId: esReply.Id.String(),
-		Version:     esReply.Version,
-	}
-	return reply, nil
+	return &api.CommandReply{
+		AggregateId: result.Id.String(),
+		Version:     result.Version,
+	}, nil
 }
 
 // GetPermissionModel implements API method GetPermissionModel
