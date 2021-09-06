@@ -58,5 +58,8 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 		return nil, err
 	}
 
+	// Set the version the aggregate now has after handling the command.
+	reply.Version = aggregate.Version()
+
 	return reply, err
 }
