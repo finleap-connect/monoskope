@@ -1,0 +1,26 @@
+{{- if and .Values.rabbitmq.auth.tls.enabled .Values.eventstore.messageBus.tlsSecret }}
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-rabbitmq-auth-admin
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ .Values.eventstore.messageBus.tlsSecret }}
+  duration: {{ .Values.pki.certificates.duration }}
+  renewBefore: {{ .Values.pki.certificates.renewBefore }}
+  issuerRef:
+    name: {{ .Values.pki.issuer.name }}
+    kind: Issuer
+  commonName: {{ .Values.rabbitmq.auth.username }}
+  subject:
+    organizations:
+      - Monoskope
+  usages:
+    - client auth
+  keySize: 2048
+  keyAlgorithm: rsa
+{{- end }}

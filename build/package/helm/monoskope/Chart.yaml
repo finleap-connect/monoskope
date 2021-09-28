@@ -1,0 +1,58 @@
+apiVersion: v2
+name: monoskope
+description: Monoskope implements the management and operation of tenants, users and their roles in a Kubernetes multi-cluster environment.
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.0.1
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+appVersion: 0.0.1
+
+dependencies: # A list of the chart requirements
+  - name: gateway
+    version: 0.0.1-local
+    repository: "file://../gateway"
+    condition: gateway.enabled,global.gateway.enabled
+  - name: eventstore
+    version: 0.0.1-local
+    repository: "file://../eventstore"
+    condition: eventstore.enabled,global.eventstore.enabled
+  - name: commandhandler
+    version: 0.0.1-local
+    repository: "file://../commandhandler"
+    condition: commandhandler.enabled,global.commandhandler.enabled
+  - name: queryhandler
+    version: 0.0.1-local
+    repository: "file://../queryhandler"
+    condition: queryhandler.enabled,global.queryhandler.enabled
+  - name: cluster-bootstrap-reactor
+    version: 0.0.1-local
+    repository: "file://../cluster-bootstrap-reactor"
+    condition: cluster-bootstrap-reactor.enabled,global.cluster-bootstrap-reactor.enabled
+  - name: cockroachdb
+    version: 6.1.2
+    repository: https://charts.cockroachdb.com/
+    condition: cockroachdb.enabled,global.cockroachdb.enabled
+  - name: rabbitmq
+    version: 8.17.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled,global.rabbitmq.enabled
+  - name: ambassador
+    version: 6.7.11
+    repository: https://getambassador.io
+    condition: ambassador.deploy,global.ambassador.deploy
+

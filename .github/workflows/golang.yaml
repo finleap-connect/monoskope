@@ -1,0 +1,162 @@
+# Copyright 2021 Monoskope Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Golang CI
+
+on: [push, pull_request]
+
+env:
+  GOPATH: ${{ github.workspace }}/.go
+  GO_MODULE: github.com/finleap-connect/monoskope
+  AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
+  DB_URL: "postgres://root@cockroachdb:26257/test?sslmode=disable"
+  MINIO_URL: "minio:9000"
+
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: Cache go modules
+        id: go-modules-cache
+        uses: actions/cache@v2
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-mod-
+
+      - name: Download go modules
+        if: steps.go-modules-cache.outputs.cache-hit != 'true'
+        run: make go-mod
+
+  lint:
+    needs: cache
+
+    runs-on: ubuntu-latest
+    container: ghcr.io/finleap-connect/m8-builder:latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: Load go modules
+        uses: actions/cache@v2
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: lint golang
+        run: LINTER=golangci-lint make -j go-vet go-lint
+
+  test:
+    needs: lint
+
+    runs-on: ubuntu-latest
+    container: ghcr.io/finleap-connect/m8-builder:latest
+    services:
+      rabbitmq:
+        image: rabbitmq:3.8.10-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+      cockroachdb:
+        image: ghcr.io/finleap-connect/m8-cockroach:latest
+      minio:
+        image: ghcr.io/finleap-connect/m8-minio:latest
+        env:
+          MINIO_ACCESS_KEY: "TESTACCESSKEY"
+          MINIO_SECRET_KEY: "TESTSECRETKEY"
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: Load go modules
+        uses: actions/cache@v2
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: test
+        run: |
+          GINKGO=ginkgo make go-test-ci
+          make go-coverage
+
+      - name: Uploading go tests artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: go-tests
+          path: reports/*.xml
+
+  deliver:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+
+    env:
+      REGISTRY: ghcr.io
+      REPO_OWNER: ${{ github.repository_owner }}
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        app: [ 'gateway' , 'eventstore', 'commandhandler', 'queryhandler', 'clusterbootstrapreactor' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Load go modules
+        uses: actions/cache@v2
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Log in to github registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.app }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=0.0.0-{{sha}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/package/go.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            APP=${{ matrix.app }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            COMMIT=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
+            SRC=cmd/${{ matrix.app }}/*.go
+            NAME=${{ matrix.app }}
+            GO_MODULE=${{ env.GO_MODULE }}

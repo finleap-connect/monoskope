@@ -1,0 +1,212 @@
+# Default values for monoskope.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+name: &name monoskope
+nameOverride: ""
+fullnameOverride: ""
+
+global:
+  imagePullSecrets: []
+  labels:
+    app.kubernetes.io/part-of: *name
+
+vaultOperator:
+  enabled: false
+  basePath: "app/{{ .Release.Namespace }}"
+
+pki:
+  enabled: true
+  certificates:
+    # -- Specify which apiVersion cert-manager resources must have.
+    certManagerApiVersion: v1
+    duration: 2160h # 90d
+    renewBefore: 1440h # 60d
+  issuer:
+    name: &rootIssuerName "m8-root-ca-issuer"
+    ca:
+      enabled: true
+      existingTrustAnchorSecretName: "m8-trust-anchor"
+      secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
+    vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
+      enabled: false
+  authentication:
+    keySecretName: &authKeySecretName "m8-authentication"
+
+hosting:
+  issuer: ""
+  domain: ""
+
+messageBus:
+  routingKeyPrefix: "m8"
+  clientConfigSecretName: &msgBusClientConfigSecretName "m8-messagebus-client-config"
+  clientAuthCertSecretName: &msgBusClientAuthCertSecretName "m8-messagebus-client-auth-cert"
+
+gateway:
+  enabled: true
+  replicaCount: 1
+  auth:
+    # -- The URL of the issuer to Gateway itself
+    selfURL: ""
+    # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
+    identityProviderName: ""
+    # -- The URL of the issuer to use for OIDC
+    identityProviderURL: ""
+  # -- The secret containing private key for signing JWTs.
+  keySecret:
+    # -- Name of the secret to be used by the gateway, required
+    name: *authKeySecretName
+  # -- The secret where the gateway finds the OIDC secrets.
+  # If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc
+  # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
+  oidcSecret:
+    name: m8-gateway-oidc
+
+eventstore:
+  enabled: true
+  replicaCount: 1
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
+  storeDatabase:
+    configSecret: "m8-db-client-config"
+    tlsSecret:  "m8-db-client-auth-cert"
+
+commandhandler:
+  enabled: true
+  replicaCount: 1
+
+queryhandler:
+  enabled: true
+  replicaCount: 1
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
+
+cockroachdb:
+  enabled: true
+  dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
+  image:
+    repository: cockroachdb/cockroach
+    tag: v21.1.4
+    pullPolicy: Always
+  statefulset:
+    replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
+    budget:
+      maxUnavailable: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 2Gi
+  init:
+    annotations:
+      linkerd.io/inject: disabled
+  storage:
+    persistentVolume:
+      size: "1Gi" # ATTENTION: Increase for PROD according to your use-case
+  conf:
+    # Total size in bytes for caches, shared evenly if there are multiple
+    # storage devices. Size suffixes are supported (e.g. `1GB` and `1GiB`).
+    # A percentage of physical memory can also be specified (e.g. `.25`).
+    cache: 25%
+    # Maximum memory capacity available to store temporary data for SQL clients,
+    # including prepared queries and intermediate data rows during query
+    # execution. Accepts numbers interpreted as bytes, size suffixes
+    # (e.g. `1GB` and `1GiB`) or a percentage of physical memory (e.g. `.25`).
+    maxSQLMemory: 25%
+  tls:
+    enabled: true
+    certs:
+      provided: true
+      certManager: true
+      certManagerIssuer:
+        kind: Issuer
+        name: *rootIssuerName
+      # Enable if you run cert-manager >=1.0 on K8s <=1.15 with legacy CRDs
+      # Legacy CRDs only support cert-manager.io/v1 API Versions
+      useCertManagerV1CRDs: true
+  # CockroachDB's Prometheus operator ServiceMonitor support
+  serviceMonitor:
+    enabled: false
+    labels:
+      release: monitoring
+    annotations: {}
+    interval: 1m
+    scrapeTimeout: 10s
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  persistence:
+    enabled: false
+  image:
+    tag: 3.8.9
+    pullPolicy: Always
+  loadDefinition:
+    enabled: true
+    existingSecret: m8-rabbitmq-load-definition
+  extraPlugins: 'rabbitmq_auth_mechanism_ssl'
+  extraConfiguration: |-
+    load_definitions = /app/rabbitmq-definitions.json
+    auth_mechanisms.1 = EXTERNAL
+    ssl_cert_login_from = common_name
+    ssl_options.depth = 2
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+  service:
+    tlsPort: 5671
+  auth:
+    username: eventstore # admin user with read/write access
+    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition which takes the password from a generated secret
+    # -- Name of the secret containing the erlang secret
+    # If vaultOperator.enabled:true the secret will eb auto generated
+    existingErlangSecret: m8-rabbitmq-erlang-cookie
+    tls:
+      enabled: true
+      failIfNoPeerCert: true
+      sslOptionsVerify: verify_peer
+      existingSecret: m8-rabbitmq-leaf
+  metrics:
+    grafanaDashboard:
+      enabled: false
+
+ambassador:
+  enabled: true
+  deploy: true
+  replicaCount: 1
+  image:
+    repository: datawire/ambassador
+    tag: 1.14.1
+  enableAES: false
+  agent:
+    enabled: false
+  crds:
+    create: false
+    enabled: false
+  rbac:
+    create: false
+  serviceAccount:
+    create: false
+  scope:
+    singleNamespace: true
+  resources:
+    limits:
+      cpu: 4
+      memory: 1000Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+cluster-bootstrap-reactor:
+  enabled: true
+  replicaCount: 1
+  keySecret:
+    name: *authKeySecretName
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName

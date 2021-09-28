@@ -1,0 +1,99 @@
+# Dev cluster environment values for monoskope.
+
+imageTag: &imageTag "0.0.1-local"
+
+vaultOperator:
+  enabled: true
+  basePath: app/{{ .Release.Namespace }}
+  
+hosting:
+  issuer: letsencrypt
+  domain: monoskope.yourdomain.io
+
+# cockroachdb:
+  # dropExistingDatabase: true
+
+gateway:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  auth:
+    selfURL: https://api.monoskope.yourdomain.io
+    identityProviderName: dex
+    identityProviderURL: https://dex.yourdomain.io
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+eventstore:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  backup:
+    enabled: false
+
+commandhandler:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  # -- List of email addresses to identify superusers.
+  superusers: []
+    # - someone@yourdomain.io
+
+queryhandler:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+
+ambassador:
+  service:
+    loadBalancerIP: 1.1.1.1 # IP address of your external load balancer
+  metrics:
+    serviceMonitor:
+      enabled: true
+      selector:
+        release: monitoring
+
+cluster-bootstrap-reactor:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 64Mi
+  issuerURL: https://api.monoskope.yourdomain.io
+
+rabbitmq:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

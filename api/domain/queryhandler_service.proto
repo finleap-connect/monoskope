@@ -1,0 +1,90 @@
+// Copyright 2021 Monoskope Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/empty.proto";
+import "api/domain/projections/user.proto";
+import "api/domain/projections/tenant.proto";
+import "api/domain/projections/cluster.proto";
+import "api/domain/projections/certificate.proto";
+import "api/eventsourcing/messages.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
+
+package domain;
+
+// User is a service to query Users.
+service User {
+  // GetAll returns all users.
+  rpc GetAll(GetAllRequest) returns (stream projections.User);
+  // GetById returns the user found by the given id.
+  rpc GetById(google.protobuf.StringValue) returns (projections.User);
+  // GetByEmail returns the user found by the given email address.
+  rpc GetByEmail(google.protobuf.StringValue) returns (projections.User);
+  // GetRoleBindingsById returns all role bindings related to the given user id.
+  rpc GetRoleBindingsById(google.protobuf.StringValue)
+      returns (stream projections.UserRoleBinding);
+}
+
+// Tenant is a service to query Tenants.
+service Tenant {
+  // GetAll returns all tenants.
+  rpc GetAll(GetAllRequest) returns (stream projections.Tenant);
+  // GetById returns the tenant found by the given id.
+  rpc GetById(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetByName returns the tenant found by the given name
+  rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
+  // GetUsers returns users belonging to the given tenant id.
+  rpc GetUsers(google.protobuf.StringValue)
+      returns (stream projections.TenantUser);
+}
+
+// Cluster is a service to query information about known clusters.
+service Cluster {
+  // GetAll returns all known clusters
+  rpc GetAll(GetAllRequest) returns (stream projections.Cluster);
+  // GetById returns a cluster by its UUID
+  rpc GetById(google.protobuf.StringValue) returns (projections.Cluster);
+  // GetByName returns a cluster by its name
+  rpc GetByName(google.protobuf.StringValue) returns (projections.Cluster);
+  // GetBootstrapToken returns the JWT token for cluster authentication for the
+  // cluster with the given UUID
+  rpc GetBootstrapToken(google.protobuf.StringValue)
+      returns (google.protobuf.StringValue);
+}
+
+service Certificate {
+  rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
+}
+
+// K8sOperator is a service used by remote K8s Operators to query the Control
+// Plane
+service K8sOperator {
+  rpc GetCluster(google.protobuf.Empty) returns (projections.Cluster);
+  rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
+}
+
+message GetAllRequest { bool include_deleted = 1; }
+
+message GetCertificateRequest {
+  // Unique identifier of the aggregate referenced (UUID 128-bit number)
+  string aggregate_id = 1;
+  // Type of the aggregate referenced
+  string aggregate_type = 2;
+}

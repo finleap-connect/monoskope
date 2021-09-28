@@ -1,0 +1,63 @@
+# Copyright 2021 Monoskope Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Helm CI
+
+on: [push, pull_request]
+
+env:
+  CHART_DIR: build/package/helm/monoskope
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: lint helm
+        run: |
+          make helm-lint-gateway
+          make helm-lint-eventstore
+          make helm-lint-commandhandler
+          make helm-lint-queryhandler
+          make helm-dep-monoskope
+          make helm-lint-monoskope
+
+  deliver:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: lint
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: set env VERSION
+        run: echo "VERSION=$(bash .github/scripts/configure_versions.sh)" >> $GITHUB_ENV
+      - name: set env IMAGE_TAG
+        run: echo "IMAGE_TAG=$(echo "${VERSION}" | tr "+" "-")" >> $GITHUB_ENV
+      - name: prep charts
+        run: |
+          VERSION=$VERSION make helm-set-version-all
+          yq eval ".image.tag = \"${IMAGE_TAG}\"" "${CHART_DIR}/values.yaml" --inplace
+
+      - name: Publish Helm chart
+        run: ./.github/scripts/publish_chart.sh
+        env:
+          GIT_EMAIL: "deploy-bot@finleap-connect.github.com"
+          GIT_USER: "Deploy Bot"
+          CHART_DEPLOY_KEY: "${{ secrets.CHART_DEPLOY_KEY }}"

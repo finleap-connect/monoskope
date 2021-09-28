@@ -1,0 +1,32 @@
+{{ if .Values.pki.enabled }}
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion}}
+kind: Certificate
+metadata:
+  name: {{ include "monoskope.fullname" . }}-authentication
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ .Values.pki.authentication.keySecretName }}
+  duration: {{ .Values.pki.certificates.duration }}
+  renewBefore: {{ .Values.pki.certificates.renewBefore }}
+  privateKey:
+    rotationPolicy: Always
+  issuerRef:
+    name: {{ .Values.pki.issuer.name }}
+    kind: Issuer
+  commonName: m8-authentication
+  dnsNames:
+  - localhost
+  subject:
+    organizations:
+      - Monoskope
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  keySize: 2048
+  keyAlgorithm: rsa
+{{ end }}

@@ -1,0 +1,28 @@
+{{ if and .Values.cockroachdb.enabled .Values.eventstore.storeDatabase.tlsSecret }}
+{{- $fullname := (printf "%s-%s" (include "monoskope.fullname" .) "crdb") -}}
+apiVersion: cert-manager.io/{{ .Values.pki.certificates.certManagerApiVersion }}
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-auth-eventstore
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ .Values.eventstore.storeDatabase.tlsSecret }}
+  issuerRef:
+    name: {{ .Values.pki.issuer.name }}
+    kind: Issuer
+  commonName: eventstore
+  organization:
+    - Cockroach
+  duration: 672h
+  renewBefore: 48h
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  keySize: 2048
+  keyAlgorithm: rsa
+{{ end }}

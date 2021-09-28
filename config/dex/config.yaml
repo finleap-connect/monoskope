@@ -1,0 +1,25 @@
+issuer: http://127.0.0.1:5556
+storage:
+  config:
+    file: /tmp/dex.db
+    inCluster: true
+  type: sqlite3
+logger:
+  level: debug
+web:
+  http: 0.0.0.0:5556
+oauth2:
+  alwaysShowLoginScreen: false
+  skipApprovalScreen: true
+staticClients:
+  - id: gateway
+    name: Monoskope Gateway
+    redirectURIs:
+      - http://localhost:8000
+    secret: app-secret
+enablePasswordDB: true
+staticPasswords:
+  - email: admin@monoskope.io
+    hash: $2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W
+    userID: 08a8684b-db88-4b73-90a9-3cd1661f5466
+    username: admin

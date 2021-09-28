@@ -1,0 +1,127 @@
+# Default values for monoskope-gateway.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+imagePullSecrets: []
+
+image:
+  repository: ghcr.io/finleap-connect/monoskope/gateway
+  pullPolicy: Always
+  # -- Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  grpcApiPort: 8080
+  httpApiPort: 8081
+  metricsPort: 9102
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  enabled: true
+  failureThreshold: 10
+  periodSeconds: 5
+  initialDelaySeconds: 10
+
+readinessProbe:
+  enabled: true
+  failureThreshold: 5
+  periodSeconds: 5
+  initialDelaySeconds: 5
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+labels: {}
+  # app.kubernetes.io/part-of: my-app
+
+ports:
+  grpcApi: 8080
+  httpApi: 8081
+  metrics: 9102
+
+# -- API address of the query handler
+queryHandler:
+  prefix: "" # Defaults to the release name
+  host: "queryhandler"
+  port: 8080
+
+keepAlive: false
+
+auth:
+  # -- The URL of the issuer to Gateway itself
+  selfURL: ""
+  # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
+  identityProviderName: ""
+  # -- The URL of the issuer to use for OIDC
+  identityProviderURL: ""
+  # -- Additional scopes to request from upstream IDP
+  scopes:
+    - "openid"
+    - "profile"
+    - "email"
+  # -- The allowed redirect URIs for authentication flow
+  redirectUris:
+    - http://localhost:8000
+    - http://localhost:18000
+
+# -- The secret where the gateway finds the OIDC secrets.
+# Must contain the fields oidc-clientsecret, oidc-clientid and oidc-nonce.
+oidcSecret:
+  # -- Name of the secret to be used by the gateway, required
+  name: ""
+
+# -- The secret containing private key for signing JWTs.
+# Must contain tls.key containing the private key for signing and tls.crt containing public key for verification.
+keySecret:
+  # -- Name of the secret to be used by the gateway, required
+  name: ""
+  # -- How long to cache public key's
+  validity: 24h
+
+# -- Duration for which issued K8s auth tokens are valid
+k8sTokenValidity: 10s
+
+# -- Duration for which issued Monoskope auth tokens are valid
+authTokenValidity: 12h

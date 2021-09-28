@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gateway.fullname" .  }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gateway.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  progressDeadlineSeconds: 120
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "gateway.selectorLabels" . | nindent 8 }}
+        {{- with (.Values.labels | default .Values.global.labels) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ (include "gateway.name" .) }}
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - {{ .Release.Name }}
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: grpc
+            containerPort: {{ .Values.ports.grpcApi }}
+          - name: http
+            containerPort: {{ .Values.ports.httpApi }}
+          - name: http-metrics
+            containerPort: {{ .Values.ports.metrics }}
+          env:
+            - name: M8_OPERATION_MODE
+              value: release
+            - name: GIN_MODE
+              value: release
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
+                  key: oidc-clientid
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
+                  key: oidc-clientsecret
+            - name: OIDC_NONCE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
+                  key: oidc-nonce
+          args:
+            - /app
+            - server
+            - --keep-alive={{ .Values.keepAlive }}
+            - --grpc-api-addr=:{{ .Values.ports.grpcApi }}
+            - --http-api-addr=:{{ .Values.ports.httpApi }}
+            - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
+            - --metrics-addr=:{{ .Values.ports.metrics }}
+            - --identity-provider-name={{ required "A valid .Values.auth.identityProviderName entry is required!" .Values.auth.identityProviderName }}
+            - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
+            - --scopes={{ join "," .Values.auth.scopes }}
+            - --redirect-uris={{ join "," .Values.auth.redirectUris }}
+            - --key-cache-duration={{ .Values.keySecret.validity }}
+            - --k8s-token-validity={{ .Values.k8sTokenValidity }}
+            - --auth-token-validity={{ .Values.authTokenValidity }}
+            - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            exec:
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            exec:
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: key-secret
+              mountPath: /etc/gateway/jwt
+              readOnly: true
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: key-secret
+          secret:
+            secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}

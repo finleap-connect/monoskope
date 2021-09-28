@@ -1,0 +1,29 @@
+{{- if and .Values.backup.enabled  .Values.backup.alerting.enabled }}
+{{- $release := .Release.Name -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "eventstore.fullname" . }}-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eventstore.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    app: prometheus-operator
+    release: monitoring
+spec:
+  groups:
+  - name: {{ .Release.Namespace }}.rules
+    rules:
+    - alert: 
+        expr: time() - eventstore_backup_last_success_timestamp_seconds{namespace="{{ .Release.Namespace }}"} > {{ .Values.backup.alerting.secondsSinceLastSuccessfulBackup }}
+        for: {{ .Values.backup.alerting.alertAfter }}
+        labels:
+          installed_by: {{ .Release.Namespace }}
+          severity: critical
+        annotations:
+          description: The event store backup job in namespace {{ .Release.Namespace }} has not run within the last {{ .Values.backup.alerting.secondsSinceLastSuccessfulBackup }} seconds!
+          summary: The event store backup job in namespace {{ .Release.Namespace }} has not run.
+{{- end }}

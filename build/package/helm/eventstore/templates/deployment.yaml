@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eventstore.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eventstore.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  progressDeadlineSeconds: 120
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "eventstore.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "eventstore.selectorLabels" . | nindent 8 }}
+        {{- with (.Values.labels | default .Values.global.labels) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ (include "eventstore.name" .) }}
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - {{ .Release.Name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.ports.api }}
+          - name: http-metrics
+            containerPort: {{ .Values.ports.metrics }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "bus") }}
+            - secretRef:
+                name: {{ .Values.storeDatabase.configSecret | default (printf "%s-%s" (include "eventstore.fullname" .) "db") }}
+          args:
+            - /app
+            - server
+            - {{ (printf "--keep-alive=%v" .Values.keepAlive) }}
+            - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
+            - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
+            - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            exec:
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            exec:
+              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.api) | quote }}]
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.storeDatabase.tlsSecret }}
+            - name: dbcerts
+              mountPath: /etc/eventstore/certs/db
+              readOnly: true
+            {{- end }}
+            {{- if .Values.messageBus.tlsSecret }}
+            - name: buscerts
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
+            {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.storeDatabase.tlsSecret }}
+        - name: dbcerts
+          secret:
+            secretName: {{ .Values.storeDatabase.tlsSecret }}
+        {{- end }}
+        {{- if .Values.messageBus.tlsSecret }}
+        - name: buscerts
+          secret:
+            secretName: {{ .Values.messageBus.tlsSecret }}
+        {{- end }}
