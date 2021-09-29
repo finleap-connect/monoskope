@@ -56,7 +56,7 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/EventStoreReplayMiddleware", fu
 				esRetrieveClient.EXPECT().Recv().Return(eventsourcing.NewProtoFromEvent(eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 1)), nil)
 				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).Do(func() {
 					defer GinkgoRecover()
-					wg.Done()
+					defer wg.Done()
 				})
 
 				eventHandlerChain := eventsourcing.UseEventHandlerMiddleware(eventHandler, NewEventStoreReplayMiddleware(esClient))

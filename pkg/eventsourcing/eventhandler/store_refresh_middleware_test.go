@@ -48,10 +48,11 @@ var _ = Describe("Pkg/Eventsourcing/Eventhandler/StoreRefreshMiddleware", func()
 				esClient := mock_eventsourcing.NewMockEventStoreClient(mockCtrl)
 				esRetrieveClient := mock_eventsourcing.NewMockEventStore_RetrieveClient(mockCtrl)
 
-				esClient.EXPECT().Retrieve(ctx, gomock.Any()).Return(esRetrieveClient, nil)
+				esClient.EXPECT().Retrieve(ctx, gomock.Any()).Return(esRetrieveClient, nil).MinTimes(1)
 				esRetrieveClient.EXPECT().Recv().Return(eventsourcing.NewProtoFromEvent(eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 2)), nil)
 				esRetrieveClient.EXPECT().Recv().Return(eventsourcing.NewProtoFromEvent(eventsourcing.NewEvent(ctx, expectedEventType, nil, time.Now().UTC(), expectedAggregateType, expectedAggregateId, 3)), nil)
 				esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF).Do(func() {
+					defer GinkgoRecover()
 					wg.Done()
 				})
 
