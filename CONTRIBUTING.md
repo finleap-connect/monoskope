@@ -30,7 +30,7 @@ Do you have an improvement?
 2. We will try to respond to your issue shortly.
 3. Fork this repo, develop and test your code changes. See the project's
    [README](README.md) for further information about working in this repository.
-4. Submit a pull request against this repo's `main` branch.
+4. Submit a pull request against this repo's `develop` branch.
     - Include instructions on how to test your changes.
 5. Your branch may be merged once all configured checks pass, including:
     - The branch has passed tests in CI.
