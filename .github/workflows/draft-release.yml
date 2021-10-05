@@ -1,0 +1,15 @@
+name: Draft Release
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update draft
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
