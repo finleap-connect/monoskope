@@ -36,7 +36,7 @@ import (
 type Handler struct {
 	config           *Config
 	httpClient       *http.Client
-	Provider         *oidc.Provider
+	provider         *oidc.Provider
 	upstreamVerifier *oidc.IDTokenVerifier
 	verifier         jwt.JWTVerifier
 	signer           jwt.JWTSigner
@@ -72,7 +72,7 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 	backoffParams.MaxElapsedTime = time.Second * 10
 	err := backoff.Retry(func() error {
 		var err error
-		n.Provider, err = oidc.NewProvider(ctx, n.config.IdentityProvider)
+		n.provider, err = oidc.NewProvider(ctx, n.config.IdentityProvider)
 		return err
 	}, backoffParams)
 	if err != nil {
@@ -84,7 +84,7 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 		// See: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 		Supported []string `json:"scopes_supported"`
 	}
-	if err := n.Provider.Claims(&scopes); err != nil {
+	if err := n.provider.Claims(&scopes); err != nil {
 		return fmt.Errorf("failed to parse provider scopes_supported: %v", err)
 	}
 	if len(scopes.Supported) == 0 {
@@ -104,9 +104,9 @@ func (n *Handler) SetupOIDC(ctx context.Context) error {
 		}()
 	}
 
-	n.upstreamVerifier = n.Provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
+	n.upstreamVerifier = n.provider.Verifier(&oidc.Config{ClientID: n.config.ClientId})
 
-	n.log.Info("Connected to auth provider successful.", "AuthURL", n.Provider.Endpoint().AuthURL, "TokenURL", n.Provider.Endpoint().TokenURL, "AuthStyle", n.Provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
+	n.log.Info("Connected to auth provider successful.", "AuthURL", n.provider.Endpoint().AuthURL, "TokenURL", n.provider.Endpoint().TokenURL, "AuthStyle", n.provider.Endpoint().AuthStyle, "SupportedScopes", scopes.Supported)
 
 	return nil
 }
@@ -115,7 +115,7 @@ func (n *Handler) getOauth2Config(scopes []string, redirectURL string) *oauth2.C
 	return &oauth2.Config{
 		ClientID:     n.config.ClientId,
 		ClientSecret: n.config.ClientSecret,
-		Endpoint:     n.Provider.Endpoint(),
+		Endpoint:     n.provider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL:  redirectURL,
 	}
