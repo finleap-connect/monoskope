@@ -107,7 +107,7 @@ var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
 				err = publisher.PublishEvent(ctx, event)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(done, 10).Should(BeClosed())
+				Eventually(done, 30).Should(BeClosed())
 			})
 			It("can publish and receive an event matching event type", func() {
 				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(eventsourcing.AggregateType(expectedEventType)))
@@ -118,7 +118,7 @@ var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
 				err = publisher.PublishEvent(ctx, event)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(done, 10).Should(BeClosed())
+				Eventually(done, 30).Should(BeClosed())
 			})
 			It("can publish and receive an event matching aggregate and event type", func() {
 				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(expectedAggregateType), consumer.Matcher().MatchAggregateType(eventsourcing.AggregateType(expectedEventType)))
@@ -129,7 +129,7 @@ var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
 				err = publisher.PublishEvent(ctx, event)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(done, 10).Should(BeClosed())
+				Eventually(done, 30).Should(BeClosed())
 			})
 		})
 		When("normal worker style", func() {
@@ -157,8 +157,8 @@ var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 				err = publisher.PublishEvent(ctx, eventB)
 				Expect(err).ToNot(HaveOccurred())
 
-				Eventually(doneA, 10).Should(BeClosed())
-				Eventually(doneB, 10).Should(BeClosed())
+				Eventually(doneA, 30).Should(BeClosed())
+				Eventually(doneB, 30).Should(BeClosed())
 			})
 		})
 	})
