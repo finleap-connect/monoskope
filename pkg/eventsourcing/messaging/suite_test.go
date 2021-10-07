@@ -20,7 +20,6 @@ import (
 	"github.com/finleap-connect/monoskope/internal/test"
 	"github.com/finleap-connect/monoskope/pkg/rabbitmq"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
@@ -31,8 +30,7 @@ var (
 
 func TestMessageBus(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/event-sourcing-messaging-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "eventsourcing/messaging", []Reporter{junitReporter})
+	RunSpecs(t, "eventsourcing/messaging")
 }
 
 var _ = BeforeSuite(func() {
