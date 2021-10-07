@@ -98,8 +98,9 @@ var serveCmd = &cobra.Command{
 		defer reactorEventHandler.Stop()
 
 		// Register event handler with event bus
-		if err := msgBus.AddHandler(ctx,
+		if err := msgBus.AddWorker(ctx,
 			reactorEventHandler,
+			"cluster-bootstrap-reactor",
 			msgBus.Matcher().MatchEventType(events.ClusterCreated),
 			msgBus.Matcher().MatchEventType(events.ClusterCreatedV2),
 			msgBus.Matcher().MatchEventType(events.CertificateRequested),
