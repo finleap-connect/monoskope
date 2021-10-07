@@ -110,7 +110,7 @@ var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 				Eventually(done, 30).Should(BeClosed())
 			})
 			It("can publish and receive an event matching event type", func() {
-				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(eventsourcing.AggregateType(expectedEventType)))
+				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchEventType(expectedEventType))
 				Expect(err).ToNot(HaveOccurred())
 
 				event := createEvent()
