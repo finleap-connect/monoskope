@@ -38,6 +38,9 @@ type EventBusConsumer interface {
 	Matcher() EventMatcher
 	// AddHandler adds a handler for events matching one of the given EventMatcher.
 	AddHandler(context.Context, EventHandler, ...EventMatcher) error
+	// AddWorker behave similar to AddHandler but distributes events among the handlers with the same
+	// work queue name according to the competing consumers pattern.
+	AddWorker(context.Context, EventHandler, string, ...EventMatcher) error
 }
 
 // EventMatcher is an interface used to define what events should be consumed

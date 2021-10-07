@@ -20,64 +20,48 @@ import (
 	"time"
 
 	testEd "github.com/finleap-connect/monoskope/pkg/api/eventsourcing/eventdata"
-	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	mock_eventsourcing "github.com/finleap-connect/monoskope/test/eventsourcing"
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-type testEventHandler struct {
-	event evs.Event
-}
-
-func (t testEventHandler) HandleEvent(ctx context.Context, e evs.Event) error {
-	defer GinkgoRecover()
-	env.Log.Info("Received event.")
-	Expect(e).ToNot(BeNil())
-	Expect(e.AggregateID()).To(BeEquivalentTo(t.event.AggregateID()))
-	Expect(e.AggregateType()).To(BeEquivalentTo(t.event.AggregateType()))
-	Expect(e.AggregateVersion()).To(BeEquivalentTo(t.event.AggregateVersion()))
-	return nil
-}
-
-var _ = Describe("messaging/rabbitmq", func() {
-	var consumer evs.EventBusConsumer
-	var publisher evs.EventBusPublisher
+var _ = Describe("Pkg/Eventsourcing/Messaging/BusRabbmitMQ", func() {
 	ctx := context.Background()
-	eventCounter := 0
 	testCount := 0
+	eventCounter := 0
+	expectedEventType := eventsourcing.EventType("TestEventXYZ")
+	expectedAggregateType := eventsourcing.AggregateType("TestAggregateXYZ")
+	var consumer eventsourcing.EventBusConsumer
+	var publisher eventsourcing.EventBusPublisher
+	var eventHandler *mock_eventsourcing.MockEventHandler
+	var mockCtrl *gomock.Controller
 
-	createTestEventData := func(something string) evs.EventData {
-		return evs.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
+	createTestEventData := func(something string) eventsourcing.EventData {
+		return eventsourcing.ToEventDataFromProto(&testEd.TestEventData{Hello: something})
 	}
-	createEvent := func() evs.Event {
-		eventType := evs.EventType("TestEvent")
-		aggregateType := evs.AggregateType("TestAggregate")
-		data := createTestEventData("world!")
-		event := evs.NewEvent(ctx, eventType, data, time.Now().UTC(), aggregateType, uuid.New(), uint64(eventCounter))
+	createEvent := func() eventsourcing.Event {
+		data := createTestEventData(fmt.Sprintf("hello world %v!", eventCounter))
+		event := eventsourcing.NewEvent(ctx, expectedEventType, data, time.Now().UTC(), expectedAggregateType, uuid.New(), uint64(eventCounter))
 		eventCounter++
 		return event
 	}
 
-	publishEvent := func(event evs.Event) {
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
-		defer cancel()
-		err := publisher.PublishEvent(ctxWithTimeout, event)
-		Expect(err).ToNot(HaveOccurred())
+	handleEventNamed := func(done chan interface{}, e eventsourcing.Event, name string) {
+		Expect(e.AggregateType()).To(Equal(expectedAggregateType))
+		Expect(e.EventType()).To(Equal(expectedEventType))
+
+		testData := new(testEd.TestEventData)
+		Expect(e.Data().ToProto(testData)).ToNot(HaveOccurred())
+
+		env.Log.Info("Received event.", "Handler", name, "Event", e.String(), "Data", testData.Hello)
+		close(done)
 	}
 
-	createHandler := func(event evs.Event, matchers ...evs.EventMatcher) {
-		handler := &testEventHandler{event: event}
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Second)
-		defer cancel()
-		err := consumer.AddHandler(ctxWithTimeout, handler, matchers...)
-		Expect(err).ToNot(HaveOccurred())
-	}
-
-	testPubSub := func(matchers ...evs.EventMatcher) {
-		event := createEvent()
-		createHandler(event, matchers...)
-		publishEvent(event)
+	handleEvent := func(done chan interface{}, e eventsourcing.Event) {
+		handleEventNamed(done, e, "default")
 	}
 
 	BeforeEach(func() {
@@ -94,8 +78,14 @@ var _ = Describe("messaging/rabbitmq", func() {
 		consumer, err = NewRabbitEventBusConsumer(conf)
 		Expect(err).ToNot(HaveOccurred())
 
+		// Setup mock event handler
+		mockCtrl = gomock.NewController(GinkgoT())
+		defer mockCtrl.Finish()
+		eventHandler = mock_eventsourcing.NewMockEventHandler(mockCtrl)
+
 		testCount++
 	}, 10)
+
 	AfterEach(func() {
 		var err error
 
@@ -105,19 +95,71 @@ var _ = Describe("messaging/rabbitmq", func() {
 		err = publisher.Close()
 		Expect(err).ToNot(HaveOccurred())
 	}, 10)
-	It("can publish and receive events", func() {
-		testPubSub(consumer.Matcher().Any())
-	})
-	It("can publish and receive an event matching aggregate type", func() {
-		event := createEvent()
-		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()))
-	})
-	It("can publish and receive an event matching event type", func() {
-		event := createEvent()
-		testPubSub(consumer.Matcher().MatchEventType(event.EventType()))
-	})
-	It("can publish and receive an event matching aggregate type and event type", func() {
-		event := createEvent()
-		testPubSub(consumer.Matcher().MatchAggregateType(event.AggregateType()).MatchEventType(event.EventType()))
+
+	Context("RabbitMQ can be used to publish and receive events", func() {
+		When("normal handler style", func() {
+			It("can publish and receive an event matching aggregate type", func() {
+				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(expectedAggregateType))
+				Expect(err).ToNot(HaveOccurred())
+
+				event := createEvent()
+				done := make(chan interface{})
+				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
+				err = publisher.PublishEvent(ctx, event)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(done, 10).Should(BeClosed())
+			})
+			It("can publish and receive an event matching event type", func() {
+				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(eventsourcing.AggregateType(expectedEventType)))
+				Expect(err).ToNot(HaveOccurred())
+
+				event := createEvent()
+				done := make(chan interface{})
+				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
+				err = publisher.PublishEvent(ctx, event)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(done, 10).Should(BeClosed())
+			})
+			It("can publish and receive an event matching aggregate and event type", func() {
+				err := consumer.AddHandler(ctx, eventHandler, consumer.Matcher().MatchAggregateType(expectedAggregateType), consumer.Matcher().MatchAggregateType(eventsourcing.AggregateType(expectedEventType)))
+				Expect(err).ToNot(HaveOccurred())
+
+				event := createEvent()
+				done := make(chan interface{})
+				eventHandler.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEvent(done, e) }).Return(nil)
+				err = publisher.PublishEvent(ctx, event)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(done, 10).Should(BeClosed())
+			})
+		})
+		When("normal worker style", func() {
+			It("can publish and receive an event round robin among consumers", func() {
+				eventHandlerA := mock_eventsourcing.NewMockEventHandler(mockCtrl)
+				eventHandlerB := mock_eventsourcing.NewMockEventHandler(mockCtrl)
+
+				// Add two workers
+				err := consumer.AddWorker(ctx, eventHandlerA, "my-worker-group", consumer.Matcher().Any())
+				Expect(err).ToNot(HaveOccurred())
+				err = consumer.AddWorker(ctx, eventHandlerB, "my-worker-group", consumer.Matcher().Any())
+				Expect(err).ToNot(HaveOccurred())
+
+				eventA := createEvent()
+				eventB := createEvent()
+				doneA := make(chan interface{})
+				doneB := make(chan interface{})
+
+				eventHandlerA.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEventNamed(doneA, e, "a") }).Return(nil).AnyTimes()
+				eventHandlerB.EXPECT().HandleEvent(gomock.Any(), gomock.Any()).Do(func(_ context.Context, e eventsourcing.Event) { handleEventNamed(doneB, e, "b") }).Return(nil).AnyTimes()
+
+				err = publisher.PublishEvent(ctx, eventA)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = publisher.PublishEvent(ctx, eventB)
+				Expect(err).ToNot(HaveOccurred())
+
+				Eventually(doneA, 10).Should(BeClosed())
+				Eventually(doneB, 10).Should(BeClosed())
+			})
+		})
 	})
 })
