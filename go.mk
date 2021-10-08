@@ -53,14 +53,9 @@ CMD_CLBOREACTOR_SRC = cmd/clusterbootstrapreactor/*.go
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
-define go-run
-	$(GO) run -ldflags "$(LDFLAGS)" cmd/$(1)/*.go $(ARGS)
-endef
-
 .PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf
 
 ##@ Go
-go-all: go-mod go-fmt go-vet go-lint go-test
 
 go-mod: ## go mod download and verify
 	$(GO) mod download
@@ -74,9 +69,6 @@ go-vet: ## go vet
 
 go-lint: $(LINTER) ## go lint
 	$(LINTER) run -v --no-config --deadline=5m
-
-go-run-%: ## run command
-	$(call go-run,$*)
 
 go-report: ## create report of commands and permission
 	@echo
@@ -95,7 +87,7 @@ go-protobuf: $(GENERATED_GO_FILES)
 
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 	@find . -name '*.coverprofile' -exec rm {} \;
-	ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace -compilers 8 * # see FCLOUD-4515
+	@ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace
 	@echo "mode: count" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;
@@ -104,7 +96,7 @@ go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 
 go-test-ci: ## run all tests without generation go files from protobuf
 	@find . -name '*.coverprofile' -exec rm {} \;
-	ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace -compilers 8 * # see FCLOUD-4515
+	@ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace
 	@echo "mode: count" > ./monoskope.coverprofile
 	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
 	@find ./pkg -name '*.coverprofile' -exec rm {} \;

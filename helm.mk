@@ -1,4 +1,6 @@
 HELM                        ?= helm
+HELM_PATH 		            ?= build/package/helm
+HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
 HELM_OUTPUT_DIR             ?= tmp
 HELM_REGISTRY               ?= https://finleap-connect.github.io/charts
 HELM_REGISTRY_ALIAS         ?= finleap-connect

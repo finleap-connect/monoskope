@@ -1,43 +1,10 @@
 SHELL := bash
 
 # Directory, where all required tools are located (absolute path required)
-TOOLS_DIR ?= $(shell cd tools 2>/dev/null && pwd)
-HACK_DIR ?= $(shell cd hack 2>/dev/null && pwd)
+TOOLS_DIR   ?= $(shell cd tools 2>/dev/null && pwd)
+HACK_DIR    ?= $(shell cd hack 2>/dev/null && pwd)
 
-VERSION   ?= 0.0.1-local
-COMMIT     	   := $(shell git rev-parse --short HEAD)
-LATEST_TAG=$(shell git describe --tags $(LATEST_REV))
-
-export
-
-clean: go-clean helm-clean tools-clean ## clean up everything
-
-# go
-include go.mk
-
-# helm
-HELM_PATH 		            ?= build/package/helm
-HELM_VALUES_FILE            ?= examples/00-monoskope-dev-values.yaml
-include helm.mk
-
-# kind
-include kind.mk
-
-# tools
-tools: go-tools ## Phony target to install all required tools into ${TOOLS_DIR}
-tools-clean: go-tools-clean ## Phony target to clean all required tools
-
-commit-hash: ## Echos the current commit hash
-	@echo $(COMMIT)
-
-latest-tag: ## Echos the latest tag
-	@echo $(LATEST_TAG)
-
-add-license: ## Adds the license to every file
-	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v .
-
-check-license: ## Checks thath the license is set on every file
-	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v -check .
+VERSION     ?= 0.0.1-local
 
 ##@ General
 
@@ -54,3 +21,14 @@ check-license: ## Checks thath the license is set on every file
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+add-license: ## Adds the license to every file
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v .
+
+check-license: ## Checks thath the license is set on every file
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v -check .
+
+export
+include go.mk
+include helm.mk
+include kind.mk
