@@ -172,16 +172,22 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 		routingKeys = append(routingKeys, rabbitMatcher.generateRoutingKey())
 	}
 
+	options := []func(*rabbitmq.ConsumeOptions){
+		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.exchangeName),
+		rabbitmq.WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
+		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
+	}
+	if workQueueName == "" {
+		options = append(options, rabbitmq.WithConsumeOptionsQueueExclusive)
+	}
+
 	err := b.consumer.StartConsuming(
 		func(d amqp.Delivery) bool {
 			return b.handleIncomingMessages(ctx, d, handler)
 		},
 		workQueueName,
 		routingKeys,
-		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.exchangeName),
-		rabbitmq.WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
-		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
-		rabbitmq.WithConsumeOptionsQueueExclusive,
+		options...,
 	)
 	if err != nil {
 		return errors.ErrMessageBusConnection
