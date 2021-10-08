@@ -1,0 +1,97 @@
+# Copyright 2021 Monoskope Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Publish CI
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - v*
+
+env:
+  CHART_DIR: build/package/helm/monoskope
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v2
+
+      - name: set env VERSION
+        run: echo "VERSION=$(bash .github/scripts/configure_versions.sh)" >> $GITHUB_ENV
+      - name: set env IMAGE_TAG
+        run: echo "IMAGE_TAG=$(echo "${VERSION}" | tr "+" "-")" >> $GITHUB_ENV
+      - name: prep charts
+        run: |
+          VERSION=$VERSION make helm-set-version-all
+          yq eval ".image.tag = \"${IMAGE_TAG}\"" "${CHART_DIR}/values.yaml" --inplace
+
+      - name: Publish Helm chart
+        run: ./.github/scripts/publish_chart.sh
+        env:
+          GIT_EMAIL: "deploy-bot@finleap-connect.github.com"
+          GIT_USER: "Deploy Bot"
+          CHART_DEPLOY_KEY: "${{ secrets.CHART_DEPLOY_KEY }}"
+
+
+  go:
+    env:
+      REGISTRY: ghcr.io
+      REPO_OWNER: ${{ github.repository_owner }}
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        app: [ 'gateway' , 'eventstore', 'commandhandler', 'queryhandler', 'clusterbootstrapreactor' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to github registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.app }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=0.0.0-{{sha}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/package/go.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            APP=${{ matrix.app }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            COMMIT=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
+            SRC=cmd/${{ matrix.app }}/*.go
+            NAME=${{ matrix.app }}
+            GO_MODULE=${{ env.GO_MODULE }}

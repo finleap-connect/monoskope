@@ -19,9 +19,6 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  create:
-    tags:
-      - v*
   
 env:
   GO_MODULE: github.com/finleap-connect/monoskope
@@ -69,55 +66,3 @@ jobs:
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: coverage.lcov
-
-  deliver:
-    if: github.event_name == 'create'
-    needs: test
-
-    env:
-      REGISTRY: ghcr.io
-      REPO_OWNER: ${{ github.repository_owner }}
-
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    strategy:
-      matrix:
-        app: [ 'gateway' , 'eventstore', 'commandhandler', 'queryhandler', 'clusterbootstrapreactor' ]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Log in to github registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.app }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=0.0.0-{{sha}}
-
-      - name: Build and push image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: build/package/go.Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            APP=${{ matrix.app }}
-            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
-            COMMIT=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
-            SRC=cmd/${{ matrix.app }}/*.go
-            NAME=${{ matrix.app }}
-            GO_MODULE=${{ env.GO_MODULE }}

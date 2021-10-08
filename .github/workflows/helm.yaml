@@ -17,11 +17,11 @@ name: Helm CI
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  create:
     tags:
       - v*
+  pull_request:
+    branches: [ main ]
+
 env:
   CHART_DIR: build/package/helm/monoskope
 
@@ -41,27 +41,3 @@ jobs:
           make helm-lint-queryhandler
           make helm-dep-monoskope
           make helm-lint-monoskope
-
-  deliver:
-    if: github.event_name == 'create'
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v2
-
-      - name: set env VERSION
-        run: echo "VERSION=$(bash .github/scripts/configure_versions.sh)" >> $GITHUB_ENV
-      - name: set env IMAGE_TAG
-        run: echo "IMAGE_TAG=$(echo "${VERSION}" | tr "+" "-")" >> $GITHUB_ENV
-      - name: prep charts
-        run: |
-          VERSION=$VERSION make helm-set-version-all
-          yq eval ".image.tag = \"${IMAGE_TAG}\"" "${CHART_DIR}/values.yaml" --inplace
-
-      - name: Publish Helm chart
-        run: ./.github/scripts/publish_chart.sh
-        env:
-          GIT_EMAIL: "deploy-bot@finleap-connect.github.com"
-          GIT_USER: "Deploy Bot"
-          CHART_DEPLOY_KEY: "${{ secrets.CHART_DEPLOY_KEY }}"
