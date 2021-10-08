@@ -15,7 +15,6 @@
 package rabbitmq
 
 import (
-	"os"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -27,8 +26,7 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	AmqpURL          string
-	ExternalRabbitMQ bool
+	AmqpURL string
 }
 
 func (env *TestEnv) Shutdown() error {
@@ -52,40 +50,32 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 }
 
 func (env *TestEnv) stopRabbitMQ() error {
-	if !env.ExternalRabbitMQ {
-		env.Log.Info("Purging rabbitmq...")
-		return env.Purge("rabbitmq")
-	}
-	return nil
+	env.Log.Info("Purging rabbitmq...")
+	return env.Purge("rabbitmq")
 }
 
 func (env *TestEnv) startRabbitMQ() error {
 	env.Log.Info("Starting rabbitmq...")
 	var err error
 
-	if v := os.Getenv("AMQP_URL"); v != "" {
-		env.AmqpURL = v // running in ci pipeline
-		env.ExternalRabbitMQ = true
-	} else {
-		// Start rabbitmq
-		_, err := env.Run(&dockertest.RunOptions{
-			Name:       "rabbitmq",
-			Repository: "bitnami/rabbitmq",
-			Tag:        "3.8.19",
-			Env: []string{
-				"RABBITMQ_PLUGINS=rabbitmq_management",
-			},
-			PortBindings: map[dc.Port][]dc.PortBinding{
-				"5672/tcp": {{HostPort: "5672"}},
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		// Build connection string
-		env.AmqpURL = "amqp://user:bitnami@127.0.0.1:5672"
+	// Start rabbitmq
+	_, err = env.Run(&dockertest.RunOptions{
+		Name:       "rabbitmq",
+		Repository: "bitnami/rabbitmq",
+		Tag:        "3.8.19",
+		Env: []string{
+			"RABBITMQ_PLUGINS=rabbitmq_management",
+		},
+		PortBindings: map[dc.Port][]dc.PortBinding{
+			"5672/tcp": {{HostPort: "5672"}},
+		},
+	})
+	if err != nil {
+		return err
 	}
+
+	// Build connection string
+	env.AmqpURL = "amqp://user:bitnami@127.0.0.1:5672"
 
 	params := backoff.NewExponentialBackOff()
 	params.MaxElapsedTime = 60 * time.Second

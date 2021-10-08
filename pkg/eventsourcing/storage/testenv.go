@@ -17,7 +17,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/finleap-connect/monoskope/internal/test"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -48,59 +47,39 @@ func NewTestEnvWithParent(parent *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	if v := os.Getenv("DB_URL"); v != "" {
-		// create test db
-		options, err := pg.ParseURL(v)
-		if err != nil {
-			return nil, err
-		}
-
-		testDb := pg.Connect(options)
-		_, err = testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
-		if err != nil {
-			return nil, err
-		}
-
-		conf, err := NewPostgresStoreConfig(v)
-		if err != nil {
-			return nil, err
-		}
-		env.postgresStoreConfig = conf
-	} else {
-		// Start single node crdb
-		container, err := env.Run(&dockertest.RunOptions{
-			Name:       "cockroach",
-			Repository: "cockroachdb/cockroach",
-			Tag:        "v20.2.2",
-			Cmd: []string{
-				"start-single-node", "--insecure",
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// create test db
-		err = env.Retry(func() error {
-			testDb := pg.Connect(&pg.Options{
-				Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
-				Database: "",
-				User:     "root",
-				Password: "",
-			})
-			_, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
-			return err
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
-		if err != nil {
-			return nil, err
-		}
-		env.postgresStoreConfig = conf
+	// Start single node crdb
+	container, err := env.Run(&dockertest.RunOptions{
+		Name:       "cockroach",
+		Repository: "cockroachdb/cockroach",
+		Tag:        "v20.2.2",
+		Cmd: []string{
+			"start-single-node", "--insecure",
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	// create test db
+	err = env.Retry(func() error {
+		testDb := pg.Connect(&pg.Options{
+			Addr:     fmt.Sprintf("127.0.0.1:%s", container.GetPort("26257/tcp")),
+			Database: "",
+			User:     "root",
+			Password: "",
+		})
+		_, err := testDb.Exec("CREATE DATABASE IF NOT EXISTS test")
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	conf, err := NewPostgresStoreConfig(fmt.Sprintf("postgres://root@127.0.0.1:%s/test?sslmode=disable", container.GetPort("26257/tcp")))
+	if err != nil {
+		return nil, err
+	}
+	env.postgresStoreConfig = conf
 
 	store, err := NewPostgresEventStore(env.postgresStoreConfig)
 	if err != nil {

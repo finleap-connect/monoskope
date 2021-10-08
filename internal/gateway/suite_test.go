@@ -91,48 +91,46 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		return nil, err
 	}
 
-	if !test.IsRunningInCI() {
-		dexConfigDir := os.Getenv("DEX_CONFIG")
-		if dexConfigDir == "" {
-			return nil, fmt.Errorf("DEX_CONFIG not specified")
-		}
-		env.Log.Info("Config for dex specified.", "DEX_CONFIG", dexConfigDir)
+	dexConfigDir := os.Getenv("DEX_CONFIG")
+	if dexConfigDir == "" {
+		return nil, fmt.Errorf("DEX_CONFIG not specified")
+	}
+	env.Log.Info("Config for dex specified.", "DEX_CONFIG", dexConfigDir)
 
-		dexContainer, err := env.Run(&dockertest.RunOptions{
-			Name:       "dex",
-			Repository: "dexidp/dex",
-			Tag:        "v2.27.0",
-			PortBindings: map[dc.Port][]dc.PortBinding{
-				"5556": {{HostPort: "5556"}},
-			},
-			ExposedPorts: []string{"5556", "5000"},
-			Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
-			Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", dexConfigDir)},
-		})
+	dexContainer, err := env.Run(&dockertest.RunOptions{
+		Name:       "dex",
+		Repository: "dexidp/dex",
+		Tag:        "v2.27.0",
+		PortBindings: map[dc.Port][]dc.PortBinding{
+			"5556": {{HostPort: "5556"}},
+		},
+		ExposedPorts: []string{"5556", "5000"},
+		Cmd:          []string{"serve", "/etc/dex/cfg/config.yaml"},
+		Mounts:       []string{fmt.Sprintf("%s:/etc/dex/cfg", dexConfigDir)},
+	})
 
-		if err != nil {
-			_ = env.Shutdown()
-			return nil, err
-		}
-		env.IdentityProviderURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
+	if err != nil {
+		_ = env.Shutdown()
+		return nil, err
+	}
+	env.IdentityProviderURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
-		env.AuthConfig = &auth.Config{
-			IdentityProviderName: "dex",
-			IdentityProvider:     env.IdentityProviderURL,
-			OfflineAsScope:       true,
-			ClientId:             "gateway",
-			ClientSecret:         "app-secret",
-			Nonce:                "secret-nonce",
-			Scopes: []string{
-				"openid",
-				"profile",
-				"email",
-				"federated:id",
-			},
-			RedirectURIs: []string{
-				fmt.Sprintf("http://%s%s", RedirectURLHostname, RedirectURLPort),
-			},
-		}
+	env.AuthConfig = &auth.Config{
+		IdentityProviderName: "dex",
+		IdentityProvider:     env.IdentityProviderURL,
+		OfflineAsScope:       true,
+		ClientId:             "gateway",
+		ClientSecret:         "app-secret",
+		Nonce:                "secret-nonce",
+		Scopes: []string{
+			"openid",
+			"profile",
+			"email",
+			"federated:id",
+		},
+		RedirectURIs: []string{
+			fmt.Sprintf("http://%s%s", RedirectURLHostname, RedirectURLPort),
+		},
 	}
 	return env, nil
 }
@@ -157,9 +155,6 @@ func (env *oAuthTestEnv) Shutdown() error {
 }
 
 func TestGateway(t *testing.T) {
-	if test.IsRunningInCI() {
-		return
-	}
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../../reports/gateway-junit.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "gateway/integration", []Reporter{junitReporter})

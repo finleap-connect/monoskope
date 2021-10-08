@@ -17,7 +17,6 @@ package test
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/ory/dockertest/v3"
@@ -33,17 +32,7 @@ type TestEnv struct {
 	resources    map[string]*dockertest.Resource
 }
 
-func IsRunningInCI() bool {
-	_, runningInCi := os.LookupEnv("CI")
-	return runningInCi
-}
-
 func (t *TestEnv) CreateDockerPool(keepExisting bool) error {
-	// Running in CI, no docker necessary
-	if IsRunningInCI() {
-		return nil
-	}
-
 	t.Log.Info("Creating docker pool...")
 
 	pool, err := dockertest.NewPool("")

@@ -28,9 +28,6 @@ env:
   GO_MODULE: github.com/finleap-connect/monoskope
   GO_VERSION: 1.17.x
   GINKGO_VERSION: v1.16.4
-  # AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
-  # DB_URL: "postgres://root@cockroachdb:26257/test?sslmode=disable"
-  # MINIO_URL: "minio:9000"
 
 jobs:
   lint:
@@ -51,19 +48,6 @@ jobs:
   test:
     needs: lint
     runs-on: ubuntu-latest
-    # services:
-    #   rabbitmq:
-    #     image: rabbitmq:3.8.10-alpine
-    #     env:
-    #       RABBITMQ_DEFAULT_USER: guest
-    #       RABBITMQ_DEFAULT_PASS: guest
-    #   cockroachdb:
-    #     image: ghcr.io/finleap-connect/m8-cockroach:latest
-    #   minio:
-    #     image: ghcr.io/finleap-connect/m8-minio:latest
-    #     env:
-    #       MINIO_ACCESS_KEY: "TESTACCESSKEY"
-    #       MINIO_SECRET_KEY: "TESTSECRETKEY"
     steps:
       - name: Install Go
         if: success()

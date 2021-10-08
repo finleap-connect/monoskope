@@ -64,30 +64,26 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	if v := os.Getenv("MINIO_URL"); v != "" {
-		env.Endpoint = v
-	} else {
-		container, err := env.Run(&dockertest.RunOptions{
-			Name:       "minio",
-			Repository: "minio/minio",
-			Tag:        "latest",
-			Cmd:        []string{"server", "/data"},
-			Env: []string{
-				fmt.Sprintf("MINIO_ACCESS_KEY=%s", accessKeyID),
-				fmt.Sprintf("MINIO_SECRET_KEY=%s", secretAccessKey),
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
+	container, err := env.Run(&dockertest.RunOptions{
+		Name:       "minio",
+		Repository: "minio/minio",
+		Tag:        "latest",
+		Cmd:        []string{"server", "/data"},
+		Env: []string{
+			fmt.Sprintf("MINIO_ACCESS_KEY=%s", accessKeyID),
+			fmt.Sprintf("MINIO_SECRET_KEY=%s", secretAccessKey),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 
-		env.Endpoint = fmt.Sprintf("localhost:%s", container.GetPort("9000/tcp"))
+	env.Endpoint = fmt.Sprintf("localhost:%s", container.GetPort("9000/tcp"))
 
-		env.Log.Info("check minio connection", "endpoint", env.Endpoint)
-		err = env.WaitForS3(env.Endpoint, accessKeyID, secretAccessKey)
-		if err != nil {
-			return nil, err
-		}
+	env.Log.Info("check minio connection", "endpoint", env.Endpoint)
+	err = env.WaitForS3(env.Endpoint, accessKeyID, secretAccessKey)
+	if err != nil {
+		return nil, err
 	}
 
 	err = env.CreateBucket(env.Endpoint, accessKeyID, secretAccessKey)
