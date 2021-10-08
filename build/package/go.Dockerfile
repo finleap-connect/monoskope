@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.17-buster:latest AS builder
+FROM golang:1.17-buster AS builder
 
 ARG VERSION
 ARG GO_MODULE
