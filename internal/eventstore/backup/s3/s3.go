@@ -124,7 +124,7 @@ func (b *S3BackupHandler) RunBackup(ctx context.Context) (*backup.BackupResult, 
 	})
 
 	if err := eg.Wait(); err != nil {
-		b.log.Error(err, "Error occured when backing up eventstore.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+		b.log.Error(err, "Error occurred when backing up eventstore.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 		return result, err
 	}
 	return result, nil
@@ -149,7 +149,7 @@ func (b *S3BackupHandler) RunRestore(ctx context.Context, identifier string) (*b
 	})
 
 	if err := eg.Wait(); err != nil {
-		b.log.Error(err, "Error occured when restoring events.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
+		b.log.Error(err, "Error occurred when restoring events.", "ProcessedEvents", result.ProcessedEvents, "ProcessedBytes", result.ProcessedBytes)
 		return result, err
 	}
 	return result, nil
@@ -276,7 +276,7 @@ func (b *S3BackupHandler) storeEvents(ctx context.Context, reader *io.PipeReader
 		event := &s3Event{}
 		err = json.Unmarshal(bytes, event)
 		if err != nil {
-			b.log.Error(err, "An error occured when unmarshalling event", "AggregateType", event.AggregateType())
+			b.log.Error(err, "An error occurred when unmarshalling event", "AggregateType", event.AggregateType())
 			return err
 		}
 
@@ -320,7 +320,7 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 
 		bytes, err := json.Marshal(convertToS3Event(event))
 		if err != nil {
-			b.log.Error(err, "An error occured when marshalling event", "AggregateType", event.AggregateType())
+			b.log.Error(err, "An error occurred when marshalling event", "AggregateType", event.AggregateType())
 			return err
 		}
 
@@ -341,13 +341,13 @@ func (b *S3BackupHandler) streamEvents(ctx context.Context, writer *io.PipeWrite
 			Size:       int64(len(bytes)),
 		})
 		if err != nil {
-			b.log.Error(err, "An error occured when writing tar header", "AggregateType", event.AggregateType())
+			b.log.Error(err, "An error occurred when writing tar header", "AggregateType", event.AggregateType())
 			return err
 		}
 
 		numBytes, err := tarWriter.Write(bytes)
 		if err != nil {
-			b.log.Error(err, "An error occured when writing tar payload for event", "AggregateType", event.AggregateType())
+			b.log.Error(err, "An error occurred when writing tar payload for event", "AggregateType", event.AggregateType())
 			return err
 		} else {
 			result.ProcessedEvents++
@@ -384,13 +384,13 @@ func (b *S3BackupHandler) readBackup(ctx context.Context, writer *io.PipeWriter,
 
 	object, err := b.s3Client.GetObjectWithContext(ctx, objectInput)
 	if err != nil {
-		b.log.Error(err, "An error occured when reading object")
+		b.log.Error(err, "An error occurred when reading object")
 		return err
 	}
 
 	_, err = io.Copy(writer, object.Body)
 	if err != nil {
-		b.log.Error(err, "An error occured when writing object to destination")
+		b.log.Error(err, "An error occurred when writing object to destination")
 		return err
 	}
 

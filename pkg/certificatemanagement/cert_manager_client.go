@@ -99,7 +99,7 @@ func (c *certManagerClient) GetCertificate(ctx context.Context, requestID uuid.U
 
 	if len(cr.Status.Certificate) > 0 {
 		if err := c.k8sClient.Delete(ctx, cr); err != nil {
-			c.log.Error(err, "Failed to delete request after successfull certificate issueing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
+			c.log.Error(err, "Failed to delete request after successful certificate issuing.", "RequestID", requestID.String(), "Namespace", c.namespace, "Issuer", c.issuer)
 		}
 		return cr.Status.CA, cr.Status.Certificate, nil
 	}

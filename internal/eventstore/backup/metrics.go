@@ -163,7 +163,7 @@ func (mp *metricsPublisher) CloseAndPush() error {
 		mp.log.Error(err, "Failed to push metrics.")
 		return err
 	}
-	mp.log.Info("Metrics pushed sucessfully.")
+	mp.log.Info("Metrics pushed successfully.")
 
 	return nil
 }

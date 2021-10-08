@@ -79,7 +79,7 @@ func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthC
 	// Issue token
 	signedToken, rawToken, err := s.authHandler.IssueToken(ctx, upstreamClaims, user.ID().String())
 	if err != nil {
-		s.log.Error(err, "Issueing token failed.")
+		s.log.Error(err, "Issuing token failed.")
 		return nil, err
 	}
 

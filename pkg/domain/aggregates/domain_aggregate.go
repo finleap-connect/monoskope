@@ -29,7 +29,7 @@ type DomainAggregateBase struct {
 	*es.BaseAggregate
 }
 
-// Authorization authorizes the command against the issueing users rolebindings
+// Authorization authorizes the command against the issuing users rolebindings
 func (a *DomainAggregateBase) Authorize(ctx context.Context, cmd es.Command, expectedResource uuid.UUID) error {
 	// Extract domain context
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
