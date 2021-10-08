@@ -16,11 +16,11 @@ name: Publish CI
 
 on:
   push:
-    branches: [ main ]
     tags:
       - v*
 
 env:
+  GO_MODULE: github.com/finleap-connect/monoskope
   CHART_DIR: build/package/helm/monoskope
 
 jobs:

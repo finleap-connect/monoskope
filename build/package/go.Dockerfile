@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ghcr.io/finleap-connect/m8-builder:latest AS builder
+FROM golang:1.17-buster:latest AS builder
 
 ARG VERSION
 ARG GO_MODULE
@@ -22,7 +22,6 @@ ARG NAME
 
 WORKDIR /workdir
 
-ENV GOPATH /workdir/.go
 ENV GRPC_HEALTH_PROBE_VERSION=v0.3.5
 ENV CGO_ENABLED=0
 ENV GOOS=linux
@@ -33,7 +32,6 @@ RUN wget -qOgrpc-health-probe https://github.com/grpc-ecosystem/grpc-health-prob
 
 COPY go.mod .
 COPY go.sum .
-COPY .go/ .go/
 
 COPY cmd/ cmd/
 COPY internal/ internal/
