@@ -50,7 +50,7 @@ jobs:
   go:
     env:
       REGISTRY: ghcr.io
-      REPO_OWNER: ${{ github.repository_owner }}
+      REPOSITORY: ${{ github.repository }}
 
     runs-on: ubuntu-latest
     permissions:
@@ -76,7 +76,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.app }}
+          images: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ matrix.app }}
           tags: |
             type=ref,event=tag
             type=raw,value=0.0.0-{{sha}}

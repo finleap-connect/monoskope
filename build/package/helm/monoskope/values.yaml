@@ -120,6 +120,7 @@ cockroachdb:
   tls:
     enabled: true
     certs:
+      selfSigner.enabled: false
       provided: true
       certManager: true
       certManagerIssuer:
