@@ -32,42 +32,23 @@ env:
   MINIO_URL: "minio:9000"
 
 jobs:
-  cache:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v2
-      - name: Cache go modules
-        id: go-modules-cache
-        uses: actions/cache@v2
-        with:
-          path: .go/pkg/mod/
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-mod-
-      - name: Download go modules
-        if: steps.go-modules-cache.outputs.cache-hit != 'true'
-        run: make go-mod
-
   lint:
-    needs: cache
     runs-on: ubuntu-latest
-    container: ghcr.io/finleap-connect/m8-builder:latest
     steps:
-      - name: Checkout Project
-        uses: actions/checkout@v2
-      - name: Load go modules
-        uses: actions/cache@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
         with:
-          path: .go/pkg/mod/
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-      - name: lint golang
-        run: LINTER=golangci-lint make -j go-vet go-lint
+          go-version: 1.17.x
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v2.5.2
+        with:
+          version: v1.39
 
   test:
     needs: lint
     runs-on: ubuntu-latest
-    container: ghcr.io/finleap-connect/m8-builder:latest
     services:
       rabbitmq:
         image: rabbitmq:3.8.10-alpine
@@ -82,13 +63,13 @@ jobs:
           MINIO_ACCESS_KEY: "TESTACCESSKEY"
           MINIO_SECRET_KEY: "TESTSECRETKEY"
     steps:
+      - name: Install Go
+        if: success()
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
       - name: Checkout Project
         uses: actions/checkout@v2
-      - name: Load go modules
-        uses: actions/cache@v2
-        with:
-          path: .go/pkg/mod/
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
       - name: test
         run: |
           GINKGO=ginkgo make go-test-ci
