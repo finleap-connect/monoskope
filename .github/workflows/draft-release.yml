@@ -1,9 +1,10 @@
 name: Draft Release
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-
+  push:
+    branches:
+      - main
+      
 jobs:
   draft-release:
     runs-on: ubuntu-latest

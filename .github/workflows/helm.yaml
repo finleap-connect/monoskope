@@ -14,7 +14,15 @@
 
 name: Helm CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 env:
   CHART_DIR: build/package/helm/monoskope
