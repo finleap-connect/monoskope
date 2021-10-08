@@ -25,8 +25,9 @@ on:
       - develop
 
 env:
-  GOPATH: ${{ github.workspace }}/.go
   GO_MODULE: github.com/finleap-connect/monoskope
+  GO_VERSION: 1.17.x
+  GINKGO_VERSION: v1.16.4
   AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
   DB_URL: "postgres://root@cockroachdb:26257/test?sslmode=disable"
   MINIO_URL: "minio:9000"
@@ -38,7 +39,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17.x
+          go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run linters
@@ -68,12 +69,12 @@ jobs:
         if: success()
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17.x
+          go-version: ${{ env.GO_VERSION }}
       - name: Checkout Project
         uses: actions/checkout@v2
       - name: test
         run: |
-          go install github.com/onsi/ginkgo/ginkgo@v1.16.4
+          go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
           GINKGO=ginkgo make go-test-ci
           make go-coverage
       - name: Convert coverage to lcov
