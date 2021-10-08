@@ -53,7 +53,7 @@ CMD_CLBOREACTOR_SRC = cmd/clusterbootstrapreactor/*.go
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
-.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf
+.PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf ginkgo-get
 
 ##@ Go
 
@@ -106,7 +106,7 @@ go-test-ci: ## run all tests without generation go files from protobuf
 go-coverage: ## print coverage from coverprofiles
 	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
 
-ginkgo-get $(TOOLS_DIR)/ginkgo:
+ginkgo-get $(GINKGO):
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))
 
 golangci-lint-get $(LINTER):
@@ -115,7 +115,7 @@ golangci-lint-get $(LINTER):
 gomock-get $(MOCKGEN):
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
-protoc-get $(TOOLS_DIR)/protoc:
+protoc-get $(PROTOC):
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
 	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
