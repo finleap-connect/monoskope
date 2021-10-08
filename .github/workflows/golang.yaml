@@ -26,7 +26,6 @@ on:
 
 env:
   GOPATH: ${{ github.workspace }}/.go
-  GOROOT: ${{ github.workspace }}/.go
   GO_MODULE: github.com/finleap-connect/monoskope
   AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
   DB_URL: "postgres://root@cockroachdb:26257/test?sslmode=disable"
