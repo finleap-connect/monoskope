@@ -36,15 +36,16 @@ import (
 
 var _ = Describe("domain/handler", func() {
 	adminUser := &projections.User{User: &projectionsApi.User{
-		Id:    uuid.New().String(),
-		Name:  "admin",
-		Email: "admin@monoskope.io",
-	}}
+		Id:       uuid.New().String(),
+		Name:     "admin",
+		Email:    "admin@monoskope.io",
+		Metadata: &projectionsApi.LifecycleMetadata{},
+	}, DomainProjection: projections.NewDomainProjection()}
 	someUser := &projections.User{User: &projectionsApi.User{
 		Id:    uuid.New().String(),
 		Name:  "some.user",
 		Email: "some.user@monoskope.io",
-	}}
+	}, DomainProjection: projections.NewDomainProjection()}
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
