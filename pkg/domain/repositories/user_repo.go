@@ -129,7 +129,9 @@ func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*pr
 			if err != nil {
 				return nil, err
 			}
-			users = append(users, u)
+			if !u.GetDeleted().IsValid() || includeDeleted {
+				users = append(users, u)
+			}
 		}
 	}
 	return users, nil
