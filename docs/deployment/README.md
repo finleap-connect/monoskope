@@ -22,4 +22,4 @@ See [certificate management](01-certificate-management.md).
 See [identity provider setup](02-identity-provider-setup.md).
 1. Configure m8 Ambassador.
 See [DNS and IP address setup](03-dns-and-ip-address-setup.md).
-1. Deploy [Helm Chart](../../build/package/helm/monoskope/README.md).
+1. Deploy [Helm Chart](../../build/package/helm/monoskope/README.md) via finleap-connect [chart repo](https://finleap-connect.github.io/charts/).
