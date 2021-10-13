@@ -17,27 +17,42 @@ package rabbitmq
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/rabbitmq/amqp091-go"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var _ = Describe("Pkg/Rabbitmq/Consume", func() {
+	expectedExchangeName := "test-exchange"
+	expectedRoutingKey := "*"
+	expectedConsumerName := "test-consumer"
+
 	It("can consume", func() {
-		consumer, err := NewConsumer(env.AmqpURL, &amqp091.Config{})
+		consumer, err := NewConsumer(env.AmqpURL, &amqp.Config{})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(consumer).ToNot(BeNil())
 
-		err = consumer.StartConsuming(func(d amqp091.Delivery) bool {
+		publisher, _, err := NewPublisher(env.AmqpURL, &amqp.Config{})
+		Expect(err).ToNot(HaveOccurred())
+		defer publisher.StopPublishing()
+
+		done := make(chan interface{})
+
+		err = consumer.StartConsuming(func(d amqp.Delivery) bool {
+			defer close(done)
 			Expect(d).ToNot(BeNil())
 			return true
-		}, "test-consumer-queue", []string{"*"}, WithConsumeOptionsConsumerName("test-consumer"))
+		}, "test-consumer-queue", []string{expectedRoutingKey},
+			WithConsumeOptionsConsumerName(expectedConsumerName),
+			WithConsumeOptionsBindingExchangeName(expectedExchangeName),
+			WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
+			WithConsumeOptionsBindingExchangeDurable,
+		)
+
+		Expect(err).ToNot(HaveOccurred())
+		defer consumer.StopConsuming(expectedConsumerName, false)
+
+		err = publisher.Publish([]byte("test"), []string{expectedRoutingKey}, WithPublishOptionsExchange(expectedExchangeName))
 		Expect(err).ToNot(HaveOccurred())
 
-		publisher, _, err := NewPublisher(env.AmqpURL, &amqp091.Config{})
-		Expect(err).ToNot(HaveOccurred())
-
-		err = publisher.Publish([]byte("test"), []string{"*"})
-		Expect(err).ToNot(HaveOccurred())
-
-		consumer.StopConsuming("test-consumer", false)
+		Eventually(done, 60).Should(BeClosed())
 	})
 })

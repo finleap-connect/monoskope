@@ -27,7 +27,6 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/test"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
-	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
@@ -184,14 +183,26 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// Setup user repo
-		env.AdminUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "admin", Email: "admin@monoskope.io"}}
+		adminUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+		adminUser.Name = "admin"
+		adminUser.Email = "admin@monoskope.io"
+
+		env.AdminUser = adminUser
 		adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 		adminRoleBinding.UserId = env.AdminUser.Id
 		adminRoleBinding.Role = roles.Admin.String()
 		adminRoleBinding.Scope = scopes.System.String()
 
-		env.ExistingUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "someone", Email: "someone@monoskope.io"}}
-		env.NotExistingUser = &projections.User{User: &projectionsApi.User{Id: uuid.New().String(), Name: "nobody", Email: "nobody@monoskope.io"}}
+		existingUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+		existingUser.Name = "someone"
+		existingUser.Email = "someone@monoskope.io"
+
+		notExistingUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+		notExistingUser.Name = "nobody"
+		notExistingUser.Email = "nobody@monoskope.io"
+
+		env.ExistingUser = existingUser
+		env.NotExistingUser = notExistingUser
 
 		inMemoryUserRepo := es_repos.NewInMemoryRepository()
 		inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()

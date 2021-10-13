@@ -29,7 +29,7 @@ import (
 
 var _ = Describe("domain/user_repo", func() {
 	userId := uuid.New()
-	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}}
+	adminUser := &projections.User{User: &projectionsApi.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}, DomainProjection: projections.NewDomainProjection()}
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
