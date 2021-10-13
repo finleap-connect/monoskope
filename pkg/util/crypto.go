@@ -29,13 +29,16 @@ func EncryptAES(key []byte, plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// The IV needs to be unique, but not secure. Therefore it's common to
-	// include it at the beginning of the ciphertext.
-	if aes.BlockSize+len(plaintext) > 64*1024*1024 {
-		return nil, errors.New("value too large")
+	// Check for integer overflow
+	plaintextLen := len(plaintext)
+	bufferSize := aes.BlockSize + plaintextLen
+	if (bufferSize > aes.BlockSize) != (plaintextLen > 0) {
+		return nil, errors.New("integer overflow")
 	}
 
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, bufferSize)
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return nil, err

@@ -15,13 +15,25 @@
 package util
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func TestUtil(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "util")
-}
+var _ = Describe("util.EncryptAES", func() {
+	plaintextValue := "this is my secret"
+	encryptionKey := "thisis32bitlongpassphraseimusing"
+	var encryptedBytes []byte
+
+	It("can encrypt bytes", func() {
+		var err error
+		encryptedBytes, err = EncryptAES([]byte(encryptionKey), []byte(plaintextValue))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(encryptedBytes).ToNot(BeNil())
+	})
+	It("can decrypt bytes", func() {
+		decryptedBytes, err := DecryptAES([]byte(encryptionKey), encryptedBytes)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(decryptedBytes).ToNot(BeNil())
+		Expect(string(decryptedBytes)).To(Equal(plaintextValue))
+	})
+})
