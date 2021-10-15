@@ -213,7 +213,6 @@ func (b *S3BackupHandler) purgeBackups(ctx context.Context, result *backup.Purge
 	if result.BackupsLeft < 1 {
 		return fmt.Errorf("Destination bucket contains no backups.")
 	}
-	b.log.Info("Listing backups in bucket finished.", "ExistingBackups", result.BackupsLeft)
 
 	if result.BackupsLeft <= b.retention {
 		b.log.Info("Not purging backups because the number of backups is lower than or equal to the number of backups to keep.", "Retention", b.retention, "ExistingBackups", result.BackupsLeft)
@@ -221,21 +220,23 @@ func (b *S3BackupHandler) purgeBackups(ctx context.Context, result *backup.Purge
 	}
 
 	backupsToDelete := result.BackupsLeft - b.retention
-	b.log.Info("Purging backups...", "BackupsToDelete", backupsToDelete, "Retention", b.retention)
+	b.log.Info("Purging backups...", "ExistingBackups", result.BackupsLeft, "BackupsToDelete", backupsToDelete, "Retention", b.retention)
 
-	_, err := b.s3Client.DeleteObjectsWithContext(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(b.conf.Bucket),
-		Delete: &s3.Delete{
-			Objects: infos[:backupsToDelete],
-		},
-	})
-	if err != nil {
-		b.log.Error(err, "Encountered an error trying to delete an object in S3: %v", "objectName", err.Error)
-		return err
+	purgedBackups := 0
+	for _, obj := range infos[:backupsToDelete] {
+		_, err := b.s3Client.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(b.conf.Bucket),
+			Key:    obj.Key,
+		})
+		if err != nil {
+			b.log.Error(err, "Encountered an error trying to delete object in S3.", "ObjectKey", obj.Key)
+		} else {
+			purgedBackups++
+		}
 	}
 
-	result.BackupsLeft -= backupsToDelete
-	result.PurgedBackups = backupsToDelete
+	result.BackupsLeft -= purgedBackups
+	result.PurgedBackups = purgedBackups
 
 	return nil
 }

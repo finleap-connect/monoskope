@@ -94,7 +94,6 @@ func NewTestEnvWithParent(testEnv *test.TestEnv) (*TestEnv, error) {
 	os.Setenv("S3_ENCRYPTION_KEY", encryptionKey)
 	os.Setenv("S3_ACCESS_KEY", accessKeyID)
 	os.Setenv("S3_SECRET_KEY", secretAccessKey)
-	os.Setenv("S3_SECRET_KEY", secretAccessKey)
 
 	return env, nil
 }
