@@ -230,8 +230,9 @@ func (b *S3BackupHandler) purgeBackups(ctx context.Context, result *backup.Purge
 		})
 		if err != nil {
 			b.log.Error(err, "Encountered an error trying to delete object in S3.", "ObjectKey", obj.Key)
+		} else {
+			purgedBackups++
 		}
-		purgedBackups++
 	}
 
 	result.BackupsLeft -= purgedBackups
