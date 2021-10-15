@@ -117,7 +117,13 @@ func runBackup(ctx context.Context, log logger.Logger, metricsPublisher backup.M
 }
 
 func runPurge(ctx context.Context, log logger.Logger, backupManger *eventstore.BackupManager) error {
-	return nil
+	result, err := backupManger.RunPurge(ctx)
+	if err != nil {
+		log.Error(err, "Failed to purge backups.", "BackupsLeft", result.BackupsLeft, "PurgedBackups", result.PurgedBackups)
+	} else {
+		log.Info("Purging outdated backups has been successful.", "BackupsLeft", result.BackupsLeft, "PurgedBackups", result.PurgedBackups)
+	}
+	return err
 }
 
 func init() {
