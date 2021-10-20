@@ -87,6 +87,12 @@ spec:
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
           {{- end }}
+          # define a readiness probe that checks every 5 seconds
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8086
+            periodSeconds: 5
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

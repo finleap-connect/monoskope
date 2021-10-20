@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,6 +33,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
+	"github.com/heptiolabs/healthcheck"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 )
@@ -107,6 +109,10 @@ var serveCmd = &cobra.Command{
 		); err != nil {
 			return err
 		}
+
+		health := healthcheck.NewHandler()
+		health.AddReadinessCheck("ready", func() error { return nil })
+		go util.PanicOnError(http.ListenAndServe("0.0.0.0:8086", health))
 
 		// Wait for interrupt signal sent from terminal or on sigterm
 		sigint := make(chan os.Signal, 1)
