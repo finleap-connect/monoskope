@@ -17,10 +17,10 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
@@ -110,16 +110,36 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
+		// Add readiness check
 		health := healthcheck.NewHandler()
 		health.AddReadinessCheck("ready", func() error { return nil })
-		go util.PanicOnError(http.ListenAndServe("0.0.0.0:8086", health))
 
-		// Wait for interrupt signal sent from terminal or on sigterm
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
-		signal.Notify(sigint, syscall.SIGTERM)
-		signal.Notify(sigint, syscall.SIGQUIT)
-		<-sigint
+		listener, err := net.Listen("tcp", "0.0.0.0:8086")
+		if err != nil {
+			return err
+		}
+		defer listener.Close()
+
+		shutdown := util.NewShutdownWaitGroup()
+
+		// Start routine waiting for signals
+		shutdown.RegisterSignalHandler(func() {
+			// Stop the HTTP servers
+			reactorEventHandler.Stop()
+			util.PanicOnError(listener.Close())
+			util.PanicOnError(msgBus.Close())
+		})
+
+		err = http.Serve(listener, health)
+		if !shutdown.IsExpected() && err != nil {
+			panic(fmt.Sprintf("shutdown unexpected: %v", err))
+		}
+
+		// Check if we are expecting shutdown
+		// Wait for both shutdown signals and close the channel
+		if ok := shutdown.WaitOrTimeout(30 * time.Second); !ok {
+			panic("shutting down gracefully exceeded 30 seconds")
+		}
 
 		return nil
 	},
