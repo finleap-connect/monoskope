@@ -51,4 +51,9 @@ const (
 	CertificateIssued es.EventType = "CertificateIssued"
 	// Event emitted when a certificate could not be issued
 	CertificateIssueingFailed es.EventType = "CertificateIssueingFailed"
+
+	// Event emitted when a tenant was given access to a certain cluster
+	TenantClusterBindingCreated es.EventType = "TenantClusterBindingCreated"
+	// Event emitted when a tenant's access to a cluster has been revoked
+	TenantClusterBindingDeleted es.EventType = "TenantClusterBindingDeleted"
 )

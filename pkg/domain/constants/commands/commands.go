@@ -43,4 +43,7 @@ const (
 
 	// Command to request a certificate
 	RequestCertificate es.CommandType = "RequestCertificate"
+
+	// Command to allow a tenant to access a certain cluster
+	CreateTenantClusterBinding es.CommandType = "CreateTenantClusterBinding"
 )

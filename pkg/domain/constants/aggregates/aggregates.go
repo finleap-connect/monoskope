@@ -27,4 +27,6 @@ const (
 	Cluster es.AggregateType = "Cluster"
 	// Type for the CertificateAggregate
 	Certificate es.AggregateType = "Certificate"
+	// Type for the TenantClusterBindingAggregate
+	TenantClusterBinding es.AggregateType = "TenantClusterBinding"
 )
