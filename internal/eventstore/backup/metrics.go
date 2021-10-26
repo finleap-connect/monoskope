@@ -21,6 +21,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
 
@@ -103,7 +104,7 @@ func NewMetricsPublisher(pushGatewayUrl string) (MetricsPublisher, error) {
 	// We use a registry here to benefit from the consistency checks that
 	// happen during registration.
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(mp.completionTime, mp.duration, mp.bytes, prometheus.NewGoCollector())
+	registry.MustRegister(mp.completionTime, mp.duration, mp.bytes, collectors.NewGoCollector())
 	// Note that successTime is not registered.
 
 	jobName := os.Getenv("K8S_JOB")

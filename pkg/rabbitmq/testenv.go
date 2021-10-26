@@ -61,8 +61,8 @@ func (env *TestEnv) startRabbitMQ() error {
 	// Start rabbitmq
 	_, err = env.Run(&dockertest.RunOptions{
 		Name:       "rabbitmq",
-		Repository: "bitnami/rabbitmq",
-		Tag:        "3.8.19",
+		Repository: "rabbitmq",
+		Tag:        "3.9.8",
 		Env: []string{
 			"RABBITMQ_PLUGINS=rabbitmq_management",
 		},
@@ -75,7 +75,7 @@ func (env *TestEnv) startRabbitMQ() error {
 	}
 
 	// Build connection string
-	env.AmqpURL = "amqp://user:bitnami@127.0.0.1:5672"
+	env.AmqpURL = "amqp://guest:guest@127.0.0.1:5672"
 
 	params := backoff.NewExponentialBackOff()
 	params.MaxElapsedTime = 60 * time.Second

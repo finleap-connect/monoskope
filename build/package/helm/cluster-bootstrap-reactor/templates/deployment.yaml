@@ -60,6 +60,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: http
+            containerPort: 8086
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "cluster-bootstrap-reactor.fullname" .) "bus") }}
@@ -87,6 +90,12 @@ spec:
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
           {{- end }}
+          # define a readiness probe that checks every 5 seconds
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8086
+            periodSeconds: 5
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
