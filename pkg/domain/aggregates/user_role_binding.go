@@ -120,11 +120,7 @@ func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) 
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
-	reply := &es.CommandReply{
-		Id:      a.ID(),
-		Version: a.Version(),
-	}
-	return reply, nil
+	return a.DefaultReply(), nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

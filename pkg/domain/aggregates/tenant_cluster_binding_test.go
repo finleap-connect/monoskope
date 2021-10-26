@@ -30,7 +30,6 @@ import (
 var _ = Describe("UnitTest: TenantClusterBindingAggregate", func() {
 	var mockCtrl *gomock.Controller
 	ctx := createSysAdminCtx()
-	expectedBindingId := uuid.New()
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
@@ -53,7 +52,7 @@ var _ = Describe("UnitTest: TenantClusterBindingAggregate", func() {
 		cluster.IncrementVersion()
 
 		// Build create command for binding
-		createCommand := commands.NewCreateTenantClusterBindingCommand(expectedBindingId).(*commands.CreateTenantClusterBindingCommand)
+		createCommand := commands.NewCreateTenantClusterBindingCommand(uuid.Nil).(*commands.CreateTenantClusterBindingCommand)
 		createCommand.TenantId = tenant.ID().String()
 		createCommand.ClusterId = cluster.ID().String()
 
@@ -77,5 +76,25 @@ var _ = Describe("UnitTest: TenantClusterBindingAggregate", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(data.TenantId).To(Equal(tenant.ID().String()))
 		Expect(data.ClusterId).To(Equal(cluster.ID().String()))
+
+		err = binding.ApplyEvent(event)
+		Expect(err).NotTo(HaveOccurred())
+		binding.IncrementVersion()
+
+		deleteCommand := commands.NewDeleteTenantClusterBindingCommand(reply.Id)
+		reply, err = binding.HandleCommand(ctx, deleteCommand)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(reply).ToNot(BeNil())
+
+		// Validate emitted event(s)
+		event = binding.UncommittedEvents()[0]
+		Expect(event.EventType()).To(Equal(events.TenantClusterBindingDeleted))
+
+		err = binding.ApplyEvent(event)
+		Expect(err).NotTo(HaveOccurred())
+		binding.IncrementVersion()
+
+		Expect(binding.Deleted()).To(BeTrue())
+		Expect(binding.Version()).To(BeNumerically("==", 2))
 	})
 })

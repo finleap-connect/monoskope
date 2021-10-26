@@ -67,11 +67,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			CaCertificateBundle: cmd.GetCaCertBundle(),
 		})
 		_ = a.AppendEvent(ctx, events.ClusterCreatedV2, ed)
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-		return reply, nil
 	case *commands.UpdateClusterCommand:
 		ed := new(eventdata.ClusterUpdated)
 
@@ -89,21 +84,12 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 			ed.CaCertificateBundle = caCertBundle
 		}
 		_ = a.AppendEvent(ctx, events.ClusterUpdated, es.ToEventDataFromProto(ed))
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-		return reply, nil
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-		return reply, nil
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
+	return a.DefaultReply(), nil
 }
 
 // validate validates the current state of the aggregate and if a specific command is valid in the current state

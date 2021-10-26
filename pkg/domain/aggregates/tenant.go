@@ -98,42 +98,18 @@ func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comm
 		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{
 			Name:   cmd.GetName(),
 			Prefix: cmd.GetPrefix()})
-
 		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	case *commands.UpdateTenantCommand:
 		ed := es.ToEventDataFromProto(&eventdata.TenantUpdated{
 			Name: cmd.GetName(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	case *commands.DeleteTenantCommand:
 		_ = a.AppendEvent(ctx, events.TenantDeleted, nil)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
+	return a.DefaultReply(), nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

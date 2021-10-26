@@ -61,14 +61,12 @@ func (a *TenantClusterBindingAggregate) HandleCommand(ctx context.Context, cmd e
 			ClusterId: cmd.GetClusterId(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantClusterBindingCreated, ed)
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-		return reply, nil
+	case *commands.DeleteTenantClusterBindingCommand:
+		_ = a.AppendEvent(ctx, events.TenantClusterBindingDeleted, nil)
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
+	return a.DefaultReply(), nil
 }
 
 // validate validates the current state of the aggregate and if a specific command is valid in the current state
