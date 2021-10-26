@@ -68,8 +68,8 @@ var _ = Describe("Unit Test for the Tenant Aggregate", func() {
 		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(agg.(*TenantAggregate).Name).To(Equal(expectedTenantName))
-		Expect(agg.(*TenantAggregate).Prefix).To(Equal(expectedPrefix))
+		Expect(agg.(*TenantAggregate).name).To(Equal(expectedTenantName))
+		Expect(agg.(*TenantAggregate).prefix).To(Equal(expectedPrefix))
 
 	})
 })

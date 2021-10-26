@@ -31,8 +31,8 @@ import (
 type TenantAggregate struct {
 	*DomainAggregateBase
 	aggregateManager es.AggregateStore
-	Name             string
-	Prefix           string
+	name             string
+	prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
@@ -83,7 +83,7 @@ func containsTenant(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*TenantAggregate)
 		if ok {
-			if !d.Deleted() && d.Name == name {
+			if !d.Deleted() && d.name == name {
 				return true
 			}
 		}
@@ -144,14 +144,14 @@ func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.Name = data.Name
-		a.Prefix = data.Prefix
+		a.name = data.Name
+		a.prefix = data.Prefix
 	case events.TenantUpdated:
 		data := &eventdata.TenantUpdated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.Name = data.GetName().GetValue()
+		a.name = data.GetName().GetValue()
 	case events.TenantDeleted:
 		a.SetDeleted(true)
 	default:
