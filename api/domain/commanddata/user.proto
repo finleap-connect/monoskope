@@ -21,6 +21,7 @@ option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/command
 
 package commanddata;
 
+// Command data to create a new user
 message CreateUserCommandData {
   // Email address of the user
   string email = 1;
@@ -28,6 +29,7 @@ message CreateUserCommandData {
   string name = 2;
 }
 
+// Command data to create a rolebinding for an user
 message CreateUserRoleBindingCommandData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1;

@@ -23,7 +23,7 @@ option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/command
 
 package commanddata;
 
-// Request to create a new tenant
+// Command data to create a new tenant
 message CreateTenantCommandData {
   // Name of the tenant
   string name = 1; // required
@@ -31,7 +31,7 @@ message CreateTenantCommandData {
   string prefix = 2; // required
 }
 
-// Request to update a single tenant
+// Command data to update a tenant
 message UpdateTenantCommandData {
   // New name for the tenant
   google.protobuf.StringValue name = 1;

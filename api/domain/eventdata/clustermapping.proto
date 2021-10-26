@@ -17,16 +17,13 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
+option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
-package commanddata;
+package eventdata;
 
-// Command data to request a new certificate
-message RequestCertificate {
-  // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string referenced_aggregate_id = 1;
-  // Type of the aggregate referenced
-  string referenced_aggregate_type = 2;
-  // Certificate signing request
-  bytes signing_request = 3;
+message TenantClusterBindingCreated {
+    // Unique identifier of the tenant (UUID 128-bit number)
+    string tenant_id = 1;
+    // Unique identifier of the cluster (UUID 128-bit number)
+    string cluster_id = 2;
 }
