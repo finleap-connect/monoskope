@@ -26,8 +26,8 @@ The `<CA_CERT_FILE>` has to be the CA of your KubeAPIServer so when
 `monoctl` updates your `kubeconfig` the CA is known to `kubectl`when talking
 to your KubeAPIServer. You will find the CA in the kubeconfig file for this cluster as `certificate-authority-data`, you need to decode base64 it for `monoctl`.
 
-Example for the playground cluster:
+Example:
 
-* `grep certificate-authority-data ~/.kube/kubeconfig--bfs--playground.yaml | awk '{print $2}' | base64 -d > /tmp/bfs-playground-cluster-ca.crt`
-* `KUBE_API_SERVER_ADDRESS=$(grep server ~/.kube/kubeconfig--bfs--playground.yaml | awk '{print $2}')`
-* `monoctl create cluster $KUBE_API_SERVER_ADDRESS /tmp/bfs-playground-cluster-ca.crt`
+* `grep certificate-authority-data ~/.kube/kubeconfig.yaml | awk '{print $2}' | base64 -d > /tmp/cluster-ca.crt`
+* `KUBE_API_SERVER_ADDRESS=$(grep server ~/.kube/kubeconfig.yaml | awk '{print $2}')`
+* `monoctl create cluster $KUBE_API_SERVER_ADDRESS /tmp/cluster-ca.crt -n mycluster`
