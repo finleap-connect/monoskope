@@ -83,8 +83,6 @@ go-report: ## create report of commands and permission
 	for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
 	echo >>.protobuf-deps
 
-go-protobuf: $(GENERATED_GO_FILES)
-
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
 	@find . -name '*.coverprofile' -exec rm {} \;
 	@ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace
@@ -138,7 +136,7 @@ go-clean: go-build-clean ## clean up all go parts
 	mkdir $(TOOLS_DIR)
 	find . -name '*.coverprofile' -exec rm {} \;
 
-%.pb.go: .protobuf-deps
+go-protobuf: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
