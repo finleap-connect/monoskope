@@ -31,6 +31,7 @@ import (
 
 var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 	ctx := context.Background()
+	expectedBindingId := uuid.New()
 	expectedTenantId := uuid.New()
 	expectedClusterId := uuid.New()
 
@@ -44,15 +45,15 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 	})
 	ctx = mdManager.GetContext()
 
+	projector := NewTenantClusterBindingProjector()
+	projection := projector.NewProjection(uuid.New())
+
 	It("can project event TenantClusterBindingCreated", func() {
 		protoEventData := &eventdata.TenantClusterBindingCreated{
 			TenantId:  expectedTenantId.String(),
 			ClusterId: expectedClusterId.String(),
 		}
-		event := es.NewEvent(ctx, events.TenantClusterBindingCreated, es.ToEventDataFromProto(protoEventData), time.Now().UTC(), aggregates.TenantClusterBinding, uuid.New(), 1)
-
-		projector := NewTenantClusterBindingProjector()
-		projection := projector.NewProjection(uuid.New())
+		event := es.NewEvent(ctx, events.TenantClusterBindingCreated, es.ToEventDataFromProto(protoEventData), time.Now().UTC(), aggregates.TenantClusterBinding, expectedBindingId, 1)
 
 		projection, err := projector.Project(context.Background(), event, projection)
 		Expect(err).NotTo(HaveOccurred())
@@ -66,5 +67,22 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 
 		dp := binding.DomainProjection
 		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.LastModified).ToNot(BeNil())
+		Expect(dp.Deleted).To(BeNil())
+	})
+	It("can project event TenantClusterBindingDeleted", func() {
+		event := es.NewEvent(ctx, events.TenantClusterBindingDeleted, nil, time.Now().UTC(), aggregates.TenantClusterBinding, expectedBindingId, 2)
+
+		projection, err := projector.Project(context.Background(), event, projection)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(projection.Version()).To(Equal(uint64(2)))
+
+		binding, ok := projection.(*projections.TenantClusterBinding)
+		Expect(ok).To(BeTrue())
+
+		dp := binding.DomainProjection
+		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.LastModified).ToNot(BeNil())
+		Expect(dp.Deleted).ToNot(BeNil())
 	})
 })
