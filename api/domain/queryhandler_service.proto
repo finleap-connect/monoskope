@@ -51,8 +51,7 @@ service Tenant {
   // GetByName returns the tenant found by the given name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
   // GetUsers returns users belonging to the given tenant id.
-  rpc GetUsers(google.protobuf.StringValue)
-      returns (stream projections.TenantUser);
+  rpc GetUsers(google.protobuf.StringValue) returns (stream projections.TenantUser);
 }
 
 // Cluster is a service to query information about known clusters.
