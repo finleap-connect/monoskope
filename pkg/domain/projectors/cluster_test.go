@@ -37,7 +37,7 @@ var (
 	expectedJWT                 = "thisisnotajwt"
 )
 
-var _ = Describe("domain/cluster_repo", func() {
+var _ = Describe("domain/projectors/cluster", func() {
 	ctx := context.Background()
 	userId := uuid.New()
 
@@ -65,7 +65,6 @@ var _ = Describe("domain/cluster_repo", func() {
 
 		clusterProjection, err := clusterProjector.Project(context.Background(), event, clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
-
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
 
 		cluster, ok := clusterProjection.(*projections.Cluster)
