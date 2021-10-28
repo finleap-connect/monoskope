@@ -34,12 +34,3 @@ message TenantClusterBinding {
     // Metadata about the projection
     LifecycleMetadata metadata = 4;
 }
-
-message UserClusterRole {
-    // Unique identifier of the cluster (UUID 128-bit number)
-    string cluster_id = 1;
-    // Unique name of the cluster
-    string cluster_name = 2;
-    // Roles of the user within the cluster
-    repeated string cluster_roles = 3;
-}

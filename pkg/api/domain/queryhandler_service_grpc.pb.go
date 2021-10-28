@@ -764,6 +764,186 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
+// ClusterAccessClient is the client API for ClusterAccess service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ClusterAccessClient interface {
+	// GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
+	GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error)
+	// GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
+	GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error)
+}
+
+type clusterAccessClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewClusterAccessClient(cc grpc.ClientConnInterface) ClusterAccessClient {
+	return &clusterAccessClient{cc}
+}
+
+func (c *clusterAccessClient) GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[0], "/domain.ClusterAccess/GetClusterAccessByTenantId", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterAccessGetClusterAccessByTenantIdClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ClusterAccess_GetClusterAccessByTenantIdClient interface {
+	Recv() (*projections.Cluster, error)
+	grpc.ClientStream
+}
+
+type clusterAccessGetClusterAccessByTenantIdClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterAccessGetClusterAccessByTenantIdClient) Recv() (*projections.Cluster, error) {
+	m := new(projections.Cluster)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *clusterAccessClient) GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[1], "/domain.ClusterAccess/GetClusterAccessByUserId", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterAccessGetClusterAccessByUserIdClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ClusterAccess_GetClusterAccessByUserIdClient interface {
+	Recv() (*projections.Cluster, error)
+	grpc.ClientStream
+}
+
+type clusterAccessGetClusterAccessByUserIdClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.Cluster, error) {
+	m := new(projections.Cluster)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ClusterAccessServer is the server API for ClusterAccess service.
+// All implementations must embed UnimplementedClusterAccessServer
+// for forward compatibility
+type ClusterAccessServer interface {
+	// GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
+	GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error
+	// GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
+	GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error
+	mustEmbedUnimplementedClusterAccessServer()
+}
+
+// UnimplementedClusterAccessServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterAccessServer struct {
+}
+
+func (UnimplementedClusterAccessServer) GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByTenantId not implemented")
+}
+func (UnimplementedClusterAccessServer) GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByUserId not implemented")
+}
+func (UnimplementedClusterAccessServer) mustEmbedUnimplementedClusterAccessServer() {}
+
+// UnsafeClusterAccessServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterAccessServer will
+// result in compilation errors.
+type UnsafeClusterAccessServer interface {
+	mustEmbedUnimplementedClusterAccessServer()
+}
+
+func RegisterClusterAccessServer(s grpc.ServiceRegistrar, srv ClusterAccessServer) {
+	s.RegisterService(&ClusterAccess_ServiceDesc, srv)
+}
+
+func _ClusterAccess_GetClusterAccessByTenantId_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ClusterAccessServer).GetClusterAccessByTenantId(m, &clusterAccessGetClusterAccessByTenantIdServer{stream})
+}
+
+type ClusterAccess_GetClusterAccessByTenantIdServer interface {
+	Send(*projections.Cluster) error
+	grpc.ServerStream
+}
+
+type clusterAccessGetClusterAccessByTenantIdServer struct {
+	grpc.ServerStream
+}
+
+func (x *clusterAccessGetClusterAccessByTenantIdServer) Send(m *projections.Cluster) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _ClusterAccess_GetClusterAccessByUserId_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ClusterAccessServer).GetClusterAccessByUserId(m, &clusterAccessGetClusterAccessByUserIdServer{stream})
+}
+
+type ClusterAccess_GetClusterAccessByUserIdServer interface {
+	Send(*projections.Cluster) error
+	grpc.ServerStream
+}
+
+type clusterAccessGetClusterAccessByUserIdServer struct {
+	grpc.ServerStream
+}
+
+func (x *clusterAccessGetClusterAccessByUserIdServer) Send(m *projections.Cluster) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// ClusterAccess_ServiceDesc is the grpc.ServiceDesc for ClusterAccess service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.ClusterAccess",
+	HandlerType: (*ClusterAccessServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetClusterAccessByTenantId",
+			Handler:       _ClusterAccess_GetClusterAccessByTenantId_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetClusterAccessByUserId",
+			Handler:       _ClusterAccess_GetClusterAccessByUserId_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
 // CertificateClient is the client API for Certificate service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.

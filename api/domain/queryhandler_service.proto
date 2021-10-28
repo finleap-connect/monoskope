@@ -68,6 +68,13 @@ service Cluster {
       returns (google.protobuf.StringValue);
 }
 
+service ClusterAccess{
+  // GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
+  rpc GetClusterAccessByTenantId(google.protobuf.StringValue) returns (stream projections.Cluster);
+  // GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
+  rpc GetClusterAccessByUserId(google.protobuf.StringValue) returns (stream projections.Cluster);
+}
+
 service Certificate {
   rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
 }
