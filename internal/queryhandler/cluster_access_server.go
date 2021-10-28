@@ -20,7 +20,6 @@ import (
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
 )
@@ -28,18 +27,11 @@ import (
 // clusterAccessServer is the implementation of the ClusterAccessService API
 type clusterAccessServer struct {
 	api.UnimplementedClusterAccessServer
-
-	bindingRepo repositories.ReadOnlyTenantClusterBindingRepository
-	userRepo    repositories.ReadOnlyUserRepository
-	tenantRepo  repositories.ReadOnlyTenantUserRepository
-	clusterRepo repositories.ReadOnlyClusterRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterAccessServer(clusterRepo repositories.ReadOnlyClusterRepository) *clusterAccessServer {
-	return &clusterAccessServer{
-		clusterRepo: clusterRepo,
-	}
+func NewClusterAccessServer() *clusterAccessServer {
+	return &clusterAccessServer{}
 }
 
 func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.ClusterAccessClient, error) {
