@@ -20,6 +20,7 @@ import (
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
+	"github.com/google/uuid"
 )
 
 type tenantClusterBindingRepository struct {
@@ -37,6 +38,7 @@ type TenantClusterBindingRepository interface {
 type ReadOnlyTenantClusterBindingRepository interface {
 	// GetAll searches for the a TenantClusterBinding projections.
 	GetAll(context.Context, bool) ([]*projections.TenantClusterBinding, error)
+	GetByTenantId(context.Context, uuid.UUID) ([]*projections.TenantClusterBinding, error)
 }
 
 // WriteOnlyTenantClusterBindingRepository is a repository for writing tenantclusterbinding projections.
@@ -57,15 +59,31 @@ func (r *tenantClusterBindingRepository) GetAll(ctx context.Context, includeDele
 		return nil, err
 	}
 
-	var tenants []*projections.TenantClusterBinding
+	var bindings []*projections.TenantClusterBinding
 	for _, p := range ps {
 		if t, ok := p.(*projections.TenantClusterBinding); ok {
 			if !t.GetDeleted().IsValid() || includeDeleted {
-				tenants = append(tenants, t)
+				bindings = append(bindings, t)
 			}
 		} else {
 			return nil, esErrors.ErrInvalidProjectionType
 		}
 	}
-	return tenants, nil
+	return bindings, nil
+}
+
+// GetAll searches for the a TenantClusterBinding projections.
+func (r *tenantClusterBindingRepository) GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error) {
+	ps, err := r.GetAll(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var bindings []*projections.TenantClusterBinding
+	for _, p := range ps {
+		if p.TenantId == tenantId.String() {
+			bindings = append(bindings, p)
+		}
+	}
+	return bindings, nil
 }

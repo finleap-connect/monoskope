@@ -17,12 +17,10 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "google/protobuf/empty.proto";
 import "api/domain/projections/user.proto";
 import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/domain/projections/certificate.proto";
-import "api/eventsourcing/messages.proto";
 import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
@@ -68,6 +66,7 @@ service Cluster {
       returns (google.protobuf.StringValue);
 }
 
+// ClusterAccess is a service to query access information about clusters.
 service ClusterAccess{
   // GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
   rpc GetClusterAccessByTenantId(google.protobuf.StringValue) returns (stream projections.Cluster);
@@ -79,13 +78,7 @@ service Certificate {
   rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
 }
 
-// K8sOperator is a service used by remote K8s Operators to query the Control
-// Plane
-service K8sOperator {
-  rpc GetCluster(google.protobuf.Empty) returns (projections.Cluster);
-  rpc Retrieve(google.protobuf.Empty) returns (stream eventsourcing.Event);
-}
-
+// GetAllRequest is the generic request to query all instances of a certain projection
 message GetAllRequest { bool include_deleted = 1; }
 
 message GetCertificateRequest {

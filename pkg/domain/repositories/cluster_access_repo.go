@@ -14,11 +14,18 @@
 
 package repositories
 
+import (
+	"context"
+
+	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/google/uuid"
+)
+
 type clusterAccessRepository struct {
-	clusterRepo         ReadOnlyClusterRepository
-	tenantRepo          ReadOnlyTenantRepository
-	userRepo            ReadOnlyUserRepository
-	userRoleBindingRepo ReadOnlyUserRoleBindingRepository
+	clusterRepo              ReadOnlyClusterRepository
+	userRoleBindingRepo      ReadOnlyUserRoleBindingRepository
+	tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository
 }
 
 // ReadOnlyClusterAccessRepository is a repository for reading accesses to a cluster.
@@ -26,19 +33,35 @@ type ReadOnlyClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(tenantRepo ReadOnlyTenantRepository, clusterRepo ReadOnlyClusterRepository, userRepo ReadOnlyUserRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
+func NewClusterAccessRepository(clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
 	return &clusterAccessRepository{
 		clusterRepo:         clusterRepo,
-		tenantRepo:          tenantRepo,
-		userRepo:            userRepo,
 		userRoleBindingRepo: userRoleBindingRepo,
 	}
 }
 
-// func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.UserClusterRole, error) {
-// 	roleBindings, err := r.userRoleBindingRepo.ByUserId(ctx, id)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error) {
+	roleBindings, err := r.userRoleBindingRepo.ByUserId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
-// }
+	var clusters []*projections.Cluster
+	for _, roleBinding := range roleBindings {
+		if roleBinding.Scope == scopes.Tenant.String() {
+			tenantClusterBinding, err := r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(roleBinding.GetResource()))
+			if err != nil {
+				return nil, err
+			}
+
+			for _, clusterBinding := range tenantClusterBinding {
+				cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+				if err != nil {
+					return nil, err
+				}
+				clusters = append(clusters, cluster.Cluster)
+			}
+		}
+	}
+	return clusters, nil
+}
