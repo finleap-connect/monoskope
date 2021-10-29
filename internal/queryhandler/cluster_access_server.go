@@ -22,9 +22,8 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -52,10 +51,42 @@ func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc
 	return conn, api.NewClusterAccessClient(conn), nil
 }
 
-func (clusterAccessServer) GetClusterAccessByTenantId(tenantId *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByTenantIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByTenantId not implemented")
+func (s *clusterAccessServer) GetClusterAccessByTenantId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByTenantIdServer) error {
+	tenantId, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return err
+	}
+
+	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByTenantId(stream.Context(), tenantId)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, c := range clusters {
+		err := stream.Send(c)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
 }
 
-func (clusterAccessServer) GetClusterAccessByUserId(userId *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByUserIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByUserId not implemented")
+func (s *clusterAccessServer) GetClusterAccessByUserId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByUserIdServer) error {
+	userId, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return err
+	}
+
+	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByUserId(stream.Context(), userId)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, c := range clusters {
+		err := stream.Send(c)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
 }

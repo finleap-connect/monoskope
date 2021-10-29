@@ -30,6 +30,10 @@ type clusterAccessRepository struct {
 
 // ReadOnlyClusterAccessRepository is a repository for reading accesses to a cluster.
 type ReadOnlyClusterAccessRepository interface {
+	// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
+	GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error)
+	// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
+	GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error)
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
@@ -62,6 +66,23 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 				clusters = append(clusters, cluster.Cluster)
 			}
 		}
+	}
+	return clusters, nil
+}
+
+func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error) {
+	bindings, err := r.tenantClusterBindingRepo.GetByTenantId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var clusters []*projections.Cluster
+	for _, clusterBinding := range bindings {
+		cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+		if err != nil {
+			return nil, err
+		}
+		clusters = append(clusters, cluster.Cluster)
 	}
 	return clusters, nil
 }
