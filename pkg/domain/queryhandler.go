@@ -36,6 +36,7 @@ type QueryHandlerDomain struct {
 	ClusterRepository              repositories.ClusterRepository
 	CertificateRepository          repositories.CertificateRepository
 	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
+	ClusterAccessRepo              repositories.ReadOnlyClusterAccessRepository
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
@@ -49,6 +50,7 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
 	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
 	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository())
+	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.ClusterRepository, d.UserRoleBindingRepository)
 
 	// Setup projectors
 	userProjector := projectors.NewUserProjector()

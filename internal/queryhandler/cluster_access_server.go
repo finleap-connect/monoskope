@@ -20,18 +20,25 @@ import (
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // clusterAccessServer is the implementation of the ClusterAccessService API
 type clusterAccessServer struct {
 	api.UnimplementedClusterAccessServer
+	clusterAccessRepo repositories.ReadOnlyClusterAccessRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterAccessServer() *clusterAccessServer {
-	return &clusterAccessServer{}
+func NewClusterAccessServer(clusterAccessRepo repositories.ReadOnlyClusterAccessRepository) *clusterAccessServer {
+	return &clusterAccessServer{
+		clusterAccessRepo: clusterAccessRepo,
+	}
 }
 
 func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.ClusterAccessClient, error) {
@@ -43,4 +50,12 @@ func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc
 	}
 
 	return conn, api.NewClusterAccessClient(conn), nil
+}
+
+func (clusterAccessServer) GetClusterAccessByTenantId(tenantId *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByTenantIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByTenantId not implemented")
+}
+
+func (clusterAccessServer) GetClusterAccessByUserId(userId *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByUserIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByUserId not implemented")
 }
