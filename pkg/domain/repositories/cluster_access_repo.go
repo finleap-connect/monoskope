@@ -37,10 +37,11 @@ type ReadOnlyClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
+func NewClusterAccessRepository(tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository, clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
 	return &clusterAccessRepository{
-		clusterRepo:         clusterRepo,
-		userRoleBindingRepo: userRoleBindingRepo,
+		clusterRepo:              clusterRepo,
+		userRoleBindingRepo:      userRoleBindingRepo,
+		tenantClusterBindingRepo: tenantClusterBindingRepo,
 	}
 }
 
