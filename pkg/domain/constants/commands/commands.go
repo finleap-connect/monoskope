@@ -43,4 +43,9 @@ const (
 
 	// Command to request a certificate
 	RequestCertificate es.CommandType = "RequestCertificate"
+
+	// Command to allow a tenant to access a certain cluster
+	CreateTenantClusterBinding es.CommandType = "CreateTenantClusterBinding"
+	// Command to remove access of a tenant to a certain cluster
+	DeleteTenantClusterBinding es.CommandType = "DeleteTenantClusterBinding"
 )

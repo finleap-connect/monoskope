@@ -29,7 +29,6 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
@@ -55,8 +54,7 @@ var (
 
 func TestAggregates(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/aggregates-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Aggregates Suite", []Reporter{junitReporter})
+	RunSpecs(t, "Aggregates Suite")
 }
 
 func createSysAdminCtx() context.Context {

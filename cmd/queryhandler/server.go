@@ -80,6 +80,7 @@ var serverCmd = &cobra.Command{
 			qhApi.RegisterCertificateServer(s, queryhandler.NewCertificateServer(qhDomain.CertificateRepository))
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
 			qhApi.RegisterClusterServer(s, queryhandler.NewClusterServer(qhDomain.ClusterRepository))
+			qhApi.RegisterClusterAccessServer(s, queryhandler.NewClusterAccessServer(qhDomain.ClusterAccessRepo))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

@@ -5,11 +5,9 @@ package domain
 import (
 	context "context"
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	eventsourcing "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -764,6 +762,186 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/domain/queryhandler_service.proto",
 }
 
+// ClusterAccessClient is the client API for ClusterAccess service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ClusterAccessClient interface {
+	// GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
+	GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error)
+	// GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
+	GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error)
+}
+
+type clusterAccessClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewClusterAccessClient(cc grpc.ClientConnInterface) ClusterAccessClient {
+	return &clusterAccessClient{cc}
+}
+
+func (c *clusterAccessClient) GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[0], "/domain.ClusterAccess/GetClusterAccessByTenantId", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterAccessGetClusterAccessByTenantIdClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ClusterAccess_GetClusterAccessByTenantIdClient interface {
+	Recv() (*projections.Cluster, error)
+	grpc.ClientStream
+}
+
+type clusterAccessGetClusterAccessByTenantIdClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterAccessGetClusterAccessByTenantIdClient) Recv() (*projections.Cluster, error) {
+	m := new(projections.Cluster)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *clusterAccessClient) GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[1], "/domain.ClusterAccess/GetClusterAccessByUserId", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &clusterAccessGetClusterAccessByUserIdClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ClusterAccess_GetClusterAccessByUserIdClient interface {
+	Recv() (*projections.Cluster, error)
+	grpc.ClientStream
+}
+
+type clusterAccessGetClusterAccessByUserIdClient struct {
+	grpc.ClientStream
+}
+
+func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.Cluster, error) {
+	m := new(projections.Cluster)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ClusterAccessServer is the server API for ClusterAccess service.
+// All implementations must embed UnimplementedClusterAccessServer
+// for forward compatibility
+type ClusterAccessServer interface {
+	// GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
+	GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error
+	// GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
+	GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error
+	mustEmbedUnimplementedClusterAccessServer()
+}
+
+// UnimplementedClusterAccessServer must be embedded to have forward compatible implementations.
+type UnimplementedClusterAccessServer struct {
+}
+
+func (UnimplementedClusterAccessServer) GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByTenantId not implemented")
+}
+func (UnimplementedClusterAccessServer) GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByUserId not implemented")
+}
+func (UnimplementedClusterAccessServer) mustEmbedUnimplementedClusterAccessServer() {}
+
+// UnsafeClusterAccessServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ClusterAccessServer will
+// result in compilation errors.
+type UnsafeClusterAccessServer interface {
+	mustEmbedUnimplementedClusterAccessServer()
+}
+
+func RegisterClusterAccessServer(s grpc.ServiceRegistrar, srv ClusterAccessServer) {
+	s.RegisterService(&ClusterAccess_ServiceDesc, srv)
+}
+
+func _ClusterAccess_GetClusterAccessByTenantId_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ClusterAccessServer).GetClusterAccessByTenantId(m, &clusterAccessGetClusterAccessByTenantIdServer{stream})
+}
+
+type ClusterAccess_GetClusterAccessByTenantIdServer interface {
+	Send(*projections.Cluster) error
+	grpc.ServerStream
+}
+
+type clusterAccessGetClusterAccessByTenantIdServer struct {
+	grpc.ServerStream
+}
+
+func (x *clusterAccessGetClusterAccessByTenantIdServer) Send(m *projections.Cluster) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _ClusterAccess_GetClusterAccessByUserId_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ClusterAccessServer).GetClusterAccessByUserId(m, &clusterAccessGetClusterAccessByUserIdServer{stream})
+}
+
+type ClusterAccess_GetClusterAccessByUserIdServer interface {
+	Send(*projections.Cluster) error
+	grpc.ServerStream
+}
+
+type clusterAccessGetClusterAccessByUserIdServer struct {
+	grpc.ServerStream
+}
+
+func (x *clusterAccessGetClusterAccessByUserIdServer) Send(m *projections.Cluster) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// ClusterAccess_ServiceDesc is the grpc.ServiceDesc for ClusterAccess service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.ClusterAccess",
+	HandlerType: (*ClusterAccessServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetClusterAccessByTenantId",
+			Handler:       _ClusterAccess_GetClusterAccessByTenantId_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetClusterAccessByUserId",
+			Handler:       _ClusterAccess_GetClusterAccessByUserId_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
 // CertificateClient is the client API for Certificate service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
@@ -847,155 +1025,5 @@ var Certificate_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/domain/queryhandler_service.proto",
-}
-
-// K8SOperatorClient is the client API for K8SOperator service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type K8SOperatorClient interface {
-	GetCluster(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*projections.Cluster, error)
-	Retrieve(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (K8SOperator_RetrieveClient, error)
-}
-
-type k8SOperatorClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewK8SOperatorClient(cc grpc.ClientConnInterface) K8SOperatorClient {
-	return &k8SOperatorClient{cc}
-}
-
-func (c *k8SOperatorClient) GetCluster(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*projections.Cluster, error) {
-	out := new(projections.Cluster)
-	err := c.cc.Invoke(ctx, "/domain.K8sOperator/GetCluster", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *k8SOperatorClient) Retrieve(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (K8SOperator_RetrieveClient, error) {
-	stream, err := c.cc.NewStream(ctx, &K8SOperator_ServiceDesc.Streams[0], "/domain.K8sOperator/Retrieve", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &k8SOperatorRetrieveClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type K8SOperator_RetrieveClient interface {
-	Recv() (*eventsourcing.Event, error)
-	grpc.ClientStream
-}
-
-type k8SOperatorRetrieveClient struct {
-	grpc.ClientStream
-}
-
-func (x *k8SOperatorRetrieveClient) Recv() (*eventsourcing.Event, error) {
-	m := new(eventsourcing.Event)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// K8SOperatorServer is the server API for K8SOperator service.
-// All implementations must embed UnimplementedK8SOperatorServer
-// for forward compatibility
-type K8SOperatorServer interface {
-	GetCluster(context.Context, *emptypb.Empty) (*projections.Cluster, error)
-	Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error
-	mustEmbedUnimplementedK8SOperatorServer()
-}
-
-// UnimplementedK8SOperatorServer must be embedded to have forward compatible implementations.
-type UnimplementedK8SOperatorServer struct {
-}
-
-func (UnimplementedK8SOperatorServer) GetCluster(context.Context, *emptypb.Empty) (*projections.Cluster, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCluster not implemented")
-}
-func (UnimplementedK8SOperatorServer) Retrieve(*emptypb.Empty, K8SOperator_RetrieveServer) error {
-	return status.Errorf(codes.Unimplemented, "method Retrieve not implemented")
-}
-func (UnimplementedK8SOperatorServer) mustEmbedUnimplementedK8SOperatorServer() {}
-
-// UnsafeK8SOperatorServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to K8SOperatorServer will
-// result in compilation errors.
-type UnsafeK8SOperatorServer interface {
-	mustEmbedUnimplementedK8SOperatorServer()
-}
-
-func RegisterK8SOperatorServer(s grpc.ServiceRegistrar, srv K8SOperatorServer) {
-	s.RegisterService(&K8SOperator_ServiceDesc, srv)
-}
-
-func _K8SOperator_GetCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(K8SOperatorServer).GetCluster(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.K8sOperator/GetCluster",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(K8SOperatorServer).GetCluster(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _K8SOperator_Retrieve_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(emptypb.Empty)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(K8SOperatorServer).Retrieve(m, &k8SOperatorRetrieveServer{stream})
-}
-
-type K8SOperator_RetrieveServer interface {
-	Send(*eventsourcing.Event) error
-	grpc.ServerStream
-}
-
-type k8SOperatorRetrieveServer struct {
-	grpc.ServerStream
-}
-
-func (x *k8SOperatorRetrieveServer) Send(m *eventsourcing.Event) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-// K8SOperator_ServiceDesc is the grpc.ServiceDesc for K8SOperator service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var K8SOperator_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "domain.K8sOperator",
-	HandlerType: (*K8SOperatorServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetCluster",
-			Handler:    _K8SOperator_GetCluster_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Retrieve",
-			Handler:       _K8SOperator_Retrieve_Handler,
-			ServerStreams: true,
-		},
-	},
 	Metadata: "api/domain/queryhandler_service.proto",
 }

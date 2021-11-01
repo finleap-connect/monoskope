@@ -17,8 +17,6 @@ package repositories
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -27,8 +25,7 @@ import (
 
 func TestRepositories(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-repositories-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestRepositories", []Reporter{junitReporter})
+	RunSpecs(t, "TestRepositories")
 }
 
 var _ = BeforeSuite(func() {

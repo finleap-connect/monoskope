@@ -29,12 +29,14 @@ import (
 )
 
 type QueryHandlerDomain struct {
-	UserRoleBindingRepository repositories.UserRoleBindingRepository
-	UserRepository            repositories.UserRepository
-	TenantRepository          repositories.TenantRepository
-	TenantUserRepository      repositories.ReadOnlyTenantUserRepository
-	ClusterRepository         repositories.ClusterRepository
-	CertificateRepository     repositories.CertificateRepository
+	UserRoleBindingRepository      repositories.UserRoleBindingRepository
+	UserRepository                 repositories.UserRepository
+	TenantRepository               repositories.TenantRepository
+	TenantUserRepository           repositories.ReadOnlyTenantUserRepository
+	ClusterRepository              repositories.ClusterRepository
+	CertificateRepository          repositories.CertificateRepository
+	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
+	ClusterAccessRepo              repositories.ReadOnlyClusterAccessRepository
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
@@ -47,6 +49,8 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
 	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
+	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository())
+	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository)
 
 	// Setup projectors
 	userProjector := projectors.NewUserProjector()
@@ -54,13 +58,15 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	tenantProjector := projectors.NewTenantProjector()
 	clusterProjector := projectors.NewClusterProjector()
 	certificateProjector := projectors.NewCertificateProjector()
+	tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
 
 	// Setup handler
 	userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, d.UserRepository)
 	tenantProjectingHandler := eventhandler.NewProjectingEventHandler(tenantProjector, d.TenantRepository)
 	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, d.UserRoleBindingRepository)
 	clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, d.ClusterRepository)
-	certificateProjectHandler := eventhandler.NewProjectingEventHandler(certificateProjector, d.CertificateRepository)
+	certificateProjectingHandler := eventhandler.NewProjectingEventHandler(certificateProjector, d.CertificateRepository)
+	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler(tenantClusterBindingProjector, d.TenantClusterBindingRepository)
 
 	// Setup middleware
 	refreshDuration := time.Second * 30
@@ -68,7 +74,8 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-	certificateHandlerChain := eventsourcing.UseEventHandlerMiddleware(certificateProjectHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	certificateHandlerChain := eventsourcing.UseEventHandlerMiddleware(certificateProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	tenantClusterBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantClusterBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)
@@ -76,6 +83,7 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userRoleBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
 	clusterMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Cluster)
 	certificateMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Certificate)
+	tenantClusterBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.TenantClusterBinding)
 
 	// Register event handler with event bus
 	if err := eventBus.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
@@ -93,6 +101,9 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	if err := eventBus.AddHandler(ctx, certificateHandlerChain, certificateMatcher); err != nil {
 		return nil, err
 	}
+	if err := eventBus.AddHandler(ctx, tenantClusterBindingHandlerChain, tenantClusterBindingMatcher); err != nil {
+		return nil, err
+	}
 
 	// Start repo warming
 	if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
@@ -108,6 +119,9 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.Certificate, certificateHandlerChain); err != nil {
+		return nil, err
+	}
+	if err := handler.WarmUp(ctx, esClient, aggregates.TenantClusterBinding, tenantClusterBindingHandlerChain); err != nil {
 		return nil, err
 	}
 

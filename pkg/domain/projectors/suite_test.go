@@ -17,8 +17,6 @@ package projectors
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -27,8 +25,7 @@ import (
 
 func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-projectors-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/projectors", []Reporter{junitReporter})
+	RunSpecs(t, "pkg/domain/projectors")
 }
 
 var _ = BeforeSuite(func() {

@@ -58,6 +58,9 @@ var (
 
 	// ErrCertificateAlreadyExists is returned when a cert does already exist.
 	ErrCertificateAlreadyExists = errors.New("certificate already exists")
+
+	// ErrTenantClusterBindingAlreadyExists is returned when a tenant-cluster-binding does already exist.
+	ErrTenantClusterBindingAlreadyExists = errors.New("tenant already has access to that cluster")
 )
 
 var (
@@ -74,6 +77,7 @@ var (
 			ErrClusterRegistrationAlreadyExists,
 			ErrClusterAlreadyExists,
 			ErrCertificateAlreadyExists,
+			ErrTenantClusterBindingAlreadyExists,
 		},
 		codes.PermissionDenied: {ErrUnauthorized},
 	}

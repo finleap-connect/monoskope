@@ -17,16 +17,20 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
+import "api/domain/projections/metadata.proto";
 
-package commanddata;
+option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
-// Command data to request a new certificate
-message RequestCertificate {
-  // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string referenced_aggregate_id = 1;
-  // Type of the aggregate referenced
-  string referenced_aggregate_type = 2;
-  // Certificate signing request
-  bytes signing_request = 3;
+package projections;
+
+// TenantClusterBinding represents which tenant has access to what cluster
+message TenantClusterBinding {
+    // Unique identifier of the binding (UUID 128-bit number)
+    string id = 1;
+    // Unique identifier of the cluster (UUID 128-bit number)
+    string cluster_id = 2;
+    // Unique identifier of the tenant (UUID 128-bit number)
+    string tenant_id = 3;
+    // Metadata about the projection
+    LifecycleMetadata metadata = 4;
 }

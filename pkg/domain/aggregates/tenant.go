@@ -31,8 +31,8 @@ import (
 type TenantAggregate struct {
 	*DomainAggregateBase
 	aggregateManager es.AggregateStore
-	Name             string
-	Prefix           string
+	name             string
+	prefix           string
 }
 
 // NewTenantAggregate creates a new TenantAggregate
@@ -83,7 +83,7 @@ func containsTenant(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*TenantAggregate)
 		if ok {
-			if !d.Deleted() && d.Name == name {
+			if !d.Deleted() && d.name == name {
 				return true
 			}
 		}
@@ -98,42 +98,18 @@ func (a *TenantAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comm
 		ed := es.ToEventDataFromProto(&eventdata.TenantCreated{
 			Name:   cmd.GetName(),
 			Prefix: cmd.GetPrefix()})
-
 		_ = a.AppendEvent(ctx, events.TenantCreated, ed)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	case *commands.UpdateTenantCommand:
 		ed := es.ToEventDataFromProto(&eventdata.TenantUpdated{
 			Name: cmd.GetName(),
 		})
 		_ = a.AppendEvent(ctx, events.TenantUpdated, ed)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	case *commands.DeleteTenantCommand:
 		_ = a.AppendEvent(ctx, events.TenantDeleted, nil)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: a.Version(),
-		}
-
-		return reply, nil
-
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
+	return a.DefaultReply(), nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
@@ -144,14 +120,14 @@ func (a *TenantAggregate) ApplyEvent(event es.Event) error {
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.Name = data.Name
-		a.Prefix = data.Prefix
+		a.name = data.Name
+		a.prefix = data.Prefix
 	case events.TenantUpdated:
 		data := &eventdata.TenantUpdated{}
 		if err := event.Data().ToProto(data); err != nil {
 			return err
 		}
-		a.Name = data.GetName().GetValue()
+		a.name = data.GetName().GetValue()
 	case events.TenantDeleted:
 		a.SetDeleted(true)
 	default:

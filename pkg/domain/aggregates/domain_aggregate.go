@@ -80,3 +80,11 @@ func (a *DomainAggregateBase) Validate(ctx context.Context, cmd es.Command) erro
 	}
 	return nil
 }
+
+// DefaultReply creates a default command reply containing the ID and current version of the aggregate.
+func (a *DomainAggregateBase) DefaultReply() *es.CommandReply {
+	return &es.CommandReply{
+		Id:      a.ID(),
+		Version: a.Version(),
+	}
+}

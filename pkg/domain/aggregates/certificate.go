@@ -64,17 +64,11 @@ func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command
 			ReferencedAggregateType: cmd.GetReferencedAggregateType(),
 			SigningRequest:          cmd.GetSigningRequest(),
 		})
-
-		ev := a.AppendEvent(ctx, events.CertificateRequested, ed)
-
-		reply := &es.CommandReply{
-			Id:      a.ID(),
-			Version: ev.AggregateVersion(),
-		}
-		return reply, nil
+		_ = a.AppendEvent(ctx, events.CertificateRequested, ed)
 	default:
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
+	return a.DefaultReply(), nil
 }
 
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.

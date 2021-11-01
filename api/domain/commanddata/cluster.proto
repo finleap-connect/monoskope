@@ -23,7 +23,7 @@ option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/command
 
 package commanddata;
 
-// Command issued by an admin via monoctl to create a new cluster
+// Command data to create a new cluster
 message CreateCluster {
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
@@ -36,7 +36,7 @@ message CreateCluster {
   bytes ca_cert_bundle = 4;
 }
 
-// Command issued by an admin via monoctl to update information about a cluster
+// Command data to update information about a cluster
 message UpdateCluster {
   // Display name of the cluster
   google.protobuf.StringValue display_name = 1;
