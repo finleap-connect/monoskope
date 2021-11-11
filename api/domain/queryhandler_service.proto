@@ -21,6 +21,7 @@ import "api/domain/projections/user.proto";
 import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/domain/projections/certificate.proto";
+import "api/domain/projections/tenant_cluster_binding.proto";
 import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
@@ -72,6 +73,12 @@ service ClusterAccess{
   rpc GetClusterAccessByTenantId(google.protobuf.StringValue) returns (stream projections.Cluster);
   // GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
   rpc GetClusterAccessByUserId(google.protobuf.StringValue) returns (stream projections.Cluster);
+  // GetTenantClusterMappingsByTenantId returns bindings which belong to the given tenant by it's UUID
+  rpc GetTenantClusterMappingsByTenantId(google.protobuf.StringValue) returns (stream projections.TenantClusterBinding);
+  // GetTenantClusterMappingsByClusterId returns bindings which belong to the given cluster by it's UUID
+  rpc GetTenantClusterMappingsByClusterId(google.protobuf.StringValue) returns (stream projections.TenantClusterBinding);
+  // GetTenantClusterMappingsByClusterId returns the binding which belongs to the given tenant and cluster by their UUIDs
+  rpc GetTenantClusterMappingByTenantAndClusterId(google.protobuf.StringValue) returns (projections.TenantClusterBinding);
 }
 
 service Certificate {
