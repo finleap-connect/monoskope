@@ -78,7 +78,7 @@ service ClusterAccess{
   // GetTenantClusterMappingsByClusterId returns bindings which belong to the given cluster by it's UUID
   rpc GetTenantClusterMappingsByClusterId(google.protobuf.StringValue) returns (stream projections.TenantClusterBinding);
   // GetTenantClusterMappingsByClusterId returns the binding which belongs to the given tenant and cluster by their UUIDs
-  rpc GetTenantClusterMappingByTenantAndClusterId(google.protobuf.StringValue) returns (projections.TenantClusterBinding);
+  rpc GetTenantClusterMappingByTenantAndClusterId(GetClusterMappingRequest) returns (projections.TenantClusterBinding);
 }
 
 service Certificate {
@@ -93,4 +93,9 @@ message GetCertificateRequest {
   string aggregate_id = 1;
   // Type of the aggregate referenced
   string aggregate_type = 2;
+}
+
+message GetClusterMappingRequest {
+  string tenant_id = 1;
+  string cluster_id = 2;
 }
