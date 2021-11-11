@@ -19,6 +19,7 @@ import (
 	"time"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
@@ -30,13 +31,15 @@ import (
 // clusterAccessServer is the implementation of the ClusterAccessService API
 type clusterAccessServer struct {
 	api.UnimplementedClusterAccessServer
-	clusterAccessRepo repositories.ReadOnlyClusterAccessRepository
+	clusterAccessRepo        repositories.ReadOnlyClusterAccessRepository
+	tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterAccessServer(clusterAccessRepo repositories.ReadOnlyClusterAccessRepository) *clusterAccessServer {
+func NewClusterAccessServer(clusterAccessRepo repositories.ReadOnlyClusterAccessRepository, tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository) *clusterAccessServer {
 	return &clusterAccessServer{
-		clusterAccessRepo: clusterAccessRepo,
+		clusterAccessRepo:        clusterAccessRepo,
+		tenantClusterBindingRepo: tenantClusterBindingRepo,
 	}
 }
 
@@ -89,4 +92,42 @@ func (s *clusterAccessServer) GetClusterAccessByUserId(id *wrapperspb.StringValu
 		}
 	}
 	return nil
+}
+
+func (s *clusterAccessServer) GetTenantClusterMappingsByTenantId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetTenantClusterMappingsByTenantIdServer) error {
+	tenantId, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return err
+	}
+
+	tenants, err := s.tenantClusterBindingRepo.GetByTenantId(stream.Context(), tenantId)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, t := range tenants {
+		err := stream.Send(t.Proto())
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
+}
+
+func (s *clusterAccessServer) GetTenantClusterMappingByTenantAndClusterId(ctx context.Context, request *api.GetClusterMappingRequest) (*projections.TenantClusterBinding, error) {
+	tenantId, err := uuid.Parse(request.GetTenantId())
+	if err != nil {
+		return nil, err
+	}
+
+	clusterId, err := uuid.Parse(request.GetClusterId())
+	if err != nil {
+		return nil, err
+	}
+
+	binding, err := s.tenantClusterBindingRepo.GetByTenantAndClusterId(ctx, tenantId, clusterId)
+	if err != nil {
+		return nil, err
+	}
+	return binding.Proto(), nil
 }

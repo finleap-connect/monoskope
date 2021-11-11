@@ -775,7 +775,7 @@ type ClusterAccessClient interface {
 	// GetTenantClusterMappingsByClusterId returns bindings which belong to the given cluster by it's UUID
 	GetTenantClusterMappingsByClusterId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetTenantClusterMappingsByClusterIdClient, error)
 	// GetTenantClusterMappingsByClusterId returns the binding which belongs to the given tenant and cluster by their UUIDs
-	GetTenantClusterMappingByTenantAndClusterId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.TenantClusterBinding, error)
+	GetTenantClusterMappingByTenantAndClusterId(ctx context.Context, in *GetClusterMappingRequest, opts ...grpc.CallOption) (*projections.TenantClusterBinding, error)
 }
 
 type clusterAccessClient struct {
@@ -914,7 +914,7 @@ func (x *clusterAccessGetTenantClusterMappingsByClusterIdClient) Recv() (*projec
 	return m, nil
 }
 
-func (c *clusterAccessClient) GetTenantClusterMappingByTenantAndClusterId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.TenantClusterBinding, error) {
+func (c *clusterAccessClient) GetTenantClusterMappingByTenantAndClusterId(ctx context.Context, in *GetClusterMappingRequest, opts ...grpc.CallOption) (*projections.TenantClusterBinding, error) {
 	out := new(projections.TenantClusterBinding)
 	err := c.cc.Invoke(ctx, "/domain.ClusterAccess/GetTenantClusterMappingByTenantAndClusterId", in, out, opts...)
 	if err != nil {
@@ -936,7 +936,7 @@ type ClusterAccessServer interface {
 	// GetTenantClusterMappingsByClusterId returns bindings which belong to the given cluster by it's UUID
 	GetTenantClusterMappingsByClusterId(*wrapperspb.StringValue, ClusterAccess_GetTenantClusterMappingsByClusterIdServer) error
 	// GetTenantClusterMappingsByClusterId returns the binding which belongs to the given tenant and cluster by their UUIDs
-	GetTenantClusterMappingByTenantAndClusterId(context.Context, *wrapperspb.StringValue) (*projections.TenantClusterBinding, error)
+	GetTenantClusterMappingByTenantAndClusterId(context.Context, *GetClusterMappingRequest) (*projections.TenantClusterBinding, error)
 	mustEmbedUnimplementedClusterAccessServer()
 }
 
@@ -956,7 +956,7 @@ func (UnimplementedClusterAccessServer) GetTenantClusterMappingsByTenantId(*wrap
 func (UnimplementedClusterAccessServer) GetTenantClusterMappingsByClusterId(*wrapperspb.StringValue, ClusterAccess_GetTenantClusterMappingsByClusterIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetTenantClusterMappingsByClusterId not implemented")
 }
-func (UnimplementedClusterAccessServer) GetTenantClusterMappingByTenantAndClusterId(context.Context, *wrapperspb.StringValue) (*projections.TenantClusterBinding, error) {
+func (UnimplementedClusterAccessServer) GetTenantClusterMappingByTenantAndClusterId(context.Context, *GetClusterMappingRequest) (*projections.TenantClusterBinding, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTenantClusterMappingByTenantAndClusterId not implemented")
 }
 func (UnimplementedClusterAccessServer) mustEmbedUnimplementedClusterAccessServer() {}
@@ -1057,7 +1057,7 @@ func (x *clusterAccessGetTenantClusterMappingsByClusterIdServer) Send(m *project
 }
 
 func _ClusterAccess_GetTenantClusterMappingByTenantAndClusterId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
+	in := new(GetClusterMappingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1069,7 +1069,7 @@ func _ClusterAccess_GetTenantClusterMappingByTenantAndClusterId_Handler(srv inte
 		FullMethod: "/domain.ClusterAccess/GetTenantClusterMappingByTenantAndClusterId",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterAccessServer).GetTenantClusterMappingByTenantAndClusterId(ctx, req.(*wrapperspb.StringValue))
+		return srv.(ClusterAccessServer).GetTenantClusterMappingByTenantAndClusterId(ctx, req.(*GetClusterMappingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
