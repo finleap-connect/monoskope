@@ -3,7 +3,6 @@ module github.com/finleap-connect/monoskope
 go 1.17
 
 require (
-	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/aws/aws-sdk-go v1.34.30
 	github.com/cenkalti/backoff v2.2.1+incompatible
@@ -15,13 +14,11 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/go-pg/pg/v10 v10.7.3
-	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/int128/listener v1.1.0
 	github.com/jetstack/cert-manager v1.3.1
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -34,7 +31,6 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.0 // indirect
 	github.com/rabbitmq/amqp091-go v0.0.0-20210714180937-de74e8a7d0e0
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cobra v1.1.3
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.16.0
@@ -59,6 +55,7 @@ require github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -74,11 +71,13 @@ require (
 	github.com/go-pg/zerochecker v0.2.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -97,6 +96,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/ugorji/go/codec v1.2.4 // indirect
