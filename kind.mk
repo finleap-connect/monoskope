@@ -8,11 +8,11 @@ KUBECONFIG=tmp/kind-kubeconfig
 
 ##@ Kind
 
-kind-create: ## create kind cluster
+kind-create-cluster: ## create kind cluster
 	@kind get clusters | grep ${K8S_CLUSTER_NAME} || kind create cluster --name ${K8S_CLUSTER_NAME} --config build/deploy/kind/kind_config_${KIND_VERSION}.yaml --kubeconfig ${KUBECONFIG}
 	@kind get kubeconfig --name ${K8S_CLUSTER_NAME} > ${KUBECONFIG}
 
-kind-delete: ## destroy kind cluster
+kind-delete-cluster: ## destroy kind cluster
 	@kind delete cluster --name ${K8S_CLUSTER_NAME}
 
 kind-helm-repos: ## add & update helm repos necessary
@@ -46,4 +46,4 @@ kind-helm-template-monoskope: kind-helm-clean
 kind-install-monoskope: ## installs monoskope into kind cluster using the latest tag available
 	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace monoskope --create-namespace --version $(LATEST_TAG) --values $(HELM_KIND_VALUES_FILE)
 
-kind-setup-monoskope: kind-create kind-trust-anchor kind-helm-repos kind-install-certmanager kind-install-dex kind-install-monoskope ## install monoskope with kind
+kind-setup-monoskope: kind-create-cluster kind-trust-anchor kind-helm-repos kind-install-certmanager kind-install-dex kind-install-monoskope ## install monoskope with kind
