@@ -21,7 +21,9 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| ambassador.adminService.create | bool | `false` |  |
 | ambassador.agent.enabled | bool | `false` |  |
+| ambassador.alerting.enabled | bool | `false` |  |
 | ambassador.crds.create | bool | `false` |  |
 | ambassador.crds.enabled | bool | `false` |  |
 | ambassador.deploy | bool | `true` |  |
@@ -29,6 +31,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.enabled | bool | `true` |  |
 | ambassador.image.repository | string | `"datawire/ambassador"` |  |
 | ambassador.image.tag | string | `"1.14.1"` |  |
+| ambassador.metrics.serviceMonitor.enabled | bool | `false` |  |
 | ambassador.rbac.create | bool | `false` |  |
 | ambassador.replicaCount | int | `1` |  |
 | ambassador.resources.limits.cpu | int | `4` |  |
@@ -66,6 +69,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.tls.certs.certManagerIssuer.kind | string | `"Issuer"` |  |
 | cockroachdb.tls.certs.certManagerIssuer.name | string | `"m8-root-ca-issuer"` |  |
 | cockroachdb.tls.certs.provided | bool | `true` |  |
+| cockroachdb.tls.certs.selfSigner.enabled | bool | `false` |  |
 | cockroachdb.tls.certs.useCertManagerV1CRDs | bool | `true` |  |
 | cockroachdb.tls.enabled | bool | `true` |  |
 | commandhandler.enabled | bool | `true` |  |
@@ -122,6 +126,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
 | rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
+| rabbitmq.metrics.enabled | bool | `false` |  |
 | rabbitmq.metrics.grafanaDashboard.enabled | bool | `false` |  |
 | rabbitmq.persistence.enabled | bool | `false` |  |
 | rabbitmq.rbac.create | bool | `false` |  |
