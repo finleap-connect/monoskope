@@ -14,12 +14,13 @@ LINTER_VERSION ?= v1.39.0
 MOCKGEN         ?= $(TOOLS_DIR)/mockgen
 GOMOCK_VERSION  ?= v1.5.0
 
-PROTOC 	   	           	   ?= $(TOOLS_DIR)/protoc
-PROTOC_IMPORTS_DIR         ?= $(BUILD_PATH)/include
-PROTOC_VERSION             ?= 3.17.0
-PROTOC_GEN_GO_VERSION      ?= v1.26.0
-PROTOC_GEN_GO_GRPC_VERSION ?= v1.1.0
-PROTO_FILES                != find api -name "*.proto"
+PROTOC 	   	           	    ?= $(TOOLS_DIR)/protoc
+PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/include
+PROTOC_VERSION              ?= 3.17.0
+PROTOC_GEN_GO_VERSION       ?= v1.26.0
+PROTOC_GEN_GO_GRPC_VERSION  ?= v1.1.0
+PROTOC_GEN_VALIDATE_VERSION ?= 0.6.2
+PROTO_FILES                 != find api -name "*.proto"
 
 CURL          ?= curl
 
@@ -58,6 +59,7 @@ export M8_OPERATION_MODE = development
 ##@ Go
 
 go-mod: ## go mod download and verify
+	$(GO) mod tidy
 	$(GO) mod download
 	$(GO) mod verify
 
@@ -114,14 +116,19 @@ gomock-get $(MOCKGEN):
 	$(shell $(GOGET) github.com/golang/mock/mockgen@$(GOMOCK_VERSION))
 
 protoc-get $(PROTOC):
+	mkdir -p $(PROTOC_IMPORTS_DIR)/
 	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
 	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(TOOLS_DIR)/.protoc-unpack
 	mv $(TOOLS_DIR)/.protoc-unpack/bin/protoc $(TOOLS_DIR)/protoc
-	mkdir -p $(PROTOC_IMPORTS_DIR)/
 	cp -a $(TOOLS_DIR)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
 	rm -rf $(TOOLS_DIR)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
+	$(CURL) -LO "https://github.com/envoyproxy/protoc-gen-validate/archive/refs/tags/v$(PROTOC_GEN_VALIDATE_VERSION).zip"
+	unzip v$(PROTOC_GEN_VALIDATE_VERSION).zip -d $(TOOLS_DIR)/
+	cp -a $(TOOLS_DIR)/protoc-gen-validate-$(PROTOC_GEN_VALIDATE_VERSION)/validate $(PROTOC_IMPORTS_DIR)/
+	rm -rf $(TOOLS_DIR)/protoc-gen-validate-$(PROTOC_GEN_VALIDATE_VERSION) v$(PROTOC_GEN_VALIDATE_VERSION).zip
 	$(shell $(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION))
 	$(shell $(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION))
+	$(shell $(GOGET) github.com/envoyproxy/protoc-gen-validate@v$(PROTOC_GEN_VALIDATE_VERSION))
 
 go-tools: golangci-lint-get ginkgo-get protoc-get gomock-get ## download needed go tools
 
@@ -140,9 +147,9 @@ go-protobuf: .protobuf-deps
 	rm -rf $(BUILD_PATH)/pkg/api
 	mkdir -p $(BUILD_PATH)/pkg/api
 	# generates server part
-	export PATH="$(TOOLS_DIR):$$PATH:" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=github.com/finleap-connect/monoskope --go-grpc_out=. {} \;
+	export PATH="$(TOOLS_DIR):$$PATH:" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go-grpc_opt=module=github.com/finleap-connect/monoskope --go-grpc_out=. --validate_out="lang=go,module=github.com/finleap-connect/monoskope:." {} \;
 	# generates client part
-	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=github.com/finleap-connect/monoskope --go_out=. {} \;
+	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=github.com/finleap-connect/monoskope --go_out=. --validate_out="lang=go,module=github.com/finleap-connect/monoskope:." {} \;
 
 $(CMD_GATEWAY):
 	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_GATEWAY)" $(CMD_GATEWAY_SRC)
