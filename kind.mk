@@ -2,13 +2,7 @@ KIND_VERSION ?= v1.15.12
 CERT_MANAGER_VERSION ?= v1.1.0
 K8S_CLUSTER_NAME := m8-dev-cluster
 
-HELM ?= helm
-HELM_RELEASE ?= m8
-HELM_REGISTRY               ?= https://finleap-connect.github.io/charts
-HELM_REGISTRY_ALIAS         ?= finleap-connect
-HELM_RELEASE                ?= m8
-HELM_VALUES_FILE            ?= examples/01-monoskope-kind-values.yaml
-HELM_OUTPUT_DIR             ?= tmp
+HELM_KIND_VALUES_FILE ?= examples/01-monoskope-kind-values.yaml
 
 KUBECONFIG=tmp/kind-kubeconfig
 
@@ -16,6 +10,7 @@ KUBECONFIG=tmp/kind-kubeconfig
 
 kind-create: ## create kind cluster
 	@kind get clusters | grep ${K8S_CLUSTER_NAME} || kind create cluster --name ${K8S_CLUSTER_NAME} --config build/deploy/kind/kind_config_${KIND_VERSION}.yaml --kubeconfig ${KUBECONFIG}
+	@kind get kubeconfig --name ${K8S_CLUSTER_NAME} > ${KUBECONFIG}
 
 kind-delete: ## destroy kind cluster
 	@kind delete cluster --name ${K8S_CLUSTER_NAME}
@@ -36,7 +31,8 @@ kind-trust-anchor: ## create trust-anchor in kind cluster
 kind-install-certmanager:
 	@echo "Installing cert-manager into kind cluster..."
 	@$(HELM) upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version ${CERT_MANAGER_VERSION} --values examples/02-kind-cert-manager-values.yaml
-
+	@kubectl apply -f examples/04-kind-cert-manager-issuer.yaml
+	
 kind-install-dex:
 	@echo "Installing dex into kind cluster..."
 	@$(HELM) upgrade --install dex --wait dex/dex --values examples/03-kind-dex-values.yaml
@@ -45,9 +41,9 @@ kind-helm-clean: ## clean up templated helm charts
 	@rm -Rf $(HELM_OUTPUT_DIR)
 
 kind-helm-template-monoskope: kind-helm-clean
-	@$(HELM) template $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace monoskope --version $(LATEST_TAG) --values $(HELM_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR)
+	@$(HELM) template $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --version $(LATEST_TAG) --namespace monoskope --values $(HELM_KIND_VALUES_FILE) --output-dir $(HELM_OUTPUT_DIR)
 
 kind-install-monoskope: ## installs monoskope into kind cluster using the latest tag available
-	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace monoskope --create-namespace --version $(LATEST_TAG) --values $(HELM_VALUES_FILE)
+	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace monoskope --create-namespace --version $(LATEST_TAG) --values $(HELM_KIND_VALUES_FILE)
 
-kind-setup-monoskope: kind-create kind-trust-anchor kind-helm-repos kind-install-certmanager kind-install-dex kind-install-monoskope
+kind-setup-monoskope: kind-create kind-trust-anchor kind-helm-repos kind-install-certmanager kind-install-dex kind-install-monoskope ## install monoskope with kind
