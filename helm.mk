@@ -5,8 +5,6 @@ HELM_OUTPUT_DIR             ?= tmp/helm
 HELM_REGISTRY               ?= https://finleap-connect.github.io/charts
 HELM_REGISTRY_ALIAS         ?= finleap-connect
 HELM_RELEASE                ?= m8
-KUBE_NAMESPACE              ?= platform-monoskope
-YQ							?= yq
 
 .PHONY: template-clean dependency-update install uninstall template docs
 

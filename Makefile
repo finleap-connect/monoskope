@@ -4,9 +4,12 @@ SHELL := bash
 TOOLS_DIR   ?= $(shell cd tools 2>/dev/null && pwd)
 HACK_DIR    ?= $(shell cd hack 2>/dev/null && pwd)
 
-VERSION     ?= 0.0.1-local
-LATEST_REV	= $(shell git rev-list --tags --max-count=1)
-LATEST_TAG  = $(shell git describe --tags $(LATEST_REV))
+YQ ?= yq
+
+VERSION ?= 0.0.1-local
+KUBE_NAMESPACE ?= monoskope
+LATEST_REV = $(shell git rev-list --tags --max-count=1)
+LATEST_TAG = $(shell git describe --tags $(LATEST_REV))
 
 ##@ General
 
