@@ -32,6 +32,9 @@ rabbitmq:
     enabled: false
   serviceMonitor:
     enabled: false
+  auth:
+    erlangCookie: "somerandomstringfortesting"
+    existingErlangSecret: ""
 
 ambassador:
   crds:
