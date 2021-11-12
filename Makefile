@@ -5,6 +5,8 @@ TOOLS_DIR   ?= $(shell cd tools 2>/dev/null && pwd)
 HACK_DIR    ?= $(shell cd hack 2>/dev/null && pwd)
 
 VERSION     ?= 0.0.1-local
+LATEST_REV	= $(shell git rev-list --tags --max-count=1)
+LATEST_TAG  = $(shell git describe --tags $(LATEST_REV))
 
 ##@ General
 
@@ -27,6 +29,9 @@ add-license: ## Adds the license to every file
 
 check-license: ## Checks thath the license is set on every file
 	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v -check .
+
+show-latest-tag: ## echos the latest tag
+	@echo "Latest tag is $(LATEST_TAG)"
 
 export
 include go.mk
