@@ -164,7 +164,7 @@ rabbitmq:
     tlsPort: 5671
   auth:
     username: eventstore # admin user with read/write access
-    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition which takes the password from a generated secret
+    password: "w1!!b3r3pl4c3d"  # in case you use VaultOperator this will be overwritten by the load definition which takes the password from a generated secret
     # -- Name of the secret containing the erlang secret
     # If vaultOperator.enabled:true the secret will eb auto generated
     existingErlangSecret: m8-rabbitmq-erlang-cookie
