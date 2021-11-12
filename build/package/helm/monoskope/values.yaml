@@ -145,7 +145,6 @@ rabbitmq:
   persistence:
     enabled: false
   image:
-    tag: 3.8.9
     pullPolicy: Always
   loadDefinition:
     enabled: true
