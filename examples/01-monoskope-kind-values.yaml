@@ -16,8 +16,6 @@ eventstore:
 
 commandhandler:
   replicaCount: 1
-  image:
-    tag: *imageTag
   # -- List of email addresses to identify superusers.
   superusers: []
     # - someone@yourdomain.io
@@ -28,3 +26,18 @@ queryhandler:
 cluster-bootstrap-reactor:
   replicaCount: 1
   issuerURL: http://127.0.0.1:5555
+
+rabbitmq:
+  metrics:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+
+ambassador:
+  crds:
+    enabled: true
+    create: true
+  rbac:
+    create: true
+  serviceAccount:
+    create: true
