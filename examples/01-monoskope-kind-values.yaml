@@ -33,7 +33,7 @@ rabbitmq:
   serviceMonitor:
     enabled: false
   auth:
-    erlangCookie: "somerandomstringfortesting"
+    erlangCookie: "thisis32bitlongpassphraseimusing"
     existingErlangSecret: ""
 
 ambassador:
