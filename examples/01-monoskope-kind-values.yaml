@@ -1,0 +1,30 @@
+# Kind cluster environment values for monoskope.
+
+hosting:
+  issuer: selfsigned
+  domain:  127.0.0.1:5555
+
+gateway:
+  replicaCount: 1
+  auth:
+    selfURL: http://127.0.0.1:5555
+    identityProviderName: dex
+    identityProviderURL: http://127.0.0.1:5556
+
+eventstore:
+  replicaCount: 1
+
+commandhandler:
+  replicaCount: 1
+  image:
+    tag: *imageTag
+  # -- List of email addresses to identify superusers.
+  superusers: []
+    # - someone@yourdomain.io
+
+queryhandler:
+  replicaCount: 1
+
+cluster-bootstrap-reactor:
+  replicaCount: 1
+  issuerURL: http://127.0.0.1:5555

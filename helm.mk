@@ -43,7 +43,7 @@ helm-template-%: helm-clean ## template helm chart
 	@echo
 
 helm-add-finleap: ## add finleap helm chart repo
-	@$(HELM) repo add --username $(HELM_USER) --password $(HELM_PASSWORD) $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
+	@$(HELM) repo add $(HELM_REGISTRY_ALIAS) "$(HELM_REGISTRY)"
 
 helm-set-version-all:
 	@find $(HELM_PATH) -name 'Chart.yaml' -exec $(YQ) e --inplace '.version = "$(VERSION)"' {} \;
