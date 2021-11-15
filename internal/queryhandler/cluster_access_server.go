@@ -100,12 +100,32 @@ func (s *clusterAccessServer) GetTenantClusterMappingsByTenantId(id *wrapperspb.
 		return err
 	}
 
-	tenants, err := s.tenantClusterBindingRepo.GetByTenantId(stream.Context(), tenantId)
+	bindings, err := s.tenantClusterBindingRepo.GetByTenantId(stream.Context(), tenantId)
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
 
-	for _, t := range tenants {
+	for _, t := range bindings {
+		err := stream.Send(t.Proto())
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
+}
+
+func (s *clusterAccessServer) GetTenantClusterMappingsByClusterId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetTenantClusterMappingsByClusterIdServer) error {
+	clusterId, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return err
+	}
+
+	bindings, err := s.tenantClusterBindingRepo.GetByClusterId(stream.Context(), clusterId)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, t := range bindings {
 		err := stream.Send(t.Proto())
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
