@@ -19,14 +19,14 @@ helm-dep-%: ## update helm dependencies
 helm-lint-%: ## lint helm chart
 	@$(HELM) lint $(HELM_PATH)/$*
 
-helm-install-%: ## install helm chart from local sources
+helm-install-from-local-%: ## install helm chart from local sources
 	@cat $(HELM_VALUES_FILE) | sed "s/0.0.1-local/$(VERSION)/g" > $(HELM_VALUES_FILE).tag
 	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_PATH)/$* --namespace $(KUBE_NAMESPACE) --values $(HELM_VALUES_FILE).tag --skip-crds
 	@rm $(HELM_VALUES_FILE).tag
 
-helm-install-from-repo-%: ## install helm chart from build artifact
+helm-install-from-repo: ## install helm chart from build artifact
 	@$(HELM) repo update
-	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/$* --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds
+	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds
 
 helm-uninstall-%: ## uninstall helm chart
 	@$(HELM) uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
