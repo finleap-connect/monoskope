@@ -40,6 +40,7 @@ type ReadOnlyTenantClusterBindingRepository interface {
 	// GetAll searches for the a TenantClusterBinding projections.
 	GetAll(ctx context.Context, showDeleted bool) ([]*projections.TenantClusterBinding, error)
 	GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
+	GetByClusterId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
 	GetByTenantAndClusterId(ctx context.Context, tenantId, clusterId uuid.UUID) (*projections.TenantClusterBinding, error)
 }
 
@@ -84,6 +85,22 @@ func (r *tenantClusterBindingRepository) GetByTenantId(ctx context.Context, tena
 	var bindings []*projections.TenantClusterBinding
 	for _, p := range ps {
 		if p.TenantId == tenantId.String() {
+			bindings = append(bindings, p)
+		}
+	}
+	return bindings, nil
+}
+
+// GetByClusterId searches for the TenantClusterBinding projections by cluster id.
+func (r *tenantClusterBindingRepository) GetByClusterId(ctx context.Context, clusterId uuid.UUID) ([]*projections.TenantClusterBinding, error) {
+	ps, err := r.GetAll(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var bindings []*projections.TenantClusterBinding
+	for _, p := range ps {
+		if p.ClusterId == clusterId.String() {
 			bindings = append(bindings, p)
 		}
 	}
