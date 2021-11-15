@@ -155,6 +155,20 @@ spec:
 apiVersion: getambassador.io/v1
 kind: Mapping
 metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clusteraccesssvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.ClusterAccess/
+  rewrite: /domain.ClusterAccess/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
   name: {{ include "monoskope.fullname" . }}-qh-certsvc-mapping
   namespace: {{ .Release.Namespace }}
   labels:
