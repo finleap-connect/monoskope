@@ -17,6 +17,8 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "validate/validate.proto";
+
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
 
 package commanddata;
@@ -24,9 +26,11 @@ package commanddata;
 // Command data to request a new certificate
 message RequestCertificate {
   // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string referenced_aggregate_id = 1;
+  string referenced_aggregate_id = 1 [(validate.rules).string.uuid = true];
   // Type of the aggregate referenced
-  string referenced_aggregate_type = 2;
+  string referenced_aggregate_type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // Certificate signing request
-  bytes signing_request = 3;
+  bytes signing_request = 3 [
+    (validate.rules).bytes.prefix = "-----BEGIN CERTIFICATE REQUEST-----",
+    (validate.rules).bytes.suffix = "-----END CERTIFICATE REQUEST-----"];
 }
