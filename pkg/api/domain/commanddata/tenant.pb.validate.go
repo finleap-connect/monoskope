@@ -57,9 +57,49 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if len(m.GetName()) > 60 {
+		err := CreateTenantCommandDataValidationError{
+			field:  "Name",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Prefix
+	if !_CreateTenantCommandData_Name_Pattern.MatchString(m.GetName()) {
+		err := CreateTenantCommandDataValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPrefix()) > 60 {
+		err := CreateTenantCommandDataValidationError{
+			field:  "Prefix",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_CreateTenantCommandData_Prefix_Pattern.MatchString(m.GetPrefix()) {
+		err := CreateTenantCommandDataValidationError{
+			field:  "Prefix",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return CreateTenantCommandDataMultiError(errors)
@@ -140,6 +180,10 @@ var _ interface {
 	ErrorName() string
 } = CreateTenantCommandDataValidationError{}
 
+var _CreateTenantCommandData_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
+var _CreateTenantCommandData_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on UpdateTenantCommandData with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -162,33 +206,30 @@ func (m *UpdateTenantCommandData) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetName()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, UpdateTenantCommandDataValidationError{
-					field:  "Name",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, UpdateTenantCommandDataValidationError{
-					field:  "Name",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return UpdateTenantCommandDataValidationError{
+	if wrapper := m.GetName(); wrapper != nil {
+
+		if len(wrapper.GetValue()) > 60 {
+			err := UpdateTenantCommandDataValidationError{
 				field:  "Name",
-				reason: "embedded message failed validation",
-				cause:  err,
+				reason: "value length must be at most 60 bytes",
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
+		if !_UpdateTenantCommandData_Name_Pattern.MatchString(wrapper.GetValue()) {
+			err := UpdateTenantCommandDataValidationError{
+				field:  "Name",
+				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -269,3 +310,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateTenantCommandDataValidationError{}
+
+var _UpdateTenantCommandData_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
