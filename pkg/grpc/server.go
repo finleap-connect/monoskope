@@ -26,6 +26,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/util"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_validateor "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -63,10 +64,12 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 	unaryServerInterceptors = append(unaryServerInterceptors,
 		grpc_prometheus.UnaryServerInterceptor, // add prometheus metrics interceptors
 		grpc_recovery.UnaryServerInterceptor(), // add recovery from panics
+		grpc_validateor.UnaryServerInterceptor(), // add message validator
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
 		grpc_prometheus.StreamServerInterceptor, // add prometheus metrics interceptors
 		grpc_recovery.StreamServerInterceptor(), // add recovery from panics
+		grpc_validateor.StreamServerInterceptor(), // add message validator
 	)
 
 	// Configure gRPC server
