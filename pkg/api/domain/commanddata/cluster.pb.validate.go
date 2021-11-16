@@ -57,17 +57,86 @@ func (m *CreateCluster) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if len(m.GetName()) > 60 {
+		err := CreateClusterValidationError{
+			field:  "Name",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for DisplayName
+	if !_CreateCluster_Name_Pattern.MatchString(m.GetName()) {
+		err := CreateClusterValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ApiServerAddress
+	if len(m.GetDisplayName()) > 150 {
+		err := CreateClusterValidationError{
+			field:  "DisplayName",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
+		err = CreateClusterValidationError{
+			field:  "ApiServerAddress",
+			reason: "value must be a valid hostname",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for CaCertBundle
 
 	if len(errors) > 0 {
 		return CreateClusterMultiError(errors)
 	}
+	return nil
+}
+
+func (m *CreateCluster) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -142,6 +211,8 @@ var _ interface {
 	ErrorName() string
 } = CreateClusterValidationError{}
 
+var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on UpdateCluster with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -164,62 +235,35 @@ func (m *UpdateCluster) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetDisplayName()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, UpdateClusterValidationError{
-					field:  "DisplayName",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, UpdateClusterValidationError{
-					field:  "DisplayName",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetDisplayName()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return UpdateClusterValidationError{
+	if wrapper := m.GetDisplayName(); wrapper != nil {
+
+		if len(wrapper.GetValue()) > 150 {
+			err := UpdateClusterValidationError{
 				field:  "DisplayName",
-				reason: "embedded message failed validation",
-				cause:  err,
+				reason: "value length must be at most 150 bytes",
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
 	}
 
-	if all {
-		switch v := interface{}(m.GetApiServerAddress()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, UpdateClusterValidationError{
-					field:  "ApiServerAddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, UpdateClusterValidationError{
-					field:  "ApiServerAddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetApiServerAddress()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return UpdateClusterValidationError{
+	if wrapper := m.GetApiServerAddress(); wrapper != nil {
+
+		if err := m._validateHostname(wrapper.GetValue()); err != nil {
+			err = UpdateClusterValidationError{
 				field:  "ApiServerAddress",
-				reason: "embedded message failed validation",
+				reason: "value must be a valid hostname",
 				cause:  err,
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
 	}
 
 	// no validation rules for CaCertBundle
@@ -227,6 +271,36 @@ func (m *UpdateCluster) validate(all bool) error {
 	if len(errors) > 0 {
 		return UpdateClusterMultiError(errors)
 	}
+	return nil
+}
+
+func (m *UpdateCluster) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
 	return nil
 }
 
