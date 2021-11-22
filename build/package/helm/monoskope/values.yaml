@@ -145,7 +145,6 @@ rabbitmq:
   persistence:
     enabled: false
   image:
-    tag: 3.8.9
     pullPolicy: Always
   loadDefinition:
     enabled: true
@@ -164,7 +163,7 @@ rabbitmq:
     tlsPort: 5671
   auth:
     username: eventstore # admin user with read/write access
-    password: "w1!!b3r3pl4c3d"  # this will be overwritten by the load definition which takes the password from a generated secret
+    password: "w1!!b3r3pl4c3d"  # in case you use VaultOperator this will be overwritten by the load definition which takes the password from a generated secret
     # -- Name of the secret containing the erlang secret
     # If vaultOperator.enabled:true the secret will eb auto generated
     existingErlangSecret: m8-rabbitmq-erlang-cookie
@@ -174,6 +173,7 @@ rabbitmq:
       sslOptionsVerify: verify_peer
       existingSecret: m8-rabbitmq-leaf
   metrics:
+    enabled: false
     grafanaDashboard:
       enabled: false
 
@@ -203,6 +203,13 @@ ambassador:
     requests:
       cpu: 100m
       memory: 512Mi
+  metrics:
+    serviceMonitor:
+      enabled: false
+  adminService:
+    create: false
+  alerting:
+    enabled: false
 
 cluster-bootstrap-reactor:
   enabled: true
