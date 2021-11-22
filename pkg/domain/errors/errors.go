@@ -61,6 +61,8 @@ var (
 
 	// ErrTenantClusterBindingAlreadyExists is returned when a tenant-cluster-binding does already exist.
 	ErrTenantClusterBindingAlreadyExists = errors.New("tenant already has access to that cluster")
+	// ErrTenantClusterBindingNotFound is returned when a tenant-cluster-binding could not be found.
+	ErrTenantClusterBindingNotFound = errors.New("no cluster access found for the given cluster and tenant")
 )
 
 var (
