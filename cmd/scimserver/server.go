@@ -21,22 +21,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/commandhandler"
+	"github.com/finleap-connect/monoskope/internal/scimserver"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
-	eventStoreAddr    string
-	msgbusPrefix      string
-	certIssuer        string
-	certIssuerKind    string
-	certDuration      string
-	jwtPrivateKeyFile string
-	issuerURL         string
+	commandHandlerAddr string
 )
 
 var serveCmd = &cobra.Command{
@@ -48,33 +44,53 @@ var serveCmd = &cobra.Command{
 		log := logger.WithName("serve-cmd")
 		ctx := context.Background()
 
-		// Create EventStore client
-		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
-		esConnection, _, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
+		// Create CommandHandler client
+		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
+		conn, _, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
 		if err != nil {
 			return err
 		}
-		defer esConnection.Close()
+		defer conn.Close()
 
 		// Add readiness check
 		health := healthcheck.NewHandler()
 		health.AddReadinessCheck("ready", func() error { return nil })
 
-		listener, err := net.Listen("tcp", "0.0.0.0:8086")
+		healthListener, err := net.Listen("tcp", "0.0.0.0:8086")
 		if err != nil {
 			return err
 		}
-		defer listener.Close()
+		defer healthListener.Close()
+
+		scimListener, err := net.Listen("tcp", "0.0.0.0:8080")
+		if err != nil {
+			return err
+		}
+		defer scimListener.Close()
 
 		shutdown := util.NewShutdownWaitGroup()
 
+		providerConfig := scimserver.NewProvierConfig()
+		userHandler := scimserver.NewUserHandler()
+		groupHandler := scimserver.NewGroupHandler()
+		scimServer := scimserver.NewServer(providerConfig, userHandler, groupHandler)
+
 		// Start routine waiting for signals
 		shutdown.RegisterSignalHandler(func() {
-			// Stop the HTTP servers
-			util.PanicOnError(listener.Close())
+			util.PanicOnError(healthListener.Close())
+			util.PanicOnError(scimListener.Close())
 		})
 
-		err = http.Serve(listener, health)
+		// Finally start the servers
+		eg, _ := errgroup.WithContext(cmd.Context())
+		eg.Go(func() error {
+			return http.Serve(healthListener, health)
+		})
+		eg.Go(func() error {
+			return http.Serve(scimListener, scimServer)
+		})
+		err = eg.Wait()
+
 		if !shutdown.IsExpected() && err != nil {
 			panic(fmt.Sprintf("shutdown unexpected: %v", err))
 		}
@@ -94,16 +110,5 @@ func init() {
 
 	// Local flags
 	flags := serveCmd.Flags()
-	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
-	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
-	flags.StringVar(&jwtPrivateKeyFile, "jwt-privatekey", "/etc/clusterbootstrapreactor/signing.key", "Path to the private key for signing JWTs")
-
-	flags.StringVarP(&certDuration, "certificate-duration", "d", "48h", "Certificate validity to request certificates for")
-	flags.StringVarP(&certIssuerKind, "certificate-issuer-kind", "k", "Issuer", "Certificate issuer kind to request certificates from")
-
-	flags.StringVarP(&certIssuer, "certificate-issuer", "i", "", "Certificate issuer name to request certificates from")
-	util.PanicOnError(cobra.MarkFlagRequired(flags, "certificate-issuer"))
-
-	flags.StringVar(&issuerURL, "issuer-url", "", "The URL of the Monoskope issuer (Gateway)")
-	util.PanicOnError(cobra.MarkFlagRequired(flags, "issuer-url"))
+	flags.StringVar(&commandHandlerAddr, "command-handler-api-addr", ":8081", "Address the command handler gRPC service is listening on")
 }
