@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _certificate_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on Certificate with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -57,11 +60,51 @@ func (m *Certificate) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	if err := m._validateUuid(m.GetId()); err != nil {
+		err = CertificateValidationError{
+			field:  "Id",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ReferencedAggregateId
+	if err := m._validateUuid(m.GetReferencedAggregateId()); err != nil {
+		err = CertificateValidationError{
+			field:  "ReferencedAggregateId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for AggregateType
+	if len(m.GetAggregateType()) > 60 {
+		err := CertificateValidationError{
+			field:  "AggregateType",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Certificate_AggregateType_Pattern.MatchString(m.GetAggregateType()) {
+		err := CertificateValidationError{
+			field:  "AggregateType",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Certificate
 
@@ -99,6 +142,14 @@ func (m *Certificate) validate(all bool) error {
 	if len(errors) > 0 {
 		return CertificateMultiError(errors)
 	}
+	return nil
+}
+
+func (m *Certificate) _validateUuid(uuid string) error {
+	if matched := _certificate_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -171,3 +222,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CertificateValidationError{}
+
+var _Certificate_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
