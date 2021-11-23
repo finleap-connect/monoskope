@@ -17,6 +17,8 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "validate/validate.proto";
+
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/common";
 
 package common;
@@ -24,9 +26,10 @@ package common;
 // ServiceInformation are the version and commit hash of a service
 message ServiceInformation {
   // version
+  // TODO: is this just a number?
   string version = 1;
   // name
-  string name = 2;
+  string name = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // commit hash of the service
   string commit = 3;
 }

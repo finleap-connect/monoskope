@@ -59,7 +59,27 @@ func (m *ServiceInformation) validate(all bool) error {
 
 	// no validation rules for Version
 
-	// no validation rules for Name
+	if len(m.GetName()) > 60 {
+		err := ServiceInformationValidationError{
+			field:  "Name",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_ServiceInformation_Name_Pattern.MatchString(m.GetName()) {
+		err := ServiceInformationValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Commit
 
@@ -141,6 +161,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServiceInformationValidationError{}
+
+var _ServiceInformation_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
 
 // Validate checks the field values on CertificateChain with the rules defined
 // in the proto definition for this message. If any rules are violated, the
