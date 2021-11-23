@@ -51,6 +51,7 @@ require (
 )
 
 require (
+	github.com/elimity-com/scim v0.0.0-20211119105057-007f1a2691f0
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 )
@@ -64,6 +65,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/di-wu/parser v0.2.2 // indirect
+	github.com/di-wu/xsd-datetime v1.0.0 // indirect
 	github.com/docker/cli v20.10.8+incompatible // indirect
 	github.com/docker/docker v20.10.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -98,6 +101,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/scim2/filter-parser/v2 v2.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
