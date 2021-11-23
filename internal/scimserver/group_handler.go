@@ -4,10 +4,7 @@ import (
 	"net/http"
 
 	"github.com/elimity-com/scim"
-	"github.com/elimity-com/scim/schema"
 )
-
-var GroupSchema = schema.CoreGroupSchema()
 
 type groupHandler struct {
 }

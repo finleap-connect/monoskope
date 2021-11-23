@@ -4,10 +4,7 @@ import (
 	"net/http"
 
 	"github.com/elimity-com/scim"
-	"github.com/elimity-com/scim/schema"
 )
-
-var UserSchema = schema.ExtensionEnterpriseUser()
 
 type userHandler struct {
 }
