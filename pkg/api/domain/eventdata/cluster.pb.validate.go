@@ -57,17 +57,86 @@ func (m *ClusterCreated) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if len(m.GetName()) > 150 {
+		err := ClusterCreatedValidationError{
+			field:  "Name",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Label
+	if len(m.GetLabel()) > 60 {
+		err := ClusterCreatedValidationError{
+			field:  "Label",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ApiServerAddress
+	if !_ClusterCreated_Label_Pattern.MatchString(m.GetLabel()) {
+		err := ClusterCreatedValidationError{
+			field:  "Label",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
+		err = ClusterCreatedValidationError{
+			field:  "ApiServerAddress",
+			reason: "value must be a valid hostname",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for CaCertificateBundle
 
 	if len(errors) > 0 {
 		return ClusterCreatedMultiError(errors)
 	}
+	return nil
+}
+
+func (m *ClusterCreated) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -142,6 +211,8 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedValidationError{}
 
+var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on ClusterCreatedV2 with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -164,17 +235,86 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if len(m.GetName()) > 60 {
+		err := ClusterCreatedV2ValidationError{
+			field:  "Name",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for DisplayName
+	if !_ClusterCreatedV2_Name_Pattern.MatchString(m.GetName()) {
+		err := ClusterCreatedV2ValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ApiServerAddress
+	if len(m.GetDisplayName()) > 150 {
+		err := ClusterCreatedV2ValidationError{
+			field:  "DisplayName",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
+		err = ClusterCreatedV2ValidationError{
+			field:  "ApiServerAddress",
+			reason: "value must be a valid hostname",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for CaCertificateBundle
 
 	if len(errors) > 0 {
 		return ClusterCreatedV2MultiError(errors)
 	}
+	return nil
+}
+
+func (m *ClusterCreatedV2) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -249,6 +389,8 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedV2ValidationError{}
 
+var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -271,15 +413,64 @@ func (m *ClusterUpdated) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for DisplayName
+	if len(m.GetDisplayName()) > 150 {
+		err := ClusterUpdatedValidationError{
+			field:  "DisplayName",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ApiServerAddress
+	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
+		err = ClusterUpdatedValidationError{
+			field:  "ApiServerAddress",
+			reason: "value must be a valid hostname",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for CaCertificateBundle
 
 	if len(errors) > 0 {
 		return ClusterUpdatedMultiError(errors)
 	}
+	return nil
+}
+
+func (m *ClusterUpdated) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
 	return nil
 }
 
