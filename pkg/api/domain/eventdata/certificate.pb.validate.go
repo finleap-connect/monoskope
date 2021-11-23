@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _certificate_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on CertificateRequested with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -57,15 +60,73 @@ func (m *CertificateRequested) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for ReferencedAggregateId
+	if err := m._validateUuid(m.GetReferencedAggregateId()); err != nil {
+		err = CertificateRequestedValidationError{
+			field:  "ReferencedAggregateId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for ReferencedAggregateType
+	if len(m.GetReferencedAggregateType()) > 60 {
+		err := CertificateRequestedValidationError{
+			field:  "ReferencedAggregateType",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for SigningRequest
+	if !_CertificateRequested_ReferencedAggregateType_Pattern.MatchString(m.GetReferencedAggregateType()) {
+		err := CertificateRequestedValidationError{
+			field:  "ReferencedAggregateType",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !bytes.HasPrefix(m.GetSigningRequest(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x42, 0x45, 0x47, 0x49, 0x4E, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x20, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := CertificateRequestedValidationError{
+			field:  "SigningRequest",
+			reason: "value does not have prefix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x42\\x45\\x47\\x49\\x4E\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x20\\x52\\x45\\x51\\x55\\x45\\x53\\x54\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !bytes.HasSuffix(m.GetSigningRequest(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x45, 0x4E, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x20, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := CertificateRequestedValidationError{
+			field:  "SigningRequest",
+			reason: "value does not have suffix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x45\\x4E\\x44\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x20\\x52\\x45\\x51\\x55\\x45\\x53\\x54\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return CertificateRequestedMultiError(errors)
 	}
+	return nil
+}
+
+func (m *CertificateRequested) _validateUuid(uuid string) error {
+	if matched := _certificate_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -141,6 +202,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CertificateRequestedValidationError{}
+
+var _CertificateRequested_ReferencedAggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
 
 // Validate checks the field values on CertificateIssued with the rules defined
 // in the proto definition for this message. If any rules are violated, the
