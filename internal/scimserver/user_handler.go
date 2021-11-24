@@ -5,14 +5,19 @@ import (
 
 	"github.com/elimity-com/scim"
 	"github.com/elimity-com/scim/errors"
+	"github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 )
 
 type userHandler struct {
+	cmdHandlerClient eventsourcing.CommandHandlerClient
+	userClient       domain.UserClient
 }
 
-func NewUserHandler() scim.ResourceHandler {
-	userHandler := new(userHandler)
-	return userHandler
+func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userClient domain.UserClient) scim.ResourceHandler {
+	return &userHandler{
+		cmdHandlerClient, userClient,
+	}
 }
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
