@@ -1,6 +1,5 @@
 # `Monoskope` Architecture Diagram
 
-Location: `docs/diagrams/00-monoskope-architecture.drawio`
-
-![Monoskope Architecture Diagram](00-monoskope-architecture.svg)
+![Monoskope Architecture Diagram](00-monoskope-architecture.drawio.svg)
+Edit with [diagrams.net](https://app.diagrams.net/?mode=github)
 
