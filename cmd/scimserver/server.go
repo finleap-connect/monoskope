@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
+	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/finleap-connect/monoskope/internal/scimserver"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
@@ -33,6 +34,7 @@ import (
 
 var (
 	commandHandlerAddr string
+	queryHandlerAddr   string
 )
 
 var serveCmd = &cobra.Command{
@@ -46,7 +48,15 @@ var serveCmd = &cobra.Command{
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
-		conn, _, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
+		conn, commandHandlerClient, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		// Create User client
+		log.Info("Connecting queryhandler...", "queryHandlerAddr", queryHandlerAddr)
+		conn, userClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
 		if err != nil {
 			return err
 		}
@@ -71,8 +81,8 @@ var serveCmd = &cobra.Command{
 		shutdown := util.NewShutdownWaitGroup()
 
 		providerConfig := scimserver.NewProvierConfig()
-		userHandler := scimserver.NewUserHandler()
-		groupHandler := scimserver.NewGroupHandler()
+		userHandler := scimserver.NewUserHandler(commandHandlerClient, userClient)
+		groupHandler := scimserver.NewGroupHandler(commandHandlerClient, userClient)
 		scimServer := scimserver.NewServer(providerConfig, userHandler, groupHandler)
 
 		// Start routine waiting for signals
@@ -111,4 +121,5 @@ func init() {
 	// Local flags
 	flags := serveCmd.Flags()
 	flags.StringVar(&commandHandlerAddr, "command-handler-api-addr", ":8081", "Address the command handler gRPC service is listening on")
+	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8082", "Address the query handler gRPC service is listening on")
 }
