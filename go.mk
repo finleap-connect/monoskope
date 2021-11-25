@@ -185,6 +185,8 @@ go-build-clboreactor: $(CMD_CLBOREACTOR)
 go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
+	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/commandhandler_client_mock.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
+	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient
