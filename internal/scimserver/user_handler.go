@@ -1,6 +1,7 @@
 package scimserver
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -52,9 +53,66 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // An empty list of resources will be represented as `null` in the JSON response if `nil` is assigned to the
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	return scim.Page{}, scim_errors.ScimError{
-		Status: http.StatusNotImplemented,
+	// Get total user count intially
+	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: false})
+	if err != nil {
+		return scim.Page{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
 	}
+
+	// If count is less than one just return total count
+	if params.Count < 1 {
+		return scim.Page{
+			TotalResults: int(userCount.Count),
+		}, nil
+	}
+
+	// Get stream of users
+	userStream, err := h.userClient.GetAll(r.Context(), &domain.GetAllRequest{IncludeDeleted: false})
+	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		return scim.Page{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	// Seek through the stream
+	resources := make([]scim.Resource, 0)
+	i := 1
+	for {
+		if i > (params.StartIndex + params.Count - 1) {
+			break // We're done
+		}
+
+		// Read next
+		user, err := userStream.Recv()
+
+		// End of stream
+		if err == io.EOF {
+			break // No further users to query
+		}
+
+		if err != nil { // Some other error
+			return scim.Page{}, scim_errors.ScimError{
+				Status: http.StatusInternalServerError,
+				Detail: err.Error(),
+			}
+		}
+
+		// Skip users which are not in the current page
+		if i >= params.StartIndex {
+			resources = append(resources, toScimUser(user))
+		}
+		i++
+	}
+
+	return scim.Page{
+		TotalResults: int(userCount.Count),
+		Resources:    resources,
+	}, nil
 }
 
 // Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty

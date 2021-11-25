@@ -37,8 +37,9 @@ service User {
   // GetByEmail returns the user found by the given email address.
   rpc GetByEmail(google.protobuf.StringValue) returns (projections.User);
   // GetRoleBindingsById returns all role bindings related to the given user id.
-  rpc GetRoleBindingsById(google.protobuf.StringValue)
-      returns (stream projections.UserRoleBinding);
+  rpc GetRoleBindingsById(google.protobuf.StringValue) returns (stream projections.UserRoleBinding);
+  // GetCount returns the count of users
+  rpc GetCount(GetCountRequest) returns (GetCountResult);
 }
 
 // Tenant is a service to query Tenants.
@@ -99,3 +100,7 @@ message GetClusterMappingRequest {
   string tenant_id = 1;
   string cluster_id = 2;
 }
+
+message GetCountRequest { bool include_deleted = 1; }
+
+message GetCountResult { int64 count = 1; }
