@@ -168,7 +168,3 @@ func toScimUser(user *projections.User) scim.Resource {
 		},
 	}
 }
-
-func fromScimUser(scim.Resource) *projections.User {
-	return new(projections.User)
-}
