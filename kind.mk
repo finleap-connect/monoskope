@@ -7,8 +7,13 @@ HELM_KIND_VALUES_FILE ?= examples/01-monoskope-kind-values.yaml
 ##@ Kind
 
 kind-create-cluster: ## create kind cluster
-	@kind get clusters | grep ${K8S_CLUSTER_NAME} || kind create cluster --name ${K8S_CLUSTER_NAME} --config build/deploy/kind/kind_config_${KIND_VERSION}.yaml --kubeconfig ${KUBECONFIG}
-	@kind get kubeconfig --name ${K8S_CLUSTER_NAME} > ${KUBECONFIG}
+	@kind get clusters | grep ${K8S_CLUSTER_NAME} || kind create cluster --name ${K8S_CLUSTER_NAME} --config build/deploy/kind/kind_config_${KIND_VERSION}.yaml --kubeconfig ${KIND_KUBECONFIG}
+	@kind get kubeconfig --name ${K8S_CLUSTER_NAME} > ${KIND_KUBECONFIG}
+
+.PHONY: kind-watch
+
+kind-watch:
+	KUBECONFIG=${KIND_KUBECONFIG} watch "kubectl get no -owide; echo; kubectl get po -A"
 
 kind-delete-cluster: ## destroy kind cluster
 	@kind delete cluster --name ${K8S_CLUSTER_NAME}
