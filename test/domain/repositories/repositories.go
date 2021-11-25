@@ -112,6 +112,21 @@ func (mr *MockUserRepositoryMockRecorder) GetAll(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockUserRepository)(nil).GetAll), arg0, arg1)
 }
 
+// GetCount mocks base method.
+func (m *MockUserRepository) GetCount(arg0 context.Context, arg1 bool) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCount", arg0, arg1)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCount indicates an expected call of GetCount.
+func (mr *MockUserRepositoryMockRecorder) GetCount(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCount", reflect.TypeOf((*MockUserRepository)(nil).GetCount), arg0, arg1)
+}
+
 // Remove mocks base method.
 func (m *MockUserRepository) Remove(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()

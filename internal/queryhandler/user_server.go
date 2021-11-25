@@ -110,3 +110,13 @@ func (s *UserServer) GetAll(request *api.GetAllRequest, stream api.User_GetAllSe
 	}
 	return nil
 }
+
+func (s *UserServer) GetCount(ctx context.Context, request *api.GetCountRequest) (*api.GetCountResult, error) {
+	userCount, err := s.repo.GetCount(ctx, request.GetIncludeDeleted())
+	if err != nil {
+		return nil, errors.TranslateToGrpcError(err)
+	}
+	return &api.GetCountResult{
+		Count: int64(userCount),
+	}, err
+}
