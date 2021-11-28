@@ -57,6 +57,60 @@ func (m *PermissionModel) validate(all bool) error {
 
 	var errors []error
 
+	for idx, item := range m.GetRoles() {
+		_, _ = idx, item
+
+		if len(item) > 60 {
+			err := PermissionModelValidationError{
+				field:  fmt.Sprintf("Roles[%v]", idx),
+				reason: "value length must be at most 60 bytes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_PermissionModel_Roles_Pattern.MatchString(item) {
+			err := PermissionModelValidationError{
+				field:  fmt.Sprintf("Roles[%v]", idx),
+				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	for idx, item := range m.GetScopes() {
+		_, _ = idx, item
+
+		if len(item) > 60 {
+			err := PermissionModelValidationError{
+				field:  fmt.Sprintf("Scopes[%v]", idx),
+				reason: "value length must be at most 60 bytes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_PermissionModel_Scopes_Pattern.MatchString(item) {
+			err := PermissionModelValidationError{
+				field:  fmt.Sprintf("Scopes[%v]", idx),
+				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return PermissionModelMultiError(errors)
 	}
@@ -133,6 +187,10 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PermissionModelValidationError{}
+
+var _PermissionModel_Roles_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
+var _PermissionModel_Scopes_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
 
 // Validate checks the field values on PolicyOverview with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -288,11 +346,71 @@ func (m *Policy) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Command
+	if len(m.GetCommand()) > 60 {
+		err := PolicyValidationError{
+			field:  "Command",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Role
+	if !_Policy_Command_Pattern.MatchString(m.GetCommand()) {
+		err := PolicyValidationError{
+			field:  "Command",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Scope
+	if len(m.GetRole()) > 60 {
+		err := PolicyValidationError{
+			field:  "Role",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Policy_Role_Pattern.MatchString(m.GetRole()) {
+		err := PolicyValidationError{
+			field:  "Role",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetScope()) > 60 {
+		err := PolicyValidationError{
+			field:  "Scope",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Policy_Scope_Pattern.MatchString(m.GetScope()) {
+		err := PolicyValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return PolicyMultiError(errors)
@@ -369,3 +487,9 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PolicyValidationError{}
+
+var _Policy_Command_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
+var _Policy_Role_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
+var _Policy_Scope_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
