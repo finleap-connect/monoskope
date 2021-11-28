@@ -21,12 +21,12 @@ import (
 	"net/http"
 	"time"
 
+	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/metrics"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -64,12 +64,16 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 	unaryServerInterceptors = append(unaryServerInterceptors,
 		grpc_prometheus.UnaryServerInterceptor,  // add prometheus metrics interceptors
 		grpc_recovery.UnaryServerInterceptor(),  // add recovery from panics
-		grpc_validator.UnaryServerInterceptor(), // add message validator
+		// owen wrapper is used to unpack nested messages
+		//grpc_validator.UnaryServerInterceptor(), // add message validator
+		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
 		grpc_prometheus.StreamServerInterceptor,  // add prometheus metrics interceptors
 		grpc_recovery.StreamServerInterceptor(),  // add recovery from panics
-		grpc_validator.StreamServerInterceptor(), // add message validator
+		// owen wrapper is used to unpack nested messages
+		//grpc_validator.StreamServerInterceptor(), // add message validator
+		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
 	)
 
 	// Configure gRPC server
