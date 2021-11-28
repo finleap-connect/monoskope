@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _messages_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on Event with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -56,7 +59,27 @@ func (m *Event) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Type
+	if len(m.GetType()) > 60 {
+		err := EventValidationError{
+			field:  "Type",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Event_Type_Pattern.MatchString(m.GetType()) {
+		err := EventValidationError{
+			field:  "Type",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetTimestamp()).(type) {
@@ -87,9 +110,39 @@ func (m *Event) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for AggregateId
+	if err := m._validateUuid(m.GetAggregateId()); err != nil {
+		err = EventValidationError{
+			field:  "AggregateId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for AggregateType
+	if len(m.GetAggregateType()) > 60 {
+		err := EventValidationError{
+			field:  "AggregateType",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Event_AggregateType_Pattern.MatchString(m.GetAggregateType()) {
+		err := EventValidationError{
+			field:  "AggregateType",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetAggregateVersion()).(type) {
@@ -127,6 +180,14 @@ func (m *Event) validate(all bool) error {
 	if len(errors) > 0 {
 		return EventMultiError(errors)
 	}
+	return nil
+}
+
+func (m *Event) _validateUuid(uuid string) error {
+	if matched := _messages_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -200,6 +261,10 @@ var _ interface {
 	ErrorName() string
 } = EventValidationError{}
 
+var _Event_Type_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
+var _Event_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on EventFilter with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -222,62 +287,46 @@ func (m *EventFilter) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetAggregateId()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, EventFilterValidationError{
-					field:  "AggregateId",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, EventFilterValidationError{
-					field:  "AggregateId",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetAggregateId()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EventFilterValidationError{
+	if wrapper := m.GetAggregateId(); wrapper != nil {
+
+		if err := m._validateUuid(wrapper.GetValue()); err != nil {
+			err = EventFilterValidationError{
 				field:  "AggregateId",
-				reason: "embedded message failed validation",
+				reason: "value must be a valid UUID",
 				cause:  err,
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
 	}
 
-	if all {
-		switch v := interface{}(m.GetAggregateType()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, EventFilterValidationError{
-					field:  "AggregateType",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, EventFilterValidationError{
-					field:  "AggregateType",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetAggregateType()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EventFilterValidationError{
+	if wrapper := m.GetAggregateType(); wrapper != nil {
+
+		if len(wrapper.GetValue()) > 60 {
+			err := EventFilterValidationError{
 				field:  "AggregateType",
-				reason: "embedded message failed validation",
-				cause:  err,
+				reason: "value length must be at most 60 bytes",
 			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
+
+		if !_EventFilter_AggregateType_Pattern.MatchString(wrapper.GetValue()) {
+			err := EventFilterValidationError{
+				field:  "AggregateType",
+				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if all {
@@ -402,6 +451,14 @@ func (m *EventFilter) validate(all bool) error {
 	return nil
 }
 
+func (m *EventFilter) _validateUuid(uuid string) error {
+	if matched := _messages_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
+	return nil
+}
+
 // EventFilterMultiError is an error wrapping multiple validation errors
 // returned by EventFilter.ValidateAll() if the designated constraints aren't met.
 type EventFilterMultiError []error
@@ -471,3 +528,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = EventFilterValidationError{}
+
+var _EventFilter_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
