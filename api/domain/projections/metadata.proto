@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
@@ -27,13 +28,13 @@ message LifecycleMetadata {
   // When it has been created
   google.protobuf.Timestamp created = 1;
   // By whom it has been created
-  string created_by_id = 2;
+  string created_by_id = 2 [(validate.rules).string.uuid = true];
   // When it has been last modified
   google.protobuf.Timestamp last_modified = 3;
   // By whom it has been last modified
-  string last_modified_by_id = 4;
+  string last_modified_by_id = 4 [(validate.rules).string.uuid = true];
   // By whom it has been deleted
-  string deleted_by_id = 5;
+  string deleted_by_id = 5 [(validate.rules).string.uuid = true];
   // When it has been deleted
   google.protobuf.Timestamp deleted = 6;
 }
