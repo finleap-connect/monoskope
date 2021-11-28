@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "api/domain/projections/metadata.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
@@ -26,11 +27,11 @@ package projections;
 // User within Monoskope
 message User {
   // Unique identifier of the user (UUID 128-bit number)
-  string id = 1;
+  string id = 1 [(validate.rules).string.uuid = true];
   // Name of the user
-  string name = 2;
+  string name = 2 [(validate.rules).string.max_bytes = 150];
   // Email address of the user
-  string email = 3;
+  string email = 3 [(validate.rules).string.email = true];
   // Roles of the user
   repeated UserRoleBinding roles = 4;
   // Metadata about the projection
@@ -39,15 +40,15 @@ message User {
 
 message UserRoleBinding {
   // Unique identifier of the user role binding (UUID 128-bit number)
-  string id = 1;
+  string id = 1 [(validate.rules).string.uuid = true];
   // Unique identifier of the user (UUID 128-bit number)
-  string user_id = 2;
+  string user_id = 2 [(validate.rules).string.uuid = true];
   // Name of the role
-  string role = 3;
+  string role = 3 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // Scope of the role
-  string scope = 4;
+  string scope = 4 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // Target resource of the role
-  string resource = 5;
+  string resource = 5 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
 }
