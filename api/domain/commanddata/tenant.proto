@@ -28,7 +28,7 @@ package commanddata;
 message CreateTenantCommandData {
   // Name of the tenant
   // TODO: how flexible is this?
-  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
+  string name = 1 [(validate.rules).string.max_bytes = 150];
   // Prefix for namespaces and other resources related to the tenant
   string prefix = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
 }

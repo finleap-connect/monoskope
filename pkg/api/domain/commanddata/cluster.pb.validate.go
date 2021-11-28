@@ -71,7 +71,7 @@ func (m *CreateCluster) validate(all bool) error {
 	if !_CreateCluster_Name_Pattern.MatchString(m.GetName()) {
 		err := CreateClusterValidationError{
 			field:  "Name",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z_-]+$\"",
 		}
 		if !all {
 			return err
@@ -211,7 +211,7 @@ var _ interface {
 	ErrorName() string
 } = CreateClusterValidationError{}
 
-var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z_-]+$")
 
 // Validate checks the field values on UpdateCluster with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

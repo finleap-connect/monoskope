@@ -82,7 +82,7 @@ func (m *ClusterCreated) validate(all bool) error {
 	if !_ClusterCreated_Label_Pattern.MatchString(m.GetLabel()) {
 		err := ClusterCreatedValidationError{
 			field:  "Label",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z_-]+$\"",
 		}
 		if !all {
 			return err
@@ -211,7 +211,7 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedValidationError{}
 
-var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z_-]+$")
 
 // Validate checks the field values on ClusterCreatedV2 with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -249,7 +249,7 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 	if !_ClusterCreatedV2_Name_Pattern.MatchString(m.GetName()) {
 		err := ClusterCreatedV2ValidationError{
 			field:  "Name",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z_-]+$\"",
 		}
 		if !all {
 			return err
@@ -389,7 +389,7 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedV2ValidationError{}
 
-var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z_-]+$")
 
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
