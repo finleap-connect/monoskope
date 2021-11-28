@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/gateway";
 
@@ -57,9 +58,9 @@ message AuthResponse {
 // authenticate against a certain cluster with a specific role
 message ClusterAuthTokenRequest {
   // Unique identifier of the cluster (UUID 128-bit number)
-  string cluster_id = 1;
+  string cluster_id = 1 [(validate.rules).string.uuid = true];
   // Kubernetes role name
-  string role = 2;
+  string role = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
 }
 
 // ClusterAuthTokenResponse contains an auth token valid to

@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _service_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on AuthState with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -495,13 +498,51 @@ func (m *ClusterAuthTokenRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for ClusterId
+	if err := m._validateUuid(m.GetClusterId()); err != nil {
+		err = ClusterAuthTokenRequestValidationError{
+			field:  "ClusterId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Role
+	if len(m.GetRole()) > 60 {
+		err := ClusterAuthTokenRequestValidationError{
+			field:  "Role",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_ClusterAuthTokenRequest_Role_Pattern.MatchString(m.GetRole()) {
+		err := ClusterAuthTokenRequestValidationError{
+			field:  "Role",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return ClusterAuthTokenRequestMultiError(errors)
 	}
+	return nil
+}
+
+func (m *ClusterAuthTokenRequest) _validateUuid(uuid string) error {
+	if matched := _service_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -577,6 +618,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterAuthTokenRequestValidationError{}
+
+var _ClusterAuthTokenRequest_Role_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
 
 // Validate checks the field values on ClusterAuthTokenResponse with the rules
 // defined in the proto definition for this message. If any rules are
