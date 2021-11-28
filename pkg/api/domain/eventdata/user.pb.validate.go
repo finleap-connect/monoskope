@@ -257,7 +257,7 @@ func (m *UserRoleAdded) validate(all bool) error {
 	if !_UserRoleAdded_Role_Pattern.MatchString(m.GetRole()) {
 		err := UserRoleAddedValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -279,7 +279,7 @@ func (m *UserRoleAdded) validate(all bool) error {
 	if !_UserRoleAdded_Scope_Pattern.MatchString(m.GetScope()) {
 		err := UserRoleAddedValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -384,6 +384,6 @@ var _ interface {
 	ErrorName() string
 } = UserRoleAddedValidationError{}
 
-var _UserRoleAdded_Role_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _UserRoleAdded_Role_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _UserRoleAdded_Scope_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _UserRoleAdded_Scope_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

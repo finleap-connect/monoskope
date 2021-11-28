@@ -28,7 +28,7 @@ message ClusterCreated {
   string name = 1 [(validate.rules).string.max_bytes = 150];
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string label = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_-]+$", max_bytes: 60}];
+  string label = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Address of the KubeApiServer
   string api_server_address = 3 [(validate.rules).string.hostname = true];
   // CA certificate of the K8s cluster
@@ -38,7 +38,7 @@ message ClusterCreated {
 message ClusterCreatedV2 {
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z_-]+$", max_bytes: 60}];
+  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Display name of the cluster
   string display_name = 2 [(validate.rules).string.max_bytes = 150];
   // Address of the KubeApiServer

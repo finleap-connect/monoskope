@@ -86,7 +86,7 @@ func (m *RequestCertificate) validate(all bool) error {
 	if !_RequestCertificate_ReferencedAggregateType_Pattern.MatchString(m.GetReferencedAggregateType()) {
 		err := RequestCertificateValidationError{
 			field:  "ReferencedAggregateType",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -203,4 +203,4 @@ var _ interface {
 	ErrorName() string
 } = RequestCertificateValidationError{}
 
-var _RequestCertificate_ReferencedAggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _RequestCertificate_ReferencedAggregateType_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

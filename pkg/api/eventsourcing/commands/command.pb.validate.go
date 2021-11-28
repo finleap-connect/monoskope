@@ -85,7 +85,7 @@ func (m *Command) validate(all bool) error {
 	if !_Command_Type_Pattern.MatchString(m.GetType()) {
 		err := CommandValidationError{
 			field:  "Type",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -206,7 +206,7 @@ var _ interface {
 	ErrorName() string
 } = CommandValidationError{}
 
-var _Command_Type_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _Command_Type_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on TestCommandData with the rules defined
 // in the proto definition for this message. If any rules are violated, the

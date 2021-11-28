@@ -73,7 +73,7 @@ func (m *Event) validate(all bool) error {
 	if !_Event_Type_Pattern.MatchString(m.GetType()) {
 		err := EventValidationError{
 			field:  "Type",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -136,7 +136,7 @@ func (m *Event) validate(all bool) error {
 	if !_Event_AggregateType_Pattern.MatchString(m.GetAggregateType()) {
 		err := EventValidationError{
 			field:  "AggregateType",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -261,9 +261,9 @@ var _ interface {
 	ErrorName() string
 } = EventValidationError{}
 
-var _Event_Type_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _Event_Type_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _Event_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _Event_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on EventFilter with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -319,7 +319,7 @@ func (m *EventFilter) validate(all bool) error {
 		if !_EventFilter_AggregateType_Pattern.MatchString(wrapper.GetValue()) {
 			err := EventFilterValidationError{
 				field:  "AggregateType",
-				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 			}
 			if !all {
 				return err
@@ -529,4 +529,4 @@ var _ interface {
 	ErrorName() string
 } = EventFilterValidationError{}
 
-var _EventFilter_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _EventFilter_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

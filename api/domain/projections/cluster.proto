@@ -31,7 +31,7 @@ message Cluster {
   string id = 1 [(validate.rules).string.uuid = true];
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string name = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_-]+$", max_bytes: 60}];
+  string name = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Display name of the cluster
   string display_name = 3 [(validate.rules).string.max_bytes = 150];
   // Address of the clusters KubeAPIServer

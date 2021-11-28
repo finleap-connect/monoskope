@@ -82,7 +82,7 @@ func (m *TenantCreated) validate(all bool) error {
 	if !_TenantCreated_Prefix_Pattern.MatchString(m.GetPrefix()) {
 		err := TenantCreatedValidationError{
 			field:  "Prefix",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -167,7 +167,7 @@ var _ interface {
 	ErrorName() string
 } = TenantCreatedValidationError{}
 
-var _TenantCreated_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _TenantCreated_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on TenantUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -207,7 +207,7 @@ func (m *TenantUpdated) validate(all bool) error {
 		if !_TenantUpdated_Name_Pattern.MatchString(wrapper.GetValue()) {
 			err := TenantUpdatedValidationError{
 				field:  "Name",
-				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 			}
 			if !all {
 				return err
@@ -294,4 +294,4 @@ var _ interface {
 	ErrorName() string
 } = TenantUpdatedValidationError{}
 
-var _TenantUpdated_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _TenantUpdated_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

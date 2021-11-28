@@ -73,7 +73,7 @@ func (m *ServiceInformation) validate(all bool) error {
 	if !_ServiceInformation_Name_Pattern.MatchString(m.GetName()) {
 		err := ServiceInformationValidationError{
 			field:  "Name",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -162,7 +162,7 @@ var _ interface {
 	ErrorName() string
 } = ServiceInformationValidationError{}
 
-var _ServiceInformation_Name_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _ServiceInformation_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on CertificateChain with the rules defined
 // in the proto definition for this message. If any rules are violated, the

@@ -524,7 +524,7 @@ func (m *ClusterAuthTokenRequest) validate(all bool) error {
 	if !_ClusterAuthTokenRequest_Role_Pattern.MatchString(m.GetRole()) {
 		err := ClusterAuthTokenRequestValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 		}
 		if !all {
 			return err
@@ -619,7 +619,7 @@ var _ interface {
 	ErrorName() string
 } = ClusterAuthTokenRequestValidationError{}
 
-var _ClusterAuthTokenRequest_Role_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+var _ClusterAuthTokenRequest_Role_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on ClusterAuthTokenResponse with the rules
 // defined in the proto definition for this message. If any rules are

@@ -30,7 +30,7 @@ message Command {
   // number)
   string id = 1 [(validate.rules).string.uuid = true]; // required
   // Type of the command
-  string type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
+  string type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Command type specific data
   google.protobuf.Any data = 3;
 }

@@ -86,5 +86,5 @@ message GetCertificateRequest {
   // Unique identifier of the aggregate referenced (UUID 128-bit number)
   string aggregate_id = 1 [(validate.rules).string.uuid = true];
   // Type of the aggregate referenced
-  string aggregate_type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
+  string aggregate_type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
 }

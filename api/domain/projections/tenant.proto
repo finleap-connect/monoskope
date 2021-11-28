@@ -33,7 +33,7 @@ message Tenant {
   // Prefix for namespaces and other resources related to the tenant.
   // DNS compatibility is ensured on validation. E.g. no more than 12
   // characters. TODO: where?
-  string prefix = 3 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 12}];
+  string prefix = 3 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 12}];
   // Metadata about the projection
   LifecycleMetadata metadata = 4;
 }
@@ -47,7 +47,7 @@ message TenantUser {
   // Email address of the user
   string email = 3 [(validate.rules).string.email = true];
   // Roles of the user within the tenant
-  repeated string tenant_roles = 4 [(validate.rules).repeated.items.string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
+  repeated string tenant_roles = 4 [(validate.rules).repeated.items.string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Unique identifier of the tenant (UUID 128-bit number)
   string tenant_id = 5 [(validate.rules).string.uuid = true];
   // Metadata about the projection
