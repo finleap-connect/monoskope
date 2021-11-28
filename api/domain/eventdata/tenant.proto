@@ -28,7 +28,7 @@ message TenantCreated {
   // Name of the tenant
   string name = 1 [(validate.rules).string.max_bytes = 150];
   // Prefix of the tenant
-  string prefix = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
+  string prefix = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 12}];
 }
 
 message TenantUpdated {

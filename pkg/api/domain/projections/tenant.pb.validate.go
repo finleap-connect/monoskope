@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _tenant_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on Tenant with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -56,11 +59,50 @@ func (m *Tenant) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	if err := m._validateUuid(m.GetId()); err != nil {
+		err = TenantValidationError{
+			field:  "Id",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Name
+	if len(m.GetName()) > 150 {
+		err := TenantValidationError{
+			field:  "Name",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Prefix
+	if len(m.GetPrefix()) > 12 {
+		err := TenantValidationError{
+			field:  "Prefix",
+			reason: "value length must be at most 12 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Tenant_Prefix_Pattern.MatchString(m.GetPrefix()) {
+		err := TenantValidationError{
+			field:  "Prefix",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetMetadata()).(type) {
@@ -94,6 +136,14 @@ func (m *Tenant) validate(all bool) error {
 	if len(errors) > 0 {
 		return TenantMultiError(errors)
 	}
+	return nil
+}
+
+func (m *Tenant) _validateUuid(uuid string) error {
+	if matched := _tenant_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -167,6 +217,8 @@ var _ interface {
 	ErrorName() string
 } = TenantValidationError{}
 
+var _Tenant_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
+
 // Validate checks the field values on TenantUser with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -189,13 +241,79 @@ func (m *TenantUser) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	if err := m._validateUuid(m.GetId()); err != nil {
+		err = TenantUserValidationError{
+			field:  "Id",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Name
+	if len(m.GetName()) > 150 {
+		err := TenantUserValidationError{
+			field:  "Name",
+			reason: "value length must be at most 150 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Email
+	if err := m._validateEmail(m.GetEmail()); err != nil {
+		err = TenantUserValidationError{
+			field:  "Email",
+			reason: "value must be a valid email address",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for TenantId
+	for idx, item := range m.GetTenantRoles() {
+		_, _ = idx, item
+
+		if len(item) > 60 {
+			err := TenantUserValidationError{
+				field:  fmt.Sprintf("TenantRoles[%v]", idx),
+				reason: "value length must be at most 60 bytes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_TenantUser_TenantRoles_Pattern.MatchString(item) {
+			err := TenantUserValidationError{
+				field:  fmt.Sprintf("TenantRoles[%v]", idx),
+				reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if err := m._validateUuid(m.GetTenantId()); err != nil {
+		err = TenantUserValidationError{
+			field:  "TenantId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetMetadata()).(type) {
@@ -229,6 +347,64 @@ func (m *TenantUser) validate(all bool) error {
 	if len(errors) > 0 {
 		return TenantUserMultiError(errors)
 	}
+	return nil
+}
+
+func (m *TenantUser) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *TenantUser) _validateEmail(addr string) error {
+	a, err := mail.ParseAddress(addr)
+	if err != nil {
+		return err
+	}
+	addr = a.Address
+
+	if len(addr) > 254 {
+		return errors.New("email addresses cannot exceed 254 characters")
+	}
+
+	parts := strings.SplitN(addr, "@", 2)
+
+	if len(parts[0]) > 64 {
+		return errors.New("email address local phrase cannot exceed 64 characters")
+	}
+
+	return m._validateHostname(parts[1])
+}
+
+func (m *TenantUser) _validateUuid(uuid string) error {
+	if matched := _tenant_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -301,3 +477,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TenantUserValidationError{}
+
+var _TenantUser_TenantRoles_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")

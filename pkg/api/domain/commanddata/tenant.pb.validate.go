@@ -68,10 +68,10 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetPrefix()) > 60 {
+	if len(m.GetPrefix()) > 12 {
 		err := CreateTenantCommandDataValidationError{
 			field:  "Prefix",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 12 bytes",
 		}
 		if !all {
 			return err
