@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _commandhandler_service_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on CommandReply with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -57,13 +60,31 @@ func (m *CommandReply) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for AggregateId
+	if err := m._validateUuid(m.GetAggregateId()); err != nil {
+		err = CommandReplyValidationError{
+			field:  "AggregateId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for Version
 
 	if len(errors) > 0 {
 		return CommandReplyMultiError(errors)
 	}
+	return nil
+}
+
+func (m *CommandReply) _validateUuid(uuid string) error {
+	if matched := _commandhandler_service_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
