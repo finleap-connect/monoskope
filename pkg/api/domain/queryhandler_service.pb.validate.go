@@ -283,3 +283,136 @@ var _ interface {
 } = GetCertificateRequestValidationError{}
 
 var _GetCertificateRequest_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+
+// Validate checks the field values on GetClusterMappingRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetClusterMappingRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetClusterMappingRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetClusterMappingRequestMultiError, or nil if none found.
+func (m *GetClusterMappingRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetClusterMappingRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if err := m._validateUuid(m.GetTenantId()); err != nil {
+		err = GetClusterMappingRequestValidationError{
+			field:  "TenantId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if err := m._validateUuid(m.GetClusterId()); err != nil {
+		err = GetClusterMappingRequestValidationError{
+			field:  "ClusterId",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetClusterMappingRequestMultiError(errors)
+	}
+	return nil
+}
+
+func (m *GetClusterMappingRequest) _validateUuid(uuid string) error {
+	if matched := _queryhandler_service_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
+	return nil
+}
+
+// GetClusterMappingRequestMultiError is an error wrapping multiple validation
+// errors returned by GetClusterMappingRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetClusterMappingRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetClusterMappingRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetClusterMappingRequestMultiError) AllErrors() []error { return m }
+
+// GetClusterMappingRequestValidationError is the validation error returned by
+// GetClusterMappingRequest.Validate if the designated constraints aren't met.
+type GetClusterMappingRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetClusterMappingRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetClusterMappingRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetClusterMappingRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetClusterMappingRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetClusterMappingRequestValidationError) ErrorName() string {
+	return "GetClusterMappingRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetClusterMappingRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetClusterMappingRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetClusterMappingRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetClusterMappingRequestValidationError{}
