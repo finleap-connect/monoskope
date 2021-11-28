@@ -35,6 +35,9 @@ var (
 	_ = sort.Sort
 )
 
+// define the regex for a UUID once up-front
+var _command_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 // Validate checks the field values on Command with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -56,9 +59,39 @@ func (m *Command) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	if err := m._validateUuid(m.GetId()); err != nil {
+		err = CommandValidationError{
+			field:  "Id",
+			reason: "value must be a valid UUID",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Type
+	if len(m.GetType()) > 60 {
+		err := CommandValidationError{
+			field:  "Type",
+			reason: "value length must be at most 60 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_Command_Type_Pattern.MatchString(m.GetType()) {
+		err := CommandValidationError{
+			field:  "Type",
+			reason: "value does not match regex pattern \"^[a-zA-Z_]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetData()).(type) {
@@ -92,6 +125,14 @@ func (m *Command) validate(all bool) error {
 	if len(errors) > 0 {
 		return CommandMultiError(errors)
 	}
+	return nil
+}
+
+func (m *Command) _validateUuid(uuid string) error {
+	if matched := _command_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
@@ -164,6 +205,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CommandValidationError{}
+
+var _Command_Type_Pattern = regexp.MustCompile("^[a-zA-Z_]+$")
 
 // Validate checks the field values on TestCommandData with the rules defined
 // in the proto definition for this message. If any rules are violated, the

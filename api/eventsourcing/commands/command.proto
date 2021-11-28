@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/any.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands";
 
@@ -27,9 +28,9 @@ package commands;
 message Command {
   // Unique identifier of the aggregate the command applies to (UUID 128-bit
   // number)
-  string id = 1; // required
+  string id = 1 [(validate.rules).string.uuid = true]; // required
   // Type of the command
-  string type = 2;
+  string type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
   // Command type specific data
   google.protobuf.Any data = 3;
 }
