@@ -22,6 +22,7 @@ import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/domain/projections/certificate.proto";
 import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
 
@@ -83,7 +84,7 @@ message GetAllRequest { bool include_deleted = 1; }
 
 message GetCertificateRequest {
   // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string aggregate_id = 1;
+  string aggregate_id = 1 [(validate.rules).string.uuid = true];
   // Type of the aggregate referenced
-  string aggregate_type = 2;
+  string aggregate_type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z_]+$", max_bytes: 60}];
 }
