@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _tenant_cluster_binding_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on TenantClusterBinding with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -60,41 +57,11 @@ func (m *TenantClusterBinding) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetId()); err != nil {
-		err = TenantClusterBindingValidationError{
-			field:  "Id",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
 
-	if err := m._validateUuid(m.GetClusterId()); err != nil {
-		err = TenantClusterBindingValidationError{
-			field:  "ClusterId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ClusterId
 
-	if err := m._validateUuid(m.GetTenantId()); err != nil {
-		err = TenantClusterBindingValidationError{
-			field:  "TenantId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for TenantId
 
 	if all {
 		switch v := interface{}(m.GetMetadata()).(type) {
@@ -128,14 +95,6 @@ func (m *TenantClusterBinding) validate(all bool) error {
 	if len(errors) > 0 {
 		return TenantClusterBindingMultiError(errors)
 	}
-	return nil
-}
-
-func (m *TenantClusterBinding) _validateUuid(uuid string) error {
-	if matched := _tenant_cluster_binding_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 

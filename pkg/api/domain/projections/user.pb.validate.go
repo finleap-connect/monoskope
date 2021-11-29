@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _user_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on User with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -59,40 +56,11 @@ func (m *User) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetId()); err != nil {
-		err = UserValidationError{
-			field:  "Id",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
 
-	if len(m.GetName()) > 150 {
-		err := UserValidationError{
-			field:  "Name",
-			reason: "value length must be at most 150 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Name
 
-	if err := m._validateEmail(m.GetEmail()); err != nil {
-		err = UserValidationError{
-			field:  "Email",
-			reason: "value must be a valid email address",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Email
 
 	for idx, item := range m.GetRoles() {
 		_, _ = idx, item
@@ -160,64 +128,6 @@ func (m *User) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserMultiError(errors)
 	}
-	return nil
-}
-
-func (m *User) _validateHostname(host string) error {
-	s := strings.ToLower(strings.TrimSuffix(host, "."))
-
-	if len(host) > 253 {
-		return errors.New("hostname cannot exceed 253 characters")
-	}
-
-	for _, part := range strings.Split(s, ".") {
-		if l := len(part); l == 0 || l > 63 {
-			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
-		}
-
-		if part[0] == '-' {
-			return errors.New("hostname parts cannot begin with hyphens")
-		}
-
-		if part[len(part)-1] == '-' {
-			return errors.New("hostname parts cannot end with hyphens")
-		}
-
-		for _, r := range part {
-			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
-				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
-			}
-		}
-	}
-
-	return nil
-}
-
-func (m *User) _validateEmail(addr string) error {
-	a, err := mail.ParseAddress(addr)
-	if err != nil {
-		return err
-	}
-	addr = a.Address
-
-	if len(addr) > 254 {
-		return errors.New("email addresses cannot exceed 254 characters")
-	}
-
-	parts := strings.SplitN(addr, "@", 2)
-
-	if len(parts[0]) > 64 {
-		return errors.New("email address local phrase cannot exceed 64 characters")
-	}
-
-	return m._validateHostname(parts[1])
-}
-
-func (m *User) _validateUuid(uuid string) error {
-	if matched := _user_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 
@@ -313,95 +223,15 @@ func (m *UserRoleBinding) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetId()); err != nil {
-		err = UserRoleBindingValidationError{
-			field:  "Id",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
 
-	if err := m._validateUuid(m.GetUserId()); err != nil {
-		err = UserRoleBindingValidationError{
-			field:  "UserId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for UserId
 
-	if len(m.GetRole()) > 60 {
-		err := UserRoleBindingValidationError{
-			field:  "Role",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Role
 
-	if !_UserRoleBinding_Role_Pattern.MatchString(m.GetRole()) {
-		err := UserRoleBindingValidationError{
-			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Scope
 
-	if len(m.GetScope()) > 60 {
-		err := UserRoleBindingValidationError{
-			field:  "Scope",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_UserRoleBinding_Scope_Pattern.MatchString(m.GetScope()) {
-		err := UserRoleBindingValidationError{
-			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetResource()) > 60 {
-		err := UserRoleBindingValidationError{
-			field:  "Resource",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_UserRoleBinding_Resource_Pattern.MatchString(m.GetResource()) {
-		err := UserRoleBindingValidationError{
-			field:  "Resource",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Resource
 
 	if all {
 		switch v := interface{}(m.GetMetadata()).(type) {
@@ -435,14 +265,6 @@ func (m *UserRoleBinding) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserRoleBindingMultiError(errors)
 	}
-	return nil
-}
-
-func (m *UserRoleBinding) _validateUuid(uuid string) error {
-	if matched := _user_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 
@@ -516,9 +338,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UserRoleBindingValidationError{}
-
-var _UserRoleBinding_Role_Pattern = regexp.MustCompile("^[a-z]+$")
-
-var _UserRoleBinding_Scope_Pattern = regexp.MustCompile("^[a-z]+$")
-
-var _UserRoleBinding_Resource_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

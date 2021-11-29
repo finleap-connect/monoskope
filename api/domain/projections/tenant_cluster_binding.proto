@@ -18,7 +18,6 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "api/domain/projections/metadata.proto";
-import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
@@ -27,11 +26,11 @@ package projections;
 // TenantClusterBinding represents which tenant has access to what cluster
 message TenantClusterBinding {
     // Unique identifier of the binding (UUID 128-bit number)
-    string id = 1 [(validate.rules).string.uuid = true];
+    string id = 1;
     // Unique identifier of the cluster (UUID 128-bit number)
-    string cluster_id = 2 [(validate.rules).string.uuid = true];
+    string cluster_id = 2;
     // Unique identifier of the tenant (UUID 128-bit number)
-    string tenant_id = 3 [(validate.rules).string.uuid = true];
+    string tenant_id = 3;
     // Metadata about the projection
     LifecycleMetadata metadata = 4;
 }

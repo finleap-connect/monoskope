@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _metadata_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on LifecycleMetadata with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -89,17 +86,7 @@ func (m *LifecycleMetadata) validate(all bool) error {
 		}
 	}
 
-	if err := m._validateUuid(m.GetCreatedById()); err != nil {
-		err = LifecycleMetadataValidationError{
-			field:  "CreatedById",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for CreatedById
 
 	if all {
 		switch v := interface{}(m.GetLastModified()).(type) {
@@ -130,29 +117,9 @@ func (m *LifecycleMetadata) validate(all bool) error {
 		}
 	}
 
-	if err := m._validateUuid(m.GetLastModifiedById()); err != nil {
-		err = LifecycleMetadataValidationError{
-			field:  "LastModifiedById",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for LastModifiedById
 
-	if err := m._validateUuid(m.GetDeletedById()); err != nil {
-		err = LifecycleMetadataValidationError{
-			field:  "DeletedById",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for DeletedById
 
 	if all {
 		switch v := interface{}(m.GetDeleted()).(type) {
@@ -186,14 +153,6 @@ func (m *LifecycleMetadata) validate(all bool) error {
 	if len(errors) > 0 {
 		return LifecycleMetadataMultiError(errors)
 	}
-	return nil
-}
-
-func (m *LifecycleMetadata) _validateUuid(uuid string) error {
-	if matched := _metadata_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 
