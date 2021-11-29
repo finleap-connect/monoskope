@@ -259,7 +259,6 @@ type ClusterBootstrapTokenCreated struct {
 	unknownFields protoimpl.UnknownFields
 
 	// JsonWebToken for cluster bootstrap
-	// TODO: dose it make sense to check here it will fail anyway if the token is not valid.
 	Jwt string `protobuf:"bytes,1,opt,name=jwt,proto3" json:"jwt,omitempty"`
 }
 

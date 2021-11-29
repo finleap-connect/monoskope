@@ -58,6 +58,5 @@ message ClusterUpdated {
 
 message ClusterBootstrapTokenCreated {
   // JsonWebToken for cluster bootstrap
-  // TODO: dose it make sense to check here it will fail anyway if the token is not valid.
   string jwt = 1;
 }
