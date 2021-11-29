@@ -105,15 +105,16 @@ func (m *Cluster) validate(all bool) error {
 	}
 
 	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		err = ClusterValidationError{
-			field:  "ApiServerAddress",
-			reason: "value must be a valid hostname",
-			cause:  err,
+		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
+			err := ClusterValidationError{
+				field:  "ApiServerAddress",
+				reason: "value must be a valid hostname, or ip address",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertBundle

@@ -91,15 +91,16 @@ func (m *ClusterCreated) validate(all bool) error {
 	}
 
 	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		err = ClusterCreatedValidationError{
-			field:  "ApiServerAddress",
-			reason: "value must be a valid hostname",
-			cause:  err,
+		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
+			err := ClusterCreatedValidationError{
+				field:  "ApiServerAddress",
+				reason: "value must be a valid hostname, or ip address",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle
@@ -269,15 +270,16 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 	}
 
 	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		err = ClusterCreatedV2ValidationError{
-			field:  "ApiServerAddress",
-			reason: "value must be a valid hostname",
-			cause:  err,
+		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
+			err := ClusterCreatedV2ValidationError{
+				field:  "ApiServerAddress",
+				reason: "value must be a valid hostname, or ip address",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle
@@ -425,15 +427,16 @@ func (m *ClusterUpdated) validate(all bool) error {
 	}
 
 	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		err = ClusterUpdatedValidationError{
-			field:  "ApiServerAddress",
-			reason: "value must be a valid hostname",
-			cause:  err,
+		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
+			err := ClusterUpdatedValidationError{
+				field:  "ApiServerAddress",
+				reason: "value must be a valid hostname, or ip address",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle

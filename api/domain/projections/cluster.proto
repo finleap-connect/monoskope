@@ -35,7 +35,7 @@ message Cluster {
   // Display name of the cluster
   string display_name = 3 [(validate.rules).string.max_bytes = 150];
   // Address of the clusters KubeAPIServer
-  string api_server_address = 4 [(validate.rules).string.hostname = true];
+  string api_server_address = 4 [(validate.rules).string.address = true];
   // CA certificates of the cluster
   bytes ca_cert_bundle = 5;
   // Metadata about the projection
