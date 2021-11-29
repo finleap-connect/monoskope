@@ -64,14 +64,14 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 	unaryServerInterceptors = append(unaryServerInterceptors,
 		grpc_prometheus.UnaryServerInterceptor,  // add prometheus metrics interceptors
 		grpc_recovery.UnaryServerInterceptor(),  // add recovery from panics
-		// owen wrapper is used to unpack nested messages
+		// own wrapper is used to unpack nested messages
 		//grpc_validator.UnaryServerInterceptor(), // add message validator
 		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
 		grpc_prometheus.StreamServerInterceptor,  // add prometheus metrics interceptors
 		grpc_recovery.StreamServerInterceptor(),  // add recovery from panics
-		// owen wrapper is used to unpack nested messages
+		// own wrapper is used to unpack nested messages
 		//grpc_validator.StreamServerInterceptor(), // add message validator
 		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
 	)
