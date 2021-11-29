@@ -74,7 +74,7 @@ func (m *PermissionModel) validate(all bool) error {
 		if !_PermissionModel_Roles_Pattern.MatchString(item) {
 			err := PermissionModelValidationError{
 				field:  fmt.Sprintf("Roles[%v]", idx),
-				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+				reason: "value does not match regex pattern \"^[a-z]+$\"",
 			}
 			if !all {
 				return err
@@ -101,7 +101,7 @@ func (m *PermissionModel) validate(all bool) error {
 		if !_PermissionModel_Scopes_Pattern.MatchString(item) {
 			err := PermissionModelValidationError{
 				field:  fmt.Sprintf("Scopes[%v]", idx),
-				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+				reason: "value does not match regex pattern \"^[a-z]+$\"",
 			}
 			if !all {
 				return err
@@ -188,9 +188,9 @@ var _ interface {
 	ErrorName() string
 } = PermissionModelValidationError{}
 
-var _PermissionModel_Roles_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _PermissionModel_Roles_Pattern = regexp.MustCompile("^[a-z]+$")
 
-var _PermissionModel_Scopes_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _PermissionModel_Scopes_Pattern = regexp.MustCompile("^[a-z]+$")
 
 // Validate checks the field values on PolicyOverview with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -382,7 +382,7 @@ func (m *Policy) validate(all bool) error {
 	if !_Policy_Role_Pattern.MatchString(m.GetRole()) {
 		err := PolicyValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+			reason: "value does not match regex pattern \"^[a-z]+$\"",
 		}
 		if !all {
 			return err
@@ -404,7 +404,7 @@ func (m *Policy) validate(all bool) error {
 	if !_Policy_Scope_Pattern.MatchString(m.GetScope()) {
 		err := PolicyValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+			reason: "value does not match regex pattern \"^[a-z]+$\"",
 		}
 		if !all {
 			return err
@@ -490,6 +490,6 @@ var _ interface {
 
 var _Policy_Command_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _Policy_Role_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _Policy_Role_Pattern = regexp.MustCompile("^[a-z]+$")
 
-var _Policy_Scope_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _Policy_Scope_Pattern = regexp.MustCompile("^[a-z]+$")

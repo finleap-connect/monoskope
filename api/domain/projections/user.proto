@@ -44,9 +44,9 @@ message UserRoleBinding {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 2 [(validate.rules).string.uuid = true];
   // Name of the role
-  string role = 3 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string role = 3 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
   // Scope of the role
-  string scope = 4 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string scope = 4 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
   // Target resource of the role
   string resource = 5 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Metadata about the projection

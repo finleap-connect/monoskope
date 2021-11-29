@@ -36,9 +36,9 @@ message CreateUserRoleBindingCommandData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1 [(validate.rules).string.uuid = true];
   // Name of the role to add
-  string role = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string role = 2 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
   // Scope of the role
-  string scope = 3 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string scope = 3 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
   // Unique identifier of the affected resource within scope (UUID 128-bit
   // number)
   string resource = 4 [(validate.rules).string.uuid = true];

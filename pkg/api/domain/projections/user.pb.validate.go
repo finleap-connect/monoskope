@@ -351,7 +351,7 @@ func (m *UserRoleBinding) validate(all bool) error {
 	if !_UserRoleBinding_Role_Pattern.MatchString(m.GetRole()) {
 		err := UserRoleBindingValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+			reason: "value does not match regex pattern \"^[a-z]+$\"",
 		}
 		if !all {
 			return err
@@ -373,7 +373,7 @@ func (m *UserRoleBinding) validate(all bool) error {
 	if !_UserRoleBinding_Scope_Pattern.MatchString(m.GetScope()) {
 		err := UserRoleBindingValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+			reason: "value does not match regex pattern \"^[a-z]+$\"",
 		}
 		if !all {
 			return err
@@ -517,8 +517,8 @@ var _ interface {
 	ErrorName() string
 } = UserRoleBindingValidationError{}
 
-var _UserRoleBinding_Role_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _UserRoleBinding_Role_Pattern = regexp.MustCompile("^[a-z]+$")
 
-var _UserRoleBinding_Scope_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
+var _UserRoleBinding_Scope_Pattern = regexp.MustCompile("^[a-z]+$")
 
 var _UserRoleBinding_Resource_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
