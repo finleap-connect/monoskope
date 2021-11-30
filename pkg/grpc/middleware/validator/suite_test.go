@@ -15,13 +15,44 @@
 package validator
 
 import (
+	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
+	"github.com/google/uuid"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
+var (
+	validUUID = uuid.New().String()
+	validAggregateType = "ValidAggregate-Type_V1"
+	validCSR = []byte("-----BEGIN CERTIFICATE REQUEST-----valid CSR-----END CERTIFICATE REQUEST-----")
+
+	invalidUUID = "invalid uuid"
+	invalidAggregateTypeStartWithNumber = "0inValidAggregateType"
+	invalidAggregateTypeTooLong = strings.Repeat("x", 61)
+	invalidCSR = []byte("invalid CSR")
+)
+
 func TestUtil(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "gRPC Validator Middleware Test Suite")
+}
+
+func NewValidCertificateRequest() *commanddata.RequestCertificate {
+	return &commanddata.RequestCertificate{
+		ReferencedAggregateId:   validUUID,
+		ReferencedAggregateType: validAggregateType,
+		SigningRequest:          validCSR,
+	}
+}
+
+func NewValidRequestedCertificate() *eventdata.CertificateRequested {
+	return &eventdata.CertificateRequested{
+		ReferencedAggregateId:   validUUID,
+		ReferencedAggregateType: validAggregateType,
+		SigningRequest:          validCSR,
+	}
 }
