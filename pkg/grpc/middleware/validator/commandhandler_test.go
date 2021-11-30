@@ -16,6 +16,7 @@ package validator
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -64,6 +65,11 @@ var _ = Describe("Test validation rules for commandhanlder messages", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		It("should check for a valid Command", func() {
+			pc.Command = invalidCommand
+			ValidateErrorExpected()
+		})
+
 		It("should check for a valid Role", func() {
 			pc.Role = invalidRole
 			ValidateErrorExpected()
@@ -71,6 +77,28 @@ var _ = Describe("Test validation rules for commandhanlder messages", func() {
 
 		It("should check for a valid Scope", func() {
 			pc.Scope = invalidScope
+			ValidateErrorExpected()
+		})
+	})
+
+	Context("Command Replay", func() {
+		var cr *eventsourcing.CommandReply
+		JustBeforeEach(func() {
+			cr = NewValidCommandReply()
+		})
+
+		ValidateErrorExpected := func() {
+			err := cr.Validate()
+			Expect(err).To(HaveOccurred())
+		}
+
+		It("should ensure rules are valid", func() {
+			err := cr.Validate()
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should check for a valid AggregateId", func() {
+			cr.AggregateId = invalidUUID
 			ValidateErrorExpected()
 		})
 	})

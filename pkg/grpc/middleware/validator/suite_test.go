@@ -18,6 +18,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
+	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -235,5 +236,11 @@ func NewValidCommand() *commands.Command {
 		Id: validUUID,
 		Type: validCommandType,
 		Data: &anypb.Any{},
+	}
+}
+
+func NewValidCommandReply() *eventsourcing.CommandReply {
+	return &eventsourcing.CommandReply{
+		AggregateId: validUUID,
 	}
 }
