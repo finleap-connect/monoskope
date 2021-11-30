@@ -195,21 +195,10 @@ func (m *UpdateTenantCommandData) validate(all bool) error {
 
 	if wrapper := m.GetName(); wrapper != nil {
 
-		if len(wrapper.GetValue()) > 60 {
+		if len(wrapper.GetValue()) > 150 {
 			err := UpdateTenantCommandDataValidationError{
 				field:  "Name",
-				reason: "value length must be at most 60 bytes",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if !_UpdateTenantCommandData_Name_Pattern.MatchString(wrapper.GetValue()) {
-			err := UpdateTenantCommandDataValidationError{
-				field:  "Name",
-				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
+				reason: "value length must be at most 150 bytes",
 			}
 			if !all {
 				return err
@@ -297,5 +286,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateTenantCommandDataValidationError{}
-
-var _UpdateTenantCommandData_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")

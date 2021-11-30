@@ -33,5 +33,5 @@ message TenantCreated {
 
 message TenantUpdated {
   // New name for the tenant
-  google.protobuf.StringValue name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  google.protobuf.StringValue name = 1 [(validate.rules).string.max_bytes = 150];
 }

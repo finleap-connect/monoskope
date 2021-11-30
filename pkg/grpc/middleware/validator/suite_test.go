@@ -41,6 +41,9 @@ var (
 	validDisplayName = validString
 	validApiServerAddress = validAddress
 
+	validTenantPrefix = validRestrictedString[0:12]
+
+
 
 	invalidStringLength = strings.Repeat("x", 151)
 	invalidRestrictedString = "0Start_withNumber-V1"
@@ -55,6 +58,10 @@ var (
 	invalidName = invalidRestrictedString
 	invalidDisplayNameTooLong = invalidStringLength
 	invalidApiServerAddress = invalidAddress
+
+	invalidTenantPrefixTooLong = validRestrictedString
+	invalidTenantPrefixStartWithNumber = invalidRestrictedString[0:12]
+
 )
 
 func TestUtil(t *testing.T) {
@@ -132,5 +139,31 @@ func NewValidTenantClusterBindingCreated() *eventdata.TenantClusterBindingCreate
 	return &eventdata.TenantClusterBindingCreated{
 		TenantId: validUUID,
 		ClusterId: validUUID,
+	}
+}
+
+func NewValidCreateTenantCommandData() *commanddata.CreateTenantCommandData {
+	return &commanddata.CreateTenantCommandData{
+		Name: validDisplayName,
+		Prefix: validTenantPrefix,
+	}
+}
+
+func NewValidTenantCreated() *eventdata.TenantCreated {
+	return &eventdata.TenantCreated{
+		Name: validDisplayName,
+		Prefix: validTenantPrefix,
+	}
+}
+
+func NewValidUpdateTenantCommandData() *commanddata.UpdateTenantCommandData {
+	return &commanddata.UpdateTenantCommandData{
+		Name: &wrapperspb.StringValue{Value: validDisplayName},
+	}
+}
+
+func NewValidTenantUpdated() *eventdata.TenantUpdated {
+	return &eventdata.TenantUpdated{
+		Name: &wrapperspb.StringValue{Value: validDisplayName},
 	}
 }
