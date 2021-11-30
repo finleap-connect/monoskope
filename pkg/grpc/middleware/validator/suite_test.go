@@ -54,6 +54,8 @@ var (
 	validCommand = validRestrictedString
 	validCommandType = validRestrictedString
 
+	validEventType = validRestrictedString
+
 
 	invalidStringLength = strings.Repeat("x", 151)
 	invalidRestrictedString = "0Start_withNumber-V1"
@@ -78,6 +80,8 @@ var (
 
 	invalidCommand = invalidRestrictedString
 	invalidCommandType = invalidRestrictedString
+
+	invalidEventType = invalidRestrictedString
 )
 
 func TestUtil(t *testing.T) {
@@ -242,5 +246,20 @@ func NewValidCommand() *commands.Command {
 func NewValidCommandReply() *eventsourcing.CommandReply {
 	return &eventsourcing.CommandReply{
 		AggregateId: validUUID,
+	}
+}
+
+func NewValidEvent() *eventsourcing.Event {
+	return &eventsourcing.Event{
+		Type: validEventType,
+		AggregateId: validUUID,
+		AggregateType: validAggregateType,
+	}
+}
+
+func NewValidEventFilter() *eventsourcing.EventFilter {
+	return &eventsourcing.EventFilter{
+		AggregateId: &wrapperspb.StringValue{Value: validUUID},
+		AggregateType: &wrapperspb.StringValue{Value: validAggregateType},
 	}
 }
