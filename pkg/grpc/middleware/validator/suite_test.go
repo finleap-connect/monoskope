@@ -20,6 +20,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -261,5 +262,12 @@ func NewValidEventFilter() *eventsourcing.EventFilter {
 	return &eventsourcing.EventFilter{
 		AggregateId: &wrapperspb.StringValue{Value: validUUID},
 		AggregateType: &wrapperspb.StringValue{Value: validAggregateType},
+	}
+}
+
+func NewValidClusterAuthTokenRequest() *gateway.ClusterAuthTokenRequest {
+	return &gateway.ClusterAuthTokenRequest{
+		ClusterId: validUUID,
+		Role: validRole,
 	}
 }
