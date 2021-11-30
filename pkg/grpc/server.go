@@ -17,11 +17,11 @@ package grpc
 import (
 	"context"
 	"fmt"
+	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware/validator"
 	"net"
 	"net/http"
 	"time"
 
-	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/metrics"
 	"github.com/finleap-connect/monoskope/pkg/util"
