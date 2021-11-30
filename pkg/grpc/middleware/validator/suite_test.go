@@ -18,7 +18,9 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
+	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"strings"
 	"testing"
@@ -49,6 +51,7 @@ var (
 	validScope = validLowercaseString
 
 	validCommand = validRestrictedString
+	validCommandType = validRestrictedString
 
 
 	invalidStringLength = strings.Repeat("x", 151)
@@ -73,6 +76,7 @@ var (
 	invalidScope = invalidLowercaseString
 
 	invalidCommand = invalidRestrictedString
+	invalidCommandType = invalidRestrictedString
 )
 
 func TestUtil(t *testing.T) {
@@ -223,5 +227,13 @@ func NewValidPolicy() *domain.Policy {
 		Command: validCommand,
 		Role: validRole,
 		Scope: validScope,
+	}
+}
+
+func NewValidCommand() *commands.Command {
+	return &commands.Command{
+		Id: validUUID,
+		Type: validCommandType,
+		Data: &anypb.Any{},
 	}
 }
