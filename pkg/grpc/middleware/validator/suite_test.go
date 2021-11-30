@@ -120,3 +120,17 @@ func NewValidClusterUpdated() *eventdata.ClusterUpdated {
 		CaCertificateBundle: []byte(noValidationRules),
 	}
 }
+
+func NewValidCreateTenantClusterBindingCommandData() *commanddata.CreateTenantClusterBindingCommandData {
+	return &commanddata.CreateTenantClusterBindingCommandData{
+		TenantId: validUUID,
+		ClusterId: validUUID,
+	}
+}
+
+func NewValidTenantClusterBindingCreated() *eventdata.TenantClusterBindingCreated {
+	return &eventdata.TenantClusterBindingCreated{
+		TenantId: validUUID,
+		ClusterId: validUUID,
+	}
+}
