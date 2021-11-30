@@ -31,7 +31,7 @@ var (
 
 	validString = "123 Whatever, no re$triction character wise !@#$%^&*()"
 	validRestrictedString = "ValidRestricted-String_V1"
-	validAddress = "https://k8s-api.lab.example.com:6443"
+	validLowercaseString = "onlylowercase"
 
 	validUUID = uuid.New().String()
 	validAggregateType = validRestrictedString
@@ -39,16 +39,19 @@ var (
 
 	validName = validRestrictedString
 	validDisplayName = validString
-	validApiServerAddress = validAddress
+	validApiServerAddress = "https://k8s-api.lab.example.com:6443"
 
 	validTenantPrefix = validRestrictedString[0:12]
 
+	validEmail = "email@invalid.com"
+	validRole = validLowercaseString
+	validScope = validLowercaseString
 
 
 	invalidStringLength = strings.Repeat("x", 151)
 	invalidRestrictedString = "0Start_withNumber-V1"
 	invalidRestrictedStringLength = strings.Repeat("x", 61)
-	invalidAddress = "not an address"
+	invalidLowercaseString = "onlyLowerCase"
 
 	invalidUUID = "invalid uuid"
 	invalidAggregateTypeStartWithNumber = invalidRestrictedString
@@ -57,10 +60,14 @@ var (
 
 	invalidName = invalidRestrictedString
 	invalidDisplayNameTooLong = invalidStringLength
-	invalidApiServerAddress = invalidAddress
+	invalidApiServerAddress = "k8s-api.lab.example.com:6443"
 
 	invalidTenantPrefixTooLong = validRestrictedString
 	invalidTenantPrefixStartWithNumber = invalidRestrictedString[0:12]
+
+	invalidEmail = "email#invalid.com"
+	invalidRole = invalidLowercaseString
+	invalidScope = invalidLowercaseString
 
 )
 
@@ -165,5 +172,37 @@ func NewValidUpdateTenantCommandData() *commanddata.UpdateTenantCommandData {
 func NewValidTenantUpdated() *eventdata.TenantUpdated {
 	return &eventdata.TenantUpdated{
 		Name: &wrapperspb.StringValue{Value: validDisplayName},
+	}
+}
+
+func NewValidCreateUserCommandData() *commanddata.CreateUserCommandData {
+	return &commanddata.CreateUserCommandData{
+		Name: validDisplayName,
+		Email: validEmail,
+	}
+}
+
+func NewValidUserCreated() *eventdata.UserCreated {
+	return &eventdata.UserCreated{
+		Name: validDisplayName,
+		Email: validEmail,
+	}
+}
+
+func NewValidCreateUserRoleBindingCommandData() *commanddata.CreateUserRoleBindingCommandData {
+	return &commanddata.CreateUserRoleBindingCommandData{
+		UserId: validUUID,
+		Role: validRole,
+		Scope: validScope,
+		Resource: validUUID,
+	}
+}
+
+func NewValidUserRoleAdded() *eventdata.UserRoleAdded {
+	return &eventdata.UserRoleAdded{
+		UserId: validUUID,
+		Role: validRole,
+		Scope: validScope,
+		Resource: validUUID,
 	}
 }
