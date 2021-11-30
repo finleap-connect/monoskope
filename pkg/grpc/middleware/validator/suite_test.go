@@ -18,6 +18,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"strings"
 	"testing"
 
@@ -26,14 +27,34 @@ import (
 )
 
 var (
+	noValidationRules = "No Validation rules on this level"
+
+	validString = "123 Whatever, no re$triction character wise !@#$%^&*()"
+	validRestrictedString = "ValidRestricted-String_V1"
+	validAddress = "https://k8s-api.lab.example.com:6443"
+
 	validUUID = uuid.New().String()
-	validAggregateType = "ValidAggregate-Type_V1"
+	validAggregateType = validRestrictedString
 	validCSR = []byte("-----BEGIN CERTIFICATE REQUEST-----valid CSR-----END CERTIFICATE REQUEST-----")
 
+	validName = validRestrictedString
+	validDisplayName = validString
+	validApiServerAddress = validAddress
+
+
+	invalidStringLength = strings.Repeat("x", 151)
+	invalidRestrictedString = "0Start_withNumber-V1"
+	invalidRestrictedStringLength = strings.Repeat("x", 61)
+	invalidAddress = "not an address"
+
 	invalidUUID = "invalid uuid"
-	invalidAggregateTypeStartWithNumber = "0inValidAggregateType"
-	invalidAggregateTypeTooLong = strings.Repeat("x", 61)
+	invalidAggregateTypeStartWithNumber = invalidRestrictedString
+	invalidAggregateTypeTooLong = invalidRestrictedStringLength
 	invalidCSR = []byte("invalid CSR")
+
+	invalidName = invalidRestrictedString
+	invalidDisplayNameTooLong = invalidStringLength
+	invalidApiServerAddress = invalidAddress
 )
 
 func TestUtil(t *testing.T) {
@@ -54,5 +75,48 @@ func NewValidRequestedCertificate() *eventdata.CertificateRequested {
 		ReferencedAggregateId:   validUUID,
 		ReferencedAggregateType: validAggregateType,
 		SigningRequest:          validCSR,
+	}
+}
+
+func NewValidCreateCluster() *commanddata.CreateCluster {
+	return &commanddata.CreateCluster{
+		Name: validName,
+		DisplayName: validDisplayName,
+		ApiServerAddress: validApiServerAddress,
+		CaCertBundle: []byte(noValidationRules),
+	}
+}
+
+func NewValidClusterCreated() *eventdata.ClusterCreated {
+	return &eventdata.ClusterCreated{
+		Name: validDisplayName,
+		Label: validName,
+		ApiServerAddress: validApiServerAddress,
+		CaCertificateBundle: []byte(noValidationRules),
+	}
+}
+
+func NewValidClusterCreatedV2() *eventdata.ClusterCreatedV2 {
+	return &eventdata.ClusterCreatedV2{
+		Name: validName,
+		DisplayName: validDisplayName,
+		ApiServerAddress: validApiServerAddress,
+		CaCertificateBundle: []byte(noValidationRules),
+	}
+}
+
+func NewValidUpdateCluster() *commanddata.UpdateCluster {
+	return &commanddata.UpdateCluster{
+		DisplayName: &wrapperspb.StringValue{Value: validDisplayName},
+		ApiServerAddress: &wrapperspb.StringValue{Value: validApiServerAddress},
+		CaCertBundle: []byte(noValidationRules),
+	}
+}
+
+func NewValidClusterUpdated() *eventdata.ClusterUpdated {
+	return &eventdata.ClusterUpdated{
+		DisplayName: validDisplayName,
+		ApiServerAddress: validApiServerAddress,
+		CaCertificateBundle: []byte(noValidationRules),
 	}
 }

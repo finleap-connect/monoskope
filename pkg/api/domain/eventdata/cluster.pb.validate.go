@@ -90,17 +90,15 @@ func (m *ClusterCreated) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
-			err := ClusterCreatedValidationError{
-				field:  "ApiServerAddress",
-				reason: "value must be a valid hostname, or ip address",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
+	if !_ClusterCreated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
+		err := ClusterCreatedValidationError{
+			field:  "ApiServerAddress",
+			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle
@@ -108,36 +106,6 @@ func (m *ClusterCreated) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterCreatedMultiError(errors)
 	}
-	return nil
-}
-
-func (m *ClusterCreated) _validateHostname(host string) error {
-	s := strings.ToLower(strings.TrimSuffix(host, "."))
-
-	if len(host) > 253 {
-		return errors.New("hostname cannot exceed 253 characters")
-	}
-
-	for _, part := range strings.Split(s, ".") {
-		if l := len(part); l == 0 || l > 63 {
-			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
-		}
-
-		if part[0] == '-' {
-			return errors.New("hostname parts cannot begin with hyphens")
-		}
-
-		if part[len(part)-1] == '-' {
-			return errors.New("hostname parts cannot end with hyphens")
-		}
-
-		for _, r := range part {
-			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
-				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -214,6 +182,8 @@ var _ interface {
 
 var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
+var _ClusterCreated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+
 // Validate checks the field values on ClusterCreatedV2 with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -269,17 +239,15 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
-			err := ClusterCreatedV2ValidationError{
-				field:  "ApiServerAddress",
-				reason: "value must be a valid hostname, or ip address",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
+	if !_ClusterCreatedV2_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
+		err := ClusterCreatedV2ValidationError{
+			field:  "ApiServerAddress",
+			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle
@@ -287,36 +255,6 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterCreatedV2MultiError(errors)
 	}
-	return nil
-}
-
-func (m *ClusterCreatedV2) _validateHostname(host string) error {
-	s := strings.ToLower(strings.TrimSuffix(host, "."))
-
-	if len(host) > 253 {
-		return errors.New("hostname cannot exceed 253 characters")
-	}
-
-	for _, part := range strings.Split(s, ".") {
-		if l := len(part); l == 0 || l > 63 {
-			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
-		}
-
-		if part[0] == '-' {
-			return errors.New("hostname parts cannot begin with hyphens")
-		}
-
-		if part[len(part)-1] == '-' {
-			return errors.New("hostname parts cannot end with hyphens")
-		}
-
-		for _, r := range part {
-			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
-				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -393,6 +331,8 @@ var _ interface {
 
 var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
+var _ClusterCreatedV2_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -426,17 +366,15 @@ func (m *ClusterUpdated) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateHostname(m.GetApiServerAddress()); err != nil {
-		if ip := net.ParseIP(m.GetApiServerAddress()); ip == nil {
-			err := ClusterUpdatedValidationError{
-				field:  "ApiServerAddress",
-				reason: "value must be a valid hostname, or ip address",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
+	if !_ClusterUpdated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
+		err := ClusterUpdatedValidationError{
+			field:  "ApiServerAddress",
+			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	// no validation rules for CaCertificateBundle
@@ -444,36 +382,6 @@ func (m *ClusterUpdated) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterUpdatedMultiError(errors)
 	}
-	return nil
-}
-
-func (m *ClusterUpdated) _validateHostname(host string) error {
-	s := strings.ToLower(strings.TrimSuffix(host, "."))
-
-	if len(host) > 253 {
-		return errors.New("hostname cannot exceed 253 characters")
-	}
-
-	for _, part := range strings.Split(s, ".") {
-		if l := len(part); l == 0 || l > 63 {
-			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
-		}
-
-		if part[0] == '-' {
-			return errors.New("hostname parts cannot begin with hyphens")
-		}
-
-		if part[len(part)-1] == '-' {
-			return errors.New("hostname parts cannot end with hyphens")
-		}
-
-		for _, r := range part {
-			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
-				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -547,6 +455,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterUpdatedValidationError{}
+
+var _ClusterUpdated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
 
 // Validate checks the field values on ClusterBootstrapTokenCreated with the
 // rules defined in the proto definition for this message. If any rules are

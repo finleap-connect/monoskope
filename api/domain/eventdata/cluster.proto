@@ -30,7 +30,7 @@ message ClusterCreated {
   // and symbols, e.g. with metrics.
   string label = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Address of the KubeApiServer
-  string api_server_address = 3 [(validate.rules).string.address = true];
+  string api_server_address = 3 [(validate.rules).string.pattern = "^(https?)://[^\\s/$.?#].[^\\s]*$"];
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
@@ -42,7 +42,7 @@ message ClusterCreatedV2 {
   // Display name of the cluster
   string display_name = 2 [(validate.rules).string.max_bytes = 150];
   // Address of the KubeApiServer
-  string api_server_address = 3 [(validate.rules).string.address = true];
+    string api_server_address = 3 [(validate.rules).string.pattern = "^(https?)://[^\\s/$.?#].[^\\s]*$"];
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
@@ -51,7 +51,7 @@ message ClusterUpdated {
   // Display name of the cluster
   string display_name = 1 [(validate.rules).string.max_bytes = 150];
   // Address of the KubeApiServer
-  string api_server_address = 2 [(validate.rules).string.address = true];
+  string api_server_address = 2 [(validate.rules).string.pattern = "^(https?)://[^\\s/$.?#].[^\\s]*$"];
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 3;
 }
