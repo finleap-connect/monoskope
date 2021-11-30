@@ -19,7 +19,6 @@ syntax = "proto3";
 
 import "api/domain/projections/metadata.proto";
 
-
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
 package projections;
