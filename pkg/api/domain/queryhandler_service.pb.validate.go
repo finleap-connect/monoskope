@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _queryhandler_service_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on GetAllRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -161,51 +158,13 @@ func (m *GetCertificateRequest) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetAggregateId()); err != nil {
-		err = GetCertificateRequestValidationError{
-			field:  "AggregateId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for AggregateId
 
-	if len(m.GetAggregateType()) > 60 {
-		err := GetCertificateRequestValidationError{
-			field:  "AggregateType",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_GetCertificateRequest_AggregateType_Pattern.MatchString(m.GetAggregateType()) {
-		err := GetCertificateRequestValidationError{
-			field:  "AggregateType",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for AggregateType
 
 	if len(errors) > 0 {
 		return GetCertificateRequestMultiError(errors)
 	}
-	return nil
-}
-
-func (m *GetCertificateRequest) _validateUuid(uuid string) error {
-	if matched := _queryhandler_service_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 
@@ -282,8 +241,6 @@ var _ interface {
 	ErrorName() string
 } = GetCertificateRequestValidationError{}
 
-var _GetCertificateRequest_AggregateType_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
-
 // Validate checks the field values on GetClusterMappingRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -306,41 +263,13 @@ func (m *GetClusterMappingRequest) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetTenantId()); err != nil {
-		err = GetClusterMappingRequestValidationError{
-			field:  "TenantId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for TenantId
 
-	if err := m._validateUuid(m.GetClusterId()); err != nil {
-		err = GetClusterMappingRequestValidationError{
-			field:  "ClusterId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ClusterId
 
 	if len(errors) > 0 {
 		return GetClusterMappingRequestMultiError(errors)
 	}
-	return nil
-}
-
-func (m *GetClusterMappingRequest) _validateUuid(uuid string) error {
-	if matched := _queryhandler_service_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 
