@@ -15,6 +15,7 @@
 package validator
 
 import (
+	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/google/uuid"
@@ -47,6 +48,8 @@ var (
 	validRole = validLowercaseString
 	validScope = validLowercaseString
 
+	validCommand = validRestrictedString
+
 
 	invalidStringLength = strings.Repeat("x", 151)
 	invalidRestrictedString = "0Start_withNumber-V1"
@@ -69,6 +72,7 @@ var (
 	invalidRole = invalidLowercaseString
 	invalidScope = invalidLowercaseString
 
+	invalidCommand = invalidRestrictedString
 )
 
 func TestUtil(t *testing.T) {
@@ -204,5 +208,20 @@ func NewValidUserRoleAdded() *eventdata.UserRoleAdded {
 		Role: validRole,
 		Scope: validScope,
 		Resource: validUUID,
+	}
+}
+
+func NewValidPermissionModel() *domain.PermissionModel {
+	return &domain.PermissionModel{
+		Roles: []string{validRole, validRole, validRole},
+		Scopes: []string{validScope, validScope, validScope},
+	}
+}
+
+func NewValidPolicy() *domain.Policy {
+	return &domain.Policy{
+		Command: validCommand,
+		Role: validRole,
+		Scope: validScope,
 	}
 }
