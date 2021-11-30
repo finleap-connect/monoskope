@@ -93,7 +93,7 @@ func (m *ClusterCreated) validate(all bool) error {
 	if !_ClusterCreated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := ClusterCreatedValidationError{
 			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
+			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
 		}
 		if !all {
 			return err
@@ -182,7 +182,7 @@ var _ interface {
 
 var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _ClusterCreated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+var _ClusterCreated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on ClusterCreatedV2 with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -242,7 +242,7 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 	if !_ClusterCreatedV2_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := ClusterCreatedV2ValidationError{
 			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
+			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
 		}
 		if !all {
 			return err
@@ -331,7 +331,7 @@ var _ interface {
 
 var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _ClusterCreatedV2_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+var _ClusterCreatedV2_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -369,7 +369,7 @@ func (m *ClusterUpdated) validate(all bool) error {
 	if !_ClusterUpdated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := ClusterUpdatedValidationError{
 			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
+			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
 		}
 		if !all {
 			return err
@@ -456,7 +456,7 @@ var _ interface {
 	ErrorName() string
 } = ClusterUpdatedValidationError{}
 
-var _ClusterUpdated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+var _ClusterUpdated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on ClusterBootstrapTokenCreated with the
 // rules defined in the proto definition for this message. If any rules are

@@ -93,7 +93,7 @@ func (m *CreateCluster) validate(all bool) error {
 	if !_CreateCluster_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := CreateClusterValidationError{
 			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
+			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
 		}
 		if !all {
 			return err
@@ -182,7 +182,7 @@ var _ interface {
 
 var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _CreateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+var _CreateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on UpdateCluster with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -226,7 +226,7 @@ func (m *UpdateCluster) validate(all bool) error {
 		if !_UpdateCluster_ApiServerAddress_Pattern.MatchString(wrapper.GetValue()) {
 			err := UpdateClusterValidationError{
 				field:  "ApiServerAddress",
-				reason: "value does not match regex pattern \"^(https?)://[^\\\\s/$.?#].[^\\\\s]*$\"",
+				reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
 			}
 			if !all {
 				return err
@@ -315,4 +315,4 @@ var _ interface {
 	ErrorName() string
 } = UpdateClusterValidationError{}
 
-var _UpdateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?)://[^\\s/$.?#].[^\\s]*$")
+var _UpdateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")

@@ -70,7 +70,7 @@ var (
 
 	invalidName = invalidRestrictedString
 	invalidDisplayNameTooLong = invalidStringLength
-	invalidApiServerAddress = "k8s-api.lab.example.com:6443"
+	invalidApiServerAddress = "k8s-api.lab. example.com:6443"
 
 	invalidTenantPrefixTooLong = validRestrictedString
 	invalidTenantPrefixStartWithNumber = invalidRestrictedString[0:12]

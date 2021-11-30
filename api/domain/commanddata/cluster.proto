@@ -32,7 +32,7 @@ message CreateCluster {
   // Display name of the cluster
   string display_name = 2 [(validate.rules).string.max_bytes = 150];
   // DNS name or IP address of the clusters KubeAPIServer
-  string api_server_address = 3 [(validate.rules).string.pattern = "^(https?)://[^\\s/$.?#].[^\\s]*$"];
+  string api_server_address = 3 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded
   bytes ca_cert_bundle = 4;
   // not supported yet
@@ -53,7 +53,7 @@ message UpdateCluster {
   // Display name of the cluster
   google.protobuf.StringValue display_name = 1 [(validate.rules).string.max_bytes = 150];
   // DNS name or IP address of the clusters KubeAPIServer
-  google.protobuf.StringValue api_server_address = 2 [(validate.rules).string.pattern = "^(https?)://[^\\s/$.?#].[^\\s]*$"];
+  google.protobuf.StringValue api_server_address = 2 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded
   bytes ca_cert_bundle = 3;
   // not supported yet
