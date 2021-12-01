@@ -16,9 +16,11 @@ package scimserver
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/elimity-com/scim"
+	scim_errors "github.com/elimity-com/scim/errors"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	mockdomain "github.com/finleap-connect/monoskope/test/api/domain"
 	"github.com/finleap-connect/monoskope/test/api/eventsourcing"
@@ -40,8 +42,8 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 			mockCtrl.Finish()
 		})
 
-		When("call GetAll() with Count set to zero in params", func() {
-			It("returns the total user count", func() {
+		When("call GetAll()", func() {
+			It("returns the total user count with count set to zero in params", func() {
 				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
 				userClient := mockdomain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
@@ -55,6 +57,25 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(page.TotalResults).To(Equal(1337))
+			})
+			It("returns an error if there is a problem upstream", func() {
+				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				request, err := http.NewRequestWithContext(ctx, http.MethodPost, "getall", nil)
+				Expect(err).ToNot(HaveOccurred())
+
+				someError := errors.New("some error")
+				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(nil, someError)
+
+				_, err = userHandler.GetAll(request, scim.ListRequestParams{Count: 0})
+				Expect(err).To(HaveOccurred())
+
+				scimErr, ok := err.(scim_errors.ScimError)
+				Expect(ok).To(BeTrue())
+
+				Expect(scimErr.Detail).To(Equal(someError.Error()))
 			})
 		})
 	})
