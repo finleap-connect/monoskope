@@ -69,7 +69,7 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
 	// Get total user count intially
-	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: false})
+	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: true})
 	if err != nil {
 		return scim.Page{}, scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
@@ -85,7 +85,7 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 	}
 
 	// Get stream of users
-	userStream, err := h.userClient.GetAll(r.Context(), &domain.GetAllRequest{IncludeDeleted: false})
+	userStream, err := h.userClient.GetAll(r.Context(), &domain.GetAllRequest{IncludeDeleted: true})
 	if err != nil {
 		err = errors.TranslateFromGrpcError(err)
 		return scim.Page{}, scim_errors.ScimError{

@@ -42,14 +42,14 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 			mockCtrl.Finish()
 		})
 
-		When("call GetAll()", func() {
+		When("calling GetAll()", func() {
+			request, err := http.NewRequestWithContext(ctx, http.MethodPost, "getall", nil)
+			Expect(err).ToNot(HaveOccurred())
+
 			It("returns the total user count with count set to zero in params", func() {
 				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
 				userClient := mockdomain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
-
-				request, err := http.NewRequestWithContext(ctx, http.MethodPost, "getall", nil)
-				Expect(err).ToNot(HaveOccurred())
 
 				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(&domain.GetCountResult{Count: 1337}, nil)
 
@@ -62,9 +62,6 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
 				userClient := mockdomain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
-
-				request, err := http.NewRequestWithContext(ctx, http.MethodPost, "getall", nil)
-				Expect(err).ToNot(HaveOccurred())
 
 				someError := errors.New("some error")
 				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(nil, someError)
