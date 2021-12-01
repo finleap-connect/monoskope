@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
@@ -25,12 +26,12 @@ package eventdata;
 
 message TenantCreated {
   // Name of the tenant
-  string name = 1;
+  string name = 1 [(validate.rules).string.max_bytes = 150];
   // Prefix of the tenant
-  string prefix = 2;
+  string prefix = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 12}];
 }
 
 message TenantUpdated {
   // New name for the tenant
-  google.protobuf.StringValue name = 1;
+  google.protobuf.StringValue name = 1 [(validate.rules).string.max_bytes = 150];
 }
