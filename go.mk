@@ -189,4 +189,4 @@ go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
-	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient
+	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient

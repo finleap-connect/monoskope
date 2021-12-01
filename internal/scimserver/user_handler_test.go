@@ -17,6 +17,7 @@ package scimserver
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -119,6 +120,42 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				Expect(ok).To(BeTrue())
 
 				Expect(scimErr.Detail).To(Equal(someError.Error()))
+			})
+			It("returns all users", func() {
+				expectedUserA := &projections.User{
+					Id:    uuid.New().String(),
+					Name:  "test.user.a",
+					Email: "test.user.a@monoskope.io",
+					Metadata: &projections.LifecycleMetadata{
+						Created:      timestamppb.Now(),
+						LastModified: timestamppb.Now(),
+					},
+				}
+				expectedUserB := &projections.User{
+					Id:    uuid.New().String(),
+					Name:  "test.user.b",
+					Email: "test.user.b@monoskope.io",
+					Metadata: &projections.LifecycleMetadata{
+						Created:      timestamppb.Now(),
+						LastModified: timestamppb.Now(),
+					},
+				}
+				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				getAllCient := mockdomain.NewMockUser_GetAllClient(mockCtrl)
+
+				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(&domain.GetCountResult{Count: 2}, nil)
+				userClient.EXPECT().GetAll(ctx, gomock.Any()).Return(getAllCient, nil)
+				getAllCient.EXPECT().Recv().Return(expectedUserA, nil)
+				getAllCient.EXPECT().Recv().Return(expectedUserB, nil)
+				getAllCient.EXPECT().Recv().Return(nil, io.EOF)
+
+				page, err := userHandler.GetAll(request, scim.ListRequestParams{Count: 100})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(page.Resources)).To(Equal(2))
+				Expect(page.TotalResults).To(Equal(2))
 			})
 		})
 	})
