@@ -22,11 +22,15 @@ import (
 	"github.com/elimity-com/scim"
 	scim_errors "github.com/elimity-com/scim/errors"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
+	domain_errors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	mockdomain "github.com/finleap-connect/monoskope/test/api/domain"
 	"github.com/finleap-connect/monoskope/test/api/eventsourcing"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var _ = Describe("internal/scimserver/UserHandler", func() {
@@ -40,6 +44,48 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 
 		AfterEach(func() {
 			mockCtrl.Finish()
+		})
+
+		When("calling Get()", func() {
+			request, err := http.NewRequestWithContext(ctx, http.MethodPost, "get", nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			It("returns the user referenced by id", func() {
+				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+				expectedUser := &projections.User{
+					Id:    uuid.New().String(),
+					Name:  "test.user",
+					Email: "test.user@monoskope.io",
+					Metadata: &projections.LifecycleMetadata{
+						Created:      timestamppb.Now(),
+						LastModified: timestamppb.Now(),
+					},
+				}
+
+				userClient.EXPECT().GetById(ctx, gomock.Any()).Return(expectedUser, nil)
+
+				userResource, err := userHandler.Get(request, expectedUser.Id)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(userResource.ID).To(Equal(expectedUser.Id))
+				Expect(userResource.Attributes["userName"]).To(Equal(expectedUser.Email))
+			})
+			It("returns an error if there is a problem upstream", func() {
+				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				userClient.EXPECT().GetById(ctx, gomock.Any()).Return(nil, domain_errors.ErrUserNotFound)
+
+				_, err = userHandler.Get(request, "somefakeid")
+				Expect(err).To(HaveOccurred())
+
+				scimErr, ok := err.(scim_errors.ScimError)
+				Expect(ok).To(BeTrue())
+
+				Expect(scimErr.Status).To(Equal(http.StatusNotFound))
+			})
 		})
 
 		When("calling GetAll()", func() {
