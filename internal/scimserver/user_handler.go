@@ -15,15 +15,20 @@
 package scimserver
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/elimity-com/scim"
 	scim_errors "github.com/elimity-com/scim/errors"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
+	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -41,9 +46,35 @@ func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCli
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	return scim.Resource{}, scim_errors.ScimError{
-		Status: http.StatusNotImplemented,
+	var err error
+	var commandData *cmdData.CreateUserCommandData
+
+	command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser)
+
+	if commandData, err = toCreateUserCommandDataFromAttributes(attributes); err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
 	}
+
+	_, err = cmd.AddCommandData(command, commandData)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	_, err = h.cmdHandlerClient.Execute(r.Context(), command)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	return scim.Resource{}, nil
 }
 
 // Get returns the resource corresponding with the given identifier.
@@ -158,6 +189,10 @@ func (h *userHandler) Patch(r *http.Request, id string, operations []scim.PatchO
 	}
 }
 
+const (
+	SCIM_USER_USERNAME = "userName"
+)
+
 // toScimUser converts a projections.User to it's scim.Resource representation
 func toScimUser(user *projections.User) scim.Resource {
 	created := user.Metadata.Created.AsTime()
@@ -170,11 +205,8 @@ func toScimUser(user *projections.User) scim.Resource {
 			LastModified: &lastModified,
 		},
 		Attributes: scim.ResourceAttributes{
-			"userName": user.Email,
-			"name": map[string]interface{}{
-				"givenName": user.Name,
-			},
-			"active": !deleted,
+			SCIM_USER_USERNAME: user.Name,
+			"active":           !deleted,
 			"emails": []interface{}{
 				map[string]interface{}{
 					"primary": true,
@@ -183,4 +215,50 @@ func toScimUser(user *projections.User) scim.Resource {
 			},
 		},
 	}
+}
+
+type emailsResource struct {
+	Primary bool   `json:"primary"`
+	Value   string `json:"value"`
+}
+
+type userResource struct {
+	UserName string           `json:"userName"`
+	Active   bool             `json:"active"`
+	Emails   []emailsResource `json:"emails"`
+}
+
+// newUserResourceFromAttributes converts the attributes to json and back to an instance of the userResource struct
+func newUserResourceFromAttributes(attributes scim.ResourceAttributes) (*userResource, error) {
+	attributesJson, err := json.Marshal(attributes)
+	if err != nil {
+		return nil, err
+	}
+	userResource := new(userResource)
+	err = json.Unmarshal(attributesJson, userResource)
+	if err != nil {
+		return nil, err
+	}
+	return userResource, nil
+}
+
+// toScimUser converts a projections.User to it's scim.Resource representation
+func toCreateUserCommandDataFromAttributes(attributes scim.ResourceAttributes) (*cmdData.CreateUserCommandData, error) {
+	userResource, err := newUserResourceFromAttributes(attributes)
+	if err != nil {
+		return nil, err
+	}
+
+	emailAddress := ""
+	for _, email := range userResource.Emails {
+		emailAddress = email.Value
+		if email.Primary {
+			break
+		}
+	}
+
+	return &cmdData.CreateUserCommandData{
+		Name:  userResource.UserName,
+		Email: emailAddress,
+	}, err
 }
