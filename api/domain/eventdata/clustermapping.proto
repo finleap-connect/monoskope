@@ -17,13 +17,15 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "validate/validate.proto";
+
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
 package eventdata;
 
 message TenantClusterBindingCreated {
     // Unique identifier of the tenant (UUID 128-bit number)
-    string tenant_id = 1;
+    string tenant_id = 1 [(validate.rules).string.uuid = true];
     // Unique identifier of the cluster (UUID 128-bit number)
-    string cluster_id = 2;
+    string cluster_id = 2 [(validate.rules).string.uuid = true];
 }

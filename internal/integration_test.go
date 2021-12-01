@@ -135,7 +135,7 @@ var _ = Describe("integration", func() {
 			userRoleBindingId := uuid.New()
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
-				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
+				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: uuid.New().String()},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -388,7 +388,7 @@ var _ = Describe("integration", func() {
 				&cmdData.RequestCertificate{
 					ReferencedAggregateId:   clusterInfo.Id,
 					ReferencedAggregateType: aggregates.Cluster.String(),
-					SigningRequest:          []byte("this is a CSR"),
+					SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
 				},
 			)
 			Expect(err).ToNot(HaveOccurred())

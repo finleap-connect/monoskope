@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
 
@@ -27,21 +28,43 @@ package commanddata;
 message CreateCluster {
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string name = 1;
+  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
   // Display name of the cluster
-  string display_name = 2;
+  string display_name = 2 [(validate.rules).string.max_bytes = 150];
   // DNS name or IP address of the clusters KubeAPIServer
-  string api_server_address = 3;
+  string api_server_address = 3 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded
   bytes ca_cert_bundle = 4;
+  // not supported yet
+  //  [
+  //    (validate.rules).bytes.prefix = {in: [
+  //      "-----BEGIN CERTIFICATE REQUEST-----",
+  //      "-----BEGIN RSA PRIVATE KEY-----",
+  //      "-----BEGIN CERTIFICATE-----"]},
+  //    (validate.rules).bytes.suffix = {in: [
+  //      "-----END CERTIFICATE REQUEST-----",
+  //      "-----END RSA PRIVATE KEY-----",
+  //      "-----END CERTIFICATE-----"]}
+  //  ];
 }
 
 // Command data to update information about a cluster
 message UpdateCluster {
   // Display name of the cluster
-  google.protobuf.StringValue display_name = 1;
+  google.protobuf.StringValue display_name = 1 [(validate.rules).string.max_bytes = 150];
   // DNS name or IP address of the clusters KubeAPIServer
-  google.protobuf.StringValue api_server_address = 2;
+  google.protobuf.StringValue api_server_address = 2 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded
   bytes ca_cert_bundle = 3;
+  // not supported yet
+  //  [
+  //    (validate.rules).bytes.prefix = {in: [
+  //      "-----BEGIN CERTIFICATE REQUEST-----",
+  //      "-----BEGIN RSA PRIVATE KEY-----",
+  //      "-----BEGIN CERTIFICATE-----"]},
+  //    (validate.rules).bytes.suffix = {in: [
+  //      "-----END CERTIFICATE REQUEST-----",
+  //      "-----END RSA PRIVATE KEY-----",
+  //      "-----END CERTIFICATE-----"]}
+  //  ];
 }
