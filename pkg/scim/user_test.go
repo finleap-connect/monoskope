@@ -21,23 +21,18 @@ import (
 )
 
 var _ = Describe("pkg/scim/User", func() {
-	expectedUserName := "test.user"
 	expectedUserEmail := "test.user@monoskope.io"
+	expectedDisplayName := "test.user"
 
 	When("calling NewUserAttribute()", func() {
 		userAttribute, err := NewUserAttribute(scim.ResourceAttributes{
-			"userName": expectedUserName,
-			"active":   true,
-			"emails": []interface{}{
-				map[string]interface{}{
-					"primary": true,
-					"value":   expectedUserEmail,
-				},
-			},
+			"userName":    expectedUserEmail,
+			"displayName": expectedDisplayName,
+			"active":      true,
 		})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(userAttribute.UserName).To(Equal(expectedUserName))
+		Expect(userAttribute.UserName).To(Equal(expectedUserEmail))
+		Expect(userAttribute.DisplayName).To(Equal(expectedDisplayName))
 		Expect(userAttribute.Active).To(BeTrue())
-		Expect(userAttribute.GetPrimaryMail()).To(Equal(expectedUserEmail))
 	})
 })

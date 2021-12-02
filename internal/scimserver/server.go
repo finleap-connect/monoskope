@@ -17,7 +17,7 @@ package scimserver
 import (
 	"github.com/elimity-com/scim"
 	"github.com/elimity-com/scim/optional"
-	"github.com/elimity-com/scim/schema"
+	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
 )
 
 func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandler) scim.Server {
@@ -27,7 +27,7 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 			Name:        "User",
 			Endpoint:    "/Users",
 			Description: optional.NewString("User Account"),
-			Schema:      schema.CoreUserSchema(),
+			Schema:      m8scim.MonoskopeUserSchema(),
 			Handler:     userHandler,
 		},
 	}

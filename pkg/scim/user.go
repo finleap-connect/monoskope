@@ -20,28 +20,10 @@ import (
 	"github.com/elimity-com/scim"
 )
 
-type emailAttribute struct {
-	Primary bool   `json:"primary"`
-	Value   string `json:"value"`
-}
-
 type userAttributes struct {
-	UserName string           `json:"userName"`
-	Active   bool             `json:"active"`
-	Emails   []emailAttribute `json:"emails"`
-}
-
-// GetPrimaryMail returns the primary email address with fallback to the first one found
-func (u *userAttributes) GetPrimaryMail() string {
-	var firstMail string
-	for _, email := range u.Emails {
-		if email.Primary {
-			return email.Value
-		} else if firstMail == "" {
-			firstMail = email.Value
-		}
-	}
-	return firstMail
+	UserName    string `json:"userName"`
+	DisplayName string `json:"displayName"`
+	Active      bool   `json:"active"`
 }
 
 // NewUserAttribute converts the SCIM resource attributes given to an instance of the userResource struct
