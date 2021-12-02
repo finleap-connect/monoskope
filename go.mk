@@ -70,7 +70,7 @@ go-vet: ## go vet
 	$(GO) vet ./...
 
 go-lint: $(LINTER) ## go lint
-	$(LINTER) run -v --no-config --deadline=5m
+	$(LINTER) run -v -E goconst -E misspell
 
 go-report: ## create report of commands and permission
 	@echo
