@@ -82,8 +82,7 @@ var serveCmd = &cobra.Command{
 
 		providerConfig := scimserver.NewProvierConfig()
 		userHandler := scimserver.NewUserHandler(commandHandlerClient, userClient)
-		groupHandler := scimserver.NewGroupHandler(commandHandlerClient, userClient)
-		scimServer := scimserver.NewServer(providerConfig, userHandler, groupHandler)
+		scimServer := scimserver.NewServer(providerConfig, userHandler)
 
 		// Start routine waiting for signals
 		shutdown.RegisterSignalHandler(func() {
