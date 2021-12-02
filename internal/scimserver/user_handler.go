@@ -59,8 +59,8 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 	}
 
 	_, err = cmd.AddCommandData(command, &cmdData.CreateUserCommandData{
-		Email: userAttributes.GetPrimaryMail(),
-		Name:  userAttributes.UserName,
+		Email: userAttributes.UserName,
+		Name:  userAttributes.DisplayName,
 	})
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
@@ -204,14 +204,9 @@ func toScimUser(user *projections.User) scim.Resource {
 			LastModified: &lastModified,
 		},
 		Attributes: scim.ResourceAttributes{
-			"userName": user.Email,
-			"active":   !deleted,
-			"emails": []interface{}{
-				map[string]interface{}{
-					"primary": true,
-					"value":   user.Email,
-				},
-			},
+			"userName":    user.Email,
+			"active":      !deleted,
+			"displayName": user.Name,
 		},
 	}
 }
