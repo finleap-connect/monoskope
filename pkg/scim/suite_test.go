@@ -12,27 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scimserver
+package scim
 
 import (
-	"github.com/elimity-com/scim"
-	"github.com/elimity-com/scim/optional"
-	"github.com/elimity-com/scim/schema"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandler) scim.Server {
-	resourceTypes := []scim.ResourceType{
-		{
-			ID:          optional.NewString("User"),
-			Name:        "User",
-			Endpoint:    "/Users",
-			Description: optional.NewString("User Account"),
-			Schema:      schema.CoreUserSchema(),
-			Handler:     userHandler,
-		},
-	}
-	return scim.Server{
-		Config:        config,
-		ResourceTypes: resourceTypes,
-	}
+func TestRepositories(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "SCIM Test Suite")
 }
+
+var _ = BeforeSuite(func() {
+	done := make(chan interface{})
+
+	go func() {
+		By("bootstrapping test env")
+		close(done)
+	}()
+
+	Eventually(done, 60).Should(BeClosed())
+})
+
+var _ = AfterSuite(func() {
+	By("tearing down the test environment")
+})
