@@ -75,14 +75,11 @@ spec:
             - --health-api-addr=:8081
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - {{ (printf "--command-handler-api-addr=%s-%s:%v" (.Values.commandHandler.prefix | default .Release.Name ) .Values.commandHandler.host .Values.commandHandler.port ) }}
-          livenessProbe:
-            httpGet:
-              path: /
-              port: health
           readinessProbe:
             httpGet:
-              path: /
+              path: /ready
               port: health
+            periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
