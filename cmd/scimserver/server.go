@@ -33,6 +33,8 @@ import (
 )
 
 var (
+	httpApiAddr        string
+	healthApiAddr      string
 	commandHandlerAddr string
 	queryHandlerAddr   string
 )
@@ -66,13 +68,13 @@ var serveCmd = &cobra.Command{
 		health := healthcheck.NewHandler()
 		health.AddReadinessCheck("ready", func() error { return nil })
 
-		healthListener, err := net.Listen("tcp", "0.0.0.0:8086")
+		healthListener, err := net.Listen("tcp", healthApiAddr)
 		if err != nil {
 			return err
 		}
 		defer healthListener.Close()
 
-		scimListener, err := net.Listen("tcp", "0.0.0.0:8080")
+		scimListener, err := net.Listen("tcp", httpApiAddr)
 		if err != nil {
 			return err
 		}
@@ -119,6 +121,8 @@ func init() {
 
 	// Local flags
 	flags := serveCmd.Flags()
+	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
+	flags.StringVar(&healthApiAddr, "health-api-addr", ":8082", "Address the health check HTTP service will listen on")
 	flags.StringVar(&commandHandlerAddr, "command-handler-api-addr", ":8081", "Address the command handler gRPC service is listening on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8082", "Address the query handler gRPC service is listening on")
 }

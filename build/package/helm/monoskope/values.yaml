@@ -221,3 +221,6 @@ cluster-bootstrap-reactor:
   messageBus:
     configSecret: *msgBusClientConfigSecretName
     tlsSecret: *msgBusClientAuthCertSecretName
+
+scimserver:
+  enabled: false
