@@ -43,6 +43,10 @@ dependencies: # A list of the chart requirements
     version: 0.0.1-local
     repository: "file://../cluster-bootstrap-reactor"
     condition: cluster-bootstrap-reactor.enabled,global.cluster-bootstrap-reactor.enabled
+  - name: scimserver
+    version: 0.0.1-local
+    repository: "file://../scimserver"
+    condition: scimserver.enabled,global.scimserver.enabled
   - name: cockroachdb
     version: 6.1.2
     repository: https://charts.cockroachdb.com/
