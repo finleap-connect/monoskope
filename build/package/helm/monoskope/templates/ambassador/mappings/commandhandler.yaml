@@ -1,0 +1,33 @@
+{{- if .Values.ambassador.enabled }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
+{{- if .Values.commandhandler.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /eventsourcing.CommandHandler/
+  rewrite: /eventsourcing.CommandHandler/
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-extensions-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.CommandHandlerExtensions/
+  rewrite: /domain.CommandHandlerExtensions/
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+---
+{{- end }}
+{{- end }}
