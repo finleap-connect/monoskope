@@ -10,7 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+  auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
   path_prefix: /auth
   allowed_authorization_headers:
     - "x-auth-id"
