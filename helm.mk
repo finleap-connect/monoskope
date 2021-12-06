@@ -13,11 +13,11 @@ HELM_RELEASE                ?= m8
 helm-clean: ## clean up templated helm charts
 	@rm -Rf $(HELM_OUTPUT_DIR)
 
-helm-dep-%: ## update helm dependencies
-	@$(HELM) dep update $(HELM_PATH)/$*
+helm-dep: ## update helm dependencies
+	@$(HELM) dep update $(HELM_PATH)/**
 
-helm-lint-%: ## lint helm chart
-	@$(HELM) lint $(HELM_PATH)/$*
+helm-lint: ## lint helm chart
+	@$(HELM) lint $(HELM_PATH)/**
 
 helm-install-from-repo: ## install helm chart from build artifact
 	@$(HELM) repo update

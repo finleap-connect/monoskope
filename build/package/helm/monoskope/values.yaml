@@ -65,6 +65,8 @@ gateway:
 eventstore:
   enabled: true
   replicaCount: 1
+  backup:
+    enabled: false
   messageBus:
     configSecret: *msgBusClientConfigSecretName
     tlsSecret: *msgBusClientAuthCertSecretName
