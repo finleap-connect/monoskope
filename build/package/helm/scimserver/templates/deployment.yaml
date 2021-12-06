@@ -65,20 +65,24 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
           args:
             - /app
             - server
             - --http-api-addr=:8080
+            - --health-api-addr=:8081
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - {{ (printf "--command-handler-api-addr=%s-%s:%v" (.Values.commandHandler.prefix | default .Release.Name ) .Values.commandHandler.host .Values.commandHandler.port ) }}
           livenessProbe:
             httpGet:
               path: /
-              port: http
+              port: health
           readinessProbe:
             httpGet:
               path: /
-              port: http
+              port: health
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
