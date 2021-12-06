@@ -17,7 +17,7 @@ spec:
   bypass_auth: true
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApi}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -34,7 +34,7 @@ spec:
   timeout_ms: 20000
   prefix: /gateway.ClusterAuth/
   rewrite: /gateway.ClusterAuth/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApi}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -48,7 +48,7 @@ spec:
   timeout_ms: 20000
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApi}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -62,7 +62,7 @@ spec:
   method: GET
   prefix: /.well-known/
   rewrite: /.well-known/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApi}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
 apiVersion: getambassador.io/v1
 kind: Mapping
@@ -76,7 +76,7 @@ spec:
   method: GET
   prefix: /keys
   rewrite: /keys
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApi}}
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
 {{- end }}
 {{- if .Values.commandhandler.enabled }}
