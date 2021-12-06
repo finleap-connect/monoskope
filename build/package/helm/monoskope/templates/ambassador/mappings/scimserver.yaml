@@ -10,9 +10,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   bypass_auth: true # JUST FOR DEV PURPOSES, DO NOT USE IN PRODUCTION!
-  method: GET
   prefix: /scim/
-  rewrite: /scim/
   service: {{.Release.Name}}-scimserver:{{.Values.scimserver.service.port}}
 ---
 {{- end }}
