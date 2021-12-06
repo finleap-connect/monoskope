@@ -1,0 +1,74 @@
+{{- if .Values.ambassador.enabled }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
+{{- if .Values.queryhandler.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-usersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.User/
+  rewrite: /domain.User/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-tenantsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Tenant/
+  rewrite: /domain.Tenant/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clustersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Cluster/
+  rewrite: /domain.Cluster/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clusteraccesssvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.ClusterAccess/
+  rewrite: /domain.ClusterAccess/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-certsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Certificate/
+  rewrite: /domain.Certificate/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+{{- end }}
+{{- end }}
