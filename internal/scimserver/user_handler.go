@@ -268,9 +268,9 @@ func toScimUser(user *projections.User) scim.Resource {
 			LastModified: &lastModified,
 		},
 		Attributes: scim.ResourceAttributes{
-			"userName":    user.Email,
-			"active":      !deleted,
-			"displayName": user.Name,
+			m8scim.UserNameAttribute:    user.Email,
+			m8scim.ActiveAttribute:      !deleted,
+			m8scim.DisplayNameAttribute: user.Name,
 		},
 	}
 }

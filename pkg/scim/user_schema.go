@@ -34,17 +34,17 @@ func MonoskopeUserSchema() Schema {
 		Attributes: []CoreAttribute{
 			SimpleCoreAttribute(SimpleStringParams(StringParams{
 				Description: optional.NewString("Unique identifier for the User, used by the user to directly authenticate to the service provider (email address). Each User MUST include a non-empty userName value. This identifier MUST be unique across the service provider's entire set of Users. REQUIRED."),
-				Name:        "userName",
+				Name:        UserNameAttribute,
 				Required:    true,
 				Uniqueness:  AttributeUniquenessServer(),
 			})),
 			SimpleCoreAttribute(SimpleStringParams(StringParams{
 				Description: optional.NewString("The name of the User, suitable for display to end-users. The name SHOULD be the full name of the User being described, if known."),
-				Name:        "displayName",
+				Name:        DisplayNameAttribute,
 			})),
 			SimpleCoreAttribute(SimpleBooleanParams(BooleanParams{
 				Description: optional.NewString("A Boolean value indicating the User's administrative status."),
-				Name:        "active",
+				Name:        ActiveAttribute,
 			})),
 		},
 	}
