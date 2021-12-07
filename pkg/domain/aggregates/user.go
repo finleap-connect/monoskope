@@ -76,6 +76,11 @@ func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comman
 			ed.Name = name.Value
 		}
 		_ = a.AppendEvent(ctx, events.UserUpdated, es.ToEventDataFromProto(ed))
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
 	case *commands.DeleteUserCommand:
 		_ = a.AppendEvent(ctx, events.UserDeleted, nil)
 		reply := &es.CommandReply{
