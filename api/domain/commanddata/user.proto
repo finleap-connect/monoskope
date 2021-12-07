@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "validate/validate.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
 
@@ -42,4 +43,10 @@ message CreateUserRoleBindingCommandData {
   // Unique identifier of the affected resource within scope (UUID 128-bit
   // number)
   string resource = 4 [(validate.rules).string.uuid = true];
+}
+
+// Command data to update a user
+message UpdateUserCommandData {
+  // New name of the user
+  google.protobuf.StringValue name = 1 [(validate.rules).string.max_bytes = 150];
 }

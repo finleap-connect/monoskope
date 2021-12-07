@@ -16,7 +16,6 @@ package validator
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -24,82 +23,64 @@ import (
 var _ = Describe("Test validation rules for user messages", func() {
 	Context("Creating User", func() {
 		var cd *commanddata.CreateUserCommandData
-		var ed *eventdata.UserCreated
 		JustBeforeEach(func() {
 			cd = NewValidCreateUserCommandData()
-			ed = NewValidUserCreated()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid Name", func() {
 			cd.Name = invalidDisplayNameTooLong
-			ed.Name = invalidDisplayNameTooLong
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid Email", func() {
 			cd.Email = invalidEmail
-			ed.Email = invalidEmail
 			ValidateErrorExpected()
 		})
 	})
 
 	Context("Creating User Role Binding", func() {
 		var cd *commanddata.CreateUserRoleBindingCommandData
-		var ed *eventdata.UserRoleAdded
 		JustBeforeEach(func() {
 			cd = NewValidCreateUserRoleBindingCommandData()
-			ed = NewValidUserRoleAdded()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid UserId", func() {
 			cd.UserId = invalidUUID
-			ed.UserId = invalidUUID
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid Role", func() {
 			cd.Role = invalidRole
-			ed.Role = invalidRole
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid Scope", func() {
 			cd.Scope = invalidScope
-			ed.Scope = invalidScope
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid Resource", func() {
 			cd.Resource = invalidUUID
-			ed.Resource = invalidUUID
 			ValidateErrorExpected()
 		})
 	})

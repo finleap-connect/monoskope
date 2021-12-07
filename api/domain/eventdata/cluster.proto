@@ -42,7 +42,7 @@ message ClusterCreatedV2 {
   // Display name of the cluster
   string display_name = 2 [(validate.rules).string.max_bytes = 150];
   // Address of the KubeApiServer
-    string api_server_address = 3 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
+   string api_server_address = 3 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
