@@ -17,8 +17,14 @@ package scimserver
 import (
 	"testing"
 
+	"github.com/finleap-connect/monoskope/internal/test"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+)
+
+var (
+	baseTestEnv *test.TestEnv
+	testEnv     *TestEnv
 )
 
 func TestRepositories(t *testing.T) {
@@ -30,7 +36,11 @@ var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
+		var err error
 		By("bootstrapping test env")
+		baseTestEnv = test.NewTestEnv("scimserver-testenv")
+		testEnv, err = NewTestEnv(baseTestEnv)
+		Expect(err).To(Not(HaveOccurred()))
 		close(done)
 	}()
 
@@ -39,4 +49,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+
+	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
+	Expect(baseTestEnv.Shutdown()).To(Not(HaveOccurred()))
 })
