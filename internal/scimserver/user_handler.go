@@ -125,22 +125,6 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
 	h.logRequest(r)
 
-	if params.Filter != nil {
-		switch e := params.Filter.(type) {
-		case *filter.ValuePath:
-		case *filter.AttributeExpression:
-		case *filter.LogicalExpression:
-		case *filter.NotExpression:
-		default:
-			err := fmt.Errorf("unknown expression type: %s", e)
-			h.log.Error(err, "unknown expression type", "type", e)
-			return scim.Page{}, scim_errors.ScimError{
-				Status: http.StatusInternalServerError,
-				Detail: err.Error(),
-			}
-		}
-	}
-
 	// Get total user count initially
 	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: true})
 	if err != nil {
@@ -157,44 +141,79 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 		}, nil
 	}
 
-	// Get stream of users
-	userStream, err := h.userClient.GetAll(r.Context(), &domain.GetAllRequest{IncludeDeleted: true})
-	if err != nil {
-		err = errors.TranslateFromGrpcError(err)
-		return scim.Page{}, scim_errors.ScimError{
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-		}
-	}
-
-	// Seek through the stream
-	resources := make([]scim.Resource, 0)
-	i := 1
-	for {
-		if i > (params.StartIndex + params.Count - 1) {
-			break // We're done
-		}
-
-		// Read next
-		user, err := userStream.Recv()
-
-		// End of stream
-		if err == io.EOF {
-			break // No further users to query
-		}
-
-		if err != nil { // Some other error
+	var filterByName string
+	if params.Filter != nil {
+		switch e := params.Filter.(type) {
+		case *filter.AttributeExpression:
+			h.log.Info("Filter", "AttributePath", e.AttributePath, "Operator", e.Operator, "CompareValue", e.CompareValue)
+			if e.AttributePath.AttributeName == m8scim.UserNameAttribute && e.Operator == filter.EQ {
+				filterByName = e.CompareValue.(string)
+			}
+		default:
+			err := fmt.Errorf("unknown expression type: %s", e)
+			h.log.Error(err, "unknown expression type", "type", e)
 			return scim.Page{}, scim_errors.ScimError{
 				Status: http.StatusInternalServerError,
 				Detail: err.Error(),
 			}
 		}
+	}
 
-		// Skip users which are not in the current page
-		if i >= params.StartIndex {
-			resources = append(resources, toScimUser(user))
+	resources := make([]scim.Resource, 0)
+	if len(filterByName) > 0 {
+		user, err := h.userClient.GetByEmail(r.Context(), wrapperspb.String(filterByName))
+		if err != nil {
+			err = errors.TranslateFromGrpcError(err)
+			if err == errors.ErrUserNotFound {
+				return scim.Page{}, scim_errors.ScimError{
+					Detail: err.Error(),
+					Status: http.StatusNotFound,
+				}
+			}
+			return scim.Page{}, scim_errors.ScimError{
+				Status: http.StatusInternalServerError,
+				Detail: err.Error(),
+			}
 		}
-		i++
+		resources = append(resources, toScimUser(user))
+	} else {
+		// Get stream of users
+		userStream, err := h.userClient.GetAll(r.Context(), &domain.GetAllRequest{IncludeDeleted: true})
+		if err != nil {
+			err = errors.TranslateFromGrpcError(err)
+			return scim.Page{}, scim_errors.ScimError{
+				Status: http.StatusInternalServerError,
+				Detail: err.Error(),
+			}
+		}
+		// Seek through the stream
+		i := 1
+		for {
+			if i > (params.StartIndex + params.Count - 1) {
+				break // We're done
+			}
+
+			// Read next
+			user, err := userStream.Recv()
+
+			// End of stream
+			if err == io.EOF {
+				break // No further users to query
+			}
+
+			if err != nil { // Some other error
+				return scim.Page{}, scim_errors.ScimError{
+					Status: http.StatusInternalServerError,
+					Detail: err.Error(),
+				}
+			}
+
+			// Skip users which are not in the current page
+			if i >= params.StartIndex {
+				resources = append(resources, toScimUser(user))
+			}
+			i++
+		}
 	}
 
 	return scim.Page{

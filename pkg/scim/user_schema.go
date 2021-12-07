@@ -19,6 +19,12 @@ import (
 	. "github.com/elimity-com/scim/schema"
 )
 
+const (
+	UserNameAttribute    = "userName"
+	DisplayNameAttribute = "displayName"
+	ActiveAttribute      = "active"
+)
+
 // MonoskopeUserSchema returns the default "User" Resource Schema.
 func MonoskopeUserSchema() Schema {
 	return Schema{
