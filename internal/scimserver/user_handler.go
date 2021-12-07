@@ -55,11 +55,11 @@ func (h *userHandler) logRequest(r *http.Request) {
 	if r.Body != nil {
 		body, err = ioutil.ReadAll(r.Body)
 		if err != nil {
-			h.log.Error(err, "Error reading body", "RequestURI", r.RequestURI)
+			h.log.V(logger.DebugLevel).Error(err, "Error reading body", "RequestURI", r.RequestURI)
 			return
 		}
 	}
-	h.log.Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body)
+	h.log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body)
 }
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
