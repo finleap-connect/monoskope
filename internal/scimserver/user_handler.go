@@ -28,6 +28,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es_errors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -228,7 +229,15 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 func (h *userHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	h.logRequest(r)
 
-	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
+	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	user, err := h.userClient.GetById(ctx, wrapperspb.String(id))
 	if err != nil {
 		err = errors.TranslateFromGrpcError(err)
 		if err == errors.ErrUserNotFound || err == es_errors.ErrProjectionNotFound {
@@ -261,7 +270,7 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 		}
 	}
 
-	_, err = h.cmdHandlerClient.Execute(r.Context(), command)
+	_, err = h.cmdHandlerClient.Execute(ctx, command)
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
 			Status: http.StatusInternalServerError,

@@ -15,10 +15,12 @@
 package users
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/google/uuid"
 )
@@ -32,6 +34,8 @@ var (
 	CommandHandlerUser *projections.User
 	// ReactorUser is the system user representing any Reactor
 	ReactorUser *projections.User
+	// SCIMServerUser is the system user representing the SCIM server
+	SCIMServerUser *projections.User
 )
 
 // A maps of all existing system users.
@@ -40,10 +44,12 @@ var AvailableSystemUsers map[uuid.UUID]*projections.User
 func init() {
 	CommandHandlerUser = newSystemUser("commandhandler")
 	ReactorUser = newSystemUser("reactor")
+	SCIMServerUser = newSystemUser("scimserver")
 
 	AvailableSystemUsers = map[uuid.UUID]*projections.User{
 		CommandHandlerUser.ID(): CommandHandlerUser,
 		ReactorUser.ID():        ReactorUser,
+		SCIMServerUser.ID():     SCIMServerUser,
 	}
 }
 
@@ -75,4 +81,33 @@ func generateSystemEmailAddress(name string) string {
 func generateSystemUserUUID(name string) uuid.UUID {
 	userMailAddress := generateSystemEmailAddress(name)
 	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(userMailAddress))
+}
+
+func createUserContext(ctx context.Context, user *projections.User) (*metadata.DomainMetadataManager, error) {
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userInfo := metadataManager.GetUserInformation()
+	userInfo.Id = user.ID()
+	userInfo.Name = user.Name
+	userInfo.Email = user.Email
+	metadataManager.SetUserInformation(userInfo)
+	return metadataManager, nil
+}
+
+func CreateUserContext(ctx context.Context, user *projections.User) (context.Context, error) {
+	mdManager, err := createUserContext(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return mdManager.GetContext(), err
+}
+
+func CreateUserContextGrpc(ctx context.Context, user *projections.User) (context.Context, error) {
+	mdManager, err := createUserContext(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return mdManager.GetOutgoingGrpcContext(), err
 }

@@ -38,7 +38,6 @@ var (
 		componentVersion,
 		auth.HeaderAuthEmail,
 		auth.HeaderAuthId,
-		auth.HeaderAuthIssuer,
 	}
 )
 
@@ -123,7 +122,6 @@ func (m *DomainMetadataManager) GetRoleBindings() []*projections.UserRoleBinding
 func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformation) {
 	m.Set(auth.HeaderAuthName, userInformation.Name)
 	m.Set(auth.HeaderAuthEmail, userInformation.Email)
-	m.Set(auth.HeaderAuthIssuer, userInformation.Issuer)
 	m.Set(auth.HeaderAuthId, userInformation.Id.String())
 }
 
@@ -135,9 +133,6 @@ func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 	}
 	if header, ok := m.Get(auth.HeaderAuthEmail); ok {
 		userInfo.Email = header
-	}
-	if header, ok := m.Get(auth.HeaderAuthIssuer); ok {
-		userInfo.Issuer = header
 	}
 	if header, ok := m.Get(auth.HeaderAuthId); ok {
 		id, err := uuid.Parse(header)
