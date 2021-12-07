@@ -251,9 +251,8 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 	}
 
 	command := cmd.CreateCommand(uuid.MustParse(user.Id), commandTypes.UpdateUser)
-	_, err = cmd.AddCommandData(command, &cmdData.CreateUserCommandData{
-		Email: userAttributes.UserName,
-		Name:  userAttributes.DisplayName,
+	_, err = cmd.AddCommandData(command, &cmdData.UpdateUserCommandData{
+		Name: wrapperspb.String(userAttributes.DisplayName),
 	})
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
@@ -269,6 +268,8 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 			Detail: err.Error(),
 		}
 	}
+
+	user.Name = userAttributes.DisplayName
 	return toScimUser(user), nil
 }
 
@@ -290,24 +291,6 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 // More information in Section 3.5.2 of RFC 7644: https://tools.ietf.org/html/rfc7644#section-3.5.2
 func (h *userHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
 	h.logRequest(r)
-
-	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
-	if err != nil {
-		err = errors.TranslateFromGrpcError(err)
-		if err == errors.ErrUserNotFound {
-			return scim.Resource{}, scim_errors.ScimError{
-				Status: http.StatusNotFound,
-			}
-		}
-		return scim.Resource{}, scim_errors.ScimError{
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-		}
-	}
-
-	for _, operation := range operations {
-		h.log.Info("operation", "value", operation.Value, "user", user.Email)
-	}
 
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
