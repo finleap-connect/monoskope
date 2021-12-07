@@ -242,6 +242,33 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 		}
 	}
 
+	userAttributes, err := m8scim.NewUserAttribute(attributes)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	command := cmd.CreateCommand(uuid.MustParse(user.Id), commandTypes.UpdateUser)
+	_, err = cmd.AddCommandData(command, &cmdData.CreateUserCommandData{
+		Email: userAttributes.UserName,
+		Name:  userAttributes.DisplayName,
+	})
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	_, err = h.cmdHandlerClient.Execute(r.Context(), command)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
 	return toScimUser(user), nil
 }
 

@@ -395,3 +395,119 @@ var _ interface {
 var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z]+$")
 
 var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z]+$")
+
+// Validate checks the field values on UpdateUserCommandData with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpdateUserCommandData) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateUserCommandData with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateUserCommandDataMultiError, or nil if none found.
+func (m *UpdateUserCommandData) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateUserCommandData) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if wrapper := m.GetName(); wrapper != nil {
+
+		if len(wrapper.GetValue()) > 150 {
+			err := UpdateUserCommandDataValidationError{
+				field:  "Name",
+				reason: "value length must be at most 150 bytes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return UpdateUserCommandDataMultiError(errors)
+	}
+	return nil
+}
+
+// UpdateUserCommandDataMultiError is an error wrapping multiple validation
+// errors returned by UpdateUserCommandData.ValidateAll() if the designated
+// constraints aren't met.
+type UpdateUserCommandDataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateUserCommandDataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateUserCommandDataMultiError) AllErrors() []error { return m }
+
+// UpdateUserCommandDataValidationError is the validation error returned by
+// UpdateUserCommandData.Validate if the designated constraints aren't met.
+type UpdateUserCommandDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateUserCommandDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateUserCommandDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateUserCommandDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateUserCommandDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateUserCommandDataValidationError) ErrorName() string {
+	return "UpdateUserCommandDataValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateUserCommandDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateUserCommandData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateUserCommandDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateUserCommandDataValidationError{}

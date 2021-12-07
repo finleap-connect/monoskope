@@ -19,26 +19,29 @@ syntax = "proto3";
 
 // import "google/protobuf/wrappers.proto";
 
-import "validate/validate.proto";
-
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
 package eventdata;
 
 message UserCreated {
   // Email address of the user
-  string email = 1 [(validate.rules).string.email = true];
+  string email = 1;
   // Name of the user
-  string name = 2 [(validate.rules).string.max_bytes = 150];
+  string name = 2;
 }
 
 message UserRoleAdded {
   // Unique identifier of the user (UUID 128-bit number)
-  string user_id = 1 [(validate.rules).string.uuid = true];
+  string user_id = 1;
   // Name of the role added to the user
-  string role = 2 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  string role = 2;
   // Scope of the role
-  string scope = 3 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  string scope = 3;
   // Unique identifier of the affected resource (UUID 128-bit number)
-  string resource = 4 [(validate.rules).string.uuid = true];
+  string resource = 4;
+}
+
+message UserUpdated {
+  // Name of the user
+  string name = 2;
 }

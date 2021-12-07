@@ -21,6 +21,8 @@ const (
 	CreateUser es.CommandType = "CreateUser"
 	// Command to delete a User
 	DeleteUser es.CommandType = "DeleteUser"
+	// Command to update a User
+	UpdateUser es.CommandType = "UpdateUser"
 
 	// Command to create a new UserRoleBinding
 	CreateUserRoleBinding es.CommandType = "CreateUserRoleBinding"
