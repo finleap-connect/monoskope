@@ -165,10 +165,10 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 		if err != nil {
 			err = errors.TranslateFromGrpcError(err)
 			if err == errors.ErrUserNotFound {
-				return scim.Page{}, scim_errors.ScimError{
-					Detail: err.Error(),
-					Status: http.StatusNotFound,
-				}
+				return scim.Page{
+					TotalResults: int(userCount.Count),
+					Resources:    resources,
+				}, nil
 			}
 			return scim.Page{}, scim_errors.ScimError{
 				Status: http.StatusInternalServerError,
