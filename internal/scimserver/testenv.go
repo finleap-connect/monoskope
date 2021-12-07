@@ -51,7 +51,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		TestEnv: testEnv,
 	}
 
-	os.Setenv("SUPER_USERS", "admin@monoskope.io")
+	os.Setenv("SUPER_USERS", "admin@monoskope.io,other-admin@monoskope.io")
 
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
@@ -78,7 +78,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")
+	env.apiListener, err = net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		return nil, err
 	}
