@@ -23,7 +23,7 @@ helm-install-from-repo: ## install helm chart from build artifact
 	@$(HELM) repo update
 	@$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_REGISTRY_ALIAS)/monoskope --namespace $(KUBE_NAMESPACE) --version $(VERSION) --values $(HELM_VALUES_FILE) --skip-crds
 
-helm-uninstall-%: ## uninstall helm chart
+helm-uninstall: ## uninstall helm chart
 	@$(HELM) uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
 
 helm-template-%: helm-clean ## template helm chart

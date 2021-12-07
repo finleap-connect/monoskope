@@ -15,7 +15,9 @@
 package scimserver
 
 import (
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -27,27 +29,44 @@ import (
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/logger"
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
 	"github.com/google/uuid"
+	"github.com/scim2/filter-parser/v2"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type userHandler struct {
 	cmdHandlerClient eventsourcing.CommandHandlerClient
 	userClient       domain.UserClient
+	log              logger.Logger
 }
 
 // NewUserHandler creates a new scim.ResourceHandler for handling User resources
 func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userClient domain.UserClient) scim.ResourceHandler {
 	return &userHandler{
-		cmdHandlerClient, userClient,
+		cmdHandlerClient, userClient, logger.WithName("scim-user-handler"),
 	}
+}
+
+func (h *userHandler) logRequest(r *http.Request) {
+	var err error
+	var body []byte
+	if r.Body != nil {
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			h.log.Error(err, "Error reading body", "RequestURI", r.RequestURI)
+			return
+		}
+	}
+	h.log.Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body)
 }
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	var err error
+	h.logRequest(r)
 
+	var err error
 	command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser)
 
 	userAttributes, err := m8scim.NewUserAttribute(attributes)
@@ -82,6 +101,8 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 
 // Get returns the resource corresponding with the given identifier.
 func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
+	h.logRequest(r)
+
 	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
 	if err != nil {
 		err = errors.TranslateFromGrpcError(err)
@@ -102,6 +123,24 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // An empty list of resources will be represented as `null` in the JSON response if `nil` is assigned to the
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
+	h.logRequest(r)
+
+	if params.Filter != nil {
+		switch e := params.Filter.(type) {
+		case *filter.ValuePath:
+		case *filter.AttributeExpression:
+		case *filter.LogicalExpression:
+		case *filter.NotExpression:
+		default:
+			err := fmt.Errorf("unknown expression type: %s", e)
+			h.log.Error(err, "unknown expression type", "type", e)
+			return scim.Page{}, scim_errors.ScimError{
+				Status: http.StatusInternalServerError,
+				Detail: err.Error(),
+			}
+		}
+	}
+
 	// Get total user count initially
 	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: true})
 	if err != nil {
@@ -167,6 +206,8 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 // Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty
 // are to be deleted. Returns a resource with the attributes that are stored.
 func (h *userHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
+	h.logRequest(r)
+
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
 	}
@@ -174,6 +215,8 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 
 // Delete removes the resource with corresponding ID.
 func (h *userHandler) Delete(r *http.Request, id string) error {
+	h.logRequest(r)
+
 	return scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
 	}
@@ -187,6 +230,8 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 // 2. the Remove operation should return No Content when the value to be remove is already absent.
 // More information in Section 3.5.2 of RFC 7644: https://tools.ietf.org/html/rfc7644#section-3.5.2
 func (h *userHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
+	h.logRequest(r)
+
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
 	}

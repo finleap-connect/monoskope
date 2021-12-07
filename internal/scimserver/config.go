@@ -31,7 +31,7 @@ func NewProvierConfig() scim.ServiceProviderConfig {
 				Primary:     true,
 			},
 		},
-		SupportFiltering: false,
+		SupportFiltering: true,
 		SupportPatch:     true,
 	}
 	return config

@@ -24,9 +24,6 @@ PROTO_FILES                 != find api -name "*.proto"
 
 CURL          ?= curl
 
-LDFLAGS    	   += -X=$(GO_MODULE)/internal/version.Version=$(VERSION) -X=$(GO_MODULE)/internal/version.Commit=$(COMMIT)
-BUILDFLAGS 	   += -installsuffix cgo --tags release
-
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
 ifeq ($(uname_S),Linux)
@@ -35,21 +32,6 @@ endif
 ifeq ($(uname_S),Darwin)
 ARCH = osx-x86_64
 endif
-
-CMD_GATEWAY = $(BUILD_PATH)/gateway
-CMD_GATEWAY_SRC = cmd/gateway/*.go
-
-CMD_EVENTSTORE = $(BUILD_PATH)/eventstore
-CMD_EVENTSTORE_SRC = cmd/eventstore/*.go
-
-CMD_COMMANDHANDLER = $(BUILD_PATH)/commandhandler
-CMD_COMMANDHANDLER_SRC = cmd/commandhandler/*.go
-
-CMD_QUERYHANDLER = $(BUILD_PATH)/queryhandler
-CMD_QUERYHANDLER_SRC = cmd/queryhandler/*.go
-
-CMD_CLBOREACTOR = $(BUILD_PATH)/clboreactor
-CMD_CLBOREACTOR_SRC = cmd/clusterbootstrapreactor/*.go
 
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
@@ -151,37 +133,6 @@ go-protobuf: .protobuf-deps
 	# generates client part
 	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=github.com/finleap-connect/monoskope --go_out=. --validate_out="lang=go,module=github.com/finleap-connect/monoskope:." {} \;
 
-$(CMD_GATEWAY):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_GATEWAY) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_GATEWAY)" $(CMD_GATEWAY_SRC)
-
-$(CMD_EVENTSTORE):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_EVENTSTORE) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_EVENTSTORE)" $(CMD_EVENTSTORE_SRC)
-
-$(CMD_COMMANDHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_COMMANDHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_COMMANDHANDLER)" $(CMD_COMMANDHANDLER_SRC)
-
-$(CMD_QUERYHANDLER):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_QUERYHANDLER) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_QUERYHANDLER)" $(CMD_QUERYHANDLER_SRC)
-
-$(CMD_CLBOREACTOR):
-	CGO_ENABLED=0 GOOS=linux $(GO) build -o $(CMD_CLBOREACTOR) -a $(BUILDFLAGS) -ldflags "$(LDFLAGS) -X=$(GO_MODULE)/internal/version.Name=$(CMD_CLBOREACTOR)" $(CMD_CLBOREACTOR_SRC)
-
-go-build-clean: 
-	rm -Rf $(CMD_GATEWAY)
-	rm -Rf $(CMD_EVENTSTORE)
-	rm -Rf $(CMD_COMMANDHANDLER)
-	rm -Rf $(CMD_CLBOREACTOR)
-
-go-build-gateway: $(CMD_GATEWAY)
-
-go-build-eventstore: $(CMD_EVENTSTORE)
-
-go-build-commandhandler: $(CMD_COMMANDHANDLER)
-
-go-build-queryhandler: $(CMD_QUERYHANDLER)
-
-go-build-clboreactor: $(CMD_CLBOREACTOR)
-
 go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
@@ -190,3 +141,6 @@ go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
 	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
+
+go-run-: ## run cmd, e.g. `make go-run-gateway ARGS="server"` to pass arguments
+	$(GO) run cmd/$*/*.go $(ARGS)
