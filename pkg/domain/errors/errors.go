@@ -17,6 +17,7 @@ package errors
 import (
 	"errors"
 
+	es_errors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -72,6 +73,7 @@ var (
 			ErrTenantNotFound,
 			ErrClusterRegistrationNotFound,
 			ErrClusterNotFound,
+			es_errors.ErrProjectionNotFound,
 		},
 		codes.AlreadyExists: {
 			ErrUserAlreadyExists,

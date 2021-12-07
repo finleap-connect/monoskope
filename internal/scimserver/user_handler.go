@@ -29,6 +29,7 @@ import (
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	es_errors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
 	"github.com/google/uuid"
@@ -227,9 +228,21 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 func (h *userHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	h.logRequest(r)
 
-	return scim.Resource{}, scim_errors.ScimError{
-		Status: http.StatusNotImplemented,
+	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
+	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		if err == errors.ErrUserNotFound || err == es_errors.ErrProjectionNotFound {
+			return scim.Resource{}, scim_errors.ScimError{
+				Status: http.StatusNotFound,
+			}
+		}
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
 	}
+
+	return toScimUser(user), nil
 }
 
 // Delete removes the resource with corresponding ID.
@@ -250,6 +263,24 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 // More information in Section 3.5.2 of RFC 7644: https://tools.ietf.org/html/rfc7644#section-3.5.2
 func (h *userHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
 	h.logRequest(r)
+
+	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
+	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		if err == errors.ErrUserNotFound {
+			return scim.Resource{}, scim_errors.ScimError{
+				Status: http.StatusNotFound,
+			}
+		}
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	for _, operation := range operations {
+		h.log.Info("operation", "value", operation.Value, "user", user.Email)
+	}
 
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
