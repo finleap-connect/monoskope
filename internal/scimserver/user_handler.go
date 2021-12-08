@@ -61,7 +61,7 @@ func (h *userHandler) logRequest(r *http.Request) {
 			return
 		}
 	}
-	h.log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body, "RemoteAddr", r.RemoteAddr)
+	h.log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body, "RemoteAddr", r.RemoteAddr, "Referer", r.Referer())
 }
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
