@@ -46,6 +46,36 @@ func MonoskopeUserSchema() Schema {
 				Description: optional.NewString("A Boolean value indicating the User's administrative status."),
 				Name:        ActiveAttribute,
 			})),
+			ComplexCoreAttribute(ComplexParams{
+				Description: optional.NewString("A list of groups to which the user belongs, either through direct membership, through nested groups, or dynamically calculated."),
+				MultiValued: true,
+				Mutability:  AttributeMutabilityReadOnly(),
+				Name:        "groups",
+				SubAttributes: []SimpleParams{
+					SimpleStringParams(StringParams{
+						Description: optional.NewString("The identifier of the User's group."),
+						Mutability:  AttributeMutabilityReadOnly(),
+						Name:        "value",
+					}),
+					SimpleReferenceParams(ReferenceParams{
+						Description:    optional.NewString("The URI of the corresponding 'Group' resource to which the user belongs."),
+						Mutability:     AttributeMutabilityReadOnly(),
+						Name:           "$ref",
+						ReferenceTypes: []AttributeReferenceType{"User", "Group"},
+					}),
+					SimpleStringParams(StringParams{
+						Description: optional.NewString("A human-readable name, primarily used for display purposes. READ-ONLY."),
+						Mutability:  AttributeMutabilityReadOnly(),
+						Name:        "display",
+					}),
+					SimpleStringParams(StringParams{
+						CanonicalValues: []string{"direct", "indirect"},
+						Description:     optional.NewString("A label indicating the attribute's function, e.g., 'direct' or 'indirect'."),
+						Mutability:      AttributeMutabilityReadOnly(),
+						Name:            "type",
+					}),
+				},
+			}),
 		},
 	}
 }
