@@ -70,7 +70,7 @@ spec:
             containerPort: 9102
           env:
             - name: M8_OPERATION_MODE
-              value: release
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
             - name: GIN_MODE
               value: release
             - name: OIDC_CLIENT_ID

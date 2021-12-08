@@ -76,6 +76,9 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "commandhandler.fullname" . }}-users
+          env:
+            - name: M8_OPERATION_MODE
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

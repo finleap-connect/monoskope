@@ -64,6 +64,9 @@ spec:
             containerPort: {{ .Values.ports.api }}
           - name: http-metrics
             containerPort: {{ .Values.ports.metrics }}
+          env:
+            - name: M8_OPERATION_MODE
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
