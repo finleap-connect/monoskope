@@ -317,6 +317,14 @@ func toScimUser(user *projections.User) scim.Resource {
 	created := user.Metadata.Created.AsTime()
 	lastModified := user.Metadata.LastModified.AsTime()
 	deleted := user.Metadata.Deleted.IsValid()
+
+	groups := make([]interface{}, 0)
+	for _, r := range user.Roles {
+		groups = append(groups, map[string]interface{}{
+			"value":   uuid.NewSHA1(uuid.NameSpaceURL, []byte(r.Role)).String(),
+			"display": r.Role,
+		})
+	}
 	return scim.Resource{
 		ID: user.Id,
 		Meta: scim.Meta{
@@ -327,6 +335,7 @@ func toScimUser(user *projections.User) scim.Resource {
 			m8scim.UserNameAttribute:    user.Email,
 			m8scim.ActiveAttribute:      !deleted,
 			m8scim.DisplayNameAttribute: user.Name,
+			m8scim.GroupAttribute:       groups,
 		},
 	}
 }

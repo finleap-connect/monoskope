@@ -23,6 +23,7 @@ const (
 	UserNameAttribute    = "userName"
 	DisplayNameAttribute = "displayName"
 	ActiveAttribute      = "active"
+	GroupAttribute       = "groups"
 )
 
 // MonoskopeUserSchema returns the default "User" Resource Schema.
