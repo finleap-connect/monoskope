@@ -33,10 +33,9 @@ var _ = Describe("Managing Metadata", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		mdManager.SetUserInformation(&UserInformation{
-			Id:     expectedUserId,
-			Name:   "admin",
-			Email:  "admin@monoskope.io",
-			Issuer: "monoskope",
+			Id:    expectedUserId,
+			Name:  "admin",
+			Email: "admin@monoskope.io",
 		})
 
 		Expect(mdManager.GetMetadata()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))

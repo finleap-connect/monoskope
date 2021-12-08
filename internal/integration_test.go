@@ -57,9 +57,8 @@ var _ = Describe("integration", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {

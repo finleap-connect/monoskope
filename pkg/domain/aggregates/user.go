@@ -22,7 +22,9 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
+	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
@@ -59,9 +61,14 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.
 func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
+		source, err := sourceFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
 		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
-			Email: cmd.GetEmail(),
-			Name:  cmd.GetName(),
+			Email:  cmd.GetEmail(),
+			Name:   cmd.GetName(),
+			Source: source,
 		}))
 		reply := &es.CommandReply{
 			Id:      a.ID(),
@@ -124,7 +131,6 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 	case events.UserUpdated:
-
 		data := new(eventdata.UserUpdated)
 		err := event.Data().ToProto(data)
 		if err != nil {
@@ -166,4 +172,19 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 		}
 	}
 	return false
+}
+
+func sourceFromContext(ctx context.Context) (eventdata.UserSource, error) {
+	// Extract domain context
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return eventdata.UserSource_INTERNAL, err
+	}
+
+	switch metadataManager.GetComponentName() {
+	case users.SCIMServerUser.Name:
+		return eventdata.UserSource_SCIM, nil
+	default:
+		return eventdata.UserSource_INTERNAL, nil
+	}
 }
