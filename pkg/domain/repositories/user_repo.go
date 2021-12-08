@@ -16,6 +16,7 @@ package repositories
 
 import (
 	"context"
+	"sort"
 
 	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
@@ -136,6 +137,11 @@ func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*pr
 			}
 		}
 	}
+
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Name > users[j].Name
+	})
+
 	return users, nil
 }
 
