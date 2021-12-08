@@ -32,7 +32,7 @@ func NewProvierConfig() scim.ServiceProviderConfig {
 			},
 		},
 		SupportFiltering: true,
-		SupportPatch:     true,
+		SupportPatch:     false,
 	}
 	return config
 }
