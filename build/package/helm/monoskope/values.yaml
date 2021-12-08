@@ -10,6 +10,7 @@ global:
   imagePullSecrets: []
   labels:
     app.kubernetes.io/part-of: *name
+  operationMode: release
 
 vaultOperator:
   enabled: false

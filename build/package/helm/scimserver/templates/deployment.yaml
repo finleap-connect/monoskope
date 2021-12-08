@@ -75,6 +75,9 @@ spec:
             - --health-api-addr=:8081
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - {{ (printf "--command-handler-api-addr=%s-%s:%v" (.Values.commandHandler.prefix | default .Release.Name ) .Values.commandHandler.host .Values.commandHandler.port ) }}
+          env:
+            - name: M8_OPERATION_MODE
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
           readinessProbe:
             httpGet:
               path: /ready
