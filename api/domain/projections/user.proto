@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "api/domain/projections/metadata.proto";
+import "api/domain/common/messages.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/projections";
 
@@ -35,6 +36,8 @@ message User {
   repeated UserRoleBinding roles = 4;
   // Metadata about the projection
   LifecycleMetadata metadata = 5;
+  // Source the user originates from, e.g. "monoskope"
+  common.UserSource source = 6;
 }
 
 message UserRoleBinding {

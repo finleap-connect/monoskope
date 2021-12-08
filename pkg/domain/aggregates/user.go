@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
@@ -174,17 +175,17 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 	return false
 }
 
-func sourceFromContext(ctx context.Context) (eventdata.UserSource, error) {
+func sourceFromContext(ctx context.Context) (common.UserSource, error) {
 	// Extract domain context
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
-		return eventdata.UserSource_INTERNAL, err
+		return common.UserSource_INTERNAL, err
 	}
 
 	switch metadataManager.GetComponentName() {
 	case users.SCIMServerUser.Name:
-		return eventdata.UserSource_SCIM, nil
+		return common.UserSource_SCIM, nil
 	default:
-		return eventdata.UserSource_INTERNAL, nil
+		return common.UserSource_INTERNAL, nil
 	}
 }
