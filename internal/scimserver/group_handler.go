@@ -77,12 +77,12 @@ func (h *groupHandler) GetAll(r *http.Request, params scim.ListRequestParams) (s
 	// Seek through the stream
 	i := 1
 	for {
-		if i > (params.StartIndex + params.Count - 1) {
+		if i > roleCount || i > (params.StartIndex+params.Count-1) {
 			break // We're done
 		}
 
 		// Read next
-		role := roles.AvailableRoles[i]
+		role := roles.AvailableRoles[i-1]
 
 		// Skip users which are not in the current page
 		if i >= params.StartIndex {
