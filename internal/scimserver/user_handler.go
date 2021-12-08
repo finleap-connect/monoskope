@@ -294,9 +294,23 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 func (h *userHandler) Delete(r *http.Request, id string) error {
 	h.logRequest(r)
 
-	return scim_errors.ScimError{
-		Status: http.StatusNotImplemented,
+	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
+	if err != nil {
+		return scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
 	}
+
+	_, err = h.cmdHandlerClient.Execute(ctx, cmd.CreateCommand(uuid.MustParse(id), commandTypes.DeleteUser))
+	if err != nil {
+		return scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	return nil
 }
 
 // Patch update one or more attributes of a SCIM resource using a sequence of
