@@ -156,7 +156,6 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 	if params.Filter != nil {
 		switch e := params.Filter.(type) {
 		case *filter.AttributeExpression:
-			h.log.Info("Filter", "AttributePath", e.AttributePath, "Operator", e.Operator, "CompareValue", e.CompareValue)
 			if e.AttributePath.AttributeName == m8scim.UserNameAttribute && e.Operator == filter.EQ {
 				filterByName = e.CompareValue.(string)
 			}
