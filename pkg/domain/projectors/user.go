@@ -57,6 +57,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 
 		p.Email = data.GetEmail()
 		p.Name = data.GetName()
+		p.Source = data.GetSource()
 
 		if err := u.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
