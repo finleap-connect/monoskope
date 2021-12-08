@@ -62,10 +62,9 @@ func createSysAdminCtx() context.Context {
 	Expect(err).NotTo(HaveOccurred())
 
 	metaMgr.SetUserInformation(&meta.UserInformation{
-		Id:     uuid.New(),
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Id:    uuid.New(),
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 
 	metaMgr.SetRoleBindings([]*projections.UserRoleBinding{

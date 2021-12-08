@@ -61,6 +61,8 @@ func (m *UserCreated) validate(all bool) error {
 
 	// no validation rules for Name
 
+	// no validation rules for Source
+
 	if len(errors) > 0 {
 		return UserCreatedMultiError(errors)
 	}

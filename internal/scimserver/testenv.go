@@ -78,7 +78,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.apiListener, err = net.Listen("tcp", "127.0.0.1:8080")
+	env.apiListener, err = net.Listen("tcp", "127.0.0.1:5080")
 	if err != nil {
 		return nil, err
 	}

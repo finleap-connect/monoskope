@@ -23,11 +23,18 @@ option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventda
 
 package eventdata;
 
+enum UserSource {
+  INTERNAL = 0;
+  SCIM = 1;
+}
+
 message UserCreated {
   // Email address of the user
   string email = 1;
   // Name of the user
   string name = 2;
+  // Source the user originates from, e.g. "monoskope"
+  UserSource source = 3;
 }
 
 message UserRoleAdded {

@@ -64,14 +64,13 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 	var user *projections.User
 
 	// Check if system user
-	for _, sysUser := range users.AvailableSystemUsers {
-		if sysUser.GetId() == userInfo.Id.String() {
-			user = sysUser
-		}
+	sysUser, isSysUser := users.AvailableSystemUsers[userInfo.Id]
+	if isSysUser {
+		user = sysUser
 	}
 
 	// Check that user exists
-	if user == nil {
+	if !isSysUser {
 		user, err = h.userRepo.ByEmail(ctx, userInfo.Email)
 		if err != nil {
 			h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
@@ -82,6 +81,8 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 	// Enrich context with rolebindings and user information
 	userRoleBindings := user.GetRoles()
 	userInfo.Id = user.ID()
+	userInfo.Name = user.Name
+	userInfo.Email = user.Email
 	metadataManager.SetUserInformation(userInfo)
 	metadataManager.SetRoleBindings(userRoleBindings)
 

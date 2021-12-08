@@ -43,10 +43,9 @@ var (
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id     uuid.UUID
-	Name   string
-	Email  string
-	Issuer string
+	Id    uuid.UUID
+	Name  string
+	Email string
 }
 
 // domainMetadataManager is a domain specific metadata manager.
@@ -108,6 +107,15 @@ func (m *DomainMetadataManager) SetComponentInformation() {
 	m.Set(componentName, version.Name)
 	m.Set(componentVersion, version.Version)
 	m.Set(componentCommit, version.Commit)
+}
+
+// GetComponentName gets the name of the component which created the context.
+func (m *DomainMetadataManager) GetComponentName() string {
+	res, ok := m.Get(componentName)
+	if ok {
+		return res
+	}
+	return ""
 }
 
 func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) {

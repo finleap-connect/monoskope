@@ -42,10 +42,9 @@ var _ = Describe("process tenant", func() {
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Id:     userId,
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Id:    userId,
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 	ctx = mdManager.GetContext()
 
