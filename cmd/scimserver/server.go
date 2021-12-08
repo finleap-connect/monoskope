@@ -74,6 +74,9 @@ var serveCmd = &cobra.Command{
 		}
 		defer healthListener.Close()
 
+		// Set up SCIM server
+		log.Info("Setting up SCIM server...")
+
 		scimListener, err := net.Listen("tcp", httpApiAddr)
 		if err != nil {
 			return err
@@ -84,7 +87,8 @@ var serveCmd = &cobra.Command{
 
 		providerConfig := scimserver.NewProvierConfig()
 		userHandler := scimserver.NewUserHandler(commandHandlerClient, userClient)
-		scimServer := scimserver.NewServer(providerConfig, userHandler)
+		groupHandler := scimserver.NewGroupHandler(commandHandlerClient, userClient)
+		scimServer := scimserver.NewServer(providerConfig, userHandler, groupHandler)
 
 		// Start routine waiting for signals
 		shutdown.RegisterSignalHandler(func() {
@@ -100,6 +104,7 @@ var serveCmd = &cobra.Command{
 		eg.Go(func() error {
 			return http.Serve(scimListener, scimServer)
 		})
+		log.Info("Ready!")
 		err = eg.Wait()
 
 		if !shutdown.IsExpected() && err != nil {

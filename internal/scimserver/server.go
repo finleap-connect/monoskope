@@ -15,12 +15,17 @@
 package scimserver
 
 import (
+	"io/ioutil"
+	"net/http"
+
 	"github.com/elimity-com/scim"
 	"github.com/elimity-com/scim/optional"
+	"github.com/elimity-com/scim/schema"
+	"github.com/finleap-connect/monoskope/pkg/logger"
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
 )
 
-func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandler) scim.Server {
+func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandler, groupHandler scim.ResourceHandler) scim.Server {
 	resourceTypes := []scim.ResourceType{
 		{
 			ID:          optional.NewString("User"),
@@ -30,9 +35,30 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 			Schema:      m8scim.MonoskopeUserSchema(),
 			Handler:     userHandler,
 		},
+		{
+			ID:          optional.NewString("Group"),
+			Name:        "Group",
+			Endpoint:    "/Groups",
+			Description: optional.NewString("User Groups"),
+			Schema:      schema.CoreGroupSchema(),
+			Handler:     groupHandler,
+		},
 	}
 	return scim.Server{
 		Config:        config,
 		ResourceTypes: resourceTypes,
 	}
+}
+
+func logDebug(log logger.Logger, r *http.Request, attributes scim.ResourceAttributes, id string, params scim.ListRequestParams) {
+	var err error
+	var body []byte
+	if r.Body != nil {
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.V(logger.DebugLevel).Error(err, "Error reading body", "RequestURI", r.RequestURI)
+			return
+		}
+	}
+	log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body, "RemoteAddr", r.RemoteAddr, "Referer", r.Referer(), "Attributes", attributes, "ID", id, "Params", params)
 }

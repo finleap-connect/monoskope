@@ -17,7 +17,6 @@ package scimserver
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -51,22 +50,9 @@ func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCli
 	}
 }
 
-func (h *userHandler) logDebug(r *http.Request, attributes scim.ResourceAttributes, id string, params scim.ListRequestParams) {
-	var err error
-	var body []byte
-	if r.Body != nil {
-		body, err = ioutil.ReadAll(r.Body)
-		if err != nil {
-			h.log.V(logger.DebugLevel).Error(err, "Error reading body", "RequestURI", r.RequestURI)
-			return
-		}
-	}
-	h.log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body, "RemoteAddr", r.RemoteAddr, "Referer", r.Referer(), "Attributes", attributes, "ID", id, "Params", params)
-}
-
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	h.logDebug(r, attributes, "", scim.ListRequestParams{})
+	logDebug(h.log, r, attributes, "", scim.ListRequestParams{})
 
 	var err error
 
@@ -112,7 +98,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 
 // Get returns the resource corresponding with the given identifier.
 func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
-	h.logDebug(r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
 
 	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
 	if err != nil {
@@ -134,7 +120,7 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // An empty list of resources will be represented as `null` in the JSON response if `nil` is assigned to the
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	h.logDebug(r, scim.ResourceAttributes{}, "", params)
+	logDebug(h.log, r, scim.ResourceAttributes{}, "", params)
 
 	// Get total user count initially
 	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: true})
@@ -235,7 +221,7 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 // Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty
 // are to be deleted. Returns a resource with the attributes that are stored.
 func (h *userHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	h.logDebug(r, attributes, id, scim.ListRequestParams{})
+	logDebug(h.log, r, attributes, id, scim.ListRequestParams{})
 
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {
@@ -292,7 +278,7 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 
 // Delete removes the resource with corresponding ID.
 func (h *userHandler) Delete(r *http.Request, id string) error {
-	h.logDebug(r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
 
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {

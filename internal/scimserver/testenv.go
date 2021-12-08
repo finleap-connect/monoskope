@@ -85,7 +85,8 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 
 	providerConfig := NewProvierConfig()
 	userHandler := NewUserHandler(env.commandHandlerClient, env.userSvcClient)
-	scimServer := NewServer(providerConfig, userHandler)
+	groupHandler := NewGroupHandler(env.commandHandlerClient, env.userSvcClient)
+	scimServer := NewServer(providerConfig, userHandler, groupHandler)
 
 	// Start server
 	go func() {
