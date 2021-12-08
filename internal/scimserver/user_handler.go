@@ -69,6 +69,15 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 	h.logRequest(r)
 
 	var err error
+
+	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
+	if err != nil {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
 	command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser)
 
 	userAttributes, err := m8scim.NewUserAttribute(attributes)
@@ -90,7 +99,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 		}
 	}
 
-	_, err = h.cmdHandlerClient.Execute(r.Context(), command)
+	_, err = h.cmdHandlerClient.Execute(ctx, command)
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
