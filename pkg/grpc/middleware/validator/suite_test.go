@@ -15,6 +15,9 @@
 package validator
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
@@ -24,8 +27,6 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -34,52 +35,51 @@ import (
 var (
 	noValidationRules = "No Validation rules on this level"
 
-	validString = "123 Whatever, no re$triction character wise !@#$%^&*()"
+	validString           = "123 Whatever, no re$triction character wise !@#$%^&*()"
 	validRestrictedString = "ValidRestricted-String_V1"
-	validLowercaseString = "onlylowercase"
+	validLowercaseString  = "onlylowercase"
 
-	validUUID = uuid.New().String()
+	validUUID          = uuid.New().String()
 	validAggregateType = validRestrictedString
-	validCSR = []byte("-----BEGIN CERTIFICATE REQUEST-----valid CSR-----END CERTIFICATE REQUEST-----")
+	validCSR           = []byte("-----BEGIN CERTIFICATE REQUEST-----valid CSR-----END CERTIFICATE REQUEST-----")
 
-	validName = validRestrictedString
-	validDisplayName = validString
+	validName             = validRestrictedString
+	validDisplayName      = validString
 	validApiServerAddress = "https://k8s-api.lab.example.com:6443"
 
 	validTenantPrefix = validRestrictedString[0:12]
 
 	validEmail = "email@invalid.com"
-	validRole = validLowercaseString
+	validRole  = validLowercaseString
 	validScope = validLowercaseString
 
-	validCommand = validRestrictedString
+	validCommand     = validRestrictedString
 	validCommandType = validRestrictedString
 
 	validEventType = validRestrictedString
 
-
-	invalidStringLength = strings.Repeat("x", 151)
-	invalidRestrictedString = "0Start_withNumber-V1"
+	invalidStringLength           = strings.Repeat("x", 151)
+	invalidRestrictedString       = "0Start_withNumber-V1"
 	invalidRestrictedStringLength = strings.Repeat("x", 61)
-	invalidLowercaseString = "onlyLowerCase"
+	invalidLowercaseString        = "onlyLowerCase"
 
-	invalidUUID = "invalid uuid"
+	invalidUUID                         = "invalid uuid"
 	invalidAggregateTypeStartWithNumber = invalidRestrictedString
-	invalidAggregateTypeTooLong = invalidRestrictedStringLength
-	invalidCSR = []byte("invalid CSR")
+	invalidAggregateTypeTooLong         = invalidRestrictedStringLength
+	invalidCSR                          = []byte("invalid CSR")
 
-	invalidName = invalidRestrictedString
+	invalidName               = invalidRestrictedString
 	invalidDisplayNameTooLong = invalidStringLength
-	invalidApiServerAddress = "k8s-api.lab. example.com:6443"
+	invalidApiServerAddress   = "k8s-api.lab. example.com:6443"
 
-	invalidTenantPrefixTooLong = validRestrictedString
+	invalidTenantPrefixTooLong         = validRestrictedString
 	invalidTenantPrefixStartWithNumber = invalidRestrictedString[0:12]
 
 	invalidEmail = "email#invalid.com"
-	invalidRole = invalidLowercaseString
+	invalidRole  = invalidLowercaseString
 	invalidScope = invalidLowercaseString
 
-	invalidCommand = invalidRestrictedString
+	invalidCommand     = invalidRestrictedString
 	invalidCommandType = invalidRestrictedString
 
 	invalidEventType = invalidRestrictedString
@@ -108,71 +108,71 @@ func NewValidRequestedCertificate() *eventdata.CertificateRequested {
 
 func NewValidCreateCluster() *commanddata.CreateCluster {
 	return &commanddata.CreateCluster{
-		Name: validName,
-		DisplayName: validDisplayName,
+		Name:             validName,
+		DisplayName:      validDisplayName,
 		ApiServerAddress: validApiServerAddress,
-		CaCertBundle: []byte(noValidationRules),
+		CaCertBundle:     []byte(noValidationRules),
 	}
 }
 
 func NewValidClusterCreated() *eventdata.ClusterCreated {
 	return &eventdata.ClusterCreated{
-		Name: validDisplayName,
-		Label: validName,
-		ApiServerAddress: validApiServerAddress,
+		Name:                validDisplayName,
+		Label:               validName,
+		ApiServerAddress:    validApiServerAddress,
 		CaCertificateBundle: []byte(noValidationRules),
 	}
 }
 
 func NewValidClusterCreatedV2() *eventdata.ClusterCreatedV2 {
 	return &eventdata.ClusterCreatedV2{
-		Name: validName,
-		DisplayName: validDisplayName,
-		ApiServerAddress: validApiServerAddress,
+		Name:                validName,
+		DisplayName:         validDisplayName,
+		ApiServerAddress:    validApiServerAddress,
 		CaCertificateBundle: []byte(noValidationRules),
 	}
 }
 
 func NewValidUpdateCluster() *commanddata.UpdateCluster {
 	return &commanddata.UpdateCluster{
-		DisplayName: &wrapperspb.StringValue{Value: validDisplayName},
+		DisplayName:      &wrapperspb.StringValue{Value: validDisplayName},
 		ApiServerAddress: &wrapperspb.StringValue{Value: validApiServerAddress},
-		CaCertBundle: []byte(noValidationRules),
+		CaCertBundle:     []byte(noValidationRules),
 	}
 }
 
 func NewValidClusterUpdated() *eventdata.ClusterUpdated {
 	return &eventdata.ClusterUpdated{
-		DisplayName: validDisplayName,
-		ApiServerAddress: validApiServerAddress,
+		DisplayName:         validDisplayName,
+		ApiServerAddress:    validApiServerAddress,
 		CaCertificateBundle: []byte(noValidationRules),
 	}
 }
 
 func NewValidCreateTenantClusterBindingCommandData() *commanddata.CreateTenantClusterBindingCommandData {
 	return &commanddata.CreateTenantClusterBindingCommandData{
-		TenantId: validUUID,
+		TenantId:  validUUID,
 		ClusterId: validUUID,
 	}
 }
 
 func NewValidTenantClusterBindingCreated() *eventdata.TenantClusterBindingCreated {
 	return &eventdata.TenantClusterBindingCreated{
-		TenantId: validUUID,
+		TenantId:  validUUID,
 		ClusterId: validUUID,
 	}
 }
 
 func NewValidCreateTenantCommandData() *commanddata.CreateTenantCommandData {
 	return &commanddata.CreateTenantCommandData{
-		Name: validDisplayName,
+		Name:   validDisplayName,
 		Prefix: validTenantPrefix,
 	}
 }
 
 func NewValidTenantCreated() *eventdata.TenantCreated {
 	return &eventdata.TenantCreated{
-		Name: validDisplayName,
+		Name:   validDisplayName,
 		Prefix: validTenantPrefix,
 	}
 }
@@ -191,39 +191,39 @@ func NewValidTenantUpdated() *eventdata.TenantUpdated {
 
 func NewValidCreateUserCommandData() *commanddata.CreateUserCommandData {
 	return &commanddata.CreateUserCommandData{
-		Name: validDisplayName,
+		Name:  validDisplayName,
 		Email: validEmail,
 	}
 }
 
 func NewValidUserCreated() *eventdata.UserCreated {
 	return &eventdata.UserCreated{
-		Name: validDisplayName,
+		Name:  validDisplayName,
 		Email: validEmail,
 	}
 }
 
 func NewValidCreateUserRoleBindingCommandData() *commanddata.CreateUserRoleBindingCommandData {
 	return &commanddata.CreateUserRoleBindingCommandData{
-		UserId: validUUID,
-		Role: validRole,
-		Scope: validScope,
-		Resource: validUUID,
+		UserId:   validUUID,
+		Role:     validRole,
+		Scope:    validScope,
+		Resource: wrapperspb.String(validUUID),
 	}
 }
 
 func NewValidUserRoleAdded() *eventdata.UserRoleAdded {
 	return &eventdata.UserRoleAdded{
-		UserId: validUUID,
-		Role: validRole,
-		Scope: validScope,
+		UserId:   validUUID,
+		Role:     validRole,
+		Scope:    validScope,
 		Resource: validUUID,
 	}
 }
 
 func NewValidPermissionModel() *domain.PermissionModel {
 	return &domain.PermissionModel{
-		Roles: []string{validRole, validRole, validRole},
+		Roles:  []string{validRole, validRole, validRole},
 		Scopes: []string{validScope, validScope, validScope},
 	}
 }
@@ -231,14 +231,14 @@ func NewValidPermissionModel() *domain.PermissionModel {
 func NewValidPolicy() *domain.Policy {
 	return &domain.Policy{
 		Command: validCommand,
-		Role: validRole,
-		Scope: validScope,
+		Role:    validRole,
+		Scope:   validScope,
 	}
 }
 
 func NewValidCommand() *commands.Command {
 	return &commands.Command{
-		Id: validUUID,
+		Id:   validUUID,
 		Type: validCommandType,
 		Data: &anypb.Any{},
 	}
@@ -252,15 +252,15 @@ func NewValidCommandReply() *eventsourcing.CommandReply {
 
 func NewValidEvent() *eventsourcing.Event {
 	return &eventsourcing.Event{
-		Type: validEventType,
-		AggregateId: validUUID,
+		Type:          validEventType,
+		AggregateId:   validUUID,
 		AggregateType: validAggregateType,
 	}
 }
 
 func NewValidEventFilter() *eventsourcing.EventFilter {
 	return &eventsourcing.EventFilter{
-		AggregateId: &wrapperspb.StringValue{Value: validUUID},
+		AggregateId:   &wrapperspb.StringValue{Value: validUUID},
 		AggregateType: &wrapperspb.StringValue{Value: validAggregateType},
 	}
 }
@@ -268,6 +268,6 @@ func NewValidEventFilter() *eventsourcing.EventFilter {
 func NewValidClusterAuthTokenRequest() *gateway.ClusterAuthTokenRequest {
 	return &gateway.ClusterAuthTokenRequest{
 		ClusterId: validUUID,
-		Role: validRole,
+		Role:      validRole,
 	}
 }

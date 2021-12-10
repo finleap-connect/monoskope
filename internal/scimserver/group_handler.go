@@ -15,13 +15,19 @@
 package scimserver
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/elimity-com/scim"
 	scim_errors "github.com/elimity-com/scim/errors"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
+	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
@@ -126,33 +132,92 @@ func (h *groupHandler) Delete(r *http.Request, id string) error {
 func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
 	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
 
-	var foundRole es.Role
-	for _, role := range roles.AvailableRoles {
-		roleId := uuid.NewSHA1(uuid.NameSpaceURL, []byte(role)).String()
-		if roleId == id {
-			foundRole = role
+	var err error
+
+	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
+	if err != nil {
+		h.log.Error(err, "Failed to create grpc context.")
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
 		}
 	}
 
-	//TODO remove
-	h.log.Info("Patch on role", "role", foundRole)
+	roleId, err := uuid.Parse(id)
+	if err != nil {
+		h.log.Error(err, "Failed to parse roleId")
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
 
+	role, ok := roles.AvailableRolesMap[roleId]
+	if !ok {
+		err := fmt.Errorf("roleId '%s' does not exist", roleId)
+		h.log.Error(err, "Failed to get role by id")
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+
+	var members []string
 	for _, operation := range operations {
-		//TODO remove
-		h.log.Info("operation", "Op", operation.Op, "Path", operation.Path, "Value", operation.Value)
+		if operation.Path.String() != m8scim.GroupMembersAttribute {
+			continue
+		}
+
+		switch operation.Op {
+		case scim.PatchOperationAdd:
+			userIds := operation.Value.([]interface{})
+			for _, userIdValue := range userIds {
+				userIdAny := userIdValue.(map[string]interface{})[m8scim.GroupMemberValueAttribute]
+				userId := userIdAny.(string)
+
+				command, err := cmd.AddCommandData(
+					cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+					&cmdData.CreateUserRoleBindingCommandData{Role: role.String(), Scope: scopes.System.String(), UserId: userId},
+				)
+				if err != nil {
+					h.log.Error(err, "Failed to create command to patch group.")
+					return scim.Resource{}, scim_errors.ScimError{
+						Status: http.StatusInternalServerError,
+						Detail: err.Error(),
+					}
+				}
+				_, err = h.cmdHandlerClient.Execute(ctx, command)
+				if err != nil {
+					h.log.Error(err, "Failed to execute command to patch group.")
+					return scim.Resource{}, scim_errors.ScimError{
+						Status: http.StatusInternalServerError,
+						Detail: err.Error(),
+					}
+				}
+				members = append(members, userId)
+			}
+		}
 	}
 
-	return scim.Resource{}, scim_errors.ScimError{
-		Status: http.StatusNotImplemented,
-	}
+	return toScimGroup(role, members...), nil
 }
 
 // toScimGroup converts a projections.UserRoleBinding to it's scim.Resource representation
-func toScimGroup(role es.Role) scim.Resource {
+func toScimGroup(role es.Role, members ...string) scim.Resource {
+	var memberAttribute []map[string]string
+	if len(members) > 0 {
+		memberAttribute = make([]map[string]string, 0)
+		for _, member := range members {
+			memberAttribute = append(memberAttribute, map[string]string{
+				m8scim.GroupMemberValueAttribute: member,
+			})
+		}
+	}
 	return scim.Resource{
-		ID: uuid.NewSHA1(uuid.NameSpaceURL, []byte(role)).String(),
+		ID: roles.IdFromRole(role).String(),
 		Attributes: scim.ResourceAttributes{
-			m8scim.GroupNameAttribute: role,
+			m8scim.GroupNameAttribute:    role,
+			m8scim.GroupMembersAttribute: memberAttribute,
 		},
 	}
 }

@@ -261,7 +261,7 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 	if !_CreateUserRoleBindingCommandData_Role_Pattern.MatchString(m.GetRole()) {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
+			reason: "value does not match regex pattern \"^[a-z0-9]+$\"",
 		}
 		if !all {
 			return err
@@ -283,7 +283,7 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 	if !_CreateUserRoleBindingCommandData_Scope_Pattern.MatchString(m.GetScope()) {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
+			reason: "value does not match regex pattern \"^[a-z0-9]+$\"",
 		}
 		if !all {
 			return err
@@ -291,16 +291,20 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateUuid(m.GetResource()); err != nil {
-		err = CreateUserRoleBindingCommandDataValidationError{
-			field:  "Resource",
-			reason: "value must be a valid UUID",
-			cause:  err,
+	if wrapper := m.GetResource(); wrapper != nil {
+
+		if err := m._validateUuid(wrapper.GetValue()); err != nil {
+			err = CreateUserRoleBindingCommandDataValidationError{
+				field:  "Resource",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
 	if len(errors) > 0 {
@@ -392,9 +396,9 @@ var _ interface {
 	ErrorName() string
 } = CreateUserRoleBindingCommandDataValidationError{}
 
-var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z]+$")
+var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z0-9]+$")
 
-var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z]+$")
+var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z0-9]+$")
 
 // Validate checks the field values on UpdateUserCommandData with the rules
 // defined in the proto definition for this message. If any rules are
