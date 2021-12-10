@@ -77,6 +77,7 @@ var (
 		},
 		codes.AlreadyExists: {
 			ErrUserAlreadyExists,
+			ErrUserRoleBindingAlreadyExists,
 			ErrTenantAlreadyExists,
 			ErrClusterRegistrationAlreadyExists,
 			ErrClusterAlreadyExists,
