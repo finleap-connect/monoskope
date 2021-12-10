@@ -55,8 +55,6 @@ func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCli
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	logDebug(h.log, r, attributes, "", scim.ListRequestParams{})
 
-	var err error
-
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
@@ -64,8 +62,6 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 			Detail: err.Error(),
 		}
 	}
-
-	command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser)
 
 	userAttributes, err := m8scim.NewUserAttribute(attributes)
 	if err != nil {
@@ -75,7 +71,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 		}
 	}
 
-	_, err = cmd.AddCommandData(command, &cmdData.CreateUserCommandData{
+	command, err := cmd.AddCommandData(cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser), &cmdData.CreateUserCommandData{
 		Email: userAttributes.UserName,
 		Name:  userAttributes.DisplayName,
 	})
@@ -86,7 +82,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 		}
 	}
 
-	_, err = h.cmdHandlerClient.Execute(ctx, command)
+	reply, err := h.cmdHandlerClient.Execute(ctx, command)
 	if err != nil {
 		return scim.Resource{}, scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
@@ -94,7 +90,10 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 		}
 	}
 
-	return scim.Resource{}, nil
+	return scim.Resource{
+		ID:         reply.AggregateId,
+		Attributes: attributes,
+	}, nil
 }
 
 // Get returns the resource corresponding with the given identifier.
@@ -254,8 +253,7 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 		}
 	}
 
-	command := cmd.CreateCommand(uuid.MustParse(user.Id), commandTypes.UpdateUser)
-	_, err = cmd.AddCommandData(command, &cmdData.UpdateUserCommandData{
+	command, err := cmd.AddCommandData(cmd.CreateCommand(uuid.MustParse(user.Id), commandTypes.UpdateUser), &cmdData.UpdateUserCommandData{
 		Name: wrapperspb.String(userAttributes.DisplayName),
 	})
 	if err != nil {
