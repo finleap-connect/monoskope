@@ -18,6 +18,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("Test validation rules for user messages", func() {
@@ -80,7 +81,7 @@ var _ = Describe("Test validation rules for user messages", func() {
 		})
 
 		It("should check for a valid Resource", func() {
-			cd.Resource = invalidUUID
+			cd.Resource = wrapperspb.String(invalidUUID)
 			ValidateErrorExpected()
 		})
 	})

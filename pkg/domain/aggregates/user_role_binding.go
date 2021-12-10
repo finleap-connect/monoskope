@@ -66,7 +66,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 
 		var err error
 		var userId uuid.UUID
-		var resource uuid.UUID
+		resource := uuid.Nil
 		// Get all aggregates of same type
 		if userId, err = uuid.Parse(cmd.GetUserId()); err != nil {
 			return domainErrors.ErrInvalidArgument("user id is invalid")
@@ -77,8 +77,11 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err := scopes.ValidateScope(cmd.GetScope()); err != nil {
 			return err
 		}
-		if resource, err = uuid.Parse(cmd.GetResource()); err != nil && cmd.GetResource() != "" {
-			return domainErrors.ErrInvalidArgument("resource id is invalid")
+		if cmd.Resource != nil {
+			resourceValue := cmd.GetResource().GetValue()
+			if resource, err = uuid.Parse(resourceValue); err != nil {
+				return domainErrors.ErrInvalidArgument("resource id is invalid")
+			}
 		}
 		if err := a.Authorize(ctx, cmd, resource); err != nil {
 			return err
@@ -96,7 +99,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err != nil {
 			return err
 		}
-		if containsRoleBinding(roleBindings, cmd.UserId, cmd.Role, cmd.Scope, cmd.Resource) {
+		if containsRoleBinding(roleBindings, cmd.UserId, cmd.Role, cmd.Scope, resource.String()) {
 			return domainErrors.ErrUserRoleBindingAlreadyExists
 		}
 		return nil
@@ -108,11 +111,16 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 func (a *UserRoleBindingAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserRoleBindingCommand:
+		resource := ""
+		resourceValue := cmd.GetResource()
+		if resourceValue != nil {
+			resource = resourceValue.Value
+		}
 		eventData := &eventdata.UserRoleAdded{
 			UserId:   cmd.GetUserId(),
 			Role:     cmd.GetRole(),
 			Scope:    cmd.GetScope(),
-			Resource: cmd.GetResource(),
+			Resource: resource,
 		}
 		_ = a.AppendEvent(ctx, events.UserRoleBindingCreated, es.ToEventDataFromProto(eventData))
 	case *commands.DeleteUserRoleBindingCommand:

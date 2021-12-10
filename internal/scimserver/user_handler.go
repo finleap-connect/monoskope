@@ -27,6 +27,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es_errors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
@@ -320,11 +321,17 @@ func toScimUser(user *projections.User) scim.Resource {
 
 	groups := make([]map[string]string, 0)
 	for _, r := range user.Roles {
+		role, err := roles.ToRole(r.Role)
+		if err != nil {
+			continue
+		}
+
 		groups = append(groups, map[string]string{
-			m8scim.GroupMemberValueAttribute:   uuid.NewSHA1(uuid.NameSpaceURL, []byte(r.Role)).String(),
+			m8scim.GroupMemberValueAttribute:   roles.IdFromRole(role).String(),
 			m8scim.GroupMemberDisplayAttribute: r.Role,
 		})
 	}
+
 	return scim.Resource{
 		ID: user.Id,
 		Meta: scim.Meta{
