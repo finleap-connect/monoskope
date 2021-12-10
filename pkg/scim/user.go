@@ -23,7 +23,6 @@ import (
 type userAttributes struct {
 	UserName    string `json:"userName"`
 	DisplayName string `json:"displayName"`
-	Active      bool   `json:"active"`
 }
 
 // NewUserAttribute converts the SCIM resource attributes given to an instance of the userResource struct

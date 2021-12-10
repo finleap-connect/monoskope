@@ -50,15 +50,10 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 	}
 }
 
-func logDebug(log logger.Logger, r *http.Request, attributes scim.ResourceAttributes, id string, params scim.ListRequestParams) {
-	var err error
-	var body []byte
+func logDebug(log logger.Logger, r *http.Request) {
+	body := []byte("")
 	if r.Body != nil {
-		body, err = ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.V(logger.DebugLevel).Error(err, "Error reading body", "RequestURI", r.RequestURI)
-			return
-		}
+		body, _ = ioutil.ReadAll(r.Body)
 	}
-	log.V(logger.DebugLevel).Info("Received request", "RequestURI", r.RequestURI, "RequestBody", body, "RemoteAddr", r.RemoteAddr, "Referer", r.Referer(), "Attributes", attributes, "ID", id, "Params", params)
+	log.V(logger.DebugLevel).Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body))
 }

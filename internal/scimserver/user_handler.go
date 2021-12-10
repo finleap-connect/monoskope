@@ -53,7 +53,7 @@ func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCli
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	logDebug(h.log, r, attributes, "", scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {
@@ -98,7 +98,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 
 // Get returns the resource corresponding with the given identifier.
 func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
-	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
 	if err != nil {
@@ -113,6 +113,11 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 			Detail: err.Error(),
 		}
 	}
+	if user.GetMetadata().Deleted != nil && user.GetMetadata().Deleted.IsValid() {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusNotFound,
+		}
+	}
 	return toScimUser(user), nil
 }
 
@@ -120,7 +125,7 @@ func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // An empty list of resources will be represented as `null` in the JSON response if `nil` is assigned to the
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	logDebug(h.log, r, scim.ResourceAttributes{}, "", params)
+	logDebug(h.log, r)
 
 	// Get total user count initially
 	userCount, err := h.userClient.GetCount(r.Context(), &domain.GetCountRequest{IncludeDeleted: true})
@@ -221,7 +226,7 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 // Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty
 // are to be deleted. Returns a resource with the attributes that are stored.
 func (h *userHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	logDebug(h.log, r, attributes, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {
@@ -277,7 +282,16 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 
 // Delete removes the resource with corresponding ID.
 func (h *userHandler) Delete(r *http.Request, id string) error {
-	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
+
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		h.log.Error(err, "Failed to parse id")
+		return scim_errors.ScimError{
+			Status: http.StatusBadRequest,
+			Detail: err.Error(),
+		}
+	}
 
 	ctx, err := users.CreateUserContextGrpc(r.Context(), users.SCIMServerUser)
 	if err != nil {
@@ -287,7 +301,7 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 		}
 	}
 
-	_, err = h.cmdHandlerClient.Execute(ctx, cmd.CreateCommand(uuid.MustParse(id), commandTypes.DeleteUser))
+	_, err = h.cmdHandlerClient.Execute(ctx, cmd.CreateCommand(uid, commandTypes.DeleteUser))
 	if err != nil {
 		return scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
@@ -315,7 +329,6 @@ func (h *userHandler) Patch(r *http.Request, id string, operations []scim.PatchO
 func toScimUser(user *projections.User) scim.Resource {
 	created := user.Metadata.Created.AsTime()
 	lastModified := user.Metadata.LastModified.AsTime()
-	deleted := user.Metadata.Deleted.IsValid()
 
 	groups := make([]map[string]string, 0)
 	for _, r := range user.Roles {
@@ -338,7 +351,6 @@ func toScimUser(user *projections.User) scim.Resource {
 		},
 		Attributes: scim.ResourceAttributes{
 			m8scim.UserNameAttribute:    user.Email,
-			m8scim.ActiveAttribute:      !deleted,
 			m8scim.DisplayNameAttribute: user.Name,
 			m8scim.GroupAttribute:       groups,
 		},
