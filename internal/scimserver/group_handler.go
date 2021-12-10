@@ -28,6 +28,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
+	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
@@ -188,6 +189,10 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 				}
 				_, err = h.cmdHandlerClient.Execute(ctx, command)
 				if err != nil {
+					if err := errors.TranslateFromGrpcError(err); err == errors.ErrUserRoleBindingAlreadyExists {
+						members = append(members, userId)
+						continue
+					}
 					h.log.Error(err, "Failed to execute command to patch group.")
 					return scim.Resource{}, scim_errors.ScimError{
 						Status: http.StatusInternalServerError,
