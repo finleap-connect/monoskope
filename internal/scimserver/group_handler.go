@@ -201,6 +201,13 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 				}
 				members = append(members, userId)
 			}
+		default:
+			err := fmt.Errorf("patch operator '%s' not supported", operation.Op)
+			h.log.Error(err, "Failed to patch group")
+			return scim.Resource{}, scim_errors.ScimError{
+				Status: http.StatusInternalServerError,
+				Detail: err.Error(),
+			}
 		}
 	}
 
