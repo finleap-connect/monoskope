@@ -57,10 +57,10 @@ func (m *CreateCluster) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetName()) > 60 {
+	if utf8.RuneCountInString(m.GetName()) > 60 {
 		err := CreateClusterValidationError{
 			field:  "Name",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -79,10 +79,10 @@ func (m *CreateCluster) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetDisplayName()) > 150 {
+	if utf8.RuneCountInString(m.GetDisplayName()) > 150 {
 		err := CreateClusterValidationError{
 			field:  "DisplayName",
-			reason: "value length must be at most 150 bytes",
+			reason: "value length must be at most 150 runes",
 		}
 		if !all {
 			return err
@@ -208,10 +208,10 @@ func (m *UpdateCluster) validate(all bool) error {
 
 	if wrapper := m.GetDisplayName(); wrapper != nil {
 
-		if len(wrapper.GetValue()) > 150 {
+		if utf8.RuneCountInString(wrapper.GetValue()) > 150 {
 			err := UpdateClusterValidationError{
 				field:  "DisplayName",
-				reason: "value length must be at most 150 bytes",
+				reason: "value length must be at most 150 runes",
 			}
 			if !all {
 				return err
