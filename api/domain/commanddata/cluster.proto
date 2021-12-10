@@ -28,9 +28,9 @@ package commanddata;
 message CreateCluster {
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string name = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_len: 60}];
   // Display name of the cluster
-  string display_name = 2 [(validate.rules).string.max_bytes = 150];
+  string display_name = 2 [(validate.rules).string.max_len = 150];
   // DNS name or IP address of the clusters KubeAPIServer
   string api_server_address = 3 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded
@@ -51,7 +51,7 @@ message CreateCluster {
 // Command data to update information about a cluster
 message UpdateCluster {
   // Display name of the cluster
-  google.protobuf.StringValue display_name = 1 [(validate.rules).string.max_bytes = 150];
+  google.protobuf.StringValue display_name = 1 [(validate.rules).string.max_len = 150];
   // DNS name or IP address of the clusters KubeAPIServer
   google.protobuf.StringValue api_server_address = 2 [(validate.rules).string.pattern = "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$"];
   // Bundle of CA certificates of the cluster, PEM encoded

@@ -72,10 +72,10 @@ func (m *CreateUserCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetName()) > 150 {
+	if l := utf8.RuneCountInString(m.GetName()); l < 5 || l > 150 {
 		err := CreateUserCommandDataValidationError{
 			field:  "Name",
-			reason: "value length must be at most 150 bytes",
+			reason: "value length must be between 5 and 150 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -247,10 +247,10 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetRole()) > 60 {
+	if utf8.RuneCountInString(m.GetRole()) > 60 {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Role",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -269,10 +269,10 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetScope()) > 60 {
+	if utf8.RuneCountInString(m.GetScope()) > 60 {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Scope",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -424,10 +424,10 @@ func (m *UpdateUserCommandData) validate(all bool) error {
 
 	if wrapper := m.GetName(); wrapper != nil {
 
-		if len(wrapper.GetValue()) > 150 {
+		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 5 || l > 150 {
 			err := UpdateUserCommandDataValidationError{
 				field:  "Name",
-				reason: "value length must be at most 150 bytes",
+				reason: "value length must be between 5 and 150 runes, inclusive",
 			}
 			if !all {
 				return err
