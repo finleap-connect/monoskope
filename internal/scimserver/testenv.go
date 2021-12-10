@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/elimity-com/scim"
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
@@ -41,6 +42,7 @@ type TestEnv struct {
 	userSvcClient         domainApi.UserClient
 	commandHandlerConn    *ggrpc.ClientConn
 	commandHandlerClient  esApi.CommandHandlerClient
+	scimServer            scim.Server
 }
 
 func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
@@ -51,7 +53,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		TestEnv: testEnv,
 	}
 
-	os.Setenv("SUPER_USERS", "admin@monoskope.io,other-admin@monoskope.io")
+	os.Setenv("SUPER_USERS", "")
 
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
@@ -86,11 +88,11 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	providerConfig := NewProvierConfig()
 	userHandler := NewUserHandler(env.commandHandlerClient, env.userSvcClient)
 	groupHandler := NewGroupHandler(env.commandHandlerClient, env.userSvcClient)
-	scimServer := NewServer(providerConfig, userHandler, groupHandler)
+	env.scimServer = NewServer(providerConfig, userHandler, groupHandler)
 
 	// Start server
 	go func() {
-		_ = http.Serve(env.apiListener, scimServer)
+		_ = http.Serve(env.apiListener, env.scimServer)
 	}()
 
 	return env, nil

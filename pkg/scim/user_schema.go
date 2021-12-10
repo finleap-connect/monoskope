@@ -22,7 +22,6 @@ import (
 const (
 	UserNameAttribute    = "userName"
 	DisplayNameAttribute = "displayName"
-	ActiveAttribute      = "active"
 	GroupAttribute       = "groups"
 )
 
@@ -42,10 +41,6 @@ func MonoskopeUserSchema() Schema {
 			SimpleCoreAttribute(SimpleStringParams(StringParams{
 				Description: optional.NewString("The name of the User, suitable for display to end-users. The name SHOULD be the full name of the User being described, if known."),
 				Name:        DisplayNameAttribute,
-			})),
-			SimpleCoreAttribute(SimpleBooleanParams(BooleanParams{
-				Description: optional.NewString("A Boolean value indicating the User's administrative status."),
-				Name:        ActiveAttribute,
 			})),
 			ComplexCoreAttribute(ComplexParams{
 				Description: optional.NewString("A list of groups to which the user belongs, either through direct membership, through nested groups, or dynamically calculated."),

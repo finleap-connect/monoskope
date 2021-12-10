@@ -25,14 +25,14 @@ var _ = Describe("pkg/scim/User", func() {
 	expectedDisplayName := "test.user"
 
 	When("calling NewUserAttribute()", func() {
-		userAttribute, err := NewUserAttribute(scim.ResourceAttributes{
-			"userName":    expectedUserEmail,
-			"displayName": expectedDisplayName,
-			"active":      true,
+		It("converts resource attributes to a user attribute", func() {
+			userAttribute, err := NewUserAttribute(scim.ResourceAttributes{
+				"userName":    expectedUserEmail,
+				"displayName": expectedDisplayName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(userAttribute.UserName).To(Equal(expectedUserEmail))
+			Expect(userAttribute.DisplayName).To(Equal(expectedDisplayName))
 		})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(userAttribute.UserName).To(Equal(expectedUserEmail))
-		Expect(userAttribute.DisplayName).To(Equal(expectedDisplayName))
-		Expect(userAttribute.Active).To(BeTrue())
 	})
 })

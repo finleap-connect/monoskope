@@ -49,7 +49,7 @@ func NewGroupHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCl
 
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *groupHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	logDebug(h.log, r, attributes, "", scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
@@ -58,7 +58,7 @@ func (h *groupHandler) Create(r *http.Request, attributes scim.ResourceAttribute
 
 // Get returns the resource corresponding with the given identifier.
 func (h *groupHandler) Get(r *http.Request, id string) (scim.Resource, error) {
-	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
@@ -69,7 +69,7 @@ func (h *groupHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 // An empty list of resources will be represented as `null` in the JSON response if `nil` is assigned to the
 // Page.Resources. Otherwise, is an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *groupHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	logDebug(h.log, r, scim.ResourceAttributes{}, "", params)
+	logDebug(h.log, r)
 
 	roleCount := len(roles.AvailableRoles)
 
@@ -107,7 +107,7 @@ func (h *groupHandler) GetAll(r *http.Request, params scim.ListRequestParams) (s
 // Replace replaces ALL existing attributes of the resource with given identifier. Given attributes that are empty
 // are to be deleted. Returns a resource with the attributes that are stored.
 func (h *groupHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	logDebug(h.log, r, attributes, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
@@ -116,7 +116,7 @@ func (h *groupHandler) Replace(r *http.Request, id string, attributes scim.Resou
 
 // Delete removes the resource with corresponding ID.
 func (h *groupHandler) Delete(r *http.Request, id string) error {
-	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	return scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
@@ -131,7 +131,7 @@ func (h *groupHandler) Delete(r *http.Request, id string) error {
 // 2. the Remove operation should return No Content when the value to be remove is already absent.
 // More information in Section 3.5.2 of RFC 7644: https://tools.ietf.org/html/rfc7644#section-3.5.2
 func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
-	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+	logDebug(h.log, r)
 
 	var err error
 
@@ -148,7 +148,7 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 	if err != nil {
 		h.log.Error(err, "Failed to parse roleId")
 		return scim.Resource{}, scim_errors.ScimError{
-			Status: http.StatusInternalServerError,
+			Status: http.StatusBadRequest,
 			Detail: err.Error(),
 		}
 	}
@@ -190,8 +190,7 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 				_, err = h.cmdHandlerClient.Execute(ctx, command)
 				if err != nil {
 					if err := errors.TranslateFromGrpcError(err); err == errors.ErrUserRoleBindingAlreadyExists {
-						members = append(members, userId)
-						continue
+						return scim.Resource{ID: roles.IdFromRole(role).String()}, nil
 					}
 					h.log.Error(err, "Failed to execute command to patch group.")
 					return scim.Resource{}, scim_errors.ScimError{
