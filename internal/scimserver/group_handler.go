@@ -124,6 +124,24 @@ func (h *groupHandler) Delete(r *http.Request, id string) error {
 // 2. the Remove operation should return No Content when the value to be remove is already absent.
 // More information in Section 3.5.2 of RFC 7644: https://tools.ietf.org/html/rfc7644#section-3.5.2
 func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
+	logDebug(h.log, r, scim.ResourceAttributes{}, id, scim.ListRequestParams{})
+
+	var foundRole es.Role
+	for _, role := range roles.AvailableRoles {
+		roleId := uuid.NewSHA1(uuid.NameSpaceURL, []byte(role)).String()
+		if roleId == id {
+			foundRole = role
+		}
+	}
+
+	//TODO remove
+	h.log.Info("Patch on role", "role", foundRole)
+
+	for _, operation := range operations {
+		//TODO remove
+		h.log.Info("operation", "Op", operation.Op, "Path", operation.Path, "Value", operation.Value)
+	}
+
 	return scim.Resource{}, scim_errors.ScimError{
 		Status: http.StatusNotImplemented,
 	}
@@ -134,7 +152,7 @@ func toScimGroup(role es.Role) scim.Resource {
 	return scim.Resource{
 		ID: uuid.NewSHA1(uuid.NameSpaceURL, []byte(role)).String(),
 		Attributes: scim.ResourceAttributes{
-			m8scim.DisplayNameAttribute: role,
+			m8scim.GroupNameAttribute: role,
 		},
 	}
 }
