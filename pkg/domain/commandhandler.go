@@ -110,8 +110,12 @@ func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string,
 
 // setupSuperUsers creates super users/rolebindings
 func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
-	superUsers := strings.Split(os.Getenv("SUPER_USERS"), ",")
-	if len(superUsers) == 0 {
+	superUsersEnv := os.Getenv("SUPER_USERS")
+	if len(superUsersEnv) < 1 {
+		return nil
+	}
+	superUsers := strings.Split(superUsersEnv, ",")
+	if len(superUsers) < 1 {
 		return nil
 	}
 
