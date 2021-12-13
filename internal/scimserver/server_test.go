@@ -73,4 +73,17 @@ var _ = Describe("internal/scimserver/Server", func() {
 			Expect(rr.Code).To(Equal(http.StatusNoContent))
 		})
 	})
+
+	When("getting groups", func() {
+		It("returns the list of groups and StatusOK", func() {
+			req := httptest.NewRequest(http.MethodGet, "/Groups", nil)
+			rr := httptest.NewRecorder()
+			testEnv.scimServer.ServeHTTP(rr, req)
+			Expect(rr.Code).To(Equal(http.StatusOK))
+
+			body, err := ioutil.ReadAll(rr.Body)
+			Expect(err).To(Not(HaveOccurred()))
+			testEnv.Log.Info(string(body))
+		})
+	})
 })
