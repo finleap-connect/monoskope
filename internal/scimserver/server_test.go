@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -123,8 +124,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		deleteUser()
 	})
 
-	It("allows management of groups", func() {
-		By("querying groups ")
+	getGroups := func() {
 		req := httptest.NewRequest(http.MethodGet, "/Groups", nil)
 		rr := httptest.NewRecorder()
 		testEnv.scimServer.ServeHTTP(rr, req)
@@ -133,5 +133,25 @@ var _ = Describe("internal/scimserver/Server", func() {
 		body, err := ioutil.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		testEnv.Log.Info(string(body))
+	}
+
+	patchGroup := func() {
+		req := httptest.NewRequest(http.MethodPatch, "/Groups/"+roles.IdFromRole(roles.Admin).String(), strings.NewReader(fmt.Sprintf(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"value":[{"value":"%s"}],"op":"add","path":"members"}]}"`, userId.String())))
+		rr := httptest.NewRecorder()
+		testEnv.scimServer.ServeHTTP(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusOK))
+
+		body, err := ioutil.ReadAll(rr.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		testEnv.Log.Info(string(body))
+	}
+
+	It("allows management of groups", func() {
+		By("querying groups")
+		getGroups()
+
+		By("adding users to a group")
+		createUser()
+		patchGroup()
 	})
 })
