@@ -17,6 +17,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
@@ -37,8 +38,10 @@ type TenantClusterBindingRepository interface {
 // ReadOnlyTenantClusterBindingRepository is a repository for reading tenantclusterbinding projections.
 type ReadOnlyTenantClusterBindingRepository interface {
 	// GetAll searches for the a TenantClusterBinding projections.
-	GetAll(context.Context, bool) ([]*projections.TenantClusterBinding, error)
-	GetByTenantId(context.Context, uuid.UUID) ([]*projections.TenantClusterBinding, error)
+	GetAll(ctx context.Context, showDeleted bool) ([]*projections.TenantClusterBinding, error)
+	GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
+	GetByClusterId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
+	GetByTenantAndClusterId(ctx context.Context, tenantId, clusterId uuid.UUID) (*projections.TenantClusterBinding, error)
 }
 
 // WriteOnlyTenantClusterBindingRepository is a repository for writing tenantclusterbinding projections.
@@ -52,7 +55,7 @@ func NewTenantClusterBindingRepository(repository es.Repository) TenantClusterBi
 	}
 }
 
-// GetAll searches for the a TenantClusterBinding projections.
+// GetAll searches for all TenantClusterBinding projections.
 func (r *tenantClusterBindingRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.TenantClusterBinding, error) {
 	ps, err := r.All(ctx)
 	if err != nil {
@@ -72,7 +75,7 @@ func (r *tenantClusterBindingRepository) GetAll(ctx context.Context, includeDele
 	return bindings, nil
 }
 
-// GetAll searches for the a TenantClusterBinding projections.
+// GetByTenantId searches for the TenantClusterBinding projections by tenant id.
 func (r *tenantClusterBindingRepository) GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error) {
 	ps, err := r.GetAll(ctx, false)
 	if err != nil {
@@ -86,4 +89,35 @@ func (r *tenantClusterBindingRepository) GetByTenantId(ctx context.Context, tena
 		}
 	}
 	return bindings, nil
+}
+
+// GetByClusterId searches for the TenantClusterBinding projections by cluster id.
+func (r *tenantClusterBindingRepository) GetByClusterId(ctx context.Context, clusterId uuid.UUID) ([]*projections.TenantClusterBinding, error) {
+	ps, err := r.GetAll(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var bindings []*projections.TenantClusterBinding
+	for _, p := range ps {
+		if p.ClusterId == clusterId.String() {
+			bindings = append(bindings, p)
+		}
+	}
+	return bindings, nil
+}
+
+// GetByTenantAndClusterId searches the TenantClusterBinding projection by tenant and cluster id.
+func (r *tenantClusterBindingRepository) GetByTenantAndClusterId(ctx context.Context, tenantId, clusterId uuid.UUID) (*projections.TenantClusterBinding, error) {
+	ps, err := r.GetAll(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range ps {
+		if p.TenantId == tenantId.String() && p.ClusterId == clusterId.String() {
+			return p, nil
+		}
+	}
+	return nil, errors.ErrTenantClusterBindingNotFound
 }

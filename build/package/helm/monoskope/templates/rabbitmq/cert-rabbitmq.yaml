@@ -20,9 +20,9 @@ spec:
   dnsNames:
     - localhost
     - 127.0.0.1
-    - {{.Release.Name}}-rabbitmq
-    - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}
-    - {{.Release.Name}}-rabbitmq.{{.Release.Namespace}}.svc.cluster.local
+    - {{.Release.Name}}-rabbitmq-headless
+    - {{.Release.Name}}-rabbitmq-headless.{{.Release.Namespace}}
+    - {{.Release.Name}}-rabbitmq-headless.{{.Release.Namespace}}.svc.cluster.local
   subject:
     organizations:
       - Monoskope

@@ -30,6 +30,7 @@ var skipPaths = []string{
 	"../../pkg/api/",
 	"../../.go/",
 	"../../test/",
+	"../../include/",
 }
 
 var _ = Describe("License", func() {
