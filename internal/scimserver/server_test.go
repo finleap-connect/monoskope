@@ -16,11 +16,13 @@ package scimserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 
+	"github.com/cenkalti/backoff"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,61 +31,107 @@ import (
 var _ = Describe("internal/scimserver/Server", func() {
 	var userId uuid.UUID
 
-	When("getting users", func() {
-		It("returns the list of users and StatusOK", func() {
-			req := httptest.NewRequest(http.MethodGet, "/Users", nil)
-			rr := httptest.NewRecorder()
-			testEnv.scimServer.ServeHTTP(rr, req)
-			Expect(rr.Code).To(Equal(http.StatusOK))
+	getUsers := func() {
+		req := httptest.NewRequest(http.MethodGet, "/Users", nil)
+		rr := httptest.NewRecorder()
+		testEnv.scimServer.ServeHTTP(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusOK))
 
-			body, err := ioutil.ReadAll(rr.Body)
-			Expect(err).To(Not(HaveOccurred()))
-			testEnv.Log.Info(string(body))
-		})
-	})
-	When("creating user", func() {
-		It("returns the newly created user and StatusCreated", func() {
+		body, err := ioutil.ReadAll(rr.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		testEnv.Log.Info(string(body))
+	}
+
+	createUser := func() {
+		req := httptest.NewRequest(
+			http.MethodPost,
+			"/Users",
+			strings.NewReader(`{"userName":"some.user@monoskope.io","schemas":["urn:scim:schemas:core:2.0"],"displayName":"Some User"}`),
+		)
+		rr := httptest.NewRecorder()
+		testEnv.scimServer.ServeHTTP(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusCreated))
+
+		body, err := ioutil.ReadAll(rr.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(body).To(MatchRegexp(`^{"displayName":"Some User","id":"[0-9a-z\-]+","meta":{"resourceType":"User","location":"Users/[0-9a-z\-]+"},"schemas":\["urn:ietf:params:scim:schemas:core:2.0:User"\],"userName":"some.user@monoskope.io"}$`))
+		testEnv.Log.Info(string(body))
+
+		bodyMap := make(map[string]interface{})
+		err = json.Unmarshal(body, &bodyMap)
+		Expect(err).To(Not(HaveOccurred()))
+		userIdStr := bodyMap["id"].(string)
+		userId, err = uuid.Parse(userIdStr)
+		Expect(err).To(Not(HaveOccurred()))
+	}
+
+	getSpecificUser := func() {
+		rr := httptest.NewRecorder()
+		err := backoff.Retry(func() error {
+			req := httptest.NewRequest(http.MethodGet, `/Users?filter=userName%20eq%20"some.user@monoskope.io"`, nil)
+			testEnv.scimServer.ServeHTTP(rr, req)
+			if rr.Code != http.StatusOK {
+				return fmt.Errorf("wrong status code: %v", rr.Code)
+			}
+			return nil
+		}, backoff.NewExponentialBackOff())
+		Expect(err).To(Not(HaveOccurred()))
+
+		body, err := ioutil.ReadAll(rr.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		testEnv.Log.Info(string(body))
+	}
+
+	replaceUser := func() {
+		var rr *httptest.ResponseRecorder
+		err := backoff.Retry(func() error {
+			rr = httptest.NewRecorder()
 			req := httptest.NewRequest(
-				http.MethodPost,
-				"/Users",
-				strings.NewReader(`{"userName":"some.user@monoskope.io","schemas":["urn:scim:schemas:core:1.0"],"displayName":"Some User"}`),
+				http.MethodPut, "/Users/"+userId.String(), strings.NewReader(`{"userName":"some.user@monoskope.io","schemas":["urn:scim:schemas:core:2.0"],"displayName":"Some User"}`),
 			)
-			rr := httptest.NewRecorder()
 			testEnv.scimServer.ServeHTTP(rr, req)
-			Expect(rr.Code).To(Equal(http.StatusCreated))
+			if rr.Code == http.StatusNotFound {
+				return fmt.Errorf("wrong status code: %v", rr.Code)
+			}
+			return nil
+		}, backoff.NewExponentialBackOff())
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(rr.Code).To(Equal(http.StatusOK))
+	}
 
-			body, err := ioutil.ReadAll(rr.Body)
-			Expect(err).To(Not(HaveOccurred()))
-			Expect(body).To(MatchRegexp(`^{"displayName":"Some User","id":"[0-9a-z\-]+","meta":{"resourceType":"User","location":"Users/[0-9a-z\-]+"},"schemas":\["urn:ietf:params:scim:schemas:core:2.0:User"\],"userName":"some.user@monoskope.io"}$`))
-			testEnv.Log.Info(string(body))
+	deleteUser := func() {
+		req := httptest.NewRequest(http.MethodDelete, "/Users/"+userId.String(), nil)
+		rr := httptest.NewRecorder()
+		testEnv.scimServer.ServeHTTP(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusNoContent))
+	}
 
-			bodyMap := make(map[string]interface{})
-			err = json.Unmarshal(body, &bodyMap)
-			Expect(err).To(Not(HaveOccurred()))
-			userIdStr := bodyMap["id"].(string)
-			userId, err = uuid.Parse(userIdStr)
-			Expect(err).To(Not(HaveOccurred()))
-		})
+	It("allows management of users", func() {
+		By("querying users")
+		getUsers()
+
+		By("creating users")
+		createUser()
+
+		By("getting a specific user via filter")
+		getSpecificUser()
+
+		By("replacing a user")
+		replaceUser()
+
+		By("deleting a user")
+		deleteUser()
 	})
-	When("deleting user", func() {
-		It("returns status StatusNoContent", func() {
-			req := httptest.NewRequest(http.MethodDelete, "/Users/"+userId.String(), nil)
-			rr := httptest.NewRecorder()
-			testEnv.scimServer.ServeHTTP(rr, req)
-			Expect(rr.Code).To(Equal(http.StatusNoContent))
-		})
-	})
 
-	When("getting groups", func() {
-		It("returns the list of groups and StatusOK", func() {
-			req := httptest.NewRequest(http.MethodGet, "/Groups", nil)
-			rr := httptest.NewRecorder()
-			testEnv.scimServer.ServeHTTP(rr, req)
-			Expect(rr.Code).To(Equal(http.StatusOK))
+	It("allows management of groups", func() {
+		By("querying groups ")
+		req := httptest.NewRequest(http.MethodGet, "/Groups", nil)
+		rr := httptest.NewRecorder()
+		testEnv.scimServer.ServeHTTP(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusOK))
 
-			body, err := ioutil.ReadAll(rr.Body)
-			Expect(err).To(Not(HaveOccurred()))
-			testEnv.Log.Info(string(body))
-		})
+		body, err := ioutil.ReadAll(rr.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		testEnv.Log.Info(string(body))
 	})
 })
