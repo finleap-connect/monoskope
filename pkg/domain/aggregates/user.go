@@ -82,8 +82,8 @@ func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comman
 
 		if name != nil && a.Name != name.Value {
 			ed.Name = name.Value
+			_ = a.AppendEvent(ctx, events.UserUpdated, es.ToEventDataFromProto(ed))
 		}
-		_ = a.AppendEvent(ctx, events.UserUpdated, es.ToEventDataFromProto(ed))
 		reply := &es.CommandReply{
 			Id:      a.ID(),
 			Version: a.Version(),
