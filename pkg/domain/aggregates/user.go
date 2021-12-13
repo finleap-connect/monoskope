@@ -137,10 +137,7 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
-
-		if len(data.GetName()) > 0 && a.Name != data.GetName() {
-			a.Name = data.GetName()
-		}
+		a.Name = data.GetName()
 	case events.UserDeleted:
 		a.SetDeleted(true)
 	default:
