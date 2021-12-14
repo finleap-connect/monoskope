@@ -171,7 +171,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		signer := env.JwtTestEnv.CreateSigner()
-		verifier, err := env.JwtTestEnv.CreateVerifier(10 * time.Minute)
+		verifier, err := env.JwtTestEnv.CreateVerifier()
 		Expect(err).ToNot(HaveOccurred())
 
 		// Start gateway

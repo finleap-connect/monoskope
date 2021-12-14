@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/finleap-connect/monoskope/internal/test"
-	"github.com/onsi/ginkgo/reporters"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,8 +27,7 @@ var testEnv *TestEnv
 
 func TestJWT(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/jwt-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "jwt", []Reporter{junitReporter})
+	RunSpecs(t, "jwt")
 }
 
 var _ = BeforeSuite(func() {
