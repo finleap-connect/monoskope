@@ -18,9 +18,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es_repos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/google/uuid"
@@ -45,8 +44,8 @@ var _ = Describe("domain/cluster_repo", func() {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.System.String()
+	adminRoleBinding.Role = common.Role_admin.String()
+	adminRoleBinding.Scope = common.Scope_system.String()
 
 	newCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
 	newCluster.Name = expectedClusterName

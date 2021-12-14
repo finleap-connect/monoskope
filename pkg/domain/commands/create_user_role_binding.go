@@ -18,10 +18,9 @@ import (
 	"context"
 
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -47,7 +46,7 @@ func (c *CreateUserRoleBindingCommand) SetData(a *anypb.Any) error {
 }
 func (c *CreateUserRoleBindingCommand) Policies(ctx context.Context) []es.Policy {
 	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.Tenant), // Tenant admin
+		es.NewPolicy().WithRole(es.Role(common.Role_admin.String())).WithScope(es.Scope(common.Scope_system.String())), // System admin
+		es.NewPolicy().WithRole(es.Role(common.Role_admin.String())).WithScope(es.Scope(common.Scope_tenant.String())), // Tenant admin
 	}
 }

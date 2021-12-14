@@ -17,8 +17,8 @@ package aggregates
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -64,7 +64,7 @@ func validatePolicy(roleBinding *projections.UserRoleBinding, policy es.Policy, 
 	if !policy.AcceptsScope(es.Scope(roleBinding.GetScope())) {
 		return false
 	}
-	if roleBinding.GetScope() != scopes.System.String() && roleBinding.GetResource() != expectedResource.String() {
+	if roleBinding.GetScope() != common.Scope_system.String() && roleBinding.GetResource() != expectedResource.String() {
 		return false
 	}
 	return true

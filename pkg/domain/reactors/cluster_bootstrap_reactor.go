@@ -25,8 +25,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/certificatemanagement"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -151,8 +149,8 @@ func (r *clusterBootstrapReactor) handleClusterCreated(ctx context.Context, name
 		events.UserRoleBindingCreated,
 		es.ToEventDataFromProto(&eventdata.UserRoleAdded{
 			UserId: userId.String(),
-			Role:   roles.K8sOperator.String(),
-			Scope:  scopes.System.String(),
+			Role:   common.Role_k8soperator,
+			Scope:  common.Scope_system,
 		}),
 		time.Now().UTC(),
 		aggregates.UserRoleBinding,

@@ -18,12 +18,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
@@ -70,12 +69,6 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		// Get all aggregates of same type
 		if userId, err = uuid.Parse(cmd.GetUserId()); err != nil {
 			return domainErrors.ErrInvalidArgument("user id is invalid")
-		}
-		if err := roles.ValidateRole(cmd.GetRole()); err != nil {
-			return err
-		}
-		if err := scopes.ValidateScope(cmd.GetScope()); err != nil {
-			return err
 		}
 		if resource, err = uuid.Parse(cmd.GetResource()); err != nil && cmd.GetResource() != "" {
 			return domainErrors.ErrInvalidArgument("resource id is invalid")
@@ -153,8 +146,8 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	}
 
 	a.userId = userId
-	a.role = es.Role(data.Role)
-	a.scope = es.Scope(data.Scope)
+	a.role = es.Role(data.Role.String())
+	a.scope = es.Scope(data.Scope.String())
 	a.resource = uuid.Nil
 
 	if data.Resource != "" {
@@ -168,7 +161,7 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	return nil
 }
 
-func containsRoleBinding(values []es.Aggregate, userId string, role, scope, resource string) bool {
+func containsRoleBinding(values []es.Aggregate, userId string, role common.Role, scope common.Scope, resource string) bool {
 	resourceId := uuid.Nil
 	if resource != "" {
 		id, err := uuid.Parse(resource)
@@ -182,8 +175,8 @@ func containsRoleBinding(values []es.Aggregate, userId string, role, scope, reso
 		d, ok := value.(*UserRoleBindingAggregate)
 		if ok &&
 			d.userId.String() == userId &&
-			d.role.String() == role &&
-			d.scope.String() == scope &&
+			d.role == es.Role(role.String()) &&
+			d.scope == es.Scope(scope.String()) &&
 			d.resource == resourceId {
 			return true
 		}

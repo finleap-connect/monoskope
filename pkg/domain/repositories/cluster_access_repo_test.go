@@ -17,9 +17,8 @@ package repositories
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es_repos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/google/uuid"
@@ -38,14 +37,14 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.Tenant.String()
+	adminRoleBinding.Role = common.Role_admin.String()
+	adminRoleBinding.Scope = common.Scope_tenant.String()
 	adminRoleBinding.Resource = tenantId.String()
 
 	otherUserRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	otherUserRoleBinding.UserId = otherUser.Id
-	otherUserRoleBinding.Role = roles.User.String()
-	otherUserRoleBinding.Scope = scopes.Tenant.String()
+	otherUserRoleBinding.Role = common.Role_admin.String()
+	otherUserRoleBinding.Scope = common.Scope_tenant.String()
 	otherUserRoleBinding.Resource = tenantId.String()
 
 	cluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)

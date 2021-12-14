@@ -85,18 +85,6 @@ var _ = Describe("Test validation rules for user messages", func() {
 			ValidateErrorExpected()
 		})
 
-		It("should check for a valid Role", func() {
-			cd.Role = invalidRole
-			ed.Role = invalidRole
-			ValidateErrorExpected()
-		})
-
-		It("should check for a valid Scope", func() {
-			cd.Scope = invalidScope
-			ed.Scope = invalidScope
-			ValidateErrorExpected()
-		})
-
 		It("should check for a valid Resource", func() {
 			cd.Resource = invalidUUID
 			ed.Resource = invalidUUID

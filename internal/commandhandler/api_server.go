@@ -20,10 +20,9 @@ import (
 	"time"
 
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -92,11 +91,11 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*ap
 // GetPermissionModel implements API method GetPermissionModel
 func (s *apiServer) GetPermissionModel(ctx context.Context, in *empty.Empty) (*api_domain.PermissionModel, error) {
 	permissionModel := &api_domain.PermissionModel{}
-	for _, role := range roles.AvailableRoles {
-		permissionModel.Roles = append(permissionModel.Roles, role.String())
+	for _, role := range common.Role_name {
+		permissionModel.Roles = append(permissionModel.Roles, role)
 	}
-	for _, scope := range scopes.AvailableScopes {
-		permissionModel.Scopes = append(permissionModel.Scopes, scope.String())
+	for _, scope := range common.Scope_name {
+		permissionModel.Scopes = append(permissionModel.Scopes, scope)
 	}
 	return permissionModel, nil
 }

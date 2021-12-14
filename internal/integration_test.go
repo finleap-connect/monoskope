@@ -34,8 +34,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -135,7 +133,7 @@ var _ = Describe("integration", func() {
 			userRoleBindingId := uuid.New()
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
-				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: uuid.New().String()},
+				&cmdData.CreateUserRoleBindingCommandData{Role: common.Role_admin, Scope: common.Scope_system, UserId: userId.String(), Resource: uuid.New().String()},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -145,9 +143,6 @@ var _ = Describe("integration", func() {
 
 			// update userRolebBindingId, as the "create" command will have changed it.
 			userRoleBindingId = uuid.MustParse(reply.AggregateId)
-
-			// Wait to propagate
-			time.Sleep(500 * time.Millisecond)
 
 			// Creating the same rolebinding again should fail
 			Eventually(func(g Gomega) {
@@ -159,8 +154,8 @@ var _ = Describe("integration", func() {
 			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(user).ToNot(BeNil())
-			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
-			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
+			Expect(user.Roles[0].Role).To(Equal(common.Role_admin.String()))
+			Expect(user.Roles[0].Scope).To(Equal(common.Scope_system.String()))
 
 			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())
