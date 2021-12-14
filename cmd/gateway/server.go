@@ -44,7 +44,6 @@ var (
 	httpApiAddr       string
 	queryHandlerAddr  string
 	metricsAddr       string
-	keyCacheDuration  string
 	keepAlive         bool
 	authConfig        = auth.Config{}
 	scopes            string
@@ -89,14 +88,9 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create token signer/validator
-		keyCacheDuration, err := time.ParseDuration(keyCacheDuration)
-		if err != nil {
-			return err
-		}
-
 		log.Info("Configuring JWT signing and verifying...")
 		signer := jwt.NewSigner("/etc/gateway/jwt/tls.key")
-		verifier, err := jwt.NewVerifier("/etc/gateway/jwt/tls.crt", keyCacheDuration)
+		verifier, err := jwt.NewVerifier("/etc/gateway/jwt/tls.crt")
 		if err != nil {
 			return err
 		}
@@ -171,7 +165,6 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
-	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")
 	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
 	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
