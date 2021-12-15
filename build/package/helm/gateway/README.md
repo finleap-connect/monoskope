@@ -6,57 +6,56 @@ Monoskope Gateway
 
 ## Values
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| affinity | object | `{}` |  |
-| auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
-| auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
-| auth.redirectUris | list | `["http://localhost:8000","http://localhost:18000"]` | The allowed redirect URIs for authentication flow |
-| auth.scopes | list | `["openid","profile","email"]` | Additional scopes to request from upstream IDP |
-| auth.selfURL | string | `""` | The URL of the issuer to Gateway itself |
-| authTokenValidity | string | `"12h"` | Duration for which issued Monoskope auth tokens are valid |
-| autoscaling.enabled | bool | `false` |  |
-| autoscaling.maxReplicas | int | `10` |  |
-| autoscaling.minReplicas | int | `1` |  |
-| autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| fullnameOverride | string | `""` |  |
-| global | object | `{}` |  |
-| image.pullPolicy | string | `"Always"` |  |
-| image.repository | string | `"ghcr.io/finleap-connect/monoskope/gateway"` |  |
-| image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
-| imagePullSecrets | list | `[]` |  |
-| k8sTokenValidity | string | `"10s"` | Duration for which issued K8s auth tokens are valid |
-| keepAlive | bool | `false` |  |
-| keySecret | object | `{"name":"","validity":"24h"}` | The secret containing private key for signing JWTs. Must contain tls.key containing the private key for signing and tls.crt containing public key for verification. |
-| keySecret.name | string | `""` | Name of the secret to be used by the gateway, required |
-| keySecret.validity | string | `"24h"` | How long to cache public key's |
-| labels | object | `{}` |  |
-| livenessProbe.enabled | bool | `true` |  |
-| livenessProbe.failureThreshold | int | `10` |  |
-| livenessProbe.initialDelaySeconds | int | `10` |  |
-| livenessProbe.periodSeconds | int | `5` |  |
-| nameOverride | string | `""` |  |
-| nodeSelector | object | `{}` |  |
-| oidcSecret | object | `{"name":""}` | The secret where the gateway finds the OIDC secrets. Must contain the fields oidc-clientsecret, oidc-clientid and oidc-nonce. |
-| oidcSecret.name | string | `""` | Name of the secret to be used by the gateway, required |
-| podAnnotations | object | `{}` |  |
-| podSecurityContext | object | `{}` |  |
-| ports.grpcApi | int | `8080` |  |
-| ports.httpApi | int | `8081` |  |
-| ports.metrics | int | `9102` |  |
-| queryHandler | object | `{"host":"queryhandler","port":8080,"prefix":""}` | API address of the query handler |
-| readinessProbe.enabled | bool | `true` |  |
-| readinessProbe.failureThreshold | int | `5` |  |
-| readinessProbe.initialDelaySeconds | int | `5` |  |
-| readinessProbe.periodSeconds | int | `5` |  |
-| replicaCount | int | `1` |  |
-| resources | object | `{}` |  |
-| securityContext | object | `{}` |  |
-| service.grpcApiPort | int | `8080` |  |
-| service.httpApiPort | int | `8081` |  |
-| service.metricsPort | int | `9102` |  |
-| service.type | string | `"ClusterIP"` |  |
-| tolerations | list | `[]` |  |
+| Key                                        | Type   | Default                                              | Description                                                                                                                                                         |
+| ------------------------------------------ | ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| affinity                                   | object | `{}`                                                 |                                                                                                                                                                     |
+| auth.identityProviderURL                   | string | `""`                                                 | The URL of the issuer to use for OIDC                                                                                                                               |
+| auth.redirectUris                          | list   | `["http://localhost:8000","http://localhost:18000"]` | The allowed redirect URIs for authentication flow                                                                                                                   |
+| auth.scopes                                | list   | `["openid","profile","email"]`                       | Additional scopes to request from upstream IDP                                                                                                                      |
+| auth.selfURL                               | string | `""`                                                 | The URL of the issuer to Gateway itself                                                                                                                             |
+| authTokenValidity                          | string | `"12h"`                                              | Duration for which issued Monoskope auth tokens are valid                                                                                                           |
+| autoscaling.enabled                        | bool   | `false`                                              |                                                                                                                                                                     |
+| autoscaling.maxReplicas                    | int    | `10`                                                 |                                                                                                                                                                     |
+| autoscaling.minReplicas                    | int    | `1`                                                  |                                                                                                                                                                     |
+| autoscaling.targetCPUUtilizationPercentage | int    | `80`                                                 |                                                                                                                                                                     |
+| fullnameOverride                           | string | `""`                                                 |                                                                                                                                                                     |
+| global                                     | object | `{}`                                                 |                                                                                                                                                                     |
+| image.pullPolicy                           | string | `"Always"`                                           |                                                                                                                                                                     |
+| image.repository                           | string | `"ghcr.io/finleap-connect/monoskope/gateway"`        |                                                                                                                                                                     |
+| image.tag                                  | string | `""`                                                 | Overrides the image tag whose default is the chart appVersion.                                                                                                      |
+| imagePullSecrets                           | list   | `[]`                                                 |                                                                                                                                                                     |
+| k8sTokenValidity                           | string | `"10s"`                                              | Duration for which issued K8s auth tokens are valid                                                                                                                 |
+| keepAlive                                  | bool   | `false`                                              |                                                                                                                                                                     |
+| keySecret                                  | object | `{"name":"","validity":"24h"}`                       | The secret containing private key for signing JWTs. Must contain tls.key containing the private key for signing and tls.crt containing public key for verification. |
+| keySecret.name                             | string | `""`                                                 | Name of the secret to be used by the gateway, required                                                                                                              |
+| keySecret.validity                         | string | `"24h"`                                              | How long to cache public key's                                                                                                                                      |
+| labels                                     | object | `{}`                                                 |                                                                                                                                                                     |
+| livenessProbe.enabled                      | bool   | `true`                                               |                                                                                                                                                                     |
+| livenessProbe.failureThreshold             | int    | `10`                                                 |                                                                                                                                                                     |
+| livenessProbe.initialDelaySeconds          | int    | `10`                                                 |                                                                                                                                                                     |
+| livenessProbe.periodSeconds                | int    | `5`                                                  |                                                                                                                                                                     |
+| nameOverride                               | string | `""`                                                 |                                                                                                                                                                     |
+| nodeSelector                               | object | `{}`                                                 |                                                                                                                                                                     |
+| oidcSecret                                 | object | `{"name":""}`                                        | The secret where the gateway finds the OIDC secrets. Must contain the fields oidc-clientsecret, oidc-clientid and oidc-nonce.                                       |
+| oidcSecret.name                            | string | `""`                                                 | Name of the secret to be used by the gateway, required                                                                                                              |
+| podAnnotations                             | object | `{}`                                                 |                                                                                                                                                                     |
+| podSecurityContext                         | object | `{}`                                                 |                                                                                                                                                                     |
+| ports.grpcApi                              | int    | `8080`                                               |                                                                                                                                                                     |
+| ports.httpApi                              | int    | `8081`                                               |                                                                                                                                                                     |
+| ports.metrics                              | int    | `9102`                                               |                                                                                                                                                                     |
+| queryHandler                               | object | `{"host":"queryhandler","port":8080,"prefix":""}`    | API address of the query handler                                                                                                                                    |
+| readinessProbe.enabled                     | bool   | `true`                                               |                                                                                                                                                                     |
+| readinessProbe.failureThreshold            | int    | `5`                                                  |                                                                                                                                                                     |
+| readinessProbe.initialDelaySeconds         | int    | `5`                                                  |                                                                                                                                                                     |
+| readinessProbe.periodSeconds               | int    | `5`                                                  |                                                                                                                                                                     |
+| replicaCount                               | int    | `1`                                                  |                                                                                                                                                                     |
+| resources                                  | object | `{}`                                                 |                                                                                                                                                                     |
+| securityContext                            | object | `{}`                                                 |                                                                                                                                                                     |
+| service.grpcApiPort                        | int    | `8080`                                               |                                                                                                                                                                     |
+| service.httpApiPort                        | int    | `8081`                                               |                                                                                                                                                                     |
+| service.metricsPort                        | int    | `9102`                                               |                                                                                                                                                                     |
+| service.type                               | string | `"ClusterIP"`                                        |                                                                                                                                                                     |
+| tolerations                                | list   | `[]`                                                 |                                                                                                                                                                     |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.4.0](https://github.com/norwoodj/helm-docs/releases/v1.4.0)
