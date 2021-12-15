@@ -19,36 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 )
-
-type Config struct {
-	IdentityProvider     string
-	IdentityProviderName string
-	URL                  string
-	Scopes               []string
-	OfflineAsScope       bool
-	Nonce                string
-	ClientId             string
-	ClientSecret         string
-	RedirectURIs         []string
-	TokenValidity        time.Duration
-}
-
-func (conf *Config) String() string {
-	return fmt.Sprintf(
-		"IdentityProviderName: %s\\IdentityProvider: %s\\ņScopes: %v\\ņRedirectURIs: %v",
-		conf.IdentityProviderName,
-		conf.IdentityProvider,
-		conf.Scopes,
-		conf.RedirectURIs,
-	)
-}
-
-type OpenIdConfiguration struct {
-	Issuer  string `json:"issuer"`
-	JwksURL string `json:"jwks_uri"`
-}
 
 type State struct {
 	Callback string `form:"callback" json:"callback,omitempty"`

@@ -16,6 +16,7 @@ package gateway
 
 import (
 	"context"
+	"strings"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -31,23 +32,25 @@ type gatewayApiServer struct {
 	// Logger interface
 	log logger.Logger
 	//
-	authConfig  *auth.Config
-	authHandler *auth.Handler
-	userRepo    repositories.ReadOnlyUserRepository
+	clientConfig *auth.ClientConfig
+	authClient   *auth.Client
+	authServer   *auth.Server
+	userRepo     repositories.ReadOnlyUserRepository
 }
 
-func NewGatewayAPIServer(authConfig *auth.Config, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) api.GatewayServer {
+func NewGatewayAPIServer(authConfig *auth.ClientConfig, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) api.GatewayServer {
 	s := &gatewayApiServer{
-		log:         logger.WithName("server"),
-		authConfig:  authConfig,
-		authHandler: authHandler,
-		userRepo:    userRepo,
+		log:          logger.WithName("server"),
+		clientConfig: authConfig,
+		authClient:   client,
+		authServer:   server,
+		userRepo:     userRepo,
 	}
 	return s
 }
 
 func (s *gatewayApiServer) GetAuthInformation(ctx context.Context, state *api.AuthState) (*api.AuthInformation, error) {
-	url, encodedState, err := s.authHandler.GetAuthCodeURL(state, s.authConfig.Scopes)
+	url, encodedState, err := s.authClient.GetAuthCodeURL(state)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
@@ -58,7 +61,7 @@ func (s *gatewayApiServer) GetAuthInformation(ctx context.Context, state *api.Au
 func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthCode) (*api.AuthResponse, error) {
 	// Exchange auth code with upstream identity provider
 	s.log.Info("Exchanging auth code with issuer...")
-	upstreamClaims, err := s.authHandler.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackUrl)
+	upstreamClaims, err := s.authClient.Exchange(ctx, code.GetCode(), code.GetState(), code.CallbackUrl)
 	if err != nil {
 		s.log.Error(err, "User authentication failed.")
 		return nil, err
@@ -75,9 +78,10 @@ func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthC
 
 	// Override upstream name
 	upstreamClaims.Name = user.Name
+	upstreamClaims.Scope = strings.Join(code.GetScopes(), " ")
 
 	// Issue token
-	signedToken, rawToken, err := s.authHandler.IssueToken(ctx, upstreamClaims, user.ID().String())
+	signedToken, rawToken, err := s.authServer.IssueToken(ctx, upstreamClaims, user.ID().String())
 	if err != nil {
 		s.log.Error(err, "Issuing token failed.")
 		return nil, err
