@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package jwt
+package auth
 
 import (
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/jwt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/square/go-jose.v2/jwt"
+	jose_jwt "gopkg.in/square/go-jose.v2/jwt"
 )
 
-var _ = Describe("jwt/claims", func() {
+var _ = Describe("internal/gateway/auth/token", func() {
 	expectedIssuer := "https://localhost"
 	expectedValidity := time.Hour * 1
 	It("validate cluster bootstrap token", func() {
-		t := NewClusterBootstrapToken(&StandardClaims{}, expectedIssuer, "me")
+		t := NewClusterBootstrapToken(&jwt.StandardClaims{}, expectedIssuer, "me")
 		Expect(t.Validate(expectedIssuer)).ToNot(HaveOccurred())
 	})
 	It("fail validate auth token", func() {
-		t := NewAuthToken(&StandardClaims{}, expectedIssuer, "me", expectedValidity)
-		t.Expiry = jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * -12))
+		t := NewAuthToken(&jwt.StandardClaims{}, expectedIssuer, "me", expectedValidity)
+		t.Expiry = jose_jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * -12))
 		Expect(t.Validate(expectedIssuer)).To(HaveOccurred())
 	})
 })

@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -95,7 +96,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 	}
 
 	s.Log.V(logger.DebugLevel).Info("Generating token for k8s user...", "username", username)
-	token := jwt.NewKubernetesAuthToken(&jwt.StandardClaims{
+	token := auth.NewKubernetesAuthToken(&jwt.StandardClaims{
 		Name:          user.GetName(),
 		Email:         user.GetEmail(),
 		EmailVerified: true,

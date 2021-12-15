@@ -52,7 +52,7 @@ func (n *Server) IssueToken(ctx context.Context, upstreamClaims *jwt.StandardCla
 		upstreamClaims.FederatedClaims = make(map[string]string)
 	}
 
-	token := jwt.NewAuthToken(upstreamClaims, n.config.URL, userId, n.config.TokenValidity)
+	token := NewAuthToken(upstreamClaims, n.config.URL, userId, n.config.TokenValidity)
 	n.log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := n.signer.GenerateSignedToken(token)
