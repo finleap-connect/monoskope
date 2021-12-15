@@ -8,7 +8,6 @@ gateway:
   replicaCount: 1
   auth:
     selfURL: http://127.0.0.1:5555
-    identityProviderName: dex
     identityProviderURL: http://127.0.0.1:5556
 
 eventstore:

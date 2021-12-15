@@ -19,7 +19,6 @@ gateway:
     tag: *imageTag
   auth:
     selfURL: https://api.monoskope.yourdomain.io
-    identityProviderName: dex
     identityProviderURL: https://dex.yourdomain.io
   resources:
     limits:
