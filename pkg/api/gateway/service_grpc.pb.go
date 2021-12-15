@@ -221,3 +221,89 @@ var ClusterAuth_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/gateway/service.proto",
 }
+
+// APITokenClient is the client API for APIToken service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type APITokenClient interface {
+	RequestAPIToken(ctx context.Context, in *APITokenRequest, opts ...grpc.CallOption) (*ClusterAuthTokenResponse, error)
+}
+
+type aPITokenClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAPITokenClient(cc grpc.ClientConnInterface) APITokenClient {
+	return &aPITokenClient{cc}
+}
+
+func (c *aPITokenClient) RequestAPIToken(ctx context.Context, in *APITokenRequest, opts ...grpc.CallOption) (*ClusterAuthTokenResponse, error) {
+	out := new(ClusterAuthTokenResponse)
+	err := c.cc.Invoke(ctx, "/gateway.APIToken/RequestAPIToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// APITokenServer is the server API for APIToken service.
+// All implementations must embed UnimplementedAPITokenServer
+// for forward compatibility
+type APITokenServer interface {
+	RequestAPIToken(context.Context, *APITokenRequest) (*ClusterAuthTokenResponse, error)
+	mustEmbedUnimplementedAPITokenServer()
+}
+
+// UnimplementedAPITokenServer must be embedded to have forward compatible implementations.
+type UnimplementedAPITokenServer struct {
+}
+
+func (UnimplementedAPITokenServer) RequestAPIToken(context.Context, *APITokenRequest) (*ClusterAuthTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestAPIToken not implemented")
+}
+func (UnimplementedAPITokenServer) mustEmbedUnimplementedAPITokenServer() {}
+
+// UnsafeAPITokenServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to APITokenServer will
+// result in compilation errors.
+type UnsafeAPITokenServer interface {
+	mustEmbedUnimplementedAPITokenServer()
+}
+
+func RegisterAPITokenServer(s grpc.ServiceRegistrar, srv APITokenServer) {
+	s.RegisterService(&APIToken_ServiceDesc, srv)
+}
+
+func _APIToken_RequestAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(APITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APITokenServer).RequestAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.APIToken/RequestAPIToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APITokenServer).RequestAPIToken(ctx, req.(*APITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// APIToken_ServiceDesc is the grpc.ServiceDesc for APIToken service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var APIToken_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gateway.APIToken",
+	HandlerType: (*APITokenServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RequestAPIToken",
+			Handler:    _APIToken_RequestAPIToken_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/gateway/service.proto",
+}

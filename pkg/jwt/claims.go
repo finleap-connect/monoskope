@@ -22,18 +22,17 @@ import (
 )
 
 const (
-	AudienceMonoctl               = "monoctl"
-	AudienceK8sAuth               = "k8sauth"
-	AudienceM8Operator            = "m8operator"
 	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
+// https://www.iana.org/assignments/jwt/jwt.xhtml
 type StandardClaims struct {
-	Name            string            `json:"name,omitempty"`           // User’s display name.
-	Email           string            `json:"email,omitempty"`          // The email of the user.
-	EmailVerified   bool              `json:"email_verified,omitempty"` // If the upstream provider has verified the email.
-	Groups          []string          `json:"groups,omitempty"`         // A list of strings representing the groups a user is a member of.
-	FederatedClaims map[string]string `json:"federated_claims,omitempty"`
+	Name            string            `json:"name,omitempty"`             // User’s display name.
+	Email           string            `json:"email,omitempty"`            // The email of the user.
+	EmailVerified   bool              `json:"email_verified,omitempty"`   // If the upstream provider has verified the email.
+	Groups          []string          `json:"groups,omitempty"`           // A list of strings representing the groups a user is a member of.
+	FederatedClaims map[string]string `json:"federated_claims,omitempty"` // Claims from any upstream IDP.
+	Scope           string            `json:"scope"`                      // Space-separated list of scopes associated with the token.
 }
 
 type ClusterClaim struct {
@@ -60,7 +59,6 @@ func NewAuthToken(claims *StandardClaims, issuer, userId string, validity time.D
 			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
-			Audience:  jwt.Audience{AudienceMonoctl},
 		},
 		StandardClaims: claims,
 	}
@@ -77,7 +75,6 @@ func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, 
 			Expiry:    jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
-			Audience:  jwt.Audience{AudienceK8sAuth},
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
@@ -95,7 +92,6 @@ func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId string) *Au
 			Expiry:    jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
 			NotBefore: jwt.NewNumericDate(now),
 			IssuedAt:  jwt.NewNumericDate(now),
-			Audience:  jwt.Audience{AudienceM8Operator},
 		},
 		StandardClaims: claims,
 	}

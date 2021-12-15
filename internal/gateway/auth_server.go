@@ -41,28 +41,35 @@ const (
 	HeaderAuthorization = "Authorization"
 )
 
+type OpenIdConfiguration struct {
+	Issuer  string `json:"issuer"`
+	JwksURL string `json:"jwks_uri"`
+}
+
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
-	api         *http.Server
-	engine      *gin.Engine
-	log         logger.Logger
-	shutdown    *util.ShutdownWaitGroup
-	authHandler *auth.Handler
-	userRepo    repositories.ReadOnlyUserRepository
-	url         string
+	api        *http.Server
+	engine     *gin.Engine
+	log        logger.Logger
+	shutdown   *util.ShutdownWaitGroup
+	authClient *auth.Client
+	authServer *auth.Server
+	userRepo   repositories.ReadOnlyUserRepository
+	url        string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(url string, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(url string, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
-		api:         &http.Server{Handler: engine},
-		engine:      engine,
-		log:         logger.WithName("auth-server"),
-		shutdown:    util.NewShutdownWaitGroup(),
-		authHandler: authHandler,
-		userRepo:    userRepo,
-		url:         url,
+		api:        &http.Server{Handler: engine},
+		engine:     engine,
+		log:        logger.WithName("auth-server"),
+		shutdown:   util.NewShutdownWaitGroup(),
+		authClient: client,
+		authServer: server,
+		userRepo:   userRepo,
+		url:        url,
 	}
 	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
@@ -127,15 +134,15 @@ func (s *authServer) registerViews(r *gin.Engine) {
 }
 
 func (s *authServer) discovery(c *gin.Context) {
-	c.JSON(http.StatusOK, &auth.OpenIdConfiguration{
+	c.JSON(http.StatusOK, &OpenIdConfiguration{
 		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
 		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
 	})
 }
 
 func (s *authServer) keys(c *gin.Context) {
-	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authHandler.KeyExpiration().Seconds())))
-	c.JSON(http.StatusOK, s.authHandler.Keys())
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authServer.KeyExpiration().Seconds())))
+	c.JSON(http.StatusOK, s.authServer.Keys())
 }
 
 // auth serves as handler for the auth route of the server.
@@ -171,7 +178,7 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
-	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
+	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request))
 	if authToken != nil {
 		if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
 			s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
@@ -182,7 +189,7 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 }
 
 // tokenValidation validates the token provided within the authorization flow
-func (s *authServer) tokenValidation(ctx context.Context, token string, expectedAudience ...string) *jwt.AuthToken {
+func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
 	if token == "" {
@@ -191,11 +198,11 @@ func (s *authServer) tokenValidation(ctx context.Context, token string, expected
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
+	if err := s.authServer.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
-	if err := authToken.Validate(s.url, expectedAudience...); err != nil {
+	if err := authToken.Validate(s.url); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}

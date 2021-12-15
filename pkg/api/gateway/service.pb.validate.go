@@ -752,3 +752,106 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterAuthTokenResponseValidationError{}
+
+// Validate checks the field values on APITokenRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *APITokenRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on APITokenRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// APITokenRequestMultiError, or nil if none found.
+func (m *APITokenRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *APITokenRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for AuthorizationScope
+
+	// no validation rules for Subject
+
+	if len(errors) > 0 {
+		return APITokenRequestMultiError(errors)
+	}
+	return nil
+}
+
+// APITokenRequestMultiError is an error wrapping multiple validation errors
+// returned by APITokenRequest.ValidateAll() if the designated constraints
+// aren't met.
+type APITokenRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m APITokenRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m APITokenRequestMultiError) AllErrors() []error { return m }
+
+// APITokenRequestValidationError is the validation error returned by
+// APITokenRequest.Validate if the designated constraints aren't met.
+type APITokenRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e APITokenRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e APITokenRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e APITokenRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e APITokenRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e APITokenRequestValidationError) ErrorName() string { return "APITokenRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e APITokenRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAPITokenRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = APITokenRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = APITokenRequestValidationError{}
