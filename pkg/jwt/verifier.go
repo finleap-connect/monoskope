@@ -18,7 +18,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"sync"
-	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/fsnotify/fsnotify"
@@ -30,17 +29,15 @@ import (
 type JWTVerifier interface {
 	Verify(string, interface{}) error
 	JWKS() *jose.JSONWebKeySet
-	KeyExpiration() time.Duration
-	Close() error
+	Close()
 }
 
 type jwtVerifier struct {
-	log           logger.Logger
-	keyExpiration time.Duration
-	jsonWebKey    *jose.JSONWebKey
-	watcher       *fsnotify.Watcher
-	mutex         sync.RWMutex
-	watching      chan struct{}
+	log        logger.Logger
+	jsonWebKey *jose.JSONWebKey
+	watcher    *fsnotify.Watcher
+	mutex      sync.RWMutex
+	watching   chan struct{}
 }
 
 // NewVerifier creates a new verifier for raw JWT
@@ -150,11 +147,7 @@ func (v *jwtVerifier) JWKS() *jose.JSONWebKeySet {
 	return jwks
 }
 
-func (v *jwtVerifier) KeyExpiration() time.Duration {
-	return v.keyExpiration
-}
-
 // Close closes file watcher
-func (v *jwtVerifier) Close() error {
-	return v.watcher.Close()
+func (v *jwtVerifier) Close() {
+	close(v.watching)
 }
