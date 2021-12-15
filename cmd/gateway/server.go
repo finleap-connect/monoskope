@@ -178,8 +178,6 @@ func init() {
 	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
 	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
-	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))
-
 	flags.StringVar(&identityProvider, "identity-provider-url", "", "Identity provider URL")
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-url"))
 
