@@ -24,7 +24,6 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -192,8 +191,16 @@ func (n *Client) verifyStateAndClaims(ctx context.Context, token *oauth2.Token, 
 }
 
 // Exchange exchanges the auth code with a token of the upstream IDP and verifies the claims
-func (n *Client) Exchange(ctx context.Context, code, state, redirectURL string) (*jwt.StandardClaims, error) {
-	upstreamToken, err := n.exchange(ctx, code, redirectURL)
+func (n *Client) Exchange(ctx context.Context, code, state string) (*jwt.StandardClaims, error) {
+	decodedState, err := DecodeState(state)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode state")
+	}
+	if !decodedState.IsValid() {
+		return nil, grpcUtil.ErrInvalidArgument("url is invalid")
+	}
+
+	upstreamToken, err := n.exchange(ctx, code, decodedState.Callback)
 	if err != nil {
 		return nil, err
 	}
@@ -209,13 +216,13 @@ func (n *Client) Exchange(ctx context.Context, code, state, redirectURL string) 
 }
 
 // AuthCodeURL returns a URL to OAuth 2.0 provider's consent page that asks for permissions for the required scopes explicitly.
-func (n *Client) GetAuthCodeURL(state *api.AuthState) (string, string, error) {
-	if !n.redirectUrlAllowed(state.GetCallbackUrl()) {
+func (n *Client) GetAuthCodeURL(redirectUrl string) (string, string, error) {
+	if !n.redirectUrlAllowed(redirectUrl) {
 		return "", "", errors.New("callback url not allowed")
 	}
 
 	// Encode state and calculate nonce
-	encoded, err := (&State{Callback: state.GetCallbackUrl()}).Encode()
+	encoded, err := (&State{Callback: redirectUrl}).Encode()
 	if err != nil {
 		return "", "", err
 	}
@@ -228,9 +235,9 @@ func (n *Client) GetAuthCodeURL(state *api.AuthState) (string, string, error) {
 
 	if n.config.OfflineAsScope {
 		scopes = append(n.config.Scopes, oidc.ScopeOfflineAccess)
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackUrl()).AuthCodeURL(encoded, oidc.Nonce(nonce))
+		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oidc.Nonce(nonce))
 	} else {
-		authCodeURL = n.getOauth2Config(scopes, state.GetCallbackUrl()).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
+		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	}
 
 	return authCodeURL, encoded, nil
