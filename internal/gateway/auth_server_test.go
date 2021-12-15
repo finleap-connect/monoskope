@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -48,7 +49,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can authenticate with JWT", func() {
 		expectedValidity := time.Hour * 1
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
@@ -72,7 +73,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("fails authentication with expired JWT", func() {
 		expectedValidity := -30 * time.Minute
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		token.NotBefore = josejwt.NewNumericDate(time.Now().UTC().Add(-1 * time.Hour))
 
 		signer := env.JwtTestEnv.CreateSigner()
@@ -89,7 +90,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("fails authentication with not existing user", func() {
 		expectedValidity := time.Hour * 1
-		token := jwt.NewAuthToken(&jwt.StandardClaims{Name: env.NotExistingUser.Name, Email: env.NotExistingUser.Email}, localAddrAPIServer, env.NotExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.NotExistingUser.Name, Email: env.NotExistingUser.Email}, localAddrAPIServer, env.NotExistingUser.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())

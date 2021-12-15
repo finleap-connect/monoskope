@@ -226,7 +226,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
 		return nil
 	} else {
-		claims := jwt.NewAuthToken(&jwt.StandardClaims{
+		claims := auth.NewAuthToken(&jwt.StandardClaims{
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
 		}, s.url, userId, time.Minute*5)

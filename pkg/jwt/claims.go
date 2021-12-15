@@ -17,12 +17,7 @@ package jwt
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"gopkg.in/square/go-jose.v2/jwt"
-)
-
-const (
-	ClusterBootstrapTokenValidity = 10 * time.Minute
 )
 
 // https://www.iana.org/assignments/jwt/jwt.xhtml
@@ -32,7 +27,6 @@ type StandardClaims struct {
 	EmailVerified   bool              `json:"email_verified,omitempty"`   // If the upstream provider has verified the email.
 	Groups          []string          `json:"groups,omitempty"`           // A list of strings representing the groups a user is a member of.
 	FederatedClaims map[string]string `json:"federated_claims,omitempty"` // Claims from any upstream IDP.
-	Scope           string            `json:"scope"`                      // Space-separated list of scopes associated with the token.
 }
 
 type ClusterClaim struct {
@@ -46,55 +40,7 @@ type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
 	*ClusterClaim
-}
-
-func NewAuthToken(claims *StandardClaims, issuer, userId string, validity time.Duration) *AuthToken {
-	now := time.Now().UTC()
-
-	return &AuthToken{
-		Claims: &jwt.Claims{
-			ID:        uuid.New().String(),
-			Issuer:    issuer,
-			Subject:   userId,
-			Expiry:    jwt.NewNumericDate(now.Add(validity)),
-			NotBefore: jwt.NewNumericDate(now),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-		StandardClaims: claims,
-	}
-}
-
-func NewKubernetesAuthToken(claims *StandardClaims, clusterClaim *ClusterClaim, issuer, userId string, validity time.Duration) *AuthToken {
-	now := time.Now().UTC()
-
-	return &AuthToken{
-		Claims: &jwt.Claims{
-			ID:        uuid.New().String(),
-			Issuer:    issuer,
-			Subject:   userId,
-			Expiry:    jwt.NewNumericDate(now.Add(validity)),
-			NotBefore: jwt.NewNumericDate(now),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-		StandardClaims: claims,
-		ClusterClaim:   clusterClaim,
-	}
-}
-
-func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId string) *AuthToken {
-	now := time.Now().UTC()
-
-	return &AuthToken{
-		Claims: &jwt.Claims{
-			ID:        uuid.New().String(),
-			Issuer:    issuer,
-			Subject:   userId,
-			Expiry:    jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
-			NotBefore: jwt.NewNumericDate(now),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-		StandardClaims: claims,
-	}
+	Scope string `json:"scope"` // Space-separated list of scopes associated with the token.
 }
 
 func (t *AuthToken) Validate(issuer string) error {
