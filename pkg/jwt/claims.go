@@ -40,7 +40,8 @@ type AuthToken struct {
 	*jwt.Claims
 	*StandardClaims
 	*ClusterClaim
-	Scope string `json:"scope"` // Space-separated list of scopes associated with the token.
+	Scope      string `json:"scope"`        // Space-separated list of scopes associated with the token.
+	IsAPIToken bool   `json:"is_api_token"` // Bool to indicate if the token is an API token.
 }
 
 func (t *AuthToken) Validate(issuer string) error {

@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/gateway";
@@ -118,9 +119,17 @@ message ClusterAuthTokenResponse {
 // authenticate against Monoskope and authorize specific scopes.
 message APITokenRequest {
   // Scope the resulting token is issued for
-  AuthorizationScope authorization_scope = 1;
-  // Subject the token authenticates
-  string username = 2;
+  repeated AuthorizationScope authorization_scopes = 1;
+
+  // Duration for which the issued token will be valid
+  google.protobuf.Duration validity = 2;
+
+  oneof user {
+    // Unique identifier of an existing user (UUID 128-bit number)
+    string user_id = 3 [ (validate.rules).string.uuid = true ];
+    // Name of the user the token is valid for (not necessarily a real user)
+    string username = 4;
+  }
 }
 
 // APITokenResponse is the answer to an APITokenRequest
