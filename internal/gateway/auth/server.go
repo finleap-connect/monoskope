@@ -75,7 +75,3 @@ func (n *Server) Authorize(ctx context.Context, token string, claims interface{}
 func (n *Server) Keys() *jose.JSONWebKeySet {
 	return n.verifier.JWKS()
 }
-
-func (n *Server) KeyExpiration() time.Duration {
-	return n.verifier.KeyExpiration()
-}
