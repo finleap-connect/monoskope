@@ -197,6 +197,11 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
 		return authToken
 	}
+	if route == "/scim" {
+		if containsString(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
+			return authToken
+		}
+	}
 
 	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
 	return nil
