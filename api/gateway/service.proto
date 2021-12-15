@@ -35,6 +35,11 @@ service ClusterAuth {
   rpc GetAuthToken(ClusterAuthTokenRequest) returns (ClusterAuthTokenResponse);
 }
 
+// ClusterAuth is the API to request token for cluster authentication from
+service APIToken {
+  rpc RequestAPIToken(APITokenRequest) returns (ClusterAuthTokenResponse);
+}
+
 message AuthState { string callback_url = 1; }
 
 message AuthInformation {
@@ -46,6 +51,7 @@ message AuthCode {
   string code = 1;
   string state = 2;
   string callback_url = 3;
+  repeated string scopes = 4;
 }
 
 message AuthResponse {
@@ -66,6 +72,24 @@ message ClusterAuthTokenRequest {
 // ClusterAuthTokenResponse contains an auth token valid to
 // authenticate against a certain cluster with a specific role
 message ClusterAuthTokenResponse {
+  // JWT to authenticate a K8s cluster
   string access_token = 1;
+  // Timestamp when the token expires
   google.protobuf.Timestamp expiry = 2;
+}
+
+// APITokenRequest is send in order to retrieve an API token valid to
+// authenticate against Monoskope and authorize specific scopes.
+message APITokenRequest {
+  // Scope the resulting token is issued for
+  AuthorizationScope authorization_scope = 1;
+  // Subject the token authenticates
+  string subject = 2;
+}
+
+enum AuthorizationScope {
+  NONE = 0; // Dummy to prevent accidents
+  API = 1; // Read-write for the complete API
+  WRITE_SCIM = 2; // Read-write for endpoints under /scim
+  WRITE_K8SOPERATOR = 3; // Read-write for K8sOperator endpoints
 }
