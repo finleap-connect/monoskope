@@ -97,22 +97,9 @@ func NewClusterBootstrapToken(claims *StandardClaims, issuer, userId string) *Au
 	}
 }
 
-// IsValid returns if the token is not used too early or is expired
-func (t *AuthToken) Validate(issuer string, expectedAudience ...string) error {
-	if len(expectedAudience) > 0 {
-		for i := 0; i < len(expectedAudience); i++ {
-			if t.validate(issuer, expectedAudience[i]) == nil {
-				return nil
-			}
-		}
-	}
-	return t.validate(issuer, expectedAudience...)
-}
-
-func (t *AuthToken) validate(issuer string, expectedAudience ...string) error {
+func (t *AuthToken) Validate(issuer string) error {
 	return t.ValidateWithLeeway(jwt.Expected{
-		Issuer:   issuer,
-		Audience: expectedAudience,
-		Time:     time.Now().UTC(),
+		Issuer: issuer,
+		Time:   time.Now().UTC(),
 	}, jwt.DefaultLeeway)
 }
