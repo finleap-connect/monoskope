@@ -141,7 +141,7 @@ func (s *authServer) discovery(c *gin.Context) {
 }
 
 func (s *authServer) keys(c *gin.Context) {
-	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authServer.KeyExpiration().Seconds())))
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
 	c.JSON(http.StatusOK, s.authServer.Keys())
 }
 

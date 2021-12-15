@@ -47,6 +47,7 @@ var _ = Describe("jwt/verifier", func() {
 		verifier, err := testEnv.CreateVerifier()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(verifier).ToNot(BeNil())
+		defer verifier.Close()
 
 		claimsFromJWT := jwt.Claims{}
 		err = verifier.Verify(rawJWT, &claimsFromJWT)
