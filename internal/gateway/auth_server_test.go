@@ -103,6 +103,20 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
+	It("can not authenticate with JWT for wrong scope", func() {
+		token := auth.NewClusterBootstrapToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id)
+		signer := env.JwtTestEnv.CreateSigner()
+		signedToken, err := signer.GenerateSignedToken(token)
+		Expect(err).NotTo(HaveOccurred())
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/auth/test", localAddrAuthServer), nil)
+		Expect(err).NotTo(HaveOccurred())
+
+		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
+		res, err := env.HttpClient.Do(req)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
+	})
 })
 
 var _ = Describe("Checks", func() {
