@@ -1257,13 +1257,67 @@ func (m *APITokenRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for AuthorizationScope
+	if all {
+		switch v := interface{}(m.GetValidity()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, APITokenRequestValidationError{
+					field:  "Validity",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, APITokenRequestValidationError{
+					field:  "Validity",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetValidity()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return APITokenRequestValidationError{
+				field:  "Validity",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	// no validation rules for Username
+	switch m.User.(type) {
+
+	case *APITokenRequest_UserId:
+
+		if err := m._validateUuid(m.GetUserId()); err != nil {
+			err = APITokenRequestValidationError{
+				field:  "UserId",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	case *APITokenRequest_Username:
+		// no validation rules for Username
+
+	}
 
 	if len(errors) > 0 {
 		return APITokenRequestMultiError(errors)
 	}
+	return nil
+}
+
+func (m *APITokenRequest) _validateUuid(uuid string) error {
+	if matched := _messages_uuidPattern.MatchString(uuid); !matched {
+		return errors.New("invalid uuid format")
+	}
+
 	return nil
 }
 
