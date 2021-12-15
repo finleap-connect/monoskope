@@ -54,7 +54,7 @@ func NewKubernetesAuthToken(claims *jwt.StandardClaims, clusterClaim *jwt.Cluste
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
-		Scope:          gateway.AuthorizationScope_READ_K8STOKEN.String(),
+		Scope:          gateway.AuthorizationScope_NONE.String(),
 	}
 }
 
