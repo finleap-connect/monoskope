@@ -99,7 +99,6 @@ spec:
             - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
-            - --key-cache-duration={{ .Values.keySecret.validity }}
             - --k8s-token-validity={{ .Values.k8sTokenValidity }}
             - --auth-token-validity={{ .Values.authTokenValidity }}
             - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
