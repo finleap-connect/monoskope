@@ -38,7 +38,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
@@ -59,7 +58,8 @@ var (
 type oAuthTestEnv struct {
 	*test.TestEnv
 	JwtTestEnv            *jwt.TestEnv
-	AuthConfig            *auth.Config
+	ClientAuthConfig      *auth.ClientConfig
+	ServerAuthConfig      *auth.ServerConfig
 	IdentityProviderURL   string
 	ApiListenerAPIServer  net.Listener
 	ApiListenerAuthServer net.Listener
@@ -114,13 +114,12 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 	}
 	env.IdentityProviderURL = fmt.Sprintf("http://127.0.0.1:%s", dexContainer.GetPort("5556/tcp"))
 
-	env.AuthConfig = &auth.Config{
-		IdentityProviderName: "dex",
-		IdentityProvider:     env.IdentityProviderURL,
-		OfflineAsScope:       true,
-		ClientId:             "gateway",
-		ClientSecret:         "app-secret",
-		Nonce:                "secret-nonce",
+	env.ClientAuthConfig = &auth.ClientConfig{
+		IdentityProvider: env.IdentityProviderURL,
+		OfflineAsScope:   true,
+		ClientId:         "gateway",
+		ClientSecret:     "app-secret",
+		Nonce:            "secret-nonce",
 		Scopes: []string{
 			"openid",
 			"profile",
@@ -130,6 +129,10 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		RedirectURIs: []string{
 			fmt.Sprintf("http://%s%s", RedirectURLHostname, RedirectURLPort),
 		},
+	}
+	env.ServerAuthConfig = &auth.ServerConfig{
+		URL:           localAddrAuthServer,
+		TokenValidity: time.Minute * 1,
 	}
 	return env, nil
 }
@@ -155,8 +158,7 @@ func (env *oAuthTestEnv) Shutdown() error {
 
 func TestGateway(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/gateway-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "gateway/integration", []Reporter{junitReporter})
+	RunSpecs(t, "gateway/integration")
 }
 
 var _ = BeforeSuite(func() {
@@ -175,11 +177,13 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// Start gateway
-		authHandler := auth.NewHandler(env.AuthConfig, signer, verifier)
+		authClient := auth.NewClient(env.ClientAuthConfig)
+		Expect(err).ToNot(HaveOccurred())
+		authServer := auth.NewServer(env.ServerAuthConfig, signer, verifier)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Setup OIDC
-		err = authHandler.SetupOIDC(ctx)
+		err = authClient.SetupOIDC(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Setup user repo
@@ -227,7 +231,7 @@ var _ = BeforeSuite(func() {
 
 		userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
 		env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
-		gatewayApiServer := NewGatewayAPIServer(env.AuthConfig, authHandler, userRepo)
+		gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, userRepo)
 		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, time.Hour*1)
 
 		// Create gRPC server and register implementation
@@ -247,7 +251,7 @@ var _ = BeforeSuite(func() {
 			}
 		}()
 
-		env.LocalAuthServer = NewAuthServer(localAddrAPIServer, authHandler, userRepo)
+		env.LocalAuthServer = NewAuthServer(localAddrAPIServer, authClient, authServer, userRepo)
 		env.ApiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
