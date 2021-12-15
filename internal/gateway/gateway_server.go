@@ -16,7 +16,6 @@ package gateway
 
 import (
 	"context"
-	"strings"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -78,7 +77,6 @@ func (s *gatewayApiServer) ExchangeAuthCode(ctx context.Context, code *api.AuthC
 
 	// Override upstream name
 	upstreamClaims.Name = user.Name
-	upstreamClaims.Scope = strings.Join(code.GetScopes(), " ")
 
 	// Issue token
 	signedToken, rawToken, err := s.authServer.IssueToken(ctx, upstreamClaims, user.ID().String())

@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/certificatemanagement"
@@ -111,7 +112,7 @@ func (r *clusterBootstrapReactor) HandleEvent(ctx context.Context, event es.Even
 func (r *clusterBootstrapReactor) handleClusterCreated(ctx context.Context, name string, event es.Event, eventsChannel chan<- es.Event) error {
 	var email = name + DOMAIN
 	r.log.Info("Generating bootstrap token...", "AggregateID", event.AggregateID(), "Name", name)
-	rawJWT, err := r.signer.GenerateSignedToken(jwt.NewClusterBootstrapToken(&jwt.StandardClaims{
+	rawJWT, err := r.signer.GenerateSignedToken(auth.NewClusterBootstrapToken(&jwt.StandardClaims{
 		Name:  name,
 		Email: email,
 	}, r.issuerURL, uuid.New().String()))
