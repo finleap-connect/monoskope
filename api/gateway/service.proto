@@ -91,5 +91,4 @@ enum AuthorizationScope {
   API = 1; // Read-write for the complete API
   WRITE_SCIM = 2; // Read-write for endpoints under /scim
   WRITE_K8SOPERATOR = 3; // Read-write for K8sOperator endpoints
-  READ_K8STOKEN = 4; // Read-only k8s authentication token endpoint
 }

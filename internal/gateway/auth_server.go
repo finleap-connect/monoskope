@@ -193,11 +193,10 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	// Validate scopes
 	route := c.Param("route")
 	scopes := strings.Split(authToken.Scope, " ")
-
 	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
 		return authToken
 	}
-	if route == "/scim" {
+	if strings.HasPrefix(route, "/scim") {
 		if containsString(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
 			return authToken
 		}
