@@ -102,6 +102,7 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defer verifier.Close()
 
 		// Create interceptor for auth
 		authTokenValidityDuration, err := time.ParseDuration(authTokenValidity)
