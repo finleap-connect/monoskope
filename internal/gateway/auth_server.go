@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -179,13 +180,35 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request))
-	if authToken != nil {
-		if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
-			s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
-			return nil
+	if authToken == nil {
+		return nil
+	}
+
+	// Check user actually exists in m8
+	if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
+		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
+		return nil
+	}
+
+	// Validate scopes
+	route := c.Param("route")
+	scopes := strings.Split(authToken.Scope, " ")
+
+	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
+		return authToken
+	}
+
+	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
+	return nil
+}
+
+func containsString(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
 		}
 	}
-	return authToken
+	return false
 }
 
 // tokenValidation validates the token provided within the authorization flow
@@ -207,7 +230,7 @@ func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.Aut
 		return nil
 	}
 
-	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email)
+	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email, "scope", authToken.Scope)
 
 	return authToken
 }
