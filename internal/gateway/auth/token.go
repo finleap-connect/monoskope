@@ -15,6 +15,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -76,5 +77,28 @@ func NewClusterBootstrapToken(claims *jwt.StandardClaims, issuer, userId string)
 		},
 		StandardClaims: claims,
 		Scope:          gateway.AuthorizationScope_WRITE_K8SOPERATOR.String(),
+	}
+}
+
+func NewApiToken(claims *jwt.StandardClaims, issuer, userId string, validity time.Duration, scopes []gateway.AuthorizationScope) *jwt.AuthToken {
+	now := time.Now().UTC()
+
+	var scopesString string
+	for _, scope := range scopes {
+		scopesString = fmt.Sprintf("%s %s", scopesString, scope.String())
+	}
+
+	return &jwt.AuthToken{
+		Claims: &jose_jwt.Claims{
+			ID:        uuid.New().String(),
+			Issuer:    issuer,
+			Subject:   userId,
+			Expiry:    jose_jwt.NewNumericDate(now.Add(validity)),
+			NotBefore: jose_jwt.NewNumericDate(now),
+			IssuedAt:  jose_jwt.NewNumericDate(now),
+		},
+		StandardClaims: claims,
+		Scope:          scopesString,
+		IsAPIToken:     true,
 	}
 }

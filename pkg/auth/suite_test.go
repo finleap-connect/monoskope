@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/onsi/ginkgo/reporters"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -43,8 +42,7 @@ var (
 
 func TestAuth(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/monoctl-auth-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "monoctl/auth", []Reporter{junitReporter})
+	RunSpecs(t, "monoctl/auth")
 }
 
 var _ = BeforeSuite(func() {
