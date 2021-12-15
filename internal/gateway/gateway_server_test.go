@@ -38,16 +38,16 @@ var _ = Describe("Gateway", func() {
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
 
-		authInfo, err := gwc.GetAuthInformation(context.Background(), &api.AuthState{CallbackUrl: "http://localhost:8000"})
+		response, err := gwc.RequestUpstreamAuthentication(context.Background(), &api.UpstreamAuthenticationRequest{CallbackUrl: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(authInfo).ToNot(BeNil())
-		env.Log.Info("AuthCodeURL: " + authInfo.AuthCodeUrl)
+		Expect(response).ToNot(BeNil())
+		env.Log.Info("UpstreamIdpRedirect: " + response.UpstreamIdpRedirect)
 	})
 	It("can go through oidc-flow with existing user", func() {
 		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		gwcAuth := api.NewGatewayClient(conn)
+		gwc := api.NewGatewayClient(conn)
 
 		ready := make(chan string, 1)
 		oidcClientServer, err := env.NewOidcClientServer(ready)
@@ -55,17 +55,20 @@ var _ = Describe("Gateway", func() {
 		defer oidcClientServer.Close()
 
 		env.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
-		authInfo, err := gwcAuth.GetAuthInformation(context.Background(), &api.AuthState{CallbackUrl: oidcClientServer.RedirectURI})
+		response, err := gwc.RequestUpstreamAuthentication(context.Background(), &api.UpstreamAuthenticationRequest{CallbackUrl: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(authInfo).ToNot(BeNil())
+		Expect(response).ToNot(BeNil())
 
 		var innerErr error
-		res, err := env.HttpClient.Get(authInfo.AuthCodeUrl)
+		res, err := env.HttpClient.Get(response.UpstreamIdpRedirect)
 		Expect(err).NotTo(HaveOccurred())
+
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		Expect(err).NotTo(HaveOccurred())
+
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
+
 		formAction := fmt.Sprintf("%s%s", env.IdentityProviderURL, path)
 
 		var authCode string
@@ -74,7 +77,7 @@ var _ = Describe("Gateway", func() {
 		eg.Go(func() error {
 			defer GinkgoRecover()
 			var innerErr error
-			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, authInfo.AuthCodeUrl, authInfo.State)
+			authCode, innerErr = oidcClientServer.ReceiveCodeViaLocalServer(ctx, response.UpstreamIdpRedirect, response.State)
 			return innerErr
 		})
 		eg.Go(func() error {
@@ -92,7 +95,7 @@ var _ = Describe("Gateway", func() {
 		Expect(eg.Wait()).NotTo(HaveOccurred())
 		Expect(statusCode).To(Equal(http.StatusOK))
 
-		authResponse, err := gwcAuth.ExchangeAuthCode(context.Background(), &api.AuthCode{Code: authCode, State: authInfo.GetState(), CallbackUrl: oidcClientServer.RedirectURI})
+		authResponse, err := gwc.RequestAuthentication(context.Background(), &api.AuthenticationRequest{Code: authCode, State: response.State})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(authResponse).ToNot(BeNil())
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
