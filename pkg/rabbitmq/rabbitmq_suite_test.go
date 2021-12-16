@@ -19,7 +19,6 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/test"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
@@ -30,8 +29,7 @@ var (
 
 func TestRabbitmq(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/rabbitmq-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Rabbitmq Suite", []Reporter{junitReporter})
+	RunSpecs(t, "Rabbitmq Suite")
 }
 
 var _ = BeforeSuite(func() {

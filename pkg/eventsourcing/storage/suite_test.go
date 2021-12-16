@@ -19,7 +19,6 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/test"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
@@ -30,8 +29,7 @@ var (
 
 func TestEventStoreStorage(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/event-sourcing-storage-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "eventsourcing/storage", []Reporter{junitReporter})
+	RunSpecs(t, "eventsourcing/storage")
 }
 
 var _ = BeforeSuite(func() {
