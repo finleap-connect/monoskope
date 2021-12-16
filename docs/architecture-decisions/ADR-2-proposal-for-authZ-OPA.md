@@ -1,13 +1,13 @@
 ## Context
 
-Flexible Authorization is a mandatory feature for Monoskope(m8).
+Flexible Authorization is a mandatory feature for Monoskope (m8).
 Flexible role binding will allow more granular control over resource access.
-Authorisation process simply consists of 2 steps - evaluation and enforcement
+Authorisation process simply consists of 2 steps - evaluation and enforcement.
 
-There are currently 2 ways  to implement it:
+There are currently 2 ways to implement it:
 
 1. each command and query provide their own policies and enforce them.
-2. integration of Open Policy Agent(OPA) for evaluation process and enforce it in a separate component
+2. integration of Open Policy Agent(OPA) for evaluation process and enforce it in a separate component.
 
 ### Pros and Cons of first approach
 
@@ -23,9 +23,9 @@ There are currently 2 ways  to implement it:
 
 ### Pros and Cons of OPA integration
 
-Open Policy Agent(OPA) is graduated opensource CNCF project widely adopted by community. It allows us to separate
-evaluation process from policy enforcement and provide own language for policy definition(Rego)
-This approach will also enable us to utilise Admission Control webhooks of k8s
+Open Policy Agent (OPA) is graduated opensource CNCF project widely adopted by community. It allows us to separate
+evaluation process from policy enforcement and provide own language for policy definition (Rego).
+This approach will also enable us to utilise Admission Control webhooks of k8s.
 
 #### Pros
 
