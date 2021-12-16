@@ -44,7 +44,7 @@ type getAuthTokenUsecase struct {
 
 func NewGetAuthTokenUsecase(
 	request *api.ClusterAuthTokenRequest,
-	result *api.ClusterAuthTokenResponse,
+	response *api.ClusterAuthTokenResponse,
 	signer jwt.JWTSigner,
 	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
@@ -52,14 +52,14 @@ func NewGetAuthTokenUsecase(
 	validity time.Duration,
 ) usecase.UseCase {
 	useCase := &getAuthTokenUsecase{
-		UseCaseBase: usecase.NewUseCaseBase("get-auth-token"),
-		request:     request,
-		result:      result,
-		signer:      signer,
-		userRepo:    userRepo,
-		clusterRepo: clusterRepo,
-		issuer:      issuer,
-		validity:    validity,
+		usecase.NewUseCaseBase("get-auth-token"),
+		request,
+		response,
+		signer,
+		userRepo,
+		clusterRepo,
+		issuer,
+		validity,
 	}
 	return useCase
 }

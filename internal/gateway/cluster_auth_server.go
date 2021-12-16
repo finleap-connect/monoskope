@@ -27,18 +27,16 @@ import (
 
 type clusterAuthApiServer struct {
 	api.UnimplementedClusterAuthServer
-	// Logger interface
-	log logger.Logger
-	//
+	log         logger.Logger
 	signer      jwt.JWTSigner
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
-	url         string
+	issuer      string
 	validity    time.Duration
 }
 
 func NewClusterAuthAPIServer(
-	url string,
+	issuer string,
 	signer jwt.JWTSigner,
 	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
@@ -49,18 +47,18 @@ func NewClusterAuthAPIServer(
 		signer:      signer,
 		userRepo:    userRepo,
 		clusterRepo: clusterRepo,
-		url:         url,
+		issuer:      issuer,
 		validity:    validity,
 	}
 	return s
 }
 
 func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.ClusterAuthTokenRequest) (*api.ClusterAuthTokenResponse, error) {
-	result := new(api.ClusterAuthTokenResponse)
-	uc := usecases.NewGetAuthTokenUsecase(request, result, s.signer, s.userRepo, s.clusterRepo, s.url, s.validity)
+	response := new(api.ClusterAuthTokenResponse)
+	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.userRepo, s.clusterRepo, s.issuer, s.validity)
 	err := uc.Run(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return response, nil
 }
