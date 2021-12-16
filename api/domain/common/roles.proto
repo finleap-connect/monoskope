@@ -12,43 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package roles
+syntax = "proto3";
 
-import (
-	"fmt"
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
 
-	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-)
+option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/common";
+
+package common;
 
 // Roles
-const (
+enum Role {
 	// Admin role
-	Admin es.Role = "admin"
-
+    admin = 0;
 	// User role
-	User es.Role = "user"
-
+    user = 1;
 	// OnCall role
-	OnCall es.Role = "oncall"
-
+    oncall = 2;
 	// K8sOperator role
-	K8sOperator es.Role = "k8soperator"
-)
-
-// A list of all existing roles.
-var AvailableRoles = []es.Role{
-	Admin,
-	User,
-	K8sOperator,
-	OnCall,
+    k8soperator = 3;
 }
 
-func ValidateRole(role string) error {
-	for _, v := range AvailableRoles {
-		if v.String() == role {
-			return nil
-		}
-	}
-	return errors.ErrInvalidArgument(fmt.Sprintf("Role '%s' is invalid.", role))
+// Scopes
+enum Scope {
+	// System scope
+    system = 0;
+	// Tenant scope
+    tenant = 1;
+	// Cluster scope
+    cluster = 2;
 }

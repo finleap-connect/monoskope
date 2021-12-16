@@ -22,12 +22,11 @@ import (
 
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	domainHandlers "github.com/finleap-connect/monoskope/pkg/domain/handler"
@@ -85,7 +84,7 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 }
 
 // setupRoleBinding creates rolebindings
-func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string, handler es.CommandHandler) error {
+func setupRoleBinding(ctx context.Context, userId uuid.UUID, role common.Role, scope common.Scope, handler es.CommandHandler) error {
 	data, err := commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
 		UserId: userId.String(),
 		Role:   role,
@@ -126,7 +125,7 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 			return err
 		}
 
-		err = setupRoleBinding(ctx, userId, roles.Admin.String(), scopes.System.String(), handler)
+		err = setupRoleBinding(ctx, userId, common.Role_admin, common.Scope_system, handler)
 		if err != nil {
 			return err
 		}

@@ -29,8 +29,6 @@ import (
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es_repos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
@@ -190,8 +188,8 @@ var _ = BeforeSuite(func() {
 		env.AdminUser = adminUser
 		adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 		adminRoleBinding.UserId = env.AdminUser.Id
-		adminRoleBinding.Role = roles.Admin.String()
-		adminRoleBinding.Scope = scopes.System.String()
+		adminRoleBinding.Role = api_common.Role_admin.String()
+		adminRoleBinding.Scope = api_common.Scope_system.String()
 
 		existingUser := projections.NewUserProjection(uuid.New()).(*projections.User)
 		existingUser.Name = "someone"

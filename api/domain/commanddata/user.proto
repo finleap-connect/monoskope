@@ -18,6 +18,7 @@ syntax = "proto3";
 // https://cloud.google.com/apis/design/naming_convention
 
 import "validate/validate.proto";
+import "api/domain/common/roles.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata";
 
@@ -36,9 +37,9 @@ message CreateUserRoleBindingCommandData {
   // Unique identifier of the user (UUID 128-bit number)
   string user_id = 1 [(validate.rules).string.uuid = true];
   // Name of the role to add
-  string role = 2 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  common.Role role = 2;
   // Scope of the role
-  string scope = 3 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  common.Scope scope = 3;
   // Unique identifier of the affected resource within scope (UUID 128-bit
   // number)
   string resource = 4 [(validate.rules).string.uuid = true];

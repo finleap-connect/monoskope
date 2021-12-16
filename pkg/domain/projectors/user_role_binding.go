@@ -56,8 +56,8 @@ func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, 
 		}
 
 		p.UserId = data.GetUserId()
-		p.Role = data.GetRole()
-		p.Scope = data.GetScope()
+		p.Role = data.GetRole().String()
+		p.Scope = data.GetScope().String()
 		p.Resource = data.GetResource()
 
 		if err := u.projectCreated(event, p.DomainProjection); err != nil {

@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 )
 
 // ensure the imports are used
@@ -33,6 +35,10 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = common.Role(0)
+
+	_ = common.Scope(0)
 )
 
 // define the regex for a UUID once up-front
@@ -247,49 +253,9 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetRole()) > 60 {
-		err := CreateUserRoleBindingCommandDataValidationError{
-			field:  "Role",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Role
 
-	if !_CreateUserRoleBindingCommandData_Role_Pattern.MatchString(m.GetRole()) {
-		err := CreateUserRoleBindingCommandDataValidationError{
-			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetScope()) > 60 {
-		err := CreateUserRoleBindingCommandDataValidationError{
-			field:  "Scope",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_CreateUserRoleBindingCommandData_Scope_Pattern.MatchString(m.GetScope()) {
-		err := CreateUserRoleBindingCommandDataValidationError{
-			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Scope
 
 	if err := m._validateUuid(m.GetResource()); err != nil {
 		err = CreateUserRoleBindingCommandDataValidationError{
@@ -391,7 +357,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CreateUserRoleBindingCommandDataValidationError{}
-
-var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z]+$")
-
-var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z]+$")

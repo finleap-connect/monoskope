@@ -66,7 +66,7 @@ So before adding a new `Command` you might have a look at the docs about them fi
     // Policies returns the Role/Scope combination allowed to execute.
     func (c *UpdateUserNameCommand) Policies(ctx context.Context) []es.Policy {
         return []es.Policy{
-            es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins to update a user name
+            es.NewPolicy().WithRole(es.Role(common.Role_admin.String())).WithScope(es.Scope(common.Scope_system.String())), // Allows system admins to update a user name
         }
     }
     ```

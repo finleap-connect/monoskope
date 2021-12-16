@@ -17,8 +17,7 @@ package users
 import (
 	"fmt"
 
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/google/uuid"
 )
@@ -54,8 +53,8 @@ func newSystemUser(name string) *projections.User {
 	// Create admin rolebinding
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.Nil)
 	adminRoleBinding.UserId = userId.String()
-	adminRoleBinding.Role = string(roles.Admin)
-	adminRoleBinding.Scope = string(scopes.System)
+	adminRoleBinding.Role = string(common.Role_admin.String())
+	adminRoleBinding.Scope = string(common.Scope_system.String())
 
 	// Create system user
 	user := projections.NewUserProjection(userId).(*projections.User)

@@ -17,8 +17,8 @@ package repositories
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/google/uuid"
 )
 
@@ -53,7 +53,7 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 
 	var clusters []*projections.Cluster
 	for _, roleBinding := range roleBindings {
-		if roleBinding.Scope == scopes.Tenant.String() {
+		if roleBinding.Scope == common.Scope_tenant.String() {
 			tenantClusterBinding, err := r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(roleBinding.GetResource()))
 			if err != nil {
 				return nil, err

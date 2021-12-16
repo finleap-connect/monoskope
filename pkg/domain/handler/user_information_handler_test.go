@@ -18,12 +18,11 @@ import (
 	"context"
 
 	cmddata "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -49,8 +48,8 @@ var _ = Describe("domain/handler", func() {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.System.String()
+	adminRoleBinding.Role = common.Role_admin.String()
+	adminRoleBinding.Scope = common.Scope_system.String()
 
 	inMemoryRoleRepo := es_repos.NewInMemoryRepository()
 	err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
@@ -103,8 +102,8 @@ var _ = Describe("domain/handler", func() {
 			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
-				Role:   roles.Admin.String(),
-				Scope:  scopes.System.String(),
+				Role:   common.Role_admin,
+				Scope:  common.Scope_system,
 			},
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -118,8 +117,8 @@ var _ = Describe("domain/handler", func() {
 			BaseCommand: roleBindingBase,
 			CreateUserRoleBindingCommandData: cmddata.CreateUserRoleBindingCommandData{
 				UserId: someUser.Id,
-				Role:   roles.Admin.String(),
-				Scope:  scopes.System.String(),
+				Role:   common.Role_admin,
+				Scope:  common.Scope_system,
 			},
 		}
 		_, err = handler.HandleCommand(manager.GetContext(), command)

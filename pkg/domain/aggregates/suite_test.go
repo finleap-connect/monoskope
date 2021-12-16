@@ -18,12 +18,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	meta "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -36,8 +35,8 @@ var (
 	expectedUserName = "the one cluster"
 	expectedEmail    = "me@example.com"
 
-	expectedTenantScope = scopes.Tenant
-	expectedAdminRole   = roles.Admin
+	expectedTenantScope = common.Scope_tenant
+	expectedAdminRole   = common.Role_admin
 	expectedResourceId  = uuid.New()
 	expectedUserId      = uuid.New()
 
@@ -70,8 +69,8 @@ func createSysAdminCtx() context.Context {
 
 	metaMgr.SetRoleBindings([]*projections.UserRoleBinding{
 		{
-			Role:  roles.Admin.String(),
-			Scope: scopes.System.String(),
+			Role:  common.Role_admin.String(),
+			Scope: common.Scope_system.String(),
 		},
 	})
 
@@ -200,8 +199,8 @@ func createUserRoleBinding(ctx context.Context, agg es.Aggregate, userId uuid.UU
 	Expect(ok).To(BeTrue())
 
 	esCommand.UserId = userId.String()
-	esCommand.Role = expectedAdminRole.String()
-	esCommand.Scope = expectedTenantScope.String()
+	esCommand.Role = expectedAdminRole
+	esCommand.Scope = expectedTenantScope
 	esCommand.Resource = expectedResourceId.String()
 
 	return agg.HandleCommand(ctx, esCommand)

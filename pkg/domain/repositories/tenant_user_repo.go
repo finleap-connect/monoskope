@@ -17,8 +17,9 @@ package repositories
 import (
 	"context"
 
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
@@ -43,7 +44,7 @@ func NewTenantUserRepository(userRepo ReadOnlyUserRepository, userRoleBindingRep
 
 // GetTenantUsersById searches for users belonging to a tenant.
 func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.UUID) ([]*projections.TenantUser, error) {
-	roleBindings, err := r.userRoleBindingRepo.ByScopeAndResource(ctx, scopes.Tenant, id)
+	roleBindings, err := r.userRoleBindingRepo.ByScopeAndResource(ctx, eventsourcing.Scope(common.Scope_tenant.String()), id)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 		}
 
 		if _, ok := userMap[user.Id]; !ok {
-			bindings, err := r.userRoleBindingRepo.ByUserIdAndScope(ctx, user.ID(), scopes.Tenant)
+			bindings, err := r.userRoleBindingRepo.ByUserIdAndScope(ctx, user.ID(), eventsourcing.Scope(common.Scope_tenant.String()))
 			if err != nil {
 				return nil, err
 			}
