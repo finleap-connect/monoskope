@@ -16,16 +16,12 @@ package gateway
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/internal/gateway/usecases"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
-	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type apiTokenServer struct {
@@ -33,11 +29,11 @@ type apiTokenServer struct {
 	log      logger.Logger
 	signer   jwt.JWTSigner
 	userRepo repositories.ReadOnlyUserRepository
-	url      string
+	issuer   string
 }
 
 func NewAPITokenServer(
-	url string,
+	issuer string,
 	signer jwt.JWTSigner,
 	userRepo repositories.ReadOnlyUserRepository,
 ) api.APITokenServer {
@@ -45,43 +41,17 @@ func NewAPITokenServer(
 		log:      logger.WithName("server"),
 		signer:   signer,
 		userRepo: userRepo,
-		url:      url,
+		issuer:   issuer,
 	}
 	return s
 }
 
 func (s *apiTokenServer) RequestAPIToken(ctx context.Context, request *api.APITokenRequest) (*api.APITokenResponse, error) {
-	if len(request.GetAuthorizationScopes()) < 1 {
-		return nil, fmt.Errorf("At least one scope required.")
-	}
-
-	standardClaims := new(jwt.StandardClaims)
-
-	var userId string
-	switch u := request.User.(type) {
-	case *api.APITokenRequest_UserId:
-		userId = u.UserId
-		user, err := s.userRepo.ByUserId(ctx, uuid.MustParse(u.UserId))
-		if err != nil {
-			return nil, errors.TranslateToGrpcError(err)
-		}
-		standardClaims.Name = user.GetName()
-		standardClaims.Email = user.GetEmail()
-	case *api.APITokenRequest_Username:
-		userId = u.Username
-	default:
-		return nil, fmt.Errorf("user argument invalid")
-	}
-
-	token := auth.NewApiToken(standardClaims, s.url, userId, request.Validity.AsDuration(), request.GetAuthorizationScopes())
-
-	signedToken, err := s.signer.GenerateSignedToken(token)
+	response := new(api.APITokenResponse)
+	uc := usecases.NewGenerateAPITokenUsecase(request, response, s.signer, s.userRepo, s.issuer)
+	err := uc.Run(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	result := new(api.APITokenResponse)
-	result.AccessToken = signedToken
-	result.Expiry = timestamppb.New(token.Expiry.Time())
-	return result, nil
+	return response, nil
 }
