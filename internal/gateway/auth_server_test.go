@@ -21,6 +21,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -116,6 +117,23 @@ var _ = Describe("Gateway Auth Server", func() {
 		res, err := env.HttpClient.Do(req)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
+	})
+	It("can authenticate with JWT for correct scope", func() {
+		expectedValidity := time.Hour * 1
+		token := auth.NewApiToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
+			gateway.AuthorizationScope_WRITE_SCIM,
+		})
+		signer := env.JwtTestEnv.CreateSigner()
+		signedToken, err := signer.GenerateSignedToken(token)
+		Expect(err).NotTo(HaveOccurred())
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/auth/scim/Users", localAddrAuthServer), nil)
+		Expect(err).NotTo(HaveOccurred())
+
+		req.Header.Set(HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
+		res, err := env.HttpClient.Do(req)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res.StatusCode).To(Equal(http.StatusOK))
 	})
 })
 
