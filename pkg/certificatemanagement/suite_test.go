@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 
 	_ "github.com/finleap-connect/monoskope/internal/test"
@@ -26,8 +25,7 @@ import (
 
 func TestCertificateManagement(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/certmanagement-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestCertificateManagement", []Reporter{junitReporter})
+	RunSpecs(t, "TestCertificateManagement")
 }
 
 var _ = BeforeSuite(func() {
