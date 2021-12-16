@@ -22,7 +22,9 @@ import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/domain/projections/certificate.proto";
 import "api/domain/projections/tenant_cluster_binding.proto";
+import "api/domain/audit/event.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
 
@@ -81,6 +83,11 @@ service ClusterAccess{
   rpc GetTenantClusterMappingByTenantAndClusterId(GetClusterMappingRequest) returns (projections.TenantClusterBinding);
 }
 
+service AuditLog{
+  // GetByDateRange returns human readable events within the specified data range
+  rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
+}
+
 service Certificate {
   rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
 }
@@ -98,4 +105,9 @@ message GetCertificateRequest {
 message GetClusterMappingRequest {
   string tenant_id = 1;
   string cluster_id = 2;
+}
+
+message GetAuditLogByDateRangeRequest {
+  google.protobuf.Timestamp min_timestamp = 1;
+  google.protobuf.Timestamp max_timestamp = 2;
 }

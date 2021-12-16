@@ -4,6 +4,7 @@ package domain
 
 import (
 	context "context"
+	audit "github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -1105,6 +1106,121 @@ var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetTenantClusterMappingsByClusterId",
 			Handler:       _ClusterAccess_GetTenantClusterMappingsByClusterId_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/domain/queryhandler_service.proto",
+}
+
+// AuditLogClient is the client API for AuditLog service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AuditLogClient interface {
+	// GetByDateRange returns human readable events within the specified data range
+	GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error)
+}
+
+type auditLogClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuditLogClient(cc grpc.ClientConnInterface) AuditLogClient {
+	return &auditLogClient{cc}
+}
+
+func (c *auditLogClient) GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AuditLog_ServiceDesc.Streams[0], "/domain.AuditLog/GetByDateRange", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &auditLogGetByDateRangeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type AuditLog_GetByDateRangeClient interface {
+	Recv() (*audit.HumanReadableEvent, error)
+	grpc.ClientStream
+}
+
+type auditLogGetByDateRangeClient struct {
+	grpc.ClientStream
+}
+
+func (x *auditLogGetByDateRangeClient) Recv() (*audit.HumanReadableEvent, error) {
+	m := new(audit.HumanReadableEvent)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// AuditLogServer is the server API for AuditLog service.
+// All implementations must embed UnimplementedAuditLogServer
+// for forward compatibility
+type AuditLogServer interface {
+	// GetByDateRange returns human readable events within the specified data range
+	GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error
+	mustEmbedUnimplementedAuditLogServer()
+}
+
+// UnimplementedAuditLogServer must be embedded to have forward compatible implementations.
+type UnimplementedAuditLogServer struct {
+}
+
+func (UnimplementedAuditLogServer) GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetByDateRange not implemented")
+}
+func (UnimplementedAuditLogServer) mustEmbedUnimplementedAuditLogServer() {}
+
+// UnsafeAuditLogServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuditLogServer will
+// result in compilation errors.
+type UnsafeAuditLogServer interface {
+	mustEmbedUnimplementedAuditLogServer()
+}
+
+func RegisterAuditLogServer(s grpc.ServiceRegistrar, srv AuditLogServer) {
+	s.RegisterService(&AuditLog_ServiceDesc, srv)
+}
+
+func _AuditLog_GetByDateRange_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAuditLogByDateRangeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AuditLogServer).GetByDateRange(m, &auditLogGetByDateRangeServer{stream})
+}
+
+type AuditLog_GetByDateRangeServer interface {
+	Send(*audit.HumanReadableEvent) error
+	grpc.ServerStream
+}
+
+type auditLogGetByDateRangeServer struct {
+	grpc.ServerStream
+}
+
+func (x *auditLogGetByDateRangeServer) Send(m *audit.HumanReadableEvent) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// AuditLog_ServiceDesc is the grpc.ServiceDesc for AuditLog service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuditLog_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "domain.AuditLog",
+	HandlerType: (*AuditLogServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetByDateRange",
+			Handler:       _AuditLog_GetByDateRange_Handler,
 			ServerStreams: true,
 		},
 	},
