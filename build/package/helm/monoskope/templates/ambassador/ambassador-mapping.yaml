@@ -1,0 +1,197 @@
+{{- if .Values.ambassador.enabled }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
+{{- if .Values.gateway.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  bypass_auth: true
+  prefix: /gateway.Gateway/
+  rewrite: /gateway.Gateway/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-clusterauth-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /gateway.ClusterAuth/
+  rewrite: /gateway.ClusterAuth/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-version-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /common.ServiceInformationService/
+  rewrite: /common.ServiceInformationService/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.grpcApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-oidc-discovery-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  bypass_auth: true
+  method: GET
+  prefix: /.well-known/
+  rewrite: /.well-known/
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-gateway-oidc-keys-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  bypass_auth: true
+  method: GET
+  prefix: /keys
+  rewrite: /keys
+  service: {{.Release.Name}}-gateway:{{.Values.gateway.ports.httpApi}}
+---
+{{- end }}
+{{- if .Values.commandhandler.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /eventsourcing.CommandHandler/
+  rewrite: /eventsourcing.CommandHandler/
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-commandhandler-extensions-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.CommandHandlerExtensions/
+  rewrite: /domain.CommandHandlerExtensions/
+  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+---
+{{- end }}
+{{- if .Values.queryhandler.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-usersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.User/
+  rewrite: /domain.User/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-tenantsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Tenant/
+  rewrite: /domain.Tenant/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clustersvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Cluster/
+  rewrite: /domain.Cluster/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-clusteraccesssvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.ClusterAccess/
+  rewrite: /domain.ClusterAccess/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-certsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.Certificate/
+  rewrite: /domain.Certificate/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+---
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-qh-auditlogsvc-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  grpc: true
+  timeout_ms: 20000
+  prefix: /domain.AuditLog/
+  rewrite: /domain.AuditLog/
+  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+{{- end }}
+{{- end }}
