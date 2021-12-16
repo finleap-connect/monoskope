@@ -19,7 +19,6 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/test"
-	"github.com/onsi/ginkgo/reporters"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,8 +30,7 @@ var (
 
 func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/queryhandler-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "queryhandler/integration", []Reporter{junitReporter})
+	RunSpecs(t, "queryhandler/integration")
 }
 
 var _ = BeforeSuite(func() {

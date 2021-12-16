@@ -68,25 +68,13 @@ go-report: ## create report of commands and permission
 	echo >>.protobuf-deps
 
 go-test: $(TOOLS_DIR)/protoc $(GINKGO) $(GENERATED_GO_FILES) ## run all tests
-	@find . -name '*.coverprofile' -exec rm {} \;
-	@ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace
-	@echo "mode: count" > ./monoskope.coverprofile
-	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile
-	@find ./pkg -name '*.coverprofile' -exec rm {} \;
-	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile
-	@find ./internal -name '*.coverprofile' -exec rm {} \;
+	@$(GINKGO) -r -v -cover -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
 
 go-test-ci: ## run all tests without generation go files from protobuf
-	@find . -name '*.coverprofile' -exec rm {} \;
-	@ACK_GINKGO_DEPRECATIONS=1.16.4 $(GINKGO) -r -v -cover -covermode count -trace
-	@echo "mode: count" > ./monoskope.coverprofile
-	@find ./pkg -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
-	@find ./pkg -name '*.coverprofile' -exec rm {} \;
-	@find ./internal -name "*.coverprofile" -exec cat {} \; | grep -v mode: | sort -r >> ./monoskope.coverprofile   
-	@find ./internal -name '*.coverprofile' -exec rm {} \;
+	@$(GINKGO) -r -cover -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
 
 go-coverage: ## print coverage from coverprofiles
-	@find . -name '*.coverprofile' -exec go tool cover -func {} \;
+	@go tool cover -func monoskope.coverprofile
 
 ginkgo-get $(GINKGO):
 	$(shell $(GOGET) github.com/onsi/ginkgo/ginkgo@$(GINKO_VERSION))

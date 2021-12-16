@@ -17,8 +17,6 @@ package handler
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -27,8 +25,7 @@ import (
 
 func TestDomainHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/domainhandler-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestDomainHandler", []Reporter{junitReporter})
+	RunSpecs(t, "TestDomainHandler")
 }
 
 var _ = BeforeSuite(func() {

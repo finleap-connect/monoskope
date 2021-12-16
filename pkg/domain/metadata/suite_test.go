@@ -17,16 +17,13 @@ package metadata
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/domain-metadata-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "pkg/domain/metadata", []Reporter{junitReporter})
+	RunSpecs(t, "pkg/domain/metadata")
 }
 
 var _ = BeforeSuite(func() {
