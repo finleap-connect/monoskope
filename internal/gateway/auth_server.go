@@ -185,7 +185,7 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	}
 
 	// Check user actually exists in m8
-	if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
+	if _, ok := s.retrieveUserId(c, authToken.Email); !ok && !authToken.IsAPIToken {
 		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
 		return nil
 	}

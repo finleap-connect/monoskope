@@ -16,6 +16,7 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -86,6 +87,7 @@ func NewApiToken(claims *jwt.StandardClaims, issuer, userId string, validity tim
 	var scopesString string
 	for _, scope := range scopes {
 		scopesString = fmt.Sprintf("%s %s", scopesString, scope.String())
+		scopesString = strings.TrimPrefix(scopesString, " ")
 	}
 
 	return &jwt.AuthToken{
