@@ -3,7 +3,7 @@ module github.com/finleap-connect/monoskope
 go 1.17
 
 require (
-	github.com/PuerkitoBio/goquery v1.6.1
+	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/aws/aws-sdk-go v1.34.30
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/andybalholm/cascadia v1.1.0 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -112,7 +112,9 @@ require (
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	golang.org/x/mod v0.5.0 // indirect
+	golang.org/x/net v0.0.0-20210916014120-12bc252f5db8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/appengine v1.6.7 // indirect
