@@ -16,7 +16,7 @@ updates:
     # Specify labels for pull requests
     labels:
       - "github-actions"
-      - "dependencies"
+      - "chore"
   # Maintain dependencies for golang
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -28,4 +28,4 @@ updates:
     # Specify labels for npm pull requests
     labels:
       - "golang"
-      - "dependencies"
+      - "chore"
