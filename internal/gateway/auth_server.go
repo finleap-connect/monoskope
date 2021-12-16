@@ -32,6 +32,8 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
+	m8roles "github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	m8scopes "github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -185,7 +187,9 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	}
 
 	// Check user actually exists in m8
-	if _, ok := s.retrieveUserId(c, authToken.Email); !ok && !authToken.IsAPIToken {
+
+	user, err := s.userRepo.ByEmail(c, authToken.Email)
+	if err != nil && !authToken.IsAPIToken {
 		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
 		return nil
 	}
@@ -193,13 +197,34 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	// Validate scopes
 	route := c.Param("route")
 	scopes := strings.Split(authToken.Scope, " ")
-	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
-		return authToken
+
+	// Validation for API Token Endpoint
+	// TODO: This is a temporary solution until authorization has been replaced with Open Policy Agent
+	if strings.HasPrefix(route, "/"+gateway.APIToken_ServiceDesc.ServiceName) {
+		if !authToken.IsAPIToken {
+			for _, role := range user.Roles {
+				if role.Role == m8roles.Admin.String() && role.Scope == m8scopes.System.String() { // Only system admins can issue API tokens
+					return authToken
+				}
+			}
+			s.log.Info("Token validation failed. Only system admins can call that route.", "Route", route, "Scopes", authToken.Scope)
+			return nil
+		} else { // API Tokens can't be used to issue new ones
+			s.log.Info("Token validation failed. Token can not be used for route.", "Route", route, "Scopes", authToken.Scope)
+			return nil
+		}
 	}
+
+	// SCIM API Access
 	if strings.HasPrefix(route, "/scim") {
 		if containsString(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
 			return authToken
 		}
+	}
+
+	// General API access
+	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
+		return authToken
 	}
 
 	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
