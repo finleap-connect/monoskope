@@ -20,6 +20,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "validate/validate.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/gateway";
 
@@ -126,7 +127,8 @@ message APITokenRequest {
 
   oneof user {
     // Unique identifier of an existing user (UUID 128-bit number)
-    string user_id = 3 [ (validate.rules).string.uuid = true ];
+    google.protobuf.StringValue user_id = 3
+        [ (validate.rules).string.uuid = true ];
     // Name of the user the token is valid for (not necessarily a real user)
     string username = 4;
   }
