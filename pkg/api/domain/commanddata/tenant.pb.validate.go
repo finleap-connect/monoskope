@@ -57,10 +57,10 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 5 || l > 150 {
+	if l := utf8.RuneCountInString(m.GetName()); l < 3 || l > 150 {
 		err := CreateTenantCommandDataValidationError{
 			field:  "Name",
-			reason: "value length must be between 5 and 150 runes, inclusive",
+			reason: "value length must be between 3 and 150 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -68,10 +68,10 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPrefix()) > 12 {
+	if l := utf8.RuneCountInString(m.GetPrefix()); l < 2 || l > 12 {
 		err := CreateTenantCommandDataValidationError{
 			field:  "Prefix",
-			reason: "value length must be at most 12 runes",
+			reason: "value length must be between 2 and 12 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -195,10 +195,10 @@ func (m *UpdateTenantCommandData) validate(all bool) error {
 
 	if wrapper := m.GetName(); wrapper != nil {
 
-		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 5 || l > 150 {
+		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 3 || l > 150 {
 			err := UpdateTenantCommandDataValidationError{
 				field:  "Name",
-				reason: "value length must be between 5 and 150 runes, inclusive",
+				reason: "value length must be between 3 and 150 runes, inclusive",
 			}
 			if !all {
 				return err

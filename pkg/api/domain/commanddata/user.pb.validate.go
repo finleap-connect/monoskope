@@ -72,10 +72,10 @@ func (m *CreateUserCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 5 || l > 150 {
+	if l := utf8.RuneCountInString(m.GetName()); l < 3 || l > 150 {
 		err := CreateUserCommandDataValidationError{
 			field:  "Name",
-			reason: "value length must be between 5 and 150 runes, inclusive",
+			reason: "value length must be between 3 and 150 runes, inclusive",
 		}
 		if !all {
 			return err
