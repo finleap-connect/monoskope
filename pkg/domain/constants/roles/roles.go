@@ -19,6 +19,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/google/uuid"
 )
 
 // Roles
@@ -44,6 +45,15 @@ var AvailableRoles = []es.Role{
 	OnCall,
 }
 
+// A list of all existing roles.
+var AvailableRolesMap = make(map[uuid.UUID]es.Role)
+
+func init() {
+	for _, role := range AvailableRoles {
+		AvailableRolesMap[uuid.NewSHA1(uuid.NameSpaceURL, []byte(role))] = role
+	}
+}
+
 func ValidateRole(role string) error {
 	for _, v := range AvailableRoles {
 		if v.String() == role {
@@ -51,4 +61,16 @@ func ValidateRole(role string) error {
 		}
 	}
 	return errors.ErrInvalidArgument(fmt.Sprintf("Role '%s' is invalid.", role))
+}
+
+func IdFromRole(role es.Role) uuid.UUID {
+	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(role))
+}
+
+func ToRole(role string) (es.Role, error) {
+	err := ValidateRole(role)
+	if err != nil {
+		return "", err
+	}
+	return es.Role(role), nil
 }

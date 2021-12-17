@@ -30,6 +30,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -62,10 +63,9 @@ func createSysAdminCtx() context.Context {
 	Expect(err).NotTo(HaveOccurred())
 
 	metaMgr.SetUserInformation(&meta.UserInformation{
-		Id:     uuid.New(),
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Id:    uuid.New(),
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 
 	metaMgr.SetRoleBindings([]*projections.UserRoleBinding{
@@ -202,7 +202,7 @@ func createUserRoleBinding(ctx context.Context, agg es.Aggregate, userId uuid.UU
 	esCommand.UserId = userId.String()
 	esCommand.Role = expectedAdminRole.String()
 	esCommand.Scope = expectedTenantScope.String()
-	esCommand.Resource = expectedResourceId.String()
+	esCommand.Resource = wrapperspb.String(expectedResourceId.String())
 
 	return agg.HandleCommand(ctx, esCommand)
 }

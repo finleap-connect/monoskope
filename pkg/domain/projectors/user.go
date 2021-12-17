@@ -57,10 +57,18 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 
 		p.Email = data.GetEmail()
 		p.Name = data.GetName()
+		p.Source = data.GetSource()
 
 		if err := u.projectCreated(event, p.DomainProjection); err != nil {
 			return nil, err
 		}
+	case events.UserUpdated:
+		data := &eventdata.UserUpdated{}
+		if err := event.Data().ToProto(data); err != nil {
+			return projection, err
+		}
+
+		p.Name = data.GetName()
 	case events.UserDeleted:
 		if err := u.projectDeleted(event, p.DomainProjection); err != nil {
 			return nil, err

@@ -38,16 +38,14 @@ var (
 		componentVersion,
 		auth.HeaderAuthEmail,
 		auth.HeaderAuthId,
-		auth.HeaderAuthIssuer,
 	}
 )
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id     uuid.UUID
-	Name   string
-	Email  string
-	Issuer string
+	Id    uuid.UUID
+	Name  string
+	Email string
 }
 
 // domainMetadataManager is a domain specific metadata manager.
@@ -111,6 +109,15 @@ func (m *DomainMetadataManager) SetComponentInformation() {
 	m.Set(componentCommit, version.Commit)
 }
 
+// GetComponentName gets the name of the component which created the context.
+func (m *DomainMetadataManager) GetComponentName() string {
+	res, ok := m.Get(componentName)
+	if ok {
+		return res
+	}
+	return ""
+}
+
 func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) {
 	m.domainContext.UserRoleBindings = roleBindings
 }
@@ -123,7 +130,6 @@ func (m *DomainMetadataManager) GetRoleBindings() []*projections.UserRoleBinding
 func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformation) {
 	m.Set(auth.HeaderAuthName, userInformation.Name)
 	m.Set(auth.HeaderAuthEmail, userInformation.Email)
-	m.Set(auth.HeaderAuthIssuer, userInformation.Issuer)
 	m.Set(auth.HeaderAuthId, userInformation.Id.String())
 }
 
@@ -135,9 +141,6 @@ func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 	}
 	if header, ok := m.Get(auth.HeaderAuthEmail); ok {
 		userInfo.Email = header
-	}
-	if header, ok := m.Get(auth.HeaderAuthIssuer); ok {
-		userInfo.Issuer = header
 	}
 	if header, ok := m.Get(auth.HeaderAuthId); ok {
 		id, err := uuid.Parse(header)

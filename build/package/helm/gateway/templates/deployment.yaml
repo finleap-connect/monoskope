@@ -63,14 +63,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
           - name: grpc
-            containerPort: {{ .Values.ports.grpcApi }}
+            containerPort: 8080
           - name: http
-            containerPort: {{ .Values.ports.httpApi }}
+            containerPort: 8081
           - name: http-metrics
-            containerPort: {{ .Values.ports.metrics }}
+            containerPort: 9102
           env:
             - name: M8_OPERATION_MODE
-              value: release
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
             - name: GIN_MODE
               value: release
             - name: OIDC_CLIENT_ID
@@ -92,10 +92,10 @@ spec:
             - /app
             - server
             - --keep-alive={{ .Values.keepAlive }}
-            - --grpc-api-addr=:{{ .Values.ports.grpcApi }}
-            - --http-api-addr=:{{ .Values.ports.httpApi }}
+            - --grpc-api-addr=:8080
+            - --http-api-addr=:8081
+            - --metrics-addr=:9102
             - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
-            - --metrics-addr=:{{ .Values.ports.metrics }}
             - --identity-provider-name={{ required "A valid .Values.auth.identityProviderName entry is required!" .Values.auth.identityProviderName }}
             - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
@@ -108,7 +108,7 @@ spec:
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
+              command: ["grpc-health-probe", "-addr=:8080"]
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
           {{- end }}
@@ -116,7 +116,7 @@ spec:
           readinessProbe:
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             exec:
-              command: ["grpc-health-probe", {{ (printf "-addr=:%v" .Values.ports.grpcApi) | quote }}]
+              command: ["grpc-health-probe", "-addr=:8080"]
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
           {{- end }}

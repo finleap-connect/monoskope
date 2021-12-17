@@ -43,10 +43,9 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 		apiClient := api.NewClusterAuthClient(conn)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:     uuid.MustParse(env.AdminUser.GetId()),
-			Name:   env.AdminUser.Name,
-			Email:  env.AdminUser.Email,
-			Issuer: "monoskope",
+			Id:    uuid.MustParse(env.AdminUser.GetId()),
+			Name:  env.AdminUser.Name,
+			Email: env.AdminUser.Email,
 		})
 
 		response, err := apiClient.GetAuthToken(mdManager.GetOutgoingGrpcContext(), &api.ClusterAuthTokenRequest{

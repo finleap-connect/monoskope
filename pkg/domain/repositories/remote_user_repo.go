@@ -16,6 +16,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
@@ -37,7 +38,7 @@ func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository 
 }
 
 func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
-	panic("not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 // ById searches for the a user projection by it's id.
@@ -104,4 +105,8 @@ func (r *remoteUserRepository) ByEmail(ctx context.Context, email string) (*proj
 	}
 
 	return user, nil
+}
+
+func (r *remoteUserRepository) GetCount(ctx context.Context, includeDeleted bool) (int, error) {
+	return -1, fmt.Errorf("not implemented")
 }

@@ -38,3 +38,8 @@ message CertificateChain {
   // Certificate
   bytes certificate = 2;
 }
+
+enum UserSource {
+  INTERNAL = 0;
+  SCIM = 1;
+}

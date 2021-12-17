@@ -16,6 +16,7 @@ package repositories
 
 import (
 	"context"
+	"sort"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -110,6 +111,9 @@ func (r *clusterRepository) GetAll(ctx context.Context, includeDeleted bool) ([]
 			return nil, esErrors.ErrInvalidProjectionType
 		}
 	}
+	sort.Slice(clusters, func(i, j int) bool {
+		return clusters[i].Name > clusters[j].Name
+	})
 	return clusters, nil
 }
 

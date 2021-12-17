@@ -1,0 +1,16 @@
+{{- if .Values.ambassador.enabled }}
+{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
+{{- if .Values.scimserver.enabled }}
+apiVersion: getambassador.io/v1
+kind: Mapping
+metadata:
+  name: {{ include "monoskope.fullname" . }}-scimserver-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "monoskope.labels" . | nindent 4 }}
+spec:
+  prefix: /scim/
+  service: {{.Release.Name}}-scimserver:{{.Values.scimserver.service.port}}
+---
+{{- end }}
+{{- end }}

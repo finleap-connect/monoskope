@@ -76,11 +76,6 @@ affinity: {}
 labels: {}
   # app.kubernetes.io/part-of: my-app
 
-ports:
-  grpcApi: 8080
-  httpApi: 8081
-  metrics: 9102
-
 # -- API address of the query handler
 queryHandler:
   prefix: "" # Defaults to the release name

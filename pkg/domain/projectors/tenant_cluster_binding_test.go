@@ -38,10 +38,9 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Id:     uuid.New(),
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Id:    uuid.New(),
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 	ctx = mdManager.GetContext()
 

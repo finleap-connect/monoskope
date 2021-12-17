@@ -17,8 +17,10 @@ package handler
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -45,6 +47,8 @@ func (m *userInformationHandler) Middleware(h es.CommandHandler) es.CommandHandl
 
 // HandleCommand implements the CommandHandler interface
 func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
+	var err error
+
 	// Gather context
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	if err != nil {
@@ -57,16 +61,28 @@ func (h *userInformationHandler) HandleCommand(ctx context.Context, cmd es.Comma
 		return h.nextHandlerInChain.HandleCommand(metadataManager.GetContext(), cmd)
 	}
 
+	var user *projections.User
+
+	// Check if system user
+	sysUser, isSysUser := users.AvailableSystemUsers[userInfo.Id]
+	if isSysUser {
+		user = sysUser
+	}
+
 	// Check that user exists
-	user, err := h.userRepo.ByEmail(ctx, userInfo.Email)
-	if err != nil {
-		h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
-		return nil, domainErrors.ErrUnauthorized
+	if !isSysUser {
+		user, err = h.userRepo.ByEmail(ctx, userInfo.Email)
+		if err != nil {
+			h.log.Info("User does not exist -> unauthorized.", "CommandType", cmd.CommandType(), "AggregateType", cmd.AggregateType(), "User", userInfo.Email)
+			return nil, domainErrors.ErrUnauthorized
+		}
 	}
 
 	// Enrich context with rolebindings and user information
 	userRoleBindings := user.GetRoles()
 	userInfo.Id = user.ID()
+	userInfo.Name = user.Name
+	userInfo.Email = user.Email
 	metadataManager.SetUserInformation(userInfo)
 	metadataManager.SetRoleBindings(userRoleBindings)
 

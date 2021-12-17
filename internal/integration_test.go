@@ -57,9 +57,8 @@ var _ = Describe("integration", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
@@ -132,19 +131,17 @@ var _ = Describe("integration", func() {
 				g.Expect(user.Id).To(Equal(userId.String()))
 			}).Should(Succeed())
 
-			userRoleBindingId := uuid.New()
 			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(userRoleBindingId, commandTypes.CreateUserRoleBinding),
-				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: uuid.New().String()},
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(userRoleBindingId.String()).ToNot(Equal(reply.AggregateId))
 
 			// update userRolebBindingId, as the "create" command will have changed it.
-			userRoleBindingId = uuid.MustParse(reply.AggregateId)
+			userRoleBindingId := uuid.MustParse(reply.AggregateId)
 
 			// Wait to propagate
 			time.Sleep(500 * time.Millisecond)

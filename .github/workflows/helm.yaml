@@ -35,9 +35,5 @@ jobs:
 
       - name: lint helm
         run: |
-          make helm-lint-gateway
-          make helm-lint-eventstore
-          make helm-lint-commandhandler
-          make helm-lint-queryhandler
           make helm-dep-monoskope
-          make helm-lint-monoskope
+          make helm-lint

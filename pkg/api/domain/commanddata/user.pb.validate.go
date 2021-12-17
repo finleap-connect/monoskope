@@ -72,10 +72,10 @@ func (m *CreateUserCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetName()) > 150 {
+	if l := utf8.RuneCountInString(m.GetName()); l < 3 || l > 150 {
 		err := CreateUserCommandDataValidationError{
 			field:  "Name",
-			reason: "value length must be at most 150 bytes",
+			reason: "value length must be between 3 and 150 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -247,10 +247,10 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetRole()) > 60 {
+	if utf8.RuneCountInString(m.GetRole()) > 60 {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Role",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -261,7 +261,7 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 	if !_CreateUserRoleBindingCommandData_Role_Pattern.MatchString(m.GetRole()) {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
+			reason: "value does not match regex pattern \"^[a-z0-9]+$\"",
 		}
 		if !all {
 			return err
@@ -269,10 +269,10 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetScope()) > 60 {
+	if utf8.RuneCountInString(m.GetScope()) > 60 {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Scope",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -283,7 +283,7 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 	if !_CreateUserRoleBindingCommandData_Scope_Pattern.MatchString(m.GetScope()) {
 		err := CreateUserRoleBindingCommandDataValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
+			reason: "value does not match regex pattern \"^[a-z0-9]+$\"",
 		}
 		if !all {
 			return err
@@ -291,16 +291,20 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if err := m._validateUuid(m.GetResource()); err != nil {
-		err = CreateUserRoleBindingCommandDataValidationError{
-			field:  "Resource",
-			reason: "value must be a valid UUID",
-			cause:  err,
+	if wrapper := m.GetResource(); wrapper != nil {
+
+		if err := m._validateUuid(wrapper.GetValue()); err != nil {
+			err = CreateUserRoleBindingCommandDataValidationError{
+				field:  "Resource",
+				reason: "value must be a valid UUID",
+				cause:  err,
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
+
 	}
 
 	if len(errors) > 0 {
@@ -392,6 +396,122 @@ var _ interface {
 	ErrorName() string
 } = CreateUserRoleBindingCommandDataValidationError{}
 
-var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z]+$")
+var _CreateUserRoleBindingCommandData_Role_Pattern = regexp.MustCompile("^[a-z0-9]+$")
 
-var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z]+$")
+var _CreateUserRoleBindingCommandData_Scope_Pattern = regexp.MustCompile("^[a-z0-9]+$")
+
+// Validate checks the field values on UpdateUserCommandData with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpdateUserCommandData) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateUserCommandData with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateUserCommandDataMultiError, or nil if none found.
+func (m *UpdateUserCommandData) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateUserCommandData) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if wrapper := m.GetName(); wrapper != nil {
+
+		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 5 || l > 150 {
+			err := UpdateUserCommandDataValidationError{
+				field:  "Name",
+				reason: "value length must be between 5 and 150 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return UpdateUserCommandDataMultiError(errors)
+	}
+	return nil
+}
+
+// UpdateUserCommandDataMultiError is an error wrapping multiple validation
+// errors returned by UpdateUserCommandData.ValidateAll() if the designated
+// constraints aren't met.
+type UpdateUserCommandDataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateUserCommandDataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateUserCommandDataMultiError) AllErrors() []error { return m }
+
+// UpdateUserCommandDataValidationError is the validation error returned by
+// UpdateUserCommandData.Validate if the designated constraints aren't met.
+type UpdateUserCommandDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateUserCommandDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateUserCommandDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateUserCommandDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateUserCommandDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateUserCommandDataValidationError) ErrorName() string {
+	return "UpdateUserCommandDataValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateUserCommandDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateUserCommandData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateUserCommandDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateUserCommandDataValidationError{}

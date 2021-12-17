@@ -77,6 +77,8 @@ spec:
             - --certificate-duration={{ .Values.certificates.duration }}
             - --issuer-url={{ required "A valid .Values.issuerURL entry is required!" .Values.issuerURL}}
           env:
+            - name: M8_OPERATION_MODE
+              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
             - name: K8S_NAMESPACE
               value: {{ .Release.Namespace }}
           resources:

@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 )
 
 // ensure the imports are used
@@ -33,6 +35,8 @@ var (
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
 	_ = sort.Sort
+
+	_ = common.UserSource(0)
 )
 
 // Validate checks the field values on User with the rules defined in the proto
@@ -124,6 +128,8 @@ func (m *User) validate(all bool) error {
 			}
 		}
 	}
+
+	// no validation rules for Source
 
 	if len(errors) > 0 {
 		return UserMultiError(errors)

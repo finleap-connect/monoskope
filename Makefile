@@ -35,6 +35,9 @@ check-license: ## Checks thath the license is set on every file
 
 show-latest-tag: ## echos the latest tag
 	@echo "Latest tag is $(LATEST_TAG)"
+	
+diagrams: ## Generate pngs from mermaid
+	$(SHELL) ./build/docs/diagrams.sh
 
 export
 include go.mk

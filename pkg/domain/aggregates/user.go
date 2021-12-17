@@ -18,11 +18,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
+	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
@@ -59,10 +62,28 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.
 func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	switch cmd := cmd.(type) {
 	case *commands.CreateUserCommand:
+		source, err := sourceFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
 		_ = a.AppendEvent(ctx, events.UserCreated, es.ToEventDataFromProto(&eventdata.UserCreated{
-			Email: cmd.GetEmail(),
-			Name:  cmd.GetName(),
+			Email:  cmd.GetEmail(),
+			Name:   cmd.GetName(),
+			Source: source,
 		}))
+		reply := &es.CommandReply{
+			Id:      a.ID(),
+			Version: a.Version(),
+		}
+		return reply, nil
+	case *commands.UpdateUserCommand:
+		ed := new(eventdata.UserUpdated)
+		name := cmd.GetName()
+
+		if name != nil && a.Name != name.Value {
+			ed.Name = name.Value
+			_ = a.AppendEvent(ctx, events.UserUpdated, es.ToEventDataFromProto(ed))
+		}
 		reply := &es.CommandReply{
 			Id:      a.ID(),
 			Version: a.Version(),
@@ -110,6 +131,13 @@ func (a *UserAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+	case events.UserUpdated:
+		data := new(eventdata.UserUpdated)
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		a.Name = data.GetName()
 	case events.UserDeleted:
 		a.SetDeleted(true)
 	default:
@@ -142,4 +170,19 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 		}
 	}
 	return false
+}
+
+func sourceFromContext(ctx context.Context) (common.UserSource, error) {
+	// Extract domain context
+	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
+	if err != nil {
+		return common.UserSource_INTERNAL, err
+	}
+
+	switch metadataManager.GetComponentName() {
+	case users.SCIMServerUser.Name:
+		return common.UserSource_SCIM, nil
+	default:
+		return common.UserSource_INTERNAL, nil
+	}
 }

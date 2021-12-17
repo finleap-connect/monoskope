@@ -28,6 +28,8 @@ type UserClient interface {
 	GetByEmail(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
 	GetRoleBindingsById(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (User_GetRoleBindingsByIdClient, error)
+	// GetCount returns the count of users
+	GetCount(ctx context.Context, in *GetCountRequest, opts ...grpc.CallOption) (*GetCountResult, error)
 }
 
 type userClient struct {
@@ -120,6 +122,15 @@ func (x *userGetRoleBindingsByIdClient) Recv() (*projections.UserRoleBinding, er
 	return m, nil
 }
 
+func (c *userClient) GetCount(ctx context.Context, in *GetCountRequest, opts ...grpc.CallOption) (*GetCountResult, error) {
+	out := new(GetCountResult)
+	err := c.cc.Invoke(ctx, "/domain.User/GetCount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -132,6 +143,8 @@ type UserServer interface {
 	GetByEmail(context.Context, *wrapperspb.StringValue) (*projections.User, error)
 	// GetRoleBindingsById returns all role bindings related to the given user id.
 	GetRoleBindingsById(*wrapperspb.StringValue, User_GetRoleBindingsByIdServer) error
+	// GetCount returns the count of users
+	GetCount(context.Context, *GetCountRequest) (*GetCountResult, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -150,6 +163,9 @@ func (UnimplementedUserServer) GetByEmail(context.Context, *wrapperspb.StringVal
 }
 func (UnimplementedUserServer) GetRoleBindingsById(*wrapperspb.StringValue, User_GetRoleBindingsByIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetRoleBindingsById not implemented")
+}
+func (UnimplementedUserServer) GetCount(context.Context, *GetCountRequest) (*GetCountResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCount not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -242,6 +258,24 @@ func (x *userGetRoleBindingsByIdServer) Send(m *projections.UserRoleBinding) err
 	return x.ServerStream.SendMsg(m)
 }
 
+func _User_GetCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/domain.User/GetCount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetCount(ctx, req.(*GetCountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -256,6 +290,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetByEmail",
 			Handler:    _User_GetByEmail_Handler,
+		},
+		{
+			MethodName: "GetCount",
+			Handler:    _User_GetCount_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
