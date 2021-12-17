@@ -144,11 +144,14 @@ var serverCmd = &cobra.Command{
 		}
 		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, userRepo, clusterRepo, k8sTokenValidityDuration)
 
+		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepo)
+
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterGatewayServer(s, gatewayApiServer)
 			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
+			api.RegisterAPITokenServer(s, apiTokenServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
