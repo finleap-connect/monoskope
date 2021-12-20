@@ -120,7 +120,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can authenticate with JWT for correct scope", func() {
 		expectedValidity := time.Hour * 1
-		token := auth.NewApiToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
+		token := auth.NewApiToken(&jwt.StandardClaims{Name: env.NotExistingUser.Name}, localAddrAPIServer, env.NotExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
 			gateway.AuthorizationScope_WRITE_SCIM,
 		})
 		signer := env.JwtTestEnv.CreateSigner()

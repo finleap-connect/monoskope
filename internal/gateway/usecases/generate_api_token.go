@@ -75,6 +75,7 @@ func (u *generateAPITokenUsecase) Run(ctx context.Context) error {
 		standardClaims.Email = user.GetEmail()
 	case *api.APITokenRequest_Username:
 		userId = userRequest.Username
+		standardClaims.Name = userId
 	default:
 		return fmt.Errorf("user argument invalid")
 	}
