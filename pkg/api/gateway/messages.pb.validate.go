@@ -1290,20 +1290,16 @@ func (m *APITokenRequest) validate(all bool) error {
 
 	case *APITokenRequest_UserId:
 
-		if wrapper := m.GetUserId(); wrapper != nil {
-
-			if err := m._validateUuid(wrapper.GetValue()); err != nil {
-				err = APITokenRequestValidationError{
-					field:  "UserId",
-					reason: "value must be a valid UUID",
-					cause:  err,
-				}
-				if !all {
-					return err
-				}
-				errors = append(errors, err)
+		if err := m._validateUuid(m.GetUserId()); err != nil {
+			err = APITokenRequestValidationError{
+				field:  "UserId",
+				reason: "value must be a valid UUID",
+				cause:  err,
 			}
-
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
 		}
 
 	case *APITokenRequest_Username:

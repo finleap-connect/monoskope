@@ -66,8 +66,8 @@ func (u *generateAPITokenUsecase) Run(ctx context.Context) error {
 	standardClaims := new(jwt.StandardClaims)
 	switch userRequest := u.request.User.(type) {
 	case *api.APITokenRequest_UserId:
-		userId = userRequest.UserId.Value
-		user, err := u.userRepo.ByUserId(ctx, uuid.MustParse(userId))
+		userId = userRequest.UserId
+		user, err := u.userRepo.ByUserId(ctx, uuid.MustParse(userRequest.UserId))
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
 		}

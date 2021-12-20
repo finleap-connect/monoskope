@@ -30,7 +30,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("GenerateAPIToken", func() {
@@ -64,7 +63,7 @@ var _ = Describe("GenerateAPIToken", func() {
 			AuthorizationScopes: []api.AuthorizationScope{
 				api.AuthorizationScope_WRITE_SCIM,
 			},
-			User:     &api.APITokenRequest_UserId{UserId: wrapperspb.String(expectedUserId.String())},
+			User:     &api.APITokenRequest_UserId{UserId: expectedUserId.String()},
 			Validity: durationpb.New(expectedValidity),
 		}
 		response := new(api.APITokenResponse)
