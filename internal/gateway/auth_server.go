@@ -74,7 +74,6 @@ func NewAuthServer(url string, client *auth.Client, server *auth.Server, userRep
 		userRepo:   userRepo,
 		url:        url,
 	}
-	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
 	return s
 }
@@ -128,10 +127,20 @@ func (s *authServer) Shutdown() {
 
 // registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
+	// readiness check
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
+
+	// auth route
+	r.GET("/auth/*route", s.auth)
+	r.PUT("/auth/*route", s.auth)
 	r.POST("/auth/*route", s.auth)
+	r.PATCH("/auth/*route", s.auth)
+	r.DELETE("/auth/*route", s.auth)
+	r.OPTIONS("/auth/*route", s.auth)
+
+	// OIDC
 	r.GET("/.well-known/openid-configuration", s.discovery)
 	r.GET("/keys", s.keys)
 }
