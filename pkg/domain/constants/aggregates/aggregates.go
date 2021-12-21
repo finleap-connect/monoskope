@@ -21,6 +21,8 @@ const (
 	User es.AggregateType = "User"
 	// Type for the UserRoleBindingAggregate
 	UserRoleBinding es.AggregateType = "UserRoleBinding"
+	// Type for the UserTOTPToken
+	UserTOTPToken es.AggregateType = "UserTOTPToken"
 	// Type for the TenantAggregate
 	Tenant es.AggregateType = "Tenant"
 	// Type for the ClusterAggregate

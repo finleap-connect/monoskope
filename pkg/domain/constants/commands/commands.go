@@ -50,4 +50,9 @@ const (
 	CreateTenantClusterBinding es.CommandType = "CreateTenantClusterBinding"
 	// Command to remove access of a tenant to a certain cluster
 	DeleteTenantClusterBinding es.CommandType = "DeleteTenantClusterBinding"
+
+	// Command to create a new UserTOTPToken
+	CreateUserTOTPToken es.CommandType = "CreateUserTOTPToken"
+	// Command to delete a UserTOTPToken
+	DeleteUserTOTPToken es.CommandType = "DeleteUserTOTPToken"
 )

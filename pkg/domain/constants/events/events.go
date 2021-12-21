@@ -58,4 +58,9 @@ const (
 	TenantClusterBindingCreated es.EventType = "TenantClusterBindingCreated"
 	// Event emitted when a tenant's access to a cluster has been revoked
 	TenantClusterBindingDeleted es.EventType = "TenantClusterBindingDeleted"
+
+	// Event emitted when a UserTOTPToken has been created
+	UserTOTPTokenCreated es.EventType = "UserTOTPTokenCreated"
+	// Event emitted when a UserTOTPToken has been deleted
+	UserTOTPTokenDeleted es.EventType = "UserTOTPTokenDeleted"
 )
