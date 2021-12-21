@@ -13,7 +13,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore | 0.0.1-local |
 | file://../gateway | gateway | 0.0.1-local |
 | file://../queryhandler | queryhandler | 0.0.1-local |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.17.0 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.24.3 |
 | https://charts.cockroachdb.com/ | cockroachdb | 6.1.2 |
 | https://getambassador.io | ambassador | 6.7.11 |
 
@@ -81,7 +81,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | eventstore.storeDatabase.configSecret | string | `"m8-db-client-config"` |  |
 | eventstore.storeDatabase.tlsSecret | string | `"m8-db-client-auth-cert"` |  |
 | fullnameOverride | string | `""` |  |
-| gateway.auth.identityProviderName | string | `""` | The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream |
 | gateway.auth.identityProviderURL | string | `""` | The URL of the issuer to use for OIDC |
 | gateway.auth.selfURL | string | `""` | The URL of the issuer to Gateway itself |
 | gateway.enabled | bool | `true` |  |
@@ -123,7 +122,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.extraConfiguration | string | `"load_definitions = /app/rabbitmq-definitions.json\nauth_mechanisms.1 = EXTERNAL\nssl_cert_login_from = common_name\nssl_options.depth = 2"` |  |
 | rabbitmq.extraPlugins | string | `"rabbitmq_auth_mechanism_ssl"` |  |
 | rabbitmq.image.pullPolicy | string | `"Always"` |  |
-| rabbitmq.image.tag | string | `"3.8.9"` |  |
 | rabbitmq.loadDefinition.enabled | bool | `true` |  |
 | rabbitmq.loadDefinition.existingSecret | string | `"m8-rabbitmq-load-definition"` |  |
 | rabbitmq.metrics.enabled | bool | `false` |  |

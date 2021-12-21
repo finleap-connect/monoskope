@@ -44,13 +44,13 @@ var (
 	httpApiAddr       string
 	queryHandlerAddr  string
 	metricsAddr       string
-	keyCacheDuration  string
 	keepAlive         bool
-	authConfig        = auth.Config{}
 	scopes            string
 	redirectUris      string
 	k8sTokenValidity  string
 	authTokenValidity string
+	gatewayURL        string
+	identityProvider  string
 )
 
 var serverCmd = &cobra.Command{
@@ -62,55 +62,59 @@ var serverCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
+		authClientConfig := auth.ClientConfig{
+			IdentityProvider: identityProvider,
+		}
+		authServerConfig := auth.ServerConfig{
+			URL: gatewayURL,
+		}
+
 		log.Info("Reading environment...")
 		// Some options can be provided by env variables
 		if v := os.Getenv("OIDC_CLIENT_ID"); v != "" {
-			authConfig.ClientId = v
+			authClientConfig.ClientId = v
 		}
 		if v := os.Getenv("OIDC_CLIENT_SECRET"); v != "" {
-			authConfig.ClientSecret = v
+			authClientConfig.ClientSecret = v
 		}
 		if v := os.Getenv("OIDC_NONCE"); v != "" {
-			authConfig.Nonce = v
+			authClientConfig.Nonce = v
 		}
 
 		if len(scopes) > 0 {
-			authConfig.Scopes = strings.Split(scopes, ",")
+			authClientConfig.Scopes = strings.Split(scopes, ",")
 		}
-		if len(authConfig.Scopes) == 0 {
+		if len(authClientConfig.Scopes) == 0 {
 			return fmt.Errorf("scopes must not be empty")
 		}
 
 		if len(redirectUris) > 0 {
-			authConfig.RedirectURIs = strings.Split(redirectUris, ",")
+			authClientConfig.RedirectURIs = strings.Split(redirectUris, ",")
 		}
-		if len(authConfig.RedirectURIs) == 0 {
+		if len(authClientConfig.RedirectURIs) == 0 {
 			return fmt.Errorf("redirectUris must not be empty")
 		}
 
 		// Create token signer/validator
-		keyCacheDuration, err := time.ParseDuration(keyCacheDuration)
-		if err != nil {
-			return err
-		}
-
 		log.Info("Configuring JWT signing and verifying...")
 		signer := jwt.NewSigner("/etc/gateway/jwt/tls.key")
-		verifier, err := jwt.NewVerifier("/etc/gateway/jwt/tls.crt", keyCacheDuration)
+		verifier, err := jwt.NewVerifier("/etc/gateway/jwt/tls.crt")
 		if err != nil {
 			return err
 		}
+		defer verifier.Close()
 
 		// Create interceptor for auth
 		authTokenValidityDuration, err := time.ParseDuration(authTokenValidity)
 		if err != nil {
 			return err
 		}
-		authConfig.TokenValidity = authTokenValidityDuration
-		authHandler := auth.NewHandler(&authConfig, signer, verifier)
+		authServerConfig.TokenValidity = authTokenValidityDuration
+		client := auth.NewClient(&authClientConfig)
+		server := auth.NewServer(&authServerConfig, signer, verifier)
 
 		// Setup OIDC
-		if err := authHandler.SetupOIDC(cmd.Context()); err != nil {
+		if err := client.SetupOIDC(cmd.Context()); err != nil {
 			return err
 		}
 
@@ -131,20 +135,23 @@ var serverCmd = &cobra.Command{
 		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
 		// API servers
-		authServer := gateway.NewAuthServer(authConfig.URL, authHandler, userRepo)
-		gatewayApiServer := gateway.NewGatewayAPIServer(&authConfig, authHandler, userRepo)
+		authServer := gateway.NewAuthServer(gatewayURL, client, server, userRepo)
+		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepo)
 
 		k8sTokenValidityDuration, err := time.ParseDuration(k8sTokenValidity)
 		if err != nil {
 			return err
 		}
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(authConfig.URL, signer, userRepo, clusterRepo, k8sTokenValidityDuration)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, userRepo, clusterRepo, k8sTokenValidityDuration)
+
+		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepo)
 
 		// Create gRPC server and register implementation
 		grpcServer := grpc.NewServer("gateway-grpc", keepAlive)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			api.RegisterGatewayServer(s, gatewayApiServer)
 			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
+			api.RegisterAPITokenServer(s, apiTokenServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
@@ -171,16 +178,12 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
-	flags.StringVar(&keyCacheDuration, "key-cache-duration", "24h", "Cache duration of public keys for token verification")
 	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
 	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
-	flags.StringVar(&authConfig.IdentityProviderName, "identity-provider-name", "", "Identity provider name")
-	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-name"))
-
-	flags.StringVar(&authConfig.IdentityProvider, "identity-provider-url", "", "Identity provider URL")
+	flags.StringVar(&identityProvider, "identity-provider-url", "", "Identity provider URL")
 	util.PanicOnError(serverCmd.MarkFlagRequired("identity-provider-url"))
 
-	flags.StringVar(&authConfig.URL, "gateway-url", "", "URL of the gateway itself")
+	flags.StringVar(&gatewayURL, "gateway-url", "", "URL of the gateway itself")
 	util.PanicOnError(serverCmd.MarkFlagRequired("gateway-url"))
 }

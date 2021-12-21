@@ -17,8 +17,6 @@ package eventsourcing
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -27,8 +25,7 @@ import (
 
 func TestEventSourcing(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/event-sourcing-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestEventSourcing", []Reporter{junitReporter})
+	RunSpecs(t, "TestEventSourcing")
 }
 
 var _ = BeforeSuite(func() {

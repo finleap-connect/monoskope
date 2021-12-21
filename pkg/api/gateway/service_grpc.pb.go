@@ -18,8 +18,16 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
+	// Deprecated: Do not use.
 	GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error)
+	// Deprecated: Do not use.
 	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error)
+	// PrepareAuthentication returns the URL to call to authenticate against the
+	// upstream IDP
+	RequestUpstreamAuthentication(ctx context.Context, in *UpstreamAuthenticationRequest, opts ...grpc.CallOption) (*UpstreamAuthenticationResponse, error)
+	// RequestAuthentication is called to exchange the authorization code with the
+	// upstream IDP and to authenticate with the m8 control plane
+	RequestAuthentication(ctx context.Context, in *AuthenticationRequest, opts ...grpc.CallOption) (*AuthenticationResponse, error)
 }
 
 type gatewayClient struct {
@@ -30,6 +38,7 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
+// Deprecated: Do not use.
 func (c *gatewayClient) GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error) {
 	out := new(AuthInformation)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetAuthInformation", in, out, opts...)
@@ -39,9 +48,28 @@ func (c *gatewayClient) GetAuthInformation(ctx context.Context, in *AuthState, o
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error) {
 	out := new(AuthResponse)
 	err := c.cc.Invoke(ctx, "/gateway.Gateway/ExchangeAuthCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) RequestUpstreamAuthentication(ctx context.Context, in *UpstreamAuthenticationRequest, opts ...grpc.CallOption) (*UpstreamAuthenticationResponse, error) {
+	out := new(UpstreamAuthenticationResponse)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/RequestUpstreamAuthentication", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) RequestAuthentication(ctx context.Context, in *AuthenticationRequest, opts ...grpc.CallOption) (*AuthenticationResponse, error) {
+	out := new(AuthenticationResponse)
+	err := c.cc.Invoke(ctx, "/gateway.Gateway/RequestAuthentication", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +80,16 @@ func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
+	// Deprecated: Do not use.
 	GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error)
+	// Deprecated: Do not use.
 	ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error)
+	// PrepareAuthentication returns the URL to call to authenticate against the
+	// upstream IDP
+	RequestUpstreamAuthentication(context.Context, *UpstreamAuthenticationRequest) (*UpstreamAuthenticationResponse, error)
+	// RequestAuthentication is called to exchange the authorization code with the
+	// upstream IDP and to authenticate with the m8 control plane
+	RequestAuthentication(context.Context, *AuthenticationRequest) (*AuthenticationResponse, error)
 	mustEmbedUnimplementedGatewayServer()
 }
 
@@ -66,6 +102,12 @@ func (UnimplementedGatewayServer) GetAuthInformation(context.Context, *AuthState
 }
 func (UnimplementedGatewayServer) ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
+}
+func (UnimplementedGatewayServer) RequestUpstreamAuthentication(context.Context, *UpstreamAuthenticationRequest) (*UpstreamAuthenticationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestUpstreamAuthentication not implemented")
+}
+func (UnimplementedGatewayServer) RequestAuthentication(context.Context, *AuthenticationRequest) (*AuthenticationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestAuthentication not implemented")
 }
 func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
 
@@ -116,6 +158,42 @@ func _Gateway_ExchangeAuthCode_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Gateway_RequestUpstreamAuthentication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpstreamAuthenticationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).RequestUpstreamAuthentication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.Gateway/RequestUpstreamAuthentication",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).RequestUpstreamAuthentication(ctx, req.(*UpstreamAuthenticationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_RequestAuthentication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).RequestAuthentication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.Gateway/RequestAuthentication",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).RequestAuthentication(ctx, req.(*AuthenticationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Gateway_ServiceDesc is the grpc.ServiceDesc for Gateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +208,14 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExchangeAuthCode",
 			Handler:    _Gateway_ExchangeAuthCode_Handler,
+		},
+		{
+			MethodName: "RequestUpstreamAuthentication",
+			Handler:    _Gateway_RequestUpstreamAuthentication_Handler,
+		},
+		{
+			MethodName: "RequestAuthentication",
+			Handler:    _Gateway_RequestAuthentication_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -216,6 +302,92 @@ var ClusterAuth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAuthToken",
 			Handler:    _ClusterAuth_GetAuthToken_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/gateway/service.proto",
+}
+
+// APITokenClient is the client API for APIToken service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type APITokenClient interface {
+	RequestAPIToken(ctx context.Context, in *APITokenRequest, opts ...grpc.CallOption) (*APITokenResponse, error)
+}
+
+type aPITokenClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAPITokenClient(cc grpc.ClientConnInterface) APITokenClient {
+	return &aPITokenClient{cc}
+}
+
+func (c *aPITokenClient) RequestAPIToken(ctx context.Context, in *APITokenRequest, opts ...grpc.CallOption) (*APITokenResponse, error) {
+	out := new(APITokenResponse)
+	err := c.cc.Invoke(ctx, "/gateway.APIToken/RequestAPIToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// APITokenServer is the server API for APIToken service.
+// All implementations must embed UnimplementedAPITokenServer
+// for forward compatibility
+type APITokenServer interface {
+	RequestAPIToken(context.Context, *APITokenRequest) (*APITokenResponse, error)
+	mustEmbedUnimplementedAPITokenServer()
+}
+
+// UnimplementedAPITokenServer must be embedded to have forward compatible implementations.
+type UnimplementedAPITokenServer struct {
+}
+
+func (UnimplementedAPITokenServer) RequestAPIToken(context.Context, *APITokenRequest) (*APITokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestAPIToken not implemented")
+}
+func (UnimplementedAPITokenServer) mustEmbedUnimplementedAPITokenServer() {}
+
+// UnsafeAPITokenServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to APITokenServer will
+// result in compilation errors.
+type UnsafeAPITokenServer interface {
+	mustEmbedUnimplementedAPITokenServer()
+}
+
+func RegisterAPITokenServer(s grpc.ServiceRegistrar, srv APITokenServer) {
+	s.RegisterService(&APIToken_ServiceDesc, srv)
+}
+
+func _APIToken_RequestAPIToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(APITokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APITokenServer).RequestAPIToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.APIToken/RequestAPIToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APITokenServer).RequestAPIToken(ctx, req.(*APITokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// APIToken_ServiceDesc is the grpc.ServiceDesc for APIToken service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var APIToken_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gateway.APIToken",
+	HandlerType: (*APITokenServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RequestAPIToken",
+			Handler:    _APIToken_RequestAPIToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

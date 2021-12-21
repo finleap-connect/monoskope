@@ -12,33 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reactors
+package auth
 
 import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	_ "github.com/finleap-connect/monoskope/internal/test"
 )
 
-func TestReactors(t *testing.T) {
+func TestAuth(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "TestReactors")
+	RunSpecs(t, "Auth Suite")
 }
-
-var _ = BeforeSuite(func() {
-	done := make(chan interface{})
-
-	go func() {
-		By("bootstrapping test env")
-		close(done)
-	}()
-
-	Eventually(done, 60).Should(BeClosed())
-})
-
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-})

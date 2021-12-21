@@ -16,7 +16,6 @@ package gateway
 
 import (
 	"context"
-	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/usecases"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -25,37 +24,31 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 )
 
-type clusterAuthApiServer struct {
-	api.UnimplementedClusterAuthServer
-	log         logger.Logger
-	signer      jwt.JWTSigner
-	userRepo    repositories.ReadOnlyUserRepository
-	clusterRepo repositories.ReadOnlyClusterRepository
-	issuer      string
-	validity    time.Duration
+type apiTokenServer struct {
+	api.UnimplementedAPITokenServer
+	log      logger.Logger
+	signer   jwt.JWTSigner
+	userRepo repositories.ReadOnlyUserRepository
+	issuer   string
 }
 
-func NewClusterAuthAPIServer(
+func NewAPITokenServer(
 	issuer string,
 	signer jwt.JWTSigner,
 	userRepo repositories.ReadOnlyUserRepository,
-	clusterRepo repositories.ReadOnlyClusterRepository,
-	validity time.Duration,
-) api.ClusterAuthServer {
-	s := &clusterAuthApiServer{
-		log:         logger.WithName("server"),
-		signer:      signer,
-		userRepo:    userRepo,
-		clusterRepo: clusterRepo,
-		issuer:      issuer,
-		validity:    validity,
+) api.APITokenServer {
+	s := &apiTokenServer{
+		log:      logger.WithName("server"),
+		signer:   signer,
+		userRepo: userRepo,
+		issuer:   issuer,
 	}
 	return s
 }
 
-func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.ClusterAuthTokenRequest) (*api.ClusterAuthTokenResponse, error) {
-	response := new(api.ClusterAuthTokenResponse)
-	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.userRepo, s.clusterRepo, s.issuer, s.validity)
+func (s *apiTokenServer) RequestAPIToken(ctx context.Context, request *api.APITokenRequest) (*api.APITokenResponse, error) {
+	response := new(api.APITokenResponse)
+	uc := usecases.NewGenerateAPITokenUsecase(request, response, s.signer, s.userRepo, s.issuer)
 	err := uc.Run(ctx)
 	if err != nil {
 		return nil, err

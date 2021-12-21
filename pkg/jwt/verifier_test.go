@@ -44,9 +44,10 @@ var _ = Describe("jwt/verifier", func() {
 		Expect(rawJWT).ToNot(BeEmpty())
 		testEnv.Log.Info("JWT created.", "JWT", rawJWT)
 
-		verifier, err := testEnv.CreateVerifier(5 * time.Minute)
+		verifier, err := testEnv.CreateVerifier()
 		Expect(err).ToNot(HaveOccurred())
 		Expect(verifier).ToNot(BeNil())
+		defer verifier.Close()
 
 		claimsFromJWT := jwt.Claims{}
 		err = verifier.Verify(rawJWT, &claimsFromJWT)
@@ -59,8 +60,7 @@ var _ = Describe("jwt/verifier", func() {
 
 		claimsFromJWT = jwt.Claims{}
 		err = verifier.Verify(rawJWT, &claimsFromJWT)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(claims).To(Equal(claimsFromJWT))
+		Expect(err).To(HaveOccurred())
 
 		rawJWT, err = signer.GenerateSignedToken(claims)
 		Expect(err).ToNot(HaveOccurred())

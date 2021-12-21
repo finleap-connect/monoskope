@@ -34,8 +34,6 @@ Set the following configuration in the values file for the Gateway component of 
 ```yaml
 gateway:
     auth:
-        # -- The identifier of the issuer, e.g. DEX or whatever identifies your identities upstream
-        identityProviderName: "dex"
         # -- The URL of the issuer to use for OIDC
         identityProviderURL: "https://idp.your-domain.com"
     # -- The secret where the gateway finds the OIDC secrets.

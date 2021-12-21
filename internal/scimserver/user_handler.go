@@ -51,6 +51,28 @@ func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userCli
 	}
 }
 
+func (h *userHandler) getBy(f func() (*projections.User, error)) (scim.Resource, error) {
+	user, err := f()
+	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		if err == errors.ErrUserNotFound {
+			return scim.Resource{}, scim_errors.ScimError{
+				Status: http.StatusNotFound,
+			}
+		}
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+	if user.GetMetadata().Deleted != nil && user.GetMetadata().Deleted.IsValid() {
+		return scim.Resource{}, scim_errors.ScimError{
+			Status: http.StatusNotFound,
+		}
+	}
+	return toScimUser(user), nil
+}
+
 // Create stores given attributes. Returns a resource with the attributes that are stored and a (new) unique identifier.
 func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
 	logDebug(h.log, r)
@@ -84,6 +106,12 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 
 	reply, err := h.cmdHandlerClient.Execute(ctx, command)
 	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		if err == errors.ErrUserAlreadyExists {
+			return h.getBy(func() (*projections.User, error) {
+				return h.userClient.GetByEmail(r.Context(), wrapperspb.String(userAttributes.UserName))
+			})
+		}
 		return scim.Resource{}, scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
 			Detail: err.Error(),
@@ -99,26 +127,9 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 // Get returns the resource corresponding with the given identifier.
 func (h *userHandler) Get(r *http.Request, id string) (scim.Resource, error) {
 	logDebug(h.log, r)
-
-	user, err := h.userClient.GetById(r.Context(), wrapperspb.String(id))
-	if err != nil {
-		err = errors.TranslateFromGrpcError(err)
-		if err == errors.ErrUserNotFound {
-			return scim.Resource{}, scim_errors.ScimError{
-				Status: http.StatusNotFound,
-			}
-		}
-		return scim.Resource{}, scim_errors.ScimError{
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-		}
-	}
-	if user.GetMetadata().Deleted != nil && user.GetMetadata().Deleted.IsValid() {
-		return scim.Resource{}, scim_errors.ScimError{
-			Status: http.StatusNotFound,
-		}
-	}
-	return toScimUser(user), nil
+	return h.getBy(func() (*projections.User, error) {
+		return h.userClient.GetById(r.Context(), wrapperspb.String(id))
+	})
 }
 
 // GetAll returns a paginated list of resources.

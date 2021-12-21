@@ -1,0 +1,147 @@
+// Copyright 2021 Monoskope Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// This file follows google's gRPC naming conventions:
+// https://cloud.google.com/apis/design/naming_convention
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/finleap-connect/monoskope/pkg/api/gateway";
+
+package gateway;
+
+message UpstreamAuthenticationRequest {
+  // callback_url is the URL where the authorization code
+  // will be redirected to by the upstream IDP
+  string callback_url = 1 [ (validate.rules).string.uri = true ];
+}
+
+message UpstreamAuthenticationResponse {
+  // upstream_idp_redirect is the URL of the IDP to authenticate against
+  string upstream_idp_redirect = 1 [ (validate.rules).string.uri = true ];
+  // state is the encoded, server-side nonced state containing the callback.
+  // This has to be presented to the server along with the actual m8
+  // AuthenticationRequest.
+  string state = 2;
+}
+
+message AuthenticationRequest {
+  // code is the auth code received by the IDP
+  string code = 1;
+  // state is the encoded, nonced AuthState
+  string state = 2;
+}
+
+message AuthenticationResponse {
+  // access_token is a JWT to authenticate against the m8 API
+  string access_token = 1;
+  // expiry is the timestamp when the token expires
+  google.protobuf.Timestamp expiry = 2;
+  // username is the username known the m8 control plane
+  string username = 3;
+}
+
+message AuthState {
+  // callback_url is the url to send the auth token response too
+  string callback_url = 1 [ (validate.rules).string.uri = true ];
+}
+
+// AuthInformation is the response to an AuthState message.
+// It contains the URL
+message AuthInformation {
+  // auth_code_url is the URL of the IDP to authenticate against
+  string auth_code_url = 1 [ (validate.rules).string.uri = true ];
+  // state is the encoded, nonced AuthState
+  string state = 2;
+}
+
+// AuthCode is the request to exchange the auth code received from
+// an upstream identity provider against a token issued by m8 for
+// authentication.
+message AuthCode {
+  // code is the auth code received by the IDP
+  string code = 1;
+  // state is the encoded, nonced AuthState
+  string state = 2;
+  // callback_url is the url to send the auth token response too
+  string callback_url = 3 [ (validate.rules).string.uri = true ];
+}
+
+// AuthResponse is the response to an AuthCode message.
+// It contains a JWT to authenticate against the m8 API.
+message AuthResponse {
+  // access_token is a JWT to authenticate against the m8 API
+  string access_token = 1;
+  // expiry is the timestamp when the token expires
+  google.protobuf.Timestamp expiry = 2;
+  // username is the username known the m8 control plane
+  string username = 3;
+}
+
+// ClusterAuthTokenRequest is send in order to retrieve an auth token valid to
+// authenticate against a certain cluster with a specific role.
+message ClusterAuthTokenRequest {
+  // Unique identifier of the cluster (UUID 128-bit number)
+  string cluster_id = 1 [ (validate.rules).string.uuid = true ];
+  // Kubernetes role name
+  string role = 2
+      [ (validate.rules).string = {pattern : "^[a-z0-9-]+$", max_bytes : 60} ];
+}
+
+// ClusterAuthTokenResponse contains an auth token valid to
+// authenticate against a certain cluster with a specific role.
+message ClusterAuthTokenResponse {
+  // JWT to authenticate against a K8s cluster
+  string access_token = 1;
+  // Timestamp when the token expires
+  google.protobuf.Timestamp expiry = 2;
+}
+
+// APITokenRequest is send in order to retrieve an API token valid to
+// authenticate against Monoskope and authorize specific scopes.
+message APITokenRequest {
+  // Scope the resulting token is issued for
+  repeated AuthorizationScope authorization_scopes = 1;
+
+  // Duration for which the issued token will be valid
+  google.protobuf.Duration validity = 2;
+
+  oneof user {
+    // Unique identifier of an existing user (UUID 128-bit number)
+    string user_id = 3 [ (validate.rules).string.uuid = true ];
+    // Name of the user the token is valid for (not necessarily a real user)
+    string username = 4;
+  }
+}
+
+// APITokenResponse is the answer to an APITokenRequest
+// containing a JWT to authenticate against the m8 API.
+message APITokenResponse {
+  // JWT to authenticate against the m8 API
+  string access_token = 1;
+  // Timestamp when the token expires
+  google.protobuf.Timestamp expiry = 2;
+}
+
+// AuthorizationScope is an enum defining the available API scopes.
+enum AuthorizationScope {
+  NONE = 0;              // Dummy to prevent accidents
+  API = 1;               // Read-write for the complete API
+  WRITE_SCIM = 2;        // Read-write for endpoints under "/scim"
+  WRITE_K8SOPERATOR = 3; // Read-write for K8sOperator endpoints
+}

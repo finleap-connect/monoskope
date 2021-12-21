@@ -17,8 +17,6 @@ package common
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/reporters"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -29,13 +27,12 @@ var (
 
 func TestCommandHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../reports/commandhandler-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "commandhandler/integration", []Reporter{junitReporter})
+	RunSpecs(t, "commandhandler/integration")
 }
 
 var _ = BeforeSuite(func() {
 	done := make(chan interface{})
-	
+
 	go func() {
 		var err error
 

@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 
 	_ "github.com/finleap-connect/monoskope/internal/test"
@@ -26,8 +25,7 @@ import (
 
 func TestEventHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../../reports/eventhandler-junit.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "TestEventHandler", []Reporter{junitReporter})
+	RunSpecs(t, "TestEventHandler")
 }
 
 var _ = BeforeSuite(func() {

@@ -20,7 +20,6 @@ import (
 	"crypto/x509"
 	"io/fs"
 	"io/ioutil"
-	"time"
 
 	"github.com/finleap-connect/monoskope/internal/test"
 )
@@ -89,8 +88,8 @@ func (env *TestEnv) CreateSigner() JWTSigner {
 	return NewSigner(env.privateKeyFile)
 }
 
-func (env *TestEnv) CreateVerifier(keyExpiration time.Duration) (JWTVerifier, error) {
-	return NewVerifier(env.publicKeyFile, keyExpiration)
+func (env *TestEnv) CreateVerifier() (JWTVerifier, error) {
+	return NewVerifier(env.publicKeyFile)
 }
 
 func (env *TestEnv) Shutdown() error {

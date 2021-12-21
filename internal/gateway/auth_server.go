@@ -31,6 +31,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
+	m8roles "github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	m8scopes "github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -41,30 +44,36 @@ const (
 	HeaderAuthorization = "Authorization"
 )
 
+type OpenIdConfiguration struct {
+	Issuer  string `json:"issuer"`
+	JwksURL string `json:"jwks_uri"`
+}
+
 // authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
-	api         *http.Server
-	engine      *gin.Engine
-	log         logger.Logger
-	shutdown    *util.ShutdownWaitGroup
-	authHandler *auth.Handler
-	userRepo    repositories.ReadOnlyUserRepository
-	url         string
+	api        *http.Server
+	engine     *gin.Engine
+	log        logger.Logger
+	shutdown   *util.ShutdownWaitGroup
+	authClient *auth.Client
+	authServer *auth.Server
+	userRepo   repositories.ReadOnlyUserRepository
+	url        string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(url string, authHandler *auth.Handler, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(url string, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
-		api:         &http.Server{Handler: engine},
-		engine:      engine,
-		log:         logger.WithName("auth-server"),
-		shutdown:    util.NewShutdownWaitGroup(),
-		authHandler: authHandler,
-		userRepo:    userRepo,
-		url:         url,
+		api:        &http.Server{Handler: engine},
+		engine:     engine,
+		log:        logger.WithName("auth-server"),
+		shutdown:   util.NewShutdownWaitGroup(),
+		authClient: client,
+		authServer: server,
+		userRepo:   userRepo,
+		url:        url,
 	}
-	engine.Use(gin.Recovery())
 	engine.Use(cors.Default())
 	return s
 }
@@ -118,24 +127,34 @@ func (s *authServer) Shutdown() {
 
 // registerViews registers all routes necessary serving.
 func (s *authServer) registerViews(r *gin.Engine) {
+	// readiness check
 	r.GET("/readyz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ready")
 	})
+
+	// auth route
+	r.GET("/auth/*route", s.auth)
+	r.PUT("/auth/*route", s.auth)
 	r.POST("/auth/*route", s.auth)
+	r.PATCH("/auth/*route", s.auth)
+	r.DELETE("/auth/*route", s.auth)
+	r.OPTIONS("/auth/*route", s.auth)
+
+	// OIDC
 	r.GET("/.well-known/openid-configuration", s.discovery)
 	r.GET("/keys", s.keys)
 }
 
 func (s *authServer) discovery(c *gin.Context) {
-	c.JSON(http.StatusOK, &auth.OpenIdConfiguration{
+	c.JSON(http.StatusOK, &OpenIdConfiguration{
 		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
 		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
 	})
 }
 
 func (s *authServer) keys(c *gin.Context) {
-	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(s.authHandler.KeyExpiration().Seconds())))
-	c.JSON(http.StatusOK, s.authHandler.Keys())
+	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
+	c.JSON(http.StatusOK, s.authServer.Keys())
 }
 
 // auth serves as handler for the auth route of the server.
@@ -171,18 +190,67 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
-	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request), jwt.AudienceMonoctl, jwt.AudienceM8Operator)
-	if authToken != nil {
-		if _, ok := s.retrieveUserId(c, authToken.Email); !ok {
-			s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
+	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request))
+	if authToken == nil {
+		return nil
+	}
+
+	// Check user actually exists in m8
+
+	user, err := s.userRepo.ByEmail(c, authToken.Email)
+	if err != nil && !authToken.IsAPIToken {
+		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
+		return nil
+	}
+
+	// Validate scopes
+	route := c.Param("route")
+	scopes := strings.Split(authToken.Scope, " ")
+
+	// Validation for API Token Endpoint
+	// TODO: This is a temporary solution until authorization has been replaced with Open Policy Agent
+	if strings.HasPrefix(route, "/"+gateway.APIToken_ServiceDesc.ServiceName) {
+		if !authToken.IsAPIToken {
+			for _, role := range user.Roles {
+				if role.Role == m8roles.Admin.String() && role.Scope == m8scopes.System.String() { // Only system admins can issue API tokens
+					return authToken
+				}
+			}
+			s.log.Info("Token validation failed. Only system admins can call that route.", "Route", route, "Scopes", authToken.Scope)
+			return nil
+		} else { // API Tokens can't be used to issue new ones
+			s.log.Info("Token validation failed. Token can not be used for route.", "Route", route, "Scopes", authToken.Scope)
 			return nil
 		}
 	}
-	return authToken
+
+	// SCIM API Access
+	if strings.HasPrefix(route, "/scim") {
+		if containsString(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
+			return authToken
+		}
+	}
+
+	// General API access
+	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
+		return authToken
+	}
+
+	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
+	return nil
+}
+
+func containsString(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 // tokenValidation validates the token provided within the authorization flow
-func (s *authServer) tokenValidation(ctx context.Context, token string, expectedAudience ...string) *jwt.AuthToken {
+func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
 
 	if token == "" {
@@ -191,16 +259,16 @@ func (s *authServer) tokenValidation(ctx context.Context, token string, expected
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authHandler.Authorize(ctx, token, authToken); err != nil {
+	if err := s.authServer.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
-	if err := authToken.Validate(s.url, expectedAudience...); err != nil {
+	if err := authToken.Validate(s.url); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
 
-	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email)
+	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email, "scope", authToken.Scope)
 
 	return authToken
 }
@@ -219,7 +287,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
 		return nil
 	} else {
-		claims := jwt.NewAuthToken(&jwt.StandardClaims{
+		claims := auth.NewAuthToken(&jwt.StandardClaims{
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
 		}, s.url, userId, time.Minute*5)

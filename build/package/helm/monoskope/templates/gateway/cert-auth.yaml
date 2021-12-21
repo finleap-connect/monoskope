@@ -10,8 +10,7 @@ metadata:
     {{- end }}
 spec:
   secretName: {{ .Values.pki.authentication.keySecretName }}
-  duration: {{ .Values.pki.certificates.duration }}
-  renewBefore: {{ .Values.pki.certificates.renewBefore }}
+  duration: 876000h # 100y cause this is to be rotated manually
   privateKey:
     rotationPolicy: Always
   issuerRef:
