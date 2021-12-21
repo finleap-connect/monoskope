@@ -28,13 +28,12 @@ package gateway;
 message UpstreamAuthenticationRequest {
   // callback_url is the URL where the authorization code
   // will be redirected to by the upstream IDP
-  string callback_url = 1 [ (validate.rules).string.pattern =
-                                "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string callback_url = 1 [ (validate.rules).string.uri = true ];
 }
 
 message UpstreamAuthenticationResponse {
   // upstream_idp_redirect is the URL of the IDP to authenticate against
-  string upstream_idp_redirect = 1;
+  string upstream_idp_redirect = 1 [ (validate.rules).string.uri = true ];
   // state is the encoded, server-side nonced state containing the callback.
   // This has to be presented to the server along with the actual m8
   // AuthenticationRequest.
@@ -59,16 +58,14 @@ message AuthenticationResponse {
 
 message AuthState {
   // callback_url is the url to send the auth token response too
-  string callback_url = 1 [ (validate.rules).string.pattern =
-                                "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string callback_url = 1 [ (validate.rules).string.uri = true ];
 }
 
 // AuthInformation is the response to an AuthState message.
 // It contains the URL
 message AuthInformation {
   // auth_code_url is the URL of the IDP to authenticate against
-  string auth_code_url = 1 [ (validate.rules).string.pattern =
-                                 "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string auth_code_url = 1 [ (validate.rules).string.uri = true ];
   // state is the encoded, nonced AuthState
   string state = 2;
 }
@@ -82,7 +79,7 @@ message AuthCode {
   // state is the encoded, nonced AuthState
   string state = 2;
   // callback_url is the url to send the auth token response too
-  string callback_url = 3;
+  string callback_url = 3 [ (validate.rules).string.uri = true ];
 }
 
 // AuthResponse is the response to an AuthCode message.
@@ -103,7 +100,7 @@ message ClusterAuthTokenRequest {
   string cluster_id = 1 [ (validate.rules).string.uuid = true ];
   // Kubernetes role name
   string role = 2
-      [ (validate.rules).string = {pattern : "^[a-z]+$", max_bytes : 60} ];
+      [ (validate.rules).string = {pattern : "^[a-z0-9-]+$", max_bytes : 60} ];
 }
 
 // ClusterAuthTokenResponse contains an auth token valid to

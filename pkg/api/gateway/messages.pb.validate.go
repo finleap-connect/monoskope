@@ -60,10 +60,20 @@ func (m *UpstreamAuthenticationRequest) validate(all bool) error {
 
 	var errors []error
 
-	if !_UpstreamAuthenticationRequest_CallbackUrl_Pattern.MatchString(m.GetCallbackUrl()) {
+	if uri, err := url.Parse(m.GetCallbackUrl()); err != nil {
+		err = UpstreamAuthenticationRequestValidationError{
+			field:  "CallbackUrl",
+			reason: "value must be a valid URI",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	} else if !uri.IsAbs() {
 		err := UpstreamAuthenticationRequestValidationError{
 			field:  "CallbackUrl",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
+			reason: "value must be absolute",
 		}
 		if !all {
 			return err
@@ -151,8 +161,6 @@ var _ interface {
 	ErrorName() string
 } = UpstreamAuthenticationRequestValidationError{}
 
-var _UpstreamAuthenticationRequest_CallbackUrl_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
-
 // Validate checks the field values on UpstreamAuthenticationResponse with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -175,7 +183,26 @@ func (m *UpstreamAuthenticationResponse) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for UpstreamIdpRedirect
+	if uri, err := url.Parse(m.GetUpstreamIdpRedirect()); err != nil {
+		err = UpstreamAuthenticationResponseValidationError{
+			field:  "UpstreamIdpRedirect",
+			reason: "value must be a valid URI",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	} else if !uri.IsAbs() {
+		err := UpstreamAuthenticationResponseValidationError{
+			field:  "UpstreamIdpRedirect",
+			reason: "value must be absolute",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	// no validation rules for State
 
@@ -520,10 +547,20 @@ func (m *AuthState) validate(all bool) error {
 
 	var errors []error
 
-	if !_AuthState_CallbackUrl_Pattern.MatchString(m.GetCallbackUrl()) {
+	if uri, err := url.Parse(m.GetCallbackUrl()); err != nil {
+		err = AuthStateValidationError{
+			field:  "CallbackUrl",
+			reason: "value must be a valid URI",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	} else if !uri.IsAbs() {
 		err := AuthStateValidationError{
 			field:  "CallbackUrl",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
+			reason: "value must be absolute",
 		}
 		if !all {
 			return err
@@ -607,8 +644,6 @@ var _ interface {
 	ErrorName() string
 } = AuthStateValidationError{}
 
-var _AuthState_CallbackUrl_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
-
 // Validate checks the field values on AuthInformation with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -631,10 +666,20 @@ func (m *AuthInformation) validate(all bool) error {
 
 	var errors []error
 
-	if !_AuthInformation_AuthCodeUrl_Pattern.MatchString(m.GetAuthCodeUrl()) {
+	if uri, err := url.Parse(m.GetAuthCodeUrl()); err != nil {
+		err = AuthInformationValidationError{
+			field:  "AuthCodeUrl",
+			reason: "value must be a valid URI",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	} else if !uri.IsAbs() {
 		err := AuthInformationValidationError{
 			field:  "AuthCodeUrl",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
+			reason: "value must be absolute",
 		}
 		if !all {
 			return err
@@ -721,8 +766,6 @@ var _ interface {
 	ErrorName() string
 } = AuthInformationValidationError{}
 
-var _AuthInformation_AuthCodeUrl_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
-
 // Validate checks the field values on AuthCode with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -749,7 +792,26 @@ func (m *AuthCode) validate(all bool) error {
 
 	// no validation rules for State
 
-	// no validation rules for CallbackUrl
+	if uri, err := url.Parse(m.GetCallbackUrl()); err != nil {
+		err = AuthCodeValidationError{
+			field:  "CallbackUrl",
+			reason: "value must be a valid URI",
+			cause:  err,
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	} else if !uri.IsAbs() {
+		err := AuthCodeValidationError{
+			field:  "CallbackUrl",
+			reason: "value must be absolute",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return AuthCodeMultiError(errors)
@@ -1006,7 +1068,7 @@ func (m *ClusterAuthTokenRequest) validate(all bool) error {
 	if !_ClusterAuthTokenRequest_Role_Pattern.MatchString(m.GetRole()) {
 		err := ClusterAuthTokenRequestValidationError{
 			field:  "Role",
-			reason: "value does not match regex pattern \"^[a-z]+$\"",
+			reason: "value does not match regex pattern \"^[a-z0-9-]+$\"",
 		}
 		if !all {
 			return err
@@ -1101,7 +1163,7 @@ var _ interface {
 	ErrorName() string
 } = ClusterAuthTokenRequestValidationError{}
 
-var _ClusterAuthTokenRequest_Role_Pattern = regexp.MustCompile("^[a-z]+$")
+var _ClusterAuthTokenRequest_Role_Pattern = regexp.MustCompile("^[a-z0-9-]+$")
 
 // Validate checks the field values on ClusterAuthTokenResponse with the rules
 // defined in the proto definition for this message. If any rules are
