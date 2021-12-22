@@ -25,6 +25,11 @@ import (
 	jose_jwt "gopkg.in/square/go-jose.v2/jwt"
 )
 
+const (
+	AudienceAPI     = "m8api"
+	AudienceK8sAuth = "k8sauth"
+)
+
 func NewAuthToken(claims *jwt.StandardClaims, issuer, userId string, validity time.Duration) *jwt.AuthToken {
 	now := time.Now().UTC()
 
@@ -36,6 +41,7 @@ func NewAuthToken(claims *jwt.StandardClaims, issuer, userId string, validity ti
 			Expiry:    jose_jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jose_jwt.NewNumericDate(now),
 			IssuedAt:  jose_jwt.NewNumericDate(now),
+			Audience:  jose_jwt.Audience{AudienceAPI},
 		},
 		StandardClaims: claims,
 		Scope:          gateway.AuthorizationScope_API.String(),
@@ -53,6 +59,7 @@ func NewKubernetesAuthToken(claims *jwt.StandardClaims, clusterClaim *jwt.Cluste
 			Expiry:    jose_jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jose_jwt.NewNumericDate(now),
 			IssuedAt:  jose_jwt.NewNumericDate(now),
+			Audience:  jose_jwt.Audience{AudienceK8sAuth},
 		},
 		StandardClaims: claims,
 		ClusterClaim:   clusterClaim,
@@ -75,6 +82,7 @@ func NewClusterBootstrapToken(claims *jwt.StandardClaims, issuer, userId string)
 			Expiry:    jose_jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
 			NotBefore: jose_jwt.NewNumericDate(now),
 			IssuedAt:  jose_jwt.NewNumericDate(now),
+			Audience:  jose_jwt.Audience{AudienceAPI},
 		},
 		StandardClaims: claims,
 		Scope:          gateway.AuthorizationScope_WRITE_K8SOPERATOR.String(),
@@ -98,6 +106,7 @@ func NewApiToken(claims *jwt.StandardClaims, issuer, userId string, validity tim
 			Expiry:    jose_jwt.NewNumericDate(now.Add(validity)),
 			NotBefore: jose_jwt.NewNumericDate(now),
 			IssuedAt:  jose_jwt.NewNumericDate(now),
+			Audience:  jose_jwt.Audience{AudienceAPI},
 		},
 		StandardClaims: claims,
 		Scope:          scopesString,
