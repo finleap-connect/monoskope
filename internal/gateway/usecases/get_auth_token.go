@@ -90,7 +90,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		return err
 	}
 
-	username := strings.ToLower(user.Name)
+	username := strings.ToLower(strings.Split(user.GetEmail(), "@")[0])
 	if s.request.GetRole() != string(k8s.DefaultRole) {
 		username = fmt.Sprintf("%s-%s", username, s.request.GetRole())
 	}
