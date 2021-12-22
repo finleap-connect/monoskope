@@ -16,9 +16,9 @@ name: Golang CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   
 env:
   GO_MODULE: github.com/finleap-connect/monoskope
