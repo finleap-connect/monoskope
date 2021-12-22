@@ -25,6 +25,7 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type tlsConf struct {
@@ -58,7 +59,7 @@ func (factory grpcConnectionFactory) WithInsecure() grpcConnectionFactory {
 	if factory.opts == nil {
 		factory.opts = make([]grpc.DialOption, 0)
 	}
-	factory.opts = append(factory.opts, grpc.WithInsecure())
+	factory.opts = append(factory.opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	return factory
 }
 
