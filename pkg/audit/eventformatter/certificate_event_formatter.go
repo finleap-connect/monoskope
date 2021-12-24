@@ -35,23 +35,24 @@ func (f *certificateEventFormatter) getFormattedDetails() string {
 	case *eventdata.CertificateRequested: return f.getFormattedDetailsCertificateRequested(ed.(*eventdata.CertificateRequested))
 	case *eventdata.CertificateIssued: return f.getFormattedDetailsCertificateIssued(ed.(*eventdata.CertificateIssued))
 	}
+
 	return ""
 }
 
 // TODO: improve details
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(_ *eventdata.CertificateRequested) string {
-	return fmt.Sprintf("%s requested a certificate", f.event.Metadata["x-auth-email"])
+	return fmt.Sprintf("“%s“ requested a certificate", f.event.Metadata["x-auth-email"])
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued() string {
-	return fmt.Sprintf("%s issued a certificate request", f.event.Metadata["x-auth-email"])
+	return fmt.Sprintf("“%s“ issued a certificate request", f.event.Metadata["x-auth-email"])
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(_ *eventdata.CertificateIssued) string {
-	return fmt.Sprintf("%s issued a certificate", f.event.Metadata["x-auth-email"])
+	return fmt.Sprintf("“%s“ issued a certificate", f.event.Metadata["x-auth-email"])
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssueingFailed() string {
-	return fmt.Sprintf("certificate request issuing faild for %s", f.event.Metadata["x-auth-email"])
+	return fmt.Sprintf("certificate request issuing faild for “%s“", f.event.Metadata["x-auth-email"])
 }
