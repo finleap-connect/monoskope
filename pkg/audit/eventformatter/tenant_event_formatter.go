@@ -26,11 +26,12 @@ func (f *tenantEventFormatter) getFormattedDetails() string {
 	case events.TenantDeleted: return f.getFormattedDetailsTenantDeleted()
 	case events.TenantClusterBindingDeleted: return f.getFormattedDetailsTenantClusterBindingDeleted()
 	}
-	
+
 	ed, ok := toPortoFromEventData(f.event.Data)
 	if !ok {
 		return ""
 	}
+	
 	switch ed.(type) {
 	case *eventdata.TenantCreated: return f.getFormattedDetailsTenantCreated(ed.(*eventdata.TenantCreated))
 	case *eventdata.TenantUpdated: return f.getFormattedDetailsTenantUpdated(ed.(*eventdata.TenantUpdated))
@@ -41,59 +42,59 @@ func (f *tenantEventFormatter) getFormattedDetails() string {
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(eventData *eventdata.TenantCreated) string {
-	return fmt.Sprintf("%s created Tenant %s with prefix %s", f.event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix)
+	return fmt.Sprintf("“%s“ created tenant “%s“ with prefix “%s“", f.event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix)
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(eventData *eventdata.TenantClusterBindingCreated) string {
-	tenant, err := f.getTenantById(f.ctx, eventData.TenantId)
+	tenant, err := f.QHDomain.TenantRepository.ByTenantId(f.ctx, eventData.TenantId)
 	if err != nil {
 		return ""
 	}
-	cluster, err := f.getClusterById(f.ctx, eventData.ClusterId)
+	cluster, err := f.QHDomain.ClusterRepository.ByClusterId(f.ctx, eventData.ClusterId)
 	if err != nil {
 		return ""
 	}
 	
-	return fmt.Sprintf("%s binded tanent “%s” to cluster “%s”",
+	return fmt.Sprintf("“%s“ binded tanent “%s“ to cluster “%s”",
 		f.event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName)
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(eventData *eventdata.TenantUpdated) string {
 	// TODO: how to get a projection of a specific version
-	oldTenant, err := f.getTenantById(f.ctx, f.event.AggregateId)
+	oldTenant, err := f.QHDomain.TenantRepository.ByTenantId(f.ctx, f.event.AggregateId)
 	if err != nil {
 		return ""
 	}
 	
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf("%s updated the Tenant", f.event.Metadata["x-auth-email"]))
+	details.WriteString(fmt.Sprintf("“%s“ updated the Tenant", f.event.Metadata["x-auth-email"]))
 	appendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
 	return details.String()
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted() string {
-	tenant, err := f.getTenantById(f.ctx, f.event.AggregateId)
+	tenant, err := f.QHDomain.TenantRepository.ByTenantId(f.ctx, f.event.AggregateId)
 	if err != nil {
 		return ""
 	}
 	
-	return fmt.Sprintf("%s deleted tenant %s", f.event.Metadata["x-auth-email"], tenant.Name)
+	return fmt.Sprintf("“%s“ deleted tenant “%s“", f.event.Metadata["x-auth-email"], tenant.Name)
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted() string {
-	tcb, err := f.getTenantClusterBinding(f.ctx, f.event.AggregateId)
+	tcb, err := f.QHDomain.TenantClusterBindingRepository.GetByTenantClusterBindingId(f.ctx, f.event.AggregateId)
 	if err != nil {
 		return ""
 	}
-	tenant, err := f.getTenantById(f.ctx, tcb.TenantId)
+	tenant, err := f.QHDomain.TenantRepository.ByTenantId(f.ctx, tcb.TenantId)
 	if err != nil {
 		return ""
 	}
-	cluster, err := f.getClusterById(f.ctx, tcb.ClusterId)
+	cluster, err := f.QHDomain.ClusterRepository.ByClusterId(f.ctx, tcb.ClusterId)
 	if err != nil {
 		return ""
 	}
 	
-	return fmt.Sprintf("%s deleted the bound between cluster %s and tenant %s",
+	return fmt.Sprintf("“%s“ deleted the bound between cluster “%s“ and tenant “%s“",
 		f.event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name)
 }
