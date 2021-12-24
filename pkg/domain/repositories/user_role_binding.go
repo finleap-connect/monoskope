@@ -16,6 +16,7 @@ package repositories
 
 import (
 	"context"
+	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -34,9 +35,11 @@ type UserRoleBindingRepository interface {
 
 // ReadOnlyUserRepository is a repository for reading UserRoleBinding projections.
 type ReadOnlyUserRoleBindingRepository interface {
-	// ByUserId searches for all UserRoleBinding projection's by the a user id.
+	// GetByUserRoleBindingId searches for the UserRoleBinding projections by its id.
+	GetByUserRoleBindingId(ctx context.Context, id string) (*projections.UserRoleBinding, error)
+	// ByUserId searches for all UserRoleBinding projection's by the user id.
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
-	// ByUserIdAndScope searches for all UserRoleBinding projection's by the a user id and the scope.
+	// ByUserIdAndScope searches for all UserRoleBinding projection's by the user id and the scope.
 	ByUserIdAndScope(context.Context, uuid.UUID, es.Scope) ([]*projections.UserRoleBinding, error)
 	// ByScopeAndResource returns all UserRoleBinding projections matching the given scope and resource.
 	ByScopeAndResource(context.Context, es.Scope, uuid.UUID) ([]*projections.UserRoleBinding, error)
@@ -47,6 +50,26 @@ func NewUserRoleBindingRepository(repository es.Repository) UserRoleBindingRepos
 	return &userRoleBindingRepository{
 		Repository: repository,
 	}
+}
+
+// GetByUserRoleBindingId searches for the UserRoleBinding projections by its id.
+func (r *userRoleBindingRepository) GetByUserRoleBindingId(ctx context.Context, id string) (*projections.UserRoleBinding, error) {
+	projectionUUID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	projection, err := r.ById(ctx, projectionUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	userRoleBinding, ok := projection.(*projections.UserRoleBinding)
+	if !ok {
+		return nil, esErrors.ErrInvalidProjectionType
+	}
+
+	return userRoleBinding, nil
 }
 
 // ByUserId searches for all UserRoleBinding projection's by the a user id.
