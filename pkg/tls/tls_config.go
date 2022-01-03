@@ -58,7 +58,7 @@ func NewTLSConfigLoader(caCertFile, certFile, keyFile string) (*TLSConfigLoader,
 		caCertFile: caCertFile,
 		certFile:   certFile,
 		keyFile:    keyFile,
-		log:        logger.WithName("auto-reloading-tls-config").WithValues("caCertFile", caCertFile, "certFile", certFile, "keyFile", keyFile),
+		log:        logger.WithName("tls-config-loader").WithValues("caCertFile", caCertFile, "certFile", certFile, "keyFile", keyFile),
 	}, nil
 }
 
@@ -131,12 +131,12 @@ loop:
 		case <-t.watching:
 			break loop
 		case event := <-t.watcher.Events:
-			t.log.Info("watch event: %v", event)
+			t.log.V(logger.ErrorLevel).Info("watch event", "event", event)
 			if err := t.load(); err != nil {
-				t.log.Info("can't load: %v", err)
+				t.log.Error(err, "can't load", err)
 			}
 		case err := <-t.watcher.Errors:
-			t.log.Info("error watching files: %v", err)
+			t.log.Error(err, "error watching files")
 		}
 	}
 	t.log.Info("stopped watching")
