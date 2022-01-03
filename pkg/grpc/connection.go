@@ -142,5 +142,11 @@ func (factory *grpcConnectionFactory) loadTLSCredentials() (credentials.Transpor
 	if err != nil {
 		return nil, err
 	}
+
+	err = loader.Watch()
+	if err != nil {
+		return nil, err
+	}
+
 	return credentials.NewTLS(loader.GetTLSConfig()), nil
 }

@@ -71,6 +71,11 @@ func (conf *RabbitEventBusConfig) configureTLS() error {
 		return err
 	}
 
+	err = loader.Watch()
+	if err != nil {
+		return err
+	}
+
 	conf.amqpConfig.TLSClientConfig = loader.GetTLSConfig()
 	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
 

@@ -70,6 +70,11 @@ func (conf *postgresStoreConfig) ConfigureTLS() error {
 		return err
 	}
 
+	err = loader.Watch()
+	if err != nil {
+		return err
+	}
+
 	conf.pgOptions.TLSConfig = loader.GetTLSConfig()
 	return nil
 }
