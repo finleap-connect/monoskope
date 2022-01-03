@@ -16,11 +16,9 @@ package grpc
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"io/ioutil"
 	"time"
+
+	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
@@ -140,28 +138,15 @@ func (factory grpcConnectionFactory) ConnectWithTimeout(ctx context.Context, tim
 
 // loadTLSCredentials actually loads the configured certs
 func (factory *grpcConnectionFactory) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	// Load certificate of the CA who signed server's certificate
-	pemServerCA, err := ioutil.ReadFile(factory.tlsConf.pemServerCAFile)
+	loader, err := m8tls.NewTLSConfigLoader(factory.tlsConf.pemServerCAFile, factory.tlsConf.certFile, factory.tlsConf.keyFile)
 	if err != nil {
 		return nil, err
 	}
 
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(pemServerCA) {
-		return nil, fmt.Errorf("failed to add server CA's certificate")
-	}
-
-	// Load client's certificate and private key
-	clientCert, err := tls.LoadX509KeyPair(factory.tlsConf.certFile, factory.tlsConf.keyFile)
+	err = loader.Watch()
 	if err != nil {
 		return nil, err
 	}
 
-	// Create the credentials and return it
-	config := &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-		RootCAs:      certPool,
-	}
-
-	return credentials.NewTLS(config), nil
+	return credentials.NewTLS(loader.GetTLSConfig()), nil
 }

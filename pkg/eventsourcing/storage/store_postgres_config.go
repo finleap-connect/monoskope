@@ -15,12 +15,11 @@
 package storage
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"strings"
 	"time"
+
+	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
 
 	"github.com/go-pg/pg/v10"
 )
@@ -30,6 +29,9 @@ const (
 	DefaultReInitDelay    = 5 * time.Second  // When setting up db schema
 	DefaultResendDelay    = 3 * time.Second  // When retrying to read/write
 	DefaultMaxRetries     = 10               // How many times retrying read/write
+	CACertPath            = "/etc/eventstore/certs/db/ca.crt"
+	TLSCertPath           = "/etc/eventstore/certs/db/tls.crt"
+	TLSKeyPath            = "/etc/eventstore/certs/db/tls.key"
 )
 
 type postgresStoreConfig struct {
@@ -64,23 +66,19 @@ func NewPostgresStoreConfig(url string) (*postgresStoreConfig, error) {
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *postgresStoreConfig) ConfigureTLS() error {
-	cfg := &tls.Config{
-		RootCAs:    x509.NewCertPool(),
-		ServerName: strings.Split(conf.pgOptions.Addr, ":")[0],
-	}
-	if ca, err := ioutil.ReadFile("/etc/eventstore/certs/db/ca.crt"); err != nil {
+	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
+	if err != nil {
 		return err
-	} else {
-		cfg.RootCAs.AppendCertsFromPEM(ca)
 	}
 
-	if cert, err := tls.LoadX509KeyPair("/etc/eventstore/certs/db/tls.crt", "/etc/eventstore/certs/db/tls.key"); err != nil {
+	err = loader.Watch()
+	if err != nil {
 		return err
-	} else {
-		cfg.Certificates = append(cfg.Certificates, cert)
 	}
 
-	conf.pgOptions.TLSConfig = cfg
+	conf.pgOptions.TLSConfig = loader.GetTLSConfig()
+	conf.pgOptions.TLSConfig.ServerName = strings.Split(conf.pgOptions.Addr, ":")[0]
+
 	return nil
 }
 

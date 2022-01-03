@@ -15,9 +15,7 @@
 package messaging
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
+	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
 
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -68,31 +66,20 @@ func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBu
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) configureTLS() error {
-	var err error
-	caCertPool := x509.NewCertPool()
-	ca, err := ioutil.ReadFile(CACertPath)
+	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
 	if err != nil {
 		return err
 	}
-	caCertPool.AppendCertsFromPEM(ca)
 
-	conf.amqpConfig.TLSClientConfig = &tls.Config{
-		RootCAs:              caCertPool,
-		GetClientCertificate: getClientCertificate,
+	err = loader.Watch()
+	if err != nil {
+		return err
 	}
+
+	conf.amqpConfig.TLSClientConfig = loader.GetTLSConfig()
 	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
 
 	return nil
-}
-
-// getClientCertificate returns the loaded certificate for use by
-// the TLSConfig fields getClientCertificate.
-func getClientCertificate(hello *tls.CertificateRequestInfo) (*tls.Certificate, error) {
-	cert, err := tls.LoadX509KeyPair(TLSCertPath, TLSKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	return &cert, nil
 }
 
 // Validate validates the configuration
