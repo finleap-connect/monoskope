@@ -131,7 +131,7 @@ loop:
 		case <-t.watching:
 			break loop
 		case event := <-t.watcher.Events:
-			t.log.V(logger.ErrorLevel).Info("watch event", "event", event)
+			t.log.V(logger.DebugLevel).Info("watch event", "event", event)
 			if err := t.load(); err != nil {
 				t.log.Error(err, "can't load", err)
 			}
