@@ -16,6 +16,7 @@ package storage
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
@@ -76,6 +77,8 @@ func (conf *postgresStoreConfig) ConfigureTLS() error {
 	}
 
 	conf.pgOptions.TLSConfig = loader.GetTLSConfig()
+	conf.pgOptions.TLSConfig.ServerName = strings.Split(conf.pgOptions.Addr, ":")[0]
+
 	return nil
 }
 
