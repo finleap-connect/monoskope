@@ -107,9 +107,13 @@ func (t *TLSConfigLoader) load() error {
 	}
 
 	// Append local CA cert to the system pool
-	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-		t.log.Info("No certs appended, using system certs only")
+	if rootCAs.AppendCertsFromPEM(certs) {
+		t.log.Info("root CAs loaded")
+	} else {
+		t.log.Info("No root CAs appended, using system CAs only")
 	}
+
+	t.rootCAs = rootCAs
 
 	keyPair, err := tls.LoadX509KeyPair(t.certFile, t.keyFile)
 	if err == nil {
