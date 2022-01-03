@@ -142,8 +142,9 @@ loop:
 // GetTLSConfig returns a tls.Config with auto reloading certs.
 func (t *TLSConfigLoader) GetTLSConfig() *tls.Config {
 	return &tls.Config{
-		RootCAs:        t.GetRootCAs(),
-		GetCertificate: t.GetCertificate,
+		RootCAs:              t.GetRootCAs(),
+		GetCertificate:       t.GetCertificate,
+		GetClientCertificate: t.GetClientCertificate,
 	}
 }
 
@@ -157,6 +158,14 @@ func (t *TLSConfigLoader) GetRootCAs() *x509.CertPool {
 // GetCertificate returns the loaded certificate for use by
 // the TLSConfig fields GetCertificate field in a http.Server.
 func (t *TLSConfigLoader) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.keyPair, nil
+}
+
+// GetClientCertificate returns the loaded certificate for use by
+// the TLSConfig fields GetClientCertificate field in a http.Server.
+func (t *TLSConfigLoader) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.keyPair, nil
