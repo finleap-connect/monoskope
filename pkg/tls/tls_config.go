@@ -39,6 +39,15 @@ type TLSConfigLoader struct {
 }
 
 func NewTLSConfigLoader(caCertFile, certFile, keyFile string) (*TLSConfigLoader, error) {
+	if caCertFile == "" {
+		return nil, errors.New("caCertFile must not be empty")
+	}
+	if certFile == "" {
+		return nil, errors.New("certFile must not be empty")
+	}
+	if keyFile == "" {
+		return nil, errors.New("keyFile must not be empty")
+	}
 	var err error
 	caCertFile, err = filepath.Abs(caCertFile)
 	if err != nil {
@@ -58,7 +67,7 @@ func NewTLSConfigLoader(caCertFile, certFile, keyFile string) (*TLSConfigLoader,
 		caCertFile: caCertFile,
 		certFile:   certFile,
 		keyFile:    keyFile,
-		log:        logger.WithName("tls-config-loader").WithValues("caCertFile", caCertFile, "certFile", certFile, "keyFile", keyFile),
+		log:        logger.WithName("tls-config-loader"),
 	}, nil
 }
 
@@ -84,7 +93,7 @@ func (t *TLSConfigLoader) Watch() error {
 	if err := t.load(); err != nil {
 		t.log.Error(err, "can't load")
 	}
-	t.log.Info("watching for ca, cert and key change")
+	t.log.Info("watching for ca, cert and key change", "caCertFile", t.caCertFile, "certFile", t.certFile, "keyFile", t.keyFile)
 	t.watching = make(chan struct{})
 	go t.run()
 	return nil
@@ -133,7 +142,7 @@ loop:
 		case event := <-t.watcher.Events:
 			t.log.V(logger.DebugLevel).Info("watch event", "event", event)
 			if err := t.load(); err != nil {
-				t.log.Error(err, "can't load", err)
+				t.log.Error(err, "can't load")
 			}
 		case err := <-t.watcher.Errors:
 			t.log.Error(err, "error watching files")
