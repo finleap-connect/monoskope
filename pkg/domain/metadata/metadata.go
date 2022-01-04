@@ -22,6 +22,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/version"
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 )
@@ -56,6 +57,7 @@ type UserInformation struct {
 type DomainMetadataManager struct {
 	es.MetadataManager
 	domainContext *DomainContext
+	log           logger.Logger
 }
 
 type DomainContext struct {
@@ -80,6 +82,7 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
 		newDomainContext(nil),
+		logger.WithName("domain-metadata-manager"),
 	}
 
 	if len(m.GetMetadata()) == 0 {
@@ -87,6 +90,7 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			data := make(map[string]string)
 			for k, v := range md {
+				m.log.V(logger.DebugLevel).Info("grpc metadata from incoming context", "key", k, "value", v)
 				if isHeaderAccepted(k) {
 					data[k] = v[0] // typically only the first and only value of that is relevant
 				}
