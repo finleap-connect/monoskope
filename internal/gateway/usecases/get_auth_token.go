@@ -22,6 +22,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
@@ -29,7 +30,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type getAuthTokenUsecase struct {
@@ -74,11 +74,11 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 
 	if userInfo.NotBefore.IsZero() {
 		s.Log.Info("User's authentication time could not be determined", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
-		return errors.NewUnauthorized("could not determine when user was authenticated")
+		return domainErrors.ErrUnauthorized
 	}
 	if time.Now().UTC().Sub(userInfo.NotBefore) > 1*time.Minute {
 		s.Log.Info("User's authentication is too far in the past", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
-		return errors.NewUnauthorized("your authentication is too far in the past, please reauthenticate")
+		return domainErrors.ErrUnauthorized
 	}
 
 	s.Log.V(logger.DebugLevel).Info("Getting current user by id...", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)

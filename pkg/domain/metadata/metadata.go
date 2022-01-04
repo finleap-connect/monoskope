@@ -37,8 +37,9 @@ var (
 		componentName,
 		componentCommit,
 		componentVersion,
-		auth.HeaderAuthEmail,
 		auth.HeaderAuthId,
+		auth.HeaderAuthName,
+		auth.HeaderAuthEmail,
 		auth.HeaderAuthNotBefore,
 	}
 )
