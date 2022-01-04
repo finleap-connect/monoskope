@@ -43,7 +43,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const K8sTokenLifetimeConfig = "k8sTokenLifetime.yaml"
+const K8sTokenLifetimeConfig = "k8s-auth/k8sTokenLifetime.yaml"
 
 var (
 	grpcApiAddr       string
