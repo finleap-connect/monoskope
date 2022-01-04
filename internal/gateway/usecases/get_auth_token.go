@@ -74,11 +74,11 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 
 	if userInfo.NotBefore.IsZero() {
 		s.Log.Info("User's authentication time could not be determined", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
-		return domainErrors.ErrUnauthorized
+		return domainErrors.ErrUnauthenticated
 	}
 	if time.Now().UTC().Sub(userInfo.NotBefore) > 1*time.Minute {
 		s.Log.Info("User's authentication is too far in the past", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
-		return domainErrors.ErrUnauthorized
+		return domainErrors.ErrUnauthenticated
 	}
 
 	s.Log.V(logger.DebugLevel).Info("Getting current user by id...", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)

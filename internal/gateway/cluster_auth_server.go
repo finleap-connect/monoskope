@@ -20,6 +20,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/usecases"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -58,7 +59,7 @@ func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.Cl
 	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.userRepo, s.clusterRepo, s.issuer, s.validity)
 	err := uc.Run(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.TranslateToGrpcError(err)
 	}
 	return response, nil
 }
