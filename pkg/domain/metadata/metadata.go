@@ -16,6 +16,7 @@ package metadata
 
 import (
 	"context"
+	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/version"
@@ -38,14 +39,16 @@ var (
 		componentVersion,
 		auth.HeaderAuthEmail,
 		auth.HeaderAuthId,
+		auth.HeaderAuthNotBefore,
 	}
 )
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id    uuid.UUID
-	Name  string
-	Email string
+	Id        uuid.UUID
+	Name      string
+	Email     string
+	NotBefore time.Time
 }
 
 // domainMetadataManager is a domain specific metadata manager.
@@ -131,6 +134,7 @@ func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformat
 	m.Set(auth.HeaderAuthName, userInformation.Name)
 	m.Set(auth.HeaderAuthEmail, userInformation.Email)
 	m.Set(auth.HeaderAuthId, userInformation.Id.String())
+	m.Set(auth.HeaderAuthNotBefore, userInformation.NotBefore.Format(auth.HeaderAuthNotBeforeFormat))
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
@@ -146,6 +150,12 @@ func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 		id, err := uuid.Parse(header)
 		if err == nil {
 			userInfo.Id = id
+		}
+	}
+	if header, ok := m.Get(auth.HeaderAuthNotBefore); ok {
+		t, err := time.Parse(auth.HeaderAuthNotBeforeFormat, header)
+		if err == nil {
+			userInfo.NotBefore = t
 		}
 	}
 	return userInfo

@@ -23,20 +23,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:          "gateway action [flags]",
-	Short:        "gateway",
-	Long:         `gateway`,
-	SilenceUsage: true,
-}
-
-func init() {
-	// Setup global flags
-	flags := rootCmd.PersistentFlags()
-	flags.AddGoFlagSet(flag.CommandLine)
-}
+const ConfigPath = "/etc/gateway"
 
 func main() {
+	rootCmd := NewRootCommand()
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
 
 	if err := rootCmd.Execute(); err != nil {
@@ -44,4 +34,21 @@ func main() {
 		log.Error(err, "command failed")
 		os.Exit(1)
 	}
+}
+
+func NewRootCommand() *cobra.Command {
+	var rootCmd = &cobra.Command{
+		Use:          "gateway action [flags]",
+		Short:        "gateway",
+		Long:         `gateway`,
+		SilenceUsage: true,
+	}
+
+	// Setup global flags
+	flags := rootCmd.PersistentFlags()
+	flags.AddGoFlagSet(flag.CommandLine)
+
+	rootCmd.AddCommand(serverCmd)
+
+	return rootCmd
 }

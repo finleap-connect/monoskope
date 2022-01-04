@@ -313,6 +313,7 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
 	c.Writer.Header().Set(auth.HeaderAuthId, claims.Subject)
 	c.Writer.Header().Set(auth.HeaderAuthName, claims.Name)
 	c.Writer.Header().Set(auth.HeaderAuthEmail, claims.Email)
+	c.Writer.Header().Set(auth.HeaderAuthNotBefore, claims.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat))
 
 	c.Writer.WriteHeader(http.StatusOK)
 }

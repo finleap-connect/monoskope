@@ -29,6 +29,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type getAuthTokenUsecase struct {
@@ -39,7 +40,7 @@ type getAuthTokenUsecase struct {
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
 	issuer      string
-	validity    time.Duration
+	validity    map[string]time.Duration
 }
 
 func NewGetAuthTokenUsecase(
@@ -49,7 +50,7 @@ func NewGetAuthTokenUsecase(
 	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
 	issuer string,
-	validity time.Duration,
+	validity map[string]time.Duration,
 ) usecase.UseCase {
 	useCase := &getAuthTokenUsecase{
 		usecase.NewUseCaseBase("get-auth-token"),
@@ -70,6 +71,15 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		return err
 	}
 	userInfo := metadataManager.GetUserInformation()
+
+	if userInfo.NotBefore.IsZero() {
+		s.Log.Info("User's authentication time could not be determined", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
+		return errors.NewUnauthorized("could not determine when user was authenticated")
+	}
+	if time.Now().UTC().Sub(userInfo.NotBefore) > 1*time.Minute {
+		s.Log.Info("User's authentication is too far in the past", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
+		return errors.NewUnauthorized("your authentication is too far in the past, please reauthenticate")
+	}
 
 	s.Log.V(logger.DebugLevel).Info("Getting current user by id...", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
 	user, err := s.userRepo.ByUserId(ctx, userInfo.Id)
@@ -105,7 +115,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		ClusterName:     cluster.GetName(),
 		ClusterUserName: username,
 		ClusterRole:     s.request.Role,
-	}, s.issuer, user.Id, s.validity)
+	}, s.issuer, user.Id, s.validity[s.request.Role])
 	s.Log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := s.signer.GenerateSignedToken(token)

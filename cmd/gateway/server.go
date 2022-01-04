@@ -17,7 +17,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -26,9 +28,11 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
+	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	ggrpc "google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/gateway"
@@ -39,6 +43,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const K8sTokenLifetimeConfig = "k8sTokenLifetime.yaml"
+
 var (
 	grpcApiAddr       string
 	httpApiAddr       string
@@ -47,7 +53,7 @@ var (
 	keepAlive         bool
 	scopes            string
 	redirectUris      string
-	k8sTokenValidity  string
+	k8sTokenLifetime  = make(map[string]string)
 	authTokenValidity string
 	gatewayURL        string
 	identityProvider  string
@@ -138,11 +144,31 @@ var serverCmd = &cobra.Command{
 		authServer := gateway.NewAuthServer(gatewayURL, client, server, userRepo)
 		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepo)
 
-		k8sTokenValidityDuration, err := time.ParseDuration(k8sTokenValidity)
-		if err != nil {
-			return err
+		// Look for config
+		if len(k8sTokenLifetime) == 0 {
+			data, err := ioutil.ReadFile(path.Join(ConfigPath, K8sTokenLifetimeConfig))
+			if err != nil {
+				return err
+			}
+			err = yaml.Unmarshal(data, k8sTokenLifetime)
+			if err != nil {
+				return err
+			}
 		}
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, userRepo, clusterRepo, k8sTokenValidityDuration)
+
+		// Parse token lifetime
+		tokenLifeTimePerRole := make(map[string]time.Duration)
+		for k, v := range k8sTokenLifetime {
+			if err := k8s.ValidateRole(k); err != nil {
+				return err
+			}
+			k8sTokenValidityDuration, err := time.ParseDuration(v)
+			if err != nil {
+				return err
+			}
+			tokenLifeTimePerRole[k] = k8sTokenValidityDuration
+		}
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, userRepo, clusterRepo, tokenLifeTimePerRole)
 
 		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepo)
 
@@ -168,7 +194,6 @@ var serverCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(serverCmd)
 	// Local flags
 	flags := serverCmd.Flags()
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
@@ -178,7 +203,7 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
-	flags.StringVar(&k8sTokenValidity, "k8s-token-validity", "30s", "Validity period of K8s auth token")
+	flags.StringToStringVar(&k8sTokenLifetime, "k8s-token-lifetime", k8sTokenLifetime, "Token lifetime for k8s token per role")
 	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
 	flags.StringVar(&identityProvider, "identity-provider-url", "", "Identity provider URL")

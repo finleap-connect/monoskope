@@ -32,7 +32,7 @@ type clusterAuthApiServer struct {
 	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
 	issuer      string
-	validity    time.Duration
+	validity    map[string]time.Duration
 }
 
 func NewClusterAuthAPIServer(
@@ -40,7 +40,7 @@ func NewClusterAuthAPIServer(
 	signer jwt.JWTSigner,
 	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
-	validity time.Duration,
+	validity map[string]time.Duration,
 ) api.ClusterAuthServer {
 	s := &clusterAuthApiServer{
 		log:         logger.WithName("server"),
