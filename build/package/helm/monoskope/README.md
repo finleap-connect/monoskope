@@ -13,6 +13,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../eventstore | eventstore | 0.0.1-local |
 | file://../gateway | gateway | 0.0.1-local |
 | file://../queryhandler | queryhandler | 0.0.1-local |
+| file://../scimserver | scimserver | 0.0.1-local |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.24.3 |
 | https://charts.cockroachdb.com/ | cockroachdb | 6.1.2 |
 | https://getambassador.io | ambassador | 6.7.11 |
@@ -74,6 +75,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.tls.enabled | bool | `true` |  |
 | commandhandler.enabled | bool | `true` |  |
 | commandhandler.replicaCount | int | `1` |  |
+| eventstore.backup.enabled | bool | `false` |  |
 | eventstore.enabled | bool | `true` |  |
 | eventstore.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
 | eventstore.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
@@ -90,6 +92,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.labels."app.kubernetes.io/part-of" | string | `"monoskope"` |  |
+| global.operationMode | string | `"release"` |  |
 | hosting.domain | string | `""` |  |
 | hosting.issuer | string | `""` |  |
 | messageBus.clientAuthCertSecretName | string | `"m8-messagebus-client-auth-cert"` |  |
@@ -131,6 +134,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | rabbitmq.replicaCount | int | `3` |  |
 | rabbitmq.service.tlsPort | int | `5671` |  |
 | rabbitmq.serviceAccount.create | bool | `false` |  |
+| scimserver.enabled | bool | `false` |  |
 | vaultOperator.basePath | string | `"app/{{ .Release.Namespace }}"` |  |
 | vaultOperator.enabled | bool | `false` |  |
 

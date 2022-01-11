@@ -24,7 +24,7 @@ Monoskope Gateway
 | image.repository | string | `"ghcr.io/finleap-connect/monoskope/gateway"` |  |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` |  |
-| k8sTokenValidity | string | `"360s"` | Duration for which issued K8s auth tokens are valid |
+| k8sTokenLifetime | object | `{"admin":"5m","default":"12h","oncall":"10m"}` | Duration for which issued K8s auth tokens are valid per role |
 | keepAlive | bool | `false` |  |
 | keySecret | object | `{"name":""}` | The secret containing private key for signing JWTs. Must contain tls.key containing the private key for signing and tls.crt containing public key for verification. |
 | keySecret.name | string | `""` | Name of the secret to be used by the gateway, required |
@@ -39,9 +39,6 @@ Monoskope Gateway
 | oidcSecret.name | string | `""` | Name of the secret to be used by the gateway, required |
 | podAnnotations | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
-| ports.grpcApi | int | `8080` |  |
-| ports.httpApi | int | `8081` |  |
-| ports.metrics | int | `9102` |  |
 | queryHandler | object | `{"host":"queryhandler","port":8080,"prefix":""}` | API address of the query handler |
 | readinessProbe.enabled | bool | `true` |  |
 | readinessProbe.failureThreshold | int | `5` |  |

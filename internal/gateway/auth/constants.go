@@ -14,9 +14,13 @@
 
 package auth
 
+import "time"
+
 const (
 	HeaderAuthId              = "x-auth-id"
 	HeaderAuthName            = "x-auth-name"
 	HeaderAuthEmail           = "x-auth-email"
+	HeaderAuthNotBefore       = "x-auth-not-before"
+	HeaderAuthNotBeforeFormat = time.RFC3339
 	HeaderForwardedClientCert = "x-forwarded-client-cert"
 )

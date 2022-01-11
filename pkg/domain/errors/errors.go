@@ -32,6 +32,8 @@ var (
 
 	// ErrUnauthorized is returned when a requested command can not be executed because the current user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
+	// ErrUnauthenticated is returned when a the current user is unauthenticated.
+	ErrUnauthenticated = errors.New("unauthenticated")
 	// ErrUserNotFound is returned when a user is not known to the system.
 	ErrUserNotFound = errors.New("user not found")
 	// ErrUserAlreadyExists is returned when a user does already exist.
@@ -85,6 +87,7 @@ var (
 			ErrTenantClusterBindingAlreadyExists,
 		},
 		codes.PermissionDenied: {ErrUnauthorized},
+		codes.Unauthenticated:  {ErrUnauthenticated},
 	}
 	reverseErrorMap = reverseMap(errorMap)
 )

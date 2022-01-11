@@ -232,7 +232,9 @@ var _ = BeforeSuite(func() {
 		userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
 		env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 		gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, userRepo)
-		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, time.Hour*1)
+		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, map[string]time.Duration{
+			"default": time.Hour * 1,
+		})
 
 		// Create gRPC server and register implementation
 		env.GrpcServer = grpc.NewServer("gateway-grpc", false)

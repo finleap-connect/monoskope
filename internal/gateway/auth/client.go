@@ -235,9 +235,9 @@ func (n *Client) GetAuthCodeURL(redirectUrl string) (string, string, error) {
 
 	if n.config.OfflineAsScope {
 		scopes = append(n.config.Scopes, oidc.ScopeOfflineAccess)
-		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oidc.Nonce(nonce))
+		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oauth2.SetAuthURLParam("prompt", "login"), oidc.Nonce(nonce))
 	} else {
-		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
+		authCodeURL = n.getOauth2Config(scopes, redirectUrl).AuthCodeURL(encoded, oauth2.SetAuthURLParam("prompt", "login"), oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	}
 
 	return authCodeURL, encoded, nil

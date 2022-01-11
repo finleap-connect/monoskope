@@ -16,11 +16,13 @@ package metadata
 
 import (
 	"context"
+	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/version"
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 )
@@ -36,22 +38,26 @@ var (
 		componentName,
 		componentCommit,
 		componentVersion,
-		auth.HeaderAuthEmail,
 		auth.HeaderAuthId,
+		auth.HeaderAuthName,
+		auth.HeaderAuthEmail,
+		auth.HeaderAuthNotBefore,
 	}
 )
 
 // UserInformation are identifying information about a user.
 type UserInformation struct {
-	Id    uuid.UUID
-	Name  string
-	Email string
+	Id        uuid.UUID
+	Name      string
+	Email     string
+	NotBefore time.Time
 }
 
 // domainMetadataManager is a domain specific metadata manager.
 type DomainMetadataManager struct {
 	es.MetadataManager
 	domainContext *DomainContext
+	log           logger.Logger
 }
 
 type DomainContext struct {
@@ -76,6 +82,7 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
 		newDomainContext(nil),
+		logger.WithName("domain-metadata-manager"),
 	}
 
 	if len(m.GetMetadata()) == 0 {
@@ -83,6 +90,7 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			data := make(map[string]string)
 			for k, v := range md {
+				m.log.V(logger.DebugLevel).Info("grpc metadata from incoming context", "key", k, "value", v)
 				if isHeaderAccepted(k) {
 					data[k] = v[0] // typically only the first and only value of that is relevant
 				}
@@ -131,6 +139,7 @@ func (m *DomainMetadataManager) SetUserInformation(userInformation *UserInformat
 	m.Set(auth.HeaderAuthName, userInformation.Name)
 	m.Set(auth.HeaderAuthEmail, userInformation.Email)
 	m.Set(auth.HeaderAuthId, userInformation.Id.String())
+	m.Set(auth.HeaderAuthNotBefore, userInformation.NotBefore.Format(auth.HeaderAuthNotBeforeFormat))
 }
 
 // GetUserInformation returns the UserInformation stored in the metadata.
@@ -146,6 +155,12 @@ func (m *DomainMetadataManager) GetUserInformation() *UserInformation {
 		id, err := uuid.Parse(header)
 		if err == nil {
 			userInfo.Id = id
+		}
+	}
+	if header, ok := m.Get(auth.HeaderAuthNotBefore); ok {
+		t, err := time.Parse(auth.HeaderAuthNotBeforeFormat, header)
+		if err == nil {
+			userInfo.NotBefore = t
 		}
 	}
 	return userInfo

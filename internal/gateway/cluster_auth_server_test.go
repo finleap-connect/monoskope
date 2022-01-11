@@ -16,6 +16,7 @@ package gateway
 
 import (
 	"context"
+	"time"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
@@ -43,9 +44,10 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 		apiClient := api.NewClusterAuthClient(conn)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:    uuid.MustParse(env.AdminUser.GetId()),
-			Name:  env.AdminUser.Name,
-			Email: env.AdminUser.Email,
+			Id:        uuid.MustParse(env.AdminUser.GetId()),
+			Name:      env.AdminUser.Name,
+			Email:     env.AdminUser.Email,
+			NotBefore: time.Now().UTC(),
 		})
 
 		response, err := apiClient.GetAuthToken(mdManager.GetOutgoingGrpcContext(), &api.ClusterAuthTokenRequest{

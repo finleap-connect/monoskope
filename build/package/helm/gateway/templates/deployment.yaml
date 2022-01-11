@@ -99,7 +99,6 @@ spec:
             - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
             - --scopes={{ join "," .Values.auth.scopes }}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
-            - --k8s-token-validity={{ .Values.k8sTokenValidity }}
             - --auth-token-validity={{ .Values.authTokenValidity }}
             - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
           {{- if .Values.livenessProbe.enabled }}
@@ -124,6 +123,8 @@ spec:
             - name: key-secret
               mountPath: /etc/gateway/jwt
               readOnly: true
+            - name: k8s-auth-config
+              mountPath: /etc/gateway/k8s-auth
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -140,3 +141,9 @@ spec:
         - name: key-secret
           secret:
             secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}
+        - name: k8s-auth-config
+          configMap:
+            name: {{ include "gateway.fullname" . }}-k8s-auth
+            items:
+            - key: "k8sTokenLifetime"
+              path: "k8sTokenLifetime.yaml"

@@ -16,7 +16,7 @@ spec:
     - "x-auth-id"
     - "x-auth-name"
     - "x-auth-email"
-    - "x-auth-issuer"
+    - "x-auth-not-before"
   add_auth_headers:
     x-forwarded-client-cert: "%DOWNSTREAM_PEER_CERT%"
 {{- end }}

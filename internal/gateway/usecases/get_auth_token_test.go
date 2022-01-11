@@ -42,7 +42,9 @@ var _ = Describe("GetAuthToken", func() {
 	expectedUserName := "admin"
 	expectedUserEmail := "admin@monoskope.io"
 	expectedIssuer := "https://someissuer.io"
-	expectedValidity := time.Hour * 1
+	expectedValidity := map[string]time.Duration{
+		"default": time.Hour * 1,
+	}
 
 	jwtTestEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestReactors"))
 	Expect(err).NotTo(HaveOccurred())
@@ -71,9 +73,10 @@ var _ = Describe("GetAuthToken", func() {
 		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), userRepo, clusterRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:    expectedUserId,
-			Name:  expectedUserName,
-			Email: expectedUserEmail,
+			Id:        expectedUserId,
+			Name:      expectedUserName,
+			Email:     expectedUserEmail,
+			NotBefore: time.Now().UTC(),
 		})
 
 		userProjection := projections.NewUserProjection(expectedUserId).(*projections.User)

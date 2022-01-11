@@ -111,8 +111,11 @@ keySecret:
   # -- Name of the secret to be used by the gateway, required
   name: ""
 
-# -- Duration for which issued K8s auth tokens are valid
-k8sTokenValidity: 360s
+# -- Duration for which issued K8s auth tokens are valid per role
+k8sTokenLifetime:
+  default: 12h
+  admin: 5m
+  oncall: 10m
 
 # -- Duration for which issued Monoskope auth tokens are valid
 authTokenValidity: 12h
