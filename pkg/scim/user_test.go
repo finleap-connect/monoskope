@@ -35,4 +35,16 @@ var _ = Describe("pkg/scim/User", func() {
 			Expect(userAttribute.DisplayName).To(Equal(expectedDisplayName))
 		})
 	})
+
+	When("calling NewUserAttribute()", func() {
+		It("it trims leading and trailing whitespaces", func() {
+			userAttribute, err := NewUserAttribute(scim.ResourceAttributes{
+				"userName":    " test.user@monoskope.io ",
+				"displayName": " test.user ",
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(userAttribute.UserName).To(Equal(expectedUserEmail))
+			Expect(userAttribute.DisplayName).To(Equal(expectedDisplayName))
+		})
+	})
 })

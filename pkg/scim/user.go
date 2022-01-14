@@ -16,6 +16,7 @@ package scim
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/elimity-com/scim"
 )
@@ -36,5 +37,9 @@ func NewUserAttribute(attributes scim.ResourceAttributes) (*userAttributes, erro
 	if err != nil {
 		return nil, err
 	}
+
+	userResource.UserName = strings.TrimSpace(userResource.UserName)
+	userResource.DisplayName = strings.TrimSpace(userResource.DisplayName)
+
 	return userResource, nil
 }
