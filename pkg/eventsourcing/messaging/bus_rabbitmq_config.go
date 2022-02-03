@@ -29,11 +29,11 @@ const (
 )
 
 type RabbitEventBusConfig struct {
-	name             string // Name of the client, required
 	url              string // Connection string, required
-	routingKeyPrefix string // Prefix for routing of messages
-	exchangeName     string // Name of the exchange to initialize/use
-	amqpConfig       *amqp.Config
+	Name             string // Name of the client, required
+	RoutingKeyPrefix string // Prefix for routing of messages
+	ExchangeName     string // Name of the exchange to initialize/use
+	AMQPConfig       *amqp.Config
 }
 
 // NewRabbitEventBusConfig creates a new RabbitEventBusConfig with defaults.
@@ -42,29 +42,41 @@ func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBu
 		routingKeyPrefix = "m8"
 	}
 
-	uri, err := amqp.ParseURI(url)
-	if err != nil {
-		return nil, err
-	}
-
 	conf := &RabbitEventBusConfig{
-		name:             name,
+		Name:             name,
 		url:              url,
-		routingKeyPrefix: routingKeyPrefix,
-		exchangeName:     DefaultExchangeName,
-		amqpConfig:       &amqp.Config{},
+		RoutingKeyPrefix: routingKeyPrefix,
+		ExchangeName:     DefaultExchangeName,
+		AMQPConfig:       &amqp.Config{},
 	}
 
-	if uri.Scheme == "amqps" {
-		if err := conf.configureTLS(); err != nil {
-			return nil, err
-		}
-	}
-
+    if err := conf.SetURL(url); err != nil {
+        return nil, err
+    }
 	return conf, nil
 }
 
-// ConfigureTLS adds the configuration for TLS secured connection/auth
+// URL of the RabbitMQ host to connect to
+func (conf *RabbitEventBusConfig) URL() string {
+    return conf.url
+}
+
+// SetURL reconfigures the address of the RabbitMQ host
+func (conf *RabbitEventBusConfig) SetURL(url string) error {
+	uri, err := amqp.ParseURI(url)
+	if err != nil {
+		return err
+	}
+	if uri.Scheme == "amqps" {
+		if err := conf.configureTLS(); err != nil {
+			return err
+		}
+	}
+    conf.url = url
+    return nil
+}
+
+// configureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) configureTLS() error {
 	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
 	if err != nil {
@@ -76,15 +88,15 @@ func (conf *RabbitEventBusConfig) configureTLS() error {
 		return err
 	}
 
-	conf.amqpConfig.TLSClientConfig = loader.GetTLSConfig()
-	conf.amqpConfig.SASL = []amqp.Authentication{&CertAuth{}}
+	conf.AMQPConfig.TLSClientConfig = loader.GetTLSConfig()
+	conf.AMQPConfig.SASL = []amqp.Authentication{&CertAuth{}}
 
 	return nil
 }
 
 // Validate validates the configuration
 func (conf *RabbitEventBusConfig) Validate() error {
-	if conf.name == "" {
+	if conf.Name == "" {
 		return errors.ErrConfigNameRequired
 	}
 	if conf.url == "" {

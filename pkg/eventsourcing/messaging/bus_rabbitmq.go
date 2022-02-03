@@ -55,13 +55,13 @@ func NewRabbitEventBusPublisher(conf *RabbitEventBusConfig) (evs.EventBusPublish
 		return nil, err
 	}
 
-	publisher, returns, err := rabbitmq.NewPublisher(conf.url, conf.amqpConfig)
+	publisher, returns, err := rabbitmq.NewPublisher(conf.URL(), conf.AMQPConfig)
 	if err != nil {
 		return nil, err
 	}
 	b.publisher = publisher
 	b.returns = returns
-	b.log = logger.WithName("publisher").WithValues("name", conf.name)
+	b.log = logger.WithName("publisher").WithValues("name", conf.Name)
 
 	go func() {
 		for r := range returns {
@@ -79,12 +79,12 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 		return nil, err
 	}
 
-	consumer, err := rabbitmq.NewConsumer(conf.url, conf.amqpConfig)
+	consumer, err := rabbitmq.NewConsumer(conf.URL(), conf.AMQPConfig)
 	if err != nil {
 		return nil, err
 	}
 	b.consumer = consumer
-	b.log = logger.WithName("consumer").WithValues("name", conf.name)
+	b.log = logger.WithName("consumer").WithValues("name", conf.Name)
 
 	return b, nil
 }
@@ -111,7 +111,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 		rabbitMessageBytes,
 		[]string{b.generateRoutingKey(event)},
 		rabbitmq.WithPublishOptionsContentType("application/json"),
-		rabbitmq.WithPublishOptionsExchange(b.conf.exchangeName),
+		rabbitmq.WithPublishOptionsExchange(b.conf.ExchangeName),
 	)
 	if err != nil {
 		b.log.Error(err, errors.ErrCouldNotPublishEvent.Error(), "event", event.String())
@@ -173,7 +173,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 	}
 
 	options := []func(*rabbitmq.ConsumeOptions){
-		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.exchangeName),
+		rabbitmq.WithConsumeOptionsBindingExchangeName(b.conf.ExchangeName),
 		rabbitmq.WithConsumeOptionsBindingExchangeKind(amqp.ExchangeTopic),
 		rabbitmq.WithConsumeOptionsBindingExchangeDurable,
 	}
@@ -199,7 +199,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 // Matcher returns a new EventMatcher of type RabbitMatcher
 func (b *rabbitEventBus) Matcher() evs.EventMatcher {
 	matcher := &rabbitMatcher{
-		routingKeyPrefix: b.conf.routingKeyPrefix,
+		routingKeyPrefix: b.conf.RoutingKeyPrefix,
 	}
 	return matcher.Any()
 }
@@ -222,7 +222,7 @@ func (b *rabbitEventBus) Close() error {
 
 // generateRoutingKey generates the routing key for an event.
 func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
-	return fmt.Sprintf("%s.%s.%s", b.conf.routingKeyPrefix, event.AggregateType(), event.EventType())
+	return fmt.Sprintf("%s.%s.%s", b.conf.RoutingKeyPrefix, event.AggregateType(), event.EventType())
 }
 
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on handler result
