@@ -40,9 +40,15 @@ To configure OneLogin to provision users to Monoskope you can follow the [guide]
     "displayName": "{$user.display_name}"
 }
 ```
-1. `//TODO` Provide your SCIM Bearer Token value 
-1. Select `Enable`. The app will attempt to make an initial connection to the SCIM base URL defined for your SCIM test app.
-1. Select `Save`
+1. Provide your SCIM Bearer Token value 
+
+    * Create a token with `monoctl` and adjust the values according to your needs:
+  
+      `monoctl create api-token -u yourscimclient -s WRITE_SCIM -v 8760h`
+    * Use the resulting token and put into the `SCIM Bearer Token` form field.
+
+2. Select `Enable`. The app will attempt to make an initial connection to the SCIM base URL defined for your SCIM test app.
+3. Select `Save`
 
 #### Provisioning
 
