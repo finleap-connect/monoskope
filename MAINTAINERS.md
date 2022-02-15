@@ -2,5 +2,5 @@
 
 The Monoskope maintainers are:
 
-* Carolin Dohmen <carolin.dohmen@finleap.com> @maresac
-* Jan Steffen <jan.steffen@finleap.com> @jastBytes
+* Carolin Dohmen [@maresac](https://github.com/orgs/finleap-connect/people/maresac)
+* Jan Steffen [@jastBytes](https://github.com/orgs/finleap-connect/people/jastBytes)

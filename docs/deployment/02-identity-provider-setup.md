@@ -27,7 +27,7 @@ You have to configure the following URLs as valid callback URL:
     kubectl create secret generic m8-gateway-oidc --from-literal=oidc-clientid=<clientid> --from-literal=oidc-clientsecret=<clientsecret> --from-literal=oidc-nonce=<somerandomstring>
     ```
 
-    1. Or using the finleap/vaultoperator. It will create the secret automatically but you need to put the values in the right place in your Hashicorp Vault.
+    1. Or using the [finleap-connect/vaultoperator](https://github.com/finleap-connect/vaultoperator). It will create the secret automatically but you need to put the values in the right place in your Hashicorp Vault.
 
 Set the following configuration in the values file for the Gateway component of m8 like in this example:
 
