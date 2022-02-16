@@ -14,7 +14,7 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/go-pg/pg/v10 v10.10.6
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
