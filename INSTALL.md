@@ -22,7 +22,7 @@
     * [finleap-connect/vaultoperator](https://github.com/finleap-connect/vaultoperator) [optional]
 1. Create m8 PKI. See [certificate management](docs/deployment/01-certificate-management.md) for details.
 1. Configure an identity provider. See [identity provider setup](docs/deployment/02-identity-provider-setup.md) for details.
-1. Configure m8 Ambassador. See [DNS and IP address se0tup](docs/deployment/03-dns-and-ip-address-setup.md) for details.
+1. Configure m8 Ambassador. See [DNS and IP address setup](docs/deployment/03-dns-and-ip-address-setup.md) for details.
 1. Deploy [Helm Chart](build/package/helm/monoskope/README.md) via finleap-connect [chart repo](https://finleap-connect.github.io/charts/) and adjust the values to your needs.
 
 ## Optional steps
