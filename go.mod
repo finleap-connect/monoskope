@@ -25,7 +25,7 @@ require (
 	github.com/lib/pq v1.10.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.16.0
+	github.com/onsi/gomega v1.18.1
 	github.com/ory/dockertest/v3 v3.8.0
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
 	github.com/prometheus/client_golang v1.11.0
@@ -36,7 +36,7 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
