@@ -27,7 +27,7 @@ var _ = Describe("EventData", func() {
 	}
 	eventDataFromProto := func() EventData {
 		eventData := ToEventDataFromProto(getProto())
-		Expect(eventData).To(Not(BeNil()))
+		Expect(eventData).ToNot(BeNil())
 		return eventData
 	}
 
@@ -38,22 +38,30 @@ var _ = Describe("EventData", func() {
 		proto := getProto()
 		any := anypb.Any{}
 		err := any.MarshalFrom(proto)
-		Expect(err).To(Not(HaveOccurred()))
+		Expect(err).ToNot(HaveOccurred())
 
 		eventData := toEventDataFromAny(&any)
-		Expect(eventData).To(Not(BeNil()))
+		Expect(eventData).ToNot(BeNil())
 	})
-	It("can unmarshall to any", func() {
+	It("can unmarshal to any", func() {
 		eventData := eventDataFromProto()
 		any, err := eventData.toAny()
-		Expect(err).To(Not(HaveOccurred()))
-		Expect(any).To(Not(BeNil()))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(any).ToNot(BeNil())
 	})
-	It("can unmarshall to proto", func() {
+	It("can unmarshal to proto", func() {
 		eventData := eventDataFromProto()
 		proto := &cmdApi.TestCommandData{}
 		err := eventData.ToProto(proto)
-		Expect(err).To(Not(HaveOccurred()))
+		Expect(err).ToNot(HaveOccurred())
 		Expect(proto.GetTest()).To(Equal(getProto().GetTest()))
+	})
+	It("can resolve message type on unmarshal", func() {
+		eventData := eventDataFromProto()
+		proto, err := eventData.Unmarshal()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(proto).ToNot(BeNil())
+		_, ok := proto.(*cmdApi.TestCommandData)
+		Expect(ok).To(BeTrue())
 	})
 })

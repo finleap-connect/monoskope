@@ -16,7 +16,7 @@ package eventsourcing
 
 import (
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -33,7 +33,7 @@ func toEventDataFromAny(a *anypb.Any) EventData {
 }
 
 // ToEventDataFromProto marshalls m into EventData.
-func ToEventDataFromProto(m protoreflect.ProtoMessage) EventData {
+func ToEventDataFromProto(m proto.Message) EventData {
 	a := &anypb.Any{}
 	if err := a.MarshalFrom(m); err != nil {
 		panic(err)
@@ -52,10 +52,20 @@ func (d EventData) toAny() (*anypb.Any, error) {
 }
 
 // ToProto unmarshals the contents the EventData into m.
-func (d EventData) ToProto(m protoreflect.ProtoMessage) error {
+func (d EventData) ToProto(m proto.Message) error {
 	a, err := d.toAny()
 	if err != nil {
 		return err
 	}
 	return a.UnmarshalTo(m)
+}
+
+// Unmarshal deserializes the EventData into a proto message using a type resolved from
+// the type URL.
+func (d EventData) Unmarshal() (proto.Message, error) {
+	a, err := d.toAny()
+	if err != nil {
+		return nil, err
+	}
+	return a.UnmarshalNew()
 }
