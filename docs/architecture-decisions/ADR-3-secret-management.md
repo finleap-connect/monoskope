@@ -35,7 +35,10 @@ m8 should support multiple upstream secrets stores which will be implemented as 
 
 If a user want's to upload a secret, the server-side key pair is generated only for this single use-case and discarded after the secret has been successfully stored in the upstream secret store.
 This shortens the timeframe m8 itself has a stored readable version of the secret.
-This makes the handling of the server-side key pair more complex since there have to be several key pair's handled in parallel.
+
+#### Cons 
+
+* This makes the handling of the server-side key pair more complex since there have to be several key pair's handled in parallel.
 
 ### Enhancement of security #SEC1-ENH2
 
@@ -44,17 +47,24 @@ The entry has a TTL and if Monoskope doesn't manage to store it upstream in time
 The events only have a reference to this cached entry.
 This way the secrets are not stored anywhere anymore after successful upload into the upstream store.
 
+#### Cons
+
+* Does not fit the EventSourcing architecture.
+
 ### API Design #APID1
 
 * The API has different proto message types for different upstream secret providers to reflect differences between them
 * Hashes have to be equal no matter what the upstream secret store is
 * Secrets stores have to be activated/deactivated by system admins so that m8 can show a list of supported secret stores available along
+* Secrets stores have a unique name which not necessarily reflects the type of the upstream secret store
 * The first store added becomes the default store, this can be adjusted if there are more than one store
 * Users have to provide which upstream store they target if they do not wan't the default store
+* IDs of uploaded secrets are URIs, e.g. `mysecretstore://app/some/path` where the protocol is the secret store to upload the secret to
+* The encrypted payload is simple json where values are base64 encoded
 
 ## Decision
 
-TBD
+* We take #SEC1 + #SEC1-ENH1 + #APID1.
 
 ## Status
 
