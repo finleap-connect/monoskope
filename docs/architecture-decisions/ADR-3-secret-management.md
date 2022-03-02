@@ -41,10 +41,8 @@ This makes the handling of the server-side key pair more complex since there hav
 
 The secret payload is not stored as part of the event but is stored within a cache (e.g. Redis) for the time the request of storing it upstream is processed in m8.
 The entry has a TTL and if Monoskope doesn't manage to store it upstream in time it fails.
+The events only have a reference to this cached entry.
 This way the secrets are not stored anywhere anymore after successful upload into the upstream store.
-
-### Security #SEC2
-
 
 ### API Design #APID1
 
