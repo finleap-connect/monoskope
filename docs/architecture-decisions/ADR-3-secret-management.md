@@ -36,9 +36,9 @@ m8 should support multiple upstream secrets stores which will be implemented as 
 If a user want's to upload a secret, the server-side key pair is generated only for this single use-case and discarded after the secret has been successfully stored in the upstream secret store.
 This shortens the timeframe m8 itself has a stored readable version of the secret.
 
-#### Cons 
+#### Cons
 
-* This makes the handling of the server-side key pair more complex since there have to be several key pair's handled in parallel.
+* This makes the handling of the server-side key slightly more complex
 
 ### Enhancement of security #SEC1-ENH2
 
@@ -65,7 +65,8 @@ This way the secrets are not stored anywhere anymore after successful upload int
 ## Decision
 
 * We take #SEC1 + #SEC1-ENH1 + #APID1.
-
+* #SEC1-ENH2 is considered as not fitting the architecture and would things complicate much more
+  
 ## Status
 
-Proposed
+Accepted
