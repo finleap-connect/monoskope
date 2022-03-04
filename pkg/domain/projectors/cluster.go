@@ -43,6 +43,7 @@ func (u *clusterProjector) NewProjection(id uuid.UUID) es.Projection {
 // Project updates the state of the projection according to the given event.
 func (c *clusterProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
 	// Get the actual projection type
+	// TODO why are we returning a generic projection?
 	p, ok := projection.(*projections.Cluster)
 	if !ok {
 		return nil, errors.ErrInvalidProjectionType

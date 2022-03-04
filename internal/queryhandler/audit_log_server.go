@@ -18,7 +18,6 @@ import (
 	"context"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
-	"github.com/finleap-connect/monoskope/pkg/domain"
 	"io"
 	"time"
 
@@ -31,21 +30,15 @@ import (
 // auditLogServer is the implementation of the auditLogService API
 type auditLogServer struct {
 	doApi.UnimplementedAuditLogServer
-
-	// TODO: how to deal with this (need access to all repos/stores)
-	// 	- AuditLogRepo that have deps on all repos
-	// 	- or
-	store esApi.EventStoreClient
-	//qhDomain domain.QueryHandlerDomain
-
+	esClient esApi.EventStoreClient
 	eventFormatter *eventformatter.EventFormatter
 }
 
 // NewAuditLogServer returns a new configured instance of auditLogServer
-func NewAuditLogServer(store esApi.EventStoreClient, qhDomain domain.QueryHandlerDomain) *auditLogServer {
+func NewAuditLogServer(esClient esApi.EventStoreClient) *auditLogServer {
 	return &auditLogServer{
-		store:          store,
-		eventFormatter: eventformatter.NewEventFormatter(qhDomain),
+		esClient: esClient,
+		eventFormatter: eventformatter.NewEventFormatter(esClient),
 	}
 }
 
@@ -64,7 +57,7 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 	ctx := context.Background()
 
 	eventFilter := &esApi.EventFilter{MinTimestamp: request.MinTimestamp, MaxTimestamp: request.MaxTimestamp}
-	events, err := s.store.Retrieve(ctx, eventFilter)
+	events, err := s.esClient.Retrieve(ctx, eventFilter)
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

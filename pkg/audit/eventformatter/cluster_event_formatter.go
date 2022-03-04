@@ -6,24 +6,28 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"strings"
+	"time"
 )
 
 
 type clusterEventFormatter struct {
 	EventFormatter
-	ctx   context.Context
 	event *esApi.Event
 }
 
-func newClusterEventFormatter(eventFormatter EventFormatter, ctx context.Context, event *esApi.Event) *clusterEventFormatter {
-	return &clusterEventFormatter{EventFormatter: eventFormatter, ctx: ctx, event: event}
+func newClusterEventFormatter(eventFormatter EventFormatter, event *esApi.Event) *clusterEventFormatter {
+	return &clusterEventFormatter{EventFormatter: eventFormatter, event: event}
 }
 
-func (f *clusterEventFormatter) getFormattedDetails() string {
+func (f *clusterEventFormatter) getFormattedDetails(ctx context.Context) string {
 	switch es.EventType(f.event.Type) {
-	case events.ClusterDeleted: return f.getFormattedDetailsClusterDeleted()
+	case events.ClusterDeleted: return f.getFormattedDetailsClusterDeleted(ctx)
 	}
 
 	ed, ok := toPortoFromEventData(f.event.Data)
@@ -35,7 +39,7 @@ func (f *clusterEventFormatter) getFormattedDetails() string {
 	case *eventdata.ClusterCreated: return f.getFormattedDetailsClusterCreated(ed.(*eventdata.ClusterCreated))
 	case *eventdata.ClusterCreatedV2: return f.getFormattedDetailsClusterCreatedV2(ed.(*eventdata.ClusterCreatedV2))
 	case *eventdata.ClusterBootstrapTokenCreated: return f.getFormattedDetailsClusterBootstrapTokenCreated(ed.(*eventdata.ClusterBootstrapTokenCreated))
-	case *eventdata.ClusterUpdated: return f.getFormattedDetailsClusterUpdated(ed.(*eventdata.ClusterUpdated))
+	case *eventdata.ClusterUpdated: return f.getFormattedDetailsClusterUpdated(ctx, ed.(*eventdata.ClusterUpdated))
 	}
 
 	return ""
@@ -53,10 +57,13 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterBootstrapTokenCreated(
 	return fmt.Sprintf("“%s“ created a cluster bootstrap token", f.event.Metadata["x-auth-email"])
 }
 
-func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(eventData *eventdata.ClusterUpdated) string {
-	// TODO: how to get a projection of a specific version
-	oldCluster, err := f.QHDomain.ClusterRepository.ByClusterId(f.ctx, f.event.AggregateId)
-	if err != nil {
+func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, eventData *eventdata.ClusterUpdated) string {
+	clusterSnapshot, err := f.getSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
+		MaxTimestamp: timestamppb.New(f.event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
+		AggregateId: &wrapperspb.StringValue{Value: f.event.AggregateId}},
+	)
+	oldCluster, ok := clusterSnapshot.(*projections.Cluster)
+	if err != nil || !ok {
 		return ""
 	}
 
@@ -68,9 +75,13 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(eventData *eve
 	return details.String()
 }
 
-func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted() string {
-	cluster, err := f.QHDomain.ClusterRepository.ByClusterId(f.ctx, f.event.AggregateId)
-	if err != nil {
+func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Context) string {
+	clusterSnapshot, err := f.getSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
+		MaxTimestamp: f.event.GetTimestamp(),
+		AggregateId: &wrapperspb.StringValue{Value: f.event.AggregateId}},
+	)
+	cluster, ok := clusterSnapshot.(*projections.Cluster)
+	if err != nil || !ok {
 		return ""
 	}
 
