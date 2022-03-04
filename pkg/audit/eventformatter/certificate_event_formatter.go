@@ -12,18 +12,17 @@ import (
 
 type certificateEventFormatter struct {
 	EventFormatter
-	ctx   context.Context
 	event *esApi.Event
 }
 
-func newCertificateEventFormatter(eventFormatter EventFormatter, ctx context.Context, event *esApi.Event) *certificateEventFormatter {
-	return &certificateEventFormatter{EventFormatter: eventFormatter, ctx: ctx, event: event}
+func newCertificateEventFormatter(eventFormatter EventFormatter, event *esApi.Event) *certificateEventFormatter {
+	return &certificateEventFormatter{EventFormatter: eventFormatter, event: event}
 }
 
-func (f *certificateEventFormatter) getFormattedDetails() string {
+func (f *certificateEventFormatter) getFormattedDetails(_ context.Context) string {
 	switch es.EventType(f.event.Type) {
 	case events.CertificateRequestIssued: return f.getFormattedDetailsCertificateRequestIssued()
-	case events.CertificateIssueingFailed: return f.getFormattedDetailsCertificateIssueingFailed()
+	case events.CertificateIssueingFailed: return f.getFormattedDetailsCertificateIssuingFailed()
 	}
 
 	ed, ok := toPortoFromEventData(f.event.Data)
@@ -39,8 +38,6 @@ func (f *certificateEventFormatter) getFormattedDetails() string {
 	return ""
 }
 
-// TODO: improve details
-
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(_ *eventdata.CertificateRequested) string {
 	return fmt.Sprintf("“%s“ requested a certificate", f.event.Metadata["x-auth-email"])
 }
@@ -53,6 +50,6 @@ func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(_ *even
 	return fmt.Sprintf("“%s“ issued a certificate", f.event.Metadata["x-auth-email"])
 }
 
-func (f *certificateEventFormatter) getFormattedDetailsCertificateIssueingFailed() string {
+func (f *certificateEventFormatter) getFormattedDetailsCertificateIssuingFailed() string {
 	return fmt.Sprintf("certificate request issuing faild for “%s“", f.event.Metadata["x-auth-email"])
 }

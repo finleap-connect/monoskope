@@ -29,6 +29,7 @@ var (
 	testEnv     *TestEnv
 )
 
+// TODO: why is this called TestQueryHandler and not TestIntegration
 func TestQueryHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter("../reports/internal-junit.xml")
