@@ -38,11 +38,8 @@ import (
 )
 
 // TODO: remove focus test
-var _ = FDescribe("AuditLog Test", func() {
+var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
-
-	maxTimestamp := time.Now().UTC().Add(24 * time.Hour)
-	minTimestamp := maxTimestamp.Add(-10 * 24 * time.Hour)
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
@@ -50,7 +47,6 @@ var _ = FDescribe("AuditLog Test", func() {
 	mdManager.SetUserInformation(&metadata.UserInformation{
 		Name:   "admin",
 		Email:  "admin@monoskope.io",
-		Issuer: "monoskope",
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
@@ -68,12 +64,9 @@ var _ = FDescribe("AuditLog Test", func() {
 	}
 
 	It("can provide events by date range", func() {
-		midTimestamp := createEvents(commandHandlerClient, mdManager)
-
-		// TODO: ticket to remove custom reporters (deprecated Ginkgo functionality)
-		// TODO: ticket to get projection by version
-		// TODO: ticket to unify repository getters (e.g. id is sometimes a string and sometimes a uuid)
-		// TODO: ticket to replace &wrapperspb.StringValue{Value: "PGV should take care of required values"}
+		minTimestamp := time.Now().UTC()
+		midTimestamp := initEvents(commandHandlerClient, mdManager)
+		maxTimestamp := time.Now().UTC()
 
 		By("using a general range")
 
@@ -94,6 +87,7 @@ var _ = FDescribe("AuditLog Test", func() {
 					break
 				}
 				g.Expect(err).ToNot(HaveOccurred())
+
 				g.Expect(e.When).ToNot(BeEmpty())
 				g.Expect(e.Issuer).ToNot(BeEmpty())
 				g.Expect(e.IssuerId).ToNot(BeEmpty())
@@ -122,16 +116,16 @@ var _ = FDescribe("AuditLog Test", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				counter++
 			}
-			g.Expect(counter).To(Equal(6)) // 4 + 2 to create the admin user
+			g.Expect(counter).To(Equal(4))
 		}).Should(Succeed())
 	})
 })
 
-func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManager *metadata.DomainMetadataManager ) time.Time {
+func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManager *metadata.DomainMetadataManager ) time.Time {
 	// CreateUser
 	command, err := cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-		&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe@monoskope.io"},
+		&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: "jane.dou@monoskope.io"},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	var reply *esApi.CommandReply
@@ -144,7 +138,7 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 	// CreateUserRoleBinding
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-		&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: uuid.New().String()},
+		&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(func(g Gomega) {
@@ -156,7 +150,7 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 	// CreateTenant
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
-		&cmdData.CreateTenantCommandData{Name: "Tenant X", Prefix: "tx"},
+		&cmdData.CreateTenantCommandData{Name: "Tenant Y", Prefix: "ty"},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(func(g Gomega) {
@@ -168,7 +162,7 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 	// UpdateTenant
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
-		&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Y"}},
+		&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Z"}},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(func(g Gomega) {
@@ -182,7 +176,7 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 	// CreateCluster
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-		&cmdData.CreateCluster{DisplayName: "the one cluster", Name: "one-cluster", ApiServerAddress: "one.example.com", CaCertBundle: []byte("This should be a certificate")},
+		&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: []byte("This should be a certificate")},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(func(g Gomega) {
@@ -194,7 +188,7 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 	// UpdateCluster
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(clusterId, commandTypes.UpdateCluster),
-		&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "the new cluster"}, ApiServerAddress: &wrapperspb.StringValue{Value: "new.example.com"}, CaCertBundle: []byte("This should be a new certificate")},
+		&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: []byte("This should be a new certificate")},
 	)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(func(g Gomega) {
@@ -234,7 +228,6 @@ func createEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdMana
 		cmd.CreateCommand(userId, commandTypes.DeleteUser))
 	Expect(err).ToNot(HaveOccurred())
 
-	// TODO: shouldn't we delete the role bindings if the user was deleted?
 	// DeleteUserRoleBinding
 	_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
 		cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
