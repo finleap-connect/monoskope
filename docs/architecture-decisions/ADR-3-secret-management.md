@@ -79,8 +79,8 @@ sequenceDiagram
     M8-->>M8: Process
     M8-->>+SR: Event SecretUploadKeyRequested
     M8-->>-M: Request ID
-    SR-->>SR: Generate key pair if not cached in memory
-    SR-->>-M8: Event SecretUploadKeyProvided<br>containing the public key and refs the 
+    SR-->>SR: Generate key pair<br>if not cached in-memory
+    SR-->>-M8: Event SecretUploadKeyProvided<br>containing the public key
     M8-->>M8: Process
     M-->>+M8: Query public key
     M8-->>-M: Return current public key
@@ -90,7 +90,8 @@ sequenceDiagram
     M8-->>M8: Process
     M8-->>+SR: Event SecretUploadRequested
     SR-->>+SE: Put secret
-    SR-->>-M8: Event SecretUploaded
+    SR-->>M8: Event SecretUploaded
+    SR-->>-SR: Invalidate cached key pair
     M8-->>-M: Return success
 ```
 
