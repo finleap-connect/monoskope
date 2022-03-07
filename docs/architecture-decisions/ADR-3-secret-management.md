@@ -53,13 +53,12 @@ This way the secrets are not stored anywhere anymore after successful upload int
 
 ### API Design #APID1
 
-* The API has different proto message types for different upstream secret providers to reflect differences between them
-* Hashes have to be equal no matter what the upstream secret store is
+* IDs of uploaded secrets are URIs, e.g. `mysecretstore://app/some/path` where the protocol is the secret store to upload the secret to
+* Hashes have to be equal no matter what the upstream secret store it is
 * Secrets stores have to be activated/deactivated by system admins so that m8 can show a list of supported secret stores available along
 * Secrets stores have a unique name which not necessarily reflects the type of the upstream secret store
 * The first store added becomes the default store, this can be adjusted if there are more than one store
 * Users have to provide which upstream store they target if they do not wan't the default store
-* IDs of uploaded secrets are URIs, e.g. `mysecretstore://app/some/path` where the protocol is the secret store to upload the secret to
 * The encrypted payload is simple json where values are base64 encoded
 
 ## Diagram
