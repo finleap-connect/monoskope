@@ -62,6 +62,38 @@ This way the secrets are not stored anywhere anymore after successful upload int
 * IDs of uploaded secrets are URIs, e.g. `mysecretstore://app/some/path` where the protocol is the secret store to upload the secret to
 * The encrypted payload is simple json where values are base64 encoded
 
+## Diagram
+
+In the following diagram the term "m8" is used for all parts of the control plane for handling commands/events.
+Even though single parts of the control plane which are of special interest for this diagram are shown separately.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant M as monoctl
+    participant M8 as m8
+    participant SR as Secret Reactor
+    participant SE as Secret Engine
+    U-->>+M: monoctl put secret
+    M-->>+M8: Command RequestSecretUploadKey
+    M8-->>M8: Process
+    M8-->>+SR: Event SecretUploadKeyRequested
+    M8-->>-M: Request ID
+    SR-->>SR: Generate key pair if not cached in memory
+    SR-->>-M8: Event SecretUploadKeyProvided<br>containing the public key and refs the 
+    M8-->>M8: Process
+    M-->>+M8: Query public key
+    M8-->>-M: Return current public key
+    M-->>M: Generate key pair
+    M-->>M: Encrypt secret
+    M-->>+M8: Command RequestUploadSecret (same ID as first request)
+    M8-->>M8: Process
+    M8-->>+SR: Event SecretUploadRequested
+    SR-->>+SE: Put secret
+    SR-->>-M8: Event SecretUploaded
+    M8-->>-M: Return success
+```
+
 ## Decision
 
 * We take #SEC1 + #SEC1-ENH1 + #APID1.
