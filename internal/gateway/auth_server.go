@@ -16,16 +16,11 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
-
-	"crypto/x509"
-	"encoding/pem"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -240,15 +235,6 @@ func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
 	return nil
 }
 
-func containsString(slice []string, value string) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
 // tokenValidation validates the token provided within the authorization flow
 func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.AuthToken {
 	s.log.Info("Validating token...")
@@ -316,34 +302,4 @@ func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
 	c.Writer.Header().Set(auth.HeaderAuthNotBefore, claims.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat))
 
 	c.Writer.WriteHeader(http.StatusOK)
-}
-
-// defaultBearerTokenFromRequest extracts the token from header
-func defaultBearerTokenFromRequest(r *http.Request) string {
-	token := r.Header.Get(HeaderAuthorization)
-	split := strings.SplitN(token, " ", 2)
-	if len(split) != 2 || !strings.EqualFold(strings.ToLower(split[0]), "bearer") {
-		return ""
-	}
-	return split[1]
-}
-
-// clientCertificateFromRequest extracts the client certificate from header
-func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
-	pemData := r.Header.Get(auth.HeaderForwardedClientCert)
-	if pemData == "" {
-		return nil, errors.New("cert header is empty")
-	}
-
-	decodedValue, err := url.QueryUnescape(pemData)
-	if err != nil {
-		return nil, errors.New("could not unescape pem data from header")
-	}
-
-	block, _ := pem.Decode([]byte(decodedValue))
-	if block == nil {
-		return nil, errors.New("decoding pem failed")
-	}
-
-	return x509.ParseCertificate(block.Bytes)
 }
