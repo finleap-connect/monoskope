@@ -16,7 +16,14 @@ package gateway
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
+	"net/http"
+	"net/url"
+	"strings"
 
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	ggrpc "google.golang.org/grpc"
 )
@@ -27,4 +34,44 @@ func CreateInsecureConnection(ctx context.Context, url string) (*ggrpc.ClientCon
 		WithRetry().
 		WithBlock().
 		Connect(ctx)
+}
+
+// defaultBearerTokenFromRequest extracts the token from header
+func defaultBearerTokenFromRequest(r *http.Request) string {
+	token := r.Header.Get(HeaderAuthorization)
+	split := strings.SplitN(token, " ", 2)
+	if len(split) != 2 || !strings.EqualFold(strings.ToLower(split[0]), "bearer") {
+		return ""
+	}
+	return split[1]
+}
+
+// clientCertificateFromRequest extracts the client certificate from header
+func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
+	pemData := r.Header.Get(auth.HeaderForwardedClientCert)
+	if pemData == "" {
+		return nil, errors.New("cert header is empty")
+	}
+
+	decodedValue, err := url.QueryUnescape(pemData)
+	if err != nil {
+		return nil, errors.New("could not unescape pem data from header")
+	}
+
+	block, _ := pem.Decode([]byte(decodedValue))
+	if block == nil {
+		return nil, errors.New("decoding pem failed")
+	}
+
+	return x509.ParseCertificate(block.Bytes)
+}
+
+// containsString returns if a given value is contained in a string slice
+func containsString(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
