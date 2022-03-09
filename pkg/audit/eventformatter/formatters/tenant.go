@@ -35,7 +35,7 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 	case events.TenantClusterBindingDeleted: return f.getFormattedDetailsTenantClusterBindingDeleted(ctx, event)
 	}
 
-	ed, err := f.ToPortoFromEventData(event.Data)
+	ed, err := es.EventData(event.Data).Unmarshal()
 	if err != nil {
 		return "", err
 	}

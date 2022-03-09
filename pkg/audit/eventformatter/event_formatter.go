@@ -6,9 +6,6 @@ import (
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 	"io"
 	"strings"
 )
@@ -63,18 +60,4 @@ func (f *BaseEventFormatter) AppendUpdate(field string, update string, old strin
 			strBuilder.WriteString(fmt.Sprintf(" from “%s“", old))
 		}
 	}
-}
-
-// TODO: add to event data in es
-
-func (f *BaseEventFormatter) ToPortoFromEventData(eventData []byte) (proto.Message, error) {
-	porto := &anypb.Any{}
-	if err := protojson.Unmarshal(eventData, porto); err != nil {
-		return nil, err
-	}
-	ed, err := porto.UnmarshalNew()
-	if err != nil {
-		return nil, err
-	}
-	return ed, nil
 }

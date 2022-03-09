@@ -34,7 +34,7 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 	case events.ClusterDeleted: return f.getFormattedDetailsClusterDeleted(ctx, event)
 	}
 
-	ed, err := f.ToPortoFromEventData(event.Data)
+	ed, err := es.EventData(event.Data).Unmarshal()
 	if err != nil {
 		return "", err
 	}

@@ -32,7 +32,7 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 	case events.UserRoleBindingDeleted: return f.getFormattedDetailsUserRoleBindingDeleted(ctx, event)
 	}
 
-	ed, err := f.ToPortoFromEventData(event.Data)
+	ed, err := es.EventData(event.Data).Unmarshal()
 	if err != nil {
 		return "", err
 	}
