@@ -54,10 +54,10 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 		return "", err
 	}
 
-	switch ed.(type) {
-	case *eventdata.TenantCreated: return f.getFormattedDetailsTenantCreated(event, ed.(*eventdata.TenantCreated))
-	case *eventdata.TenantUpdated: return f.getFormattedDetailsTenantUpdated(ctx, event, ed.(*eventdata.TenantUpdated))
-	case *eventdata.TenantClusterBindingCreated: return f.getFormattedDetailsTenantClusterBindingCreated(ctx, event, ed.(*eventdata.TenantClusterBindingCreated))
+	switch ed := ed.(type) {
+	case *eventdata.TenantCreated: return f.getFormattedDetailsTenantCreated(event, ed)
+	case *eventdata.TenantUpdated: return f.getFormattedDetailsTenantUpdated(ctx, event, ed)
+	case *eventdata.TenantClusterBindingCreated: return f.getFormattedDetailsTenantClusterBindingCreated(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType

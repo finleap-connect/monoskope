@@ -51,9 +51,9 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 		return "", err
 	}
 
-	switch ed.(type) {
-	case *eventdata.UserCreated: return f.getFormattedDetailsUserCreated(event, ed.(*eventdata.UserCreated))
-	case *eventdata.UserRoleAdded: return f.getFormattedDetailsUserRoleAdded(ctx, event, ed.(*eventdata.UserRoleAdded))
+	switch ed := ed.(type) {
+	case *eventdata.UserCreated: return f.getFormattedDetailsUserCreated(event, ed)
+	case *eventdata.UserRoleAdded: return f.getFormattedDetailsUserRoleAdded(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType

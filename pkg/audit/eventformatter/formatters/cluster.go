@@ -53,11 +53,11 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 		return "", err
 	}
 
-	switch ed.(type) {
-	case *eventdata.ClusterCreated: return f.getFormattedDetailsClusterCreated(event, ed.(*eventdata.ClusterCreated))
-	case *eventdata.ClusterCreatedV2: return f.getFormattedDetailsClusterCreatedV2(event, ed.(*eventdata.ClusterCreatedV2))
+	switch ed := ed.(type) {
+	case *eventdata.ClusterCreated: return f.getFormattedDetailsClusterCreated(event, ed)
+	case *eventdata.ClusterCreatedV2: return f.getFormattedDetailsClusterCreatedV2(event, ed)
 	case *eventdata.ClusterBootstrapTokenCreated: return f.getFormattedDetailsClusterBootstrapTokenCreated(event)
-	case *eventdata.ClusterUpdated: return f.getFormattedDetailsClusterUpdated(ctx, event, ed.(*eventdata.ClusterUpdated))
+	case *eventdata.ClusterUpdated: return f.getFormattedDetailsClusterUpdated(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
@@ -93,7 +93,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 	details.WriteString(fmt.Sprintf("“%s“ updated the cluster", event.Metadata["x-auth-email"]))
 	f.AppendUpdate("Display name", eventData.DisplayName, oldCluster.DisplayName, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, oldCluster.ApiServerAddress, &details)
-	if len(eventData.CaCertificateBundle) != 0 {details.WriteString(fmt.Sprintf("\n- Certifcate to a new one"))}
+	if len(eventData.CaCertificateBundle) != 0 {details.WriteString("\n- Certifcate to a new one")}
 	return details.String(), nil
 }
 

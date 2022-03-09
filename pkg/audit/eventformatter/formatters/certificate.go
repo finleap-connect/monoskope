@@ -38,20 +38,20 @@ func NewCertificateEventFormatter(esClient esApi.EventStoreClient) *certificateE
 func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
 	case events.CertificateRequestIssued: return f.getFormattedDetailsCertificateRequestIssued(event)
-	case events.CertificateRequested: return f.getFormattedDetailsCertificateIssuingFailed(event)
-	case events.CertificateIssued: return f.getFormattedDetailsCertificateIssuingFailed(event)
+	case events.CertificateRequested: return f.getFormattedDetailsCertificateRequested(event)
+	case events.CertificateIssued: return f.getFormattedDetailsCertificateIssued(event)
 	case events.CertificateIssueingFailed: return f.getFormattedDetailsCertificateIssuingFailed(event)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
 }
 
-func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ requested a certificate", event.Metadata["x-auth-email"]), nil
-}
-
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued(event *esApi.Event) (string, error) {
 	return fmt.Sprintf("“%s“ issued a certificate request", event.Metadata["x-auth-email"]), nil
+}
+
+func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
+	return fmt.Sprintf("“%s“ requested a certificate", event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(event *esApi.Event) (string, error) {
