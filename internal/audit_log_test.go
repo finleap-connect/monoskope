@@ -37,8 +37,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// TODO: remove focus test
-var _ = FDescribe("AuditLog Test", func() {
+var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
@@ -75,8 +74,6 @@ var _ = FDescribe("AuditLog Test", func() {
 			MaxTimestamp: timestamppb.New(maxTimestamp),
 		}
 
-		// TODO: remove prints
-		print("=======================================")
 		Eventually(func(g Gomega) {
 			events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
 			g.Expect(err).ToNot(HaveOccurred())
@@ -93,11 +90,8 @@ var _ = FDescribe("AuditLog Test", func() {
 				g.Expect(e.IssuerId).ToNot(BeEmpty())
 				g.Expect(e.EventType).ToNot(BeEmpty())
 				g.Expect(e.Details).ToNot(BeEmpty())
-
-				println(e.Details)
 			}
 		}).Should(Succeed())
-		print("=======================================")
 
 		By("using a custom range")
 

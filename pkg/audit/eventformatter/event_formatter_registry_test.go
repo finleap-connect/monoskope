@@ -26,12 +26,12 @@ var _ = Describe("event_formatter_registry", func() {
 	It("can register event formatter for event type", func() {
 		registry := NewEventFormatterRegistry()
 		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
-		Expect(err).To(HaveOccurred())
+		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can't replace registered event formatter for event type", func() {
 		registry := NewEventFormatterRegistry()
 		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
-		Expect(err).To(HaveOccurred())
+		Expect(err).ToNot(HaveOccurred())
 		err = registry.RegisterEventFormatter("TestEventType", testEventFormatter)
 		Expect(err).To(HaveOccurred())
 	})
@@ -44,7 +44,7 @@ var _ = Describe("event_formatter_registry", func() {
 	It("can create event formatters which are registered", func() {
 		registry := NewEventFormatterRegistry()
 		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
-		Expect(err).To(HaveOccurred())
+		Expect(err).ToNot(HaveOccurred())
 
 		aggregate, err := registry.GetEventFormatter("TestEventType")
 		Expect(err).ToNot(HaveOccurred())

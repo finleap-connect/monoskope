@@ -1,3 +1,17 @@
+// Copyright 2021 Monoskope Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package formatters
 
 import (
@@ -50,7 +64,7 @@ func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, 
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {
-	userSnapshot, err := f.GetSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId: &wrapperspb.StringValue{Value: eventData.UserId}},
 	)
@@ -58,7 +72,6 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 		return "", err
 	}
 
-	// TODO: per aggregate snapshot method?
 	user, ok := userSnapshot.(*projections.User)
 	if !ok {
 		return "", esErrors.ErrInvalidProjectionType
@@ -69,7 +82,7 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	userSnapshot, err := f.GetSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
@@ -88,7 +101,7 @@ func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context,
 func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
-	urbSnapshot, err := f.GetSnapshot(ctx, projectors.NewUserRoleBindingProjector(), eventFilter)
+	urbSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserRoleBindingProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +110,7 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx conte
 		return "", esErrors.ErrInvalidProjectionType
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: urb.UserId}
-	userSnapshot, err := f.GetSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
+	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}

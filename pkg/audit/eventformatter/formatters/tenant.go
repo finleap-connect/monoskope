@@ -1,3 +1,17 @@
+// Copyright 2021 Monoskope Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package formatters
 
 import (
@@ -56,7 +70,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Eve
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantClusterBindingCreated) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.TenantId}
-	tenantSnapshot, err := f.GetSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
+	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +79,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.ClusterId}
-	clusterSnapshot, err := f.GetSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
+	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +93,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
-	tenantSnapshot, err := f.GetSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
+	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
@@ -98,7 +112,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Cont
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	tenantSnapshot, err := f.GetSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
+	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
@@ -116,7 +130,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Cont
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
-	tcbSnapshot, err := f.GetSnapshot(ctx, projectors.NewTenantClusterBindingProjector(), eventFilter)
+	tcbSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantClusterBindingProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +139,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.TenantId}
-	tenantSnapshot, err := f.GetSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
+	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -134,7 +148,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.ClusterId}
-	clusterSnapshot, err := f.GetSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
+	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
 	if err != nil {
 		return "", err
 	}
