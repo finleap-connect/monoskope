@@ -38,7 +38,7 @@ import (
 )
 
 // TODO: remove focus test
-var _ = Describe("AuditLog Test", func() {
+var _ = FDescribe("AuditLog Test", func() {
 	ctx := context.Background()
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)

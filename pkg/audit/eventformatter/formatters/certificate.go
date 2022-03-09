@@ -1,0 +1,49 @@
+package formatters
+
+import (
+	"context"
+	"fmt"
+	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/audit/errors"
+	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+)
+
+
+type certificateEventFormatter struct {
+	*eventformatter.BaseEventFormatter
+}
+
+func NewCertificateEventFormatter(esClient esApi.EventStoreClient) *certificateEventFormatter {
+	return &certificateEventFormatter{
+		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
+	}
+}
+
+func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event *esApi.Event) (string, error) {
+	switch es.EventType(event.Type) {
+	case events.CertificateRequestIssued: return f.getFormattedDetailsCertificateRequestIssued(event)
+	case events.CertificateRequested: return f.getFormattedDetailsCertificateIssuingFailed(event)
+	case events.CertificateIssued: return f.getFormattedDetailsCertificateIssuingFailed(event)
+	case events.CertificateIssueingFailed: return f.getFormattedDetailsCertificateIssuingFailed(event)
+	}
+
+	return "", errors.ErrMissingFormatterImplementationForEventType
+}
+
+func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
+	return fmt.Sprintf("“%s“ requested a certificate", event.Metadata["x-auth-email"]), nil
+}
+
+func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued(event *esApi.Event) (string, error) {
+	return fmt.Sprintf("“%s“ issued a certificate request", event.Metadata["x-auth-email"]), nil
+}
+
+func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(event *esApi.Event) (string, error) {
+	return fmt.Sprintf("“%s“ issued a certificate", event.Metadata["x-auth-email"]), nil
+}
+
+func (f *certificateEventFormatter) getFormattedDetailsCertificateIssuingFailed(event *esApi.Event) (string, error) {
+	return fmt.Sprintf("certificate request issuing faild for “%s“", event.Metadata["x-auth-email"]), nil
+}
