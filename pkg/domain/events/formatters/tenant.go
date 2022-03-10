@@ -19,7 +19,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
@@ -32,22 +32,20 @@ import (
 )
 
 func init() {
-	tenantEvents := [...]es.EventType{events.TenantCreated, events.TenantDeleted, events.TenantUpdated,
-		events.TenantClusterBindingCreated, events.TenantClusterBindingDeleted}
-	for _, eventType := range tenantEvents {
-		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewTenantEventFormatter)
+	for _, eventType := range events.TenantEvents {
+		_ = ef.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewTenantEventFormatter)
 	}
 }
 
 // tenantEventFormatter EventFormatter implementation for the tenant-aggregate
 type tenantEventFormatter struct {
-	*eventformatter.BaseEventFormatter
+	*ef.BaseEventFormatter
 }
 
 // NewTenantEventFormatter creates a new event formatter for the tenant-aggregate
-func NewTenantEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
+func NewTenantEventFormatter(esClient esApi.EventStoreClient) ef.EventFormatter {
 	return &tenantEventFormatter{
-		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
+		BaseEventFormatter: &ef.BaseEventFormatter{EsClient: esClient},
 	}
 }
 

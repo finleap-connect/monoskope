@@ -17,45 +17,75 @@ package events
 import es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 
 const (
-	// Event emitted when a User has been created
+	// UserCreated event emitted when a User has been created
 	UserCreated es.EventType = "UserCreated"
-	// Event emitted when a User has been deleted
+	// UserDeleted event emitted when a User has been deleted
 	UserDeleted es.EventType = "UserDeleted"
-	// Event emitted when a User has been updated
+	// UserUpdated event emitted when a User has been updated
 	UserUpdated es.EventType = "UserUpdated"
-	// Event emitted when a new UserRoleBinding has been created
+	// UserRoleBindingCreated event emitted when a new UserRoleBinding has been created
 	UserRoleBindingCreated es.EventType = "UserRoleBindingCreated"
-	// Event emitted when a UserRoleBinding has been deleted
+	// UserRoleBindingDeleted event emitted when a UserRoleBinding has been deleted
 	UserRoleBindingDeleted es.EventType = "UserRoleBindingDeleted"
 
-	// Event emitted when a User has been created
+	// TenantCreated event emitted when a User has been created
 	TenantCreated es.EventType = "TenantCreated"
-	// Event emitted when a Tenant has been updated
+	// TenantUpdated event emitted when a Tenant has been updated
 	TenantUpdated es.EventType = "TenantUpdated"
-	// Event emitted when a Tenant has been deleted
+	// TenantDeleted event emitted when a Tenant has been deleted
 	TenantDeleted es.EventType = "TenantDeleted"
 
-	// Event emitted when a Cluster has been created
+	// ClusterCreated event emitted when a Cluster has been created
 	ClusterCreated   es.EventType = "ClusterCreated"
 	ClusterCreatedV2 es.EventType = "ClusterCreatedV2"
-	// Event emitted when a Cluster has been created
+	// ClusterUpdated event emitted when a Cluster has been created
 	ClusterUpdated es.EventType = "ClusterUpdated"
-	// Event emitted when a Cluster has been deleted
+	// ClusterDeleted event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
-	// Event emitted when a bootstrap token has been created
+	// ClusterBootstrapTokenCreated event emitted when a bootstrap token has been created
 	ClusterBootstrapTokenCreated es.EventType = "ClusterBootstrapTokenCreated"
 
-	// Event emitted when a certificate has been requested
+	// CertificateRequested event emitted when a certificate has been requested
 	CertificateRequested es.EventType = "CertificateRequested"
-	// Event emitted when a certificate request has been issued
+	// CertificateRequestIssued event emitted when a certificate request has been issued
 	CertificateRequestIssued es.EventType = "CertificateRequestIssued"
-	// Event emitted when a certificate has been issued
+	// CertificateIssued event emitted when a certificate has been issued
 	CertificateIssued es.EventType = "CertificateIssued"
-	// Event emitted when a certificate could not be issued
+	// CertificateIssueingFailed event emitted when a certificate could not be issued
 	CertificateIssueingFailed es.EventType = "CertificateIssueingFailed"
 
-	// Event emitted when a tenant was given access to a certain cluster
+	// TenantClusterBindingCreated event emitted when a tenant was given access to a certain cluster
 	TenantClusterBindingCreated es.EventType = "TenantClusterBindingCreated"
-	// Event emitted when a tenant's access to a cluster has been revoked
+	// TenantClusterBindingDeleted event emitted when a tenant's access to a cluster has been revoked
 	TenantClusterBindingDeleted es.EventType = "TenantClusterBindingDeleted"
 )
+
+var UserEvents = []es.EventType{
+	UserCreated,
+	UserDeleted,
+	UserRoleBindingCreated,
+	UserRoleBindingDeleted,
+}
+
+var TenantEvents = []es.EventType{
+	TenantCreated,
+	TenantDeleted,
+	TenantUpdated,
+	TenantClusterBindingCreated,
+	TenantClusterBindingDeleted,
+}
+
+var ClusterEvents = []es.EventType{
+	ClusterCreated,
+	ClusterCreatedV2,
+	ClusterUpdated,
+	ClusterDeleted,
+	ClusterBootstrapTokenCreated,
+}
+
+var CertificateEvents = []es.EventType{
+	CertificateRequested,
+	CertificateRequestIssued,
+	CertificateIssued,
+	CertificateIssueingFailed,
+}

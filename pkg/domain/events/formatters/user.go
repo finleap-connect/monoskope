@@ -29,9 +29,7 @@ import (
 )
 
 func init() {
-	userEvents := [...]es.EventType{events.UserCreated, events.UserDeleted,
-		events.UserRoleBindingCreated, events.UserRoleBindingDeleted}
-	for _, eventType := range userEvents {
+	for _, eventType := range events.UserEvents {
 		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewUserEventFormatter)
 	}
 }

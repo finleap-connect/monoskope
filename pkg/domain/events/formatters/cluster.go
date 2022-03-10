@@ -32,9 +32,7 @@ import (
 )
 
 func init() {
-	clusterEvents := [...]es.EventType{events.ClusterCreated, events.ClusterCreatedV2, events.ClusterUpdated, events.ClusterDeleted,
-		events.ClusterBootstrapTokenCreated}
-	for _, eventType := range clusterEvents {
+	for _, eventType := range events.ClusterEvents {
 		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewClusterEventFormatter)
 	}
 }

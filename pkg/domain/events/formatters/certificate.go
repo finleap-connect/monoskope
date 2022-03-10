@@ -18,28 +18,26 @@ import (
 	"context"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
 func init() {
-	certificateEvents := [...]es.EventType{events.CertificateRequested, events.CertificateRequestIssued,
-		events.CertificateIssued, events.CertificateIssueingFailed}
-	for _, eventType := range certificateEvents {
-		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewCertificateEventFormatter)
+	for _, eventType := range events.CertificateEvents {
+		_ = ef.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewCertificateEventFormatter)
 	}
 }
 
 // certificateEventFormatter EventFormatter implementation for the certificate-aggregate
 type certificateEventFormatter struct {
-	*eventformatter.BaseEventFormatter
+	*ef.BaseEventFormatter
 }
 
 // NewCertificateEventFormatter creates a new event formatter for the certificate-aggregate
-func NewCertificateEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
+func NewCertificateEventFormatter(esClient esApi.EventStoreClient) ef.EventFormatter {
 	return &certificateEventFormatter{
-		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
+		BaseEventFormatter: &ef.BaseEventFormatter{EsClient: esClient},
 	}
 }
 
