@@ -24,6 +24,11 @@ import (
 	"strings"
 )
 
+const (
+	AppendUpdateTo   = "\n- “%s“ to “%s“"
+	AppendUpdateFrom = " from “%s“"
+)
+
 type EventFormatter interface {
 	GetFormattedDetails(context.Context, *esApi.Event) (string, error)
 }
@@ -68,9 +73,9 @@ func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Pr
 
 func (f *BaseEventFormatter) AppendUpdate(field string, update string, old string, strBuilder *strings.Builder) {
 	if update != "" {
-		strBuilder.WriteString(fmt.Sprintf("\n- “%s“ to “%s“", field, update))
+		strBuilder.WriteString(fmt.Sprintf(AppendUpdateTo, field, update))
 		if old != "" {
-			strBuilder.WriteString(fmt.Sprintf(" from “%s“", old))
+			strBuilder.WriteString(fmt.Sprintf(AppendUpdateFrom, old))
 		}
 	}
 }

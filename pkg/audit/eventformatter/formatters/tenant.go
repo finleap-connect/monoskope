@@ -32,6 +32,14 @@ import (
 	"time"
 )
 
+const (
+	TenantCreatedDetails               = "“%s“ created tenant “%s“ with prefix “%s“"
+	TenantUpdatedDetails               = "“%s“ updated the Tenant"
+	TenantClusterBindingCreatedDetails = "“%s“ bounded tenant “%s“ to cluster “%s”"
+	TenantDeletedDetails               = "“%s“ deleted tenant “%s“"
+	TenantClusterBindingDeletedDetails = "“%s“ deleted the bound between cluster “%s“ and tenant “%s“"
+)
+
 type tenantEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -68,7 +76,26 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Event, eventData *eventdata.TenantCreated) (string, error) {
-	return fmt.Sprintf("“%s“ created tenant “%s“ with prefix “%s“", event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix), nil
+	return fmt.Sprintf(TenantCreatedDetails, event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix), nil
+}
+
+func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
+	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
+		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
+	)
+	if err != nil {
+		return "", err
+	}
+	oldTenant, ok := tenantSnapshot.(*projections.Tenant)
+	if !ok {
+		return "", esErrors.ErrInvalidProjectionType
+	}
+
+	var details strings.Builder
+	details.WriteString(fmt.Sprintf(TenantUpdatedDetails, event.Metadata["x-auth-email"]))
+	f.AppendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
+	return details.String(), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantClusterBindingCreated) (string, error) {
@@ -92,27 +119,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf("“%s“ bounded tenant “%s“ to cluster “%s”",
-		event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName), nil
-}
-
-func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
-	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
-		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
-		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
-	)
-	if err != nil {
-		return "", err
-	}
-	oldTenant, ok := tenantSnapshot.(*projections.Tenant)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
-
-	var details strings.Builder
-	details.WriteString(fmt.Sprintf("“%s“ updated the Tenant", event.Metadata["x-auth-email"]))
-	f.AppendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
-	return details.String(), nil
+	return fmt.Sprintf(TenantClusterBindingCreatedDetails, event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -128,7 +135,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Cont
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf("“%s“ deleted tenant “%s“", event.Metadata["x-auth-email"], tenant.Name), nil
+	return fmt.Sprintf(TenantDeletedDetails, event.Metadata["x-auth-email"], tenant.Name), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -161,6 +168,5 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf("“%s“ deleted the bound between cluster “%s“ and tenant “%s“",
-		event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name), nil
+	return fmt.Sprintf(TenantClusterBindingDeletedDetails, event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name), nil
 }

@@ -24,6 +24,13 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
+const (
+	RequestIssuedDetails            = "“%s“ issued a certificate request"
+	CertificateRequestedDetails     = "“%s“ requested a certificate"
+	CertificateIssuedDetails        = "“%s“ issued a certificate"
+	CertificateIssuingFailedDetails = "certificate request issuing faild for “%s“"
+)
+
 type certificateEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -50,17 +57,17 @@ func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ issued a certificate request", event.Metadata["x-auth-email"]), nil
+	return fmt.Sprintf(RequestIssuedDetails, event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ requested a certificate", event.Metadata["x-auth-email"]), nil
+	return fmt.Sprintf(CertificateRequestedDetails, event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ issued a certificate", event.Metadata["x-auth-email"]), nil
+	return fmt.Sprintf(CertificateIssuedDetails, event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssuingFailed(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("certificate request issuing faild for “%s“", event.Metadata["x-auth-email"]), nil
+	return fmt.Sprintf(CertificateIssuingFailedDetails, event.Metadata["x-auth-email"]), nil
 }
