@@ -40,16 +40,19 @@ const (
 	ClusterDeletedDetails               = "“%s“ deleted cluster “%s“"
 )
 
+// clusterEventFormatter EventFormatter implementation for the cluster-aggregate
 type clusterEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
 
+// NewClusterEventFormatter creates a new event formatter for the cluster-aggregate
 func NewClusterEventFormatter(esClient esApi.EventStoreClient) *clusterEventFormatter {
 	return &clusterEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
 }
 
+// GetFormattedDetails formats the cluster-aggregate-events in a human-readable format
 func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
 	case events.ClusterDeleted:

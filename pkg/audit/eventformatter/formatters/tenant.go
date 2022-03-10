@@ -40,16 +40,19 @@ const (
 	TenantClusterBindingDeletedDetails = "“%s“ deleted the bound between cluster “%s“ and tenant “%s“"
 )
 
+// tenantEventFormatter EventFormatter implementation for the tenant-aggregate
 type tenantEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
 
+// NewTenantEventFormatter creates a new event formatter for the tenant-aggregate
 func NewTenantEventFormatter(esClient esApi.EventStoreClient) *tenantEventFormatter {
 	return &tenantEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
 }
 
+// GetFormattedDetails formats the tenant-aggregate-events in a human-readable format
 func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
 	case events.TenantDeleted:

@@ -29,10 +29,13 @@ const (
 	AppendUpdateFrom = " from “%s“"
 )
 
+// EventFormatter is the interface definition for all event formatters
 type EventFormatter interface {
+	// GetFormattedDetails formats a given event in a human-readable format
 	GetFormattedDetails(context.Context, *esApi.Event) (string, error)
 }
 
+// BaseEventFormatter is the base implementation for all event formatters
 type BaseEventFormatter struct {
 	EsClient esApi.EventStoreClient
 }
@@ -71,6 +74,7 @@ func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Pr
 	return projection, nil
 }
 
+// AppendUpdate appends updates to a string builder in human-readable format
 func (f *BaseEventFormatter) AppendUpdate(field string, update string, old string, strBuilder *strings.Builder) {
 	if update != "" {
 		strBuilder.WriteString(fmt.Sprintf(AppendUpdateTo, field, update))

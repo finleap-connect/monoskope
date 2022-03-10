@@ -26,15 +26,18 @@ import (
 	"time"
 )
 
+// AuditFormatter is the interface definition for the formatter used by the auditLogServer
 type AuditFormatter interface {
 	NewHumanReadableEvent(context.Context, *esApi.Event) *audit.HumanReadableEvent
 }
 
+// auditFormatter is the implementation of AuditFormatter used by auditLogServer
 type auditFormatter struct {
 	log                    logger.Logger
 	eventFormatterRegistry eventformatter.EventFormatterRegistry
 }
 
+// NewAuditFormatter creates an auditFormatter
 func NewAuditFormatter(esClient esApi.EventStoreClient) *auditFormatter {
 	return &auditFormatter{
 		log:                    logger.WithName("audit-formatter"),
@@ -42,6 +45,7 @@ func NewAuditFormatter(esClient esApi.EventStoreClient) *auditFormatter {
 	}
 }
 
+// NewHumanReadableEvent creates a HumanReadableEvent of a given Event
 func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi.Event) *audit.HumanReadableEvent {
 	return &audit.HumanReadableEvent{
 		When:      event.Timestamp.AsTime().Format(time.RFC822),

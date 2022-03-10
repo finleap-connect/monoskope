@@ -22,11 +22,15 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 )
 
+// EventFormatterRegistry is the interface definition for an event formatter registry
 type EventFormatterRegistry interface {
+	// RegisterEventFormatter registers an event formatter for an event type.
 	RegisterEventFormatter(es.EventType, EventFormatter) error
+	// GetEventFormatter returns the event formatter of the event type registered with RegisterEventFormatter.
 	GetEventFormatter(es.EventType) (EventFormatter, error)
 }
 
+// eventFormatterRegistry is the implementation for the EventFormatterRegistry interface
 type eventFormatterRegistry struct {
 	log             logger.Logger
 	mutex           sync.RWMutex
@@ -44,15 +48,18 @@ func NewEventFormatterRegistry() EventFormatterRegistry {
 // TODO: simplify or feature usecase? (different services register formatters?)
 
 // RegisterEventFormatter registers an event formatter for an event type.
+// passing an empty eventType will result in errors.ErrEmptyEventType
+// passing a nil eventFormatter will result in errors.ErrEventFormatterInvalid
+// if an eventFormatter for the eventType is already registered errors.ErrEventFormatterForEventTypeAlreadyRegistered is returned
 func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, eventFormatter EventFormatter) error {
-	if eventFormatter == nil {
-		r.log.Info("attempt to register invalid event formatter. Event formatter can't be nil")
-		return errors.ErrEventFormatterInvalid
-	}
-
 	if eventType.String() == "" {
 		r.log.Info("attempt to register empty event type")
 		return errors.ErrEmptyEventType
+	}
+
+	if eventFormatter == nil {
+		r.log.Info("attempt to register invalid event formatter. Event formatter can't be nil")
+		return errors.ErrEventFormatterInvalid
 	}
 
 	r.mutex.Lock()
@@ -69,6 +76,7 @@ func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, 
 }
 
 // GetEventFormatter returns the event formatter of the event type registered with RegisterEventFormatter.
+// if no event formatter for the eventType is registered errors.ErrEventFormatterForEventTypeNotRegistered is returned
 func (r *eventFormatterRegistry) GetEventFormatter(eventType es.EventType) (EventFormatter, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()

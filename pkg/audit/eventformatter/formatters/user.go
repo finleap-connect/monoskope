@@ -36,16 +36,19 @@ const (
 	UserRoleBindingDeletedDetails = "“%s“ removed the role “%s“ for scope “%s“ from user “%s“"
 )
 
+// userEventFormatter EventFormatter implementation for the user-aggregate
 type userEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
 
+// NewUserEventFormatter creates a new event formatter for the user-aggregate
 func NewUserEventFormatter(esClient esApi.EventStoreClient) *userEventFormatter {
 	return &userEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
 }
 
+// GetFormattedDetails formats the user-aggregate-events in a human-readable format
 func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
 	case events.UserDeleted:

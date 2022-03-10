@@ -42,6 +42,7 @@ func NewAuditLogServer(esClient esApi.EventStoreClient) *auditLogServer {
 	}
 }
 
+// NewAuditLogClient returns a new configured instance of AuditLogClient along with the connection used
 func NewAuditLogClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, doApi.AuditLogClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
@@ -53,6 +54,7 @@ func NewAuditLogClient(ctx context.Context, queryHandlerAddr string) (*grpc.Clie
 	return conn, doApi.NewAuditLogClient(conn), nil
 }
 
+// GetByDateRange returns human-readable events within the specified data range
 func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeRequest, stream doApi.AuditLog_GetByDateRangeServer) error {
 	ctx := context.Background()
 

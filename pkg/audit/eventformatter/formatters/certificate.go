@@ -31,16 +31,19 @@ const (
 	CertificateIssuingFailedDetails = "certificate request issuing faild for “%s“"
 )
 
+// certificateEventFormatter EventFormatter implementation for the certificate-aggregate
 type certificateEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
 
+// NewCertificateEventFormatter creates a new event formatter for the certificate-aggregate
 func NewCertificateEventFormatter(esClient esApi.EventStoreClient) *certificateEventFormatter {
 	return &certificateEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
 }
 
+// GetFormattedDetails formats the certificate-aggregate-events in a human-readable format
 func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
 	case events.CertificateRequestIssued:
