@@ -53,9 +53,10 @@ func (f *BaseEventFormatter) AppendUpdate(field string, update string, old strin
 	}
 }
 
-// TODO: find a better place, move to domain package?
-// TODO: ticket: domain -> snapshots (same idea as e.g. domain -> projections)
-
+// CreateSnapshot creates a snapshot based on an event-filter and the corresponding projector for
+// the aggregate of which the id is used in the filter.
+// This is a temporary implementation until snapshots are fully implemented,
+// and it is not meant to be used extensively.
 func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Projector, eventFilter *esApi.EventFilter) (es.Projection, error) {
 	projection := projector.NewProjection(uuid.New())
 	aggregateEvents, err := f.EsClient.Retrieve(ctx, eventFilter)
