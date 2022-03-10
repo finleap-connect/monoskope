@@ -28,15 +28,15 @@ type EventFormatterRegistry interface {
 }
 
 type eventFormatterRegistry struct {
-	log logger.Logger
-	mutex sync.RWMutex
+	log             logger.Logger
+	mutex           sync.RWMutex
 	eventFormatters map[es.EventType]EventFormatter
 }
 
 // NewEventFormatterRegistry creates a new event formatter registry
 func NewEventFormatterRegistry() EventFormatterRegistry {
 	return &eventFormatterRegistry{
-		log: logger.WithName("event-formatter-registry"),
+		log:             logger.WithName("event-formatter-registry"),
 		eventFormatters: make(map[es.EventType]EventFormatter),
 	}
 }

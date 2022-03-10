@@ -96,13 +96,13 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		})
 
 		It("should check for a valid DisplayName", func() {
-			cd.DisplayName =  &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
+			cd.DisplayName = &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
 			ed.DisplayName = invalidDisplayNameTooLong
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid ApiServerAddress", func() {
-			cd.ApiServerAddress =  &wrapperspb.StringValue{Value: invalidApiServerAddress}
+			cd.ApiServerAddress = &wrapperspb.StringValue{Value: invalidApiServerAddress}
 			ed.ApiServerAddress = invalidApiServerAddress
 			ValidateErrorExpected()
 		})

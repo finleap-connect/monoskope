@@ -24,7 +24,6 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
-
 type certificateEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -37,10 +36,14 @@ func NewCertificateEventFormatter(esClient esApi.EventStoreClient) *certificateE
 
 func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
-	case events.CertificateRequestIssued: return f.getFormattedDetailsCertificateRequestIssued(event)
-	case events.CertificateRequested: return f.getFormattedDetailsCertificateRequested(event)
-	case events.CertificateIssued: return f.getFormattedDetailsCertificateIssued(event)
-	case events.CertificateIssueingFailed: return f.getFormattedDetailsCertificateIssuingFailed(event)
+	case events.CertificateRequestIssued:
+		return f.getFormattedDetailsCertificateRequestIssued(event)
+	case events.CertificateRequested:
+		return f.getFormattedDetailsCertificateRequested(event)
+	case events.CertificateIssued:
+		return f.getFormattedDetailsCertificateIssued(event)
+	case events.CertificateIssueingFailed:
+		return f.getFormattedDetailsCertificateIssuingFailed(event)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType

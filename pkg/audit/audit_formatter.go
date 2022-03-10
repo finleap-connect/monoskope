@@ -31,24 +31,24 @@ type AuditFormatter interface {
 }
 
 type auditFormatter struct {
-	log logger.Logger
+	log                    logger.Logger
 	eventFormatterRegistry eventformatter.EventFormatterRegistry
 }
 
 func NewAuditFormatter(esClient esApi.EventStoreClient) *auditFormatter {
 	return &auditFormatter{
-		log: logger.WithName("audit-formatter"),
+		log:                    logger.WithName("audit-formatter"),
 		eventFormatterRegistry: initEventFormatterRegistry(esClient),
 	}
 }
 
 func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi.Event) *audit.HumanReadableEvent {
 	return &audit.HumanReadableEvent{
-		When: event.Timestamp.AsTime().Format(time.RFC822),
-		Issuer: event.Metadata["x-auth-email"],
-		IssuerId: event.AggregateId,
+		When:      event.Timestamp.AsTime().Format(time.RFC822),
+		Issuer:    event.Metadata["x-auth-email"],
+		IssuerId:  event.AggregateId,
 		EventType: event.Type,
-		Details: f.getFormattedDetails(ctx, event),
+		Details:   f.getFormattedDetails(ctx, event),
 	}
 }
 
@@ -67,7 +67,6 @@ func (f *auditFormatter) getFormattedDetails(ctx context.Context, event *esApi.E
 
 	return details
 }
-
 
 // TODO: default registry and init on start?
 func initEventFormatterRegistry(esClient esApi.EventStoreClient) eventformatter.EventFormatterRegistry {

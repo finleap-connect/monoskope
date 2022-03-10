@@ -32,7 +32,6 @@ import (
 	"time"
 )
 
-
 type tenantEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -45,8 +44,10 @@ func NewTenantEventFormatter(esClient esApi.EventStoreClient) *tenantEventFormat
 
 func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
-	case events.TenantDeleted: return f.getFormattedDetailsTenantDeleted(ctx, event)
-	case events.TenantClusterBindingDeleted: return f.getFormattedDetailsTenantClusterBindingDeleted(ctx, event)
+	case events.TenantDeleted:
+		return f.getFormattedDetailsTenantDeleted(ctx, event)
+	case events.TenantClusterBindingDeleted:
+		return f.getFormattedDetailsTenantClusterBindingDeleted(ctx, event)
 	}
 
 	ed, err := es.EventData(event.Data).Unmarshal()
@@ -55,9 +56,12 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 	}
 
 	switch ed := ed.(type) {
-	case *eventdata.TenantCreated: return f.getFormattedDetailsTenantCreated(event, ed)
-	case *eventdata.TenantUpdated: return f.getFormattedDetailsTenantUpdated(ctx, event, ed)
-	case *eventdata.TenantClusterBindingCreated: return f.getFormattedDetailsTenantClusterBindingCreated(ctx, event, ed)
+	case *eventdata.TenantCreated:
+		return f.getFormattedDetailsTenantCreated(event, ed)
+	case *eventdata.TenantUpdated:
+		return f.getFormattedDetailsTenantUpdated(ctx, event, ed)
+	case *eventdata.TenantClusterBindingCreated:
+		return f.getFormattedDetailsTenantClusterBindingCreated(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
@@ -95,7 +99,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
 	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
-		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
@@ -114,7 +118,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Cont
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
-		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err

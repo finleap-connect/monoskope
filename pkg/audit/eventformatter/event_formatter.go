@@ -24,7 +24,6 @@ import (
 	"strings"
 )
 
-
 type EventFormatter interface {
 	GetFormattedDetails(context.Context, *esApi.Event) (string, error)
 }
@@ -45,7 +44,7 @@ func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Pr
 
 	for {
 		e, err := aggregateEvents.Recv()
-		if err == io.EOF{
+		if err == io.EOF {
 			break
 		}
 		if err != nil {

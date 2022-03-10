@@ -44,8 +44,8 @@ var _ = Describe("AuditLog Test", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Name:   "admin",
-		Email:  "admin@monoskope.io",
+		Name:  "admin",
+		Email: "admin@monoskope.io",
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
@@ -115,7 +115,7 @@ var _ = Describe("AuditLog Test", func() {
 	})
 })
 
-func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManager *metadata.DomainMetadataManager ) time.Time {
+func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManager *metadata.DomainMetadataManager) time.Time {
 	// CreateUser
 	command, err := cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),

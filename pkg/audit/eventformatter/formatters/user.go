@@ -29,7 +29,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-
 type userEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -42,8 +41,10 @@ func NewUserEventFormatter(esClient esApi.EventStoreClient) *userEventFormatter 
 
 func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
-	case events.UserDeleted: return f.getFormattedDetailsUserDeleted(ctx, event)
-	case events.UserRoleBindingDeleted: return f.getFormattedDetailsUserRoleBindingDeleted(ctx, event)
+	case events.UserDeleted:
+		return f.getFormattedDetailsUserDeleted(ctx, event)
+	case events.UserRoleBindingDeleted:
+		return f.getFormattedDetailsUserRoleBindingDeleted(ctx, event)
 	}
 
 	ed, err := es.EventData(event.Data).Unmarshal()
@@ -52,8 +53,10 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 	}
 
 	switch ed := ed.(type) {
-	case *eventdata.UserCreated: return f.getFormattedDetailsUserCreated(event, ed)
-	case *eventdata.UserRoleAdded: return f.getFormattedDetailsUserRoleAdded(ctx, event, ed)
+	case *eventdata.UserCreated:
+		return f.getFormattedDetailsUserCreated(event, ed)
+	case *eventdata.UserRoleAdded:
+		return f.getFormattedDetailsUserRoleAdded(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
@@ -66,7 +69,7 @@ func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {
 	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
-		AggregateId: &wrapperspb.StringValue{Value: eventData.UserId}},
+		AggregateId:  &wrapperspb.StringValue{Value: eventData.UserId}},
 	)
 	if err != nil {
 		return "", err
@@ -84,7 +87,7 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
-		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err

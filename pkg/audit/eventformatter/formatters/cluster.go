@@ -32,7 +32,6 @@ import (
 	"time"
 )
 
-
 type clusterEventFormatter struct {
 	*eventformatter.BaseEventFormatter
 }
@@ -45,7 +44,8 @@ func NewClusterEventFormatter(esClient esApi.EventStoreClient) *clusterEventForm
 
 func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *esApi.Event) (string, error) {
 	switch es.EventType(event.Type) {
-	case events.ClusterDeleted: return f.getFormattedDetailsClusterDeleted(ctx, event)
+	case events.ClusterDeleted:
+		return f.getFormattedDetailsClusterDeleted(ctx, event)
 	}
 
 	ed, err := es.EventData(event.Data).Unmarshal()
@@ -54,10 +54,14 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 	}
 
 	switch ed := ed.(type) {
-	case *eventdata.ClusterCreated: return f.getFormattedDetailsClusterCreated(event, ed)
-	case *eventdata.ClusterCreatedV2: return f.getFormattedDetailsClusterCreatedV2(event, ed)
-	case *eventdata.ClusterBootstrapTokenCreated: return f.getFormattedDetailsClusterBootstrapTokenCreated(event)
-	case *eventdata.ClusterUpdated: return f.getFormattedDetailsClusterUpdated(ctx, event, ed)
+	case *eventdata.ClusterCreated:
+		return f.getFormattedDetailsClusterCreated(event, ed)
+	case *eventdata.ClusterCreatedV2:
+		return f.getFormattedDetailsClusterCreatedV2(event, ed)
+	case *eventdata.ClusterBootstrapTokenCreated:
+		return f.getFormattedDetailsClusterBootstrapTokenCreated(event)
+	case *eventdata.ClusterUpdated:
+		return f.getFormattedDetailsClusterUpdated(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
@@ -78,7 +82,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterBootstrapTokenCreated(
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
 	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
-		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
@@ -88,19 +92,20 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-
 	var details strings.Builder
 	details.WriteString(fmt.Sprintf("“%s“ updated the cluster", event.Metadata["x-auth-email"]))
 	f.AppendUpdate("Display name", eventData.DisplayName, oldCluster.DisplayName, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, oldCluster.ApiServerAddress, &details)
-	if len(eventData.CaCertificateBundle) != 0 {details.WriteString("\n- Certifcate to a new one")}
+	if len(eventData.CaCertificateBundle) != 0 {
+		details.WriteString("\n- Certifcate to a new one")
+	}
 	return details.String(), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
-		AggregateId: &wrapperspb.StringValue{Value: event.AggregateId}},
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err

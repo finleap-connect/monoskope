@@ -72,9 +72,6 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(ctx, e)
-		if err != nil {
-			return errors.TranslateToGrpcError(err)
-		}
 
 		err = stream.Send(hre)
 		if err != nil {
