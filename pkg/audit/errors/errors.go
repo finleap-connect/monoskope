@@ -16,20 +16,20 @@ package errors
 
 import "errors"
 
-// Event formatter Errors
+// Event-Formatter Errors
 var (
-	// ErrMissingFormatterImplementationForEventType is when the event type is not supported by the formatter
-	ErrMissingFormatterImplementationForEventType = errors.New("event type is not supported by formatter")
+	// ErrMissingFormatterImplementationForEventType is when the event-type is not supported by the formatter
+	ErrMissingFormatterImplementationForEventType = errors.New("event-type is not supported by formatter")
 
-	// ErrEventFormatterInvalid is when an event formatter is invalid e.g. nil.
-	ErrEventFormatterInvalid = errors.New("invalid event formatter")
+	// ErrEventFormatterFactoryInvalid is when an event-formatter factory doesn't create event-formatters.
+	ErrEventFormatterFactoryInvalid = errors.New("factory does not create event-formatters")
 
-	// ErrEmptyEventType is when an event type given is empty.
-	ErrEmptyEventType = errors.New("event type must not be empty")
+	// ErrEmptyEventType is when an event-type given is empty.
+	ErrEmptyEventType = errors.New("event-type must not be empty")
 
-	// ErrEventFormatterForEventTypeAlreadyRegistered is when an event formatter for event type was already registered.
-	ErrEventFormatterForEventTypeAlreadyRegistered = errors.New("event formatter for event type already registered")
+	// ErrEventFormatterFactoryForEventTypeAlreadyRegistered is when an event-formatter factory for event-type was already registered.
+	ErrEventFormatterFactoryForEventTypeAlreadyRegistered = errors.New("event-formatter factory for event-type already registered")
 
-	// ErrEventFormatterForEventTypeNotRegistered is when no event formatter was registered for the event type.
-	ErrEventFormatterForEventTypeNotRegistered = errors.New("event formatter for event type not registered")
+	// ErrEventFormatterForEventTypeNotRegistered is when no event-formatter was registered for the event-type.
+	ErrEventFormatterForEventTypeNotRegistered = errors.New("event-formatter for event-type not registered")
 )

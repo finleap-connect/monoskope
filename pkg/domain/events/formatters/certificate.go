@@ -16,7 +16,6 @@ package formatters
 
 import (
 	"context"
-	"fmt"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
@@ -24,12 +23,13 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
-const (
-	RequestIssuedDetails            = "“%s“ issued a certificate request"
-	CertificateRequestedDetails     = "“%s“ requested a certificate"
-	CertificateIssuedDetails        = "“%s“ issued a certificate"
-	CertificateIssuingFailedDetails = "certificate request issuing faild for “%s“"
-)
+func init() {
+	certificateEvents := [...]es.EventType{events.CertificateRequested, events.CertificateRequestIssued,
+		events.CertificateIssued, events.CertificateIssueingFailed}
+	for _, eventType := range certificateEvents {
+		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewCertificateEventFormatter)
+	}
+}
 
 // certificateEventFormatter EventFormatter implementation for the certificate-aggregate
 type certificateEventFormatter struct {
@@ -37,7 +37,7 @@ type certificateEventFormatter struct {
 }
 
 // NewCertificateEventFormatter creates a new event formatter for the certificate-aggregate
-func NewCertificateEventFormatter(esClient esApi.EventStoreClient) *certificateEventFormatter {
+func NewCertificateEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
 	return &certificateEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
@@ -60,17 +60,17 @@ func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf(RequestIssuedDetails, event.Metadata["x-auth-email"]), nil
+	return events.RequestIssuedDetailsFormat.Sprint(event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
-	return fmt.Sprintf(CertificateRequestedDetails, event.Metadata["x-auth-email"]), nil
+	return events.CertificateRequestedDetailsFormat.Sprint(event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf(CertificateIssuedDetails, event.Metadata["x-auth-email"]), nil
+	return events.CertificateIssuedDetailsFormat.Sprint(event.Metadata["x-auth-email"]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssuingFailed(event *esApi.Event) (string, error) {
-	return fmt.Sprintf(CertificateIssuingFailedDetails, event.Metadata["x-auth-email"]), nil
+	return events.CertificateIssuingFailedDetailsFormat.Sprint(event.Metadata["x-auth-email"]), nil
 }

@@ -16,7 +16,6 @@ package formatters
 
 import (
 	"context"
-	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
@@ -32,13 +31,13 @@ import (
 	"time"
 )
 
-const (
-	ClusterCreatedDetails               = "“%s“ created cluster “%s“"
-	ClusterCreatedV2Details             = ClusterCreatedDetails
-	ClusterBootstrapTokenCreatedDetails = "“%s“ created a cluster bootstrap token"
-	ClusterUpdatedDetails               = "“%s“ updated the cluster"
-	ClusterDeletedDetails               = "“%s“ deleted cluster “%s“"
-)
+func init() {
+	clusterEvents := [...]es.EventType{events.ClusterCreated, events.ClusterCreatedV2, events.ClusterUpdated, events.ClusterDeleted,
+		events.ClusterBootstrapTokenCreated}
+	for _, eventType := range clusterEvents {
+		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewClusterEventFormatter)
+	}
+}
 
 // clusterEventFormatter EventFormatter implementation for the cluster-aggregate
 type clusterEventFormatter struct {
@@ -46,7 +45,7 @@ type clusterEventFormatter struct {
 }
 
 // NewClusterEventFormatter creates a new event formatter for the cluster-aggregate
-func NewClusterEventFormatter(esClient esApi.EventStoreClient) *clusterEventFormatter {
+func NewClusterEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
 	return &clusterEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
@@ -79,15 +78,15 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreated(event *esApi.Event, eventData *eventdata.ClusterCreated) (string, error) {
-	return fmt.Sprintf(ClusterCreatedDetails, event.Metadata["x-auth-email"], eventData.Name), nil
+	return events.ClusterCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Name), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV2(event *esApi.Event, eventData *eventdata.ClusterCreatedV2) (string, error) {
-	return fmt.Sprintf(ClusterCreatedV2Details, event.Metadata["x-auth-email"], eventData.Name), nil
+	return events.ClusterCreatedV2DetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Name), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterBootstrapTokenCreated(event *esApi.Event) (string, error) {
-	return fmt.Sprintf(ClusterBootstrapTokenCreatedDetails, event.Metadata["x-auth-email"]), nil
+	return events.ClusterBootstrapTokenCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"]), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
@@ -104,7 +103,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 	}
 
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf(ClusterUpdatedDetails, event.Metadata["x-auth-email"]))
+	details.WriteString(events.ClusterUpdatedDetailsFormat.Sprint(event.Metadata["x-auth-email"]))
 	f.AppendUpdate("Display name", eventData.DisplayName, oldCluster.DisplayName, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, oldCluster.ApiServerAddress, &details)
 	if len(eventData.CaCertificateBundle) != 0 {
@@ -126,5 +125,5 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Co
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(ClusterDeletedDetails, event.Metadata["x-auth-email"], cluster.DisplayName), nil
+	return events.ClusterDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], cluster.DisplayName), nil
 }

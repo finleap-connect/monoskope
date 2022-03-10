@@ -16,7 +16,6 @@ package formatters
 
 import (
 	"context"
-	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
@@ -29,12 +28,13 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-const (
-	UserCreatedDetails            = "“%s“ created user “%s“"
-	UserRoleAddedDetails          = "“%s“ assigned the role “%s“ for scope “%s“ to user “%s“"
-	UserDeletedDetails            = "“%s“ deleted user “%s“"
-	UserRoleBindingDeletedDetails = "“%s“ removed the role “%s“ for scope “%s“ from user “%s“"
-)
+func init() {
+	userEvents := [...]es.EventType{events.UserCreated, events.UserDeleted,
+		events.UserRoleBindingCreated, events.UserRoleBindingDeleted}
+	for _, eventType := range userEvents {
+		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewUserEventFormatter)
+	}
+}
 
 // userEventFormatter EventFormatter implementation for the user-aggregate
 type userEventFormatter struct {
@@ -42,7 +42,7 @@ type userEventFormatter struct {
 }
 
 // NewUserEventFormatter creates a new event formatter for the user-aggregate
-func NewUserEventFormatter(esClient esApi.EventStoreClient) *userEventFormatter {
+func NewUserEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
 	return &userEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
@@ -73,7 +73,7 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, eventData *eventdata.UserCreated) (string, error) {
-	return fmt.Sprintf(UserCreatedDetails, event.Metadata["x-auth-email"], eventData.Email), nil
+	return events.UserCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {
@@ -90,7 +90,7 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(UserRoleAddedDetails, event.Metadata["x-auth-email"], eventData.Role, eventData.Scope, user.Email), nil
+	return events.UserRoleAddedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Role, eventData.Scope, user.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -107,7 +107,7 @@ func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context,
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(UserDeletedDetails, event.Metadata["x-auth-email"], user.Email), nil
+	return events.UserDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], user.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -131,5 +131,5 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx conte
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(UserRoleBindingDeletedDetails, event.Metadata["x-auth-email"], urb.Role, urb.Scope, user.Email), nil
+	return events.UserRoleBindingDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], urb.Role, urb.Scope, user.Email), nil
 }

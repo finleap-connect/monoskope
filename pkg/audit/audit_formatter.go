@@ -18,9 +18,8 @@ import (
 	"context"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
-	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
-	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter/formatters"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	_ "github.com/finleap-connect/monoskope/pkg/domain/events/formatters"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"time"
@@ -33,15 +32,17 @@ type AuditFormatter interface {
 
 // auditFormatter is the implementation of AuditFormatter used by auditLogServer
 type auditFormatter struct {
-	log                    logger.Logger
-	eventFormatterRegistry eventformatter.EventFormatterRegistry
+	log        logger.Logger
+	esClient   esApi.EventStoreClient
+	efRegistry ef.EventFormatterRegistry
 }
 
 // NewAuditFormatter creates an auditFormatter
-func NewAuditFormatter(esClient esApi.EventStoreClient) *auditFormatter {
+func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventFormatterRegistry) *auditFormatter {
 	return &auditFormatter{
-		log:                    logger.WithName("audit-formatter"),
-		eventFormatterRegistry: initEventFormatterRegistry(esClient),
+		log:        logger.WithName("audit-formatter"),
+		esClient:   esClient,
+		efRegistry: efRegistry,
 	}
 }
 
@@ -57,7 +58,7 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 }
 
 func (f *auditFormatter) getFormattedDetails(ctx context.Context, event *esApi.Event) string {
-	eventFormatter, err := f.eventFormatterRegistry.GetEventFormatter(es.EventType(event.Type))
+	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
 	if err != nil {
 		return ""
 	}
@@ -70,45 +71,4 @@ func (f *auditFormatter) getFormattedDetails(ctx context.Context, event *esApi.E
 	}
 
 	return details
-}
-
-// TODO: default registry and init on start?
-func initEventFormatterRegistry(esClient esApi.EventStoreClient) eventformatter.EventFormatterRegistry {
-	eventFormatterRegistry := eventformatter.NewEventFormatterRegistry()
-
-	// TODO: group/enum events base on aggregate
-
-	// User
-	userEvents := [...]es.EventType{events.UserCreated, events.UserDeleted,
-		events.UserRoleBindingCreated, events.UserRoleBindingDeleted}
-	userEventsFormatter := formatters.NewUserEventFormatter(esClient)
-	for _, eventType := range userEvents {
-		_ = eventFormatterRegistry.RegisterEventFormatter(eventType, userEventsFormatter)
-	}
-
-	// Tenant
-	tenantEvents := [...]es.EventType{events.TenantCreated, events.TenantDeleted, events.TenantUpdated,
-		events.TenantClusterBindingCreated, events.TenantClusterBindingDeleted}
-	tenantEventsFormatter := formatters.NewTenantEventFormatter(esClient)
-	for _, eventType := range tenantEvents {
-		_ = eventFormatterRegistry.RegisterEventFormatter(eventType, tenantEventsFormatter)
-	}
-
-	// Cluster
-	clusterEvents := [...]es.EventType{events.ClusterCreated, events.ClusterCreatedV2, events.ClusterUpdated, events.ClusterDeleted,
-		events.ClusterBootstrapTokenCreated}
-	clusterEventsFormatter := formatters.NewClusterEventFormatter(esClient)
-	for _, eventType := range clusterEvents {
-		_ = eventFormatterRegistry.RegisterEventFormatter(eventType, clusterEventsFormatter)
-	}
-
-	// Certificate
-	certificateEvents := [...]es.EventType{events.CertificateRequested, events.CertificateRequestIssued, events.CertificateIssued,
-		events.CertificateIssueingFailed}
-	certificateEventsFormatter := formatters.NewCertificateEventFormatter(esClient)
-	for _, eventType := range certificateEvents {
-		_ = eventFormatterRegistry.RegisterEventFormatter(eventType, certificateEventsFormatter)
-	}
-
-	return eventFormatterRegistry
 }

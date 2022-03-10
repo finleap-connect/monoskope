@@ -15,38 +15,41 @@
 package eventformatter
 
 import (
+	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("event_formatter_registry", func() {
-	//testEventFormatter := formatters.NewTestEventFormatter(nil)
-	testEventFormatter := struct{ EventFormatter }{}
+	eventFormatter := func(esApi.EventStoreClient) EventFormatter { return struct{ EventFormatter }{} }
+	esClient := struct{ esApi.EventStoreClient }{}
+	eventType := es.EventType("TestEventType")
 
 	It("can register event formatter for event type", func() {
 		registry := NewEventFormatterRegistry()
-		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
+		err := registry.RegisterEventFormatter(eventType, eventFormatter)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	It("can't replace registered event formatter for event type", func() {
 		registry := NewEventFormatterRegistry()
-		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
+		err := registry.RegisterEventFormatter(eventType, eventFormatter)
 		Expect(err).ToNot(HaveOccurred())
-		err = registry.RegisterEventFormatter("TestEventType", testEventFormatter)
+		err = registry.RegisterEventFormatter(eventType, eventFormatter)
 		Expect(err).To(HaveOccurred())
 	})
 	It("can't create event formatters which are not registered", func() {
 		registry := NewEventFormatterRegistry()
-		eventFormatter, err := registry.GetEventFormatter("TestEventType")
+		eventFormatter, err := registry.CreateEventFormatter(esClient, eventType)
 		Expect(err).To(HaveOccurred())
 		Expect(eventFormatter).To(BeNil())
 	})
 	It("can create event formatters which are registered", func() {
 		registry := NewEventFormatterRegistry()
-		err := registry.RegisterEventFormatter("TestEventType", testEventFormatter)
+		err := registry.RegisterEventFormatter(eventType, eventFormatter)
 		Expect(err).ToNot(HaveOccurred())
 
-		aggregate, err := registry.GetEventFormatter("TestEventType")
+		aggregate, err := registry.CreateEventFormatter(esClient, eventType)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(aggregate).ToNot(BeNil())
 	})

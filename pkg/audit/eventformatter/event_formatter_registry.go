@@ -15,6 +15,7 @@
 package eventformatter
 
 import (
+	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"sync"
@@ -22,67 +23,71 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 )
 
-// EventFormatterRegistry is the interface definition for an event formatter registry
+// EventFormatterRegistry is the interface definition for an event-formatter registry
 type EventFormatterRegistry interface {
-	// RegisterEventFormatter registers an event formatter for an event type.
-	RegisterEventFormatter(es.EventType, EventFormatter) error
-	// GetEventFormatter returns the event formatter of the event type registered with RegisterEventFormatter.
-	GetEventFormatter(es.EventType) (EventFormatter, error)
+	// RegisterEventFormatter registers an event-formatter factory for an event-type.
+	RegisterEventFormatter(es.EventType, func(esApi.EventStoreClient) EventFormatter) error
+	// CreateEventFormatter returns the event-formatter of the event-type registered with RegisterEventFormatter.
+	CreateEventFormatter(esApi.EventStoreClient, es.EventType) (EventFormatter, error)
 }
 
 // eventFormatterRegistry is the implementation for the EventFormatterRegistry interface
 type eventFormatterRegistry struct {
 	log             logger.Logger
 	mutex           sync.RWMutex
-	eventFormatters map[es.EventType]EventFormatter
+	eventFormatters map[es.EventType]func(esApi.EventStoreClient) EventFormatter
 }
 
-// NewEventFormatterRegistry creates a new event formatter registry
+var DefaultEventFormatterRegistry EventFormatterRegistry
+
+func init() {
+	DefaultEventFormatterRegistry = NewEventFormatterRegistry()
+}
+
+// NewEventFormatterRegistry creates a new event-formatter registry
 func NewEventFormatterRegistry() EventFormatterRegistry {
 	return &eventFormatterRegistry{
 		log:             logger.WithName("event-formatter-registry"),
-		eventFormatters: make(map[es.EventType]EventFormatter),
+		eventFormatters: make(map[es.EventType]func(esApi.EventStoreClient) EventFormatter),
 	}
 }
 
-// TODO: simplify or feature usecase? (different services register formatters?)
-
-// RegisterEventFormatter registers an event formatter for an event type.
-// passing an empty eventType will result in errors.ErrEmptyEventType
-// passing a nil eventFormatter will result in errors.ErrEventFormatterInvalid
-// if an eventFormatter for the eventType is already registered errors.ErrEventFormatterForEventTypeAlreadyRegistered is returned
-func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, eventFormatter EventFormatter) error {
+// RegisterEventFormatter registers an event-formatter factory for an event-type.
+// passing an empty event-type will result in errors.ErrEmptyEventType
+// passing a nil event-formatter will result in errors.ErrEventFormatterFactoryInvalid
+// if an event-formatter factory for the event-type is already registered errors.ErrEventFormatterFactoryForEventTypeAlreadyRegistered is returned
+func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, factory func(esApi.EventStoreClient) EventFormatter) error {
 	if eventType.String() == "" {
 		r.log.Info("attempt to register empty event type")
 		return errors.ErrEmptyEventType
 	}
 
-	if eventFormatter == nil {
-		r.log.Info("attempt to register invalid event formatter. Event formatter can't be nil")
-		return errors.ErrEventFormatterInvalid
+	if factory == nil {
+		r.log.Info("attempt to register invalid event-formatter factory. Event-formatter factory can't be nil")
+		return errors.ErrEventFormatterFactoryInvalid
 	}
 
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	if _, ok := r.eventFormatters[eventType]; ok {
-		r.log.Info("attempt to register already registered event formatter for event type", "eventType", eventType)
-		return errors.ErrEventFormatterForEventTypeAlreadyRegistered
+		r.log.Info("attempt to register already registered event-formatter factory for event-type", "eventType", eventType)
+		return errors.ErrEventFormatterFactoryForEventTypeAlreadyRegistered
 	}
-	r.eventFormatters[eventType] = eventFormatter
+	r.eventFormatters[eventType] = factory
 
-	r.log.Info("event formatter for event type has been registered.", "eventType", eventType)
+	r.log.Info("event-formatter factory for event-type has been registered.", "eventType", eventType)
 	return nil
 }
 
-// GetEventFormatter returns the event formatter of the event type registered with RegisterEventFormatter.
-// if no event formatter for the eventType is registered errors.ErrEventFormatterForEventTypeNotRegistered is returned
-func (r *eventFormatterRegistry) GetEventFormatter(eventType es.EventType) (EventFormatter, error) {
+// CreateEventFormatter returns the event-formatter of the event-type registered with RegisterEventFormatter.
+// if no event-formatter for the event-type is registered errors.ErrEventFormatterForEventTypeNotRegistered is returned
+func (r *eventFormatterRegistry) CreateEventFormatter(esClient esApi.EventStoreClient, eventType es.EventType) (EventFormatter, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	if eventFormatter, ok := r.eventFormatters[eventType]; ok {
-		return eventFormatter, nil
+		return eventFormatter(esClient), nil
 	}
-	r.log.Info("trying to get an event formatter of non-registered event type", "eventType", eventType)
+	r.log.Info("trying to get an event-formatter of non-registered event-type", "eventType", eventType)
 	return nil, errors.ErrEventFormatterForEventTypeNotRegistered
 }

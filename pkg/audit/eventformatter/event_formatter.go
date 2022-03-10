@@ -24,10 +24,13 @@ import (
 	"strings"
 )
 
-const (
-	AppendUpdateTo   = "\n- “%s“ to “%s“"
-	AppendUpdateFrom = " from “%s“"
-)
+// DetailsFormat is the way an event is detailed/explained based on it's type in a human-readable way
+type DetailsFormat string
+
+// Sprint returns the resulting string after formatting.
+func (f DetailsFormat) Sprint(args ...interface{}) string {
+	return fmt.Sprintf(string(f), args...)
+}
 
 // EventFormatter is the interface definition for all event formatters
 type EventFormatter interface {
@@ -38,6 +41,16 @@ type EventFormatter interface {
 // BaseEventFormatter is the base implementation for all event formatters
 type BaseEventFormatter struct {
 	EsClient esApi.EventStoreClient
+}
+
+// AppendUpdate appends updates to a string builder in human-readable format
+func (f *BaseEventFormatter) AppendUpdate(field string, update string, old string, strBuilder *strings.Builder) {
+	if update != "" {
+		strBuilder.WriteString(fmt.Sprintf("\n- “%s“ to “%s“", field, update))
+		if old != "" {
+			strBuilder.WriteString(fmt.Sprintf(" from “%s“", old))
+		}
+	}
 }
 
 // TODO: find a better place, move to domain package?
@@ -72,14 +85,4 @@ func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Pr
 	}
 
 	return projection, nil
-}
-
-// AppendUpdate appends updates to a string builder in human-readable format
-func (f *BaseEventFormatter) AppendUpdate(field string, update string, old string, strBuilder *strings.Builder) {
-	if update != "" {
-		strBuilder.WriteString(fmt.Sprintf(AppendUpdateTo, field, update))
-		if old != "" {
-			strBuilder.WriteString(fmt.Sprintf(AppendUpdateFrom, old))
-		}
-	}
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit"
+	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"io"
 	"time"
 
@@ -35,10 +36,10 @@ type auditLogServer struct {
 }
 
 // NewAuditLogServer returns a new configured instance of auditLogServer
-func NewAuditLogServer(esClient esApi.EventStoreClient) *auditLogServer {
+func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry eventformatter.EventFormatterRegistry) *auditLogServer {
 	return &auditLogServer{
 		esClient:       esClient,
-		auditFormatter: audit.NewAuditFormatter(esClient),
+		auditFormatter: audit.NewAuditFormatter(esClient, efRegistry),
 	}
 }
 

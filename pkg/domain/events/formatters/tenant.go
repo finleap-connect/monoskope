@@ -16,7 +16,6 @@ package formatters
 
 import (
 	"context"
-	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
@@ -32,13 +31,13 @@ import (
 	"time"
 )
 
-const (
-	TenantCreatedDetails               = "“%s“ created tenant “%s“ with prefix “%s“"
-	TenantUpdatedDetails               = "“%s“ updated the Tenant"
-	TenantClusterBindingCreatedDetails = "“%s“ bounded tenant “%s“ to cluster “%s”"
-	TenantDeletedDetails               = "“%s“ deleted tenant “%s“"
-	TenantClusterBindingDeletedDetails = "“%s“ deleted the bound between cluster “%s“ and tenant “%s“"
-)
+func init() {
+	tenantEvents := [...]es.EventType{events.TenantCreated, events.TenantDeleted, events.TenantUpdated,
+		events.TenantClusterBindingCreated, events.TenantClusterBindingDeleted}
+	for _, eventType := range tenantEvents {
+		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewTenantEventFormatter)
+	}
+}
 
 // tenantEventFormatter EventFormatter implementation for the tenant-aggregate
 type tenantEventFormatter struct {
@@ -46,7 +45,7 @@ type tenantEventFormatter struct {
 }
 
 // NewTenantEventFormatter creates a new event formatter for the tenant-aggregate
-func NewTenantEventFormatter(esClient esApi.EventStoreClient) *tenantEventFormatter {
+func NewTenantEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
 	return &tenantEventFormatter{
 		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
 	}
@@ -79,7 +78,7 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Event, eventData *eventdata.TenantCreated) (string, error) {
-	return fmt.Sprintf(TenantCreatedDetails, event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix), nil
+	return events.TenantCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
@@ -96,7 +95,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Cont
 	}
 
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf(TenantUpdatedDetails, event.Metadata["x-auth-email"]))
+	details.WriteString(events.TenantUpdatedDetailsFormat.Sprint(event.Metadata["x-auth-email"]))
 	f.AppendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
 	return details.String(), nil
 }
@@ -122,7 +121,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(TenantClusterBindingCreatedDetails, event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName), nil
+	return events.TenantClusterBindingCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -138,7 +137,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Cont
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(TenantDeletedDetails, event.Metadata["x-auth-email"], tenant.Name), nil
+	return events.TenantDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], tenant.Name), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -171,5 +170,5 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf(TenantClusterBindingDeletedDetails, event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name), nil
+	return events.TenantClusterBindingDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name), nil
 }
