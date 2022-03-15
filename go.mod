@@ -31,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/rabbitmq/amqp091-go v0.0.0-20210714180937-de74e8a7d0e0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.4.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
