@@ -16,6 +16,7 @@ package events
 
 import (
 	"context"
+	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
@@ -71,7 +72,7 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, eventData *eventdata.UserCreated) (string, error) {
-	return events.UserCreatedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Email), nil
+	return fmt.Sprintf("“%s“ created user “%s“", event.Metadata["x-auth-email"], eventData.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {
@@ -88,7 +89,8 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return events.UserRoleAddedDetailsFormat.Sprint(event.Metadata["x-auth-email"], eventData.Role, eventData.Scope, user.Email), nil
+	return fmt.Sprintf("“%s“ assigned the role “%s“ for scope “%s“ to user “%s“",
+		event.Metadata["x-auth-email"], eventData.Role, eventData.Scope, user.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -105,7 +107,7 @@ func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context,
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return events.UserDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], user.Email), nil
+	return fmt.Sprintf("“%s“ deleted user “%s“", event.Metadata["x-auth-email"], user.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -129,5 +131,6 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx conte
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return events.UserRoleBindingDeletedDetailsFormat.Sprint(event.Metadata["x-auth-email"], urb.Role, urb.Scope, user.Email), nil
+	return fmt.Sprintf("“%s“ removed the role “%s“ for scope “%s“ from user “%s“",
+		event.Metadata["x-auth-email"], urb.Role, urb.Scope, user.Email), nil
 }

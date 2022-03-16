@@ -24,14 +24,6 @@ import (
 	"strings"
 )
 
-// DetailsFormat is the way an event is detailed/explained based on it's type in a human-readable way
-type DetailsFormat string
-
-// Sprint returns the resulting string after formatting.
-func (f DetailsFormat) Sprint(args ...interface{}) string {
-	return fmt.Sprintf(string(f), args...)
-}
-
 // EventFormatter is the interface definition for all event formatters
 type EventFormatter interface {
 	// GetFormattedDetails formats a given event in a human-readable format

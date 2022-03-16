@@ -37,7 +37,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("AuditLog Test", func() {
+var _ = FDescribe("AuditLog Test", func() {
 	ctx := context.Background()
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
@@ -90,6 +90,8 @@ var _ = Describe("AuditLog Test", func() {
 				g.Expect(e.IssuerId).ToNot(BeEmpty())
 				g.Expect(e.EventType).ToNot(BeEmpty())
 				g.Expect(e.Details).ToNot(BeEmpty())
+
+				println(e.Details)
 			}
 		}).Should(Succeed())
 
