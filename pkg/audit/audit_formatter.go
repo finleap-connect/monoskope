@@ -19,7 +19,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
-	_ "github.com/finleap-connect/monoskope/pkg/domain/events/formatters"
+	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"time"
