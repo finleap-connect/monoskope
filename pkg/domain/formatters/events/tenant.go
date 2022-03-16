@@ -17,6 +17,7 @@ package events
 import (
 	"context"
 	"fmt"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
@@ -77,7 +78,7 @@ func (f *tenantEventFormatter) GetFormattedDetails(ctx context.Context, event *e
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Event, eventData *eventdata.TenantCreated) (string, error) {
-	return fmt.Sprintf("“%s“ created tenant “%s“ with prefix “%s“", event.Metadata["x-auth-email"], eventData.Name, eventData.Prefix), nil
+	return fmt.Sprintf("“%s“ created tenant “%s“ with prefix “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Name, eventData.Prefix), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
@@ -94,7 +95,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Cont
 	}
 
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf("“%s“ updated the Tenant", event.Metadata["x-auth-email"]))
+	details.WriteString(fmt.Sprintf("“%s“ updated the Tenant", event.Metadata[auth.HeaderAuthEmail]))
 	f.AppendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
 	return details.String(), nil
 }
@@ -121,7 +122,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 	}
 
 	return fmt.Sprintf("“%s“ bounded tenant “%s“ to cluster “%s”",
-		event.Metadata["x-auth-email"], tenant.Name, cluster.DisplayName), nil
+		event.Metadata[auth.HeaderAuthEmail], tenant.Name, cluster.DisplayName), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -137,7 +138,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Cont
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	return fmt.Sprintf("“%s“ deleted tenant “%s“", event.Metadata["x-auth-email"], tenant.Name), nil
+	return fmt.Sprintf("“%s“ deleted tenant “%s“", event.Metadata[auth.HeaderAuthEmail], tenant.Name), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -171,5 +172,5 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 	}
 
 	return fmt.Sprintf("“%s“ deleted the bound between cluster “%s“ and tenant “%s“",
-		event.Metadata["x-auth-email"], cluster.DisplayName, tenant.Name), nil
+		event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName, tenant.Name), nil
 }
