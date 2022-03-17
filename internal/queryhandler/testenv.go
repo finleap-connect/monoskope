@@ -16,6 +16,7 @@ package queryhandler
 
 import (
 	"context"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"net"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
@@ -81,6 +82,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
 		api.RegisterCertificateServer(s, NewCertificateServer(qhDomain.CertificateRepository))
 		api.RegisterClusterAccessServer(s, NewClusterAccessServer(qhDomain.ClusterAccessRepo, qhDomain.TenantClusterBindingRepository))
+		api.RegisterAuditLogServer(s, NewAuditLogServer(env.esClient, ef.DefaultEventFormatterRegistry))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/google/uuid"
@@ -37,8 +37,9 @@ type TenantClusterBindingRepository interface {
 
 // ReadOnlyTenantClusterBindingRepository is a repository for reading tenantclusterbinding projections.
 type ReadOnlyTenantClusterBindingRepository interface {
-	// GetAll searches for the a TenantClusterBinding projections.
+	// GetAll searches for the TenantClusterBinding projections.
 	GetAll(ctx context.Context, showDeleted bool) ([]*projections.TenantClusterBinding, error)
+	GetByTenantClusterBindingId(ctx context.Context, id string) (*projections.TenantClusterBinding, error)
 	GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
 	GetByClusterId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
 	GetByTenantAndClusterId(ctx context.Context, tenantId, clusterId uuid.UUID) (*projections.TenantClusterBinding, error)
@@ -73,6 +74,26 @@ func (r *tenantClusterBindingRepository) GetAll(ctx context.Context, includeDele
 		}
 	}
 	return bindings, nil
+}
+
+// GetByTenantClusterBindingId searches for the TenantClusterBinding projections by its id.
+func (r *tenantClusterBindingRepository) GetByTenantClusterBindingId(ctx context.Context, id string) (*projections.TenantClusterBinding, error) {
+	projectionUUID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	projection, err := r.ById(ctx, projectionUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantClusterBinding, ok := projection.(*projections.TenantClusterBinding)
+	if !ok {
+		return nil, esErrors.ErrInvalidProjectionType
+	}
+
+	return tenantClusterBinding, nil
 }
 
 // GetByTenantId searches for the TenantClusterBinding projections by tenant id.

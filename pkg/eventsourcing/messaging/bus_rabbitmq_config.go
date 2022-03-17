@@ -50,15 +50,15 @@ func NewRabbitEventBusConfig(name, url, routingKeyPrefix string) (*RabbitEventBu
 		AMQPConfig:       &amqp.Config{},
 	}
 
-    if err := conf.SetURL(url); err != nil {
-        return nil, err
-    }
+	if err := conf.SetURL(url); err != nil {
+		return nil, err
+	}
 	return conf, nil
 }
 
 // URL of the RabbitMQ host to connect to
 func (conf *RabbitEventBusConfig) URL() string {
-    return conf.url
+	return conf.url
 }
 
 // SetURL reconfigures the address of the RabbitMQ host
@@ -72,8 +72,8 @@ func (conf *RabbitEventBusConfig) SetURL(url string) error {
 			return err
 		}
 	}
-    conf.url = url
-    return nil
+	conf.url = url
+	return nil
 }
 
 // configureTLS adds the configuration for TLS secured connection/auth

@@ -97,4 +97,3 @@ func validate(req interface{}) error {
 
 	return nil
 }
-

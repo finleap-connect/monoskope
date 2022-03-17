@@ -190,39 +190,39 @@ var _ = Describe("integration", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 		})
-	})
-	It("can delete a user", func() {
-		createCommand, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "John Doe", Email: "john.doe@monoskope.io"},
-		)
-		Expect(err).ToNot(HaveOccurred())
+		It("can delete a user", func() {
+			createCommand, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+				&cmdData.CreateUserCommandData{Name: "John Doe", Email: "john.doe@monoskope.io"},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-		reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), createCommand)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
+			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), createCommand)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
-		// update userId, as the "create" command will have changed it.
-		userId := uuid.MustParse(reply.AggregateId)
+			// update userId, as the "create" command will have changed it.
+			userId := uuid.MustParse(reply.AggregateId)
 
-		_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-			cmd.CreateCommand(userId, commandTypes.DeleteUser))
-		Expect(err).ToNot(HaveOccurred())
+			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
+				cmd.CreateCommand(userId, commandTypes.DeleteUser))
+			Expect(err).ToNot(HaveOccurred())
 
-		var user *projections.User
-		Eventually(func(g Gomega) {
-			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("john.doe@monoskope.io"))
-			g.Expect(err).ToNot(HaveOccurred())
-			g.Expect(user).ToNot(BeNil())
-			g.Expect(user.GetEmail()).To(Equal("john.doe@monoskope.io"))
-			g.Expect(user.Id).To(Equal(userId.String()))
-			g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
-		}).Should(Succeed())
+			var user *projections.User
+			Eventually(func(g Gomega) {
+				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("john.doe@monoskope.io"))
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(user).ToNot(BeNil())
+				g.Expect(user.GetEmail()).To(Equal("john.doe@monoskope.io"))
+				g.Expect(user.Id).To(Equal(userId.String()))
+				g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
+			}).Should(Succeed())
 
-		// Get admin user id to compare with metadata
-		admin, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-		Expect(err).ToNot(HaveOccurred())
-		Expect(user.GetMetadata().GetDeletedById()).To(Equal(admin.GetId()))
+			// Get admin user id to compare with metadata
+			admin, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.GetMetadata().GetDeletedById()).To(Equal(admin.GetId()))
+		})
 	})
 	Context("tenant management", func() {
 		It("can manage a tenant", func() {
