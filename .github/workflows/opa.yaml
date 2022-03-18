@@ -10,6 +10,8 @@ jobs:
     test:
         runs-on: ubuntu-latest
         steps:
+        - name: Checkout Project
+          uses: actions/checkout@v3
         - name: Run OPA tests
           uses: petroprotsakh/opa-test-action@v2.1
           with:
