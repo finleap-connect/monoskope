@@ -28,6 +28,7 @@ type ServerConfig struct {
 	TokenValidity time.Duration
 }
 
+// Server implements a very basic OIDC server which issues and validates tokens
 type Server struct {
 	config   *ServerConfig
 	verifier jwt.JWTVerifier
@@ -35,7 +36,7 @@ type Server struct {
 	log      logger.Logger
 }
 
-// Implements a very basic OIDC server which issues and validates tokens
+// NewServer creates a new OIDC server
 func NewServer(config *ServerConfig, signer jwt.JWTSigner, verifier jwt.JWTVerifier) *Server {
 	n := &Server{
 		config:   config,
