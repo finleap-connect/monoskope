@@ -1,5 +1,5 @@
 {{- if .Values.ambassador.enabled }}
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: AuthService
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-authservice
@@ -11,7 +11,14 @@ metadata:
     {{- end }}
 spec:
   auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
+  proto: http
   path_prefix: /auth
+  status_on_error:
+    code: 403
+  failure_mode_allow: false
+  include_body:
+    max_bytes: 4096
+    allow_partial: false
   allowed_authorization_headers:
     - "x-auth-id"
     - "x-auth-name"
