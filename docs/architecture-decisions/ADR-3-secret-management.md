@@ -61,7 +61,7 @@ This way the secrets are not stored anywhere anymore after successful upload int
 * Users have to provide which upstream store they target if they do not wan't the default store
 * The encrypted payload is simple json where values are base64 encoded
 
-## Diagram
+## Flowchart
 
 In the following diagram the term "m8" is used for all parts of the control plane for handling commands/events.
 Even though single parts of the control plane which are of special interest for this diagram are shown separately.
@@ -94,11 +94,35 @@ sequenceDiagram
     M8-->>-M: Return success
 ```
 
+## State diagram's
+
+### Secret state
+
+```mermaid
+stateDiagram-v2
+    [*] --> UploadRequested
+    
+    UploadRequested --> SecretUploaded
+    UploadRequested --> SecretUploadFailed
+    SecretUploaded --> [*]
+    SecretUploadFailed --> [*]
+```
+
+### SecretUploadKey state
+
+```mermaid
+stateDiagram-v2
+    [*] --> UploadKeyRequested
+    
+    UploadKeyRequested --> UploadKeyProvided
+    UploadKeyProvided --> [*]
+```
+
 ## Decision
 
 * We take #SEC1 + #SEC1-ENH1 + #APID1.
 * #SEC1-ENH2 is considered as not fitting the architecture and would things complicate much more
-  
+
 ## Status
 
-Accepted
+In Review
