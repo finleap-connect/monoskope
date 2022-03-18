@@ -15,13 +15,9 @@
 package commands
 
 import (
-	"context"
-
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -46,11 +42,4 @@ func NewUpdateUserCommand(id uuid.UUID) es.Command {
 
 func (c *UpdateUserCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.UpdateUserCommandData)
-}
-
-// Policies returns the Role/Scope/Resource combination allowed to execute.
-func (c *UpdateUserCommand) Policies(ctx context.Context) []es.Policy {
-	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // Allows system admins to update a user
-	}
 }
