@@ -13,4 +13,5 @@ jobs:
         - name: Run OPA tests
           uses: petroprotsakh/opa-test-action@v2.1
           with:
-            tests: "build/package/helm/gateway/files/policies/"
+            tests: "/Users/jsteffen/Documents/Dev/finleap-connect/monoskope/build/package/helm/gateway/files/policies/policies_test.rego"
+            options: "-v"
