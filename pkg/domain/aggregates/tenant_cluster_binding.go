@@ -47,9 +47,6 @@ func NewTenantClusterBindingAggregate(aggregateManager es.AggregateStore) es.Agg
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *TenantClusterBindingAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return nil, err
-	}
 	if err := a.validate(ctx, cmd); err != nil {
 		return nil, err
 	}
