@@ -47,10 +47,12 @@ erDiagram
         uuid id
         string name
         string type
+        bytes config
     }
 
     Secret {
         uuid id
+        uuid secret_store_id
         uuid secret_upload_key_id
         uri upstream_id
         string status
@@ -66,6 +68,7 @@ erDiagram
     }
 
     Secret ||--|| SecretUploadKey : references
+    Secret ||--|| SecretStore : references
 
     User ||--o{ UserRoleBinding : part_of
     Tenant ||--o{ UserRoleBinding : part_of
