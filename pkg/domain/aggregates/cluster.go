@@ -25,7 +25,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"github.com/google/uuid"
 )
 
 // ClusterAggregate is an aggregate for K8s Clusters.
@@ -51,9 +50,6 @@ func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return nil, err
-	}
 	if err := a.validate(ctx, cmd); err != nil {
 		return nil, err
 	}

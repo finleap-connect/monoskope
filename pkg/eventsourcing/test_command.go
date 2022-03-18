@@ -15,8 +15,6 @@
 package eventsourcing
 
 import (
-	"context"
-
 	cmdApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -39,7 +37,4 @@ func (c *testCommand) AggregateType() AggregateType {
 func (c *testCommand) CommandType() CommandType { return testCommandType }
 func (c *testCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.TestCommandData)
-}
-func (c *testCommand) Policies(ctx context.Context) []Policy {
-	return []Policy{}
 }
