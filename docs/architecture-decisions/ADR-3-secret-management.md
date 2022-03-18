@@ -119,6 +119,14 @@ stateDiagram-v2
     UploadKeyProvided --> [*]
 ```
 
+## AuthZ
+
+* Users belongs to tenants
+* Tenants have access to certain clusters
+* Clusters are connected to certain SecretStores
+
+With this chain of relationships it is defined which user is allowed to put secrets into which secret store. This can be evaluated via OPA, see [ADR-2](ADR-2-proposal-for-authZ-OPA.md).
+
 ## Decision
 
 * We take #SEC1 + #SEC1-ENH1 + #APID1.
