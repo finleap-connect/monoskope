@@ -61,7 +61,7 @@ This way the secrets are not stored anywhere anymore after successful upload int
 * Users have to provide which upstream store they target if they do not wan't the default store
 * The encrypted payload is simple json where values are base64 encoded
 
-## Diagram
+## Flowchart
 
 In the following diagram the term "m8" is used for all parts of the control plane for handling commands/events.
 Even though single parts of the control plane which are of special interest for this diagram are shown separately.
@@ -94,11 +94,44 @@ sequenceDiagram
     M8-->>-M: Return success
 ```
 
+## State diagram's
+
+### Secret state
+
+```mermaid
+stateDiagram-v2
+    [*] --> UploadRequested
+    
+    UploadRequested --> SecretUploaded
+    SecretUploadFailed --> UploadRequested
+    UploadRequested --> SecretUploadFailed
+    SecretUploaded --> [*]
+    SecretUploadFailed --> [*]
+```
+
+### SecretUploadKey state
+
+```mermaid
+stateDiagram-v2
+    [*] --> UploadKeyRequested
+    
+    UploadKeyRequested --> UploadKeyProvided
+    UploadKeyProvided --> [*]
+```
+
+## AuthZ
+
+* Users belongs to tenants
+* Tenants have access to certain clusters
+* Clusters are connected to certain SecretStores
+
+With this chain of relationships it is defined which user is allowed to put secrets into which secret store. This can be evaluated via OPA, see [ADR-2](ADR-2-proposal-for-authZ-OPA.md).
+
 ## Decision
 
 * We take #SEC1 + #SEC1-ENH1 + #APID1.
 * #SEC1-ENH2 is considered as not fitting the architecture and would things complicate much more
-  
+
 ## Status
 
-Accepted
+In Review
