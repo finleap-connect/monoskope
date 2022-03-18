@@ -13,4 +13,4 @@ jobs:
         - name: Run OPA tests
           uses: petroprotsakh/opa-test-action@v2.1
           with:
-              tests: "build/package/helm/gateway/files/policies/*"
+            tests: "build/package/helm/gateway/files/policies/"
