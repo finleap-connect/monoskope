@@ -87,6 +87,8 @@ service ClusterAccess{
 service AuditLog{
   // GetByDateRange returns human readable events within the specified data range
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
+  // GetUserActions returns human readable events caused by the given user actions
+  rpc GetUserActions(google.protobuf.StringValue) returns (stream audit.HumanReadableEvent);
 }
 
 service Certificate {
@@ -111,7 +113,6 @@ message GetClusterMappingRequest {
 message GetCountRequest { bool include_deleted = 1; }
 
 message GetCountResult { int64 count = 1; }
-
 
 message GetAuditLogByDateRangeRequest {
   google.protobuf.Timestamp min_timestamp = 1;
