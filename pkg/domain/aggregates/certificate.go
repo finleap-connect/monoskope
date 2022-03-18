@@ -50,10 +50,6 @@ func NewCertificateAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *CertificateAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	if err := a.Authorize(ctx, cmd, uuid.Nil); err != nil {
-		return nil, err
-	}
-
 	switch cmd := cmd.(type) {
 	case *commands.RequestCertificateCommand:
 		if a.Exists() {
