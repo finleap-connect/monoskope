@@ -103,6 +103,7 @@ stateDiagram-v2
     [*] --> UploadRequested
     
     UploadRequested --> SecretUploaded
+    SecretUploadFailed --> UploadRequested
     UploadRequested --> SecretUploadFailed
     SecretUploaded --> [*]
     SecretUploadFailed --> [*]
