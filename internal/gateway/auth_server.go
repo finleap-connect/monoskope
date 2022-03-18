@@ -44,30 +44,30 @@ type OpenIdConfiguration struct {
 	JwksURL string `json:"jwks_uri"`
 }
 
-// authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
+// authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	api        *http.Server
 	engine     *gin.Engine
 	log        logger.Logger
 	shutdown   *util.ShutdownWaitGroup
-	authClient *auth.Client
-	authServer *auth.Server
+	oidcClient *auth.Client
+	oidcServer *auth.Server
 	userRepo   repositories.ReadOnlyUserRepository
-	url        string
+	issuerURL  string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(url string, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(issuerURL string, oidcClient *auth.Client, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	engine := gin.Default()
 	s := &authServer{
 		api:        &http.Server{Handler: engine},
 		engine:     engine,
 		log:        logger.WithName("auth-server"),
 		shutdown:   util.NewShutdownWaitGroup(),
-		authClient: client,
-		authServer: server,
+		oidcClient: oidcClient,
+		oidcServer: oidcServer,
 		userRepo:   userRepo,
-		url:        url,
+		issuerURL:  issuerURL,
 	}
 	engine.Use(cors.Default())
 	return s
@@ -149,7 +149,7 @@ func (s *authServer) discovery(c *gin.Context) {
 
 func (s *authServer) keys(c *gin.Context) {
 	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
-	c.JSON(http.StatusOK, s.authServer.Keys())
+	c.JSON(http.StatusOK, s.oidcServer.Keys())
 }
 
 // auth serves as handler for the auth route of the server.
@@ -266,11 +266,11 @@ func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.Aut
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authServer.Authorize(ctx, token, authToken); err != nil {
+	if err := s.oidcServer.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
-	if err := authToken.Validate(s.url); err != nil {
+	if err := authToken.Validate(s.issuerURL); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
 		return nil
 	}
@@ -297,7 +297,7 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 		claims := auth.NewAuthToken(&jwt.StandardClaims{
 			Name:  cert.Subject.CommonName,
 			Email: cert.EmailAddresses[0],
-		}, s.url, userId, time.Minute*5)
+		}, s.issuerURL, userId, time.Minute*5)
 		claims.Subject = userId
 		claims.Issuer = cert.Issuer.CommonName
 		s.log.Info("Client certificate validation successful.", "User", claims.Email)
