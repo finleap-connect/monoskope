@@ -37,10 +37,42 @@ erDiagram
         uuid tenant_id
     }
 
-    User ||--o{ UserRoleBinding : has
-    Tenant ||--o{ UserRoleBinding : has
+    ClusterSecretStoreBinding {
+        uuid id
+        uuid cluster_id
+        uuid secret_store_id
+    }
 
-    Tenant ||--o{ TenantClusterBinding : has
-    Cluster ||--o{ TenantClusterBinding : has
+    SecretStore {
+        uuid id
+        string name
+        string type
+    }
 
+    Secret {
+        uuid id
+        uuid secret_upload_key_id
+        uri upstream_id
+        string status
+        string hash
+        bytes uploader_public_key
+        bytes encrypted_payload
+    }
+
+    SecretUploadKey {
+       uuid id
+       bytes public_key
+       timestamp expiry
+    }
+
+    Secret ||--|| SecretUploadKey : references
+
+    User ||--o{ UserRoleBinding : part_of
+    Tenant ||--o{ UserRoleBinding : part_of
+
+    Tenant ||--o{ TenantClusterBinding : part_of
+    Cluster ||--o{ TenantClusterBinding : part_of
+
+    Cluster ||--o{ ClusterSecretStoreBinding : part_of
+    SecretStore ||--o{ ClusterSecretStoreBinding : part_of
 ```
