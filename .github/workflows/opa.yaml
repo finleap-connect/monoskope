@@ -3,7 +3,7 @@ name: OPA Tests
 on:
   pull_request:
     paths:
-      - '.github/workflows/opa.yml' ## self-trigger
+      - '.github/workflows/opa.yaml' ## self-trigger
       - 'build/package/helm/gateway/files/*.rego'
 
 jobs:
@@ -14,4 +14,3 @@ jobs:
           uses: petroprotsakh/opa-test-action@v2.1
           with:
               tests: "build/package/helm/gateway/files/policies/*"
-    
