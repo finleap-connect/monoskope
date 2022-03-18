@@ -2,9 +2,9 @@ package m8.authz
 
 import future.keywords.in
 
-default allow = false
+default authorized = false
 
-allow {
+authorized {
 	is_system_admin
 }
 
