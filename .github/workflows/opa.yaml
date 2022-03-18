@@ -1,4 +1,4 @@
-name: opa
+name: OPA Tests
 
 on:
   pull_request:
@@ -7,35 +7,11 @@ on:
       - 'build/package/helm/gateway/files/*.rego'
 
 jobs:
-  opa:
-    name: opa test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Get changed objects
-      uses: b4b4r07/action-changed-objects@master
-      with:
-        added: 'true'
-        deleted: 'false'
-        modified: 'true'
-      id: objects
-    - name: Run opa test against changed files
-      uses: b4b4r07/action-opa@master
-      if: steps.objects.outputs.changed
-      with:
-        coverage: 90%
-        files: ${{ steps.objects.outputs.changed }}
-      id: opa
-    - name: Post opa command result to GitHub comment
-      uses: b4b4r07/action-github-comment@master
-      if: steps.opa.outputs.result
-      with:
-        body: |
-          ## opa test result
-          ```
-          ${{ steps.opa.outputs.result }}
-          ```
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        LOG: trace
+    test:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Run OPA tests
+          uses: petroprotsakh/opa-test-action@v2.1
+          with:
+              tests: "build/package/helm/gateway/files/*.rego"
+    
