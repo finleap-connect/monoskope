@@ -154,25 +154,46 @@ func (s *authServer) keys(c *gin.Context) {
 
 // auth serves as handler for the auth route of the server.
 func (s *authServer) auth(c *gin.Context) {
+	var err error
 	route := c.Param("route")
-	s.log.Info("Authenticating request...", "route", route)
+	authenticated := false
+	authorized := false
 
-	// Print headers
+	// Logging
+	s.log.Info("Authenticating request...", "route", route)
 	for k := range c.Request.Header {
+		// Print headers
 		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
 	}
 
+	// Authenticate user
 	var authToken *jwt.AuthToken
-	if authToken = s.tokenValidationFromContext(c); authToken != nil {
-		s.writeSuccess(c, authToken)
-		return
+	if !authenticated {
+		authToken := s.tokenValidationFromContext(c) // via JWT
+		authenticated = authToken != nil
 	}
-	if authToken = s.certValidation(c); authToken != nil {
-		s.writeSuccess(c, authToken)
-		return
+	if !authenticated {
+		authToken = s.certValidation(c) // via client certificate validation
+		authenticated = authToken != nil
 	}
 
-	c.String(http.StatusUnauthorized, "authorization failed")
+	// Authorize user
+	authorized, err = s.validatePolicies(c)
+	if err != nil {
+		s.log.Error(err, "Error checking authorization of user.")
+	}
+
+	if authenticated && authorized {
+		s.writeSuccess(c, authToken)
+	} else {
+		c.String(http.StatusUnauthorized, "authorization failed")
+	}
+}
+
+// validatePolicies validates the configured policies using OPA
+func (s *authServer) validatePolicies(c *gin.Context) (bool, error) {
+
+	return false, nil
 }
 
 func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
