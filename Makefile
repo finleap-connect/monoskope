@@ -43,3 +43,4 @@ export
 include go.mk
 include helm.mk
 include kind.mk
+include opa.mk
