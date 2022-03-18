@@ -184,7 +184,7 @@ ambassador:
   replicaCount: 1
   image:
     repository: datawire/ambassador
-    tag: 1.14.1
+    tag: 1.14.3
   enableAES: false
   agent:
     enabled: false
