@@ -1,5 +1,9 @@
 # Monoskope Data Model
 
+While m8 has no classic CRUD database with tables for storing state, the transient state built based on that has.
+Here is how the projected transient state is modeled:
+
+
 ```mermaid
 erDiagram
     User {
