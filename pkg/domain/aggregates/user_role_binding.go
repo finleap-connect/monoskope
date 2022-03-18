@@ -83,9 +83,6 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 				return domainErrors.ErrInvalidArgument("resource id is invalid")
 			}
 		}
-		if err := a.Authorize(ctx, cmd, resource); err != nil {
-			return err
-		}
 
 		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, userId)
 		if err != nil {

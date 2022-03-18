@@ -40,7 +40,6 @@ func main() {
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
 
 	report := NewReportCmd()
-	report.AddCommand(NewReportPermissions())
 	report.AddCommand(NewReportCommands())
 	rootCmd.AddCommand(report)
 
