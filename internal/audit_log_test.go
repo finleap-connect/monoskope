@@ -39,13 +39,14 @@ import (
 
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
+	adminEmail := "admin@monoskope.io"
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
 		Name:  "admin",
-		Email: "admin@monoskope.io",
+		Email: adminEmail,
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
@@ -62,56 +63,74 @@ var _ = Describe("AuditLog Test", func() {
 		return client
 	}
 
-	It("can provide events by date range", func() {
+	It("can provide human-readable events", func() {
 		minTimestamp := time.Now().UTC()
 		midTimestamp := initEvents(commandHandlerClient, mdManager)
 		maxTimestamp := time.Now().UTC()
 
-		By("using a general range")
+		When("getting by date range", func() {
+			By("using a general range")
+			dateRange := &domainApi.GetAuditLogByDateRangeRequest{
+				MinTimestamp: timestamppb.New(minTimestamp),
+				MaxTimestamp: timestamppb.New(maxTimestamp),
+			}
 
-		dateRange := &domainApi.GetAuditLogByDateRangeRequest{
-			MinTimestamp: timestamppb.New(minTimestamp),
-			MaxTimestamp: timestamppb.New(maxTimestamp),
-		}
-
-		Eventually(func(g Gomega) {
-			events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
-			g.Expect(err).ToNot(HaveOccurred())
-
-			for {
-				e, err := events.Recv()
-				if err == io.EOF {
-					break
-				}
+			Eventually(func(g Gomega) {
+				events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
 				g.Expect(err).ToNot(HaveOccurred())
 
-				g.Expect(e.When).ToNot(BeEmpty())
-				g.Expect(e.Issuer).ToNot(BeEmpty())
-				g.Expect(e.IssuerId).ToNot(BeEmpty())
-				g.Expect(e.EventType).ToNot(BeEmpty())
-				g.Expect(e.Details).ToNot(BeEmpty())
-			}
-		}).Should(Succeed())
+				for {
+					e, err := events.Recv()
+					if err == io.EOF {
+						break
+					}
+					g.Expect(err).ToNot(HaveOccurred())
 
-		By("using a custom range")
-
-		dateRange.MaxTimestamp = timestamppb.New(midTimestamp)
-
-		Eventually(func(g Gomega) {
-			events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
-			g.Expect(err).ToNot(HaveOccurred())
-
-			counter := 0
-			for {
-				_, err := events.Recv()
-				if err == io.EOF {
-					break
+					g.Expect(e.When).ToNot(BeEmpty())
+					g.Expect(e.Issuer).ToNot(BeEmpty())
+					g.Expect(e.IssuerId).ToNot(BeEmpty())
+					g.Expect(e.EventType).ToNot(BeEmpty())
+					g.Expect(e.Details).ToNot(BeEmpty())
 				}
+			}).Should(Succeed())
+
+			By("using a custom range")
+
+			dateRange.MaxTimestamp = timestamppb.New(midTimestamp)
+
+			Eventually(func(g Gomega) {
+				events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
 				g.Expect(err).ToNot(HaveOccurred())
-				counter++
-			}
-			g.Expect(counter).To(Equal(4))
-		}).Should(Succeed())
+
+				counter := 0
+				for {
+					_, err := events.Recv()
+					if err == io.EOF {
+						break
+					}
+					g.Expect(err).ToNot(HaveOccurred())
+					counter++
+				}
+				g.Expect(counter).To(Equal(4))
+			}).Should(Succeed())
+		})
+
+		When("getting user actions", func() {
+			Eventually(func(g Gomega) {
+				events, err := auditLogServiceClient().GetUserActions(ctx, wrapperspb.String(adminEmail))
+				g.Expect(err).ToNot(HaveOccurred())
+
+				for {
+					e, err := events.Recv()
+					if err == io.EOF {
+						break
+					}
+					g.Expect(err).ToNot(HaveOccurred())
+
+					g.Expect(e.Issuer).To(Equal(adminEmail))
+				}
+			}).Should(Succeed())
+		})
 	})
 })
 

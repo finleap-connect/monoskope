@@ -16,9 +16,12 @@ package queryhandler
 
 import (
 	"context"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"io"
 	"time"
 
@@ -31,15 +34,18 @@ import (
 // auditLogServer is the implementation of the auditLogService API
 type auditLogServer struct {
 	doApi.UnimplementedAuditLogServer
+
 	esClient       esApi.EventStoreClient
 	auditFormatter audit.AuditFormatter
+	userRepo       repositories.ReadOnlyUserRepository
 }
 
 // NewAuditLogServer returns a new configured instance of auditLogServer
-func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry eventformatter.EventFormatterRegistry) *auditLogServer {
+func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry eventformatter.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository) *auditLogServer {
 	return &auditLogServer{
 		esClient:       esClient,
 		auditFormatter: audit.NewAuditFormatter(esClient, efRegistry),
+		userRepo:       userRepo,
 	}
 }
 
@@ -75,7 +81,43 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(ctx, e)
+		err = stream.Send(hre)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
 
+	return nil
+}
+
+// GetUserActions returns human readable events caused by the given user actions
+func (s *auditLogServer) GetUserActions(email *wrappers.StringValue, stream doApi.AuditLog_GetUserActionsServer) error {
+	ctx := context.Background()
+
+	user, err := s.userRepo.ByEmail(ctx, email.GetValue())
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+	events, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{})
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for {
+		e, err := events.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+		// TODO: extend EventFilter and implement on store level? should be cheaper than iterating through all events?
+		// 	- problem: event metadata are stored as json
+		if e.Metadata[auth.HeaderAuthId] != user.Id {
+			continue
+		}
+
+		hre := s.auditFormatter.NewHumanReadableEvent(ctx, e)
 		err = stream.Send(hre)
 		if err != nil {
 			return errors.TranslateToGrpcError(err)

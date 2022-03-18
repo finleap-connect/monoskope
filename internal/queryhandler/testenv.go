@@ -82,7 +82,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
 		api.RegisterCertificateServer(s, NewCertificateServer(qhDomain.CertificateRepository))
 		api.RegisterClusterAccessServer(s, NewClusterAccessServer(qhDomain.ClusterAccessRepo, qhDomain.TenantClusterBindingRepository))
-		api.RegisterAuditLogServer(s, NewAuditLogServer(env.esClient, ef.DefaultEventFormatterRegistry))
+		api.RegisterAuditLogServer(s, NewAuditLogServer(env.esClient, ef.DefaultEventFormatterRegistry, qhDomain.UserRepository))
 	})
 
 	env.apiListener, err = net.Listen("tcp", "127.0.0.1:0")

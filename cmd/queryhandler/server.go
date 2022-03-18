@@ -82,7 +82,7 @@ var serverCmd = &cobra.Command{
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
 			qhApi.RegisterClusterServer(s, queryhandler.NewClusterServer(qhDomain.ClusterRepository))
 			qhApi.RegisterClusterAccessServer(s, queryhandler.NewClusterAccessServer(qhDomain.ClusterAccessRepo, qhDomain.TenantClusterBindingRepository))
-			qhApi.RegisterAuditLogServer(s, queryhandler.NewAuditLogServer(esClient, ef.DefaultEventFormatterRegistry))
+			qhApi.RegisterAuditLogServer(s, queryhandler.NewAuditLogServer(esClient, ef.DefaultEventFormatterRegistry, qhDomain.UserRepository))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 
