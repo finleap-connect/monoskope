@@ -1,7 +1,7 @@
 {{- if .Values.ambassador.enabled }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.queryhandler.enabled }}
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-usersvc-mapping
@@ -15,7 +15,7 @@ spec:
   rewrite: /domain.User/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-tenantsvc-mapping
@@ -29,7 +29,7 @@ spec:
   rewrite: /domain.Tenant/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-clustersvc-mapping
@@ -43,7 +43,7 @@ spec:
   rewrite: /domain.Cluster/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-clusteraccesssvc-mapping
@@ -57,7 +57,7 @@ spec:
   rewrite: /domain.ClusterAccess/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-certsvc-mapping
@@ -71,7 +71,7 @@ spec:
   rewrite: /domain.Certificate/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-qh-auditlogsvc-mapping
