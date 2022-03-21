@@ -23,4 +23,5 @@ const (
 	HeaderAuthNotBefore       = "x-auth-not-before"
 	HeaderAuthNotBeforeFormat = time.RFC3339
 	HeaderForwardedClientCert = "x-forwarded-client-cert"
+	HeaderAuthorization       = "Authorization"
 )
