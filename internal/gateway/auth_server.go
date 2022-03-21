@@ -192,8 +192,8 @@ func (s *authServer) auth(c *gin.Context) {
 
 // validatePolicies validates the configured policies using OPA
 func (s *authServer) validatePolicies(c *gin.Context) (bool, error) {
-
-	return false, nil
+	// TODO: Implement
+	return true, nil
 }
 
 func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
