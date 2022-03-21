@@ -19,8 +19,6 @@ vaultOperator:
 pki:
   enabled: true
   certificates:
-    # -- Specify which apiVersion cert-manager resources must have.
-    certManagerApiVersion: v1
     duration: 2160h # 90d
     renewBefore: 1440h # 60d
   issuer:
