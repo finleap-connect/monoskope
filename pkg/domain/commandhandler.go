@@ -30,9 +30,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
-	domainHandlers "github.com/finleap-connect/monoskope/pkg/domain/handler"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esCommandHandler "github.com/finleap-connect/monoskope/pkg/eventsourcing/commandhandler"
 	"github.com/google/uuid"
@@ -163,16 +161,11 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 	// Register aggregates
 	aggregateManager := registerAggregates(esClient)
 
-	// Setup repositories
-	userRepo := repositories.NewRemoteUserRepository(userService)
-
 	// Create command handler
-	authorizationHandler := domainHandlers.NewUserInformationHandler(userRepo)
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
 			aggregateManager,
 		),
-		authorizationHandler.Middleware,
 	)
 
 	// Set command handler
@@ -186,8 +179,6 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 		return err
 	}
 
-	cancel := metadataManager.BypassAuthorization()
-	defer cancel()
 	if err := setupUsers(metadataManager.GetContext(), handler); err != nil {
 		return err
 	}
