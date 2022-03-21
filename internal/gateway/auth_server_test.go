@@ -31,17 +31,18 @@ var _ = Describe("Gateway Auth Server", func() {
 	var (
 		ctx = context.Background()
 	)
-	It("can authenticate with JWT", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
-		Expect(err).ToNot(HaveOccurred())
-		defer conn.Close()
-		authClient := envoy_auth.NewAuthorizationClient(conn)
 
+	It("can authenticate with JWT", func() {
 		expectedValidity := time.Hour * 1
 		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
+
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		authClient := envoy_auth.NewAuthorizationClient(conn)
 
 		resp, err := authClient.Check(ctx, &envoy_auth.CheckRequest{Attributes: &envoy_auth.AttributeContext{
 			Request: &envoy_auth.AttributeContext_Request{
@@ -55,15 +56,24 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.Status.Code).To(Equal(int32(codes.OK)))
 	})
-	// It("fails authentication with invalid JWT", func() {
-	// 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/auth/test", localAddrOIDCProviderServer), nil)
-	// 	Expect(err).NotTo(HaveOccurred())
+	It("fails authentication with invalid JWT", func() {
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		authClient := envoy_auth.NewAuthorizationClient(conn)
 
-	// 	req.Header.Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", "notavalidjwt"))
-	// 	res, err := env.HttpClient.Do(req)
-	// 	Expect(err).NotTo(HaveOccurred())
-	// 	Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
-	// })
+		resp, err := authClient.Check(ctx, &envoy_auth.CheckRequest{Attributes: &envoy_auth.AttributeContext{
+			Request: &envoy_auth.AttributeContext_Request{
+				Http: &envoy_auth.AttributeContext_HttpRequest{
+					Headers: map[string]string{
+						auth.HeaderAuthorization: fmt.Sprintf("bearer %s", "notavalidjwt"),
+					},
+				},
+			},
+		}})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.Status.Code).To(Equal(int32(codes.Unauthenticated)))
+	})
 	// It("fails authentication with expired JWT", func() {
 	// 	expectedValidity := -30 * time.Minute
 	// 	token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
