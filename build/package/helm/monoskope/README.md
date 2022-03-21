@@ -15,8 +15,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | file://../queryhandler | queryhandler | 0.0.1-local |
 | file://../scimserver | scimserver | 0.0.1-local |
 | https://charts.bitnami.com/bitnami | rabbitmq | 8.24.3 |
-| https://charts.cockroachdb.com/ | cockroachdb | 6.1.2 |
-| https://getambassador.io | ambassador | 6.7.11 |
+| https://charts.cockroachdb.com/ | cockroachdb | 7.0.1 |
+| https://getambassador.io | ambassador | 6.9.4 |
 
 ## Values
 
@@ -31,7 +31,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.enableAES | bool | `false` |  |
 | ambassador.enabled | bool | `true` |  |
 | ambassador.image.repository | string | `"datawire/ambassador"` |  |
-| ambassador.image.tag | string | `"1.14.1"` |  |
+| ambassador.image.tag | string | `"1.14.3"` |  |
 | ambassador.metrics.serviceMonitor.enabled | bool | `false` |  |
 | ambassador.rbac.create | bool | `false` |  |
 | ambassador.replicaCount | int | `1` |  |
@@ -52,7 +52,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | cockroachdb.enabled | bool | `true` |  |
 | cockroachdb.image.pullPolicy | string | `"Always"` |  |
 | cockroachdb.image.repository | string | `"cockroachdb/cockroach"` |  |
-| cockroachdb.image.tag | string | `"v21.1.4"` |  |
+| cockroachdb.image.tag | string | `"v21.2.7"` |  |
 | cockroachdb.init.annotations."linkerd.io/inject" | string | `"disabled"` |  |
 | cockroachdb.serviceMonitor.annotations | object | `{}` |  |
 | cockroachdb.serviceMonitor.enabled | bool | `false` |  |
@@ -101,7 +101,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 | name | string | `"monoskope"` |  |
 | nameOverride | string | `""` |  |
 | pki.authentication.keySecretName | string | `"m8-authentication"` |  |
-| pki.certificates.certManagerApiVersion | string | `"v1"` | Specify which apiVersion cert-manager resources must have. |
 | pki.certificates.duration | string | `"2160h"` |  |
 | pki.certificates.renewBefore | string | `"1440h"` |  |
 | pki.enabled | bool | `true` |  |
