@@ -53,6 +53,8 @@ var _ = Describe("integration", func() {
 	expectedClusterApiServerAddress := "one.example.com"
 	expectedClusterCACertBundle := []byte("This should be a certificate")
 
+	expectedTenantName := "tenantx"
+
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -217,18 +219,10 @@ var _ = Describe("integration", func() {
 				g.Expect(user.Id).To(Equal(userId.String()))
 				g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
 			}).Should(Succeed())
-
-			// Get admin user id to compare with metadata
-			admin, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.GetMetadata().GetDeletedById()).To(Equal(admin.GetId()))
 		})
 	})
 	Context("tenant management", func() {
 		It("can manage a tenant", func() {
-			user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-			Expect(err).ToNot(HaveOccurred())
-
 			tenantId := uuid.New()
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
@@ -255,7 +249,7 @@ var _ = Describe("integration", func() {
 
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
-				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
+				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: expectedTenantName}},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -263,20 +257,18 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
-				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String(expectedTenantName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(tenant).ToNot(BeNil())
-				g.Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
 			}).Should(Succeed())
 
 			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
-				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String(expectedTenantName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(tenant).ToNot(BeNil())
-				g.Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
 				g.Expect(tenant.Metadata.Created).NotTo(BeNil())
 			}).Should(Succeed())
 		})
