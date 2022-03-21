@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -45,10 +46,10 @@ import (
 )
 
 const (
-	localAddrAPIServer  = "127.0.0.1:9090"
-	localAddrAuthServer = "127.0.0.1:9091"
-	RedirectURLHostname = "localhost"
-	RedirectURLPort     = ":8000"
+	localAddrAPIServer          = "127.0.0.1:9090"
+	localAddrOIDCProviderServer = "127.0.0.1:9091"
+	RedirectURLHostname         = "localhost"
+	RedirectURLPort             = ":8000"
 )
 
 var (
@@ -57,19 +58,19 @@ var (
 
 type oAuthTestEnv struct {
 	*test.TestEnv
-	JwtTestEnv            *jwt.TestEnv
-	ClientAuthConfig      *auth.ClientConfig
-	ServerAuthConfig      *auth.ServerConfig
-	IdentityProviderURL   string
-	ApiListenerAPIServer  net.Listener
-	ApiListenerAuthServer net.Listener
-	HttpClient            *http.Client
-	GrpcServer            *grpc.Server
-	LocalAuthServer       *authServer
-	ClusterRepo           repositories.ClusterRepository
-	AdminUser             *projections.User
-	ExistingUser          *projections.User
-	NotExistingUser       *projections.User
+	JwtTestEnv                    *jwt.TestEnv
+	ClientAuthConfig              *auth.ClientConfig
+	ServerAuthConfig              *auth.ServerConfig
+	IdentityProviderURL           string
+	ApiListenerAPIServer          net.Listener
+	ApiListenerOIDCProviderServer net.Listener
+	HttpClient                    *http.Client
+	GrpcServer                    *grpc.Server
+	LocalOIDCProviderServer       *oidcProviderServer
+	ClusterRepo                   repositories.ClusterRepository
+	AdminUser                     *projections.User
+	ExistingUser                  *projections.User
+	NotExistingUser               *projections.User
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -131,7 +132,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		},
 	}
 	env.ServerAuthConfig = &auth.ServerConfig{
-		URL:           localAddrAuthServer,
+		URL:           localAddrOIDCProviderServer,
 		TokenValidity: time.Minute * 1,
 	}
 	return env, nil
@@ -235,6 +236,7 @@ var _ = BeforeSuite(func() {
 		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, map[string]time.Duration{
 			"default": time.Hour * 1,
 		})
+		envoyAuthServer := NewAuthServer(localAddrAPIServer, authServer, userRepo)
 
 		// Create gRPC server and register implementation
 		env.GrpcServer = grpc.NewServer("gateway-grpc", false)
@@ -242,6 +244,9 @@ var _ = BeforeSuite(func() {
 			api.RegisterGatewayServer(s, gatewayApiServer)
 			api.RegisterClusterAuthServer(s, authApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+		})
+		env.GrpcServer.RegisterServiceDirect(func(s *ggrpc.Server) {
+			api_envoy.RegisterAuthorizationServer(s, envoyAuthServer)
 		})
 
 		env.ApiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
@@ -253,11 +258,11 @@ var _ = BeforeSuite(func() {
 			}
 		}()
 
-		env.LocalAuthServer = NewAuthServer(localAddrAPIServer, authClient, authServer, userRepo)
-		env.ApiListenerAuthServer, err = net.Listen("tcp", localAddrAuthServer)
+		env.LocalOIDCProviderServer = NewOIDCProviderServer(authServer)
+		env.ApiListenerOIDCProviderServer, err = net.Listen("tcp", localAddrOIDCProviderServer)
 		Expect(err).ToNot(HaveOccurred())
 		go func() {
-			err := env.LocalAuthServer.ServeFromListener(env.ApiListenerAuthServer)
+			err := env.LocalOIDCProviderServer.ServeFromListener(env.ApiListenerOIDCProviderServer)
 			if err != nil {
 				panic(err)
 			}
@@ -278,8 +283,8 @@ var _ = AfterSuite(func() {
 	Expect(err).To(BeNil())
 
 	env.GrpcServer.Shutdown()
-	env.LocalAuthServer.Shutdown()
+	env.LocalOIDCProviderServer.Shutdown()
 
 	defer env.ApiListenerAPIServer.Close()
-	defer env.ApiListenerAuthServer.Close()
+	defer env.ApiListenerOIDCProviderServer.Close()
 })
