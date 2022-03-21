@@ -20,7 +20,6 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/version"
-	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
@@ -56,32 +55,13 @@ type UserInformation struct {
 // domainMetadataManager is a domain specific metadata manager.
 type DomainMetadataManager struct {
 	es.MetadataManager
-	domainContext *DomainContext
-	log           logger.Logger
-}
-
-type DomainContext struct {
-	context.Context
-	UserRoleBindings    []*projections.UserRoleBinding
-	BypassAuthorization bool
-}
-
-func newDomainContext(ctx *DomainContext) *DomainContext {
-	if ctx == nil {
-		return &DomainContext{}
-	}
-
-	return &DomainContext{
-		UserRoleBindings:    ctx.UserRoleBindings,
-		BypassAuthorization: ctx.BypassAuthorization,
-	}
+	log logger.Logger
 }
 
 // NewDomainMetadataManager creates a new domainMetadataManager to handle domain metadata via context.
 func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, error) {
 	m := &DomainMetadataManager{
 		es.NewMetadataManagerFromContext(ctx),
-		newDomainContext(nil),
 		logger.WithName("domain-metadata-manager"),
 	}
 
@@ -97,10 +77,6 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 			}
 			m.SetMetadata(data)
 		}
-	}
-
-	if domainContext, ok := ctx.(*DomainContext); ok {
-		m.domainContext = domainContext
 	}
 
 	if _, exists := m.Get(componentName); !exists {
@@ -124,14 +100,6 @@ func (m *DomainMetadataManager) GetComponentName() string {
 		return res
 	}
 	return ""
-}
-
-func (m *DomainMetadataManager) SetRoleBindings(roleBindings []*projections.UserRoleBinding) {
-	m.domainContext.UserRoleBindings = roleBindings
-}
-
-func (m *DomainMetadataManager) GetRoleBindings() []*projections.UserRoleBinding {
-	return m.domainContext.UserRoleBindings
 }
 
 // SetUserInformation sets the UserInformation in the metadata.
@@ -172,9 +140,7 @@ func (m *DomainMetadataManager) GetOutgoingGrpcContext() context.Context {
 }
 
 func (m *DomainMetadataManager) GetContext() context.Context {
-	dc := newDomainContext(m.domainContext)
-	dc.Context = m.MetadataManager.GetContext()
-	return dc
+	return m.MetadataManager.GetContext()
 }
 
 func isHeaderAccepted(key string) bool {
@@ -184,18 +150,4 @@ func isHeaderAccepted(key string) bool {
 		}
 	}
 	return false
-}
-
-// BypassAuthorization disables authorization checks and returns a function to enable it again
-func (m *DomainMetadataManager) BypassAuthorization() func() {
-	dc := newDomainContext(m.domainContext)
-	dc.BypassAuthorization = true
-	m.domainContext = dc
-	return func() {
-		dc.BypassAuthorization = false
-	}
-}
-
-func (m *DomainMetadataManager) IsAuthorizationBypassed() bool {
-	return m.domainContext.BypassAuthorization
 }
