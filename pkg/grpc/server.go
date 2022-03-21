@@ -17,10 +17,11 @@ package grpc
 import (
 	"context"
 	"fmt"
-	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware/validator"
 	"net"
 	"net/http"
 	"time"
+
+	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware/validator"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/metrics"
@@ -104,6 +105,11 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 
 // RegisterService registers your gRPC service implementation with the server
 func (s *Server) RegisterService(f func(grpc.ServiceRegistrar)) {
+	f(s.grpc)
+}
+
+// RegisterServiceDirect registers your gRPC service implementation with the server
+func (s *Server) RegisterServiceDirect(f func(*grpc.Server)) {
 	f(s.grpc)
 }
 
