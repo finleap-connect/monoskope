@@ -87,7 +87,7 @@ cockroachdb:
   dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: cockroachdb/cockroach
-    tag: v21.1.4
+    tag: v21.2.7
     pullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
