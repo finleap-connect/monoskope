@@ -19,7 +19,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -36,9 +35,13 @@ func CreateInsecureConnection(ctx context.Context, url string) (*ggrpc.ClientCon
 		Connect(ctx)
 }
 
-// defaultBearerTokenFromRequest extracts the token from header
-func defaultBearerTokenFromRequest(r *http.Request) string {
-	token := r.Header.Get(HeaderAuthorization)
+// defaultBearerTokenFromHeaders extracts the token from header
+func defaultBearerTokenFromHeaders(headers map[string]string) string {
+	token, ok := headers[auth.HeaderAuthorization]
+	if !ok {
+		return ""
+	}
+
 	split := strings.SplitN(token, " ", 2)
 	if len(split) != 2 || !strings.EqualFold(strings.ToLower(split[0]), "bearer") {
 		return ""
@@ -46,10 +49,10 @@ func defaultBearerTokenFromRequest(r *http.Request) string {
 	return split[1]
 }
 
-// clientCertificateFromRequest extracts the client certificate from header
-func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
-	pemData := r.Header.Get(auth.HeaderForwardedClientCert)
-	if pemData == "" {
+// clientCertificateFromHeaders extracts the client certificate from header
+func clientCertificateFromHeaders(headers map[string]string) (*x509.Certificate, error) {
+	pemData, ok := headers[auth.HeaderForwardedClientCert]
+	if !ok || pemData == "" {
 		return nil, errors.New("cert header is empty")
 	}
 
