@@ -17,6 +17,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
@@ -180,6 +181,15 @@ func (s *authServer) auth(c *gin.Context) {
 		c.String(http.StatusUnauthorized, "authentication failed")
 		return
 	}
+
+	// Get message body for policy evaluation
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		s.log.Error(err, "Could not read request body.")
+		c.String(http.StatusUnauthorized, "authorization failed")
+		return
+	}
+	s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
 
 	// Authorize user
 	authorized, err = s.validatePolicies(c)
