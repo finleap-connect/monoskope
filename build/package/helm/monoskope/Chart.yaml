@@ -48,7 +48,7 @@ dependencies: # A list of the chart requirements
     repository: "file://../scimserver"
     condition: scimserver.enabled,global.scimserver.enabled
   - name: cockroachdb
-    version: 6.1.2
+    version: 7.0.1
     repository: https://charts.cockroachdb.com/
     condition: cockroachdb.enabled,global.cockroachdb.enabled
   - name: rabbitmq
