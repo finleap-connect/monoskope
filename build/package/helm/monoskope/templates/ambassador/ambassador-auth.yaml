@@ -16,6 +16,7 @@ spec:
   status_on_error:
     code: 403
   failure_mode_allow: false
+  proto: grpc
   include_body:
     max_bytes: 4096
     allow_partial: false
