@@ -16,15 +16,15 @@ package gateway
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	envoy_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_auth "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
@@ -33,178 +33,73 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/finleap-connect/monoskope/pkg/util"
+	"google.golang.org/grpc/codes"
 )
-
-const (
-	HeaderAuthorization = "Authorization"
-)
-
-type OpenIdConfiguration struct {
-	Issuer  string `json:"issuer"`
-	JwksURL string `json:"jwks_uri"`
-}
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
-	api        *http.Server
-	engine     *gin.Engine
+	envoy_auth.UnimplementedAuthorizationServer
 	log        logger.Logger
-	shutdown   *util.ShutdownWaitGroup
-	oidcClient *auth.Client
 	oidcServer *auth.Server
 	userRepo   repositories.ReadOnlyUserRepository
 	issuerURL  string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(issuerURL string, oidcClient *auth.Client, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
-	engine := gin.Default()
+func NewAuthServer(issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
 	s := &authServer{
-		api:        &http.Server{Handler: engine},
-		engine:     engine,
 		log:        logger.WithName("auth-server"),
-		shutdown:   util.NewShutdownWaitGroup(),
-		oidcClient: oidcClient,
 		oidcServer: oidcServer,
 		userRepo:   userRepo,
 		issuerURL:  issuerURL,
 	}
-	engine.Use(cors.Default())
 	return s
 }
 
-// Serve tells the server to start listening on the specified address.
-func (s *authServer) Serve(apiAddr string) error {
-	// Setup grpc listener
-	apiLis, err := net.Listen("tcp", apiAddr)
-	if err != nil {
-		return err
-	}
-	defer apiLis.Close()
-
-	return s.ServeFromListener(apiLis)
-}
-
-// Serve tells the server to start listening on given listener.
-func (s *authServer) ServeFromListener(apiLis net.Listener) error {
-	shutdown := s.shutdown
-	// Start routine waiting for signals
-	shutdown.RegisterSignalHandler(func() {
-		// Stop the HTTP servers
-		s.log.Info("api server shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.api.Shutdown(ctx); err != nil {
-			s.log.Error(err, "api server shutdown problem")
-		}
-	})
-	//
-	s.registerViews(s.engine)
-	//
-	s.log.Info("starting to serve RESTful API", "addr", apiLis.Addr())
-	err := s.api.Serve(apiLis)
-	if !shutdown.IsExpected() && err != nil {
-		panic(fmt.Sprintf("shutdown unexpected: %v", err))
-	}
-	s.log.Info("api server stopped")
-	// Check if we are expecting shutdown
-	// Wait for both shutdown signals and close the channel
-	if ok := shutdown.WaitOrTimeout(30 * time.Second); !ok {
-		panic("shutting down gracefully exceeded 30 seconds")
-	}
-	return nil
-}
-
-// Tell the server to shutdown
-func (s *authServer) Shutdown() {
-	s.shutdown.Expect()
-}
-
-// registerViews registers all routes necessary serving.
-func (s *authServer) registerViews(r *gin.Engine) {
-	// readiness check
-	r.GET("/readyz", func(c *gin.Context) {
-		c.String(http.StatusOK, "ready")
-	})
-
-	// auth route
-	r.GET("/auth/*route", s.auth)
-	r.PUT("/auth/*route", s.auth)
-	r.POST("/auth/*route", s.auth)
-	r.PATCH("/auth/*route", s.auth)
-	r.DELETE("/auth/*route", s.auth)
-	r.OPTIONS("/auth/*route", s.auth)
-
-	// OIDC
-	r.GET("/.well-known/openid-configuration", s.discovery)
-	r.GET("/keys", s.keys)
-}
-
-func (s *authServer) discovery(c *gin.Context) {
-	c.JSON(http.StatusOK, &OpenIdConfiguration{
-		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
-		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
-	})
-}
-
-func (s *authServer) keys(c *gin.Context) {
-	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
-	c.JSON(http.StatusOK, s.oidcServer.Keys())
-}
-
-// auth serves as handler for the auth route of the server.
-func (s *authServer) auth(c *gin.Context) {
+// Check request object.
+func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*envoy_auth.CheckResponse, error) {
 	var err error
 	var authToken *jwt.AuthToken
-	route := c.Param("route")
+	path := req.GetAttributes().GetRequest().GetHttp().GetPath()
 	authenticated := false
 	authorized := false
 
 	// Logging
-	s.log.Info("Authenticating request...", "route", route)
-	for k := range c.Request.Header {
-		// Print headers
-		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
-	}
+	s.log.Info("Authenticating request...", "path", path)
+	// Print headers
+	s.log.V(logger.DebugLevel).Info("Request received.", "Value", req)
 
 	// Authenticate user
 	if !authenticated {
-		authToken = s.tokenValidationFromContext(c) // via JWT
+		authToken = s.tokenValidationFromContext(ctx, req) // via JWT
 		authenticated = authToken != nil
 	}
 	if !authenticated {
-		authToken = s.certValidation(c) // via client certificate validation
+		authToken = s.certValidation(ctx, req) // via client certificate validation
 		authenticated = authToken != nil
 	}
 	if !authenticated {
-		c.String(http.StatusUnauthorized, "authentication failed")
-		return
+		return s.createUnauthorizedResponse(), nil
 	}
 
 	// Get message body for policy evaluation
-	body, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		s.log.Error(err, "Could not read request body.")
-		c.String(http.StatusUnauthorized, "authorization failed")
-		return
-	}
+	body := req.GetAttributes().GetRequest().GetHttp().GetBody()
 	s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
 
 	// Authorize user
-	authorized, err = s.validatePolicies(c)
+	authorized, err = s.validatePolicies(ctx, req)
 	if err != nil {
 		s.log.Error(err, "Error checking authorization of user.")
+		return s.createUnauthorizedResponse(), err
 	}
 	if authorized {
-		s.writeSuccess(c, authToken)
-		return
+		return s.createAuthorizedResponse(authToken), nil
 	}
-	c.String(http.StatusUnauthorized, "authorization failed")
+	return s.createUnauthorizedResponse(), nil
 }
 
 // validatePolicies validates the configured policies using OPA
-func (s *authServer) validatePolicies(c *gin.Context) (bool, error) {
+func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.CheckRequest) (bool, error) {
 	// TODO: Implement
 	return true, nil
 }
@@ -218,22 +113,22 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 }
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
-func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
-	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request))
+func (s *authServer) tokenValidationFromContext(ctx context.Context, req *envoy_auth.CheckRequest) *jwt.AuthToken {
+	authToken := s.tokenValidation(ctx, defaultBearerTokenFromHeaders(req.GetAttributes().GetRequest().GetHttp().GetHeaders()))
 	if authToken == nil {
 		return nil
 	}
 
 	// Check user actually exists in m8
 
-	user, err := s.userRepo.ByEmail(c, authToken.Email)
+	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
 	if err != nil && !authToken.IsAPIToken {
 		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
 		return nil
 	}
 
 	// Validate scopes
-	route := c.Param("route")
+	route := req.GetAttributes().GetRequest().GetHttp().GetPath()
 	scopes := strings.Split(authToken.Scope, " ")
 
 	// Validation for API Token Endpoint
@@ -294,16 +189,16 @@ func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.Aut
 }
 
 // tokenValidation validates the client certificate provided within the forwarded client secret header
-func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
+func (s *authServer) certValidation(ctx context.Context, req *envoy_auth.CheckRequest) *jwt.AuthToken {
 	s.log.Info("Validating client certificate...")
 
-	cert, err := clientCertificateFromRequest(c.Request)
+	cert, err := clientCertificateFromHeaders(req.GetAttributes().GetRequest().GetHttp().GetHeaders())
 	if err != nil {
 		s.log.Info("Certificate validation failed.", "error", err.Error())
 		return nil
 	}
 
-	if userId, ok := s.retrieveUserId(c, cert.EmailAddresses[0]); !ok {
+	if userId, ok := s.retrieveUserId(ctx, cert.EmailAddresses[0]); !ok {
 		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
 		return nil
 	} else {
@@ -318,22 +213,33 @@ func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
 	}
 }
 
-// writeSuccess writes all request headers back to the response along with information got from the upstream IdP and sends an http status ok
-func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
-	// Copy request headers to response
-	for k := range c.Request.Header {
-		// Avoid copying the original Content-Length header from the client
-		if strings.ToLower(k) == "content-length" {
-			continue
-		}
-		c.Writer.Header().Set(k, c.Request.Header.Get(k))
-	}
-
+func (s *authServer) createAuthorizedResponse(authToken *jwt.AuthToken) *envoy_auth.CheckResponse {
 	// Set headers with auth info
-	c.Writer.Header().Set(auth.HeaderAuthId, claims.Subject)
-	c.Writer.Header().Set(auth.HeaderAuthName, claims.Name)
-	c.Writer.Header().Set(auth.HeaderAuthEmail, claims.Email)
-	c.Writer.Header().Set(auth.HeaderAuthNotBefore, claims.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat))
+	return &envoy_auth.CheckResponse{
+		Status: &status.Status{Code: int32(codes.OK)},
+		HttpResponse: &envoy_auth.CheckResponse_OkResponse{
+			OkResponse: &envoy_auth.OkHttpResponse{
+				Headers: []*envoy_core.HeaderValueOption{
+					{Header: &envoy_core.HeaderValue{Key: auth.HeaderAuthId, Value: authToken.Subject}, Append: wrapperspb.Bool(true)},
+					{Header: &envoy_core.HeaderValue{Key: auth.HeaderAuthName, Value: authToken.Name}, Append: wrapperspb.Bool(true)},
+					{Header: &envoy_core.HeaderValue{Key: auth.HeaderAuthEmail, Value: authToken.Email}, Append: wrapperspb.Bool(true)},
+					{Header: &envoy_core.HeaderValue{Key: auth.HeaderAuthNotBefore, Value: authToken.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat)}, Append: wrapperspb.Bool(true)},
+				},
+			},
+		},
+	}
+}
 
-	c.Writer.WriteHeader(http.StatusOK)
+func (s *authServer) createUnauthorizedResponse() *envoy_auth.CheckResponse {
+	return &envoy_auth.CheckResponse{
+		Status: &status.Status{Code: int32(codes.Unauthenticated)},
+		HttpResponse: &envoy_auth.CheckResponse_DeniedResponse{
+			DeniedResponse: &envoy_auth.DeniedHttpResponse{
+				Status: &envoy_type.HttpStatus{
+					Code: envoy_type.StatusCode_Unauthorized,
+				},
+				Body: "UNAUTHORIZED",
+			},
+		},
+	}
 }
