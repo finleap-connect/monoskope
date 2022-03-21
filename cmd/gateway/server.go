@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -141,7 +142,8 @@ var serverCmd = &cobra.Command{
 		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
 		// API servers
-		authServer := gateway.NewAuthServer(gatewayURL, client, server, userRepo)
+		authServer := gateway.NewAuthServer(gatewayURL, server, userRepo)
+		oidcProviderServer := gateway.NewOIDCProviderServer(server)
 		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepo)
 
 		// Look for config
@@ -180,6 +182,9 @@ var serverCmd = &cobra.Command{
 			api.RegisterAPITokenServer(s, apiTokenServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
+		grpcServer.RegisterServiceDirect(func(s *ggrpc.Server) {
+			api_envoy.RegisterAuthorizationServer(s, authServer)
+		})
 
 		// Finally start the servers
 		eg, _ := errgroup.WithContext(cmd.Context())
@@ -187,7 +192,7 @@ var serverCmd = &cobra.Command{
 			return grpcServer.Serve(grpcApiAddr, metricsAddr)
 		})
 		eg.Go(func() error {
-			return authServer.Serve(httpApiAddr)
+			return oidcProviderServer.Serve(httpApiAddr)
 		})
 		return eg.Wait()
 	},
