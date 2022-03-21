@@ -1,7 +1,7 @@
 {{- if .Values.ambassador.enabled }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.gateway.enabled }}
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-mapping
@@ -19,7 +19,7 @@ spec:
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-clusterauth-mapping
@@ -36,7 +36,7 @@ spec:
   rewrite: /gateway.ClusterAuth/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-version-mapping
@@ -50,7 +50,7 @@ spec:
   rewrite: /common.ServiceInformationService/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-oidc-discovery-mapping
@@ -64,7 +64,7 @@ spec:
   rewrite: /.well-known/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-oidc-keys-mapping
@@ -78,7 +78,7 @@ spec:
   rewrite: /keys
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-apitoken-mapping
