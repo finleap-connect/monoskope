@@ -1,7 +1,7 @@
 {{- if .Values.ambassador.enabled }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.commandhandler.enabled }}
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-commandhandler-mapping
@@ -15,7 +15,7 @@ spec:
   rewrite: /eventsourcing.CommandHandler/
   service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-commandhandler-extensions-mapping
