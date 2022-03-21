@@ -18,7 +18,6 @@ import (
 	"context"
 	"testing"
 
-	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
@@ -66,13 +65,6 @@ func createSysAdminCtx() context.Context {
 		Id:    uuid.New(),
 		Name:  "admin",
 		Email: "admin@monoskope.io",
-	})
-
-	metaMgr.SetRoleBindings([]*projections.UserRoleBinding{
-		{
-			Role:  roles.Admin.String(),
-			Scope: scopes.System.String(),
-		},
 	})
 
 	return metaMgr.GetContext()
