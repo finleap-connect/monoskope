@@ -155,6 +155,7 @@ func (s *authServer) keys(c *gin.Context) {
 // auth serves as handler for the auth route of the server.
 func (s *authServer) auth(c *gin.Context) {
 	var err error
+	var authToken *jwt.AuthToken
 	route := c.Param("route")
 	authenticated := false
 	authorized := false
@@ -167,14 +168,17 @@ func (s *authServer) auth(c *gin.Context) {
 	}
 
 	// Authenticate user
-	var authToken *jwt.AuthToken
 	if !authenticated {
-		authToken := s.tokenValidationFromContext(c) // via JWT
+		authToken = s.tokenValidationFromContext(c) // via JWT
 		authenticated = authToken != nil
 	}
 	if !authenticated {
 		authToken = s.certValidation(c) // via client certificate validation
 		authenticated = authToken != nil
+	}
+	if !authenticated {
+		c.String(http.StatusUnauthorized, "authentication failed")
+		return
 	}
 
 	// Authorize user
@@ -182,12 +186,11 @@ func (s *authServer) auth(c *gin.Context) {
 	if err != nil {
 		s.log.Error(err, "Error checking authorization of user.")
 	}
-
-	if authenticated && authorized {
+	if authorized {
 		s.writeSuccess(c, authToken)
-	} else {
-		c.String(http.StatusUnauthorized, "authorization failed")
+		return
 	}
+	c.String(http.StatusUnauthorized, "authorization failed")
 }
 
 // validatePolicies validates the configured policies using OPA
