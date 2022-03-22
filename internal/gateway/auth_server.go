@@ -114,7 +114,7 @@ func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, 
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(ctx context.Context, req *envoy_auth.CheckRequest) *jwt.AuthToken {
-	authToken := s.tokenValidation(ctx, defaultBearerTokenFromHeaders(req.GetAttributes().GetRequest().GetHttp().GetHeaders()))
+	authToken := s.tokenValidation(ctx, defaultBearerTokenFromHeaders(req.Attributes.Request.Http.Headers))
 	if authToken == nil {
 		return nil
 	}

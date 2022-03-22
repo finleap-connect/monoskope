@@ -37,13 +37,12 @@ func CreateInsecureConnection(ctx context.Context, url string) (*ggrpc.ClientCon
 
 // defaultBearerTokenFromHeaders extracts the token from header
 func defaultBearerTokenFromHeaders(headers map[string]string) string {
-	token, ok := headers[auth.HeaderAuthorization]
+	authHeader, ok := headers[auth.HeaderAuthorization]
 	if !ok {
 		return ""
 	}
-
-	split := strings.SplitN(token, " ", 2)
-	if len(split) != 2 || !strings.EqualFold(strings.ToLower(split[0]), "bearer") {
+	split := strings.Split(authHeader, "Bearer ")
+	if len(split) != 2 {
 		return ""
 	}
 	return split[1]
