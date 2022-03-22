@@ -11,7 +11,7 @@ metadata:
     {{- end }}
 spec:
   auth_service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
-  tls: true
+  tls: false
   proto: grpc
   timeout_ms: 5000
   include_body:

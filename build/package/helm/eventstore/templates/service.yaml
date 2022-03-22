@@ -12,12 +12,12 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.api.port }}
-      targetPort: http
+      targetPort: grpc
       protocol: TCP
-      name: http
+      name: grpc
     - port: {{ .Values.service.metrics.port }}
-      targetPort: http-metrics
+      targetPort: metrics
       protocol: TCP
-      name: http-metrics
+      name: metrics
   selector:
     {{- include "eventstore.selectorLabels" . | nindent 4 }}
