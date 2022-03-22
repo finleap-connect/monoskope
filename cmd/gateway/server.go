@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
