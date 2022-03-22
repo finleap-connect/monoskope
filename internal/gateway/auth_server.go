@@ -83,7 +83,7 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 	}
 
 	// Get message body for policy evaluation
-	body := req.GetAttributes().GetRequest().GetHttp().GetBody()
+	body := req.Attributes.Request.Http.RawBody
 	s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
 
 	// Authorize user
