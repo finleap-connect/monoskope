@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/test"
