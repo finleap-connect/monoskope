@@ -60,9 +60,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-          - name: http
+          - name: grpc
             containerPort: {{ .Values.ports.api }}
-          - name: http-metrics
+          - name: metrics
             containerPort: {{ .Values.ports.metrics }}
           env:
             - name: M8_OPERATION_MODE
