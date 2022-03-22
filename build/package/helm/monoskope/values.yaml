@@ -209,6 +209,8 @@ ambassador:
     create: false
   alerting:
     enabled: false
+  env:
+    AMBASSADOR_ENVOY_API_VERSION: V3
 
 cluster-bootstrap-reactor:
   enabled: true
