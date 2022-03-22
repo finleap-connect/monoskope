@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	envoy_auth "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	envoy_auth "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	. "github.com/onsi/ginkgo"
