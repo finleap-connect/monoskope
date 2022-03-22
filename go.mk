@@ -9,7 +9,7 @@ GINKGO         ?= $(TOOLS_DIR)/ginkgo
 GINKO_VERSION  ?= v1.16.4
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
-LINTER_VERSION ?= v1.39.0
+LINTER_VERSION ?= v1.45.0
 
 MOCKGEN         ?= $(TOOLS_DIR)/mockgen
 GOMOCK_VERSION  ?= v1.5.0
