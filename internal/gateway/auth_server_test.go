@@ -48,7 +48,7 @@ var _ = Describe("Gateway Auth Server", func() {
 			Request: &envoy_auth.AttributeContext_Request{
 				Http: &envoy_auth.AttributeContext_HttpRequest{
 					Headers: map[string]string{
-						auth.HeaderAuthorization: fmt.Sprintf("bearer %s", signedToken),
+						auth.HeaderAuthorization: fmt.Sprintf("Bearer %s", signedToken),
 					},
 				},
 			},
@@ -66,7 +66,7 @@ var _ = Describe("Gateway Auth Server", func() {
 			Request: &envoy_auth.AttributeContext_Request{
 				Http: &envoy_auth.AttributeContext_HttpRequest{
 					Headers: map[string]string{
-						auth.HeaderAuthorization: fmt.Sprintf("bearer %s", "notavalidjwt"),
+						auth.HeaderAuthorization: fmt.Sprintf("Bearer %s", "notavalidjwt"),
 					},
 				},
 			},
