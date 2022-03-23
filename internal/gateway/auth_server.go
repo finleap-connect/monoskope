@@ -33,6 +33,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/open-policy-agent/opa/rego"
 	"google.golang.org/grpc/codes"
 )
 
@@ -94,7 +95,7 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 	// s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
 
 	// Authorize user
-	authorized, err = s.validatePolicies(ctx, req)
+	authorized, err = s.validatePolicies(ctx, req, authToken)
 	if err != nil {
 		s.log.Error(err, "Error checking authorization of user.")
 		return s.createUnauthorizedResponse(body_unauthorized), err
@@ -106,9 +107,40 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 }
 
 // validatePolicies validates the configured policies using OPA
-func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.CheckRequest) (bool, error) {
-	// TODO: Implement
-	return true, nil
+func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
+	query, err := rego.New(
+		rego.Query("x = data.m8.authz.authorized"),
+		rego.Load([]string{s.policiesPath}, nil),
+	).PrepareForEval(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
+	if err != nil {
+		s.log.Error(err, "Policy evaluation failed. User does not exist.", "Email", authToken.Email)
+		return false, err
+	}
+
+	input := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    user.Id,
+			"name":  user.Name,
+			"roles": user.Roles,
+		},
+	}
+
+	results, err := query.Eval(ctx, rego.EvalInput(input))
+	if err != nil {
+		// Handle evaluation error.
+		s.log.Error(err, "Policy evaluation failed.", "email", authToken.Email)
+		return false, err
+	} else if len(results) == 0 {
+		// Handle undefined result.
+		s.log.Info("Policy evaluation failed. No results.", "email", authToken.Email)
+		return false, err
+	}
+	return results.Allowed(), err
 }
 
 func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
