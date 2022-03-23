@@ -82,9 +82,9 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 		return s.createUnauthorizedResponse(), nil
 	}
 
-	// Get message body for policy evaluation
-	body := req.Attributes.Request.Http.RawBody
-	s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
+	// Get message body for policy evaluation in the future
+	// body := req.Attributes.Request.Http.RawBody
+	// s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
 
 	// Authorize user
 	authorized, err = s.validatePolicies(ctx, req)
