@@ -125,6 +125,9 @@ spec:
               readOnly: true
             - name: k8s-auth-config
               mountPath: /etc/gateway/k8s-auth
+            - name: policies-secret
+              mountPath: /etc/gateway/policies
+              readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -141,6 +144,9 @@ spec:
         - name: key-secret
           secret:
             secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}
+        - name: policies-secret
+          secret:
+            secretName: {{ include "gateway.fullname" . }}-policies
         - name: k8s-auth-config
           configMap:
             name: {{ include "gateway.fullname" . }}-k8s-auth
