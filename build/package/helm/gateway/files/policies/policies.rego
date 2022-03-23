@@ -5,7 +5,7 @@ import future.keywords.in
 default authorized = false
 
 authorized {
-	input.path == ["/domain.Cluster/"]
+	startswith(input.Path, "/domain.Cluster/")
 }
 
 authorized {
@@ -13,7 +13,7 @@ authorized {
 }
 
 is_system_admin {
-	some role in input.user.roles
-	"system" == role.scope
-	"admin" == role.name
+	some role in input.User.Roles
+	"system" == role.Scope
+	"admin" == role.Name
 }
