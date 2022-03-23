@@ -140,7 +140,11 @@ var serverCmd = &cobra.Command{
 		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
 
 		// API servers
-		authServer := gateway.NewAuthServer(gatewayURL, server, userRepo, policiesPath)
+		authServer, err := gateway.NewAuthServer(ctx, gatewayURL, server, userRepo, policiesPath)
+		if err != nil {
+			return err
+		}
+
 		oidcProviderServer := gateway.NewOIDCProviderServer(server)
 		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepo)
 
