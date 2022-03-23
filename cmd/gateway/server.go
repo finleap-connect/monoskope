@@ -44,20 +44,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const K8sTokenLifetimeConfig = "k8s-auth/k8sTokenLifetime.yaml"
-
 var (
-	grpcApiAddr       string
-	httpApiAddr       string
-	queryHandlerAddr  string
-	metricsAddr       string
-	keepAlive         bool
-	scopes            string
-	redirectUris      string
-	k8sTokenLifetime  = make(map[string]string)
-	authTokenValidity string
-	gatewayURL        string
-	identityProvider  string
+	grpcApiAddr                string
+	httpApiAddr                string
+	queryHandlerAddr           string
+	metricsAddr                string
+	keepAlive                  bool
+	scopes                     []string
+	redirectUris               string
+	k8sTokenLifetime           = make(map[string]string)
+	authTokenValidity          string
+	gatewayURL                 string
+	identityProvider           string
+	policiesPath               string
+	k8sTokenLifetimeConfigPath string
+	jwtPath                    string
 )
 
 var serverCmd = &cobra.Command{
@@ -88,9 +89,6 @@ var serverCmd = &cobra.Command{
 			authClientConfig.Nonce = v
 		}
 
-		if len(scopes) > 0 {
-			authClientConfig.Scopes = strings.Split(scopes, ",")
-		}
 		if len(authClientConfig.Scopes) == 0 {
 			return fmt.Errorf("scopes must not be empty")
 		}
@@ -104,8 +102,8 @@ var serverCmd = &cobra.Command{
 
 		// Create token signer/validator
 		log.Info("Configuring JWT signing and verifying...")
-		signer := jwt.NewSigner("/etc/gateway/jwt/tls.key")
-		verifier, err := jwt.NewVerifier("/etc/gateway/jwt/tls.crt")
+		signer := jwt.NewSigner(path.Join(jwtPath, "tls.key"))
+		verifier, err := jwt.NewVerifier(path.Join(jwtPath, "tls.crt"))
 		if err != nil {
 			return err
 		}
@@ -148,7 +146,7 @@ var serverCmd = &cobra.Command{
 
 		// Look for config
 		if len(k8sTokenLifetime) == 0 {
-			data, err := ioutil.ReadFile(path.Join(ConfigPath, K8sTokenLifetimeConfig))
+			data, err := ioutil.ReadFile(path.Join(ConfigPath, k8sTokenLifetimeConfigPath))
 			if err != nil {
 				return err
 			}
@@ -206,8 +204,9 @@ func init() {
 	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
-	flags.StringVar(&scopes, "scopes", "openid, profile, email", "Issuer scopes to request")
+	flags.StringArrayVar(&scopes, "scopes", []string{"openid", "profile", "email"}, "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
+	flags.StringVar(&k8sTokenLifetimeConfigPath, "k8s-token-lifetime-path", "/etc/gateway/k8s-auth/k8sTokenLifetime.yaml", "YAML containing the token lifetime for k8s token per role. Only used if `k8s-token-lifetime` is not specified")
 	flags.StringToStringVar(&k8sTokenLifetime, "k8s-token-lifetime", k8sTokenLifetime, "Token lifetime for k8s token per role")
 	flags.StringVar(&authTokenValidity, "auth-token-validity", "12h", "Validity period of m8 auth token")
 
@@ -216,4 +215,7 @@ func init() {
 
 	flags.StringVar(&gatewayURL, "gateway-url", "", "URL of the gateway itself")
 	util.PanicOnError(serverCmd.MarkFlagRequired("gateway-url"))
+
+	flags.StringVar(&policiesPath, "policies-path", "/etc/gateway/policies", "Path to rego policies to authorize requests against")
+	flags.StringVar(&jwtPath, "jwt-signing-verifying-path", "/etc/gateway/jwt", "Path to tls.key and tlss.cert for signing and verifying JWTs")
 }
