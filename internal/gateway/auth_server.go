@@ -36,6 +36,11 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+const (
+	body_unauthorized    = "unauthorized"
+	body_unauthenticated = "unauthenticated"
+)
+
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	envoy_auth.UnimplementedAuthorizationServer
@@ -79,7 +84,7 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 		authenticated = authToken != nil
 	}
 	if !authenticated {
-		return s.createUnauthorizedResponse(), nil
+		return s.createUnauthorizedResponse(body_unauthenticated), nil
 	}
 
 	// Get message body for policy evaluation in the future
@@ -90,12 +95,12 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 	authorized, err = s.validatePolicies(ctx, req)
 	if err != nil {
 		s.log.Error(err, "Error checking authorization of user.")
-		return s.createUnauthorizedResponse(), err
+		return s.createUnauthorizedResponse(body_unauthorized), err
 	}
 	if authorized {
 		return s.createAuthorizedResponse(authToken), nil
 	}
-	return s.createUnauthorizedResponse(), nil
+	return s.createUnauthorizedResponse(body_unauthorized), nil
 }
 
 // validatePolicies validates the configured policies using OPA
@@ -120,7 +125,6 @@ func (s *authServer) tokenValidationFromContext(ctx context.Context, req *envoy_
 	}
 
 	// Check user actually exists in m8
-
 	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
 	if err != nil && !authToken.IsAPIToken {
 		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
@@ -230,15 +234,15 @@ func (s *authServer) createAuthorizedResponse(authToken *jwt.AuthToken) *envoy_a
 	}
 }
 
-func (s *authServer) createUnauthorizedResponse() *envoy_auth.CheckResponse {
+func (s *authServer) createUnauthorizedResponse(body string) *envoy_auth.CheckResponse {
 	return &envoy_auth.CheckResponse{
 		Status: &status.Status{Code: int32(codes.Unauthenticated)},
 		HttpResponse: &envoy_auth.CheckResponse_DeniedResponse{
 			DeniedResponse: &envoy_auth.DeniedHttpResponse{
 				Status: &envoy_type.HttpStatus{
-					Code: envoy_type.StatusCode_Accepted,
+					Code: envoy_type.StatusCode_Unauthorized,
 				},
-				Body: "UNAUTHORIZED",
+				Body: body,
 			},
 		},
 	}
