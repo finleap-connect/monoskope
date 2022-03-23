@@ -72,7 +72,7 @@ spec:
             - name: M8_OPERATION_MODE
               value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
             - name: GIN_MODE
-              value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
+              value: "release"
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:
