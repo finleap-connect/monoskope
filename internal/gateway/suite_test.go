@@ -235,7 +235,12 @@ var _ = BeforeSuite(func() {
 		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, map[string]time.Duration{
 			"default": time.Hour * 1,
 		})
-		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, os.Getenv("POLICIES_PATH"))
+
+		policiesPath := os.Getenv("POLICIES_PATH")
+		if policiesPath == "" {
+			Expect(fmt.Errorf("POLICIES_PATH not specified")).ToNot(HaveOccurred())
+		}
+		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, policiesPath)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
