@@ -15,8 +15,8 @@ spec:
   proto: grpc
   timeout_ms: 5000
   include_body:
-    max_bytes: 4096
-    allow_partial: true
+    # max_bytes: 4096
+    allow_partial: false
   status_on_error:
     code: 403
   failure_mode_allow: false
