@@ -235,7 +235,8 @@ var _ = BeforeSuite(func() {
 		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, map[string]time.Duration{
 			"default": time.Hour * 1,
 		})
-		envoyAuthServer := NewAuthServer(localAddrAPIServer, authServer, userRepo, os.Getenv("POLICIES_PATH"))
+		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, os.Getenv("POLICIES_PATH"))
+		Expect(err).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
 		env.GrpcServer = grpc.NewServer("gateway-grpc", false)
