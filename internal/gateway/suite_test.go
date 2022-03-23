@@ -125,7 +125,6 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 			"openid",
 			"profile",
 			"email",
-			"federated:id",
 		},
 		RedirectURIs: []string{
 			fmt.Sprintf("http://%s%s", RedirectURLHostname, RedirectURLPort),
