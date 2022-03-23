@@ -1156,8 +1156,8 @@ var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
 type AuditLogClient interface {
 	// GetByDateRange returns human readable events within the specified data range
 	GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error)
-	// GetByDateRange returns human readable events within the specified data range
-	GetUserActions(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error)
+	// GetUserActions returns human readable events caused by the given user actions
+	GetUserActions(ctx context.Context, in *GetUserActionsRequest, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error)
 }
 
 type auditLogClient struct {
@@ -1200,7 +1200,7 @@ func (x *auditLogGetByDateRangeClient) Recv() (*audit.HumanReadableEvent, error)
 	return m, nil
 }
 
-func (c *auditLogClient) GetUserActions(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error) {
+func (c *auditLogClient) GetUserActions(ctx context.Context, in *GetUserActionsRequest, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &AuditLog_ServiceDesc.Streams[1], "/domain.AuditLog/GetUserActions", opts...)
 	if err != nil {
 		return nil, err
@@ -1238,8 +1238,8 @@ func (x *auditLogGetUserActionsClient) Recv() (*audit.HumanReadableEvent, error)
 type AuditLogServer interface {
 	// GetByDateRange returns human readable events within the specified data range
 	GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error
-	// GetByDateRange returns human readable events within the specified data range
-	GetUserActions(*wrapperspb.StringValue, AuditLog_GetUserActionsServer) error
+	// GetUserActions returns human readable events caused by the given user actions
+	GetUserActions(*GetUserActionsRequest, AuditLog_GetUserActionsServer) error
 	mustEmbedUnimplementedAuditLogServer()
 }
 
@@ -1250,7 +1250,7 @@ type UnimplementedAuditLogServer struct {
 func (UnimplementedAuditLogServer) GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetByDateRange not implemented")
 }
-func (UnimplementedAuditLogServer) GetUserActions(*wrapperspb.StringValue, AuditLog_GetUserActionsServer) error {
+func (UnimplementedAuditLogServer) GetUserActions(*GetUserActionsRequest, AuditLog_GetUserActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetUserActions not implemented")
 }
 func (UnimplementedAuditLogServer) mustEmbedUnimplementedAuditLogServer() {}
@@ -1288,7 +1288,7 @@ func (x *auditLogGetByDateRangeServer) Send(m *audit.HumanReadableEvent) error {
 }
 
 func _AuditLog_GetUserActions_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrapperspb.StringValue)
+	m := new(GetUserActionsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

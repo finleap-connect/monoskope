@@ -64,15 +64,15 @@ var _ = Describe("AuditLog Test", func() {
 	}
 
 	It("can provide human-readable events", func() {
-		minTimestamp := time.Now().UTC()
-		midTimestamp := initEvents(commandHandlerClient, mdManager)
-		maxTimestamp := time.Now().UTC()
+		minTime := time.Now().UTC()
+		midTime := initEvents(commandHandlerClient, mdManager)
+		maxTime := time.Now().UTC()
 
 		When("getting by date range", func() {
 			By("using a general range")
 			dateRange := &domainApi.GetAuditLogByDateRangeRequest{
-				MinTimestamp: timestamppb.New(minTimestamp),
-				MaxTimestamp: timestamppb.New(maxTimestamp),
+				MinTimestamp: timestamppb.New(minTime),
+				MaxTimestamp: timestamppb.New(maxTime),
 			}
 
 			Eventually(func(g Gomega) {
@@ -95,8 +95,7 @@ var _ = Describe("AuditLog Test", func() {
 			}).Should(Succeed())
 
 			By("using a custom range")
-
-			dateRange.MaxTimestamp = timestamppb.New(midTimestamp)
+			dateRange.MaxTimestamp = timestamppb.New(midTime)
 
 			Eventually(func(g Gomega) {
 				events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
@@ -117,7 +116,13 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting user actions", func() {
 			Eventually(func(g Gomega) {
-				events, err := auditLogServiceClient().GetUserActions(ctx, wrapperspb.String(adminEmail))
+				events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
+					Email: wrapperspb.String(adminEmail),
+					DateRange: &domainApi.GetAuditLogByDateRangeRequest{
+						MinTimestamp: timestamppb.New(minTime),
+						MaxTimestamp: timestamppb.New(maxTime),
+					},
+				})
 				g.Expect(err).ToNot(HaveOccurred())
 
 				for {
@@ -130,6 +135,24 @@ var _ = Describe("AuditLog Test", func() {
 					g.Expect(e.Issuer).To(Equal(adminEmail))
 				}
 			}).Should(Succeed())
+		})
+	})
+
+	It("can not provide human-readable events", func() {
+		When("getting user actions with a range that exceeds one year", func() {
+			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
+			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
+			request := &domainApi.GetUserActionsRequest{
+				Email: wrapperspb.String(adminEmail),
+				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
+					MinTimestamp: timestamppb.New(minTime),
+					MaxTimestamp: timestamppb.New(maxTime),
+				},
+			}
+			events, err := auditLogServiceClient().GetUserActions(ctx, request)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = events.Recv()
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })
@@ -184,7 +207,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 
 	// 4 events
-	midTimeStamp := time.Now().UTC()
+	midTime := time.Now().UTC()
 
 	// CreateCluster
 	command, err = cmd.AddCommandData(
@@ -261,5 +284,5 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 		cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
 	Expect(err).ToNot(HaveOccurred())
 
-	return midTimeStamp
+	return midTime
 }

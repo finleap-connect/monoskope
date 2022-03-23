@@ -707,3 +707,162 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetAuditLogByDateRangeRequestValidationError{}
+
+// Validate checks the field values on GetUserActionsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetUserActionsRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetUserActionsRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetUserActionsRequestMultiError, or nil if none found.
+func (m *GetUserActionsRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetUserActionsRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetEmail()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetUserActionsRequestValidationError{
+					field:  "Email",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetUserActionsRequestValidationError{
+					field:  "Email",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetEmail()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetUserActionsRequestValidationError{
+				field:  "Email",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDateRange()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetUserActionsRequestValidationError{
+					field:  "DateRange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetUserActionsRequestValidationError{
+					field:  "DateRange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDateRange()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetUserActionsRequestValidationError{
+				field:  "DateRange",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetUserActionsRequestMultiError(errors)
+	}
+	return nil
+}
+
+// GetUserActionsRequestMultiError is an error wrapping multiple validation
+// errors returned by GetUserActionsRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetUserActionsRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetUserActionsRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetUserActionsRequestMultiError) AllErrors() []error { return m }
+
+// GetUserActionsRequestValidationError is the validation error returned by
+// GetUserActionsRequest.Validate if the designated constraints aren't met.
+type GetUserActionsRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetUserActionsRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetUserActionsRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetUserActionsRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetUserActionsRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetUserActionsRequestValidationError) ErrorName() string {
+	return "GetUserActionsRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetUserActionsRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetUserActionsRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetUserActionsRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetUserActionsRequestValidationError{}

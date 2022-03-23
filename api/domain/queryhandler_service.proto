@@ -88,7 +88,7 @@ service AuditLog{
   // GetByDateRange returns human readable events within the specified data range
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
   // GetUserActions returns human readable events caused by the given user actions
-  rpc GetUserActions(google.protobuf.StringValue) returns (stream audit.HumanReadableEvent);
+  rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
 }
 
 service Certificate {
@@ -117,4 +117,9 @@ message GetCountResult { int64 count = 1; }
 message GetAuditLogByDateRangeRequest {
   google.protobuf.Timestamp min_timestamp = 1;
   google.protobuf.Timestamp max_timestamp = 2;
+}
+
+message GetUserActionsRequest {
+  google.protobuf.StringValue email = 1;
+  GetAuditLogByDateRangeRequest date_range = 2;
 }

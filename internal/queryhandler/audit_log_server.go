@@ -21,7 +21,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"io"
 	"time"
 
@@ -90,15 +89,22 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 	return nil
 }
 
-// GetUserActions returns human readable events caused by the given user actions
-func (s *auditLogServer) GetUserActions(email *wrappers.StringValue, stream doApi.AuditLog_GetUserActionsServer) error {
+// GetUserActions returns human-readable events caused by the given user actions
+func (s *auditLogServer) GetUserActions(request *doApi.GetUserActionsRequest, stream doApi.AuditLog_GetUserActionsServer) error {
 	ctx := context.Background()
 
-	user, err := s.userRepo.ByEmail(ctx, email.GetValue())
+	if request.DateRange.MaxTimestamp.AsTime().Sub(request.DateRange.MinTimestamp.AsTime()) > time.Hour*24*365 {
+		return errors.TranslateToGrpcError(errors.ErrInvalidArgument("date range cannot exceed one year")) // see PR #90
+	}
+
+	user, err := s.userRepo.ByEmail(ctx, request.Email.GetValue())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
-	events, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{})
+	events, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{
+		MinTimestamp: request.DateRange.MinTimestamp,
+		MaxTimestamp: request.DateRange.MaxTimestamp,
+	})
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
@@ -111,8 +117,6 @@ func (s *auditLogServer) GetUserActions(email *wrappers.StringValue, stream doAp
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
 		}
-		// TODO: extend EventFilter and implement on store level? should be cheaper than iterating through all events?
-		// 	- problem: event metadata are stored as json
 		if e.Metadata[auth.HeaderAuthId] != user.Id {
 			continue
 		}
