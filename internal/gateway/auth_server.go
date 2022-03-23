@@ -45,15 +45,16 @@ const (
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	envoy_auth.UnimplementedAuthorizationServer
-	log          logger.Logger
-	oidcServer   *auth.Server
-	userRepo     repositories.ReadOnlyUserRepository
-	issuerURL    string
-	policiesPath string
+	log           logger.Logger
+	oidcServer    *auth.Server
+	userRepo      repositories.ReadOnlyUserRepository
+	issuerURL     string
+	policiesPath  string
+	preparedQuery *rego.PreparedEvalQuery
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository, policiesPath string) *authServer {
+func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository, policiesPath string) (*authServer, error) {
 	s := &authServer{
 		log:          logger.WithName("auth-server"),
 		oidcServer:   oidcServer,
@@ -61,7 +62,17 @@ func NewAuthServer(issuerURL string, oidcServer *auth.Server, userRepo repositor
 		issuerURL:    issuerURL,
 		policiesPath: policiesPath,
 	}
-	return s
+
+	query, err := rego.New(
+		rego.Query("x = data.m8.authz.authorized"),
+		rego.Load([]string{s.policiesPath}, nil),
+	).PrepareForEval(ctx)
+	if err != nil {
+		return nil, err
+	}
+	s.preparedQuery = &query
+
+	return s, nil
 }
 
 // Check request object.
@@ -106,41 +117,53 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 	return s.createUnauthorizedResponse(body_unauthorized), nil
 }
 
+type policyRoles struct {
+	Scope    string
+	Role     string
+	Resource string
+}
+type policyUser struct {
+	Id    string
+	Name  string
+	Roles []policyRoles
+}
+type policyInput struct {
+	User policyUser
+}
+
 // validatePolicies validates the configured policies using OPA
 func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
-	query, err := rego.New(
-		rego.Query("x = data.m8.authz.authorized"),
-		rego.Load([]string{s.policiesPath}, nil),
-	).PrepareForEval(ctx)
-	if err != nil {
-		return false, err
-	}
-
 	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
 	if err != nil {
-		s.log.Error(err, "Policy evaluation failed. User does not exist.", "Email", authToken.Email)
+		s.log.Error(err, "Policy evaluation failed. User does not exist.", "email", authToken.Email)
 		return false, err
 	}
 
-	input := map[string]interface{}{
-		"user": map[string]interface{}{
-			"id":    user.Id,
-			"name":  user.Name,
-			"roles": user.Roles,
+	input := policyInput{
+		User: policyUser{
+			Id:   user.Id,
+			Name: user.Name,
 		},
 	}
+	input.User.Roles = make([]policyRoles, 0)
+	for _, role := range user.Roles {
+		input.User.Roles = append(input.User.Roles, policyRoles{
+			Scope:    role.Scope,
+			Role:     role.Role,
+			Resource: role.Resource,
+		})
+	}
 
-	results, err := query.Eval(ctx, rego.EvalInput(input))
+	results, err := s.preparedQuery.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
-		// Handle evaluation error.
 		s.log.Error(err, "Policy evaluation failed.", "email", authToken.Email)
 		return false, err
-	} else if len(results) == 0 {
-		// Handle undefined result.
-		s.log.Info("Policy evaluation failed. No results.", "email", authToken.Email)
-		return false, err
 	}
-	return results.Allowed(), err
+	if !results.Allowed() {
+		s.log.Info("Policy evaluation failed.", "email", authToken.Email, "results", results)
+		return false, nil
+	}
+	return results.Allowed(), nil
 }
 
 func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
