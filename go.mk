@@ -34,7 +34,6 @@ ARCH = osx-x86_64
 endif
 
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
-export POLICIES_PATH = $(BUILD_PATH)/build/package/helm/gateway/files/policies
 export M8_OPERATION_MODE = development
 
 .PHONY: go-lint go-mod go-fmt go-vet go-test go-clean go-report go-protobuf ginkgo-get
