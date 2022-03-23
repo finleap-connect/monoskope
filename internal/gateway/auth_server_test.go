@@ -36,7 +36,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 	It("can authenticate with JWT", func() {
 		expectedValidity := time.Hour * 1
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.AdminUser.Name, Email: env.AdminUser.Email}, localAddrAPIServer, env.AdminUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
