@@ -71,6 +71,7 @@ type oAuthTestEnv struct {
 	AdminUser                     *projections.User
 	ExistingUser                  *projections.User
 	NotExistingUser               *projections.User
+	PoliciesPath                  string
 }
 
 func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
@@ -134,6 +135,13 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 		URL:           localAddrOIDCProviderServer,
 		TokenValidity: time.Minute * 1,
 	}
+
+	policiesPath := os.Getenv("POLICIES_PATH")
+	if policiesPath == "" {
+		Expect(fmt.Errorf("POLICIES_PATH not specified")).ToNot(HaveOccurred())
+	}
+	env.PoliciesPath = policiesPath
+
 	return env, nil
 }
 
@@ -236,11 +244,7 @@ var _ = BeforeSuite(func() {
 			"default": time.Hour * 1,
 		})
 
-		policiesPath := os.Getenv("POLICIES_PATH")
-		if policiesPath == "" {
-			Expect(fmt.Errorf("POLICIES_PATH not specified")).ToNot(HaveOccurred())
-		}
-		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, policiesPath)
+		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
