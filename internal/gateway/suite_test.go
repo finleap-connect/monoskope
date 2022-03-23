@@ -38,6 +38,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/ory/dockertest/v3"
@@ -138,7 +139,7 @@ func SetupAuthTestEnv(envName string) (*oAuthTestEnv, error) {
 
 	policiesPath := os.Getenv("POLICIES_PATH")
 	if policiesPath == "" {
-		Expect(fmt.Errorf("POLICIES_PATH not specified")).ToNot(HaveOccurred())
+		return nil, fmt.Errorf("POLICIES_PATH not specified")
 	}
 	env.PoliciesPath = policiesPath
 
@@ -173,6 +174,8 @@ var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
+		defer ginkgo.GinkgoRecover()
+
 		var err error
 		ctx := context.Background()
 
@@ -244,8 +247,8 @@ var _ = BeforeSuite(func() {
 			"default": time.Hour * 1,
 		})
 
-		envoyAuthServer, err := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
-		Expect(err).ToNot(HaveOccurred())
+		envoyAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
+		Expect(errAuthServer).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
 		env.GrpcServer = grpc.NewServer("gateway-grpc", false)
