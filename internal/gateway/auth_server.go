@@ -42,6 +42,23 @@ const (
 	body_unauthenticated = "unauthenticated"
 )
 
+type policyRoles struct {
+	Name     string
+	Scope    string
+	Resource string
+}
+
+type policyUser struct {
+	Id    string
+	Name  string
+	Roles []policyRoles
+}
+
+type policyInput struct {
+	User policyUser
+	Path string
+}
+
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	envoy_auth.UnimplementedAuthorizationServer
@@ -64,7 +81,7 @@ func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Serve
 	}
 
 	query, err := rego.New(
-		rego.Query("x = data.m8.authz.authorized"),
+		rego.Query("data.m8.authz.authorized"),
 		rego.Load([]string{s.policiesPath}, nil),
 	).PrepareForEval(ctx)
 	if err != nil {
@@ -117,20 +134,6 @@ func (s *authServer) Check(ctx context.Context, req *envoy_auth.CheckRequest) (*
 	return s.createUnauthorizedResponse(body_unauthorized), nil
 }
 
-type policyRoles struct {
-	Scope    string
-	Role     string
-	Resource string
-}
-type policyUser struct {
-	Id    string
-	Name  string
-	Roles []policyRoles
-}
-type policyInput struct {
-	User policyUser
-}
-
 // validatePolicies validates the configured policies using OPA
 func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
 	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
@@ -144,12 +147,14 @@ func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.Check
 			Id:   user.Id,
 			Name: user.Name,
 		},
+		Path: req.Attributes.Request.Http.Path,
 	}
+
 	input.User.Roles = make([]policyRoles, 0)
 	for _, role := range user.Roles {
 		input.User.Roles = append(input.User.Roles, policyRoles{
+			Name:     role.Role,
 			Scope:    role.Scope,
-			Role:     role.Role,
 			Resource: role.Resource,
 		})
 	}
@@ -163,6 +168,7 @@ func (s *authServer) validatePolicies(ctx context.Context, req *envoy_auth.Check
 		s.log.Info("Policy evaluation failed.", "email", authToken.Email, "results", results)
 		return false, nil
 	}
+	s.log.Info("Policy evaluation succeeded.", "email", authToken.Email, "results", results)
 	return results.Allowed(), nil
 }
 

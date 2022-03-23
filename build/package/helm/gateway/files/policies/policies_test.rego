@@ -1,8 +1,10 @@
 package m8.authz
 
-alice_admin = {"user": {"id": "1234", "name": "alice", "roles": [{"name": "admin", "scope": "system"}, {"name": "admin", "scope": "tenant", "resource": "1234"}]}}
+alice_admin = {"User": {"Id": "1234", "Name": "alice", "Roles": [{"Name": "admin", "Scope": "system"}, {"Name": "admin", "Scope": "tenant", "Resource": "1234"}]}}
 
-bob_tenant_admin = {"user": {"id": "1234", "name": "bob", "roles": [{"name": "admin", "scope": "tenant"}]}}
+bob_tenant_admin = {"User": {"Id": "12345", "Name": "bob", "Roles": [{"Name": "admin", "Scope": "tenant"}]}}
+
+jane = {"User": {"Id": "123456", "Name": "jane"}, "Path": "/domain.Cluster/"}
 
 test_system_admin {
 	is_system_admin with input as alice_admin
@@ -11,4 +13,5 @@ test_system_admin {
 
 test_authorized {
 	authorized with input as alice_admin
+	authorized with input as jane
 }
