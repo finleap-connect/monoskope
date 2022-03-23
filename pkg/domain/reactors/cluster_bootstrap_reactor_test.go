@@ -38,6 +38,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("package reactors", func() {
@@ -146,7 +147,7 @@ var _ = Describe("package reactors", func() {
 				k8sClient.EXPECT().Get(gomock.Any(), types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
 					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
 
-				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
+				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object, _ ...client.CreateOption) error {
 					cr := obj.(*cmapi.CertificateRequest)
 					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 						crGet := obj.(*cmapi.CertificateRequest)
