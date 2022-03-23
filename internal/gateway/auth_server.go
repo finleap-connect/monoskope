@@ -66,23 +66,21 @@ type authServer struct {
 	oidcServer    *auth.Server
 	userRepo      repositories.ReadOnlyUserRepository
 	issuerURL     string
-	policiesPath  string
 	preparedQuery *rego.PreparedEvalQuery
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
 func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository, policiesPath string) (*authServer, error) {
 	s := &authServer{
-		log:          logger.WithName("auth-server"),
-		oidcServer:   oidcServer,
-		userRepo:     userRepo,
-		issuerURL:    issuerURL,
-		policiesPath: policiesPath,
+		log:        logger.WithName("auth-server"),
+		oidcServer: oidcServer,
+		userRepo:   userRepo,
+		issuerURL:  issuerURL,
 	}
 
 	query, err := rego.New(
 		rego.Query("data.m8.authz.authorized"),
-		rego.Load([]string{s.policiesPath}, nil),
+		rego.Load([]string{policiesPath}, nil),
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, err
