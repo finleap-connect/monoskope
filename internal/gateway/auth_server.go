@@ -44,19 +44,21 @@ const (
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	envoy_auth.UnimplementedAuthorizationServer
-	log        logger.Logger
-	oidcServer *auth.Server
-	userRepo   repositories.ReadOnlyUserRepository
-	issuerURL  string
+	log          logger.Logger
+	oidcServer   *auth.Server
+	userRepo     repositories.ReadOnlyUserRepository
+	issuerURL    string
+	policiesPath string
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
+func NewAuthServer(issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository, policiesPath string) *authServer {
 	s := &authServer{
-		log:        logger.WithName("auth-server"),
-		oidcServer: oidcServer,
-		userRepo:   userRepo,
-		issuerURL:  issuerURL,
+		log:          logger.WithName("auth-server"),
+		oidcServer:   oidcServer,
+		userRepo:     userRepo,
+		issuerURL:    issuerURL,
+		policiesPath: policiesPath,
 	}
 	return s
 }
