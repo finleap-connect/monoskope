@@ -5,6 +5,10 @@ import future.keywords.in
 default authorized = false
 
 authorized {
+	input.path == ["/domain.Cluster/"]
+}
+
+authorized {
 	is_system_admin
 }
 
