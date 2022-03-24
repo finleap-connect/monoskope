@@ -72,10 +72,10 @@ func (m *RequestCertificate) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetReferencedAggregateType()) > 60 {
+	if utf8.RuneCountInString(m.GetReferencedAggregateType()) > 60 {
 		err := RequestCertificateValidationError{
 			field:  "ReferencedAggregateType",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err

@@ -183,26 +183,7 @@ func (m *UpstreamAuthenticationResponse) validate(all bool) error {
 
 	var errors []error
 
-	if uri, err := url.Parse(m.GetUpstreamIdpRedirect()); err != nil {
-		err = UpstreamAuthenticationResponseValidationError{
-			field:  "UpstreamIdpRedirect",
-			reason: "value must be a valid URI",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	} else if !uri.IsAbs() {
-		err := UpstreamAuthenticationResponseValidationError{
-			field:  "UpstreamIdpRedirect",
-			reason: "value must be absolute",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for UpstreamIdpRedirect
 
 	// no validation rules for State
 
@@ -308,9 +289,27 @@ func (m *AuthenticationRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Code
+	if utf8.RuneCountInString(m.GetCode()) < 1 {
+		err := AuthenticationRequestValidationError{
+			field:  "Code",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for State
+	if utf8.RuneCountInString(m.GetState()) < 1 {
+		err := AuthenticationRequestValidationError{
+			field:  "State",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return AuthenticationRequestMultiError(errors)
@@ -1054,10 +1053,10 @@ func (m *ClusterAuthTokenRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetRole()) > 60 {
+	if utf8.RuneCountInString(m.GetRole()) > 60 {
 		err := ClusterAuthTokenRequestValidationError{
 			field:  "Role",
-			reason: "value length must be at most 60 bytes",
+			reason: "value length must be at most 60 runes",
 		}
 		if !all {
 			return err
@@ -1365,7 +1364,17 @@ func (m *APITokenRequest) validate(all bool) error {
 		}
 
 	case *APITokenRequest_Username:
-		// no validation rules for Username
+
+		if utf8.RuneCountInString(m.GetUsername()) < 1 {
+			err := APITokenRequestValidationError{
+				field:  "Username",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 	}
 
@@ -1583,3 +1592,351 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = APITokenResponseValidationError{}
+
+// Validate checks the field values on CheckRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CheckRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CheckRequestMultiError, or
+// nil if none found.
+func (m *CheckRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetFullMethodName()) < 1 {
+		err := CheckRequestValidationError{
+			field:  "FullMethodName",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CheckRequestMultiError(errors)
+	}
+	return nil
+}
+
+// CheckRequestMultiError is an error wrapping multiple validation errors
+// returned by CheckRequest.ValidateAll() if the designated constraints aren't met.
+type CheckRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckRequestMultiError) AllErrors() []error { return m }
+
+// CheckRequestValidationError is the validation error returned by
+// CheckRequest.Validate if the designated constraints aren't met.
+type CheckRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckRequestValidationError) ErrorName() string { return "CheckRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CheckRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckRequestValidationError{}
+
+// Validate checks the field values on CheckResponse with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CheckResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CheckResponseMultiError, or
+// nil if none found.
+func (m *CheckResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTags() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckResponseValidationError{
+						field:  fmt.Sprintf("Tags[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckResponseValidationError{
+						field:  fmt.Sprintf("Tags[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResponseValidationError{
+					field:  fmt.Sprintf("Tags[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CheckResponseMultiError(errors)
+	}
+	return nil
+}
+
+// CheckResponseMultiError is an error wrapping multiple validation errors
+// returned by CheckResponse.ValidateAll() if the designated constraints
+// aren't met.
+type CheckResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResponseMultiError) AllErrors() []error { return m }
+
+// CheckResponseValidationError is the validation error returned by
+// CheckResponse.Validate if the designated constraints aren't met.
+type CheckResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResponseValidationError) ErrorName() string { return "CheckResponseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CheckResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResponseValidationError{}
+
+// Validate checks the field values on CheckResponse_CheckResponseTag with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckResponse_CheckResponseTag) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResponse_CheckResponseTag with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// CheckResponse_CheckResponseTagMultiError, or nil if none found.
+func (m *CheckResponse_CheckResponseTag) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResponse_CheckResponseTag) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Key
+
+	// no validation rules for Value
+
+	if len(errors) > 0 {
+		return CheckResponse_CheckResponseTagMultiError(errors)
+	}
+	return nil
+}
+
+// CheckResponse_CheckResponseTagMultiError is an error wrapping multiple
+// validation errors returned by CheckResponse_CheckResponseTag.ValidateAll()
+// if the designated constraints aren't met.
+type CheckResponse_CheckResponseTagMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResponse_CheckResponseTagMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResponse_CheckResponseTagMultiError) AllErrors() []error { return m }
+
+// CheckResponse_CheckResponseTagValidationError is the validation error
+// returned by CheckResponse_CheckResponseTag.Validate if the designated
+// constraints aren't met.
+type CheckResponse_CheckResponseTagValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResponse_CheckResponseTagValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResponse_CheckResponseTagValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResponse_CheckResponseTagValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResponse_CheckResponseTagValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResponse_CheckResponseTagValidationError) ErrorName() string {
+	return "CheckResponse_CheckResponseTagValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResponse_CheckResponseTagValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResponse_CheckResponseTag.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResponse_CheckResponseTagValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResponse_CheckResponseTagValidationError{}
