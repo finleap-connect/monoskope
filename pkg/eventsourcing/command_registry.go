@@ -90,7 +90,7 @@ func (r *commandRegistry) RegisterCommand(factory func(uuid.UUID) Command) {
 	}
 	r.commands[commandType] = factory
 
-	r.log.Info("command has been registered.", "commandType", commandType)
+	r.log.V(logger.DebugLevel).Info("command has been registered.", "commandType", commandType)
 }
 
 // CreateCommand creates an command of a type with an ID using the factory
@@ -135,5 +135,5 @@ func (r *commandRegistry) SetHandler(handler CommandHandler, commandType Command
 	}
 
 	r.handlers[commandType] = handler
-	r.log.Info("command handler has been registered.", "commandType", commandType)
+	r.log.V(logger.DebugLevel).Info("command handler has been registered.", "commandType", commandType)
 }

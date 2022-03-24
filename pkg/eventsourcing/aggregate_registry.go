@@ -73,7 +73,7 @@ func (r *aggregateRegistry) RegisterAggregate(factory func() Aggregate) {
 	}
 	r.aggregates[aggregateType] = factory
 
-	r.log.Info("aggregate has been registered.", "aggregateType", aggregateType)
+	r.log.V(logger.DebugLevel).Info("aggregate has been registered.", "aggregateType", aggregateType)
 }
 
 // CreateAggregate creates an aggregate of a type with an ID using the factory
