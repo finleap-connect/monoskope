@@ -21,9 +21,6 @@ const _ = grpc.SupportPackageIsVersion7
 type CommandHandlerExtensionsClient interface {
 	// Returns roles and scopes available.
 	GetPermissionModel(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*PermissionModel, error)
-	// Returns overview of commands and which policies are necessary to execute
-	// them.
-	GetPolicyOverview(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*PolicyOverview, error)
 }
 
 type commandHandlerExtensionsClient struct {
@@ -43,24 +40,12 @@ func (c *commandHandlerExtensionsClient) GetPermissionModel(ctx context.Context,
 	return out, nil
 }
 
-func (c *commandHandlerExtensionsClient) GetPolicyOverview(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*PolicyOverview, error) {
-	out := new(PolicyOverview)
-	err := c.cc.Invoke(ctx, "/domain.CommandHandlerExtensions/GetPolicyOverview", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CommandHandlerExtensionsServer is the server API for CommandHandlerExtensions service.
 // All implementations must embed UnimplementedCommandHandlerExtensionsServer
 // for forward compatibility
 type CommandHandlerExtensionsServer interface {
 	// Returns roles and scopes available.
 	GetPermissionModel(context.Context, *emptypb.Empty) (*PermissionModel, error)
-	// Returns overview of commands and which policies are necessary to execute
-	// them.
-	GetPolicyOverview(context.Context, *emptypb.Empty) (*PolicyOverview, error)
 	mustEmbedUnimplementedCommandHandlerExtensionsServer()
 }
 
@@ -70,9 +55,6 @@ type UnimplementedCommandHandlerExtensionsServer struct {
 
 func (UnimplementedCommandHandlerExtensionsServer) GetPermissionModel(context.Context, *emptypb.Empty) (*PermissionModel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPermissionModel not implemented")
-}
-func (UnimplementedCommandHandlerExtensionsServer) GetPolicyOverview(context.Context, *emptypb.Empty) (*PolicyOverview, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyOverview not implemented")
 }
 func (UnimplementedCommandHandlerExtensionsServer) mustEmbedUnimplementedCommandHandlerExtensionsServer() {
 }
@@ -106,24 +88,6 @@ func _CommandHandlerExtensions_GetPermissionModel_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CommandHandlerExtensions_GetPolicyOverview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CommandHandlerExtensionsServer).GetPolicyOverview(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/domain.CommandHandlerExtensions/GetPolicyOverview",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommandHandlerExtensionsServer).GetPolicyOverview(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // CommandHandlerExtensions_ServiceDesc is the grpc.ServiceDesc for CommandHandlerExtensions service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,10 +98,6 @@ var CommandHandlerExtensions_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPermissionModel",
 			Handler:    _CommandHandlerExtensions_GetPermissionModel_Handler,
-		},
-		{
-			MethodName: "GetPolicyOverview",
-			Handler:    _CommandHandlerExtensions_GetPolicyOverview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
