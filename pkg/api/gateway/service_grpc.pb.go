@@ -222,6 +222,96 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/gateway/service.proto",
 }
 
+// GatewayAuthZClient is the client API for GatewayAuthZ service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type GatewayAuthZClient interface {
+	// Performs authorization check based on the attributes associated with the
+	// incoming request, and returns status `OK` or not `OK`.
+	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
+}
+
+type gatewayAuthZClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGatewayAuthZClient(cc grpc.ClientConnInterface) GatewayAuthZClient {
+	return &gatewayAuthZClient{cc}
+}
+
+func (c *gatewayAuthZClient) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
+	out := new(CheckResponse)
+	err := c.cc.Invoke(ctx, "/gateway.GatewayAuthZ/Check", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GatewayAuthZServer is the server API for GatewayAuthZ service.
+// All implementations must embed UnimplementedGatewayAuthZServer
+// for forward compatibility
+type GatewayAuthZServer interface {
+	// Performs authorization check based on the attributes associated with the
+	// incoming request, and returns status `OK` or not `OK`.
+	Check(context.Context, *CheckRequest) (*CheckResponse, error)
+	mustEmbedUnimplementedGatewayAuthZServer()
+}
+
+// UnimplementedGatewayAuthZServer must be embedded to have forward compatible implementations.
+type UnimplementedGatewayAuthZServer struct {
+}
+
+func (UnimplementedGatewayAuthZServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
+}
+func (UnimplementedGatewayAuthZServer) mustEmbedUnimplementedGatewayAuthZServer() {}
+
+// UnsafeGatewayAuthZServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GatewayAuthZServer will
+// result in compilation errors.
+type UnsafeGatewayAuthZServer interface {
+	mustEmbedUnimplementedGatewayAuthZServer()
+}
+
+func RegisterGatewayAuthZServer(s grpc.ServiceRegistrar, srv GatewayAuthZServer) {
+	s.RegisterService(&GatewayAuthZ_ServiceDesc, srv)
+}
+
+func _GatewayAuthZ_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayAuthZServer).Check(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.GatewayAuthZ/Check",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayAuthZServer).Check(ctx, req.(*CheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// GatewayAuthZ_ServiceDesc is the grpc.ServiceDesc for GatewayAuthZ service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GatewayAuthZ_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gateway.GatewayAuthZ",
+	HandlerType: (*GatewayAuthZServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Check",
+			Handler:    _GatewayAuthZ_Check_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/gateway/service.proto",
+}
+
 // ClusterAuthClient is the client API for ClusterAuth service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
