@@ -27,9 +27,13 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/metrics"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_logsettable "github.com/grpc-ecosystem/go-grpc-middleware/logging/settable"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	grpc_tracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
@@ -53,7 +57,7 @@ func NewServer(name string, keepAlive bool) *Server {
 	return NewServerWithOpts(name, keepAlive, []grpc.UnaryServerInterceptor{}, []grpc.StreamServerInterceptor{})
 }
 
-// NewServerWithOpts returns a new configured instance of Server with additional interceptros specified
+// NewServerWithOpts returns a new configured instance of Server with additional interceptors specified
 func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
@@ -61,20 +65,27 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		shutdown: util.NewShutdownWaitGroup(),
 	}
 
+	settableLogger := grpc_logsettable.ReplaceGrpcLoggerV2()
+	settableLogger.Set(grpclog.NewLoggerV2(logger.NewGrpcLog(s.log, logger.InfoLevel), logger.NewGrpcLog(s.log, logger.WarnLevel), logger.NewGrpcLog(s.log, logger.ErrorLevel)))
+
 	// Add default interceptors
 	unaryServerInterceptors = append(unaryServerInterceptors,
+		grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 		grpc_prometheus.UnaryServerInterceptor, // add prometheus metrics interceptors
 		grpc_recovery.UnaryServerInterceptor(), // add recovery from panics
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.UnaryServerInterceptor(), // add message validator
 		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
+		grpc_tracing.UnaryServerInterceptor(),
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
+		grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 		grpc_prometheus.StreamServerInterceptor, // add prometheus metrics interceptors
 		grpc_recovery.StreamServerInterceptor(), // add recovery from panics
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.StreamServerInterceptor(), // add message validator
 		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
+		grpc_tracing.StreamServerInterceptor(),
 	)
 
 	// Configure gRPC server

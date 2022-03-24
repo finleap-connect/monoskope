@@ -15,10 +15,11 @@
 package event
 
 import (
+	"sync"
+
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"sync"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 )
@@ -76,7 +77,7 @@ func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, 
 	}
 	r.eventFormatters[eventType] = factory
 
-	r.log.Info("event-formatter factory for event-type has been registered.", "eventType", eventType)
+	r.log.V(logger.DebugLevel).Info("event-formatter factory for event-type has been registered.", "eventType", eventType)
 	return nil
 }
 
