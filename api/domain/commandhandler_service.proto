@@ -28,22 +28,28 @@ package domain;
 service CommandHandlerExtensions {
   // Returns roles and scopes available.
   rpc GetPermissionModel(google.protobuf.Empty) returns (PermissionModel);
-  // Returns overview of commands and which policies are necessary to execute
-  // them.
-  rpc GetPolicyOverview(google.protobuf.Empty) returns (PolicyOverview);
 }
 
 message PermissionModel {
-  repeated string roles = 1 [(validate.rules).repeated.items.string = {pattern: "^[a-z]+$", max_bytes: 60}];
-  repeated string scopes = 2 [(validate.rules).repeated.items.string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  repeated string roles = 1 [ (validate.rules).repeated .items.string = {
+    pattern : "^[a-z]+$",
+    max_bytes : 60
+  } ];
+  repeated string scopes = 2 [ (validate.rules).repeated .items.string = {
+    pattern : "^[a-z]+$",
+    max_bytes : 60
+  } ];
 }
 
-message PolicyOverview {
-  repeated Policy policies = 1;
-}
+message PolicyOverview { repeated Policy policies = 1; }
 
 message Policy {
-  string command = 1 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
-  string role = 2 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
-  string scope = 3 [(validate.rules).string = {pattern: "^[a-z]+$", max_bytes: 60}];
+  string command = 1 [ (validate.rules).string = {
+    pattern : "^[a-zA-Z][A-Za-z0-9_-]+$",
+    max_bytes : 60
+  } ];
+  string role = 2
+      [ (validate.rules).string = {pattern : "^[a-z]+$", max_bytes : 60} ];
+  string scope = 3
+      [ (validate.rules).string = {pattern : "^[a-z]+$", max_bytes : 60} ];
 }
