@@ -35,6 +35,10 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		It("should ensure rules are valid", func() {
 			ctx := context.Background()
 			newCtx := ctxWithToken(ctx, "bearer", "onetoken")
+			middleware := NewAuthNMiddleware("dummyurl").(*authNMiddleware)
+			resultCtx, err := middleware.authnWithGateway(newCtx, "somemethod")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resultCtx).ToNot(BeNil())
 		})
 	})
 
