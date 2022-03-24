@@ -28,33 +28,19 @@ import (
 )
 
 type authNMiddleware struct {
-	authnServiceURL string
-	conn            *grpc.ClientConn
-	client          api.GatewayAuthZClient
+	factory *mgrpc.GrpcConnectionFactory
 }
 
 func NewAuthNMiddleware(authnServiceURL string) middleware.GRPCMiddleware {
-	return &authNMiddleware{authnServiceURL: authnServiceURL}
-}
-
-func (m *authNMiddleware) initialize(ctx context.Context) error {
-	// Connect to Gateway
-	factory := mgrpc.NewGrpcConnectionFactory(m.authnServiceURL).WithOSCaTransportCredentials()
-	conn, err := factory.WithRetry().WithBlock().Connect(ctx)
-	if err != nil {
-		return err
+	return &authNMiddleware{
+		mgrpc.NewGrpcConnectionFactory(authnServiceURL).WithOSCaTransportCredentials().WithRetry().WithBlock(),
 	}
-
-	m.conn = conn
-	m.client = api.NewGatewayAuthZClient(conn)
-	return nil
 }
 
 // authnWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
 func (m *authNMiddleware) authnWithGateway(ctx context.Context, fullMethodName string) (context.Context, error) {
 	// Connect to Gateway
-	factory := mgrpc.NewGrpcConnectionFactory(m.authnServiceURL).WithOSCaTransportCredentials()
-	conn, err := factory.WithRetry().WithBlock().Connect(ctx)
+	conn, err := m.factory.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
