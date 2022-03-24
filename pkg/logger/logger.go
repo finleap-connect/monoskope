@@ -24,6 +24,7 @@ import (
 )
 
 type Logger = logr.Logger
+type LogLevel = int
 
 var (
 	zapLog        *zap.Logger
@@ -32,10 +33,10 @@ var (
 )
 
 const (
-	DebugLevel = 1
-	InfoLevel  = 0
-	WarnLevel  = -1
-	ErrorLevel = -2
+	DebugLevel LogLevel = 1
+	InfoLevel  LogLevel = 0
+	WarnLevel  LogLevel = -1
+	ErrorLevel LogLevel = -2
 )
 
 func init() {
@@ -76,4 +77,27 @@ func WithOptions(opts ...zap.Option) logr.Logger {
 
 func WithName(name string) logr.Logger {
 	return WithOptions(zap.AddCaller()).WithName(name)
+}
+
+type grpcLog struct {
+	log   Logger
+	level LogLevel
+}
+
+func (l *grpcLog) Write(p []byte) (n int, err error) {
+	message := string(p)
+	switch l.level {
+	case InfoLevel:
+		l.log.V(DebugLevel).Info(message)
+		l.log.WithValues("level", InfoLevel).Info(message)
+	case WarnLevel:
+		l.log.WithValues("level", WarnLevel).Info(message)
+	case ErrorLevel:
+		l.log.WithValues("level", ErrorLevel).Error(fmt.Errorf(message), message)
+	}
+	return len(p), nil
+}
+
+func NewGrpcLog(log Logger, level LogLevel) *grpcLog {
+	return &grpcLog{log: log.V(DebugLevel), level: level}
 }
