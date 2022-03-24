@@ -33,7 +33,7 @@ message UpstreamAuthenticationRequest {
 
 message UpstreamAuthenticationResponse {
   // upstream_idp_redirect is the URL of the IDP to authenticate against
-  string upstream_idp_redirect = 1 [ (validate.rules).string.uri = true ];
+  string upstream_idp_redirect = 1;
   // state is the encoded, server-side nonced state containing the callback.
   // This has to be presented to the server along with the actual m8
   // AuthenticationRequest.
@@ -42,9 +42,9 @@ message UpstreamAuthenticationResponse {
 
 message AuthenticationRequest {
   // code is the auth code received by the IDP
-  string code = 1;
+  string code = 1 [ (validate.rules).string = {min_len : 1} ];
   // state is the encoded, nonced AuthState
-  string state = 2;
+  string state = 2 [ (validate.rules).string = {min_len : 1} ];
 }
 
 message AuthenticationResponse {
@@ -100,7 +100,7 @@ message ClusterAuthTokenRequest {
   string cluster_id = 1 [ (validate.rules).string.uuid = true ];
   // Kubernetes role name
   string role = 2
-      [ (validate.rules).string = {pattern : "^[a-z0-9-]+$", max_bytes : 60} ];
+      [ (validate.rules).string = {pattern : "^[a-z0-9-]+$", max_len : 60} ];
 }
 
 // ClusterAuthTokenResponse contains an auth token valid to
@@ -125,7 +125,7 @@ message APITokenRequest {
     // Unique identifier of an existing user (UUID 128-bit number)
     string user_id = 3 [ (validate.rules).string.uuid = true ];
     // Name of the user the token is valid for (not necessarily a real user)
-    string username = 4;
+    string username = 4 [ (validate.rules).string = {min_len : 1} ];
   }
 }
 
@@ -144,4 +144,22 @@ enum AuthorizationScope {
   API = 1;               // Read-write for the complete API
   WRITE_SCIM = 2;        // Read-write for endpoints under "/scim"
   WRITE_K8SOPERATOR = 3; // Read-write for K8sOperator endpoints
+}
+
+// Request information that should be checked if authorized.
+message CheckRequest {
+  // FullMethodName is the full RPC method string, i.e.,
+  // /package.service/method.
+  string full_method_name = 1 [ (validate.rules).string = {min_len : 1} ];
+}
+
+// Intended for gRPC and Network Authorization servers `only`.
+// Status `OK` allows the request. Any other status indicates the request
+// should be denied.
+message CheckResponse {
+  message CheckResponseTag {
+    string key = 1;
+    string value = 2;
+  }
+  repeated CheckResponseTag tags = 1;
 }
