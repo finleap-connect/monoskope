@@ -42,6 +42,14 @@ service Gateway {
       returns (AuthenticationResponse);
 }
 
+// A service for performing authorization check on incoming
+// requests to a networked service part of m8.
+service GatewayAuthZ {
+  // Performs authorization check based on the attributes associated with the
+  // incoming request, and returns status `OK` or not `OK`.
+  rpc Check(CheckRequest) returns (CheckResponse);
+}
+
 // ClusterAuth is the API to request token for cluster authentication from
 service ClusterAuth {
   rpc GetAuthToken(ClusterAuthTokenRequest) returns (ClusterAuthTokenResponse);
