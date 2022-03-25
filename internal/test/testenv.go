@@ -21,7 +21,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
-	_ "go.uber.org/automaxprocs"
 )
 
 type TestEnv struct {
