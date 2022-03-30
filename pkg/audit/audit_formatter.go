@@ -20,6 +20,9 @@ import (
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
+	"github.com/finleap-connect/monoskope/pkg/domain/formatters/overviews"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"time"
@@ -35,6 +38,9 @@ type auditFormatter struct {
 	log        logger.Logger
 	esClient   esApi.EventStoreClient
 	efRegistry ef.EventFormatterRegistry
+	userRepo       repositories.ReadOnlyUserRepository
+	tenantRepo     repositories.ReadOnlyTenantRepository
+	clusterRepo    repositories.ReadOnlyClusterRepository
 }
 
 // NewAuditFormatter creates an auditFormatter
@@ -53,11 +59,23 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 		Issuer:    event.Metadata["x-auth-email"],
 		IssuerId:  event.AggregateId,
 		EventType: event.Type,
-		Details:   f.getFormattedDetails(ctx, event),
+		Details:   f.getEventFormattedDetails(ctx, event),
 	}
 }
 
-func (f *auditFormatter) getFormattedDetails(ctx context.Context, event *esApi.Event) string {
+// NewUserOverview TODO
+func (f *auditFormatter) NewUserOverview(ctx context.Context, user *projections.User) *audit.UserOverview {
+	of := overviews.NewUserOverviewFormatter(f.userRepo, f.tenantRepo, f.clusterRepo)
+	uo := &audit.UserOverview{
+		Name: user.Name,
+		Email: user.Email,
+	}
+	_ = of.AddRolesDetails(ctx, user, uo)
+	uo.Details, _ = of.GetFormattedDetails(ctx, user)
+	return uo
+}
+
+func (f *auditFormatter) getEventFormattedDetails(ctx context.Context, event *esApi.Event) string {
 	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
 	if err != nil {
 		return ""

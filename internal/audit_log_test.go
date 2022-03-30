@@ -39,7 +39,7 @@ import (
 )
 
 // TODO remove F
-var _ = FDescribe("AuditLog Test", func() {
+var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
 
