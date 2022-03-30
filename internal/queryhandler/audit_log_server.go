@@ -16,11 +16,14 @@ package queryhandler
 
 import (
 	"context"
+	"fmt"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	auditApi "github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/google/uuid"
 	"io"
 	"time"
 
@@ -36,15 +39,22 @@ type auditLogServer struct {
 
 	esClient       esApi.EventStoreClient
 	auditFormatter audit.AuditFormatter
+	// TODO: replace with qhDomain -> sooner or later we will probably need all repos
+	// 	especially when building overviews
+	// 	or use no repos and build snapshots from the store
 	userRepo       repositories.ReadOnlyUserRepository
+	tenantRepo     repositories.ReadOnlyTenantRepository
+	clusterRepo    repositories.ReadOnlyClusterRepository
 }
 
 // NewAuditLogServer returns a new configured instance of auditLogServer
-func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry eventformatter.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository) *auditLogServer {
+func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry eventformatter.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *auditLogServer {
 	return &auditLogServer{
 		esClient:       esClient,
 		auditFormatter: audit.NewAuditFormatter(esClient, efRegistry),
 		userRepo:       userRepo,
+		tenantRepo: tenantRepo,
+		clusterRepo: clusterRepo,
 	}
 }
 
@@ -123,6 +133,51 @@ func (s *auditLogServer) GetUserActions(request *doApi.GetUserActionsRequest, st
 
 		hre := s.auditFormatter.NewHumanReadableEvent(ctx, e)
 		err = stream.Send(hre)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+
+	return nil
+}
+
+func (s *auditLogServer) GetUsersOverview(request *doApi.GetAllRequest, stream doApi.AuditLog_GetUsersOverviewServer) error {
+	ctx := context.Background()
+
+	users, err := s.userRepo.GetAll(ctx, request.IncludeDeleted)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, user := range users {
+		userOverview := &auditApi.UserOverview{
+			Name: user.Name,
+			Email: user.Email,
+		}
+
+		creator, err := s.userRepo.ByUserId(ctx, uuid.MustParse(user.CreatedById))
+		if err == nil {
+			userOverview.Details = fmt.Sprintf("%s was created by %s at %s", user.Email, creator.Email, user.Created.AsTime().Format(time.RFC822))
+		}
+
+		for _, role := range user.Roles {
+			userOverview.Roles += "\n- " + role.Scope + " " + role.Role
+			if len(role.Resource) == 0 {
+				continue
+			}
+
+			tenant, err := s.tenantRepo.ByTenantId(ctx, role.Resource)
+			if err != nil {
+				cluster, err := s.clusterRepo.ByClusterId(ctx, role.Resource)
+				if err == nil {
+					userOverview.Clusters += fmt.Sprintf("\n- %s (%s)", cluster.DisplayName, role.Role)
+				}
+			} else {
+				userOverview.Tenants += fmt.Sprintf("\n- %s (%s)", tenant.Name, role.Role)
+			}
+		}
+
+		err = stream.Send(userOverview)
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
 		}

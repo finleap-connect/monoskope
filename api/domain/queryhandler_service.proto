@@ -22,6 +22,7 @@ import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
 import "api/domain/projections/certificate.proto";
 import "api/domain/projections/tenant_cluster_binding.proto";
+import "api/domain/audit/user.proto";
 import "api/domain/audit/event.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
@@ -89,6 +90,8 @@ service AuditLog{
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
   // GetUserActions returns human readable events caused by the given user actions
   rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
+  // GetUsersOverview returns all users, tenants/clusters they belong to, and their roles
+  rpc GetUsersOverview(GetAllRequest) returns (stream audit.UserOverview);
 }
 
 service Certificate {
@@ -114,11 +117,13 @@ message GetCountRequest { bool include_deleted = 1; }
 
 message GetCountResult { int64 count = 1; }
 
+// TODO
 message GetAuditLogByDateRangeRequest {
   google.protobuf.Timestamp min_timestamp = 1;
   google.protobuf.Timestamp max_timestamp = 2;
 }
 
+// TODO
 message GetUserActionsRequest {
   google.protobuf.StringValue email = 1;
   GetAuditLogByDateRangeRequest date_range = 2;

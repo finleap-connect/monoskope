@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
@@ -37,7 +38,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("AuditLog Test", func() {
+// TODO remove F
+var _ = FDescribe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
 
@@ -110,7 +112,7 @@ var _ = Describe("AuditLog Test", func() {
 					g.Expect(err).ToNot(HaveOccurred())
 					counter++
 				}
-				g.Expect(counter).To(Equal(4))
+				g.Expect(counter).To(Equal(5)) // see midTime definition
 			}).Should(Succeed())
 		})
 
@@ -136,9 +138,28 @@ var _ = Describe("AuditLog Test", func() {
 				}
 			}).Should(Succeed())
 		})
-	})
 
-	It("can not provide human-readable events", func() {
+		When("getting users overview", func() {
+			Eventually(func(g Gomega) {
+				events, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetAllRequest{IncludeDeleted: true})
+				g.Expect(err).ToNot(HaveOccurred())
+
+				// TODO remove prints
+				println("=========================================")
+				for {
+					e, err := events.Recv()
+					if err == io.EOF {
+						break
+					}
+					g.Expect(err).ToNot(HaveOccurred())
+
+					println(fmt.Sprintf("%s %s %s %s %s %s", e.Name, e.Email, e.Roles, e.Tenants, e.Clusters, e.Details))
+				}
+				println("=========================================")
+			}).Should(Succeed())
+		})
+	})
+		It("can not provide human-readable events", func() {
 		When("getting user actions with a range that exceeds one year", func() {
 			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
 			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
@@ -171,7 +192,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 	userId := uuid.MustParse(reply.AggregateId)
 
-	// CreateUserRoleBinding
+	// CreateUserRoleBinding on system level // TODO: is this correct
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
 		&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
@@ -195,6 +216,18 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 	tenantId := uuid.MustParse(reply.AggregateId)
 
+	// CreateUserRoleBinding on tenant level // TODO: is this correct
+	command, err = cmd.AddCommandData(
+		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+		&cmdData.CreateUserRoleBindingCommandData{Role: roles.User.String(), Scope: scopes.Tenant.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(func(g Gomega) {
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		g.Expect(err).ToNot(HaveOccurred())
+	}).Should(Succeed())
+	_ = uuid.MustParse(reply.AggregateId)
+
 	// UpdateTenant
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
@@ -206,7 +239,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 
-	// 4 events
+	// 5 events
 	midTime := time.Now().UTC()
 
 	// CreateCluster
