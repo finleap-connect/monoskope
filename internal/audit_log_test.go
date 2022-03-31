@@ -16,7 +16,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
@@ -38,7 +37,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// TODO remove F
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
@@ -65,7 +63,7 @@ var _ = Describe("AuditLog Test", func() {
 		return client
 	}
 
-	It("can provide human-readable events", func() {
+	It("can provide human-readable events/overviews", func() {
 		minTime := time.Now().UTC()
 		midTime := initEvents(commandHandlerClient, mdManager)
 		maxTime := time.Now().UTC()
@@ -77,89 +75,80 @@ var _ = Describe("AuditLog Test", func() {
 				MaxTimestamp: timestamppb.New(maxTime),
 			}
 
-			Eventually(func(g Gomega) {
-				events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
-				g.Expect(err).ToNot(HaveOccurred())
+			events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
+			Expect(err).ToNot(HaveOccurred())
 
-				for {
-					e, err := events.Recv()
-					if err == io.EOF {
-						break
-					}
-					g.Expect(err).ToNot(HaveOccurred())
-
-					g.Expect(e.When).ToNot(BeEmpty())
-					g.Expect(e.Issuer).ToNot(BeEmpty())
-					g.Expect(e.IssuerId).ToNot(BeEmpty())
-					g.Expect(e.EventType).ToNot(BeEmpty())
-					g.Expect(e.Details).ToNot(BeEmpty())
+			for {
+				e, err := events.Recv()
+				if err == io.EOF {
+					break
 				}
-			}).Should(Succeed())
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(e.When).ToNot(BeEmpty())
+				Expect(e.Issuer).ToNot(BeEmpty())
+				Expect(e.IssuerId).ToNot(BeEmpty())
+				Expect(e.EventType).ToNot(BeEmpty())
+				Expect(e.Details).ToNot(BeEmpty())
+			}
 
 			By("using a custom range")
 			dateRange.MaxTimestamp = timestamppb.New(midTime)
 
-			Eventually(func(g Gomega) {
-				events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
-				g.Expect(err).ToNot(HaveOccurred())
+			events, err = auditLogServiceClient().GetByDateRange(ctx, dateRange)
+			Expect(err).ToNot(HaveOccurred())
 
-				counter := 0
-				for {
-					_, err := events.Recv()
-					if err == io.EOF {
-						break
-					}
-					g.Expect(err).ToNot(HaveOccurred())
-					counter++
+			counter := 0
+			for {
+				_, err := events.Recv()
+				if err == io.EOF {
+					break
 				}
-				g.Expect(counter).To(Equal(5)) // see midTime definition
-			}).Should(Succeed())
+				Expect(err).ToNot(HaveOccurred())
+				counter++
+			}
+			Expect(counter).To(Equal(5)) // see midTime definition
 		})
 
 		When("getting user actions", func() {
-			Eventually(func(g Gomega) {
-				events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
-					Email: wrapperspb.String(adminEmail),
-					DateRange: &domainApi.GetAuditLogByDateRangeRequest{
-						MinTimestamp: timestamppb.New(minTime),
-						MaxTimestamp: timestamppb.New(maxTime),
-					},
-				})
-				g.Expect(err).ToNot(HaveOccurred())
+			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
+				Email: wrapperspb.String(adminEmail),
+				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
+					MinTimestamp: timestamppb.New(minTime),
+					MaxTimestamp: timestamppb.New(maxTime),
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
 
-				for {
-					e, err := events.Recv()
-					if err == io.EOF {
-						break
-					}
-					g.Expect(err).ToNot(HaveOccurred())
-
-					g.Expect(e.Issuer).To(Equal(adminEmail))
+			for {
+				e, err := events.Recv()
+				if err == io.EOF {
+					break
 				}
-			}).Should(Succeed())
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(e.Issuer).To(Equal(adminEmail))
+			}
 		})
 
 		When("getting users overview", func() {
-			Eventually(func(g Gomega) {
-				events, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetAllRequest{IncludeDeleted: true})
-				g.Expect(err).ToNot(HaveOccurred())
+			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetAllRequest{IncludeDeleted: true})
+			Expect(err).ToNot(HaveOccurred())
 
-				// TODO remove prints
-				println("=========================================")
-				for {
-					e, err := events.Recv()
-					if err == io.EOF {
-						break
-					}
-					g.Expect(err).ToNot(HaveOccurred())
-
-					println(fmt.Sprintf("%s %s %s %s %s %s", e.Name, e.Email, e.Roles, e.Tenants, e.Clusters, e.Details))
+			for {
+				o, err := overviews.Recv()
+				if err == io.EOF {
+					break
 				}
-				println("=========================================")
-			}).Should(Succeed())
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(o.Name).ToNot(BeEmpty())
+				Expect(o.Email).ToNot(BeEmpty())
+			}
 		})
 	})
-		It("can not provide human-readable events", func() {
+
+	It("can not provide human-readable events", func() {
 		When("getting user actions with a range that exceeds one year", func() {
 			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
 			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
@@ -192,7 +181,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 	userId := uuid.MustParse(reply.AggregateId)
 
-	// CreateUserRoleBinding on system level // TODO: is this correct
+	// CreateUserRoleBinding on system level
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
 		&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
@@ -216,7 +205,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 	tenantId := uuid.MustParse(reply.AggregateId)
 
-	// CreateUserRoleBinding on tenant level // TODO: is this correct
+	// CreateUserRoleBinding on tenant level
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
 		&cmdData.CreateUserRoleBindingCommandData{Role: roles.User.String(), Scope: scopes.Tenant.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},

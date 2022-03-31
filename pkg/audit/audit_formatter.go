@@ -31,6 +31,7 @@ import (
 // AuditFormatter is the interface definition for the formatter used by the auditLogServer
 type AuditFormatter interface {
 	NewHumanReadableEvent(context.Context, *esApi.Event) *audit.HumanReadableEvent
+	NewUserOverview(context.Context, *projections.User) *audit.UserOverview
 }
 
 // auditFormatter is the implementation of AuditFormatter used by auditLogServer
@@ -38,55 +39,69 @@ type auditFormatter struct {
 	log        logger.Logger
 	esClient   esApi.EventStoreClient
 	efRegistry ef.EventFormatterRegistry
+	// TODO: replace with qhDomain -> sooner or later we will probably need all repos
+	// 	especially when building overviews
+	// 	or use no repos and build snapshots from the store
 	userRepo       repositories.ReadOnlyUserRepository
 	tenantRepo     repositories.ReadOnlyTenantRepository
 	clusterRepo    repositories.ReadOnlyClusterRepository
 }
 
 // NewAuditFormatter creates an auditFormatter
-func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventFormatterRegistry) *auditFormatter {
+func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *auditFormatter {
 	return &auditFormatter{
 		log:        logger.WithName("audit-formatter"),
 		esClient:   esClient,
 		efRegistry: efRegistry,
+		userRepo: userRepo,
+		tenantRepo: tenantRepo,
+		clusterRepo: clusterRepo,
 	}
 }
 
-// NewHumanReadableEvent creates a HumanReadableEvent of a given Event
+// NewHumanReadableEvent creates a HumanReadableEvent of a given event
 func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi.Event) *audit.HumanReadableEvent {
-	return &audit.HumanReadableEvent{
+	humanReadableEvent := &audit.HumanReadableEvent{
 		When:      event.Timestamp.AsTime().Format(time.RFC822),
 		Issuer:    event.Metadata["x-auth-email"],
 		IssuerId:  event.AggregateId,
 		EventType: event.Type,
-		Details:   f.getEventFormattedDetails(ctx, event),
 	}
-}
 
-// NewUserOverview TODO
-func (f *auditFormatter) NewUserOverview(ctx context.Context, user *projections.User) *audit.UserOverview {
-	of := overviews.NewUserOverviewFormatter(f.userRepo, f.tenantRepo, f.clusterRepo)
-	uo := &audit.UserOverview{
-		Name: user.Name,
-		Email: user.Email,
-	}
-	_ = of.AddRolesDetails(ctx, user, uo)
-	uo.Details, _ = of.GetFormattedDetails(ctx, user)
-	return uo
-}
-
-func (f *auditFormatter) getEventFormattedDetails(ctx context.Context, event *esApi.Event) string {
 	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
 	if err != nil {
-		return ""
+		return humanReadableEvent
 	}
 
-	details, err := eventFormatter.GetFormattedDetails(ctx, event)
+	humanReadableEvent.Details, err = eventFormatter.GetFormattedDetails(ctx, event)
 	if err != nil {
 		f.log.Error(err, "failed to format event details",
 			"eventAggregate", event.GetAggregateId(),
 			"eventTimestamp", event.GetTimestamp().AsTime().Format(time.RFC3339Nano))
 	}
 
-	return details
+	return humanReadableEvent
+}
+
+// NewUserOverview creates a UserOverview of a given user
+func (f *auditFormatter) NewUserOverview(ctx context.Context, user *projections.User) *audit.UserOverview {
+	userOverview := &audit.UserOverview{
+		Name: user.Name,
+		Email: user.Email,
+	}
+
+	overviewFormatter := overviews.NewUserOverviewFormatter(f.userRepo, f.tenantRepo, f.clusterRepo)
+	var err error
+
+	userOverview.Roles, userOverview.Tenants, userOverview.Clusters, err = overviewFormatter.GetRolesDetails(ctx, user)
+	if err != nil {
+		f.log.Error(err, "failed to format roles details", "userId", user.Id)
+	}
+
+	userOverview.Details, err = overviewFormatter.GetFormattedDetails(ctx, user)
+	if err != nil {
+		f.log.Error(err, "failed to format overview details", "userId", user.Id)
+	}
+
+	return userOverview
 }

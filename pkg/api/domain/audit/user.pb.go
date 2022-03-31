@@ -34,7 +34,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// TODO
+// human readable representation of a user for auditing
 type UserOverview struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -42,15 +42,15 @@ type UserOverview struct {
 
 	// the name of the user
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// TODO
+	// the email of the user
 	Email string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	// TODO
+	// a set the user's roles
 	Roles string `protobuf:"bytes,3,opt,name=roles,proto3" json:"roles,omitempty"`
-	// TODO
+	// a list of the tenants the user has access to including his role
 	Tenants string `protobuf:"bytes,4,opt,name=tenants,proto3" json:"tenants,omitempty"`
-	// TODO
+	// a list of the clusters the user has access to including his role
 	Clusters string `protobuf:"bytes,5,opt,name=clusters,proto3" json:"clusters,omitempty"`
-	// TODO
+	// human readable description of the user life-cycle
 	Details string `protobuf:"bytes,6,opt,name=details,proto3" json:"details,omitempty"`
 }
 

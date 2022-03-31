@@ -21,18 +21,18 @@ option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/audit";
 
 package audit;
 
-// TODO
+// human readable representation of a user for auditing
 message UserOverview {
   // the name of the user
   string name = 1;
-  // TODO
+  // the email of the user
   string email = 2;
-  // TODO
+  // a set the user's roles
   string roles = 3;
-  // TODO
+  // a list of the tenants the user has access to including his role
   string tenants = 4;
-  // TODO
+  // a list of the clusters the user has access to including his role
   string clusters = 5;
-  // TODO
+  // human readable description of the user life-cycle
   string details = 6;
 }

@@ -17,21 +17,21 @@ package overviews
 import (
 	"context"
 	"fmt"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
-// userOverviewFormatter TODO EventFormatter implementation for the user-aggregate
+// userOverviewFormatter OverviewFormatter implementation for the user-aggregate
 type userOverviewFormatter struct {
 	userRepo       repositories.ReadOnlyUserRepository
 	tenantRepo     repositories.ReadOnlyTenantRepository
 	clusterRepo    repositories.ReadOnlyClusterRepository
 }
 
-// NewUserOverviewFormatter TODO creates a new event formatter for the user-aggregate
+// NewUserOverviewFormatter creates a new overview formatter for the user-aggregate
 func NewUserOverviewFormatter(userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *userOverviewFormatter {
 	return &userOverviewFormatter{
 		userRepo: userRepo,
@@ -40,32 +40,60 @@ func NewUserOverviewFormatter(userRepo repositories.ReadOnlyUserRepository, tena
 	}
 }
 
-// GetFormattedDetails TODO formats the user-aggregate-events in a human-readable format
+// GetFormattedDetails formats the user-projection details in a human-readable format
 func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *projections.User) (string, error) {
-	creator, err := f.userRepo.ByUserId(ctx, uuid.MustParse(user.CreatedById))
+	var details string
+
+	id, err := uuid.Parse(user.CreatedById)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s was created by %s at %s", user.Email, creator.Email, user.Created.AsTime().Format(time.RFC822)), nil
+	creator, err := f.userRepo.ByUserId(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.Created.AsTime().Format(time.RFC822))
+
+	if len(user.DeletedById) == 0 {
+		return details, nil
+	}
+
+	id, err = uuid.Parse(user.DeletedById)
+	if err != nil {
+		return "", err
+	}
+	deleter, err := f.userRepo.ByUserId(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.Deleted.AsTime().Format(time.RFC822))
+
+	return details, nil
 }
 
-func (f *userOverviewFormatter) AddRolesDetails(ctx context.Context, user *projections.User, overview *audit.UserOverview) error {
+// GetRolesDetails returns the roles details in general and the tenants and clusters details to which the roles apply
+func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *projections.User) (string, string, string, error) {
+	var rolesDetails, tenantsDetails, clustersDetails string
 	for _, role := range user.Roles {
-		overview.Roles += fmt.Sprintf("- %s %s\n", role.Scope, role.Role)
+		roleDetails := fmt.Sprintf("- %s %s\n", role.Scope, role.Role)
+		if !strings.Contains(rolesDetails, roleDetails) {
+			rolesDetails += roleDetails
+		}
+
 		if len(role.Resource) == 0 {
 			continue
 		}
 
 		tenant, err := f.tenantRepo.ByTenantId(ctx, role.Resource)
 		if err == nil {
-			overview.Tenants += fmt.Sprintf("- %s (%s)\n", tenant.Name, role.Role)
+			tenantsDetails += fmt.Sprintf("- %s (%s)\n", tenant.Name, role.Role)
 			continue // it's either a tenant or cluster
 		}
 		cluster, err := f.clusterRepo.ByClusterId(ctx, role.Resource)
 		if err == nil {
-			overview.Clusters += fmt.Sprintf("- %s (%s)\n", cluster.DisplayName, role.Role)
+			clustersDetails += fmt.Sprintf("- %s (%s)\n", cluster.DisplayName, role.Role)
 		}
 	}
 
-	return nil
+	return strings.TrimSpace(rolesDetails), strings.TrimSpace(tenantsDetails), strings.TrimSpace(clustersDetails), nil
 }

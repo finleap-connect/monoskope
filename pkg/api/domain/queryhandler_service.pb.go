@@ -292,7 +292,6 @@ func (x *GetCountResult) GetCount() int64 {
 	return 0
 }
 
-// TODO
 type GetAuditLogByDateRangeRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -348,7 +347,6 @@ func (x *GetAuditLogByDateRangeRequest) GetMaxTimestamp() *timestamppb.Timestamp
 	return nil
 }
 
-// TODO
 type GetUserActionsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
