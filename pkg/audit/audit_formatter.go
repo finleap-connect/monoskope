@@ -42,19 +42,19 @@ type auditFormatter struct {
 	// TODO: replace with qhDomain -> sooner or later we will probably need all repos
 	// 	especially when building overviews
 	// 	or use no repos and build snapshots from the store
-	userRepo       repositories.ReadOnlyUserRepository
-	tenantRepo     repositories.ReadOnlyTenantRepository
-	clusterRepo    repositories.ReadOnlyClusterRepository
+	userRepo    repositories.ReadOnlyUserRepository
+	tenantRepo  repositories.ReadOnlyTenantRepository
+	clusterRepo repositories.ReadOnlyClusterRepository
 }
 
 // NewAuditFormatter creates an auditFormatter
 func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *auditFormatter {
 	return &auditFormatter{
-		log:        logger.WithName("audit-formatter"),
-		esClient:   esClient,
-		efRegistry: efRegistry,
-		userRepo: userRepo,
-		tenantRepo: tenantRepo,
+		log:         logger.WithName("audit-formatter"),
+		esClient:    esClient,
+		efRegistry:  efRegistry,
+		userRepo:    userRepo,
+		tenantRepo:  tenantRepo,
 		clusterRepo: clusterRepo,
 	}
 }
@@ -86,7 +86,7 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 // NewUserOverview creates a UserOverview of a given user
 func (f *auditFormatter) NewUserOverview(ctx context.Context, user *projections.User) *audit.UserOverview {
 	userOverview := &audit.UserOverview{
-		Name: user.Name,
+		Name:  user.Name,
 		Email: user.Email,
 	}
 

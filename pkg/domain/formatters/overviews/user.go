@@ -26,16 +26,16 @@ import (
 
 // userOverviewFormatter OverviewFormatter implementation for the user-aggregate
 type userOverviewFormatter struct {
-	userRepo       repositories.ReadOnlyUserRepository
-	tenantRepo     repositories.ReadOnlyTenantRepository
-	clusterRepo    repositories.ReadOnlyClusterRepository
+	userRepo    repositories.ReadOnlyUserRepository
+	tenantRepo  repositories.ReadOnlyTenantRepository
+	clusterRepo repositories.ReadOnlyClusterRepository
 }
 
 // NewUserOverviewFormatter creates a new overview formatter for the user-aggregate
 func NewUserOverviewFormatter(userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *userOverviewFormatter {
 	return &userOverviewFormatter{
-		userRepo: userRepo,
-		tenantRepo: tenantRepo,
+		userRepo:    userRepo,
+		tenantRepo:  tenantRepo,
 		clusterRepo: clusterRepo,
 	}
 }
