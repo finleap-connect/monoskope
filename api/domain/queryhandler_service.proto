@@ -90,7 +90,7 @@ service AuditLog{
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
   // GetUserActions returns human readable events caused by the given user actions
   rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
-  // GetUsersOverview returns all users, tenants/clusters they belong to, and their roles
+  // GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
   rpc GetUsersOverview(GetAllRequest) returns (stream audit.UserOverview);
 }
 

@@ -27,11 +27,11 @@ message UserOverview {
   string name = 1;
   // the email of the user
   string email = 2;
-  // a set the user's roles
+  // roles of the user in general
   string roles = 3;
-  // a list of the tenants the user has access to including his role
+  // tenants the user has access to including his role
   string tenants = 4;
-  // a list of the clusters the user has access to including his role
+  // clusters the user has access to including his role
   string clusters = 5;
   // human readable description of the user life-cycle
   string details = 6;
