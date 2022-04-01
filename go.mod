@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/aws/aws-sdk-go v1.43.25
+	github.com/aws/aws-sdk-go v1.43.31
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -54,7 +54,6 @@ require (
 	github.com/elimity-com/scim v0.0.0-20211119105057-007f1a2691f0
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/onsi/ginkgo/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/scim2/filter-parser/v2 v2.2.0
 	gopkg.in/fsnotify.v1 v1.4.7
