@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -247,7 +246,7 @@ var _ = BeforeSuite(func() {
 			"default": time.Hour * 1,
 		})
 
-		envoyAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
+		gatewayAuthZServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
 		Expect(errAuthServer).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
@@ -256,9 +255,9 @@ var _ = BeforeSuite(func() {
 			api.RegisterGatewayServer(s, gatewayApiServer)
 			api.RegisterClusterAuthServer(s, authApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+			api.RegisterGatewayAuthZServer(s, gatewayAuthZServer)
 		})
 		env.GrpcServer.RegisterServiceDirect(func(s *ggrpc.Server) {
-			api_envoy.RegisterAuthorizationServer(s, envoyAuthServer)
 		})
 
 		env.ApiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
