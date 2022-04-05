@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
 	"github.com/golang/mock/gomock"
@@ -42,7 +43,7 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		})
 
 		ctxWithToken := func(ctx context.Context, scheme string, token string) context.Context {
-			md := metadata.Pairs("authorization", fmt.Sprintf("%s %v", scheme, token))
+			md := metadata.Pairs(auth.HeaderAuthorization, fmt.Sprintf("%s %v", scheme, token))
 			nCtx := metautils.NiceMD(md).ToOutgoing(ctx)
 			return nCtx
 		}
