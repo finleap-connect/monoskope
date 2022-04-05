@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	api_envoy "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -183,9 +182,7 @@ var serverCmd = &cobra.Command{
 			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
 			api.RegisterAPITokenServer(s, apiTokenServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
-		})
-		grpcServer.RegisterServiceDirect(func(s *ggrpc.Server) {
-			api_envoy.RegisterAuthorizationServer(s, authServer)
+			api.RegisterGatewayAuthZServer(s, authServer)
 		})
 
 		// Finally start the servers
