@@ -17,12 +17,14 @@ package main
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/authn"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
 
@@ -40,6 +42,7 @@ var (
 	keepAlive        bool
 	eventStoreAddr   string
 	queryHandlerAddr string
+	gatewayAddr      string
 )
 
 var serverCmd = &cobra.Command{
@@ -74,9 +77,24 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
+		// Create Gateway AuthZ client
+		log.Info("Connecting gateway...", "gattewayAddr", gatewayAddr)
+		conn, gatewaySvcClient, err := gateway.NewAuthServerClient(ctx, gatewayAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		authZMiddleware := authn.NewAuthNMiddleware(gatewaySvcClient)
+
 		// Create gRPC server and register implementation
 		log.Info("Creating gRPC server...")
-		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
+		grpcServer := grpc.NewServerWithOpts("commandhandler-grpc", keepAlive,
+			[]ggrpc.UnaryServerInterceptor{
+				authZMiddleware.UnaryServerInterceptor(),
+			}, []ggrpc.StreamServerInterceptor{
+				authZMiddleware.StreamServerInterceptor(),
+			},
+		)
 
 		commandHandlerApiServer := commandhandler.NewApiServer(es.DefaultCommandRegistry)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
@@ -100,4 +118,5 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
+	flags.StringVar(&gatewayAddr, "gateway-api-addr", ":8081", "Address the gateway gRPC service is listening on")
 }
