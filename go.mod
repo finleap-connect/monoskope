@@ -7,7 +7,13 @@ require (
 	github.com/aws/aws-sdk-go v1.43.35
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
+<<<<<<< HEAD
 	github.com/fsnotify/fsnotify v1.5.4
+=======
+	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
+	github.com/envoyproxy/protoc-gen-validate v0.6.2
+	github.com/fsnotify/fsnotify v1.5.1
+>>>>>>> 28ee91c (Rewrite auth server)
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-logr/logr v1.2.3
@@ -33,6 +39,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/zap v1.21.0
+	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 <<<<<<< HEAD
@@ -41,7 +48,6 @@ require (
 	google.golang.org/grpc v1.46.0
 =======
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
 	google.golang.org/grpc v1.45.0
 >>>>>>> 5b3a789 (Working validation)
 	google.golang.org/protobuf v1.28.0
@@ -62,7 +68,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/di-wu/parser v0.2.2 // indirect
@@ -128,6 +133,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
