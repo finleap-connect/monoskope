@@ -130,19 +130,19 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 		authenticated = err == nil
 	}
 	if !authenticated {
-		return s.createUnauthorizedResponse(body_unauthenticated), nil
+		return nil, status.Error(codes.Unauthenticated, "authentication failed")
 	}
 
 	// Authorize user
 	authorized, err = s.validatePolicies(ctx, req, authToken)
 	if err != nil {
 		s.log.Error(err, "Error checking authorization of user.")
-		return s.createUnauthorizedResponse(body_unauthorized), err
+		return nil, status.Error(codes.PermissionDenied, "authorization failed")
 	}
 	if authorized {
 		return s.createAuthorizedResponse(authToken), nil
 	}
-	return s.createUnauthorizedResponse(body_unauthorized), nil
+	return nil, status.Error(codes.PermissionDenied, "authorization failed")
 }
 
 // validatePolicies validates the configured policies using OPA
@@ -307,9 +307,12 @@ func (s *authServer) certValidation(ctx context.Context, req *gateway.CheckReque
 
 func (s *authServer) createAuthorizedResponse(authToken *jwt.AuthToken) *gateway.CheckResponse {
 	// Set headers with auth info
-	return &gateway.CheckResponse{}
-}
-
-func (s *authServer) createUnauthorizedResponse(body string) *gateway.CheckResponse {
-	return &gateway.CheckResponse{}
+	return &gateway.CheckResponse{
+		Tags: []*gateway.CheckResponse_CheckResponseTag{
+			{Key: auth.HeaderAuthId, Value: authToken.Subject},
+			{Key: auth.HeaderAuthName, Value: authToken.Name},
+			{Key: auth.HeaderAuthEmail, Value: authToken.Email},
+			{Key: auth.HeaderAuthNotBefore, Value: authToken.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat)},
+		},
+	}
 }
