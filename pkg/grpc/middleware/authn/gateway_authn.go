@@ -18,7 +18,6 @@ import (
 	"context"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
-	mgrpc "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
@@ -28,27 +27,19 @@ import (
 )
 
 type authNMiddleware struct {
-	factory *mgrpc.GrpcConnectionFactory
+	gatewayClient api.GatewayAuthZClient
 }
 
-func NewAuthNMiddleware(authnServiceURL string) middleware.GRPCMiddleware {
+func NewAuthNMiddleware(gatewayClient api.GatewayAuthZClient) middleware.GRPCMiddleware {
 	return &authNMiddleware{
-		mgrpc.NewGrpcConnectionFactory(authnServiceURL).WithOSCaTransportCredentials().WithRetry().WithBlock(),
+		gatewayClient,
 	}
 }
 
-// authnWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
-func (m *authNMiddleware) authnWithGateway(ctx context.Context, fullMethodName string) (context.Context, error) {
-	// Connect to Gateway
-	conn, err := m.factory.Connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	client := api.NewGatewayAuthZClient(conn)
-
+// authNWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
+func (m *authNMiddleware) authNWithGateway(ctx context.Context, fullMethodName string) (context.Context, error) {
 	// Check request is authenticated and authorized
-	response, err := client.Check(ctx, &api.CheckRequest{
+	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
 	})
 	if err != nil {
@@ -57,6 +48,10 @@ func (m *authNMiddleware) authnWithGateway(ctx context.Context, fullMethodName s
 
 	// Add tags from response to context
 	tags := grpc_ctxtags.Extract(ctx)
+	if tags == grpc_ctxtags.NoopTags {
+		tags = grpc_ctxtags.NewTags()
+	}
+
 	for _, tag := range response.GetTags() {
 		tags.Set(tag.Key, tag.Value)
 	}
@@ -72,7 +67,7 @@ func (m *authNMiddleware) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		var newCtx context.Context
 		var err error
 
-		newCtx, err = m.authnWithGateway(ctx, info.FullMethod)
+		newCtx, err = m.authNWithGateway(ctx, info.FullMethod)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +81,7 @@ func (m *authNMiddleware) StreamServerInterceptor() grpc.StreamServerInterceptor
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		var newCtx context.Context
 		var err error
-		newCtx, err = m.authnWithGateway(stream.Context(), info.FullMethod)
+		newCtx, err = m.authNWithGateway(stream.Context(), info.FullMethod)
 		if err != nil {
 			return err
 		}

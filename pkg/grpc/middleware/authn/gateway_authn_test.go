@@ -18,6 +18,10 @@ import (
 	"context"
 	"fmt"
 
+	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
+	"github.com/golang/mock/gomock"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -26,6 +30,17 @@ import (
 
 var _ = Describe("Test validation rules for cluster messages", func() {
 	Context("Creating cluster", func() {
+		var mockCtrl *gomock.Controller
+		ctx := context.Background()
+
+		BeforeEach(func() {
+			mockCtrl = gomock.NewController(GinkgoT())
+		})
+
+		AfterEach(func() {
+			mockCtrl.Finish()
+		})
+
 		ctxWithToken := func(ctx context.Context, scheme string, token string) context.Context {
 			md := metadata.Pairs("authorization", fmt.Sprintf("%s %v", scheme, token))
 			nCtx := metautils.NiceMD(md).ToOutgoing(ctx)
@@ -33,12 +48,31 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		}
 
 		It("should ensure rules are valid", func() {
-			ctx := context.Background()
 			newCtx := ctxWithToken(ctx, "bearer", "onetoken")
-			middleware := NewAuthNMiddleware("dummyurl").(*authNMiddleware)
-			resultCtx, err := middleware.authnWithGateway(newCtx, "somemethod")
+			authzClient := mock_api.NewMockGatewayAuthZClient(mockCtrl)
+			expectedMethodName := "test"
+
+			middleware := NewAuthNMiddleware(authzClient).(*authNMiddleware)
+
+			authzClient.EXPECT().Check(newCtx, &api.CheckRequest{
+				FullMethodName: expectedMethodName,
+			}).Return(&api.CheckResponse{
+				Tags: []*api.CheckResponse_CheckResponseTag{
+					{
+						Key:   "test",
+						Value: "test",
+					},
+				},
+			}, nil)
+
+			resultCtx, err := middleware.authNWithGateway(newCtx, expectedMethodName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resultCtx).ToNot(BeNil())
+
+			tags := grpc_ctxtags.Extract(resultCtx)
+			Expect(tags).ToNot(BeNil())
+			Expect(tags.Has("test")).To(BeTrue())
+			Expect(tags.Values()["test"]).To(Equal("test"))
 		})
 	})
 
