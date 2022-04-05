@@ -37,11 +37,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	body_unauthorized    = "unauthorized"
-	body_unauthenticated = "unauthenticated"
-)
-
 type policyRoles struct {
 	Name     string
 	Scope    string
