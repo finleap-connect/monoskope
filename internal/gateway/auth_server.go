@@ -120,10 +120,6 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 		return s.createUnauthorizedResponse(body_unauthenticated), nil
 	}
 
-	// Get message body for policy evaluation in the future
-	// body := req.Attributes.Request.Http.RawBody
-	// s.log.V(logger.DebugLevel).Info("Message body received.", "body", body)
-
 	// Authorize user
 	authorized, err = s.validatePolicies(ctx, req, authToken)
 	if err != nil {
