@@ -16,17 +16,20 @@ package main
 
 import (
 	"context"
+
 	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/authn"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/domain"
-	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
+	grpc "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/spf13/cobra"
@@ -39,6 +42,7 @@ var (
 	keepAlive      bool
 	eventStoreAddr string
 	msgbusPrefix   string
+	gatewayAddr    string
 )
 
 var serverCmd = &cobra.Command{
@@ -74,9 +78,25 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create gRPC server and register implementation+
+		// Create Gateway AuthZ client
+		log.Info("Connecting gateway...", "gattewayAddr", gatewayAddr)
+		conn, gatewaySvcClient, err := gateway.NewAuthServerClient(ctx, gatewayAddr)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		authZMiddleware := authn.NewAuthNMiddleware(gatewaySvcClient)
+
+		// Create gRPC server and register implementation
 		log.Info("Creating gRPC server...")
-		grpcServer := grpcUtil.NewServer("queryhandler-grpc", keepAlive)
-		grpcServer.RegisterService(func(s grpc.ServiceRegistrar) {
+		grpcServer := grpc.NewServerWithOpts("queryhandler-grpc", keepAlive,
+			[]ggrpc.UnaryServerInterceptor{
+				authZMiddleware.UnaryServerInterceptor(),
+			}, []ggrpc.StreamServerInterceptor{
+				authZMiddleware.StreamServerInterceptor(),
+			},
+		)
+		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 			qhApi.RegisterCertificateServer(s, queryhandler.NewCertificateServer(qhDomain.CertificateRepository))
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
@@ -101,4 +121,5 @@ func init() {
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
+	flags.StringVar(&gatewayAddr, "gateway-api-addr", ":8081", "Address the gateway gRPC service is listening on")
 }
