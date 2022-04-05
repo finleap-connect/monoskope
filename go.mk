@@ -131,6 +131,7 @@ go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
 	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
 	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
+	$(MOCKGEN) -package gateway -destination test/api/gateway/gateway_authn_client_mock.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthZClient
 
 go-run-: ## run cmd, e.g. `make go-run-gateway ARGS="server"` to pass arguments
 	$(GO) run cmd/$*/*.go $(ARGS)
