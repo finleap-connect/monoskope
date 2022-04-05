@@ -24,11 +24,13 @@ import (
 	m8roles "github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	m8scopes "github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/open-policy-agent/opa/rego"
 	"golang.org/x/exp/slices"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
@@ -65,6 +67,17 @@ type authServer struct {
 	userRepo      repositories.ReadOnlyUserRepository
 	issuerURL     string
 	preparedQuery *rego.PreparedEvalQuery
+}
+
+func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthZClient, error) {
+	conn, err := grpcUtil.
+		NewGrpcConnectionFactoryWithDefaults(gatewayAddr).
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn, gateway.NewGatewayAuthZClient(conn), nil
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
