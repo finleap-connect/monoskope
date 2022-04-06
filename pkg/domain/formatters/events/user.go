@@ -27,7 +27,10 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -65,6 +68,8 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 	switch ed := ed.(type) {
 	case *eventdata.UserCreated:
 		return f.getFormattedDetailsUserCreated(event, ed)
+	case *eventdata.UserUpdated:
+		return f.getFormattedDetailsUserUpdated(ctx, event, ed)
 	case *eventdata.UserRoleAdded:
 		return f.getFormattedDetailsUserRoleAdded(ctx, event, ed)
 	}
@@ -74,6 +79,25 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 
 func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, eventData *eventdata.UserCreated) (string, error) {
 	return fmt.Sprintf("“%s“ created user “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Email), nil
+}
+
+func (f *userEventFormatter) getFormattedDetailsUserUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.UserUpdated) (string, error) {
+	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
+	)
+	if err != nil {
+		return "", err
+	}
+	oldUser, ok := userSnapshot.(*projections.User)
+	if !ok {
+		return "", esErrors.ErrInvalidProjectionType
+	}
+
+	var details strings.Builder
+	details.WriteString(fmt.Sprintf("“%s“ updated the User", event.Metadata[auth.HeaderAuthEmail]))
+	f.AppendUpdate("Name", eventData.Name, oldUser.Name, &details)
+	return details.String(), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {

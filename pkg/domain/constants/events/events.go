@@ -19,10 +19,10 @@ import es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 const (
 	// UserCreated event emitted when a User has been created
 	UserCreated es.EventType = "UserCreated"
-	// UserDeleted event emitted when a User has been deleted
-	UserDeleted es.EventType = "UserDeleted"
 	// UserUpdated event emitted when a User has been updated
 	UserUpdated es.EventType = "UserUpdated"
+	// UserDeleted event emitted when a User has been deleted
+	UserDeleted es.EventType = "UserDeleted"
 	// UserRoleBindingCreated event emitted when a new UserRoleBinding has been created
 	UserRoleBindingCreated es.EventType = "UserRoleBindingCreated"
 	// UserRoleBindingDeleted event emitted when a UserRoleBinding has been deleted
@@ -62,6 +62,7 @@ const (
 
 var UserEvents = []es.EventType{
 	UserCreated,
+	UserUpdated,
 	UserDeleted,
 	UserRoleBindingCreated,
 	UserRoleBindingDeleted,
@@ -69,8 +70,8 @@ var UserEvents = []es.EventType{
 
 var TenantEvents = []es.EventType{
 	TenantCreated,
-	TenantDeleted,
 	TenantUpdated,
+	TenantDeleted,
 	TenantClusterBindingCreated,
 	TenantClusterBindingDeleted,
 }
