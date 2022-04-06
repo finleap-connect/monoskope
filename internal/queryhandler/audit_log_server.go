@@ -21,6 +21,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"time"
 
@@ -66,6 +67,45 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 
 	eventFilter := &esApi.EventFilter{MinTimestamp: request.MinTimestamp, MaxTimestamp: request.MaxTimestamp}
 	events, err := s.esClient.Retrieve(ctx, eventFilter)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for {
+		e, err := events.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+
+		hre := s.auditFormatter.NewHumanReadableEvent(ctx, e)
+		err = stream.Send(hre)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+
+	return nil
+}
+
+// GetByUser returns human-readable events caused by others actions on the given user
+func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi.AuditLog_GetByUserServer) error {
+	ctx := context.Background()
+
+	user, err := s.userRepo.ByEmail(ctx, request.Email.GetValue())
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+	// TODO: this retrieves create/update/delete user events however
+	// 	roles events has the effected aggregate id in their data
+	// 	which means retrieving all userRoleBinding events extracting the data and filtering the ones apples to the user
+	//	this also mean user events first than roles events second which then need to be sorted by the timestamp
+	//	simply awful and cannot be implemented right now without refactoring and extending the way events are aggregated
+	events, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{
+		AggregateId: wrapperspb.String(user.Id),
+	})
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

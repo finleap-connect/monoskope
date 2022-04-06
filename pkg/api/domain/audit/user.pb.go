@@ -44,11 +44,11 @@ type UserOverview struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// the email of the user
 	Email string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	// a set the user's roles
+	// roles of the user in general
 	Roles string `protobuf:"bytes,3,opt,name=roles,proto3" json:"roles,omitempty"`
-	// a list of the tenants the user has access to including his role
+	// tenants the user has access to including his role
 	Tenants string `protobuf:"bytes,4,opt,name=tenants,proto3" json:"tenants,omitempty"`
-	// a list of the clusters the user has access to including his role
+	// clusters the user has access to including his role
 	Clusters string `protobuf:"bytes,5,opt,name=clusters,proto3" json:"clusters,omitempty"`
 	// human readable description of the user life-cycle
 	Details string `protobuf:"bytes,6,opt,name=details,proto3" json:"details,omitempty"`
