@@ -72,6 +72,7 @@ var serverCmd = &cobra.Command{
 
 		authClientConfig := auth.ClientConfig{
 			IdentityProvider: identityProvider,
+			Scopes:           scopes,
 		}
 		authServerConfig := auth.ServerConfig{
 			URL: gatewayURL,
