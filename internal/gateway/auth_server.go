@@ -65,6 +65,15 @@ type authServer struct {
 	preparedQuery *rego.PreparedEvalQuery
 }
 
+// authServerClientInternal can be used to wrap this server for use as grpc client implementation for local calls
+type authServerClientInternal struct {
+	authServer *authServer
+}
+
+func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.CheckRequest, opts ...grpc.CallOption) (*gateway.CheckResponse, error) {
+	return c.authServer.Check(ctx, req)
+}
+
 func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthZClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithDefaults(gatewayAddr).
@@ -95,6 +104,10 @@ func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Serve
 	s.preparedQuery = &query
 
 	return s, nil
+}
+
+func (s *authServer) AsClient() *authServerClientInternal {
+	return &authServerClientInternal{authServer: s}
 }
 
 // Check request object.
