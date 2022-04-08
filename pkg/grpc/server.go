@@ -119,11 +119,6 @@ func (s *Server) RegisterService(f func(grpc.ServiceRegistrar)) {
 	f(s.grpc)
 }
 
-// RegisterServiceDirect registers your gRPC service implementation with the server
-func (s *Server) RegisterServiceDirect(f func(*grpc.Server)) {
-	f(s.grpc)
-}
-
 // Serve starts the api listeners of the Server
 func (s *Server) Serve(apiAddr, metricsAddr string) error {
 	// Setup grpc listener
