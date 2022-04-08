@@ -257,8 +257,6 @@ var _ = BeforeSuite(func() {
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 			api.RegisterGatewayAuthZServer(s, gatewayAuthZServer)
 		})
-		env.GrpcServer.RegisterServiceDirect(func(s *ggrpc.Server) {
-		})
 
 		env.ApiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
 		Expect(err).ToNot(HaveOccurred())
