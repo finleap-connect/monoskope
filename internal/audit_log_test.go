@@ -132,7 +132,7 @@ var _ = Describe("AuditLog Test", func() {
 		})
 
 		When("getting users overview", func() {
-			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetAllRequest{IncludeDeleted: true})
+			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{Timestamp: timestamppb.New(maxTime)})
 			Expect(err).ToNot(HaveOccurred())
 
 			for {
@@ -144,6 +144,7 @@ var _ = Describe("AuditLog Test", func() {
 
 				Expect(o.Name).ToNot(BeEmpty())
 				Expect(o.Email).ToNot(BeEmpty())
+				Expect(o.Details).ToNot(BeEmpty())
 			}
 		})
 	})

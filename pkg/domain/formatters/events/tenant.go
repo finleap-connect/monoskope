@@ -21,7 +21,8 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
@@ -35,19 +36,19 @@ import (
 
 func init() {
 	for _, eventType := range events.TenantEvents {
-		_ = ef.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewTenantEventFormatter)
+		_ = event.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewTenantEventFormatter)
 	}
 }
 
 // tenantEventFormatter EventFormatter implementation for the tenant-aggregate
 type tenantEventFormatter struct {
-	*ef.BaseEventFormatter
+	*event.EventFormatterBase
 }
 
 // NewTenantEventFormatter creates a new event formatter for the tenant-aggregate
-func NewTenantEventFormatter(esClient esApi.EventStoreClient) ef.EventFormatter {
+func NewTenantEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &tenantEventFormatter{
-		BaseEventFormatter: &ef.BaseEventFormatter{EsClient: esClient},
+		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
 	}
 }
 
@@ -84,8 +85,8 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Eve
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
 	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
-		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
-	)
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
+	})
 	if err != nil {
 		return "", err
 	}
@@ -128,8 +129,8 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
-		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
-	)
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
+	})
 	if err != nil {
 		return "", err
 	}

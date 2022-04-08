@@ -16,7 +16,7 @@ package main
 
 import (
 	"context"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -82,7 +82,7 @@ var serverCmd = &cobra.Command{
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
 			qhApi.RegisterClusterServer(s, queryhandler.NewClusterServer(qhDomain.ClusterRepository))
 			qhApi.RegisterClusterAccessServer(s, queryhandler.NewClusterAccessServer(qhDomain.ClusterAccessRepo, qhDomain.TenantClusterBindingRepository))
-			qhApi.RegisterAuditLogServer(s, queryhandler.NewAuditLogServer(esClient, ef.DefaultEventFormatterRegistry, qhDomain.UserRepository, qhDomain.TenantRepository, qhDomain.ClusterRepository))
+			qhApi.RegisterAuditLogServer(s, queryhandler.NewAuditLogServer(esClient, ef.DefaultEventFormatterRegistry, qhDomain.UserRepository))
 			commonApi.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		})
 

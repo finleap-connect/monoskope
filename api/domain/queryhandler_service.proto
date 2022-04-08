@@ -90,8 +90,8 @@ service AuditLog{
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
   // GetUserActions returns human readable events caused by the given user actions
   rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
-  // GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
-  rpc GetUsersOverview(GetAllRequest) returns (stream audit.UserOverview);
+  // GetUsersOverview returns users overview at the specified timestamp, tenants/clusters they belong to, and their roles
+  rpc GetUsersOverview(GetUsersOverviewRequest) returns (stream audit.UserOverview);
 }
 
 service Certificate {
@@ -125,4 +125,8 @@ message GetAuditLogByDateRangeRequest {
 message GetUserActionsRequest {
   google.protobuf.StringValue email = 1;
   GetAuditLogByDateRangeRequest date_range = 2;
+}
+
+message GetUsersOverviewRequest {
+  google.protobuf.Timestamp timestamp = 1;
 }

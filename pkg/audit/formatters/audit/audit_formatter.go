@@ -16,46 +16,42 @@ package audit
 
 import (
 	"context"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/formatters/overviews"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"time"
 )
 
 // AuditFormatter is the interface definition for the formatter used by the auditLogServer
 type AuditFormatter interface {
 	NewHumanReadableEvent(context.Context, *esApi.Event) *audit.HumanReadableEvent
-	NewUserOverview(context.Context, *projections.User) *audit.UserOverview
+	NewUserOverview(context.Context, uuid.UUID, time.Time) *audit.UserOverview
 }
 
 // auditFormatter is the implementation of AuditFormatter used by auditLogServer
 type auditFormatter struct {
+	*formatters.FormatterBase
 	log        logger.Logger
-	esClient   esApi.EventStoreClient
-	efRegistry ef.EventFormatterRegistry
-	// TODO: replace with qhDomain -> sooner or later we will probably need all repos
-	// 	especially when building overviews
-	// 	or use no repos and build snapshots from the store
-	userRepo    repositories.ReadOnlyUserRepository
-	tenantRepo  repositories.ReadOnlyTenantRepository
-	clusterRepo repositories.ReadOnlyClusterRepository
+	efRegistry event.EventFormatterRegistry
 }
 
 // NewAuditFormatter creates an auditFormatter
-func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository, tenantRepo repositories.ReadOnlyTenantRepository, clusterRepo repositories.ReadOnlyClusterRepository) *auditFormatter {
+func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry event.EventFormatterRegistry) *auditFormatter {
 	return &auditFormatter{
-		log:         logger.WithName("audit-formatter"),
-		esClient:    esClient,
-		efRegistry:  efRegistry,
-		userRepo:    userRepo,
-		tenantRepo:  tenantRepo,
-		clusterRepo: clusterRepo,
+		FormatterBase: &formatters.FormatterBase{EsClient: esClient},
+		log:           logger.WithName("audit-formatter"),
+		efRegistry:    efRegistry,
 	}
 }
 
@@ -63,16 +59,15 @@ func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry ef.EventForma
 func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi.Event) *audit.HumanReadableEvent {
 	humanReadableEvent := &audit.HumanReadableEvent{
 		When:      event.Timestamp.AsTime().Format(time.RFC822),
-		Issuer:    event.Metadata["x-auth-email"],
+		Issuer:    event.Metadata[auth.HeaderAuthEmail],
 		IssuerId:  event.AggregateId,
 		EventType: event.Type,
 	}
 
-	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
+	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.EsClient, es.EventType(event.Type))
 	if err != nil {
 		return humanReadableEvent
 	}
-
 	humanReadableEvent.Details, err = eventFormatter.GetFormattedDetails(ctx, event)
 	if err != nil {
 		f.log.Error(err, "failed to format event details",
@@ -83,24 +78,34 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 	return humanReadableEvent
 }
 
-// NewUserOverview creates a UserOverview of a given user
-func (f *auditFormatter) NewUserOverview(ctx context.Context, user *projections.User) *audit.UserOverview {
-	userOverview := &audit.UserOverview{
-		Name:  user.Name,
-		Email: user.Email,
-	}
+// NewUserOverview creates a UserOverview of the given user by its id according to the given timestamp
+func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, timestamp time.Time) *audit.UserOverview {
+	userOverview := &audit.UserOverview{}
 
-	overviewFormatter := overviews.NewUserOverviewFormatter(f.userRepo, f.tenantRepo, f.clusterRepo)
-	var err error
-
-	userOverview.Roles, userOverview.Tenants, userOverview.Clusters, err = overviewFormatter.GetRolesDetails(ctx, user)
+	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+		MaxTimestamp: timestamppb.New(timestamp),
+		AggregateId:  wrapperspb.String(userId.String()),
+	})
 	if err != nil {
-		f.log.Error(err, "failed to format roles details", "userId", user.Id)
+		f.log.Error(err, "failed to create user snapshot", "userId", userId, "timeStamp", timestamp)
+		return userOverview
 	}
+	user, ok := userSnapshot.(*projections.User)
+	if !ok {
+		f.log.Error(err, "failed to cast user snapshot to user projection", "userId", userId, "timeStamp", timestamp)
+		return userOverview
+	}
+	userOverview.Name = user.Name
+	userOverview.Email = user.Email
 
-	userOverview.Details, err = overviewFormatter.GetFormattedDetails(ctx, user)
+	overviewFormatter := overviews.NewUserOverviewFormatter(f.EsClient)
+	userOverview.Roles, userOverview.Tenants, userOverview.Clusters, err = overviewFormatter.GetRolesDetails(ctx, user, timestamp)
 	if err != nil {
-		f.log.Error(err, "failed to format overview details", "userId", user.Id)
+		f.log.Error(err, "failed to format roles details", "userId", user, "timeStamp", timestamp)
+	}
+	userOverview.Details, err = overviewFormatter.GetFormattedDetails(ctx, user, timestamp)
+	if err != nil {
+		f.log.Error(err, "failed to format overview details", "userId", user.Id, "timeStamp", timestamp)
 	}
 
 	return userOverview
