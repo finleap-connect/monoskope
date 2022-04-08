@@ -50,8 +50,9 @@ type policyUser struct {
 }
 
 type policyInput struct {
-	User policyUser
-	Path string
+	User        policyUser
+	Path        string
+	CommandType string
 }
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
