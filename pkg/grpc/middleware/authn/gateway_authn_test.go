@@ -66,7 +66,7 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 				},
 			}, nil)
 
-			resultCtx, err := middleware.authNWithGateway(newCtx, expectedMethodName)
+			resultCtx, err := middleware.authNWithGateway(newCtx, expectedMethodName, nil)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resultCtx).ToNot(BeNil())
 

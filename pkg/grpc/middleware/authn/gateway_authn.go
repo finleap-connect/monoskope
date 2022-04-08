@@ -37,7 +37,7 @@ func NewAuthNMiddleware(gatewayClient api.GatewayAuthZClient) middleware.GRPCMid
 }
 
 // authNWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
-func (m *authNMiddleware) authNWithGateway(ctx context.Context, fullMethodName string) (context.Context, error) {
+func (m *authNMiddleware) authNWithGateway(ctx context.Context, fullMethodName string, req interface{}) (context.Context, error) {
 	// Check request is authenticated and authorized
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
@@ -67,7 +67,7 @@ func (m *authNMiddleware) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		var newCtx context.Context
 		var err error
 
-		newCtx, err = m.authNWithGateway(ctx, info.FullMethod)
+		newCtx, err = m.authNWithGateway(ctx, info.FullMethod, req)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ func (m *authNMiddleware) StreamServerInterceptor() grpc.StreamServerInterceptor
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		var newCtx context.Context
 		var err error
-		newCtx, err = m.authNWithGateway(stream.Context(), info.FullMethod)
+		newCtx, err = m.authNWithGateway(stream.Context(), info.FullMethod, nil)
 		if err != nil {
 			return err
 		}
