@@ -5,7 +5,7 @@ import future.keywords.in
 default authorized = false
 
 authorized {
-	startswith(input.Path, "/domain.Cluster/")
+	startswith(input.Path, "/domain.CommandHandlerExtensions/")
 }
 
 authorized {
