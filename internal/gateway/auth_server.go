@@ -104,37 +104,42 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 	authenticated := false
 	authorized := false
 
-	// Logging
-	s.log.Info("Authenticating request...", "path", path)
-	// Print headers
-	s.log.V(logger.DebugLevel).Info("Request received.", "Value", req)
+	s.log.Info("Authenticating request...", "path", path, "req", req)
 
-	// Authenticate user
+	// check authentication
+	// via JWT
+	authToken, err = s.tokenValidationFromContext(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	authenticated = err == nil
+
+	// via client certificate validation if not authenticated already
 	if !authenticated {
-		authToken, err = s.tokenValidationFromContext(ctx, req) // via JWT
+		authToken, err = s.certValidation(ctx, req)
 		if err != nil {
 			return nil, err
 		}
 		authenticated = err == nil
 	}
+
 	if !authenticated {
-		authToken, err = s.certValidation(ctx, req) // via client certificate validation
-		if err != nil {
-			return nil, err
-		}
-		authenticated = err == nil
-	}
-	if !authenticated {
+		// authentication failed
 		return nil, status.Error(codes.Unauthenticated, "authentication failed")
 	}
 
-	// Authorize user
+	s.log.Info("Request authenticated. Checking authorization...", "path", path, "req", req)
+
+	// check authorization
 	authorized, err = s.validatePolicies(ctx, req, authToken)
 	if err != nil {
+		// authorization failed with error
 		s.log.Error(err, "Error checking authorization of user.")
 		return nil, status.Error(codes.PermissionDenied, "authorization failed")
 	}
+
 	if authorized {
+		// authorization successful
 		return s.createAuthorizedResponse(authToken), nil
 	}
 	return nil, status.Error(codes.PermissionDenied, "authorization failed")
