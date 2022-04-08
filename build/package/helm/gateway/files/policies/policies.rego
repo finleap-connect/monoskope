@@ -4,8 +4,11 @@ import future.keywords.in
 
 default authorized = false
 
+allowed_paths = ["/domain.CommandHandlerExtensions/", "/domain.Cluster/GetByName"]
+
 authorized {
-	startswith(input.Path, "/domain.CommandHandlerExtensions/")
+	some path in allowed_paths
+	startswith(input.Path, path)
 }
 
 authorized {

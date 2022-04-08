@@ -4,7 +4,7 @@ alice_admin = {"User": {"Id": "1234", "Name": "alice", "Roles": [{"Name": "admin
 
 bob_tenant_admin = {"User": {"Id": "12345", "Name": "bob", "Roles": [{"Name": "admin", "Scope": "tenant"}]}}
 
-jane = {"User": {"Id": "123456", "Name": "jane"}, "Path": "/domain.Cluster/"}
+jane = {"User": {"Id": "123456", "Name": "jane"}, "Path": "/domain.CommandHandlerExtensions/"}
 
 test_system_admin {
 	is_system_admin with input as alice_admin
