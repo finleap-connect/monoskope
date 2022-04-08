@@ -58,7 +58,11 @@ var _ = Describe("Gateway Auth Server", func() {
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthZClient(conn)
 
-		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getAdminToken()))
+		nicemd := metautils.
+			ExtractIncoming(ctx).
+			Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getAdminToken())).
+			Set("command_type", "CreateUser")
+
 		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/",
 		})
