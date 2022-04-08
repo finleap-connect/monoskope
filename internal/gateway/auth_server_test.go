@@ -21,10 +21,13 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ = Describe("Gateway Auth Server", func() {
@@ -32,25 +35,56 @@ var _ = Describe("Gateway Auth Server", func() {
 		ctx = context.Background()
 	)
 
-	It("can authenticate with JWT", func() {
+	getTokenForUser := func(user *projections.User) string {
 		expectedValidity := time.Hour * 1
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: user.Name, Email: user.Email}, localAddrAPIServer, user.Id, expectedValidity)
 		signer := env.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
+		return signedToken
+	}
 
+	getAdminToken := func() string {
+		return getTokenForUser(env.AdminUser)
+	}
+
+	getNormalUserToken := func() string {
+		return getTokenForUser(env.ExistingUser)
+	}
+
+	It("admin can authZ with JWT", func() {
 		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthZClient(conn)
 
-		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", signedToken))
+		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getAdminToken()))
 		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
-			FullMethodName: "/domain.Cluster/",
+			FullMethodName: "/eventsourcing.CommandHandler/",
 		})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(resp).To(Not(BeNil()))
+		Expect(resp).ToNot(BeNil())
+		Expect(resp.Tags).ToNot(BeNil())
 	})
+
+	It("regular user can't authenticate with JWT for commandhandler", func() {
+		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		authClient := gateway.NewGatewayAuthZClient(conn)
+
+		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getNormalUserToken()))
+		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
+			FullMethodName: "/eventsourcing.CommandHandler/",
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(resp).To(BeNil())
+		status, ok := status.FromError(err)
+		Expect(ok).To(BeTrue())
+		Expect(status).NotTo(BeNil())
+		Expect(status.Code()).To(Equal(codes.PermissionDenied))
+	})
+
 	// It("fails authentication with invalid JWT", func() {
 	// 	conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 	// 	Expect(err).ToNot(HaveOccurred())
