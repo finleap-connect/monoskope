@@ -78,7 +78,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create Gateway Auth client
-		log.Info("Connecting gateway...", "gattewayAddr", gatewayAddr)
+		log.Info("Connecting gateway...", "gatewayAddr", gatewayAddr)
 		conn, gatewaySvcClient, err := gateway.NewAuthServerClient(ctx, gatewayAddr)
 		if err != nil {
 			return err

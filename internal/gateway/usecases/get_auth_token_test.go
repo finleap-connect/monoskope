@@ -62,7 +62,6 @@ var _ = Describe("GetAuthToken", func() {
 	})
 
 	It("can retrieve openid conf", func() {
-		userRepo := mockRepos.NewMockUserRepository(mockCtrl)
 		clusterRepo := mockRepos.NewMockClusterRepository(mockCtrl)
 
 		request := &api.ClusterAuthTokenRequest{
@@ -70,7 +69,7 @@ var _ = Describe("GetAuthToken", func() {
 			Role:      string(k8s.DefaultRole),
 		}
 		result := new(api.ClusterAuthTokenResponse)
-		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), userRepo, clusterRepo, expectedIssuer, expectedValidity)
+		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
 			Id:        expectedUserId,
@@ -90,7 +89,6 @@ var _ = Describe("GetAuthToken", func() {
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()
-		userRepo.EXPECT().ByUserId(ctxWithUser, expectedUserId).Return(userProjection, nil)
 		clusterRepo.EXPECT().ByClusterId(ctxWithUser, expectedClusterId.String()).Return(clusterProjection, nil)
 
 		err := uc.Run(ctxWithUser)
