@@ -9,4 +9,4 @@ metadata:
     {{- end }}
 type: Opaque
 data:
-{{ (.Files.Glob "files/policies/*.rego").AsSecrets | indent 2 }}
+{{ (.Files.Glob "files/policies/policies.rego").AsSecrets | indent 2 }}
