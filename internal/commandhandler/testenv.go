@@ -69,7 +69,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	err = domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
+	err = domain.SetupCommandHandlerDomain(ctx, env.esClient)
 	if err != nil {
 		return nil, err
 	}
