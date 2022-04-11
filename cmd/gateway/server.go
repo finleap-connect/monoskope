@@ -25,7 +25,11 @@ import (
 
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
+	"github.com/finleap-connect/monoskope/pkg/domain/handler"
+	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	authm "github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
@@ -36,9 +40,12 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/finleap-connect/monoskope/internal/common"
+	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"github.com/finleap-connect/monoskope/internal/messagebus"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing/eventhandler"
+	esr "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
@@ -47,7 +54,6 @@ import (
 var (
 	grpcApiAddr                string
 	httpApiAddr                string
-	queryHandlerAddr           string
 	metricsAddr                string
 	keepAlive                  bool
 	scopes                     []string
@@ -59,6 +65,8 @@ var (
 	policiesPath               string
 	k8sTokenLifetimeConfigPath string
 	jwtPath                    string
+	eventStoreAddr             string
+	msgbusPrefix               string
 )
 
 var serverCmd = &cobra.Command{
@@ -124,30 +132,70 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
-		// Create UserService client
-		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
+		// Create EventStore client
+		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
+		esConnection, esClient, err := eventstore.NewEventStoreClient(ctx, eventStoreAddr)
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer esConnection.Close()
 
-		conn, clusterSvcClient, err := queryhandler.NewClusterClient(ctx, queryHandlerAddr)
+		// init message bus consumer
+		log.Info("Setting up message bus consumer...")
+		ebConsumer, err := messagebus.NewEventBusConsumer("queryhandler", msgbusPrefix)
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer ebConsumer.Close()
 
-		userRepo := repositories.NewRemoteUserRepository(userSvcClient)
-		clusterRepo := repositories.NewRemoteClusterRepository(clusterSvcClient)
+		// Setup necessary projections
+		refreshDuration := time.Second * 30
+
+		userRoleBindingRepository := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
+		userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
+		userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, userRoleBindingRepository)
+		userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+		userRoleBindingMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
+		if err := ebConsumer.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
+			return err
+		}
+
+		userRepository := repositories.NewUserRepository(esr.NewInMemoryRepository(), userRoleBindingRepository)
+		userProjector := projectors.NewUserProjector()
+		userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, userRepository)
+		userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+		userMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.User)
+		if err := ebConsumer.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
+			return err
+		}
+
+		clusterRepository := repositories.NewClusterRepository(esr.NewInMemoryRepository())
+		clusterProjector := projectors.NewClusterProjector()
+		clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, clusterRepository)
+		clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+		clusterMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.Cluster)
+		if err := ebConsumer.AddHandler(ctx, clusterHandlerChain, clusterMatcher); err != nil {
+			return err
+		}
+
+		if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
+			return err
+		}
+		if err := handler.WarmUp(ctx, esClient, aggregates.UserRoleBinding, userRoleBindingHandlerChain); err != nil {
+			return err
+		}
+		if err := handler.WarmUp(ctx, esClient, aggregates.Cluster, clusterHandlerChain); err != nil {
+			return err
+		}
 
 		// API servers
-		authServer, err := gateway.NewAuthServer(ctx, gatewayURL, server, userRepo, policiesPath)
+		authServer, err := gateway.NewAuthServer(ctx, gatewayURL, server, policiesPath, userRoleBindingRepository)
 		if err != nil {
 			return err
 		}
 
 		oidcProviderServer := gateway.NewOIDCProviderServer(server)
-		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepo)
+		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepository)
 
 		// Look for config
 		if len(k8sTokenLifetime) == 0 {
@@ -173,9 +221,9 @@ var serverCmd = &cobra.Command{
 			}
 			tokenLifeTimePerRole[k] = k8sTokenValidityDuration
 		}
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, userRepo, clusterRepo, tokenLifeTimePerRole)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, clusterRepository, tokenLifeTimePerRole)
 
-		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepo)
+		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepository)
 
 		// Create gRPC server and register implementation
 		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient())
@@ -213,8 +261,9 @@ func init() {
 	flags.BoolVar(&keepAlive, "keep-alive", false, "If enabled, gRPC will use keepalive and allow long lasting connections")
 	flags.StringVar(&grpcApiAddr, "grpc-api-addr", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
-	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
+	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
+	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 	flags.StringArrayVar(&scopes, "scopes", []string{"openid", "profile", "email"}, "Issuer scopes to request")
 	flags.StringVar(&redirectUris, "redirect-uris", "localhost:8000,localhost18000", "Issuer allowed redirect uris")
 	flags.StringVar(&k8sTokenLifetimeConfigPath, "k8s-token-lifetime-path", "/etc/gateway/k8s-auth/k8sTokenLifetime.yaml", "YAML containing the token lifetime for k8s token per role. Only used if `k8s-token-lifetime` is not specified")

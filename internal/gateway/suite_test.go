@@ -239,14 +239,15 @@ var _ = BeforeSuite(func() {
 		err = inMemoryClusterRepo.Upsert(ctx, testCluster)
 		Expect(err).ToNot(HaveOccurred())
 
+		userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 		userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
 		env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 		gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, userRepo)
-		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, userRepo, env.ClusterRepo, map[string]time.Duration{
+		authApiServer := NewClusterAuthAPIServer("https://localhost", signer, env.ClusterRepo, map[string]time.Duration{
 			"default": time.Hour * 1,
 		})
 
-		gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
+		gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, env.PoliciesPath, userRoleBindingRepo)
 		Expect(errAuthServer).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation

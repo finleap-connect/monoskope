@@ -16,26 +16,29 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
-	m8roles "github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	m8scopes "github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/google/uuid"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/open-policy-agent/opa/rego"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
+
+type policyAuthentication struct {
+	Scopes []string
+}
 
 type policyRoles struct {
 	Name     string
@@ -50,19 +53,20 @@ type policyUser struct {
 }
 
 type policyInput struct {
-	User        policyUser
-	Path        string
-	CommandType string
+	User           policyUser
+	Path           string
+	CommandType    string
+	Authentication policyAuthentication
 }
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
 	gateway.UnimplementedGatewayAuthServer
-	log           logger.Logger
-	oidcServer    *auth.Server
-	userRepo      repositories.ReadOnlyUserRepository
-	issuerURL     string
-	preparedQuery *rego.PreparedEvalQuery
+	log             logger.Logger
+	oidcServer      *auth.Server
+	issuerURL       string
+	preparedQuery   *rego.PreparedEvalQuery
+	roleBindingRepo repositories.UserRoleBindingRepository
 }
 
 // authServerClientInternal can be used to wrap this server for use as grpc client implementation for local calls
@@ -86,12 +90,12 @@ func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientC
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, userRepo repositories.ReadOnlyUserRepository, policiesPath string) (*authServer, error) {
+func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, policiesPath string, roleBindingRepo repositories.UserRoleBindingRepository) (*authServer, error) {
 	s := &authServer{
-		log:        logger.WithName("auth-server"),
-		oidcServer: oidcServer,
-		userRepo:   userRepo,
-		issuerURL:  issuerURL,
+		log:             logger.WithName("auth-server"),
+		oidcServer:      oidcServer,
+		issuerURL:       issuerURL,
+		roleBindingRepo: roleBindingRepo,
 	}
 
 	query, err := rego.New(
@@ -161,28 +165,38 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 
 // validatePolicies validates the configured policies using OPA
 func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
-	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
+	userId, err := uuid.Parse(authToken.Subject)
 	if err != nil {
-		s.log.Error(err, "Policy evaluation failed. User does not exist.", "email", authToken.Email)
-		return false, err
+		return false, fmt.Errorf("Failed to parse user id from token: %w", err)
 	}
 
 	input := policyInput{
 		User: policyUser{
-			Id:   user.Id,
-			Name: user.Name,
+			Id:   authToken.Subject,
+			Name: authToken.Name,
 		},
 		Path: req.FullMethodName,
+		Authentication: policyAuthentication{
+			Scopes: make([]string, 0),
+		},
+	}
+
+	roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
+	if err != nil {
+		return false, fmt.Errorf("Failed get rolebindings for user: %w", err)
 	}
 
 	input.User.Roles = make([]policyRoles, 0)
-	for _, role := range user.Roles {
+	for _, role := range roleBindings {
 		input.User.Roles = append(input.User.Roles, policyRoles{
 			Name:     role.Role,
 			Scope:    role.Scope,
 			Resource: role.Resource,
 		})
 	}
+
+	scopes := strings.Split(authToken.Scope, " ")
+	input.Authentication.Scopes = append(input.Authentication.Scopes, scopes...)
 
 	results, err := s.preparedQuery.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
@@ -197,14 +211,6 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 	return results.Allowed(), nil
 }
 
-func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
-	user, err := s.userRepo.ByEmail(ctx, email)
-	if err != nil {
-		return "", false
-	}
-	return user.Id, true
-}
-
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(ctx context.Context, req *gateway.CheckRequest) (*jwt.AuthToken, error) {
 	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
@@ -216,49 +222,7 @@ func (s *authServer) tokenValidationFromContext(ctx context.Context, req *gatewa
 	if err != nil {
 		return nil, err
 	}
-
-	// Check user actually exists in m8
-	user, err := s.userRepo.ByEmail(ctx, authToken.Email)
-	if err != nil && !authToken.IsAPIToken {
-		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
-		return nil, err
-	}
-
-	// Validate scopes
-	route := req.FullMethodName
-	scopes := strings.Split(authToken.Scope, " ")
-
-	// Validation for API Token Endpoint
-	// TODO: This is a temporary solution until authorization has been replaced with Open Policy Agent
-	if strings.HasPrefix(route, "/"+gateway.APIToken_ServiceDesc.ServiceName) {
-		if !authToken.IsAPIToken {
-			for _, role := range user.Roles {
-				if role.Role == m8roles.Admin.String() && role.Scope == m8scopes.System.String() { // Only system admins can issue API tokens
-					return authToken, nil
-				}
-			}
-			s.log.Info("Token validation failed. Only system admins can call that route.", "Route", route, "Scopes", authToken.Scope)
-			return nil, status.Error(codes.Unauthenticated, "token validation failed")
-		} else { // API Tokens can't be used to issue new ones
-			s.log.Info("Token validation failed. Token can not be used for route.", "Route", route, "Scopes", authToken.Scope)
-			return nil, err
-		}
-	}
-
-	// SCIM API Access
-	if strings.HasPrefix(route, "/scim") {
-		if slices.Contains(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
-			return authToken, err
-		}
-	}
-
-	// General API access
-	if slices.Contains(scopes, gateway.AuthorizationScope_API.String()) {
-		return authToken, err
-	}
-
-	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
-	return nil, err
+	return authToken, nil
 }
 
 // tokenValidation validates the token provided within the authorization flow
@@ -303,20 +267,18 @@ func (s *authServer) certValidation(ctx context.Context, req *gateway.CheckReque
 		return nil, status.Error(codes.Unauthenticated, "could not verify peer certificate")
 	}
 
+	userId := tlsAuth.State.VerifiedChains[0][0].Subject.SerialNumber
 	userName := tlsAuth.State.VerifiedChains[0][0].Subject.CommonName
 	emailAddress := tlsAuth.State.VerifiedChains[0][0].EmailAddresses[0]
-	if userId, ok := s.retrieveUserId(ctx, emailAddress); !ok {
-		return nil, status.Error(codes.Unauthenticated, "invalid subject common name")
-	} else {
-		claims := auth.NewAuthToken(&jwt.StandardClaims{
-			Name:  userName,
-			Email: emailAddress,
-		}, s.issuerURL, userId, time.Minute*5)
-		claims.Subject = userId
-		claims.Issuer = tlsAuth.State.VerifiedChains[0][0].Issuer.CommonName
-		s.log.Info("Client certificate validation successful.", "User", claims.Email)
-		return claims, nil
-	}
+
+	claims := auth.NewAuthToken(&jwt.StandardClaims{
+		Name:  userName,
+		Email: emailAddress,
+	}, s.issuerURL, userId, time.Minute*5)
+	claims.Subject = userId
+	claims.Issuer = tlsAuth.State.VerifiedChains[0][0].Issuer.CommonName
+	s.log.Info("Client certificate validation successful.", "User", claims.Email)
+	return claims, nil
 }
 
 func (s *authServer) createAuthorizedResponse(authToken *jwt.AuthToken) *gateway.CheckResponse {
