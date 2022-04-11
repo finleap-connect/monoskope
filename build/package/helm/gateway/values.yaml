@@ -114,6 +114,12 @@ k8sTokenLifetime:
 # -- Duration for which issued Monoskope auth tokens are valid
 authTokenValidity: 12h
 
+# -- API address of the event store
+eventStore:
+  prefix: "" # Defaults to the release name
+  host: "eventstore"
+  port: 8080
+
 messageBus:
   # -- Prefix for routing messages via message bus
   routingKeyPrefix: m8
