@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/aggregates"
@@ -157,7 +156,7 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserClient, esClient esApi.EventStoreClient) error {
+func SetupCommandHandlerDomain(ctx context.Context, esClient esApi.EventStoreClient) error {
 	// Register aggregates
 	aggregateManager := registerAggregates(esClient)
 
