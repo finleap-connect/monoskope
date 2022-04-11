@@ -18,10 +18,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayClient interface {
-	// Deprecated: Do not use.
-	GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error)
-	// Deprecated: Do not use.
-	ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error)
 	// PrepareAuthentication returns the URL to call to authenticate against the
 	// upstream IDP
 	RequestUpstreamAuthentication(ctx context.Context, in *UpstreamAuthenticationRequest, opts ...grpc.CallOption) (*UpstreamAuthenticationResponse, error)
@@ -36,26 +32,6 @@ type gatewayClient struct {
 
 func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
-}
-
-// Deprecated: Do not use.
-func (c *gatewayClient) GetAuthInformation(ctx context.Context, in *AuthState, opts ...grpc.CallOption) (*AuthInformation, error) {
-	out := new(AuthInformation)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetAuthInformation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Deprecated: Do not use.
-func (c *gatewayClient) ExchangeAuthCode(ctx context.Context, in *AuthCode, opts ...grpc.CallOption) (*AuthResponse, error) {
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/ExchangeAuthCode", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *gatewayClient) RequestUpstreamAuthentication(ctx context.Context, in *UpstreamAuthenticationRequest, opts ...grpc.CallOption) (*UpstreamAuthenticationResponse, error) {
@@ -80,10 +56,6 @@ func (c *gatewayClient) RequestAuthentication(ctx context.Context, in *Authentic
 // All implementations must embed UnimplementedGatewayServer
 // for forward compatibility
 type GatewayServer interface {
-	// Deprecated: Do not use.
-	GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error)
-	// Deprecated: Do not use.
-	ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error)
 	// PrepareAuthentication returns the URL to call to authenticate against the
 	// upstream IDP
 	RequestUpstreamAuthentication(context.Context, *UpstreamAuthenticationRequest) (*UpstreamAuthenticationResponse, error)
@@ -97,12 +69,6 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (UnimplementedGatewayServer) GetAuthInformation(context.Context, *AuthState) (*AuthInformation, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAuthInformation not implemented")
-}
-func (UnimplementedGatewayServer) ExchangeAuthCode(context.Context, *AuthCode) (*AuthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExchangeAuthCode not implemented")
-}
 func (UnimplementedGatewayServer) RequestUpstreamAuthentication(context.Context, *UpstreamAuthenticationRequest) (*UpstreamAuthenticationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestUpstreamAuthentication not implemented")
 }
@@ -120,42 +86,6 @@ type UnsafeGatewayServer interface {
 
 func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
 	s.RegisterService(&Gateway_ServiceDesc, srv)
-}
-
-func _Gateway_GetAuthInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthState)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).GetAuthInformation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/GetAuthInformation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).GetAuthInformation(ctx, req.(*AuthState))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_ExchangeAuthCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthCode)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).ExchangeAuthCode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/ExchangeAuthCode",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).ExchangeAuthCode(ctx, req.(*AuthCode))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Gateway_RequestUpstreamAuthentication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -201,14 +131,6 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gateway.Gateway",
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetAuthInformation",
-			Handler:    _Gateway_GetAuthInformation_Handler,
-		},
-		{
-			MethodName: "ExchangeAuthCode",
-			Handler:    _Gateway_ExchangeAuthCode_Handler,
-		},
 		{
 			MethodName: "RequestUpstreamAuthentication",
 			Handler:    _Gateway_RequestUpstreamAuthentication_Handler,

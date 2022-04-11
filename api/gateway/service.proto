@@ -25,13 +25,6 @@ package gateway;
 
 // API of the Monoskope Gateway.
 service Gateway {
-  rpc GetAuthInformation(AuthState) returns (AuthInformation) {
-    option deprecated = true;
-  };
-  rpc ExchangeAuthCode(AuthCode) returns (AuthResponse) {
-    option deprecated = true;
-  };
-
   // PrepareAuthentication returns the URL to call to authenticate against the
   // upstream IDP
   rpc RequestUpstreamAuthentication(UpstreamAuthenticationRequest)
