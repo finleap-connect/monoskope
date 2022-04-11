@@ -18,7 +18,7 @@ import (
 	"context"
 
 	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
-	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/authn"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -78,22 +78,22 @@ var serverCmd = &cobra.Command{
 		}
 
 		// Create gRPC server and register implementation+
-		// Create Gateway AuthZ client
+		// Create Gateway Auth client
 		log.Info("Connecting gateway...", "gattewayAddr", gatewayAddr)
 		conn, gatewaySvcClient, err := gateway.NewAuthServerClient(ctx, gatewayAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
-		authZMiddleware := authn.NewAuthNMiddleware(gatewaySvcClient)
+		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient)
 
 		// Create gRPC server and register implementation
 		log.Info("Creating gRPC server...")
 		grpcServer := grpc.NewServerWithOpts("queryhandler-grpc", keepAlive,
 			[]ggrpc.UnaryServerInterceptor{
-				authZMiddleware.UnaryServerInterceptor(),
+				authMiddleware.UnaryServerInterceptor(),
 			}, []ggrpc.StreamServerInterceptor{
-				authZMiddleware.StreamServerInterceptor(),
+				authMiddleware.StreamServerInterceptor(),
 			},
 		)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {

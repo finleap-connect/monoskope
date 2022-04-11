@@ -57,7 +57,7 @@ type policyInput struct {
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
-	gateway.UnimplementedGatewayAuthZServer
+	gateway.UnimplementedGatewayAuthServer
 	log           logger.Logger
 	oidcServer    *auth.Server
 	userRepo      repositories.ReadOnlyUserRepository
@@ -74,7 +74,7 @@ func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.Check
 	return c.authServer.Check(ctx, req)
 }
 
-func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthZClient, error) {
+func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithDefaults(gatewayAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
@@ -82,7 +82,7 @@ func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientC
 		return nil, nil, err
 	}
 
-	return conn, gateway.NewGatewayAuthZClient(conn), nil
+	return conn, gateway.NewGatewayAuthClient(conn), nil
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
