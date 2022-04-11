@@ -12,11 +12,18 @@ allowed_paths = [
 	"/domain.Cluster/GetByName",
 ]
 
+scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]
+
 # check if system admin
 is_system_admin {
 	some role in input.User.Roles
-	"system" == role.Scope
-	"admin" == role.Name
+	role.Scope == "system"
+	role.Name == "admin"
+}
+
+# authorized because system admin
+authorized {
+	is_system_admin
 }
 
 # authorized via allowed_paths
@@ -25,7 +32,10 @@ authorized {
 	startswith(input.Path, path)
 }
 
-# authorized because system admin
+# authorized via scope
 authorized {
-	is_system_admin
+	some scoped_path in scoped_paths
+	startswith(input.Path, scoped_path.path)
+	some scope in input.Authentication.Scopes
+	scope == scoped_path.scope
 }
