@@ -12,8 +12,8 @@ jobs:
         steps:
         - name: Checkout Project
           uses: actions/checkout@v3
-        - name: Run OPA tests
-          uses: petroprotsakh/opa-test-action@v2.1
+        - name: Test Open Policy Agent (OPA) Policies
+          uses: finleap-connect/opa-test-action@v3.0.0
           with:
             tests: "build/package/helm/gateway/files/"
             options: "-v"
