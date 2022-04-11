@@ -27,7 +27,7 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
-	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/authn"
+	authm "github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -178,12 +178,12 @@ var serverCmd = &cobra.Command{
 		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepo)
 
 		// Create gRPC server and register implementation
-		authZMiddleware := authn.NewAuthNMiddleware(authServer.AsClient())
+		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient())
 		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
 			[]ggrpc.UnaryServerInterceptor{
-				authZMiddleware.UnaryServerInterceptor(),
+				authMiddleware.UnaryServerInterceptor(),
 			}, []ggrpc.StreamServerInterceptor{
-				authZMiddleware.StreamServerInterceptor(),
+				authMiddleware.StreamServerInterceptor(),
 			},
 		)
 
@@ -192,7 +192,7 @@ var serverCmd = &cobra.Command{
 			api.RegisterClusterAuthServer(s, clusterAuthApiServer)
 			api.RegisterAPITokenServer(s, apiTokenServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
-			api.RegisterGatewayAuthZServer(s, authServer)
+			api.RegisterGatewayAuthServer(s, authServer)
 		})
 
 		// Finally start the servers

@@ -37,7 +37,7 @@ service Gateway {
 
 // A service for performing authorization check on incoming
 // requests to a networked service part of m8.
-service GatewayAuthZ {
+service GatewayAuth {
   // Performs authorization check based on the attributes associated with the
   // incoming request, and returns status `OK` or not `OK`.
   rpc Check(CheckRequest) returns (CheckResponse);

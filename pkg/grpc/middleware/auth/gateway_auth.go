@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package authn
+package auth
 
 import (
 	"context"
@@ -26,18 +26,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type authNMiddleware struct {
-	gatewayClient api.GatewayAuthZClient
+type authMiddleware struct {
+	gatewayClient api.GatewayAuthClient
 }
 
-func NewAuthNMiddleware(gatewayClient api.GatewayAuthZClient) middleware.GRPCMiddleware {
-	return &authNMiddleware{
+func NewAuthMiddleware(gatewayClient api.GatewayAuthClient) middleware.GRPCMiddleware {
+	return &authMiddleware{
 		gatewayClient,
 	}
 }
 
-// authNWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
-func (m *authNMiddleware) authNWithGateway(ctx context.Context, fullMethodName string, req interface{}) (context.Context, error) {
+// authWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
+func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName string, req interface{}) (context.Context, error) {
 	// Check request is authenticated and authorized
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
@@ -62,12 +62,12 @@ func (m *authNMiddleware) authNWithGateway(ctx context.Context, fullMethodName s
 }
 
 // UnaryServerInterceptor returns a new unary server interceptors that performs per-request auth.
-func (m *authNMiddleware) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+func (m *authMiddleware) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		var newCtx context.Context
 		var err error
 
-		newCtx, err = m.authNWithGateway(ctx, info.FullMethod, req)
+		newCtx, err = m.authWithGateway(ctx, info.FullMethod, req)
 		if err != nil {
 			return nil, err
 		}
@@ -77,11 +77,11 @@ func (m *authNMiddleware) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // StreamServerInterceptor returns a new unary server interceptors that performs per-request auth.
-func (m *authNMiddleware) StreamServerInterceptor() grpc.StreamServerInterceptor {
+func (m *authMiddleware) StreamServerInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		var newCtx context.Context
 		var err error
-		newCtx, err = m.authNWithGateway(stream.Context(), info.FullMethod, nil)
+		newCtx, err = m.authWithGateway(stream.Context(), info.FullMethod, nil)
 		if err != nil {
 			return err
 		}

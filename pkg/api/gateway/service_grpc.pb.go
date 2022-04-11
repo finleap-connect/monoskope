@@ -144,90 +144,90 @@ var Gateway_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "api/gateway/service.proto",
 }
 
-// GatewayAuthZClient is the client API for GatewayAuthZ service.
+// GatewayAuthClient is the client API for GatewayAuth service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GatewayAuthZClient interface {
+type GatewayAuthClient interface {
 	// Performs authorization check based on the attributes associated with the
 	// incoming request, and returns status `OK` or not `OK`.
 	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
 }
 
-type gatewayAuthZClient struct {
+type gatewayAuthClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGatewayAuthZClient(cc grpc.ClientConnInterface) GatewayAuthZClient {
-	return &gatewayAuthZClient{cc}
+func NewGatewayAuthClient(cc grpc.ClientConnInterface) GatewayAuthClient {
+	return &gatewayAuthClient{cc}
 }
 
-func (c *gatewayAuthZClient) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
+func (c *gatewayAuthClient) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
 	out := new(CheckResponse)
-	err := c.cc.Invoke(ctx, "/gateway.GatewayAuthZ/Check", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gateway.GatewayAuth/Check", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GatewayAuthZServer is the server API for GatewayAuthZ service.
-// All implementations must embed UnimplementedGatewayAuthZServer
+// GatewayAuthServer is the server API for GatewayAuth service.
+// All implementations must embed UnimplementedGatewayAuthServer
 // for forward compatibility
-type GatewayAuthZServer interface {
+type GatewayAuthServer interface {
 	// Performs authorization check based on the attributes associated with the
 	// incoming request, and returns status `OK` or not `OK`.
 	Check(context.Context, *CheckRequest) (*CheckResponse, error)
-	mustEmbedUnimplementedGatewayAuthZServer()
+	mustEmbedUnimplementedGatewayAuthServer()
 }
 
-// UnimplementedGatewayAuthZServer must be embedded to have forward compatible implementations.
-type UnimplementedGatewayAuthZServer struct {
+// UnimplementedGatewayAuthServer must be embedded to have forward compatible implementations.
+type UnimplementedGatewayAuthServer struct {
 }
 
-func (UnimplementedGatewayAuthZServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
+func (UnimplementedGatewayAuthServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
 }
-func (UnimplementedGatewayAuthZServer) mustEmbedUnimplementedGatewayAuthZServer() {}
+func (UnimplementedGatewayAuthServer) mustEmbedUnimplementedGatewayAuthServer() {}
 
-// UnsafeGatewayAuthZServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GatewayAuthZServer will
+// UnsafeGatewayAuthServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GatewayAuthServer will
 // result in compilation errors.
-type UnsafeGatewayAuthZServer interface {
-	mustEmbedUnimplementedGatewayAuthZServer()
+type UnsafeGatewayAuthServer interface {
+	mustEmbedUnimplementedGatewayAuthServer()
 }
 
-func RegisterGatewayAuthZServer(s grpc.ServiceRegistrar, srv GatewayAuthZServer) {
-	s.RegisterService(&GatewayAuthZ_ServiceDesc, srv)
+func RegisterGatewayAuthServer(s grpc.ServiceRegistrar, srv GatewayAuthServer) {
+	s.RegisterService(&GatewayAuth_ServiceDesc, srv)
 }
 
-func _GatewayAuthZ_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _GatewayAuth_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayAuthZServer).Check(ctx, in)
+		return srv.(GatewayAuthServer).Check(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gateway.GatewayAuthZ/Check",
+		FullMethod: "/gateway.GatewayAuth/Check",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayAuthZServer).Check(ctx, req.(*CheckRequest))
+		return srv.(GatewayAuthServer).Check(ctx, req.(*CheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// GatewayAuthZ_ServiceDesc is the grpc.ServiceDesc for GatewayAuthZ service.
+// GatewayAuth_ServiceDesc is the grpc.ServiceDesc for GatewayAuth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var GatewayAuthZ_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gateway.GatewayAuthZ",
-	HandlerType: (*GatewayAuthZServer)(nil),
+var GatewayAuth_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gateway.GatewayAuth",
+	HandlerType: (*GatewayAuthServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Check",
-			Handler:    _GatewayAuthZ_Check_Handler,
+			Handler:    _GatewayAuth_Check_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
