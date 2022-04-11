@@ -58,6 +58,9 @@ gateway:
   # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
   oidcSecret:
     name: m8-gateway-oidc
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 eventstore:
   enabled: true
