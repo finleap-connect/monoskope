@@ -88,6 +88,9 @@ spec:
                 secretKeyRef:
                   name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-nonce
+          envFrom:
+            - secretRef:
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "gateway.fullname" .) "bus") }}
           args:
             - /app
             - server
@@ -129,6 +132,11 @@ spec:
             - name: policies-secret
               mountPath: /etc/gateway/policies
               readOnly: true
+          {{- if .Values.messageBus.tlsSecret }}
+            - name: buscerts
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -154,3 +162,8 @@ spec:
             items:
             - key: "k8sTokenLifetime"
               path: "k8sTokenLifetime.yaml"
+      {{- if .Values.messageBus.tlsSecret }}
+        - name: buscerts
+          secret:
+            secretName: {{ .Values.messageBus.tlsSecret }}
+      {{- end }}
