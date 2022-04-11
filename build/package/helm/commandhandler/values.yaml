@@ -100,9 +100,3 @@ eventStore:
   prefix: "" # Defaults to the release name
   host: "eventstore"
   port: 8080
-
-# -- API address of the query handler
-queryHandler:
-  prefix: "" # Defaults to the release name
-  host: "queryhandler"
-  port: 8080
