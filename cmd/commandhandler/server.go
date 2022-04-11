@@ -31,18 +31,16 @@ import (
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 )
 
 var (
-	apiAddr          string
-	metricsAddr      string
-	keepAlive        bool
-	eventStoreAddr   string
-	queryHandlerAddr string
-	gatewayAddr      string
+	apiAddr        string
+	metricsAddr    string
+	keepAlive      bool
+	eventStoreAddr string
+	gatewayAddr    string
 )
 
 var serverCmd = &cobra.Command{
@@ -62,17 +60,9 @@ var serverCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		// Create UserService client
-		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
-		err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
+		err = domain.SetupCommandHandlerDomain(ctx, esClient)
 		if err != nil {
 			return err
 		}
@@ -117,6 +107,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
-	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
 	flags.StringVar(&gatewayAddr, "gateway-api-addr", ":8081", "Address the gateway gRPC service is listening on")
 }
