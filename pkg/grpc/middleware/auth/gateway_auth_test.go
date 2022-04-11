@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package authn
+package auth
 
 import (
 	"context"
@@ -50,12 +50,12 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 
 		It("should ensure rules are valid", func() {
 			newCtx := ctxWithToken(ctx, "bearer", "onetoken")
-			authzClient := mock_api.NewMockGatewayAuthZClient(mockCtrl)
+			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
 
-			middleware := NewAuthNMiddleware(authzClient).(*authNMiddleware)
+			middleware := NewAuthMiddleware(authClient).(*authMiddleware)
 
-			authzClient.EXPECT().Check(newCtx, &api.CheckRequest{
+			authClient.EXPECT().Check(newCtx, &api.CheckRequest{
 				FullMethodName: expectedMethodName,
 			}).Return(&api.CheckResponse{
 				Tags: []*api.CheckResponse_CheckResponseTag{
@@ -66,7 +66,7 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 				},
 			}, nil)
 
-			resultCtx, err := middleware.authNWithGateway(newCtx, expectedMethodName, nil)
+			resultCtx, err := middleware.authWithGateway(newCtx, expectedMethodName, nil)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resultCtx).ToNot(BeNil())
 

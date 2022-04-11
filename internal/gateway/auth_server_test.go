@@ -52,11 +52,11 @@ var _ = Describe("Gateway Auth Server", func() {
 		return getTokenForUser(env.ExistingUser)
 	}
 
-	It("admin can authZ with JWT", func() {
+	It("admin can auth with JWT", func() {
 		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		authClient := gateway.NewGatewayAuthZClient(conn)
+		authClient := gateway.NewGatewayAuthClient(conn)
 
 		nicemd := metautils.
 			ExtractIncoming(ctx).
@@ -75,7 +75,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
-		authClient := gateway.NewGatewayAuthZClient(conn)
+		authClient := gateway.NewGatewayAuthClient(conn)
 
 		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getNormalUserToken()))
 		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
