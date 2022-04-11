@@ -246,7 +246,7 @@ var _ = BeforeSuite(func() {
 			"default": time.Hour * 1,
 		})
 
-		gatewayAuthZServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
+		gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, userRepo, env.PoliciesPath)
 		Expect(errAuthServer).ToNot(HaveOccurred())
 
 		// Create gRPC server and register implementation
@@ -255,7 +255,7 @@ var _ = BeforeSuite(func() {
 			api.RegisterGatewayServer(s, gatewayApiServer)
 			api.RegisterClusterAuthServer(s, authApiServer)
 			api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
-			api.RegisterGatewayAuthZServer(s, gatewayAuthZServer)
+			api.RegisterGatewayAuthServer(s, gatewayAuthServer)
 		})
 
 		env.ApiListenerAPIServer, err = net.Listen("tcp", localAddrAPIServer)
