@@ -159,9 +159,6 @@ spec:
         - name: k8s-auth-config
           configMap:
             name: {{ include "gateway.fullname" . }}-k8s-auth
-            items:
-            - key: "k8sTokenLifetime"
-              path: "k8sTokenLifetime.yaml"
       {{- if .Values.messageBus.tlsSecret }}
         - name: buscerts
           secret:
