@@ -23,8 +23,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const ConfigPath = "/etc/gateway"
-
 func main() {
 	rootCmd := NewRootCommand()
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
