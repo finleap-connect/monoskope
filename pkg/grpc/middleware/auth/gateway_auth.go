@@ -16,34 +16,38 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type authMiddleware struct {
-	gatewayClient     api.GatewayAuthClient
-	bypassAuthMethods []string
+	gatewayClient      api.GatewayAuthClient
+	bypassAuthPrefixes []string
 }
 
-func NewAuthMiddleware(gatewayClient api.GatewayAuthClient, bypassAuthMethods []string) middleware.GRPCMiddleware {
+func NewAuthMiddleware(gatewayClient api.GatewayAuthClient, bypassAuthPrefixes []string) middleware.GRPCMiddleware {
 	return &authMiddleware{
 		gatewayClient,
-		bypassAuthMethods,
+		bypassAuthPrefixes,
 	}
 }
 
 // authWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
 func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName string, req interface{}) (context.Context, error) {
 	// bypass auth for configured paths
-	if m.bypassAuthMethods != nil && slices.Contains(m.bypassAuthMethods, fullMethodName) {
-		return ctx, nil
+	if m.bypassAuthPrefixes != nil {
+		for _, bypassAuthMethod := range m.bypassAuthPrefixes {
+			if strings.HasPrefix(fullMethodName, bypassAuthMethod) {
+				return ctx, nil
+			}
+		}
 	}
 
 	// Check request is authenticated and authorized
