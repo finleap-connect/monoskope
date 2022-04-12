@@ -199,7 +199,7 @@ var serverCmd = &cobra.Command{
 
 		// Look for config
 		if len(k8sTokenLifetime) == 0 {
-			data, err := ioutil.ReadFile(path.Join(ConfigPath, k8sTokenLifetimeConfigPath))
+			data, err := ioutil.ReadFile(k8sTokenLifetimeConfigPath)
 			if err != nil {
 				return err
 			}
