@@ -72,6 +72,7 @@ spec:
             - {{ (printf "--api-addr=:%v" .Values.ports.api) }}
             - {{ (printf "--metrics-addr=:%v" .Values.ports.metrics) }}
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
+            - {{ (printf "--gateway-api-addr=%s-%s:%v" (.Values.gateway.prefix | default .Release.Name ) .Values.gateway.host .Values.gateway.port ) }}
           envFrom:
             - secretRef:
                 name: {{ include "commandhandler.fullname" . }}-users
