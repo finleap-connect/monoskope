@@ -6,6 +6,7 @@ default authorized = false
 
 # list of allowed paths for any user
 allowed_paths := [
+	"/grpc.health.v1.Health/Check",
 	"/gateway.Gateway/",
 	"/gateway.ClusterAuth/GetAuthToken/",
 	"/domain.CommandHandlerExtensions/",
