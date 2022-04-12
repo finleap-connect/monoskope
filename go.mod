@@ -35,6 +35,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/zap v1.21.0
+	golang.org/x/exp v0.0.0-20220407100705-7b9b53b0aca4
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211

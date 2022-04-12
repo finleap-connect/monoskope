@@ -21,23 +21,31 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type authMiddleware struct {
-	gatewayClient api.GatewayAuthClient
+	gatewayClient     api.GatewayAuthClient
+	bypassAuthMethods []string
 }
 
-func NewAuthMiddleware(gatewayClient api.GatewayAuthClient) middleware.GRPCMiddleware {
+func NewAuthMiddleware(gatewayClient api.GatewayAuthClient, bypassAuthMethods []string) middleware.GRPCMiddleware {
 	return &authMiddleware{
 		gatewayClient,
+		bypassAuthMethods,
 	}
 }
 
 // authWithGateway calls the Gateway to authenticate the request and enriches the new context with tags set by the Gateway.
 func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName string, req interface{}) (context.Context, error) {
+	// bypass auth for configured paths
+	if m.bypassAuthMethods != nil && slices.Contains(m.bypassAuthMethods, fullMethodName) {
+		return ctx, nil
+	}
+
 	// Check request is authenticated and authorized
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
