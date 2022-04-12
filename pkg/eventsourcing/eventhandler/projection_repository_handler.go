@@ -52,7 +52,7 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	h.log.Info("Projecting event...", "event", event.String())
+	h.log.V(logger.DebugLevel).Info("Projecting event...", "event", event.String())
 
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 
