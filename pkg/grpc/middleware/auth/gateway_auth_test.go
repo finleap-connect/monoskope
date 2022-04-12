@@ -53,7 +53,7 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
 
-			middleware := NewAuthMiddleware(authClient).(*authMiddleware)
+			middleware := NewAuthMiddleware(authClient, nil).(*authMiddleware)
 
 			authClient.EXPECT().Check(newCtx, &api.CheckRequest{
 				FullMethodName: expectedMethodName,
