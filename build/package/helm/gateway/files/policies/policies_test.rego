@@ -8,6 +8,8 @@ jane = {"User": {"Id": "123456", "Name": "jane"}, "Path": "/domain.CommandHandle
 
 scim_scope = {"Path": "/scim/something", "Authentication": {"Scopes": ["WRITE_SCIM"]}}
 
+grpc_health_check = {"Path": "/grpc.health.v1.Health/Check"}
+
 test_system_admin {
 	is_system_admin with input as alice_admin
 	not is_system_admin with input as bob_tenant_admin
@@ -17,4 +19,5 @@ test_authorized {
 	authorized with input as alice_admin
 	authorized with input as jane
 	authorized with input as scim_scope
+	authorized with input as grpc_health_check
 }
