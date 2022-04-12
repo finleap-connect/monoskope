@@ -5,7 +5,7 @@ import future.keywords.in
 default authorized = false
 
 # list of allowed paths for any user
-allowed_paths = [
+allowed_paths := [
 	"/gateway.Gateway/",
 	"/gateway.ClusterAuth/GetAuthToken/",
 	"/domain.CommandHandlerExtensions/",
