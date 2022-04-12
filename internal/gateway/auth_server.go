@@ -118,11 +118,10 @@ func (s *authServer) AsClient() *authServerClientInternal {
 func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gateway.CheckResponse, error) {
 	var err error
 	var authToken *jwt.AuthToken
-	path := req.FullMethodName
 	authenticated := false
 	authorized := false
 
-	s.log.Info("Authenticating request...", "path", path, "req", req)
+	s.log.V(logger.DebugLevel).Info("Authenticating request...", "req", req)
 
 	// check authentication
 	// via JWT
@@ -136,30 +135,36 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 	if !authenticated {
 		authToken, err = s.certValidation(ctx, req)
 		if err != nil {
+			s.log.Error(err, "Error authenticating user.", "req", req)
 			return nil, err
 		}
 		authenticated = err == nil
 	}
 
 	if !authenticated {
+		s.log.Info("Request authentication failed", "req", req)
+
 		// authentication failed
 		return nil, status.Error(codes.Unauthenticated, "authentication failed")
 	}
 
-	s.log.Info("Request authenticated. Checking authorization...", "path", path, "req", req)
+	s.log.V(logger.DebugLevel).Info("Request authenticated. Checking authorization...", "req", req, "user", authToken.Email)
 
 	// check authorization
 	authorized, err = s.validatePolicies(ctx, req, authToken)
 	if err != nil {
 		// authorization failed with error
-		s.log.Error(err, "Error checking authorization of user.")
+		s.log.Error(err, "Error checking authorization of user.", "req", req, "user", authToken.Email)
 		return nil, status.Error(codes.PermissionDenied, "authorization failed")
 	}
 
 	if authorized {
 		// authorization successful
+		s.log.V(logger.DebugLevel).Info("Request authorized.", "req", req, "user", authToken.Email)
 		return s.createAuthorizedResponse(authToken), nil
 	}
+
+	s.log.Info("Error checking authorization of user.", "req", req, "user", authToken.Email)
 	return nil, status.Error(codes.PermissionDenied, "authorization failed")
 }
 

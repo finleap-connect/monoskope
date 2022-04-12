@@ -226,7 +226,7 @@ var serverCmd = &cobra.Command{
 		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepository)
 
 		// Create gRPC server and register implementation
-		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient(), []string{"/grpc.health.v1.Health/Check"})
+		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient(), []string{"/grpc.health.v1.Health/Check", "/gateway.GatewayAuth/Check"})
 		grpcServer := grpc.NewServerWithOpts("gateway-grpc", keepAlive,
 			[]ggrpc.UnaryServerInterceptor{
 				authMiddleware.UnaryServerInterceptor(),
