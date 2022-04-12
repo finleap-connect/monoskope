@@ -100,3 +100,9 @@ eventStore:
   prefix: "" # Defaults to the release name
   host: "eventstore"
   port: 8080
+
+# -- API address of the gateway
+gateway:
+  prefix: "" # Defaults to the release name
+  host: "gateway"
+  port: 8080
