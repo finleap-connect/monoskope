@@ -8,5 +8,5 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  k8sTokenLifetime: |
+  k8sTokenLifetime.yaml: |
     {{- toYaml .Values.k8sTokenLifetime | nindent 4 }}
