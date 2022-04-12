@@ -65,14 +65,7 @@ func init() {
 }
 
 func WithOptions(opts ...zap.Option) logr.Logger {
-	switch operationMode {
-	case operation.DEVELOPMENT:
-		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(DebugLevel)
-	case operation.RELEASE:
-		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(InfoLevel)
-	default:
-		return zapr.NewLogger(zapLog.WithOptions(opts...)).V(ErrorLevel)
-	}
+	return zapr.NewLogger(zapLog.WithOptions(opts...))
 }
 
 func WithName(name string) logr.Logger {
@@ -88,8 +81,7 @@ func (l *grpcLog) Write(p []byte) (n int, err error) {
 	message := string(p)
 	switch l.level {
 	case InfoLevel:
-		l.log.V(DebugLevel).Info(message)
-		l.log.WithValues("level", InfoLevel).Info(message)
+		l.log.V(DebugLevel).WithValues("level", InfoLevel).Info(message)
 	case WarnLevel:
 		l.log.WithValues("level", WarnLevel).Info(message)
 	case ErrorLevel:
@@ -99,5 +91,5 @@ func (l *grpcLog) Write(p []byte) (n int, err error) {
 }
 
 func NewGrpcLog(log Logger, level LogLevel) *grpcLog {
-	return &grpcLog{log: log.V(DebugLevel), level: level}
+	return &grpcLog{log: log, level: level}
 }
