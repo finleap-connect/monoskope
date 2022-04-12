@@ -74,7 +74,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		defer conn.Close()
-		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient, nil)
+		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
 		// Create gRPC server and register implementation
 		log.Info("Creating gRPC server...")
