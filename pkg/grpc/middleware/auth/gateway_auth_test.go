@@ -29,8 +29,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var _ = Describe("Test validation rules for cluster messages", func() {
-	Context("Creating cluster", func() {
+var _ = Describe("Gateway Auth Middleware", func() {
+	Context("Auth requests", func() {
 		var mockCtrl *gomock.Controller
 		ctx := context.Background()
 
@@ -48,7 +48,7 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 			return nCtx
 		}
 
-		It("should ensure rules are valid", func() {
+		It("should ensure user is authenticated and authorized", func() {
 			newCtx := ctxWithToken(ctx, "bearer", "onetoken")
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
