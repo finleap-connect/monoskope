@@ -77,12 +77,29 @@ When getting the audit-log of a user (the events affecting the user aggregate) i
 
 [PROP01](#extending-events-structure-prop01) introduces a solution by utilising the attributes `AffectedAggregateID` and `AffectedAggregateType`.
 
+## Decision
+
+Modifying events is prohibited in event-sourcing, however, in this case, no data will be changed, only extended. This should persist the state of the system without violating the event-sourcing guidelines.
+
+[PROP01](#extending-events-structure-prop01) is accepted with the following restrictions:
+
+* `EventID` accepted.
+* `IssuerID` accepted, by moving it up from the `metadata` to the event itself.
+* `AffectedAggregateID` rejected, as one event can affect multiple aggregates.
+* `AffectedAggregateType` rejected, same as above.
+
 ## Criteria
 
-## Decision
+Modifying events should be avoided as much as possible and is considered (in this case) as an exception therefore no migration feature will be introduced.
+
+* The migration should happen at the store level.
+* Upgrading from older versions should require the migration job to run.
+* A migration job should be created and documented.
 
 ## Status
 
-Proposed
+Approved
 
 ## Consequences
+
+* breaking change that requires migration without downtime
