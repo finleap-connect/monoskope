@@ -56,43 +56,6 @@ message AuthenticationResponse {
   string username = 3;
 }
 
-message AuthState {
-  // callback_url is the url to send the auth token response too
-  string callback_url = 1 [ (validate.rules).string.uri = true ];
-}
-
-// AuthInformation is the response to an AuthState message.
-// It contains the URL
-message AuthInformation {
-  // auth_code_url is the URL of the IDP to authenticate against
-  string auth_code_url = 1 [ (validate.rules).string.uri = true ];
-  // state is the encoded, nonced AuthState
-  string state = 2;
-}
-
-// AuthCode is the request to exchange the auth code received from
-// an upstream identity provider against a token issued by m8 for
-// authentication.
-message AuthCode {
-  // code is the auth code received by the IDP
-  string code = 1;
-  // state is the encoded, nonced AuthState
-  string state = 2;
-  // callback_url is the url to send the auth token response too
-  string callback_url = 3 [ (validate.rules).string.uri = true ];
-}
-
-// AuthResponse is the response to an AuthCode message.
-// It contains a JWT to authenticate against the m8 API.
-message AuthResponse {
-  // access_token is a JWT to authenticate against the m8 API
-  string access_token = 1;
-  // expiry is the timestamp when the token expires
-  google.protobuf.Timestamp expiry = 2;
-  // username is the username known the m8 control plane
-  string username = 3;
-}
-
 // ClusterAuthTokenRequest is send in order to retrieve an auth token valid to
 // authenticate against a certain cluster with a specific role.
 message ClusterAuthTokenRequest {
