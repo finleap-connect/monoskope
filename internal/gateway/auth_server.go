@@ -218,7 +218,7 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(ctx context.Context, req *gateway.CheckRequest) (*jwt.AuthToken, error) {
-	token, err := grpc_auth.AuthFromMD(ctx, "bearer")
+	token, err := grpc_auth.AuthFromMD(ctx, auth.AuthScheme)
 	if err != nil {
 		return nil, err
 	}
