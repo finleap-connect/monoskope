@@ -12,44 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventformatter
+package formatters
 
 import (
 	"context"
-	"fmt"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"io"
-	"strings"
 )
 
-// EventFormatter is the interface definition for all event formatters
-type EventFormatter interface {
-	// GetFormattedDetails formats a given event in a human-readable format
-	GetFormattedDetails(context.Context, *esApi.Event) (string, error)
-}
-
-// BaseEventFormatter is the base implementation for all event formatters
-type BaseEventFormatter struct {
+// FormatterBase is the base implementation for all audit formatters
+type FormatterBase struct {
 	EsClient esApi.EventStoreClient
-}
-
-// AppendUpdate appends updates to a string builder in human-readable format
-func (f *BaseEventFormatter) AppendUpdate(field string, update string, old string, strBuilder *strings.Builder) {
-	if update != "" {
-		strBuilder.WriteString(fmt.Sprintf("\n- “%s“ to “%s“", field, update))
-		if old != "" {
-			strBuilder.WriteString(fmt.Sprintf(" from “%s“", old))
-		}
-	}
 }
 
 // CreateSnapshot creates a snapshot based on an event-filter and the corresponding projector for
 // the aggregate of which the id is used in the filter.
 // This is a temporary implementation until snapshots are fully implemented,
 // and it is not meant to be used extensively.
-func (f *BaseEventFormatter) CreateSnapshot(ctx context.Context, projector es.Projector, eventFilter *esApi.EventFilter) (es.Projection, error) {
+func (f *FormatterBase) CreateSnapshot(ctx context.Context, projector es.Projector, eventFilter *esApi.EventFilter) (es.Projection, error) {
 	projection := projector.NewProjection(uuid.New())
 	aggregateEvents, err := f.EsClient.Retrieve(ctx, eventFilter)
 	if err != nil {

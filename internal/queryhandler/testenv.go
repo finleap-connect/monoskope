@@ -16,7 +16,7 @@ package queryhandler
 
 import (
 	"context"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"net"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"

@@ -1158,6 +1158,8 @@ type AuditLogClient interface {
 	GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error)
 	// GetUserActions returns human readable events caused by the given user actions
 	GetUserActions(ctx context.Context, in *GetUserActionsRequest, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error)
+	// GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
+	GetUsersOverview(ctx context.Context, in *GetUsersOverviewRequest, opts ...grpc.CallOption) (AuditLog_GetUsersOverviewClient, error)
 }
 
 type auditLogClient struct {
@@ -1232,6 +1234,38 @@ func (x *auditLogGetUserActionsClient) Recv() (*audit.HumanReadableEvent, error)
 	return m, nil
 }
 
+func (c *auditLogClient) GetUsersOverview(ctx context.Context, in *GetUsersOverviewRequest, opts ...grpc.CallOption) (AuditLog_GetUsersOverviewClient, error) {
+	stream, err := c.cc.NewStream(ctx, &AuditLog_ServiceDesc.Streams[2], "/domain.AuditLog/GetUsersOverview", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &auditLogGetUsersOverviewClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type AuditLog_GetUsersOverviewClient interface {
+	Recv() (*audit.UserOverview, error)
+	grpc.ClientStream
+}
+
+type auditLogGetUsersOverviewClient struct {
+	grpc.ClientStream
+}
+
+func (x *auditLogGetUsersOverviewClient) Recv() (*audit.UserOverview, error) {
+	m := new(audit.UserOverview)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // AuditLogServer is the server API for AuditLog service.
 // All implementations must embed UnimplementedAuditLogServer
 // for forward compatibility
@@ -1240,6 +1274,8 @@ type AuditLogServer interface {
 	GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error
 	// GetUserActions returns human readable events caused by the given user actions
 	GetUserActions(*GetUserActionsRequest, AuditLog_GetUserActionsServer) error
+	// GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
+	GetUsersOverview(*GetUsersOverviewRequest, AuditLog_GetUsersOverviewServer) error
 	mustEmbedUnimplementedAuditLogServer()
 }
 
@@ -1252,6 +1288,9 @@ func (UnimplementedAuditLogServer) GetByDateRange(*GetAuditLogByDateRangeRequest
 }
 func (UnimplementedAuditLogServer) GetUserActions(*GetUserActionsRequest, AuditLog_GetUserActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetUserActions not implemented")
+}
+func (UnimplementedAuditLogServer) GetUsersOverview(*GetUsersOverviewRequest, AuditLog_GetUsersOverviewServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetUsersOverview not implemented")
 }
 func (UnimplementedAuditLogServer) mustEmbedUnimplementedAuditLogServer() {}
 
@@ -1308,6 +1347,27 @@ func (x *auditLogGetUserActionsServer) Send(m *audit.HumanReadableEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _AuditLog_GetUsersOverview_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetUsersOverviewRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AuditLogServer).GetUsersOverview(m, &auditLogGetUsersOverviewServer{stream})
+}
+
+type AuditLog_GetUsersOverviewServer interface {
+	Send(*audit.UserOverview) error
+	grpc.ServerStream
+}
+
+type auditLogGetUsersOverviewServer struct {
+	grpc.ServerStream
+}
+
+func (x *auditLogGetUsersOverviewServer) Send(m *audit.UserOverview) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // AuditLog_ServiceDesc is the grpc.ServiceDesc for AuditLog service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1324,6 +1384,11 @@ var AuditLog_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetUserActions",
 			Handler:       _AuditLog_GetUserActions_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetUsersOverview",
+			Handler:       _AuditLog_GetUsersOverview_Handler,
 			ServerStreams: true,
 		},
 	},
