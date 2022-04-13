@@ -53,26 +53,28 @@ func (s *gatewayApiServer) RequestUpstreamAuthentication(ctx context.Context, re
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid argument: %v", err)
 	}
-	return &api.UpstreamAuthenticationResponse{UpstreamIdpRedirect: upstreamIDPUrl, State: encodedState}, nil
+	response := &api.UpstreamAuthenticationResponse{UpstreamIdpRedirect: upstreamIDPUrl, State: encodedState}
+	s.log.V(logger.DebugLevel).Info("Upstream authentication requested.", "UpstreamAuthenticationResponse", response)
+	return response, nil
 }
 
 func (s *gatewayApiServer) RequestAuthentication(ctx context.Context, request *api.AuthenticationRequest) (*api.AuthenticationResponse, error) {
 	// Exchange auth code with upstream identity provider
-	s.log.Info("Exchanging auth code with issuer...")
+	s.log.V(logger.DebugLevel).Info("Exchanging auth code with issuer...")
 	upstreamClaims, err := s.authClient.Exchange(ctx, request.GetCode(), request.GetState())
 	if err != nil {
 		s.log.Error(err, "User authentication failed.")
 		return nil, err
 	}
-	s.log.Info("Exchanged successful, received upstream claims.", "name", upstreamClaims.Name, "email", upstreamClaims.Email)
+	s.log.V(logger.DebugLevel).Info("Exchanged successful, received upstream claims.", "name", upstreamClaims.Name, "email", upstreamClaims.Email)
 
 	// Check that a user exists in monoskope
-	s.log.Info("Checking user exists...", "email", upstreamClaims.Email)
+	s.log.V(logger.DebugLevel).Info("Checking user exists...", "email", upstreamClaims.Email)
 	user, err := s.userRepo.ByEmail(ctx, upstreamClaims.Email)
 	if err != nil {
 		return nil, err
 	}
-	s.log.Info("User exists!", "name", user.Name, "email", user.Email, "id", user.ID())
+	s.log.V(logger.DebugLevel).Info("User exists!", "name", user.Name, "email", user.Email, "id", user.ID())
 
 	// Override upstream name
 	upstreamClaims.Name = user.Name
@@ -80,7 +82,7 @@ func (s *gatewayApiServer) RequestAuthentication(ctx context.Context, request *a
 	// Issue token
 	signedToken, rawToken, err := s.authServer.IssueToken(ctx, upstreamClaims, user.ID().String())
 	if err != nil {
-		s.log.Error(err, "Issuing token failed.")
+		s.log.Error(err, "Issuing token failed.", user.Name, "email", user.Email, "id", user.ID())
 		return nil, err
 	}
 
