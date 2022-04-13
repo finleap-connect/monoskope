@@ -16,7 +16,7 @@ package main
 
 import (
 	"context"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"

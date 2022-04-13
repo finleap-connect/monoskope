@@ -21,7 +21,8 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/eventformatter"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
@@ -32,19 +33,19 @@ import (
 
 func init() {
 	for _, eventType := range events.UserEvents {
-		_ = eventformatter.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewUserEventFormatter)
+		_ = event.DefaultEventFormatterRegistry.RegisterEventFormatter(eventType, NewUserEventFormatter)
 	}
 }
 
 // userEventFormatter EventFormatter implementation for the user-aggregate
 type userEventFormatter struct {
-	*eventformatter.BaseEventFormatter
+	*event.EventFormatterBase
 }
 
 // NewUserEventFormatter creates a new event formatter for the user-aggregate
-func NewUserEventFormatter(esClient esApi.EventStoreClient) eventformatter.EventFormatter {
+func NewUserEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &userEventFormatter{
-		BaseEventFormatter: &eventformatter.BaseEventFormatter{EsClient: esClient},
+		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
 	}
 }
 
