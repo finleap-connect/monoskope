@@ -14,7 +14,6 @@ metadata:
 spec:
   grpc: true
   timeout_ms: 20000
-  bypass_auth: true
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
@@ -58,7 +57,6 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  bypass_auth: true
   method: GET
   prefix: /.well-known/
   rewrite: /.well-known/
@@ -72,7 +70,6 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  bypass_auth: true
   method: GET
   prefix: /keys
   rewrite: /keys

@@ -195,7 +195,7 @@ ambassador:
   rbac:
     create: false
   serviceAccount:
-    create: false
+    create: true
   scope:
     singleNamespace: true
   resources:
@@ -210,10 +210,6 @@ ambassador:
       enabled: false
   adminService:
     create: false
-  alerting:
-    enabled: false
-  env:
-    AMBASSADOR_ENVOY_API_VERSION: V3
 
 cluster-bootstrap-reactor:
   enabled: true
