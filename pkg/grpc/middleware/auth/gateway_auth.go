@@ -23,6 +23,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -60,6 +61,10 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 
 	// Check request is authenticated and authorized
 	m.log.V(logger.DebugLevel).Info("Authenticating request via gateway...", "fullMethodName", fullMethodName, "req", req)
+
+	// Forward ctx metadata
+	_ = metautils.ExtractIncoming(ctx).ToOutgoing(ctx)
+
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
 	})

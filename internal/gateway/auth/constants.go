@@ -24,4 +24,5 @@ const (
 	HeaderAuthNotBeforeFormat = time.RFC3339
 	HeaderForwardedClientCert = "x-forwarded-client-cert"
 	HeaderAuthorization       = "authorization"
+	AuthScheme                = "bearer"
 )
