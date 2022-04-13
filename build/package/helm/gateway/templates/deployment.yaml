@@ -99,7 +99,9 @@ spec:
             - --http-api-addr=:8081
             - --metrics-addr=:9102
             - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
-            - --scopes={{ join "," .Values.auth.scopes }}
+            {{ range .Values.auth.scopes -}}
+            - --scopes={{ . }}
+            {{ end -}}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
             - --auth-token-validity={{ .Values.authTokenValidity }}
             - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
