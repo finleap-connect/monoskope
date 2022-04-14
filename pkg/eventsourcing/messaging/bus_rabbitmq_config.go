@@ -78,17 +78,26 @@ func (conf *RabbitEventBusConfig) SetURL(url string) error {
 
 // configureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) configureTLS() error {
-	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
+	loader, err := m8tls.NewTLSConfigLoader()
 	if err != nil {
 		return err
 	}
 
+	err = loader.SetServerCACertificate(CACertPath)
+	if err != nil {
+		return err
+	}
+
+	err = loader.SetClientCertificate(TLSCertPath, TLSKeyPath)
+	if err != nil {
+		return err
+	}
 	err = loader.Watch()
 	if err != nil {
 		return err
 	}
 
-	conf.AMQPConfig.TLSClientConfig = loader.GetTLSConfig()
+	conf.AMQPConfig.TLSClientConfig = loader.GetClientTLSConfig()
 	conf.AMQPConfig.SASL = []amqp.Authentication{&CertAuth{}}
 
 	return nil

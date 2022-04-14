@@ -53,12 +53,12 @@ type Server struct {
 }
 
 // NewServer returns a new configured instance of Server
-func NewServer(name string, keepAlive bool) *Server {
-	return NewServerWithOpts(name, keepAlive, []grpc.UnaryServerInterceptor{}, []grpc.StreamServerInterceptor{})
+func NewServer(name string, keepAlive bool, opt ...grpc.ServerOption) *Server {
+	return NewServerWithOpts(name, keepAlive, []grpc.UnaryServerInterceptor{}, []grpc.StreamServerInterceptor{}, opt...)
 }
 
 // NewServerWithOpts returns a new configured instance of Server with additional interceptors specified
-func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor) *Server {
+func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor, opt ...grpc.ServerOption) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName(name),
