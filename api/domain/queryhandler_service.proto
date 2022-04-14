@@ -86,9 +86,11 @@ service ClusterAccess{
 }
 
 service AuditLog{
-  // GetByDateRange returns human readable events within the specified data range
+  // GetByDateRange returns human-readable events within the specified data range
   rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
-  // GetUserActions returns human readable events caused by the given user actions
+  // GetByUser returns human-readable events caused by others actions on the given user
+  rpc GetByUser(GetByUserRequest) returns (stream audit.HumanReadableEvent);
+  // GetUserActions returns human-readable events caused by the given user actions
   rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
   // GetUsersOverview returns users overview at the specified timestamp, tenants/clusters they belong to, and their roles
   rpc GetUsersOverview(GetUsersOverviewRequest) returns (stream audit.UserOverview);
@@ -120,6 +122,11 @@ message GetCountResult { int64 count = 1; }
 message GetAuditLogByDateRangeRequest {
   google.protobuf.Timestamp min_timestamp = 1;
   google.protobuf.Timestamp max_timestamp = 2;
+}
+
+message GetByUserRequest {
+  google.protobuf.StringValue email = 1;
+  GetAuditLogByDateRangeRequest date_range = 2;
 }
 
 message GetUserActionsRequest {

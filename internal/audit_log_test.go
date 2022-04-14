@@ -37,7 +37,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("AuditLog Test", func() {
+// TODO remove focues
+var _ = FDescribe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
 
@@ -107,7 +108,30 @@ var _ = Describe("AuditLog Test", func() {
 				Expect(err).ToNot(HaveOccurred())
 				counter++
 			}
-			Expect(counter).To(Equal(5)) // see midTime definition
+			Expect(counter).To(Equal(6)) // see midTime definition
+		})
+
+		When("getting by user", func() {
+			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
+				Email: wrapperspb.String("jane.dou@monoskope.io"),
+				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
+					MinTimestamp: timestamppb.New(minTime),
+					MaxTimestamp: timestamppb.New(maxTime),
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			println("============================")
+			for {
+				e, err := events.Recv()
+				if err == io.EOF {
+					break
+				}
+				Expect(err).ToNot(HaveOccurred())
+
+				println(e.Details)
+			}
+			println("============================")
 		})
 
 		When("getting user actions", func() {
@@ -194,6 +218,17 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 	}).Should(Succeed())
 	userRoleBindingId := uuid.MustParse(reply.AggregateId)
 
+	// UpdateUser
+	command, err = cmd.AddCommandData(
+		cmd.CreateCommand(userId, commandTypes.UpdateUser),
+		&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "Jane New"}},
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(func(g Gomega) {
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		g.Expect(err).ToNot(HaveOccurred())
+	}).Should(Succeed())
+
 	// CreateTenant
 	command, err = cmd.AddCommandData(
 		cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
@@ -229,7 +264,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 
-	// 5 events
+	// 6 events
 	midTime := time.Now().UTC()
 
 	// CreateCluster
