@@ -44,7 +44,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 
 		ctxWithToken := func(ctx context.Context, scheme string, token string) context.Context {
 			md := metadata.Pairs(auth.HeaderAuthorization, fmt.Sprintf("%s %v", scheme, token))
-			nCtx := metautils.NiceMD(md).ToOutgoing(ctx)
+			nCtx := metautils.NiceMD(md).ToIncoming(ctx)
 			return nCtx
 		}
 
@@ -57,7 +57,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 
 			authClient.EXPECT().Check(newCtx, &api.CheckRequest{
 				FullMethodName: expectedMethodName,
-			}).Return(&api.CheckResponse{
+			}, gomock.Any()).Return(&api.CheckResponse{
 				Tags: []*api.CheckResponse_CheckResponseTag{
 					{
 						Key:   "test",

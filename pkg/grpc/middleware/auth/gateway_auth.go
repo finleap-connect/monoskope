@@ -18,14 +18,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/status"
 )
 
@@ -63,11 +66,15 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 	m.log.V(logger.DebugLevel).Info("Authenticating request via gateway...", "fullMethodName", fullMethodName, "req", req)
 
 	// Forward ctx metadata
-	_ = metautils.ExtractIncoming(ctx).ToOutgoing(ctx)
+	token, err := grpc_auth.AuthFromMD(ctx, auth.AuthScheme)
+	if err != nil {
+		return nil, err
+	}
 
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		FullMethodName: fullMethodName,
-	})
+	}, grpc.PerRPCCredentials(oauth.NewOauthAccess(&oauth2.Token{AccessToken: token})))
+
 	if err != nil {
 		m.log.V(logger.DebugLevel).Error(err, "gateway auth failed", "fullMethodName", fullMethodName, "req", req)
 		return nil, status.Errorf(codes.Unauthenticated, "gateway auth failed: %v", err)
