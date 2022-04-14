@@ -11,8 +11,6 @@ metadata:
 spec:
   secretName: {{ .Values.pki.authentication.keySecretName }}
   duration: 876000h # 100y cause this is to be rotated manually
-  privateKey:
-    rotationPolicy: Always
   issuerRef:
     name: {{ .Values.pki.issuer.name }}
     kind: Issuer
