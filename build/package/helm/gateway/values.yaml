@@ -78,6 +78,9 @@ labels: {}
 
 keepAlive: false
 
+# -- Name of the secret containing the tls certificates/keys the Gateway grpc endpoint should use for TLS
+tlsSecret: ""
+
 auth:
   # -- The URL of the issuer to Gateway itself
   selfURL: ""
