@@ -65,7 +65,7 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 	// Check request is authenticated and authorized
 	m.log.V(logger.DebugLevel).Info("Authenticating request via gateway...", "fullMethodName", fullMethodName, "req", req)
 
-	// Forward ctx metadata
+	// Forward authorization header
 	token, err := grpc_auth.AuthFromMD(ctx, auth.AuthScheme)
 	if err != nil {
 		return nil, err

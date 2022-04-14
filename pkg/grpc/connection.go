@@ -138,7 +138,17 @@ func (factory *GrpcConnectionFactory) ConnectWithTimeout(ctx context.Context, ti
 
 // loadTLSCredentials actually loads the configured certs
 func (factory *GrpcConnectionFactory) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	loader, err := m8tls.NewTLSConfigLoader(factory.tlsConf.pemServerCAFile, factory.tlsConf.certFile, factory.tlsConf.keyFile)
+	loader, err := m8tls.NewTLSConfigLoader()
+	if err != nil {
+		return nil, err
+	}
+
+	err = loader.SetServerCACertificate(factory.tlsConf.pemServerCAFile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = loader.SetClientCertificate(factory.tlsConf.certFile, factory.tlsConf.keyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -148,5 +158,5 @@ func (factory *GrpcConnectionFactory) loadTLSCredentials() (credentials.Transpor
 		return nil, err
 	}
 
-	return credentials.NewTLS(loader.GetTLSConfig()), nil
+	return credentials.NewTLS(loader.GetClientTLSConfig()), nil
 }

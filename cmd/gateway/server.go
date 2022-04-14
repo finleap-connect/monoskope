@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,8 +36,11 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	ggrpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/finleap-connect/monoskope/internal/common"
@@ -49,6 +53,11 @@ import (
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	TLSCertPath = "/etc/gateway/certs/tls.crt"
+	TLSKeyPath  = "/etc/gateway/certs/tls.key"
 )
 
 var (
@@ -222,10 +231,23 @@ var serverCmd = &cobra.Command{
 			tokenLifeTimePerRole[k] = k8sTokenValidityDuration
 		}
 		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, clusterRepository, tokenLifeTimePerRole)
-
 		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepository)
 
 		// Create gRPC server and register implementation
+		loader, err := m8tls.NewTLSConfigLoader()
+		if err != nil {
+			return err
+		}
+
+		err = loader.SetServerCertificate(TLSCertPath, TLSKeyPath)
+		if err != nil {
+			return err
+		}
+		err = loader.Watch()
+		if err != nil {
+			return err
+		}
+
 		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient(), []string{
 			"/grpc.health.v1.Health/Check",
 			"/gateway.GatewayAuth/",
@@ -237,6 +259,7 @@ var serverCmd = &cobra.Command{
 			}, []ggrpc.StreamServerInterceptor{
 				authMiddleware.StreamServerInterceptor(),
 			},
+			ggrpc.Creds(credentials.NewTLS(loader.GetServerTLSConfig(tls.NoClientCert))), //TODO: should be validated (zero trust)
 		)
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
