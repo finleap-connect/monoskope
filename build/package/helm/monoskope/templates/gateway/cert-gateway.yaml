@@ -1,4 +1,4 @@
-{{- if .Values.rabbitmq.auth.tls.enabled }}
+{{- if and .Values.pki.enabled .Values.gateway.tlsSecretName }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -9,25 +9,24 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  secretName: {{ .Values.gateway.tls.existingSecret }}
+  secretName: {{ .Values.gateway.tlsSecretName }}
   duration: {{ .Values.pki.certificates.duration }}
   renewBefore: {{ .Values.pki.certificates.renewBefore }}
   issuerRef:
     name: {{ .Values.pki.issuer.name }}
     kind: Issuer
-  commonName: leaf
+  commonName: gateway
   ipAddresses:
   dnsNames:
     - localhost
     - 127.0.0.1
-    - {{.Release.Name}}-rabbitmq-headless
-    - {{.Release.Name}}-rabbitmq-headless.{{.Release.Namespace}}
-    - {{.Release.Name}}-rabbitmq-headless.{{.Release.Namespace}}.svc.cluster.local
+    - {{.Release.Name}}-gateway
+    - {{.Release.Name}}-gateway.{{.Release.Namespace}}
+    - {{.Release.Name}}-gateway.{{.Release.Namespace}}.svc.cluster.local
   subject:
     organizations:
       - Monoskope
   usages:
-  - client auth
   - server auth
   privateKey:
     rotationPolicy: Always
