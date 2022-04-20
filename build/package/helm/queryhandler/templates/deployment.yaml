@@ -105,7 +105,7 @@ spec:
           {{- end }}
           {{- if .Values.pkiTrustAnchorSecretName }}
             - name: m8-ca
-              mountPath: /etc/pki/certs
+              mountPath: /etc/pki
               readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}

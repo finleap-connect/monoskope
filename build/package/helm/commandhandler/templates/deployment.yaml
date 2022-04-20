@@ -101,7 +101,7 @@ spec:
           {{- if .Values.pkiTrustAnchorSecretName }}
           volumeMounts:
             - name: m8-ca
-              mountPath: /etc/pki/certs
+              mountPath: /etc/pki
               readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
