@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	CACertPath = "/etc/pki/ca.crt"
+	CACertPath = "/etc/pki/tls.crt"
 )
 
 type policyAuthentication struct {
