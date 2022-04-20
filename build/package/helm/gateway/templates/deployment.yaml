@@ -134,7 +134,7 @@ spec:
             - name: policies-secret
               mountPath: /etc/gateway/policies
               readOnly: true
-          {{- if .Values.tlsSecret }}
+          {{- if .Values.tlsSecretName }}
             - name: certs
               mountPath: /etc/gateway/certs
               readOnly: true
@@ -166,7 +166,7 @@ spec:
         - name: k8s-auth-config
           configMap:
             name: {{ include "gateway.fullname" . }}-k8s-auth
-      {{- if .Values.tlsSecret }}
+      {{- if .Values.tlsSecretName }}
         - name: certs
           secret:
             secretName: {{ .Values.tlsSecretName }}
