@@ -121,4 +121,7 @@ spec:
         - name: m8-ca
           secret:
             secretName: {{ . }}
+            items:
+            - key: tls.crt
+              path: ca.crt
       {{- end }}
