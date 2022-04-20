@@ -98,6 +98,12 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.gateway.tlsSecret }}
+          volumeMounts:
+            - name: gatewaycerts
+              mountPath: /etc/gateway/certs
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -109,4 +115,10 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.gateway.tlsSecret }}
+      volumes:
+        - name: gatewaycerts
+          secret:
+            secretName: {{ .Values.gateway.tlsSecret }}
       {{- end }}
