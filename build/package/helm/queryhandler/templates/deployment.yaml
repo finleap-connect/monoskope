@@ -103,6 +103,11 @@ spec:
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
           {{- end }}
+          {{- if .Values.gateway.tlsSecret }}
+            - name: gatewaycerts
+              mountPath: /etc/gateway/certs
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -115,9 +120,14 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.messageBus.tlsSecret }}
       volumes:
+        {{- if .Values.messageBus.tlsSecret }}
         - name: buscerts
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
-      {{- end }}
+        {{- end }}
+        {{- if .Values.gateway.tlsSecret }}
+        - name: gatewaycerts
+          secret:
+            secretName: {{ .Values.gateway.tlsSecret }}
+        {{- end }}

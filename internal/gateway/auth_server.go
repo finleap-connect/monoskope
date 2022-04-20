@@ -36,6 +36,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	CACertPath  = "/etc/gateway/certs/ca.crt"
+	TLSCertPath = "/etc/gateway/certs/tls.crt"
+	TLSKeyPath  = "/etc/gateway/certs/tls.key"
+)
+
 type policyAuthentication struct {
 	Scopes []string
 }
@@ -80,7 +86,9 @@ func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.Check
 
 func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(gatewayAddr).
+		NewGrpcConnectionFactory(gatewayAddr).
+		WithRetry().
+		WithTransportCredentials(CACertPath, TLSCertPath, TLSKeyPath).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err

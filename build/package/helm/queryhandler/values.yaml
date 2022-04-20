@@ -94,7 +94,9 @@ gateway:
   prefix: "" # Defaults to the release name
   host: "gateway"
   port: 8080
-
+  # -- Name of the secret containing the tls certificate/key to access the gateway
+  tlsSecret: ""
+  
 messageBus:
   # -- Prefix for routing messages via message bus
   routingKeyPrefix: m8
