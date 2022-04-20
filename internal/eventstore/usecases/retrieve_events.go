@@ -30,8 +30,8 @@ import (
 type retrieveGate int
 
 const (
-	None = iota
-	Or
+	none = iota
+	or
 )
 
 type RetrieveEventsUseCase struct {
@@ -45,11 +45,11 @@ type RetrieveEventsUseCase struct {
 }
 
 func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, eventFilter *esApi.EventFilter, metrics *metrics.EventStoreMetrics) usecase.UseCase {
-	return newRetrieveEventsUseCase(stream, store, &esApi.EventFilters{Filters: []*esApi.EventFilter{eventFilter}}, None, metrics)
+	return newRetrieveEventsUseCase(stream, store, &esApi.EventFilters{Filters: []*esApi.EventFilter{eventFilter}}, none, metrics)
 }
 
 func NewRetrieveOrEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, eventFilters *esApi.EventFilters, metrics *metrics.EventStoreMetrics) usecase.UseCase {
-	return newRetrieveEventsUseCase(stream, store, eventFilters, Or, metrics)
+	return newRetrieveEventsUseCase(stream, store, eventFilters, or, metrics)
 }
 
 // NewRetrieveEventsUseCase creates a new usecase which retrieves all events
@@ -114,9 +114,9 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 
 func (u *RetrieveEventsUseCase) load(ctx context.Context, storeQueries []*es.StoreQuery) (es.EventStreamReceiver, error) {
 	switch u.gate {
-	case None:
+	case none:
 		return u.store.Load(ctx, storeQueries[0])
-	case Or:
+	case or:
 		return u.store.LoadOr(ctx, storeQueries)
 	default:
 		return nil, errors.New("logical gate is not defined")

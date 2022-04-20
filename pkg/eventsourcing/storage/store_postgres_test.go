@@ -31,7 +31,7 @@ type metadataVal struct {
 	Val string
 }
 
-var _ = FDescribe("storage/postgres", func() {
+var _ = Describe("storage/postgres", func() {
 	var userInformationKey = "userInformationKey"
 
 	manager := evs.NewMetadataManagerFromContext(context.Background())

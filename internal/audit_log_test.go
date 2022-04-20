@@ -37,8 +37,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// TODO remove focues
-var _ = FDescribe("AuditLog Test", func() {
+var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
 	userEmail := "jane.dou@monoskope.io"
