@@ -109,7 +109,6 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 	if err != nil {
 		return "", err
 	}
-
 	user, ok := userSnapshot.(*projections.User)
 	if !ok {
 		return "", esErrors.ErrInvalidProjectionType

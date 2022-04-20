@@ -17,7 +17,6 @@ package queryhandler
 import (
 	"context"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	auditApi "github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
@@ -99,34 +98,18 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
-	userEventsStream, err := s.esClient.Retrieve(stream.Context(), &esApi.EventFilter{AggregateId: wrapperspb.String(user.Id)})
-	if err != nil {
-		return errors.TranslateToGrpcError(err)
-	}
-	
-	for {
-		e, err := userEventsStream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return errors.TranslateToGrpcError(err)
-		}
-
-		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
-		err = stream.Send(hre)
-		if err != nil {
-			return errors.TranslateToGrpcError(err)
-		}
-	}
-
-	rolesEventsStream, err := s.esClient.Retrieve(stream.Context(), &esApi.EventFilter{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String())})
+	eventsStream, err := s.esClient.RetrieveOr(stream.Context(), &esApi.EventFilters{
+		Filters: []*esApi.EventFilter{
+			{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String())},
+			{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String())},
+		},
+	})
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
 
 	for {
-		e, err := rolesEventsStream.Recv()
+		e, err := eventsStream.Recv()
 		if err == io.EOF {
 			break
 		}
@@ -136,7 +119,7 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 
 		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
 		if !strings.Contains(hre.Details, user.Email) {
-			continue
+			continue // skip e.g. UserRoleBindings that doesn't affect the given user
 		}
 		err = stream.Send(hre)
 		if err != nil {

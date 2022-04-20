@@ -16,6 +16,7 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"io"
 	"time"
 
@@ -26,22 +27,39 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/usecase"
 )
 
+type retrieveGate int
+
+const (
+	None = iota
+	Or
+)
+
 type RetrieveEventsUseCase struct {
 	*usecase.UseCaseBase
 
 	store   es.EventStore
-	filter  *esApi.EventFilter
+	filters []*esApi.EventFilter
+	gate    retrieveGate
 	stream  esApi.EventStore_RetrieveServer
 	metrics *metrics.EventStoreMetrics
 }
 
+func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, eventFilter *esApi.EventFilter, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+	return newRetrieveEventsUseCase(stream, store, &esApi.EventFilters{Filters: []*esApi.EventFilter{eventFilter}}, None, metrics)
+}
+
+func NewRetrieveOrEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, eventFilters *esApi.EventFilters, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+	return newRetrieveEventsUseCase(stream, store, eventFilters, Or, metrics)
+}
+
 // NewRetrieveEventsUseCase creates a new usecase which retrieves all events
-// from the store which match the filter
-func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, filter *esApi.EventFilter, metrics *metrics.EventStoreMetrics) usecase.UseCase {
+// from the store which match the filters
+func newRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.EventStore, eventFilters *esApi.EventFilters, gate retrieveGate, metrics *metrics.EventStoreMetrics) usecase.UseCase {
 	useCase := &RetrieveEventsUseCase{
 		UseCaseBase: usecase.NewUseCaseBase("retrieve-events"),
 		store:       store,
-		filter:      filter,
+		filters:     eventFilters.Filters,
+		gate:        gate,
 		stream:      stream,
 		metrics:     metrics,
 	}
@@ -49,15 +67,19 @@ func NewRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.E
 }
 
 func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
-	// Convert filter
-	sq, err := NewStoreQueryFromProto(u.filter)
-	if err != nil {
-		return err
+	// Convert filters
+	var sqs []*es.StoreQuery
+	for _, filter := range u.filters {
+		sq, err := NewStoreQueryFromProto(filter)
+		if err != nil {
+			return err
+		}
+		sqs = append(sqs, sq)
 	}
 
 	// Retrieve events from Event Store
 	u.Log.V(logger.DebugLevel).Info("Retrieving events from the database...")
-	eventStream, err := u.store.Load(ctx, sq)
+	eventStream, err := u.load(ctx, sqs)
 	if err != nil {
 		return err
 	}
@@ -88,4 +110,15 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (u *RetrieveEventsUseCase) load(ctx context.Context, storeQueries []*es.StoreQuery) (es.EventStreamReceiver, error) {
+	switch u.gate {
+	case None:
+		return u.store.Load(ctx, storeQueries[0])
+	case Or:
+		return u.store.LoadOr(ctx, storeQueries)
+	default:
+		return nil, errors.New("logical gate is not defined")
+	}
 }

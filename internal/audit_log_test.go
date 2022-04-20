@@ -41,6 +41,7 @@ import (
 var _ = FDescribe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
+	userEmail := "jane.dou@monoskope.io"
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
@@ -113,7 +114,7 @@ var _ = FDescribe("AuditLog Test", func() {
 
 		When("getting by user", func() {
 			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
-				Email: wrapperspb.String("jane.dou@monoskope.io"),
+				Email: wrapperspb.String(userEmail),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -121,7 +122,6 @@ var _ = FDescribe("AuditLog Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			println("============================")
 			for {
 				e, err := events.Recv()
 				if err == io.EOF {
@@ -129,9 +129,8 @@ var _ = FDescribe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				println(e.Details)
+				Expect(e.Details).To(ContainSubstring(userEmail))
 			}
-			println("============================")
 		})
 
 		When("getting user actions", func() {
@@ -156,7 +155,9 @@ var _ = FDescribe("AuditLog Test", func() {
 		})
 
 		When("getting users overview", func() {
-			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{Timestamp: timestamppb.New(maxTime)})
+			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{
+				Timestamp: timestamppb.New(maxTime),
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			for {
@@ -186,6 +187,7 @@ var _ = FDescribe("AuditLog Test", func() {
 			}
 			events, err := auditLogServiceClient().GetUserActions(ctx, request)
 			Expect(err).ToNot(HaveOccurred())
+
 			_, err = events.Recv()
 			Expect(err).To(HaveOccurred())
 		})

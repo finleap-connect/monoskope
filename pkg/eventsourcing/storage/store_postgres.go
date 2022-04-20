@@ -212,21 +212,26 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
+	mapStoreQuery(storeQuery, dbQuery)
+	return s.doLoad(dbQuery)
+}
+
+// LoadOr implements the LoadOr method of the EventStore interface.
+func (s *postgresEventStore) LoadOr(ctx context.Context, storeQueries []*evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
+	mapStoreQueriesOr(storeQueries, dbQuery)
+	return s.doLoad(dbQuery)
+}
+
+func (s *postgresEventStore) doLoad(dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
 	eventStream := evs.NewEventStream()
 
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
 	}
 
-	// Basic query to query all events
-	dbQuery := s.db.
-		WithContext(ctx).
-		Model((*eventRecord)(nil)).
-		Order("timestamp ASC")
-
-	// Translate the abstrace query to a postgres query
-	mapStoreQuery(storeQuery, dbQuery)
-
+	dbQuery.Order("timestamp ASC")
 	go func() {
 		defer eventStream.Done()
 		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
@@ -255,6 +260,20 @@ func (s *postgresEventStore) Close() error {
 	s.log.Info("Shutdown complete.")
 
 	return nil
+}
+
+// mapStoreQueriesOr maps the generic queries struct to a postgres orm query with the logical or
+func mapStoreQueriesOr(storeQueries []*evs.StoreQuery, dbQuery *orm.Query) {
+	if storeQueries == nil {
+		return
+	}
+
+	for _, storeQuery := range storeQueries {
+		dbQuery.WhereOrGroup(func(q *orm.Query) (*orm.Query, error) {
+			mapStoreQuery(storeQuery, q)
+			return q, nil
+		})
+	}
 }
 
 // mapStoreQuery maps the generic query struct to a postgres orm query
@@ -408,7 +427,7 @@ func (e pgEvent) AggregateVersion() uint64 {
 	return e.eventRecord.AggregateVersion
 }
 
-// AggregateVersion implements the AggregateVersion method of the Event interface.
+// Metadata implements the Metadata method of the Event interface.
 func (e pgEvent) Metadata() map[string]string {
 	return e.eventRecord.Metadata
 }

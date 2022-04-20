@@ -56,8 +56,16 @@ func (s *apiServer) Store(stream esApi.EventStore_StoreServer) error {
 
 // Retrieve implements the API method for retrieving events from the store
 func (s *apiServer) Retrieve(filter *esApi.EventFilter, stream esApi.EventStore_RetrieveServer) error {
-	// Perform the use case for storing events
 	err := usecases.NewRetrieveEventsUseCase(stream, s.store, filter, s.metrics).Run(stream.Context())
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+	return nil
+}
+
+// RetrieveOr implements the API method for retrieving events with the logical OR from the store
+func (s *apiServer) RetrieveOr(filters *esApi.EventFilters, stream esApi.EventStore_RetrieveOrServer) error {
+	err := usecases.NewRetrieveOrEventsUseCase(stream, s.store, filters, s.metrics).Run(stream.Context())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

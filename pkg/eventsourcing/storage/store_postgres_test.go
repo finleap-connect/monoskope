@@ -31,7 +31,7 @@ type metadataVal struct {
 	Val string
 }
 
-var _ = Describe("storage/postgres", func() {
+var _ = FDescribe("storage/postgres", func() {
 	var userInformationKey = "userInformationKey"
 
 	manager := evs.NewMetadataManagerFromContext(context.Background())
@@ -64,9 +64,9 @@ var _ = Describe("storage/postgres", func() {
 	createTestEvents := func() []evs.Event {
 		aggregateId := uuid.New()
 		return []evs.Event{
-			evs.NewEvent(ctx, evs.EventType(testEventCreated), createTestEventData("create"), now(), evs.AggregateType(testAggregate), aggregateId, 0),
-			evs.NewEvent(ctx, evs.EventType(testEventChanged), createTestEventData("change"), now(), evs.AggregateType(testAggregate), aggregateId, 1),
-			evs.NewEvent(ctx, evs.EventType(testEventDeleted), createTestEventData("delete"), now(), evs.AggregateType(testAggregate), aggregateId, 2),
+			evs.NewEvent(ctx, testEventCreated, createTestEventData("create"), now(), testAggregate, aggregateId, 0),
+			evs.NewEvent(ctx, testEventChanged, createTestEventData("change"), now(), testAggregate, aggregateId, 1),
+			evs.NewEvent(ctx, testEventDeleted, createTestEventData("delete"), now(), testAggregate, aggregateId, 2),
 		}
 	}
 
@@ -157,12 +157,43 @@ var _ = Describe("storage/postgres", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(valResult.Val).To(Equal("admin"))
 	})
+	It("can load events from the store by concatenating the filters with the logical OR", func() {
+		events := createTestEvents()
+		err := es.Save(ctx, events)
+		Expect(err).ToNot(HaveOccurred())
+		otherAggregateId := uuid.New()
+		otherEvents := []evs.Event{
+			evs.NewEvent(ctx, testEventCreated, createTestEventData("create"), now(), testAggregate, otherAggregateId, 0),
+		}
+		err = es.Save(ctx, otherEvents)
+		Expect(err).ToNot(HaveOccurred())
+		expectedEventCount := len(events) + len(otherEvents)
+
+		aggregateId := events[0].AggregateID()
+		eventStream, err := es.LoadOr(ctx, []*evs.StoreQuery{
+			{AggregateId: &aggregateId},
+			{AggregateId: &otherAggregateId},
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		var storeEvents []evs.Event
+		for {
+			event, err := eventStream.Receive()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).ToNot(HaveOccurred())
+			storeEvents = append(storeEvents, event)
+		}
+
+		Expect(len(storeEvents)).To(BeNumerically("==", expectedEventCount))
+	})
 	It("can filter events to load from the store by aggregate type", func() {
 		ev := createTestEvents()
 		err := es.Save(ctx, ev)
 		Expect(err).ToNot(HaveOccurred())
 
-		aggregateType := evs.AggregateType(testAggregate)
+		aggregateType := testAggregate
 		eventStream, err := es.Load(ctx, &evs.StoreQuery{
 			AggregateType: &aggregateType,
 		})
