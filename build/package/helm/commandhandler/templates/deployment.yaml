@@ -123,5 +123,5 @@ spec:
             secretName: {{ . }}
             items:
             - key: tls.crt
-              path: ca.crt
+              path: tls.crt
       {{- end }}
