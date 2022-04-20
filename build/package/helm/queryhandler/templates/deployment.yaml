@@ -103,9 +103,9 @@ spec:
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
           {{- end }}
-          {{- if .Values.gateway.tlsSecret }}
-            - name: gatewaycerts
-              mountPath: /etc/gateway/certs
+          {{- if .Values.pkiTrustAnchorSecretName }}
+            - name: m8-ca
+              mountPath: /etc/pki/certs
               readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
@@ -126,8 +126,8 @@ spec:
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
         {{- end }}
-        {{- if .Values.gateway.tlsSecret }}
-        - name: gatewaycerts
+        {{- with .Values.pkiTrustAnchorSecretName }}
+        - name: m8-ca
           secret:
-            secretName: {{ .Values.gateway.tlsSecret }}
+            secretName: {{ . }}
         {{- end }}

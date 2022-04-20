@@ -169,7 +169,7 @@ spec:
       {{- if .Values.tlsSecret }}
         - name: certs
           secret:
-            secretName: {{ .Values.tlsSecret }}
+            secretName: {{ .Values.tlsSecretName }}
       {{- end }}
       {{- if .Values.messageBus.tlsSecret }}
         - name: buscerts

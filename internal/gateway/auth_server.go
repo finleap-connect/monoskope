@@ -26,6 +26,7 @@ import (
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
 	"github.com/google/uuid"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/open-policy-agent/opa/rego"
@@ -37,9 +38,7 @@ import (
 )
 
 const (
-	CACertPath  = "/etc/gateway/certs/ca.crt"
-	TLSCertPath = "/etc/gateway/certs/tls.crt"
-	TLSKeyPath  = "/etc/gateway/certs/tls.key"
+	CACertPath = "/etc/pki/ca.crt"
 )
 
 type policyAuthentication struct {
@@ -85,10 +84,25 @@ func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.Check
 }
 
 func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
+	loader, err := m8tls.NewTLSConfigLoader()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = loader.SetServerCACertificate(CACertPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = loader.Watch()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactory(gatewayAddr).
 		WithRetry().
-		WithTransportCredentials(CACertPath, TLSCertPath, TLSKeyPath).
+		WithTransportCredentials(credentials.NewClientTLSFromCert(loader.GetRootCAs(), "")).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err
