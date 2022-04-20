@@ -98,10 +98,10 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.gateway.tlsSecret }}
+          {{- if .Values.pkiTrustAnchorSecretName }}
           volumeMounts:
-            - name: gatewaycerts
-              mountPath: /etc/gateway/certs
+            - name: m8-ca
+              mountPath: /etc/pki/certs
               readOnly: true
           {{- end }}
       {{- with .Values.nodeSelector }}
@@ -116,9 +116,9 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.gateway.tlsSecret }}
+      {{- with .Values.pkiTrustAnchorSecretName }}
       volumes:
-        - name: gatewaycerts
+        - name: m8-ca
           secret:
-            secretName: {{ .Values.gateway.tlsSecret }}
+            secretName: {{ . }}
       {{- end }}

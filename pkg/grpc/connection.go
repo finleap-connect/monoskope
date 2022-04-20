@@ -18,24 +18,15 @@ import (
 	"context"
 	"time"
 
-	m8tls "github.com/finleap-connect/monoskope/pkg/tls"
-
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type tlsConf struct {
-	pemServerCAFile string
-	certFile        string
-	keyFile         string
-}
-
 type GrpcConnectionFactory struct {
-	opts    []grpc.DialOption
-	url     string
-	tlsConf *tlsConf
+	opts []grpc.DialOption
+	url  string
 }
 
 // NewGrpcConnectionFactory creates a new factory for gRPC connections.
@@ -67,16 +58,6 @@ func (factory *GrpcConnectionFactory) WithOSCaTransportCredentials() *GrpcConnec
 		factory.opts = make([]grpc.DialOption, 0)
 	}
 	factory.opts = append(factory.opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	return factory
-}
-
-// WithTransportCredentials adds a DialOption which configures a connection level security credentials (e.g., TLS/SSL) using the given certificates.
-func (factory *GrpcConnectionFactory) WithTransportCredentials(pemServerCAFile, certFile, keyFile string) *GrpcConnectionFactory {
-	factory.tlsConf = &tlsConf{
-		pemServerCAFile: pemServerCAFile,
-		certFile:        certFile,
-		keyFile:         keyFile,
-	}
 	return factory
 }
 
@@ -117,15 +98,13 @@ func (factory *GrpcConnectionFactory) WithRetry() *GrpcConnectionFactory {
 }
 
 // Connect creates a client connection based on the factory.
-func (factory *GrpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientConn, error) {
-	if factory.tlsConf != nil {
-		tlsCredentials, err := factory.loadTLSCredentials()
-		if err != nil {
-			return nil, err
-		}
-		factory.opts = append(factory.opts, grpc.WithTransportCredentials(tlsCredentials))
-	}
+func (factory *GrpcConnectionFactory) WithTransportCredentials(creds credentials.TransportCredentials) *GrpcConnectionFactory {
+	factory.opts = append(factory.opts, grpc.WithTransportCredentials(creds))
+	return factory
+}
 
+// Connect creates a client connection based on the factory.
+func (factory *GrpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientConn, error) {
 	return grpc.DialContext(ctx, factory.url, factory.opts...)
 }
 
@@ -134,29 +113,4 @@ func (factory *GrpcConnectionFactory) ConnectWithTimeout(ctx context.Context, ti
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return factory.Connect(ctx)
-}
-
-// loadTLSCredentials actually loads the configured certs
-func (factory *GrpcConnectionFactory) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	loader, err := m8tls.NewTLSConfigLoader()
-	if err != nil {
-		return nil, err
-	}
-
-	err = loader.SetServerCACertificate(factory.tlsConf.pemServerCAFile)
-	if err != nil {
-		return nil, err
-	}
-
-	err = loader.SetClientCertificate(factory.tlsConf.certFile, factory.tlsConf.keyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	err = loader.Watch()
-	if err != nil {
-		return nil, err
-	}
-
-	return credentials.NewTLS(loader.GetClientTLSConfig()), nil
 }
