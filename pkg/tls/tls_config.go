@@ -37,7 +37,6 @@ type TLSConfigLoader struct {
 	clientCertificateKeyFile string
 	clientCertificate        *tls.Certificate
 	serverCAs                *x509.CertPool
-	clientCAs                *x509.CertPool
 	watcher                  *fsnotify.Watcher
 	watching                 chan struct{}
 	log                      logger.Logger
@@ -187,7 +186,7 @@ func (t *TLSConfigLoader) load() error {
 		rootCAs = x509.NewCertPool()
 	}
 
-	// Load local CA
+	// Load server CA
 	if t.serverCACertificateFile != "" {
 		certs, err := ioutil.ReadFile(t.serverCACertificateFile)
 		if err != nil {
@@ -195,11 +194,25 @@ func (t *TLSConfigLoader) load() error {
 		}
 		// Append local CA cert to the system pool
 		if rootCAs.AppendCertsFromPEM(certs) {
-			t.log.Info("root CAs loaded")
+			t.log.Info("server CAs loaded")
 		} else {
-			t.log.Info("No root CAs appended, using system CAs only")
+			t.log.Info("No server CAs appended, using system CAs only")
 		}
 		t.serverCAs = rootCAs
+	}
+
+	// Load client CA
+	if t.clientCACertificateFile != "" {
+		certs, err := ioutil.ReadFile(t.clientCACertificateFile)
+		if err != nil {
+			return err
+		}
+		// Append local CA cert to the system pool
+		if rootCAs.AppendCertsFromPEM(certs) {
+			t.log.Info("client CAs loaded")
+		} else {
+			t.log.Info("No client CAs appended, using system CAs only")
+		}
 	}
 
 	if t.clientCertificateFile != "" {
@@ -246,10 +259,13 @@ loop:
 
 // GetTLSConfig returns a tls.Config with auto reloading certs.
 func (t *TLSConfigLoader) GetClientTLSConfig() *tls.Config {
-	return &tls.Config{
-		RootCAs:              t.GetRootCAs(),
-		GetClientCertificate: t.GetClientCertificate,
+	conf := &tls.Config{
+		RootCAs: t.GetRootCAs(),
 	}
+	if t.clientCertificate != nil {
+		conf.GetClientCertificate = t.GetClientCertificate
+	}
+	return conf
 }
 
 func (t *TLSConfigLoader) GetServerTLSConfig(clientAuthType tls.ClientAuthType) *tls.Config {
@@ -258,7 +274,7 @@ func (t *TLSConfigLoader) GetServerTLSConfig(clientAuthType tls.ClientAuthType) 
 		ClientAuth:     clientAuthType,
 	}
 	if clientAuthType == tls.RequireAndVerifyClientCert {
-		conf.ClientCAs = t.GetClientCAs()
+		conf.ClientCAs = t.GetRootCAs()
 	}
 	return conf
 }
@@ -268,13 +284,6 @@ func (t *TLSConfigLoader) GetRootCAs() *x509.CertPool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.serverCAs
-}
-
-// GetClientCAs returns the cert pool to use to verify client certificates.
-func (t *TLSConfigLoader) GetClientCAs() *x509.CertPool {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.clientCAs
 }
 
 // GetCertificate returns the loaded certificate for use by
