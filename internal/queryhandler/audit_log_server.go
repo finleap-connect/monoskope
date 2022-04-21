@@ -100,8 +100,8 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 	}
 	eventsStream, err := s.esClient.RetrieveOr(stream.Context(), &esApi.EventFilters{
 		Filters: []*esApi.EventFilter{
-			{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String())},
-			{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String())},
+			{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
+			{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
 		},
 	})
 	if err != nil {
