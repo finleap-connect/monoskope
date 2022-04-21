@@ -9,7 +9,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "sunday"
     commit-message:
       # Prefix all commit messages with "ghactions"
       prefix: "ghactions"
@@ -17,11 +18,14 @@ updates:
     labels:
       - "github-actions"
       - "chore"
+    reviewers:
+      - "finleap-connect/fcloud"
   # Maintain dependencies for golang
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "sunday"
     commit-message:
       # Prefix all commit messages with "golang"
       prefix: "golang"
@@ -29,3 +33,12 @@ updates:
     labels:
       - "golang"
       - "chore"
+    reviewers:
+      - "finleap-connect/fcloud"
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/"
+    # Check for updates once a week
+    schedule:
+      interval: "weekly"
+      day: "sunday"
