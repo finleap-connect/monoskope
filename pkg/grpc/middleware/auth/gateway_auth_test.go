@@ -49,7 +49,8 @@ var _ = Describe("Gateway Auth Middleware", func() {
 		}
 
 		It("should ensure user is authenticated and authorized", func() {
-			newCtx := ctxWithToken(ctx, "bearer", "onetoken")
+			expectedToken := "onetoken"
+			newCtx := ctxWithToken(ctx, "bearer", expectedToken)
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
 
@@ -57,6 +58,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 
 			authClient.EXPECT().Check(newCtx, &api.CheckRequest{
 				FullMethodName: expectedMethodName,
+				AccessToken:    expectedToken,
 			}, gomock.Any()).Return(&api.CheckResponse{
 				Tags: []*api.CheckResponse_CheckResponseTag{
 					{

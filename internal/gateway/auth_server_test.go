@@ -16,7 +16,6 @@ package gateway
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
@@ -60,11 +59,11 @@ var _ = Describe("Gateway Auth Server", func() {
 
 		nicemd := metautils.
 			ExtractIncoming(ctx).
-			Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getAdminToken())).
 			Set("command_type", "CreateUser")
 
 		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/",
+			AccessToken:    getAdminToken(),
 		})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp).ToNot(BeNil())
@@ -77,9 +76,9 @@ var _ = Describe("Gateway Auth Server", func() {
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
 
-		nicemd := metautils.ExtractIncoming(ctx).Set(auth.HeaderAuthorization, fmt.Sprintf("bearer %s", getNormalUserToken()))
-		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
+		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/",
+			AccessToken:    getNormalUserToken(),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(resp).To(BeNil())
