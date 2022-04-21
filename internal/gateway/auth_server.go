@@ -126,7 +126,8 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 	// via JWT
 	authToken, err = s.tokenValidationFromContext(ctx, req)
 	if err != nil {
-		return nil, err
+		s.log.Info("Request authentication failed", "req", req, "err", err)
+		return nil, status.Error(codes.Unauthenticated, "authentication failed")
 	}
 	authenticated = err == nil
 
