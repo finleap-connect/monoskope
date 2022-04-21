@@ -49,38 +49,6 @@ var _ = Describe("Test validation rules for commandhanlder messages", func() {
 		})
 	})
 
-	Context("Policy", func() {
-		var pc *domain.Policy
-		JustBeforeEach(func() {
-			pc = NewValidPolicy()
-		})
-
-		ValidateErrorExpected := func() {
-			err := pc.Validate()
-			Expect(err).To(HaveOccurred())
-		}
-
-		It("should ensure rules are valid", func() {
-			err := pc.Validate()
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should check for a valid Command", func() {
-			pc.Command = invalidCommand
-			ValidateErrorExpected()
-		})
-
-		It("should check for a valid Role", func() {
-			pc.Role = invalidRole
-			ValidateErrorExpected()
-		})
-
-		It("should check for a valid Scope", func() {
-			pc.Scope = invalidScope
-			ValidateErrorExpected()
-		})
-	})
-
 	Context("Command Replay", func() {
 		var cr *eventsourcing.CommandReply
 		JustBeforeEach(func() {

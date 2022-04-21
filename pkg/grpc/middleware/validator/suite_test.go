@@ -53,7 +53,6 @@ var (
 	validRole  = validLowercaseString
 	validScope = validLowercaseString
 
-	validCommand     = validRestrictedString
 	validCommandType = validRestrictedString
 
 	validEventType = validRestrictedString
@@ -79,7 +78,6 @@ var (
 	invalidRole  = invalidLowercaseString
 	invalidScope = invalidLowercaseString
 
-	invalidCommand     = invalidRestrictedString
 	invalidCommandType = invalidRestrictedString
 
 	invalidEventType = invalidRestrictedString
@@ -225,14 +223,6 @@ func NewValidPermissionModel() *domain.PermissionModel {
 	return &domain.PermissionModel{
 		Roles:  []string{validRole, validRole, validRole},
 		Scopes: []string{validScope, validScope, validScope},
-	}
-}
-
-func NewValidPolicy() *domain.Policy {
-	return &domain.Policy{
-		Command: validCommand,
-		Role:    validRole,
-		Scope:   validScope,
 	}
 }
 
