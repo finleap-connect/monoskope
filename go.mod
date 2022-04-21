@@ -4,16 +4,22 @@ go 1.18
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/aws/aws-sdk-go v1.43.35
+	github.com/aws/aws-sdk-go v1.43.43
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/cert-manager/cert-manager v1.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 <<<<<<< HEAD
 	github.com/fsnotify/fsnotify v1.5.4
 =======
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
+<<<<<<< HEAD
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/fsnotify/fsnotify v1.5.1
 >>>>>>> 28ee91c (Rewrite auth server)
+=======
+	github.com/envoyproxy/protoc-gen-validate v0.6.7
+	github.com/fsnotify/fsnotify v1.5.2
+>>>>>>> 49c4da7 (Update dependencies)
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-logr/logr v1.2.3
@@ -26,7 +32,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/int128/listener v1.1.0
-	github.com/jetstack/cert-manager v1.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
@@ -37,7 +42,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.3.0
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/spf13/cobra v1.4.0
-	go.uber.org/automaxprocs v1.4.0
+	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -72,7 +77,7 @@ require (
 	github.com/di-wu/parser v0.2.2 // indirect
 	github.com/di-wu/xsd-datetime v1.0.0 // indirect
 	github.com/docker/cli v20.10.11+incompatible // indirect
-	github.com/docker/docker v20.10.7+incompatible // indirect
+	github.com/docker/docker v20.10.12+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8 // indirect
@@ -126,9 +131,9 @@ require (
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -140,10 +145,11 @@ require (
 	k8s.io/api v0.23.5 // indirect
 	k8s.io/apiextensions-apiserver v0.23.5 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
-	k8s.io/kube-aggregator v0.23.1 // indirect
+	k8s.io/kube-aggregator v0.23.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
 	mellium.im/sasl v0.2.1 // indirect
+	sigs.k8s.io/gateway-api v0.4.1 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
