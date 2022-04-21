@@ -106,6 +106,3 @@ gateway:
   prefix: "" # Defaults to the release name
   host: "gateway"
   port: 8080
-
-# -- Name of the secret containing the trust anchor of the m8 PKI
-pkiTrustAnchorSecretName: ""

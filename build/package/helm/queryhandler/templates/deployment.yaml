@@ -103,11 +103,6 @@ spec:
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
           {{- end }}
-          {{- if .Values.pkiTrustAnchorSecretName }}
-            - name: m8-ca
-              mountPath: /etc/pki
-              readOnly: true
-          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -126,11 +121,4 @@ spec:
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
         {{- end }}
-        {{- with .Values.pkiTrustAnchorSecretName }}
-        - name: m8-ca
-          secret:
-            secretName: {{ . }}
-            items:
-            - key: tls.crt
-              path: tls.crt
-        {{- end }}
+
