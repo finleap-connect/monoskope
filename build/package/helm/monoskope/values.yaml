@@ -25,7 +25,7 @@ pki:
     name: &rootIssuerName "m8-root-ca-issuer"
     ca:
       enabled: true
-      existingTrustAnchorSecretName: &trustAnchorSecretName "m8-trust-anchor"
+      existingTrustAnchorSecretName: "m8-trust-anchor"
       secretVersion: 1 # Only necessary if .pkio.issuer.ca.existingTrustAnchorSecretName is not specified and VaultOperator is used
     vault: # Matches the .spec.vault of the cert-manager.io/v1 Issuer https://cert-manager.io/docs/configuration/vault/
       enabled: false
@@ -61,7 +61,6 @@ gateway:
   messageBus:
     configSecret: *msgBusClientConfigSecretName
     tlsSecret: *msgBusClientAuthCertSecretName
-  tlsSecretName: m8-gateway-tls
 
 eventstore:
   enabled: true
@@ -78,7 +77,6 @@ eventstore:
 commandhandler:
   enabled: true
   replicaCount: 1
-  pkiTrustAnchorSecretName: *trustAnchorSecretName
   
 queryhandler:
   enabled: true
@@ -86,7 +84,6 @@ queryhandler:
   messageBus:
     configSecret: *msgBusClientConfigSecretName
     tlsSecret: *msgBusClientAuthCertSecretName
-  pkiTrustAnchorSecretName: *trustAnchorSecretName
 
 cockroachdb:
   enabled: true

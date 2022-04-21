@@ -98,12 +98,6 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.pkiTrustAnchorSecretName }}
-          volumeMounts:
-            - name: m8-ca
-              mountPath: /etc/pki
-              readOnly: true
-          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -115,13 +109,4 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.pkiTrustAnchorSecretName }}
-      volumes:
-        - name: m8-ca
-          secret:
-            secretName: {{ . }}
-            items:
-            - key: tls.crt
-              path: tls.crt
       {{- end }}
