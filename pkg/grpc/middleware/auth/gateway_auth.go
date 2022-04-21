@@ -25,10 +25,8 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/status"
 )
 
@@ -72,8 +70,9 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 	}
 
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
+		AccessToken:    token,
 		FullMethodName: fullMethodName,
-	}, grpc.PerRPCCredentials(oauth.NewOauthAccess(&oauth2.Token{AccessToken: token})))
+	})
 
 	if err != nil {
 		m.log.V(logger.DebugLevel).Error(err, "gateway auth failed", "fullMethodName", fullMethodName, "req", req)

@@ -1158,7 +1158,7 @@ type AuditLogClient interface {
 	GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error)
 	// GetUserActions returns human readable events caused by the given user actions
 	GetUserActions(ctx context.Context, in *GetUserActionsRequest, opts ...grpc.CallOption) (AuditLog_GetUserActionsClient, error)
-	// GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
+	// GetUsersOverview returns users overview at the specified timestamp, tenants/clusters they belong to, and their roles
 	GetUsersOverview(ctx context.Context, in *GetUsersOverviewRequest, opts ...grpc.CallOption) (AuditLog_GetUsersOverviewClient, error)
 }
 
@@ -1274,7 +1274,7 @@ type AuditLogServer interface {
 	GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error
 	// GetUserActions returns human readable events caused by the given user actions
 	GetUserActions(*GetUserActionsRequest, AuditLog_GetUserActionsServer) error
-	// GetUsersOverview returns users overview including tenants/clusters they belong to, and their roles
+	// GetUsersOverview returns users overview at the specified timestamp, tenants/clusters they belong to, and their roles
 	GetUsersOverview(*GetUsersOverviewRequest, AuditLog_GetUsersOverviewServer) error
 	mustEmbedUnimplementedAuditLogServer()
 }
