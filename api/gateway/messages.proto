@@ -114,6 +114,8 @@ message CheckRequest {
   // FullMethodName is the full RPC method string, i.e.,
   // /package.service/method.
   string full_method_name = 1 [ (validate.rules).string = {min_len : 1} ];
+  // AccessToken is the token from the auth header of the client request
+  string access_token = 2 [ (validate.rules).string = {min_len : 1} ];
 }
 
 // Intended for gRPC and Network Authorization servers `only`.

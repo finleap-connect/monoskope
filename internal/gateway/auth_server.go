@@ -27,7 +27,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/open-policy-agent/opa/rego"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -218,12 +217,7 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
 func (s *authServer) tokenValidationFromContext(ctx context.Context, req *gateway.CheckRequest) (*jwt.AuthToken, error) {
-	token, err := grpc_auth.AuthFromMD(ctx, auth.AuthScheme)
-	if err != nil {
-		return nil, err
-	}
-
-	authToken, err := s.tokenValidation(ctx, token)
+	authToken, err := s.tokenValidation(ctx, req.AccessToken)
 	if err != nil {
 		return nil, err
 	}
