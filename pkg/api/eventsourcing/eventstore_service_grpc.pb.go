@@ -19,11 +19,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EventStoreClient interface {
-	// Store Stream events to the store.
+	// Store streams events to the store.
 	Store(ctx context.Context, opts ...grpc.CallOption) (EventStore_StoreClient, error)
-	// Retrieve Get a stream of Events
+	// Retrieve returns a stream of Events.
 	Retrieve(ctx context.Context, in *EventFilter, opts ...grpc.CallOption) (EventStore_RetrieveClient, error)
-	// RetrieveOr Get a stream of Events by concatenating the filters with the logical or
+	// RetrieveOr returns a stream of Events by concatenating the filters with the logical or
 	RetrieveOr(ctx context.Context, in *EventFilters, opts ...grpc.CallOption) (EventStore_RetrieveOrClient, error)
 }
 
@@ -137,11 +137,11 @@ func (x *eventStoreRetrieveOrClient) Recv() (*Event, error) {
 // All implementations must embed UnimplementedEventStoreServer
 // for forward compatibility
 type EventStoreServer interface {
-	// Store Stream events to the store.
+	// Store streams events to the store.
 	Store(EventStore_StoreServer) error
-	// Retrieve Get a stream of Events
+	// Retrieve returns a stream of Events.
 	Retrieve(*EventFilter, EventStore_RetrieveServer) error
-	// RetrieveOr Get a stream of Events by concatenating the filters with the logical or
+	// RetrieveOr returns a stream of Events by concatenating the filters with the logical or
 	RetrieveOr(*EventFilters, EventStore_RetrieveOrServer) error
 	mustEmbedUnimplementedEventStoreServer()
 }
