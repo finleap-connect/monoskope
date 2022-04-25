@@ -24,6 +24,7 @@ import "api/domain/projections/certificate.proto";
 import "api/domain/projections/tenant_cluster_binding.proto";
 import "api/domain/audit/user.proto";
 import "api/domain/audit/event.proto";
+import "validate/validate.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -125,12 +126,12 @@ message GetAuditLogByDateRangeRequest {
 }
 
 message GetByUserRequest {
-  google.protobuf.StringValue email = 1;
+  google.protobuf.StringValue email = 1 [ (validate.rules).string.email = true ];
   GetAuditLogByDateRangeRequest date_range = 2;
 }
 
 message GetUserActionsRequest {
-  google.protobuf.StringValue email = 1;
+  google.protobuf.StringValue email = 1 [ (validate.rules).string.email = true ];
   GetAuditLogByDateRangeRequest date_range = 2;
 }
 
