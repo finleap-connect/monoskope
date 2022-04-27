@@ -19,10 +19,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EventStoreClient interface {
-	// Stream events to the store.
+	// Store streams events to the store.
 	Store(ctx context.Context, opts ...grpc.CallOption) (EventStore_StoreClient, error)
-	// Get a stream of Events
+	// Retrieve returns a stream of Events.
 	Retrieve(ctx context.Context, in *EventFilter, opts ...grpc.CallOption) (EventStore_RetrieveClient, error)
+	// RetrieveOr returns a stream of Events by concatenating the filters with the logical or
+	RetrieveOr(ctx context.Context, in *EventFilters, opts ...grpc.CallOption) (EventStore_RetrieveOrClient, error)
 }
 
 type eventStoreClient struct {
@@ -99,14 +101,48 @@ func (x *eventStoreRetrieveClient) Recv() (*Event, error) {
 	return m, nil
 }
 
+func (c *eventStoreClient) RetrieveOr(ctx context.Context, in *EventFilters, opts ...grpc.CallOption) (EventStore_RetrieveOrClient, error) {
+	stream, err := c.cc.NewStream(ctx, &EventStore_ServiceDesc.Streams[2], "/eventsourcing.EventStore/RetrieveOr", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &eventStoreRetrieveOrClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type EventStore_RetrieveOrClient interface {
+	Recv() (*Event, error)
+	grpc.ClientStream
+}
+
+type eventStoreRetrieveOrClient struct {
+	grpc.ClientStream
+}
+
+func (x *eventStoreRetrieveOrClient) Recv() (*Event, error) {
+	m := new(Event)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // EventStoreServer is the server API for EventStore service.
 // All implementations must embed UnimplementedEventStoreServer
 // for forward compatibility
 type EventStoreServer interface {
-	// Stream events to the store.
+	// Store streams events to the store.
 	Store(EventStore_StoreServer) error
-	// Get a stream of Events
+	// Retrieve returns a stream of Events.
 	Retrieve(*EventFilter, EventStore_RetrieveServer) error
+	// RetrieveOr returns a stream of Events by concatenating the filters with the logical or
+	RetrieveOr(*EventFilters, EventStore_RetrieveOrServer) error
 	mustEmbedUnimplementedEventStoreServer()
 }
 
@@ -119,6 +155,9 @@ func (UnimplementedEventStoreServer) Store(EventStore_StoreServer) error {
 }
 func (UnimplementedEventStoreServer) Retrieve(*EventFilter, EventStore_RetrieveServer) error {
 	return status.Errorf(codes.Unimplemented, "method Retrieve not implemented")
+}
+func (UnimplementedEventStoreServer) RetrieveOr(*EventFilters, EventStore_RetrieveOrServer) error {
+	return status.Errorf(codes.Unimplemented, "method RetrieveOr not implemented")
 }
 func (UnimplementedEventStoreServer) mustEmbedUnimplementedEventStoreServer() {}
 
@@ -180,6 +219,27 @@ func (x *eventStoreRetrieveServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _EventStore_RetrieveOr_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(EventFilters)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(EventStoreServer).RetrieveOr(m, &eventStoreRetrieveOrServer{stream})
+}
+
+type EventStore_RetrieveOrServer interface {
+	Send(*Event) error
+	grpc.ServerStream
+}
+
+type eventStoreRetrieveOrServer struct {
+	grpc.ServerStream
+}
+
+func (x *eventStoreRetrieveOrServer) Send(m *Event) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // EventStore_ServiceDesc is the grpc.ServiceDesc for EventStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +256,11 @@ var EventStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "Retrieve",
 			Handler:       _EventStore_Retrieve_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "RetrieveOr",
+			Handler:       _EventStore_RetrieveOr_Handler,
 			ServerStreams: true,
 		},
 	},

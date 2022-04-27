@@ -33,6 +33,9 @@ type EventStore interface {
 	// Load loads all events for the query from the store.
 	Load(context.Context, *StoreQuery) (EventStreamReceiver, error)
 
+	// LoadOr loads all events by combining the queries with the logical OR from the store.
+	LoadOr(context.Context, []*StoreQuery) (EventStreamReceiver, error)
+
 	// Close closes the underlying connections
 	Close() error
 }

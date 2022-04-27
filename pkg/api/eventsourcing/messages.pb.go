@@ -240,6 +240,54 @@ func (x *EventFilter) GetMaxTimestamp() *timestamppb.Timestamp {
 	return nil
 }
 
+// Request to get Events from to the store by using multiple filters
+type EventFilters struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Filters []*EventFilter `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
+}
+
+func (x *EventFilters) Reset() {
+	*x = EventFilters{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_api_eventsourcing_messages_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventFilters) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventFilters) ProtoMessage() {}
+
+func (x *EventFilters) ProtoReflect() protoreflect.Message {
+	mi := &file_api_eventsourcing_messages_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventFilters.ProtoReflect.Descriptor instead.
+func (*EventFilters) Descriptor() ([]byte, []int) {
+	return file_api_eventsourcing_messages_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EventFilters) GetFilters() []*EventFilter {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
 var File_api_eventsourcing_messages_proto protoreflect.FileDescriptor
 
 var file_api_eventsourcing_messages_proto_rawDesc = []byte{
@@ -308,12 +356,16 @@ var file_api_eventsourcing_messages_proto_rawDesc = []byte{
 	0x61, 0x78, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x08, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0c,
-	0x6d, 0x61, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x42, 0x3c, 0x5a, 0x3a,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x66, 0x69, 0x6e, 0x6c, 0x65,
-	0x61, 0x70, 0x2d, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73,
-	0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x65, 0x76, 0x65,
-	0x6e, 0x74, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x69, 0x6e, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x6d, 0x61, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x22, 0x44, 0x0a, 0x0c,
+	0x45, 0x76, 0x65, 0x6e, 0x74, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x12, 0x34, 0x0a, 0x07,
+	0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
+	0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x69, 0x6e, 0x67, 0x2e, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x73, 0x42, 0x3c, 0x5a, 0x3a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x66, 0x69, 0x6e, 0x6c, 0x65, 0x61, 0x70, 0x2d, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74,
+	0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x73, 0x6b, 0x6f, 0x70, 0x65, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x69, 0x6e, 0x67,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -328,30 +380,32 @@ func file_api_eventsourcing_messages_proto_rawDescGZIP() []byte {
 	return file_api_eventsourcing_messages_proto_rawDescData
 }
 
-var file_api_eventsourcing_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_api_eventsourcing_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_api_eventsourcing_messages_proto_goTypes = []interface{}{
 	(*Event)(nil),                  // 0: eventsourcing.Event
 	(*EventFilter)(nil),            // 1: eventsourcing.EventFilter
-	nil,                            // 2: eventsourcing.Event.MetadataEntry
-	(*timestamppb.Timestamp)(nil),  // 3: google.protobuf.Timestamp
-	(*wrapperspb.UInt64Value)(nil), // 4: google.protobuf.UInt64Value
-	(*wrapperspb.StringValue)(nil), // 5: google.protobuf.StringValue
+	(*EventFilters)(nil),           // 2: eventsourcing.EventFilters
+	nil,                            // 3: eventsourcing.Event.MetadataEntry
+	(*timestamppb.Timestamp)(nil),  // 4: google.protobuf.Timestamp
+	(*wrapperspb.UInt64Value)(nil), // 5: google.protobuf.UInt64Value
+	(*wrapperspb.StringValue)(nil), // 6: google.protobuf.StringValue
 }
 var file_api_eventsourcing_messages_proto_depIdxs = []int32{
-	3, // 0: eventsourcing.Event.timestamp:type_name -> google.protobuf.Timestamp
-	4, // 1: eventsourcing.Event.aggregate_version:type_name -> google.protobuf.UInt64Value
-	2, // 2: eventsourcing.Event.metadata:type_name -> eventsourcing.Event.MetadataEntry
-	5, // 3: eventsourcing.EventFilter.aggregate_id:type_name -> google.protobuf.StringValue
-	5, // 4: eventsourcing.EventFilter.aggregate_type:type_name -> google.protobuf.StringValue
-	4, // 5: eventsourcing.EventFilter.min_version:type_name -> google.protobuf.UInt64Value
-	4, // 6: eventsourcing.EventFilter.max_version:type_name -> google.protobuf.UInt64Value
-	3, // 7: eventsourcing.EventFilter.min_timestamp:type_name -> google.protobuf.Timestamp
-	3, // 8: eventsourcing.EventFilter.max_timestamp:type_name -> google.protobuf.Timestamp
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	4,  // 0: eventsourcing.Event.timestamp:type_name -> google.protobuf.Timestamp
+	5,  // 1: eventsourcing.Event.aggregate_version:type_name -> google.protobuf.UInt64Value
+	3,  // 2: eventsourcing.Event.metadata:type_name -> eventsourcing.Event.MetadataEntry
+	6,  // 3: eventsourcing.EventFilter.aggregate_id:type_name -> google.protobuf.StringValue
+	6,  // 4: eventsourcing.EventFilter.aggregate_type:type_name -> google.protobuf.StringValue
+	5,  // 5: eventsourcing.EventFilter.min_version:type_name -> google.protobuf.UInt64Value
+	5,  // 6: eventsourcing.EventFilter.max_version:type_name -> google.protobuf.UInt64Value
+	4,  // 7: eventsourcing.EventFilter.min_timestamp:type_name -> google.protobuf.Timestamp
+	4,  // 8: eventsourcing.EventFilter.max_timestamp:type_name -> google.protobuf.Timestamp
+	1,  // 9: eventsourcing.EventFilters.filters:type_name -> eventsourcing.EventFilter
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_api_eventsourcing_messages_proto_init() }
@@ -384,6 +438,18 @@ func file_api_eventsourcing_messages_proto_init() {
 				return nil
 			}
 		}
+		file_api_eventsourcing_messages_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventFilters); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -391,7 +457,7 @@ func file_api_eventsourcing_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_eventsourcing_messages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

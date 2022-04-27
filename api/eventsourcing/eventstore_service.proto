@@ -26,8 +26,10 @@ package eventsourcing;
 
 // API of the Monoskope EventStore.
 service EventStore {
-  // Stream events to the store.
+  // Store streams events to the store.
   rpc Store(stream Event) returns (google.protobuf.Empty);
-  // Get a stream of Events
+  // Retrieve returns a stream of Events.
   rpc Retrieve(EventFilter) returns (stream Event);
+  // RetrieveOr returns a stream of Events by concatenating the filters with the logical or
+  rpc RetrieveOr(EventFilters) returns (stream Event);
 }
