@@ -19,13 +19,13 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/google/uuid"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Managing Metadata", func() {
-	It("should set user information", func() {
-
+	It("should have user information from context", func() {
 		expectedUserId := uuid.New()
 
 		ctx := context.Background()
@@ -38,7 +38,20 @@ var _ = Describe("Managing Metadata", func() {
 			Email: "admin@monoskope.io",
 		})
 
+		mdManager, err = NewDomainMetadataManager(mdManager.GetContext())
+		Expect(err).ToNot(HaveOccurred())
 		Expect(mdManager.GetMetadata()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
+	})
+	It("should have user information from grpc context tags", func() {
+		expectedUserId := uuid.New()
 
+		ctx := context.Background()
+		tags := grpc_ctxtags.NewTags()
+		tags.Set(auth.HeaderAuthId, expectedUserId.String())
+		newCtx := grpc_ctxtags.SetInContext(ctx, tags)
+
+		mdManager, err := NewDomainMetadataManager(newCtx)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(mdManager.GetMetadata()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
 	})
 })

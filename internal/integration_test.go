@@ -59,6 +59,7 @@ var _ = Describe("integration", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
+		Id:    uuid.New(),
 		Name:  "admin",
 		Email: "admin@monoskope.io",
 	})

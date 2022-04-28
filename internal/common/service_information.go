@@ -19,7 +19,6 @@ import (
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/grpc/metadata"
 )
 
 type serviceInformationService struct {
@@ -29,15 +28,6 @@ type serviceInformationService struct {
 
 func (s *serviceInformationService) GetServiceInformation(e *empty.Empty, stream api_common.ServiceInformationService_GetServiceInformationServer) error {
 	s.log.Info("Service information requested.")
-
-	// Print headers
-	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
-		for k, vs := range md {
-			for _, v := range vs {
-				s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", v)
-			}
-		}
-	}
 
 	err := stream.Send(&api_common.ServiceInformation{
 		Name:    version.Name,
