@@ -20,8 +20,10 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	domain_metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	. "github.com/onsi/ginkgo"
@@ -53,6 +55,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			newCtx := ctxWithToken(ctx, "bearer", expectedToken)
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
+			expectedUserId := uuid.New()
 
 			middleware := NewAuthMiddleware(authClient, nil).(*authMiddleware)
 
@@ -62,8 +65,8 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			}, gomock.Any()).Return(&api.CheckResponse{
 				Tags: []*api.CheckResponse_CheckResponseTag{
 					{
-						Key:   "test",
-						Value: "test",
+						Key:   auth.HeaderAuthId,
+						Value: expectedUserId.String(),
 					},
 				},
 			}, nil)
@@ -74,8 +77,15 @@ var _ = Describe("Gateway Auth Middleware", func() {
 
 			tags := grpc_ctxtags.Extract(resultCtx)
 			Expect(tags).ToNot(BeNil())
-			Expect(tags.Has("test")).To(BeTrue())
-			Expect(tags.Values()["test"]).To(Equal("test"))
+			Expect(tags.Has(auth.HeaderAuthId)).To(BeTrue())
+			Expect(tags.Values()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
+
+			m, err := domain_metadata.NewDomainMetadataManager(resultCtx)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(m).ToNot(BeNil())
+
+			userInfo := m.GetUserInformation()
+			Expect(userInfo.Id).To(Equal(expectedUserId))
 		})
 	})
 

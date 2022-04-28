@@ -23,6 +23,7 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -30,18 +31,6 @@ const (
 	componentName    = "component_name"
 	componentVersion = "component_version"
 	componentCommit  = "component_commit"
-)
-
-var (
-	acceptedHeaders = []string{
-		componentName,
-		componentCommit,
-		componentVersion,
-		auth.HeaderAuthId,
-		auth.HeaderAuthName,
-		auth.HeaderAuthEmail,
-		auth.HeaderAuthNotBefore,
-	}
 )
 
 // UserInformation are identifying information about a user.
@@ -66,14 +55,14 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 	}
 
 	if len(m.GetMetadata()) == 0 {
+		tags := grpc_ctxtags.Extract(ctx)
+
 		// Get the grpc metadata from incoming context
-		if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if tags != grpc_ctxtags.NoopTags {
 			data := make(map[string]string)
-			for k, v := range md {
+			for k, v := range tags.Values() {
 				m.log.V(logger.DebugLevel).Info("grpc metadata from incoming context", "key", k, "value", v)
-				if isHeaderAccepted(k) {
-					data[k] = v[0] // typically only the first and only value of that is relevant
-				}
+				data[k] = v.(string)
 			}
 			m.SetMetadata(data)
 		}
@@ -141,13 +130,4 @@ func (m *DomainMetadataManager) GetOutgoingGrpcContext() context.Context {
 
 func (m *DomainMetadataManager) GetContext() context.Context {
 	return m.MetadataManager.GetContext()
-}
-
-func isHeaderAccepted(key string) bool {
-	for _, acceptedHeader := range acceptedHeaders {
-		if acceptedHeader == key {
-			return true
-		}
-	}
-	return false
 }
