@@ -28,7 +28,7 @@ var (
 	testEnv     *TestEnv
 )
 
-func TestQueryHandler(t *testing.T) {
+func TestIntegrationHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "integration")
 }
