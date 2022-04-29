@@ -24,7 +24,6 @@ import (
 	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -74,11 +73,6 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			resultCtx, err := middleware.authWithGateway(newCtx, expectedMethodName, nil)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resultCtx).ToNot(BeNil())
-
-			tags := grpc_ctxtags.Extract(resultCtx)
-			Expect(tags).ToNot(BeNil())
-			Expect(tags.Has(auth.HeaderAuthId)).To(BeTrue())
-			Expect(tags.Values()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
 
 			m, err := domain_metadata.NewDomainMetadataManager(resultCtx)
 			Expect(err).ToNot(HaveOccurred())

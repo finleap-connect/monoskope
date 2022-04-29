@@ -20,11 +20,11 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -80,19 +80,13 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 	}
 
 	// Add tags from response to context
-	tags := grpc_ctxtags.Extract(ctx)
-	if tags == grpc_ctxtags.NoopTags {
-		tags = grpc_ctxtags.NewTags()
-	}
-
+	mm := eventsourcing.NewMetadataManagerFromContext(ctx)
 	for _, tag := range response.GetTags() {
-		tags.Set(tag.Key, tag.Value)
+		mm.Set(tag.Key, tag.Value)
 	}
-	newCtx := grpc_ctxtags.SetInContext(ctx, tags)
-
 	// Return new context with auth infos
-	m.log.V(logger.DebugLevel).Info("Authenticating successful!", "fullMethodName", fullMethodName, "req", req, "tags", tags)
-	return newCtx, nil
+	m.log.V(logger.DebugLevel).Info("Authenticating successful!", "fullMethodName", fullMethodName, "req", req, "metadata", mm.GetMetadata())
+	return mm.GetContext(), nil
 }
 
 // UnaryServerInterceptor returns a new unary server interceptors that performs per-request auth.
