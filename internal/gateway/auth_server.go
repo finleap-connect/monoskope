@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
@@ -54,7 +55,7 @@ type policyUser struct {
 type policyInput struct {
 	User           policyUser
 	Path           string
-	CommandType    string
+	Command        *commands.Command
 	Authentication policyAuthentication
 }
 

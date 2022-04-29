@@ -50,7 +50,7 @@ var serveCmd = &cobra.Command{
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
-		conn, commandHandlerClient, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
+		conn, commandHandlerClient, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr, "")
 		if err != nil {
 			return err
 		}

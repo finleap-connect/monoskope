@@ -29,8 +29,10 @@ import (
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	test_grpc "github.com/finleap-connect/monoskope/test/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 )
 
@@ -50,9 +52,15 @@ func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 	}
 }
 
-func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
-	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(commandHandlerAddr).
+func NewServiceClient(ctx context.Context, commandHandlerAddr, authToken string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
+	factory := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr)
+	if authToken != "" {
+		factory = factory.
+			WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken}))
+	}
+	conn, err := factory.
+		WithInsecure().
+		WithBlock().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err

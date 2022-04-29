@@ -16,15 +16,19 @@ package queryhandler
 
 import (
 	"context"
-	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"net"
 
+	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
+
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
+	gwApi "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain"
 	esMessaging "github.com/finleap-connect/monoskope/pkg/eventsourcing/messaging"
 	ggrpc "google.golang.org/grpc"
@@ -35,21 +39,25 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	apiListener       net.Listener
-	grpcServer        *grpc.Server
-	eventStoreTestEnv *eventstore.TestEnv
-	ebConsumer        es.EventBusConsumer
-	esConn            *ggrpc.ClientConn
-	esClient          esApi.EventStoreClient
+	apiListener        net.Listener
+	grpcServer         *grpc.Server
+	eventStoreTestEnv  *eventstore.TestEnv
+	gatewayTestEnv     *gateway.TestEnv
+	ebConsumer         es.EventBusConsumer
+	esConn             *ggrpc.ClientConn
+	esClient           esApi.EventStoreClient
+	gatewayServiceConn *ggrpc.ClientConn
+	gatewaySvcClient   gwApi.GatewayAuthClient
 }
 
-func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
+func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.TestEnv) (*TestEnv, error) {
 	var err error
 	ctx := context.Background()
 
 	env := &TestEnv{
 		TestEnv:           testeEnv,
 		eventStoreTestEnv: eventStoreTestEnv,
+		gatewayTestEnv:    gatewayTestEnv,
 	}
 
 	rabbitConf, err := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
@@ -67,16 +75,29 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		return nil, err
 	}
 
+	env.gatewayServiceConn, env.gatewaySvcClient, err = gateway.NewAuthServerClient(ctx, env.gatewayTestEnv.GetApiAddr())
+	if err != nil {
+		return nil, err
+	}
+
 	// Setup domain
 	qhDomain, err := domain.NewQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}
 
+	authMiddleware := auth.NewAuthMiddleware(env.gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
+
 	// Create server
-	grpcServer := grpc.NewServer("queryhandler_grpc", false)
-	env.grpcServer = grpcServer
-	grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
+	env.grpcServer = grpc.NewServerWithOpts("queryhandler_grpc-grpc", false,
+		[]ggrpc.UnaryServerInterceptor{
+			authMiddleware.UnaryServerInterceptor(),
+		}, []ggrpc.StreamServerInterceptor{
+			authMiddleware.StreamServerInterceptor(),
+		},
+	)
+
+	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
 		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
@@ -92,7 +113,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 
 	// Start server
 	go func() {
-		err := grpcServer.ServeFromListener(env.apiListener, nil)
+		err := env.grpcServer.ServeFromListener(env.apiListener, nil)
 		if err != nil {
 			panic(err)
 		}

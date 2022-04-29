@@ -16,15 +16,18 @@ package internal
 
 import (
 	"context"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/jwt"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	ch "github.com/finleap-connect/monoskope/internal/commandhandler"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
@@ -39,20 +42,29 @@ import (
 
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
-	adminEmail := "admin@monoskope.io"
 	userEmail := "jane.dou@monoskope.io"
+
+	expectedAdminUserId := uuid.New()
+	expectedAdminUserName := "admin"
+	expectedAdminUserEmail := "admin@monoskope.io"
+	expectedValidity := time.Hour * 1
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
 		Name:  "admin",
-		Email: adminEmail,
+		Email: expectedAdminUserEmail,
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
+		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: expectedAdminUserName, Email: expectedAdminUserEmail}, testEnv.gatewayTestEnv.GetApiAddr(), expectedAdminUserId.String(), expectedValidity)
+		authToken, err := signer.GenerateSignedToken(token)
+		Expect(err).ToNot(HaveOccurred())
+
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		_, chClient, err := ch.NewServiceClient(ctx, chAddr, authToken)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
@@ -134,7 +146,7 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting user actions", func() {
 			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(adminEmail),
+				Email: wrapperspb.String(expectedAdminUserEmail),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -149,7 +161,7 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.Issuer).To(Equal(adminEmail))
+				Expect(e.Issuer).To(Equal(expectedAdminUserEmail))
 			}
 		})
 
@@ -178,7 +190,7 @@ var _ = Describe("AuditLog Test", func() {
 			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
 			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
 			request := &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(adminEmail),
+				Email: wrapperspb.String(expectedAdminUserEmail),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),

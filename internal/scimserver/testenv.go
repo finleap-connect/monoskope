@@ -23,6 +23,7 @@ import (
 	"github.com/elimity-com/scim"
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 
@@ -38,6 +39,7 @@ type TestEnv struct {
 	eventStoreTestEnv     *eventstore.TestEnv
 	commandHandlerTestEnv *commandhandler.TestEnv
 	queryHandlerTestEnv   *queryhandler.TestEnv
+	gatewayTestEnv        *gateway.TestEnv
 	userServiceConn       *ggrpc.ClientConn
 	userSvcClient         domainApi.UserClient
 	commandHandlerConn    *ggrpc.ClientConn
@@ -55,17 +57,22 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 
 	os.Setenv("SUPER_USERS", "")
 
+	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
+	if err != nil {
+		return nil, err
+	}
+
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.queryHandlerTestEnv)
+	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +82,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewServiceClient(ctx, env.commandHandlerTestEnv.GetApiAddr())
+	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewServiceClient(ctx, env.commandHandlerTestEnv.GetApiAddr(), "")
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +124,10 @@ func (env *TestEnv) Shutdown() error {
 	}
 
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
+		return err
+	}
+
+	if err := env.gatewayTestEnv.Shutdown(); err != nil {
 		return err
 	}
 	return nil

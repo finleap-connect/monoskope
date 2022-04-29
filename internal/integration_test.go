@@ -22,6 +22,7 @@ import (
 
 	ch "github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	testReactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
@@ -39,6 +40,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -47,6 +49,11 @@ import (
 
 var _ = Describe("integration", func() {
 	ctx := context.Background()
+
+	expectedAdminUserId := uuid.New()
+	expectedAdminUserName := "admin"
+	expectedAdminUserEmail := "admin@monoskope.io"
+	expectedValidity := time.Hour * 1
 
 	expectedClusterDisplayName := "the one cluster"
 	expectedClusterName := "one-cluster"
@@ -59,14 +66,19 @@ var _ = Describe("integration", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Id:    uuid.New(),
-		Name:  "admin",
-		Email: "admin@monoskope.io",
+		Id:    expectedAdminUserId,
+		Name:  expectedAdminUserName,
+		Email: expectedAdminUserEmail,
 	})
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
+		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: expectedAdminUserName, Email: expectedAdminUserEmail}, testEnv.gatewayTestEnv.GetApiAddr(), expectedAdminUserId.String(), expectedValidity)
+		authToken, err := signer.GenerateSignedToken(token)
+		Expect(err).ToNot(HaveOccurred())
+
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		_, chClient, err := ch.NewServiceClient(ctx, chAddr, authToken)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}

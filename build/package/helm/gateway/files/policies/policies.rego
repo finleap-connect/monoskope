@@ -14,11 +14,24 @@ allowed_paths := [
 
 scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]
 
+command_path := "/eventsourcing.CommandHandler/Execute"
+
 # check if system admin
 is_system_admin {
 	some role in input.User.Roles
 	role.Scope == "system"
 	role.Name == "admin"
+}
+
+# check if user is tenant admin and adjusts rolebindings of other users of the tenant
+tenant_admin_create_rolebinding {
+	startswith(input.Path, command_path)
+	input.Command.Type == "CreateUserRoleBinding"
+	input.Command.Data.Scope == "tenant"
+	some role in input.User.Roles
+	role.Scope == "tenant"
+	role.Name == "admin"
+	role.Resource == input.Command.Data.Resource
 }
 
 # authorized because system admin

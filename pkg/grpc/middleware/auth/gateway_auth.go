@@ -72,6 +72,7 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
 		AccessToken:    token,
 		FullMethodName: fullMethodName,
+		Request:        nil,
 	})
 
 	if err != nil {

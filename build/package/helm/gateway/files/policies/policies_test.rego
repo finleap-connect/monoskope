@@ -2,7 +2,7 @@ package m8.authz
 
 alice_admin = {"User": {"Id": "1234", "Name": "alice", "Roles": [{"Name": "admin", "Scope": "system"}, {"Name": "admin", "Scope": "tenant", "Resource": "1234"}]}}
 
-bob_tenant_admin = {"User": {"Id": "12345", "Name": "bob", "Roles": [{"Name": "admin", "Scope": "tenant"}]}}
+bob_tenant_admin = {"User": {"Id": "12345", "Name": "bob", "Roles": [{"Name": "admin", "Scope": "tenant", "Resource": "1234"}]}}
 
 jane = {"User": {"Id": "123456", "Name": "jane"}, "Path": "/domain.CommandHandlerExtensions/"}
 

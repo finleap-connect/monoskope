@@ -19,6 +19,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -26,6 +27,7 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
+	gatewayTestEnv        *gateway.TestEnv
 	eventStoreTestEnv     *eventstore.TestEnv
 	queryHandlerTestEnv   *queryhandler.TestEnv
 	commandHandlerTestEnv *commandhandler.TestEnv
@@ -39,17 +41,22 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 
 	os.Setenv("SUPER_USERS", "admin@monoskope.io,other-admin@monoskope.io")
 
+	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
+	if err != nil {
+		return nil, err
+	}
+
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.queryHandlerTestEnv)
+	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +76,5 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
 		return err
 	}
-
 	return nil
 }
