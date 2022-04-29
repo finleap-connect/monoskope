@@ -23,6 +23,7 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -72,6 +73,14 @@ func NewDomainMetadataManager(ctx context.Context) (*DomainMetadataManager, erro
 				m.log.V(logger.DebugLevel).Info("grpc metadata from incoming context", "key", k, "value", v)
 				m.Set(k, v[0]) // typically only the first and only value of that is relevant
 			}
+		}
+	}
+
+	// Get the grpc metadata tags from incoming context
+	tags := grpc_ctxtags.Extract(ctx)
+	if tags != grpc_ctxtags.NoopTags {
+		for k, v := range tags.Values() {
+			m.Set(k, v.(string))
 		}
 	}
 
