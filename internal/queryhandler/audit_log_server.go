@@ -16,6 +16,10 @@ package queryhandler
 
 import (
 	"context"
+	"io"
+	"strings"
+	"time"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/audit"
@@ -25,9 +29,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"io"
-	"strings"
-	"time"
 
 	doApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
@@ -56,7 +57,7 @@ func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry event.EventFo
 // NewAuditLogClient returns a new configured instance of AuditLogClient along with the connection used
 func NewAuditLogClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, doApi.AuditLogClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
+		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

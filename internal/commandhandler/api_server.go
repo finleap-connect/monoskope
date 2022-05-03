@@ -52,6 +52,18 @@ func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 	}
 }
 
+func NewInsecureServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
+	conn, err := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr).
+		WithInsecure().
+		WithBlock().
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn, api.NewCommandHandlerClient(conn), nil
+}
+
 func NewServiceClient(ctx context.Context, commandHandlerAddr, authToken string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
 	factory := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr)
 	if authToken != "" {

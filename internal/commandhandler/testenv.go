@@ -58,7 +58,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.T
 		return nil, err
 	}
 
-	env.gatewayServiceConn, env.gatewaySvcClient, err = gateway.NewAuthServerClient(ctx, env.gatewayTestEnv.GetApiAddr())
+	env.gatewayServiceConn, env.gatewaySvcClient, err = gateway.NewInsecureAuthServerClient(ctx, env.gatewayTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}

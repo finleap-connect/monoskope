@@ -36,8 +36,8 @@ func NewGrpcConnectionFactory(url string) *GrpcConnectionFactory {
 	}
 }
 
-// NewGrpcConnectionFactoryWithDefaults creates a new factory for gRPC connections and adds the following dial options: WithInsecure, WithBlock.
-func NewGrpcConnectionFactoryWithDefaults(url string) *GrpcConnectionFactory {
+// NewGrpcConnectionFactoryWithInsecure creates a new factory for gRPC connections and adds the following dial options: WithInsecure, WithBlock.
+func NewGrpcConnectionFactoryWithInsecure(url string) *GrpcConnectionFactory {
 	return NewGrpcConnectionFactory(url).
 		WithInsecure().
 		WithBlock()

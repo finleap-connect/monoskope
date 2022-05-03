@@ -84,14 +84,13 @@ func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.Check
 	return c.authServer.Check(ctx, req)
 }
 
-func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
+func NewInsecureAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(gatewayAddr).
+		NewGrpcConnectionFactoryWithInsecure(gatewayAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return conn, gateway.NewGatewayAuthClient(conn), nil
 }
 

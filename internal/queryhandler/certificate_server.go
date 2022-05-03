@@ -42,7 +42,7 @@ func NewCertificateServer(certificateRepo repositories.ReadOnlyCertificateReposi
 
 func NewCertificateClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.CertificateClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
+		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

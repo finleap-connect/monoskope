@@ -60,7 +60,7 @@ func NewEventStore() (eventsourcing.EventStore, error) {
 
 func NewEventStoreClient(ctx context.Context, eventStoreAddr string) (*grpc.ClientConn, esApi.EventStoreClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(eventStoreAddr).
+		NewGrpcConnectionFactoryWithInsecure(eventStoreAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err

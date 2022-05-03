@@ -80,7 +80,7 @@ var serverCmd = &cobra.Command{
 		// Create gRPC server and register implementation
 		// Create Gateway Auth client
 		log.Info("Connecting gateway...", "gatewayAddr", gatewayAddr)
-		conn, gatewaySvcClient, err := gateway.NewAuthServerClient(ctx, gatewayAddr)
+		conn, gatewaySvcClient, err := gateway.NewInsecureAuthServerClient(ctx, gatewayAddr)
 		if err != nil {
 			return err
 		}

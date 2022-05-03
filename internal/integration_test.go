@@ -38,7 +38,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -50,9 +49,6 @@ import (
 var _ = Describe("integration", func() {
 	ctx := context.Background()
 
-	expectedAdminUserId := uuid.New()
-	expectedAdminUserName := "admin"
-	expectedAdminUserEmail := "admin@monoskope.io"
 	expectedValidity := time.Hour * 1
 
 	expectedClusterDisplayName := "the one cluster"
@@ -62,18 +58,9 @@ var _ = Describe("integration", func() {
 
 	expectedTenantName := "tenantx"
 
-	mdManager, err := metadata.NewDomainMetadataManager(ctx)
-	Expect(err).ToNot(HaveOccurred())
-
-	mdManager.SetUserInformation(&metadata.UserInformation{
-		Id:    expectedAdminUserId,
-		Name:  expectedAdminUserName,
-		Email: expectedAdminUserEmail,
-	})
-
 	commandHandlerClient := func() esApi.CommandHandlerClient {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: expectedAdminUserName, Email: expectedAdminUserEmail}, testEnv.gatewayTestEnv.GetApiAddr(), expectedAdminUserId.String(), expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), expectedValidity)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -119,6 +106,7 @@ var _ = Describe("integration", func() {
 	}
 
 	Context("user management", func() {
+
 		It("can manage a user", func() {
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
@@ -129,7 +117,7 @@ var _ = Describe("integration", func() {
 			// handel admin user propagation
 			var reply *esApi.CommandReply
 			Eventually(func(g Gomega) {
-				reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+				reply, err = commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 			}).Should(Succeed())
@@ -152,7 +140,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			// update userRolebBindingId, as the "create" command will have changed it.
@@ -164,7 +152,7 @@ var _ = Describe("integration", func() {
 			// Creating the same rolebinding again should fail
 			Eventually(func(g Gomega) {
 				command.Id = uuid.New().String()
-				_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+				_, err = commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).To(HaveOccurred())
 			}).Should(Succeed())
 
@@ -174,7 +162,7 @@ var _ = Describe("integration", func() {
 			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
 			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -190,7 +178,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 		})
@@ -201,7 +189,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).To(HaveOccurred())
 			Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 		})
@@ -212,14 +200,14 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), createCommand)
+			reply, err := commandHandlerClient().Execute(ctx, createCommand)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
 			// update userId, as the "create" command will have changed it.
 			userId := uuid.MustParse(reply.AggregateId)
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
+			_, err = commandHandlerClient().Execute(ctx,
 				cmd.CreateCommand(userId, commandTypes.DeleteUser))
 			Expect(err).ToNot(HaveOccurred())
 
@@ -243,7 +231,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
 
@@ -266,7 +254,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -275,7 +263,7 @@ var _ = Describe("integration", func() {
 				g.Expect(tenant).ToNot(BeNil())
 			}).Should(Succeed())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -292,7 +280,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 			Expect(int(reply.Version)).To(BeNumerically("==", 1))
@@ -314,7 +302,7 @@ var _ = Describe("integration", func() {
 			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
@@ -395,7 +383,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			certRequestCmdReply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			certRequestCmdReply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			var observed []es.Event
@@ -407,7 +395,7 @@ var _ = Describe("integration", func() {
 			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
 			err = testReactor.Emit(ctx, es.NewEvent(
-				mdManager.GetOutgoingGrpcContext(),
+				ctx,
 				events.CertificateIssued,
 				es.ToEventDataFromProto(&eventdata.CertificateIssued{
 					Certificate: &common.CertificateChain{
