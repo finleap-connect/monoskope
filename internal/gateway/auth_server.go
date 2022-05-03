@@ -21,14 +21,15 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -52,11 +53,16 @@ type policyUser struct {
 	Roles []policyRoles
 }
 
+type policyInputCommandTypes struct {
+	UserRoleBindingTypes []string
+}
+
 type policyInput struct {
 	User           policyUser
 	Path           string
-	Command        *commands.Command
+	Request        string
 	Authentication policyAuthentication
+	CommandTypes   policyInputCommandTypes
 }
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
@@ -89,6 +95,11 @@ func NewAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientC
 	return conn, gateway.NewGatewayAuthClient(conn), nil
 }
 
+func (s *authServer) Print(_ print.Context, msg string) error {
+	s.log.V(logger.DebugLevel).Info(msg)
+	return nil
+}
+
 // NewAuthServer creates a new instance of gateway.authServer.
 func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, policiesPath string, roleBindingRepo repositories.UserRoleBindingRepository) (*authServer, error) {
 	s := &authServer{
@@ -101,6 +112,8 @@ func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Serve
 	query, err := rego.New(
 		rego.Query("data.m8.authz.authorized"),
 		rego.Load([]string{policiesPath}, nil),
+		rego.EnablePrintStatements(true),
+		rego.PrintHook(s),
 	).PrepareForEval(ctx)
 	if err != nil {
 		return nil, err
@@ -173,7 +186,7 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
 	userId, err := uuid.Parse(authToken.Subject)
 	if err != nil {
-		return false, fmt.Errorf("Failed to parse user id from token: %w", err)
+		return false, fmt.Errorf("failed to parse user id from token: %w", err)
 	}
 
 	input := policyInput{
@@ -185,11 +198,18 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 		Authentication: policyAuthentication{
 			Scopes: make([]string, 0),
 		},
+		Request: string(req.Request),
+		CommandTypes: policyInputCommandTypes{
+			UserRoleBindingTypes: []string{
+				commands.CreateUserRoleBinding.String(),
+				commands.DeleteUserRoleBinding.String(),
+			},
+		},
 	}
 
 	roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
 	if err != nil {
-		return false, fmt.Errorf("Failed get rolebindings for user: %w", err)
+		return false, fmt.Errorf("failed get rolebindings for user: %w", err)
 	}
 
 	input.User.Roles = make([]policyRoles, 0)
@@ -206,14 +226,14 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 
 	results, err := s.preparedQuery.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
-		s.log.Error(err, "Policy evaluation failed.", "email", authToken.Email)
+		s.log.Error(err, "policy evaluation failed.", "email", authToken.Email)
 		return false, err
 	}
 	if !results.Allowed() {
-		s.log.Info("Policy evaluation failed.", "email", authToken.Email, "results", results)
+		s.log.Info("policy evaluation failed.", "email", authToken.Email, "results", results)
 		return false, nil
 	}
-	s.log.Info("Policy evaluation succeeded.", "email", authToken.Email, "results", results)
+	s.log.Info("policy evaluation succeeded.", "email", authToken.Email, "results", results)
 	return results.Allowed(), nil
 }
 

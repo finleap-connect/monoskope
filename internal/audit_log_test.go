@@ -53,6 +53,7 @@ var _ = Describe("AuditLog Test", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	mdManager.SetUserInformation(&metadata.UserInformation{
+		Id:    expectedAdminUserId,
 		Name:  "admin",
 		Email: expectedAdminUserEmail,
 	})

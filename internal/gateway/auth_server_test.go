@@ -19,52 +19,92 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
+	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	jose_jwt "gopkg.in/square/go-jose.v2/jwt"
 )
 
 var _ = Describe("Gateway Auth Server", func() {
 	var (
-		ctx = context.Background()
+		ctx              = context.Background()
+		expectedUserId   = uuid.New()
+		expectedRole     = roles.User.String()
+		exptectedScope   = scopes.Tenant.String()
+		expectedResource = "1234"
 	)
 
 	getTokenForUser := func(user *projections.User) string {
 		expectedValidity := time.Hour * 1
 		token := auth.NewAuthToken(&jwt.StandardClaims{Name: user.Name, Email: user.Email}, localAddrAPIServer, user.Id, expectedValidity)
-		signer := env.JwtTestEnv.CreateSigner()
+		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
 		return signedToken
 	}
 
-	getAdminToken := func() string {
-		return getTokenForUser(env.AdminUser)
-	}
+	getCreateUserRoleBindingCmd := func() *anypb.Any {
+		command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding)
+		_, err := cmd.AddCommandData(command,
+			&cmdData.CreateUserRoleBindingCommandData{
+				UserId:   expectedUserId.String(),
+				Role:     expectedRole,
+				Scope:    exptectedScope,
+				Resource: wrapperspb.String(expectedResource),
+			},
+		)
+		Expect(err).ToNot(HaveOccurred())
 
-	getNormalUserToken := func() string {
-		return getTokenForUser(env.ExistingUser)
+		a := &anypb.Any{}
+		err = a.MarshalFrom(command)
+		Expect(err).ToNot(HaveOccurred())
+		return a
 	}
-
 	It("admin can auth with JWT", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
 
-		nicemd := metautils.
-			ExtractIncoming(ctx).
-			Set("command_type", "CreateUser")
+		bytes, err := protojson.Marshal(getCreateUserRoleBindingCmd())
+		Expect(err).ToNot(HaveOccurred())
 
-		resp, err := authClient.Check(nicemd.ToOutgoing(ctx), &gateway.CheckRequest{
+		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/",
-			AccessToken:    getAdminToken(),
+			AccessToken:    getTokenForUser(testEnv.AdminUser),
+			Request:        bytes,
+		})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp).ToNot(BeNil())
+		Expect(resp.Tags).ToNot(BeNil())
+	})
+
+	It("can authorize with JWT as tenant admin", func() {
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
+		Expect(err).ToNot(HaveOccurred())
+		defer conn.Close()
+		authClient := gateway.NewGatewayAuthClient(conn)
+
+		bytes, err := protojson.Marshal(getCreateUserRoleBindingCmd())
+		Expect(err).ToNot(HaveOccurred())
+
+		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
+			FullMethodName: "/eventsourcing.CommandHandler/Execute",
+			AccessToken:    getTokenForUser(testEnv.TenantAdminUser),
+			Request:        bytes,
 		})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp).ToNot(BeNil())
@@ -72,14 +112,14 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 
 	It("regular user can't authenticate with JWT for commandhandler", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
-			FullMethodName: "/eventsourcing.CommandHandler/",
-			AccessToken:    getNormalUserToken(),
+			FullMethodName: "/eventsourcing.CommandHandler/Execute",
+			AccessToken:    getTokenForUser(testEnv.ExistingUser),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(resp).To(BeNil())
@@ -90,13 +130,13 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 
 	It("fails authentication with invalid JWT", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
-			FullMethodName: "/something/",
+			FullMethodName: "/gateway.Gateway/",
 			AccessToken:    "invalidjwt",
 		})
 		Expect(err).To(HaveOccurred())
@@ -109,20 +149,20 @@ var _ = Describe("Gateway Auth Server", func() {
 
 	It("fails authentication with expired JWT", func() {
 		expectedValidity := -30 * time.Minute
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id, expectedValidity)
 		token.NotBefore = jose_jwt.NewNumericDate(time.Now().UTC().Add(-1 * time.Hour))
 
-		signer := env.JwtTestEnv.CreateSigner()
+		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
 
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
-			FullMethodName: "/something/",
+			FullMethodName: "/gateway.Gateway/",
 			AccessToken:    signedToken,
 		})
 		Expect(err).To(HaveOccurred())
@@ -133,12 +173,12 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(status.Code()).To(Equal(codes.Unauthenticated))
 	})
 	It("can not authenticate with JWT for wrong scope", func() {
-		token := auth.NewClusterBootstrapToken(&jwt.StandardClaims{Name: env.ExistingUser.Name, Email: env.ExistingUser.Email}, localAddrAPIServer, env.ExistingUser.Id)
-		signer := env.JwtTestEnv.CreateSigner()
+		token := auth.NewClusterBootstrapToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id)
+		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
 
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)
@@ -156,14 +196,14 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can authenticate with JWT for correct scope", func() {
 		expectedValidity := time.Hour * 1
-		token := auth.NewApiToken(&jwt.StandardClaims{Name: env.NotExistingUser.Name}, localAddrAPIServer, env.NotExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
+		token := auth.NewApiToken(&jwt.StandardClaims{Name: testEnv.NotExistingUser.Name}, localAddrAPIServer, testEnv.NotExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
 			gateway.AuthorizationScope_WRITE_SCIM,
 		})
-		signer := env.JwtTestEnv.CreateSigner()
+		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
 
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		authClient := gateway.NewGatewayAuthClient(conn)

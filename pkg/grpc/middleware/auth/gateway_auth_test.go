@@ -19,7 +19,12 @@ import (
 	"fmt"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	domain_metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
 	"github.com/golang/mock/gomock"
@@ -28,6 +33,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("Gateway Auth Middleware", func() {
@@ -55,12 +62,30 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
 			expectedUserId := uuid.New()
+			expectedRole := roles.Admin.String()
+			exptectedScope := scopes.Tenant.String()
+			expectedResource := uuid.New()
+
+			command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding)
+			_, err := cmd.AddCommandData(command,
+				&cmdData.CreateUserRoleBindingCommandData{
+					UserId:   expectedUserId.String(),
+					Role:     expectedRole,
+					Scope:    exptectedScope,
+					Resource: wrapperspb.String(expectedResource.String()),
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			bytes, err := protojson.Marshal(command)
+			Expect(err).ToNot(HaveOccurred())
 
 			middleware := NewAuthMiddleware(authClient, nil).(*authMiddleware)
 
 			authClient.EXPECT().Check(newCtx, &api.CheckRequest{
 				FullMethodName: expectedMethodName,
 				AccessToken:    expectedToken,
+				Request:        bytes,
 			}, gomock.Any()).Return(&api.CheckResponse{
 				Tags: []*api.CheckResponse_CheckResponseTag{
 					{
@@ -70,7 +95,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 				},
 			}, nil)
 
-			resultCtx, err := middleware.authWithGateway(newCtx, expectedMethodName, nil)
+			resultCtx, err := middleware.authWithGateway(newCtx, expectedMethodName, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resultCtx).ToNot(BeNil())
 

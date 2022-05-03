@@ -118,7 +118,7 @@ message CheckRequest {
   // AccessToken is the token from the auth header of the client request
   string access_token = 2 [ (validate.rules).string = {min_len : 1} ];
   // The actual request to authorize
-  google.protobuf.Any request = 3;
+  bytes request = 3;
 }
 
 // Intended for gRPC and Network Authorization servers `only`.

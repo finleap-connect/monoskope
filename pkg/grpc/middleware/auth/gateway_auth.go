@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type authMiddleware struct {
@@ -69,11 +71,23 @@ func (m *authMiddleware) authWithGateway(ctx context.Context, fullMethodName str
 		return nil, err
 	}
 
-	response, err := m.gatewayClient.Check(ctx, &api.CheckRequest{
+	checkRequest := &api.CheckRequest{
 		AccessToken:    token,
 		FullMethodName: fullMethodName,
 		Request:        nil,
-	})
+	}
+
+	// unpack proto message for validation
+	if pm, ok := req.(proto.Message); ok {
+		bytes, err := protojson.Marshal(pm)
+		if err != nil {
+			m.log.V(logger.DebugLevel).Error(err, "gateway auth failed", "fullMethodName", fullMethodName, "req", req)
+			return nil, err
+		}
+		checkRequest.Request = bytes
+	}
+
+	response, err := m.gatewayClient.Check(ctx, checkRequest)
 
 	if err != nil {
 		m.log.V(logger.DebugLevel).Error(err, "gateway auth failed", "fullMethodName", fullMethodName, "req", req)

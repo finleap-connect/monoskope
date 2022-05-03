@@ -61,6 +61,7 @@ type TestEnv struct {
 	LocalOIDCProviderServer       *oidcProviderServer
 	ClusterRepo                   repositories.ClusterRepository
 	AdminUser                     *projections.User
+	TenantAdminUser               *projections.User
 	ExistingUser                  *projections.User
 	NotExistingUser               *projections.User
 	PoliciesPath                  string
@@ -161,9 +162,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	adminUser.Name = "admin"
 	adminUser.Email = "admin@monoskope.io"
 
-	env.AdminUser = adminUser
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-	adminRoleBinding.UserId = env.AdminUser.Id
+	adminRoleBinding.UserId = adminUser.Id
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
@@ -175,21 +175,42 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	notExistingUser.Name = "nobody"
 	notExistingUser.Email = "nobody@monoskope.io"
 
+	tenantAdminUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+	tenantAdminUser.Name = "tenant-admin"
+	tenantAdminUser.Email = "tenant-admin@monoskope.io"
+
+	tenantAdminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	tenantAdminRoleBinding.UserId = tenantAdminUser.Id
+	tenantAdminRoleBinding.Role = roles.Admin.String()
+	tenantAdminRoleBinding.Scope = scopes.Tenant.String()
+	tenantAdminRoleBinding.Resource = "1234"
+
+	env.AdminUser = adminUser
+	env.TenantAdminUser = tenantAdminUser
 	env.ExistingUser = existingUser
 	env.NotExistingUser = notExistingUser
 
 	inMemoryUserRepo := es_repos.NewInMemoryRepository()
 	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
-	if err := inMemoryUserRepo.Upsert(context.Background(), env.AdminUser); err != nil {
+	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
 		return nil, err
 	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), env.ExistingUser); err != nil {
+	if err := inMemoryUserRepo.Upsert(context.Background(), tenantAdminUser); err != nil {
+		return nil, err
+	}
+	if err := inMemoryUserRepo.Upsert(context.Background(), existingUser); err != nil {
 		return nil, err
 	}
 	if err := inMemoryUserRoleBindingRepo.Upsert(context.Background(), adminRoleBinding); err != nil {
 		return nil, err
 	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), env.AdminUser); err != nil {
+	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
+		return nil, err
+	}
+	if err := inMemoryUserRoleBindingRepo.Upsert(context.Background(), tenantAdminRoleBinding); err != nil {
+		return nil, err
+	}
+	if err := inMemoryUserRepo.Upsert(context.Background(), tenantAdminUser); err != nil {
 		return nil, err
 	}
 

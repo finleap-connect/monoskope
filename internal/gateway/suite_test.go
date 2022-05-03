@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	env *TestEnv
+	testEnv *TestEnv
 )
 
 func TestGateway(t *testing.T) {
@@ -43,7 +43,7 @@ var _ = BeforeSuite(func() {
 		By("bootstrapping test env")
 		baseTestEnv := test.NewTestEnv("queryhandler-testenv")
 
-		env, err = NewTestEnvWithParent(baseTestEnv)
+		testEnv, err = NewTestEnvWithParent(baseTestEnv)
 		Expect(err).ToNot(HaveOccurred())
 		close(done)
 	}()
@@ -54,12 +54,12 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	var err error
 	By("tearing down the test environment")
-	err = env.Shutdown()
+	err = testEnv.Shutdown()
 	Expect(err).To(BeNil())
 
-	env.GrpcServer.Shutdown()
-	env.LocalOIDCProviderServer.Shutdown()
+	testEnv.GrpcServer.Shutdown()
+	testEnv.LocalOIDCProviderServer.Shutdown()
 
-	defer env.ApiListenerAPIServer.Close()
-	defer env.ApiListenerOIDCProviderServer.Close()
+	defer testEnv.ApiListenerAPIServer.Close()
+	defer testEnv.ApiListenerOIDCProviderServer.Close()
 })

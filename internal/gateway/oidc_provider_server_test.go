@@ -25,7 +25,7 @@ import (
 
 var _ = Describe("Gateway Auth Server", func() {
 	It("can retrieve openid conf", func() {
-		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/.well-known/openid-configuration", localAddrOIDCProviderServer))
+		res, err := testEnv.HttpClient.Get(fmt.Sprintf("http://%s/.well-known/openid-configuration", localAddrOIDCProviderServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 
@@ -35,7 +35,7 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(docText).NotTo(BeEmpty())
 	})
 	It("can retrieve jwks", func() {
-		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/keys", localAddrOIDCProviderServer))
+		res, err := testEnv.HttpClient.Get(fmt.Sprintf("http://%s/keys", localAddrOIDCProviderServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 
@@ -47,7 +47,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 var _ = Describe("Checks", func() {
 	It("can do readiness checks", func() {
-		res, err := env.HttpClient.Get(fmt.Sprintf("http://%s/readyz", localAddrOIDCProviderServer))
+		res, err := testEnv.HttpClient.Get(fmt.Sprintf("http://%s/readyz", localAddrOIDCProviderServer))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 	})

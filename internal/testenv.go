@@ -76,5 +76,9 @@ func (env *TestEnv) Shutdown() error {
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
 		return err
 	}
+
+	if err := env.gatewayTestEnv.Shutdown(); err != nil {
+		return err
+	}
 	return nil
 }

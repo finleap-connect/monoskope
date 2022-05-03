@@ -34,19 +34,19 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 
-		clusters, err := env.ClusterRepo.GetAll(ctx, false)
+		clusters, err := testEnv.ClusterRepo.GetAll(ctx, false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(clusters)).To(BeNumerically(">=", 1))
 		defer conn.Close()
 		apiClient := api.NewClusterAuthClient(conn)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        uuid.MustParse(env.AdminUser.GetId()),
-			Name:      env.AdminUser.Name,
-			Email:     env.AdminUser.Email,
+			Id:        uuid.MustParse(testEnv.AdminUser.GetId()),
+			Name:      testEnv.AdminUser.Name,
+			Email:     testEnv.AdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
