@@ -52,11 +52,13 @@ func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 	}
 }
 
-func NewInsecureServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
+func NewCommandHandlerClientWithAuthForward(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
 	conn, err := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr).
 		WithInsecure().
+		WithPerRPCCredentials(grpcUtil.NewForwardedOauthAccess(false)).
 		WithBlock().
 		ConnectWithTimeout(ctx, 10*time.Second)
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,13 +66,9 @@ func NewInsecureServiceClient(ctx context.Context, commandHandlerAddr string) (*
 	return conn, api.NewCommandHandlerClient(conn), nil
 }
 
-func NewServiceClient(ctx context.Context, commandHandlerAddr, authToken string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
-	factory := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr)
-	if authToken != "" {
-		factory = factory.
-			WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken}))
-	}
-	conn, err := factory.
+func NewCommandHandlerClient(ctx context.Context, commandHandlerAddr, authToken string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
+	conn, err := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr).
+		WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
 		WithInsecure().
 		WithBlock().
 		ConnectWithTimeout(ctx, 10*time.Second)

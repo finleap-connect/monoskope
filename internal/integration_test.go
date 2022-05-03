@@ -65,7 +65,7 @@ var _ = Describe("integration", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr, authToken)
+		_, chClient, err := ch.NewCommandHandlerClient(ctx, chAddr, authToken)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}

@@ -32,7 +32,8 @@ type GrpcConnectionFactory struct {
 // NewGrpcConnectionFactory creates a new factory for gRPC connections.
 func NewGrpcConnectionFactory(url string) *GrpcConnectionFactory {
 	return &GrpcConnectionFactory{
-		url: url,
+		url:  url,
+		opts: make([]grpc.DialOption, 0),
 	}
 }
 
@@ -45,46 +46,30 @@ func NewGrpcConnectionFactoryWithInsecure(url string) *GrpcConnectionFactory {
 
 // WithInsecure adds a DialOption which disables transport security for this connection. Note that transport security is required unless WithInsecure is set.
 func (factory *GrpcConnectionFactory) WithInsecure() *GrpcConnectionFactory {
-	if factory.opts == nil {
-		factory.opts = make([]grpc.DialOption, 0)
-	}
 	factory.opts = append(factory.opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	return factory
 }
 
 // WithOSCaTransportCredentials adds a DialOption which configures a connection level security credentials (e.g., TLS/SSL) using the CAs known to the OS.
 func (factory *GrpcConnectionFactory) WithOSCaTransportCredentials() *GrpcConnectionFactory {
-	if factory.opts == nil {
-		factory.opts = make([]grpc.DialOption, 0)
-	}
 	factory.opts = append(factory.opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 	return factory
 }
 
 // WithPerRPCCredentials adds a DialOption which sets credentials and places auth state on each outbound RPC.
 func (factory *GrpcConnectionFactory) WithPerRPCCredentials(creds credentials.PerRPCCredentials) *GrpcConnectionFactory {
-	if factory.opts == nil {
-		factory.opts = make([]grpc.DialOption, 0)
-	}
 	factory.opts = append(factory.opts, grpc.WithPerRPCCredentials(creds))
 	return factory
 }
 
 // WithBlock adds a DialOption which makes caller of Dial blocks until the underlying connection is up. Without this, Dial returns immediately and connecting the server happens in background.
 func (factory *GrpcConnectionFactory) WithBlock() *GrpcConnectionFactory {
-	if factory.opts == nil {
-		factory.opts = make([]grpc.DialOption, 0)
-	}
 	factory.opts = append(factory.opts, grpc.WithBlock())
 	return factory
 }
 
 // WithRetry adds retrying with exponential backoff using the default retryable codes from grpc_retry.DefaultRetriableCodes.
 func (factory *GrpcConnectionFactory) WithRetry() *GrpcConnectionFactory {
-	if factory.opts == nil {
-		factory.opts = make([]grpc.DialOption, 0)
-	}
-
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(10 * time.Millisecond)),
 		grpc_retry.WithCodes(grpc_retry.DefaultRetriableCodes...),

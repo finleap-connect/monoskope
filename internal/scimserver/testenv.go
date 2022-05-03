@@ -82,7 +82,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewServiceClient(ctx, env.commandHandlerTestEnv.GetApiAddr(), "")
+	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewCommandHandlerClientWithAuthForward(ctx, env.commandHandlerTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
