@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import (
 	"net/http"
 	"time"
 
-	ch "github.com/finleap-connect/monoskope/internal/commandhandler"
-	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	testReactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
@@ -39,6 +36,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -49,8 +47,6 @@ import (
 var _ = Describe("integration", func() {
 	ctx := context.Background()
 
-	expectedValidity := time.Hour * 1
-
 	expectedClusterDisplayName := "the one cluster"
 	expectedClusterName := "one-cluster"
 	expectedClusterApiServerAddress := "one.example.com"
@@ -58,49 +54,46 @@ var _ = Describe("integration", func() {
 
 	expectedTenantName := "tenantx"
 
-	commandHandlerClient := func() esApi.CommandHandlerClient {
+	getAdminAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
+		return authToken
+	}
 
-		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewCommandHandlerClient(ctx, chAddr, authToken)
+	commandHandlerClient := func() esApi.CommandHandlerClient {
+		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.commandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	userServiceClient := func() domainApi.UserClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewUserClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	tenantServiceClient := func() domainApi.TenantClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewTenantClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterServiceClient := func() domainApi.ClusterClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewClusterClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	certificateServiceClient := func() domainApi.CertificateClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewCertificateClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewCertificateClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	eventStoreClient := func() esApi.EventStoreClient {
-		addr := testEnv.eventStoreTestEnv.GetApiAddr()
-		_, client, err := eventstore.NewEventStoreClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}

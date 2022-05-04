@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 			Endpoint:    "/Users",
 			Description: optional.NewString("User Account"),
 			Schema:      m8scim.MonoskopeUserSchema(),
-			Handler:     userHandler,
+			Handler:     NewAuthHandler(userHandler),
 		},
 		{
 			ID:          optional.NewString("Group"),
@@ -41,7 +41,7 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 			Endpoint:    "/Groups",
 			Description: optional.NewString("User Groups"),
 			Schema:      schema.CoreGroupSchema(),
-			Handler:     groupHandler,
+			Handler:     NewAuthHandler(groupHandler),
 		},
 	}
 	return scim.Server{
@@ -55,5 +55,5 @@ func logDebug(log logger.Logger, r *http.Request) {
 	if r.Body != nil {
 		body, _ = ioutil.ReadAll(r.Body)
 	}
-	log.V(logger.DebugLevel).Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body))
+	log.V(logger.DebugLevel).Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body), "Header", r.Header)
 }

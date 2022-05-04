@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,13 @@ package queryhandler
 
 import (
 	"context"
-	"time"
 
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
-	"google.golang.org/grpc"
 )
 
 // UserServer is the implementation of the TenantService API
@@ -40,17 +37,6 @@ func NewUserServer(userRepo repositories.ReadOnlyUserRepository) *UserServer {
 	return &UserServer{
 		repo: userRepo,
 	}
-}
-
-func NewUserClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.UserClient, error) {
-	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
-		ConnectWithTimeout(ctx, 10*time.Second)
-	if err != nil {
-		return nil, nil, errors.TranslateToGrpcError(err)
-	}
-
-	return conn, api.NewUserClient(conn), nil
 }
 
 // GetById returns the user found by the given id.

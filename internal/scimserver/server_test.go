@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,17 @@ package scimserver
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 
 	"github.com/cenkalti/backoff"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,8 +36,22 @@ import (
 var _ = Describe("internal/scimserver/Server", func() {
 	var userId uuid.UUID
 
+	getAdminAuthToken := func() string {
+		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
+		authToken, err := signer.GenerateSignedToken(token)
+		Expect(err).ToNot(HaveOccurred())
+		return authToken
+	}
+
+	getRequest := func(method string, target string, body io.Reader) *http.Request {
+		req := httptest.NewRequest(method, target, body)
+		req.Header.Add("authorization", getAdminAuthToken())
+		return req
+	}
+
 	getUsers := func() {
-		req := httptest.NewRequest(http.MethodGet, "/Users", nil)
+		req := getRequest(http.MethodGet, "/Users", nil)
 		rr := httptest.NewRecorder()
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
@@ -44,7 +62,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 	}
 
 	createUser := func() {
-		req := httptest.NewRequest(
+		req := getRequest(
 			http.MethodPost,
 			"/Users",
 			strings.NewReader(`{"userName":"some.user@monoskope.io","schemas":["urn:scim:schemas:core:2.0"],"displayName":"Some User"}`),
@@ -69,7 +87,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 	getSpecificUser := func() {
 		rr := httptest.NewRecorder()
 		err := backoff.Retry(func() error {
-			req := httptest.NewRequest(http.MethodGet, `/Users?filter=userName%20eq%20"some.user@monoskope.io"`, nil)
+			req := getRequest(http.MethodGet, `/Users?filter=userName%20eq%20"some.user@monoskope.io"`, nil)
 			testEnv.scimServer.ServeHTTP(rr, req)
 			if rr.Code != http.StatusOK {
 				return fmt.Errorf("wrong status code: %v", rr.Code)
@@ -87,7 +105,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		var rr *httptest.ResponseRecorder
 		err := backoff.Retry(func() error {
 			rr = httptest.NewRecorder()
-			req := httptest.NewRequest(
+			req := getRequest(
 				http.MethodPut, "/Users/"+userId.String(), strings.NewReader(`{"userName":"some.user@monoskope.io","schemas":["urn:scim:schemas:core:2.0"],"displayName":"Some User"}`),
 			)
 			testEnv.scimServer.ServeHTTP(rr, req)
@@ -101,7 +119,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 	}
 
 	deleteUser := func() {
-		req := httptest.NewRequest(http.MethodDelete, "/Users/"+userId.String(), nil)
+		req := getRequest(http.MethodDelete, "/Users/"+userId.String(), nil)
 		rr := httptest.NewRecorder()
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusNoContent))
@@ -125,7 +143,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 	})
 
 	getGroups := func() {
-		req := httptest.NewRequest(http.MethodGet, "/Groups", nil)
+		req := getRequest(http.MethodGet, "/Groups", nil)
 		rr := httptest.NewRecorder()
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
@@ -136,7 +154,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 	}
 
 	patchGroup := func() {
-		req := httptest.NewRequest(http.MethodPatch, "/Groups/"+roles.IdFromRole(roles.Admin).String(), strings.NewReader(fmt.Sprintf(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"value":[{"value":"%s"}],"op":"add","path":"members"}]}"`, userId.String())))
+		req := getRequest(http.MethodPatch, "/Groups/"+roles.IdFromRole(roles.Admin).String(), strings.NewReader(fmt.Sprintf(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"value":[{"value":"%s"}],"op":"add","path":"members"}]}"`, userId.String())))
 		rr := httptest.NewRecorder()
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))

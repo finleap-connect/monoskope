@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import (
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	commandHandlerApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	ggrpc "google.golang.org/grpc"
@@ -77,12 +79,12 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.userServiceConn, env.userSvcClient, err = queryhandler.NewUserClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	env.userServiceConn, env.userSvcClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.queryHandlerTestEnv.GetApiAddr(), false, domainApi.NewUserClient)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewCommandHandlerClientWithAuthForward(ctx, env.commandHandlerTestEnv.GetApiAddr())
+	env.commandHandlerConn, env.commandHandlerClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.commandHandlerTestEnv.GetApiAddr(), false, commandHandlerApi.NewCommandHandlerClient)
 	if err != nil {
 		return nil, err
 	}

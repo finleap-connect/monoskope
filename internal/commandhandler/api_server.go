@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package commandhandler
 import (
 	"context"
 	"fmt"
-	"time"
 
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -27,13 +26,9 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	test_grpc "github.com/finleap-connect/monoskope/test/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
-	"golang.org/x/oauth2"
-	"google.golang.org/grpc"
 )
 
 // apiServer is the implementation of the CommandHandler API
@@ -50,33 +45,6 @@ func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 		cmdRegistry: cmdRegistry,
 		log:         logger.WithName("commandhandler-api-server"),
 	}
-}
-
-func NewCommandHandlerClientWithAuthForward(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
-	conn, err := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr).
-		WithInsecure().
-		WithPerRPCCredentials(grpcUtil.NewForwardedOauthAccess(false)).
-		WithBlock().
-		ConnectWithTimeout(ctx, 10*time.Second)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, api.NewCommandHandlerClient(conn), nil
-}
-
-func NewCommandHandlerClient(ctx context.Context, commandHandlerAddr, authToken string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
-	conn, err := grpcUtil.NewGrpcConnectionFactory(commandHandlerAddr).
-		WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
-		WithInsecure().
-		WithBlock().
-		ConnectWithTimeout(ctx, 10*time.Second)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, api.NewCommandHandlerClient(conn), nil
 }
 
 // Execute implements the API method Execute

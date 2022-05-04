@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	test_grpc "github.com/finleap-connect/monoskope/test/grpc"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -98,4 +101,47 @@ func (factory *GrpcConnectionFactory) ConnectWithTimeout(ctx context.Context, ti
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return factory.Connect(ctx)
+}
+
+// NewClientWithAuthForward creates a new gRPC client which forwards the authentication bearer token received from the client (TLS optional)
+func NewClientWithAuthForward[T any](ctx context.Context, addr string, requireTransportSecurity bool, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+	conn, err := NewGrpcConnectionFactory(addr).
+		WithInsecure().
+		WithPerRPCCredentials(NewForwardedOauthAccess(requireTransportSecurity)).
+		WithBlock().
+		ConnectWithTimeout(ctx, 10*time.Second)
+
+	if err != nil {
+		var result T
+		return nil, result, err
+	}
+
+	return conn, clientFactory(conn), nil
+}
+
+// NewClientWithInsecureAuth (USE ONLY IF SECURED BY SERVICE MESH OR SIMILAR) creates a new gRPC client which sends the auth token without TLS
+func NewClientWithInsecureAuth[T any](ctx context.Context, addr, authToken string, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+	conn, err := NewGrpcConnectionFactory(addr).
+		WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
+		WithInsecure().
+		WithBlock().
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		var result T
+		return nil, result, err
+	}
+
+	return conn, clientFactory(conn), nil
+}
+
+// NewClientWithInsecure creates a new gRPC client which connects without TLS
+func NewClientWithInsecure[T any](ctx context.Context, addr string, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+	conn, err := NewGrpcConnectionFactoryWithInsecure(addr).
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		var result T
+		return nil, result, errors.TranslateToGrpcError(err)
+	}
+
+	return conn, clientFactory(conn), nil
 }
