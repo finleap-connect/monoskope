@@ -68,7 +68,7 @@ func (s *oidcProviderServer) Serve(apiAddr string) error {
 	return s.ServeFromListener(apiLis)
 }
 
-// Serve tells the server to start listening on given listener.
+// ServeFromListener tells the server to start listening on given listener.
 func (s *oidcProviderServer) ServeFromListener(apiLis net.Listener) error {
 	shutdown := s.shutdown
 	// Start routine waiting for signals

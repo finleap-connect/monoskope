@@ -82,7 +82,7 @@ func (s *gatewayApiServer) RequestAuthentication(ctx context.Context, request *a
 	// Issue token
 	signedToken, rawToken, err := s.authServer.IssueToken(ctx, upstreamClaims, user.ID().String())
 	if err != nil {
-		s.log.Error(err, "Issuing token failed.", user.Name, "email", user.Email, "id", user.ID())
+		s.log.Error(err, "Issuing token failed.", "name", user.Name, "email", user.Email, "id", user.ID())
 		return nil, err
 	}
 
