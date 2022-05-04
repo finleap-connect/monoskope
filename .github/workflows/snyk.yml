@@ -1,4 +1,4 @@
-name: "Snyk"
+name: "Snyk Scanning"
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
     - cron: '44 18 * * 3'
 
 jobs:
-  security:
+  snyk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,7 +19,13 @@ jobs:
       - uses: actions/setup-go@v3.0.0
         with:
           go-version: 1.17.x
-      - name: Snyk monitor
+      - name: Run Snyk test
         run: snyk test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk.sarif
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: snyk.sarif
