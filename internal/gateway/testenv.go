@@ -113,8 +113,9 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		IdentityProvider: env.IdentityProviderURL,
 		OfflineAsScope:   true,
 		ClientId:         "gateway",
-		ClientSecret:     "app-secret",
-		Nonce:            "secret-nonce",
+		// deepcode ignore HardcodedPassword: just for test
+		ClientSecret: "app-secret",
+		Nonce:        "secret-nonce",
 		Scopes: []string{
 			"openid",
 			"profile",
