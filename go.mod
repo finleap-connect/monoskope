@@ -8,18 +8,9 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cert-manager/cert-manager v1.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
-<<<<<<< HEAD
-	github.com/fsnotify/fsnotify v1.5.4
-=======
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
-<<<<<<< HEAD
-	github.com/envoyproxy/protoc-gen-validate v0.6.2
-	github.com/fsnotify/fsnotify v1.5.1
->>>>>>> 28ee91c (Rewrite auth server)
-=======
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
-	github.com/fsnotify/fsnotify v1.5.2
->>>>>>> 49c4da7 (Update dependencies)
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-logr/logr v1.2.3
@@ -46,18 +37,9 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-<<<<<<< HEAD
-<<<<<<< HEAD
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	google.golang.org/grpc v1.46.0
-=======
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-=======
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
->>>>>>> 21f9997 (bump dep)
-	google.golang.org/grpc v1.45.0
->>>>>>> 5b3a789 (Working validation)
+	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -136,7 +118,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
