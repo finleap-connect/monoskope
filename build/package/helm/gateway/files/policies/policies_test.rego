@@ -36,6 +36,6 @@ test_authorized {
 	authorized with input as scim_scope
 }
 
-# test_tenant_admin_rolebindings {
-# 	authorized with input as bob_tenant_admin
-# }
+test_tenant_admin_rolebindings {
+	authorized with input as bob_tenant_admin
+}
