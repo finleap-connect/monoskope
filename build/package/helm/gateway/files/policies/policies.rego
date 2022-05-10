@@ -37,7 +37,7 @@ tenant_admin_rolebindings {
 	req := json.unmarshal(input.Request)
 
 	# check that it is related to user role bindings
-	some type in input.CommandTypes.UserRoleBindingTypes
+	some type in input.CommandTypes.UserRoleBinding
 	req.type == type
 
 	# check that target scope is tenant
