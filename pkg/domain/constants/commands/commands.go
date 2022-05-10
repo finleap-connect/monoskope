@@ -51,3 +51,46 @@ const (
 	// Command to remove access of a tenant to a certain cluster
 	DeleteTenantClusterBinding es.CommandType = "DeleteTenantClusterBinding"
 )
+
+var (
+	UserCommands = []es.CommandType{
+		CreateUser,
+		DeleteUser,
+		UpdateUser,
+	}
+
+	UserRoleBindingCommands = []es.CommandType{
+		CreateUserRoleBinding,
+		DeleteUserRoleBinding,
+	}
+
+	TenantCommands = []es.CommandType{
+		CreateTenant,
+		UpdateTenant,
+		DeleteTenant,
+	}
+
+	ClusterCommands = []es.CommandType{
+		CreateCluster,
+		DeleteCluster,
+		UpdateCluster,
+	}
+
+	TenantClusterBindingCommands = []es.CommandType{
+		CreateTenantClusterBinding,
+		DeleteTenantClusterBinding,
+	}
+
+	CertificateCommands = []es.CommandType{
+		RequestCertificate,
+	}
+
+	CommandTypes = map[string][]es.CommandType{
+		"User":                 UserCommands,
+		"UserRoleBinding":      UserRoleBindingCommands,
+		"Tenant":               TenantCommands,
+		"Cluster":              ClusterCommands,
+		"TenantClusterBinding": TenantClusterBindingCommands,
+		"Certificate":          CertificateCommands,
+	}
+)

@@ -24,6 +24,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -53,16 +54,12 @@ type policyUser struct {
 	Roles []policyRoles
 }
 
-type policyInputCommandTypes struct {
-	UserRoleBindingTypes []string
-}
-
 type policyInput struct {
 	User           policyUser
 	Path           string
 	Request        string
 	Authentication policyAuthentication
-	CommandTypes   policyInputCommandTypes
+	CommandTypes   map[string][]eventsourcing.CommandType
 }
 
 // authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
@@ -197,13 +194,8 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 		Authentication: policyAuthentication{
 			Scopes: make([]string, 0),
 		},
-		Request: string(req.Request),
-		CommandTypes: policyInputCommandTypes{
-			UserRoleBindingTypes: []string{
-				commands.CreateUserRoleBinding.String(),
-				commands.DeleteUserRoleBinding.String(),
-			},
-		},
+		Request:      string(req.Request),
+		CommandTypes: commands.CommandTypes,
 	}
 
 	roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
