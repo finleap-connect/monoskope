@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository, tenantUse
 
 func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.TenantClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(queryHandlerAddr).
+		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

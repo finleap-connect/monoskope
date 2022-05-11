@@ -1,7 +1,7 @@
 {{- if .Values.ambassador.enabled }}
 {{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.gateway.enabled }}
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-mapping
@@ -14,12 +14,11 @@ metadata:
 spec:
   grpc: true
   timeout_ms: 20000
-  bypass_auth: true
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-clusterauth-mapping
@@ -36,7 +35,7 @@ spec:
   rewrite: /gateway.ClusterAuth/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-version-mapping
@@ -50,7 +49,7 @@ spec:
   rewrite: /common.ServiceInformationService/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-oidc-discovery-mapping
@@ -58,13 +57,12 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  bypass_auth: true
   method: GET
   prefix: /.well-known/
   rewrite: /.well-known/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-oidc-keys-mapping
@@ -72,13 +70,12 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  bypass_auth: true
   method: GET
   prefix: /keys
   rewrite: /keys
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
 ---
-apiVersion: getambassador.io/v1
+apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: {{ include "monoskope.fullname" . }}-gateway-apitoken-mapping

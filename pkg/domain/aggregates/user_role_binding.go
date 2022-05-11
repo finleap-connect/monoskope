@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,9 +82,6 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 			if resource, err = uuid.Parse(resourceValue); err != nil {
 				return domainErrors.ErrInvalidArgument("resource id is invalid")
 			}
-		}
-		if err := a.Authorize(ctx, cmd, resource); err != nil {
-			return err
 		}
 
 		userAggregate, err := a.aggregateManager.Get(ctx, aggregates.User, userId)

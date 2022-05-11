@@ -1,4 +1,4 @@
-# Copyright 2021 Monoskope Authors
+# Copyright 2022 Monoskope Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ on:
   
 env:
   GO_MODULE: github.com/finleap-connect/monoskope
-  GO_VERSION: 1.17.x
+  GO_VERSION: 1.18.x
   GINKGO_VERSION: v1.16.4
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.39
+          version: v1.45.2
           args: --timeout=5m
 
   test:

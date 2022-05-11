@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/test"
 
 	. "github.com/onsi/ginkgo"
@@ -44,7 +45,10 @@ var _ = BeforeSuite(func() {
 		eventStoreTestEnv, err := eventstore.NewTestEnvWithParent(baseTestEnv)
 		Expect(err).To(Not(HaveOccurred()))
 
-		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv)
+		gatewayTestEnv, err := gateway.NewTestEnvWithParent(baseTestEnv)
+		Expect(err).To(Not(HaveOccurred()))
+
+		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv, gatewayTestEnv)
 		Expect(err).To(Not(HaveOccurred()))
 		close(done)
 	}()
@@ -60,5 +64,8 @@ var _ = AfterSuite(func() {
 	Expect(err).To(Not(HaveOccurred()))
 
 	err = testEnv.eventStoreTestEnv.Shutdown()
+	Expect(err).To(Not(HaveOccurred()))
+
+	err = testEnv.gatewayTestEnv.Shutdown()
 	Expect(err).To(Not(HaveOccurred()))
 })

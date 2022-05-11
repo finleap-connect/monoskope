@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,13 +25,6 @@ package gateway;
 
 // API of the Monoskope Gateway.
 service Gateway {
-  rpc GetAuthInformation(AuthState) returns (AuthInformation) {
-    option deprecated = true;
-  };
-  rpc ExchangeAuthCode(AuthCode) returns (AuthResponse) {
-    option deprecated = true;
-  };
-
   // PrepareAuthentication returns the URL to call to authenticate against the
   // upstream IDP
   rpc RequestUpstreamAuthentication(UpstreamAuthenticationRequest)
@@ -40,6 +33,14 @@ service Gateway {
   // upstream IDP and to authenticate with the m8 control plane
   rpc RequestAuthentication(AuthenticationRequest)
       returns (AuthenticationResponse);
+}
+
+// A service for performing authorization check on incoming
+// requests to a networked service part of m8.
+service GatewayAuth {
+  // Performs authorization check based on the attributes associated with the
+  // incoming request, and returns status `OK` or not `OK`.
+  rpc Check(CheckRequest) returns (CheckResponse);
 }
 
 // ClusterAuth is the API to request token for cluster authentication from

@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
-	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ClientConfig struct {
@@ -177,7 +178,7 @@ func (n *Client) verifyStateAndClaims(ctx context.Context, token *oauth2.Token, 
 	}
 
 	if !state.IsValid() {
-		return nil, grpcUtil.ErrInvalidArgument("url is invalid")
+		return nil, status.Error(codes.InvalidArgument, "url is invalid")
 	}
 
 	claims, err := getClaims(idToken)
@@ -197,7 +198,7 @@ func (n *Client) Exchange(ctx context.Context, code, state string) (*jwt.Standar
 		return nil, fmt.Errorf("failed to decode state")
 	}
 	if !decodedState.IsValid() {
-		return nil, grpcUtil.ErrInvalidArgument("url is invalid")
+		return nil, status.Error(codes.InvalidArgument, "url is invalid")
 	}
 
 	upstreamToken, err := n.exchange(ctx, code, decodedState.Callback)

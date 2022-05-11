@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/aggregates"
@@ -30,9 +29,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
-	domainHandlers "github.com/finleap-connect/monoskope/pkg/domain/handler"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esCommandHandler "github.com/finleap-connect/monoskope/pkg/eventsourcing/commandhandler"
 	"github.com/google/uuid"
@@ -159,20 +156,15 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 }
 
 // SetupCommandHandlerDomain sets up the necessary handlers/repositories for the command side of es/cqrs.
-func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserClient, esClient esApi.EventStoreClient) error {
+func SetupCommandHandlerDomain(ctx context.Context, esClient esApi.EventStoreClient) error {
 	// Register aggregates
 	aggregateManager := registerAggregates(esClient)
 
-	// Setup repositories
-	userRepo := repositories.NewRemoteUserRepository(userService)
-
 	// Create command handler
-	authorizationHandler := domainHandlers.NewUserInformationHandler(userRepo)
 	handler := es.UseCommandHandlerMiddleware(
 		esCommandHandler.NewAggregateHandler(
 			aggregateManager,
 		),
-		authorizationHandler.Middleware,
 	)
 
 	// Set command handler
@@ -186,8 +178,6 @@ func SetupCommandHandlerDomain(ctx context.Context, userService domainApi.UserCl
 		return err
 	}
 
-	cancel := metadataManager.BypassAuthorization()
-	defer cancel()
 	if err := setupUsers(metadataManager.GetContext(), handler); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,33 +60,35 @@ const (
 	TenantClusterBindingDeleted es.EventType = "TenantClusterBindingDeleted"
 )
 
-var UserEvents = []es.EventType{
-	UserCreated,
-	UserUpdated,
-	UserDeleted,
-	UserRoleBindingCreated,
-	UserRoleBindingDeleted,
-}
+var (
+	UserEvents = []es.EventType{
+		UserCreated,
+		UserUpdated,
+		UserDeleted,
+		UserRoleBindingCreated,
+		UserRoleBindingDeleted,
+	}
 
-var TenantEvents = []es.EventType{
-	TenantCreated,
-	TenantUpdated,
-	TenantDeleted,
-	TenantClusterBindingCreated,
-	TenantClusterBindingDeleted,
-}
+	TenantEvents = []es.EventType{
+		TenantCreated,
+		TenantUpdated,
+		TenantDeleted,
+		TenantClusterBindingCreated,
+		TenantClusterBindingDeleted,
+	}
 
-var ClusterEvents = []es.EventType{
-	ClusterCreated,
-	ClusterCreatedV2,
-	ClusterUpdated,
-	ClusterDeleted,
-	ClusterBootstrapTokenCreated,
-}
+	ClusterEvents = []es.EventType{
+		ClusterCreated,
+		ClusterCreatedV2,
+		ClusterUpdated,
+		ClusterDeleted,
+		ClusterBootstrapTokenCreated,
+	}
 
-var CertificateEvents = []es.EventType{
-	CertificateRequested,
-	CertificateRequestIssued,
-	CertificateIssued,
-	CertificateIssueingFailed,
-}
+	CertificateEvents = []es.EventType{
+		CertificateRequested,
+		CertificateRequestIssued,
+		CertificateIssued,
+		CertificateIssueingFailed,
+	}
+)

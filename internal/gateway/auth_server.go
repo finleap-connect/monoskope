@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,334 +16,291 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net"
-	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
-	"crypto/x509"
-	"encoding/pem"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
-	m8roles "github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	m8scopes "github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/finleap-connect/monoskope/pkg/util"
+	"github.com/google/uuid"
+	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/topdown/print"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 )
 
-const (
-	HeaderAuthorization = "Authorization"
-)
-
-type OpenIdConfiguration struct {
-	Issuer  string `json:"issuer"`
-	JwksURL string `json:"jwks_uri"`
+type policyAuthentication struct {
+	Scopes []string
 }
 
-// authServer is the AuthN/AuthZ decision API used as Ambassador Auth Service.
+type policyRoles struct {
+	Name     string
+	Scope    string
+	Resource string
+}
+
+type policyUser struct {
+	Id    string
+	Name  string
+	Roles []policyRoles
+}
+
+type policyInput struct {
+	User           policyUser
+	Path           string
+	Request        string
+	Authentication policyAuthentication
+	CommandTypes   map[string][]eventsourcing.CommandType
+}
+
+// authServer implements the AuthN/AuthZ decision API used as Ambassador Auth Service.
 type authServer struct {
-	api        *http.Server
-	engine     *gin.Engine
-	log        logger.Logger
-	shutdown   *util.ShutdownWaitGroup
-	authClient *auth.Client
-	authServer *auth.Server
-	userRepo   repositories.ReadOnlyUserRepository
-	url        string
+	gateway.UnimplementedGatewayAuthServer
+	log             logger.Logger
+	oidcServer      *auth.Server
+	issuerURL       string
+	preparedQuery   *rego.PreparedEvalQuery
+	roleBindingRepo repositories.UserRoleBindingRepository
+}
+
+// authServerClientInternal can be used to wrap this server for use as grpc client implementation for local calls
+type authServerClientInternal struct {
+	authServer *authServer
+}
+
+func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.CheckRequest, opts ...grpc.CallOption) (*gateway.CheckResponse, error) {
+	return c.authServer.Check(ctx, req)
+}
+
+func NewInsecureAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
+	conn, err := grpcUtil.
+		NewGrpcConnectionFactoryWithInsecure(gatewayAddr).
+		ConnectWithTimeout(ctx, 10*time.Second)
+	if err != nil {
+		return nil, nil, err
+	}
+	return conn, gateway.NewGatewayAuthClient(conn), nil
+}
+
+func (s *authServer) Print(_ print.Context, msg string) error {
+	s.log.V(logger.DebugLevel).Info(msg)
+	return nil
 }
 
 // NewAuthServer creates a new instance of gateway.authServer.
-func NewAuthServer(url string, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) *authServer {
-	engine := gin.Default()
+func NewAuthServer(ctx context.Context, issuerURL string, oidcServer *auth.Server, policiesPath string, roleBindingRepo repositories.UserRoleBindingRepository) (*authServer, error) {
 	s := &authServer{
-		api:        &http.Server{Handler: engine},
-		engine:     engine,
-		log:        logger.WithName("auth-server"),
-		shutdown:   util.NewShutdownWaitGroup(),
-		authClient: client,
-		authServer: server,
-		userRepo:   userRepo,
-		url:        url,
+		log:             logger.WithName("auth-server"),
+		oidcServer:      oidcServer,
+		issuerURL:       issuerURL,
+		roleBindingRepo: roleBindingRepo,
 	}
-	engine.Use(cors.Default())
-	return s
-}
 
-// Serve tells the server to start listening on the specified address.
-func (s *authServer) Serve(apiAddr string) error {
-	// Setup grpc listener
-	apiLis, err := net.Listen("tcp", apiAddr)
+	query, err := rego.New(
+		rego.Query("data.m8.authz.authorized"),
+		rego.Load([]string{policiesPath}, nil),
+		rego.EnablePrintStatements(true),
+		rego.PrintHook(s),
+	).PrepareForEval(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer apiLis.Close()
+	s.preparedQuery = &query
 
-	return s.ServeFromListener(apiLis)
+	return s, nil
 }
 
-// Serve tells the server to start listening on given listener.
-func (s *authServer) ServeFromListener(apiLis net.Listener) error {
-	shutdown := s.shutdown
-	// Start routine waiting for signals
-	shutdown.RegisterSignalHandler(func() {
-		// Stop the HTTP servers
-		s.log.Info("api server shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.api.Shutdown(ctx); err != nil {
-			s.log.Error(err, "api server shutdown problem")
-		}
-	})
-	//
-	s.registerViews(s.engine)
-	//
-	s.log.Info("starting to serve RESTful API", "addr", apiLis.Addr())
-	err := s.api.Serve(apiLis)
-	if !shutdown.IsExpected() && err != nil {
-		panic(fmt.Sprintf("shutdown unexpected: %v", err))
-	}
-	s.log.Info("api server stopped")
-	// Check if we are expecting shutdown
-	// Wait for both shutdown signals and close the channel
-	if ok := shutdown.WaitOrTimeout(30 * time.Second); !ok {
-		panic("shutting down gracefully exceeded 30 seconds")
-	}
-	return nil
+func (s *authServer) AsClient() *authServerClientInternal {
+	return &authServerClientInternal{authServer: s}
 }
 
-// Tell the server to shutdown
-func (s *authServer) Shutdown() {
-	s.shutdown.Expect()
-}
-
-// registerViews registers all routes necessary serving.
-func (s *authServer) registerViews(r *gin.Engine) {
-	// readiness check
-	r.GET("/readyz", func(c *gin.Context) {
-		c.String(http.StatusOK, "ready")
-	})
-
-	// auth route
-	r.GET("/auth/*route", s.auth)
-	r.PUT("/auth/*route", s.auth)
-	r.POST("/auth/*route", s.auth)
-	r.PATCH("/auth/*route", s.auth)
-	r.DELETE("/auth/*route", s.auth)
-	r.OPTIONS("/auth/*route", s.auth)
-
-	// OIDC
-	r.GET("/.well-known/openid-configuration", s.discovery)
-	r.GET("/keys", s.keys)
-}
-
-func (s *authServer) discovery(c *gin.Context) {
-	c.JSON(http.StatusOK, &OpenIdConfiguration{
-		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
-		JwksURL: fmt.Sprintf("https://%s%s", c.Request.Host, "/keys"),
-	})
-}
-
-func (s *authServer) keys(c *gin.Context) {
-	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
-	c.JSON(http.StatusOK, s.authServer.Keys())
-}
-
-// auth serves as handler for the auth route of the server.
-func (s *authServer) auth(c *gin.Context) {
-	route := c.Param("route")
-	s.log.Info("Authenticating request...", "route", route)
-
-	// Print headers
-	for k := range c.Request.Header {
-		s.log.V(logger.DebugLevel).Info("Metadata provided.", "Key", k, "Value", c.Request.Header.Get(k))
-	}
-
+// Check request object.
+func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gateway.CheckResponse, error) {
+	var err error
 	var authToken *jwt.AuthToken
-	if authToken = s.tokenValidationFromContext(c); authToken != nil {
-		s.writeSuccess(c, authToken)
-		return
+	authenticated := false
+	authorized := false
+
+	s.log.V(logger.DebugLevel).Info("Authenticating request...", "req", req)
+
+	// check authentication
+	// via JWT
+	authToken, err = s.tokenValidationFromContext(ctx, req)
+	if err != nil {
+		s.log.Info("Request authentication failed", "req", req, "err", err)
+		return nil, status.Error(codes.Unauthenticated, "authentication failed")
 	}
-	if authToken = s.certValidation(c); authToken != nil {
-		s.writeSuccess(c, authToken)
-		return
+	authenticated = err == nil
+
+	// via client certificate validation if not authenticated already
+	if !authenticated {
+		authToken, err = s.certValidation(ctx, req)
+		if err != nil {
+			s.log.Error(err, "Error authenticating user.", "req", req)
+			return nil, err
+		}
+		authenticated = err == nil
 	}
 
-	c.String(http.StatusUnauthorized, "authorization failed")
+	if !authenticated {
+		s.log.Info("Request authentication failed", "req", req)
+
+		// authentication failed
+		return nil, status.Error(codes.Unauthenticated, "authentication failed")
+	}
+
+	s.log.V(logger.DebugLevel).Info("Request authenticated. Checking authorization...", "req", req, "user", authToken.Email)
+
+	// check authorization
+	authorized, err = s.validatePolicies(ctx, req, authToken)
+	if err != nil {
+		// authorization failed with error
+		s.log.Error(err, "Error checking authorization of user.", "req", req, "user", authToken.Email)
+		return nil, status.Error(codes.PermissionDenied, "authorization failed")
+	}
+
+	if authorized {
+		// authorization successful
+		s.log.V(logger.DebugLevel).Info("Request authorized.", "req", req, "user", authToken.Email)
+		return s.createAuthorizedResponse(authToken), nil
+	}
+
+	s.log.Info("Error checking authorization of user.", "req", req, "user", authToken.Email)
+	return nil, status.Error(codes.PermissionDenied, "authorization failed")
 }
 
-func (s *authServer) retrieveUserId(ctx context.Context, email string) (string, bool) {
-	user, err := s.userRepo.ByEmail(ctx, email)
+// validatePolicies validates the configured policies using OPA
+func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
+	userId, err := uuid.Parse(authToken.Subject)
 	if err != nil {
-		return "", false
+		return false, fmt.Errorf("failed to parse user id from token: %w", err)
 	}
-	return user.Id, true
+
+	input := policyInput{
+		User: policyUser{
+			Id:   authToken.Subject,
+			Name: authToken.Name,
+		},
+		Path: req.FullMethodName,
+		Authentication: policyAuthentication{
+			Scopes: make([]string, 0),
+		},
+		Request:      string(req.Request),
+		CommandTypes: commands.CommandTypes,
+	}
+
+	roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
+	if err != nil {
+		return false, fmt.Errorf("failed get rolebindings for user: %w", err)
+	}
+
+	input.User.Roles = make([]policyRoles, 0)
+	for _, role := range roleBindings {
+		input.User.Roles = append(input.User.Roles, policyRoles{
+			Name:     role.Role,
+			Scope:    role.Scope,
+			Resource: role.Resource,
+		})
+	}
+
+	scopes := strings.Split(authToken.Scope, " ")
+	input.Authentication.Scopes = append(input.Authentication.Scopes, scopes...)
+
+	results, err := s.preparedQuery.Eval(ctx, rego.EvalInput(input))
+	if err != nil {
+		s.log.Error(err, "policy evaluation failed.", "email", authToken.Email)
+		return false, err
+	}
+	if !results.Allowed() {
+		s.log.Info("policy evaluation failed.", "email", authToken.Email, "results", results)
+		return false, nil
+	}
+	s.log.Info("policy evaluation succeeded.", "email", authToken.Email, "results", results)
+	return results.Allowed(), nil
 }
 
 // tokenValidationFromContext validates the token provided within the authorization flow from gin context
-func (s *authServer) tokenValidationFromContext(c *gin.Context) *jwt.AuthToken {
-	authToken := s.tokenValidation(c.Request.Context(), defaultBearerTokenFromRequest(c.Request))
-	if authToken == nil {
-		return nil
+func (s *authServer) tokenValidationFromContext(ctx context.Context, req *gateway.CheckRequest) (*jwt.AuthToken, error) {
+	authToken, err := s.tokenValidation(ctx, req.AccessToken)
+	if err != nil {
+		return nil, err
 	}
-
-	// Check user actually exists in m8
-
-	user, err := s.userRepo.ByEmail(c, authToken.Email)
-	if err != nil && !authToken.IsAPIToken {
-		s.log.Info("Token validation failed. User does not exist.", "Email", authToken.Email)
-		return nil
-	}
-
-	// Validate scopes
-	route := c.Param("route")
-	scopes := strings.Split(authToken.Scope, " ")
-
-	// Validation for API Token Endpoint
-	// TODO: This is a temporary solution until authorization has been replaced with Open Policy Agent
-	if strings.HasPrefix(route, "/"+gateway.APIToken_ServiceDesc.ServiceName) {
-		if !authToken.IsAPIToken {
-			for _, role := range user.Roles {
-				if role.Role == m8roles.Admin.String() && role.Scope == m8scopes.System.String() { // Only system admins can issue API tokens
-					return authToken
-				}
-			}
-			s.log.Info("Token validation failed. Only system admins can call that route.", "Route", route, "Scopes", authToken.Scope)
-			return nil
-		} else { // API Tokens can't be used to issue new ones
-			s.log.Info("Token validation failed. Token can not be used for route.", "Route", route, "Scopes", authToken.Scope)
-			return nil
-		}
-	}
-
-	// SCIM API Access
-	if strings.HasPrefix(route, "/scim") {
-		if containsString(scopes, gateway.AuthorizationScope_WRITE_SCIM.String()) {
-			return authToken
-		}
-	}
-
-	// General API access
-	if containsString(scopes, gateway.AuthorizationScope_API.String()) {
-		return authToken
-	}
-
-	s.log.Info("Token validation failed. Token has not correct scopes for route.", "Route", route, "Scopes", authToken.Scope)
-	return nil
-}
-
-func containsString(slice []string, value string) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
+	return authToken, nil
 }
 
 // tokenValidation validates the token provided within the authorization flow
-func (s *authServer) tokenValidation(ctx context.Context, token string) *jwt.AuthToken {
+func (s *authServer) tokenValidation(ctx context.Context, token string) (*jwt.AuthToken, error) {
 	s.log.Info("Validating token...")
 
 	if token == "" {
 		s.log.Info("Token validation failed.", "error", "token is empty")
-		return nil
+		return nil, nil
 	}
 
 	authToken := &jwt.AuthToken{}
-	if err := s.authServer.Authorize(ctx, token, authToken); err != nil {
+	if err := s.oidcServer.Authorize(ctx, token, authToken); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
-		return nil
+		return nil, err
 	}
-	if err := authToken.Validate(s.url); err != nil {
+	if err := authToken.Validate(s.issuerURL); err != nil {
 		s.log.Info("Token validation failed.", "error", err.Error())
-		return nil
+		return nil, err
 	}
 
 	s.log.Info("Token validation successful", "subject", authToken.Subject, "email", authToken.Email, "scope", authToken.Scope)
 
-	return authToken
+	return authToken, nil
 }
 
 // tokenValidation validates the client certificate provided within the forwarded client secret header
-func (s *authServer) certValidation(c *gin.Context) *jwt.AuthToken {
+func (s *authServer) certValidation(ctx context.Context, req *gateway.CheckRequest) (*jwt.AuthToken, error) {
 	s.log.Info("Validating client certificate...")
 
-	cert, err := clientCertificateFromRequest(c.Request)
-	if err != nil {
-		s.log.Info("Certificate validation failed.", "error", err.Error())
-		return nil
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "no peer found")
 	}
 
-	if userId, ok := s.retrieveUserId(c, cert.EmailAddresses[0]); !ok {
-		s.log.Info("Certificate validation failed. User does not exist.", "Email", cert.EmailAddresses[0])
-		return nil
-	} else {
-		claims := auth.NewAuthToken(&jwt.StandardClaims{
-			Name:  cert.Subject.CommonName,
-			Email: cert.EmailAddresses[0],
-		}, s.url, userId, time.Minute*5)
-		claims.Subject = userId
-		claims.Issuer = cert.Issuer.CommonName
-		s.log.Info("Client certificate validation successful.", "User", claims.Email)
-		return claims
+	tlsAuth, ok := p.AuthInfo.(credentials.TLSInfo)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "unexpected peer transport credentials")
 	}
+
+	if len(tlsAuth.State.VerifiedChains) == 0 || len(tlsAuth.State.VerifiedChains[0]) == 0 {
+		return nil, status.Error(codes.Unauthenticated, "could not verify peer certificate")
+	}
+
+	userId := tlsAuth.State.VerifiedChains[0][0].Subject.SerialNumber
+	userName := tlsAuth.State.VerifiedChains[0][0].Subject.CommonName
+	emailAddress := tlsAuth.State.VerifiedChains[0][0].EmailAddresses[0]
+
+	claims := auth.NewAuthToken(&jwt.StandardClaims{
+		Name:  userName,
+		Email: emailAddress,
+	}, s.issuerURL, userId, time.Minute*5)
+	claims.Subject = userId
+	claims.Issuer = tlsAuth.State.VerifiedChains[0][0].Issuer.CommonName
+	s.log.Info("Client certificate validation successful.", "User", claims.Email)
+	return claims, nil
 }
 
-// writeSuccess writes all request headers back to the response along with information got from the upstream IdP and sends an http status ok
-func (s *authServer) writeSuccess(c *gin.Context, claims *jwt.AuthToken) {
-	// Copy request headers to response
-	for k := range c.Request.Header {
-		// Avoid copying the original Content-Length header from the client
-		if strings.ToLower(k) == "content-length" {
-			continue
-		}
-		c.Writer.Header().Set(k, c.Request.Header.Get(k))
-	}
-
+func (s *authServer) createAuthorizedResponse(authToken *jwt.AuthToken) *gateway.CheckResponse {
 	// Set headers with auth info
-	c.Writer.Header().Set(auth.HeaderAuthId, claims.Subject)
-	c.Writer.Header().Set(auth.HeaderAuthName, claims.Name)
-	c.Writer.Header().Set(auth.HeaderAuthEmail, claims.Email)
-	c.Writer.Header().Set(auth.HeaderAuthNotBefore, claims.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat))
-
-	c.Writer.WriteHeader(http.StatusOK)
-}
-
-// defaultBearerTokenFromRequest extracts the token from header
-func defaultBearerTokenFromRequest(r *http.Request) string {
-	token := r.Header.Get(HeaderAuthorization)
-	split := strings.SplitN(token, " ", 2)
-	if len(split) != 2 || !strings.EqualFold(strings.ToLower(split[0]), "bearer") {
-		return ""
+	return &gateway.CheckResponse{
+		Tags: []*gateway.CheckResponse_CheckResponseTag{
+			{Key: auth.HeaderAuthId, Value: authToken.Subject},
+			{Key: auth.HeaderAuthName, Value: authToken.Name},
+			{Key: auth.HeaderAuthEmail, Value: authToken.Email},
+			{Key: auth.HeaderAuthNotBefore, Value: authToken.NotBefore.Time().Format(auth.HeaderAuthNotBeforeFormat)},
+		},
 	}
-	return split[1]
-}
-
-// clientCertificateFromRequest extracts the client certificate from header
-func clientCertificateFromRequest(r *http.Request) (*x509.Certificate, error) {
-	pemData := r.Header.Get(auth.HeaderForwardedClientCert)
-	if pemData == "" {
-		return nil, errors.New("cert header is empty")
-	}
-
-	decodedValue, err := url.QueryUnescape(pemData)
-	if err != nil {
-		return nil, errors.New("could not unescape pem data from header")
-	}
-
-	block, _ := pem.Decode([]byte(decodedValue))
-	if block == nil {
-		return nil, errors.New("decoding pem failed")
-	}
-
-	return x509.ParseCertificate(block.Bytes)
 }

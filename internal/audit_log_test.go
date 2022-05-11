@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,22 +16,23 @@ package internal
 
 import (
 	"context"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"time"
 
-	ch "github.com/finleap-connect/monoskope/internal/commandhandler"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/finleap-connect/monoskope/pkg/jwt"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -39,34 +40,186 @@ import (
 
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
-	adminEmail := "admin@monoskope.io"
 	userEmail := "jane.dou@monoskope.io"
+	expectedValidity := time.Hour * 1
 
-	mdManager, err := metadata.NewDomainMetadataManager(ctx)
-	Expect(err).ToNot(HaveOccurred())
-
-	mdManager.SetUserInformation(&metadata.UserInformation{
-		Name:  "admin",
-		Email: adminEmail,
-	})
+	getAdminAuthToken := func() string {
+		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), expectedValidity)
+		authToken, err := signer.GenerateSignedToken(token)
+		Expect(err).ToNot(HaveOccurred())
+		return authToken
+	}
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
 		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, chAddr, getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	auditLogServiceClient := func() domainApi.AuditLogClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewAuditLogClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewAuditLogClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
+	initEvents := func(commandHandlerClient func() esApi.CommandHandlerClient) time.Time {
+		// CreateUser
+		command, err := cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: "jane.dou@monoskope.io"},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		var reply *esApi.CommandReply
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		userId := uuid.MustParse(reply.AggregateId)
+
+		// CreateUserRoleBinding on system level
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+			&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		userRoleBindingId := uuid.MustParse(reply.AggregateId)
+
+		// UpdateUser
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(userId, commandTypes.UpdateUser),
+			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "Jane New"}},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+
+		// CreateTenant
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+			&cmdData.CreateTenantCommandData{Name: "Tenant Y", Prefix: "ty"},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		tenantId := uuid.MustParse(reply.AggregateId)
+
+		// CreateUserRoleBinding on tenant level
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+			&cmdData.CreateUserRoleBindingCommandData{Role: roles.User.String(), Scope: scopes.Tenant.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		_ = uuid.MustParse(reply.AggregateId)
+
+		// UpdateTenant
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Z"}},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+
+		// 6 events
+		midTime := time.Now().UTC()
+
+		// CreateCluster
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: []byte("This should be a certificate")},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		clusterId := uuid.MustParse(reply.AggregateId)
+
+		// UpdateCluster
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(clusterId, commandTypes.UpdateCluster),
+			&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: []byte("This should be a new certificate")},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+
+		// CreateTenantClusterBinding
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenantClusterBinding),
+			&cmdData.CreateTenantClusterBindingCommandData{TenantId: tenantId.String(), ClusterId: clusterId.String()},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+		tenantClusterBindingId := uuid.MustParse(reply.AggregateId)
+
+		// RequestCertificate
+		command, err = cmd.AddCommandData(
+			cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
+			&cmdData.RequestCertificate{
+				ReferencedAggregateId:   clusterId.String(),
+				ReferencedAggregateType: aggregates.Cluster.String(),
+				SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
+			},
+		)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			reply, err = commandHandlerClient().Execute(ctx, command)
+			g.Expect(err).ToNot(HaveOccurred())
+		}).Should(Succeed())
+
+		// DeleteUser
+		_, err = commandHandlerClient().Execute(ctx,
+			cmd.CreateCommand(userId, commandTypes.DeleteUser))
+		Expect(err).ToNot(HaveOccurred())
+
+		// DeleteUserRoleBinding
+		_, err = commandHandlerClient().Execute(ctx,
+			cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+		Expect(err).ToNot(HaveOccurred())
+
+		// DeleteTenant
+		_, err = commandHandlerClient().Execute(ctx,
+			cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+		Expect(err).ToNot(HaveOccurred())
+
+		// DeleteTenantClusterBinding
+		reply, err = commandHandlerClient().Execute(ctx,
+			cmd.CreateCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
+		Expect(err).ToNot(HaveOccurred())
+
+		// DeleteCluster
+		reply, err = commandHandlerClient().Execute(ctx,
+			cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
+		Expect(err).ToNot(HaveOccurred())
+
+		return midTime
+	}
+
 	It("can provide human-readable events/overviews", func() {
 		minTime := time.Now().UTC()
-		midTime := initEvents(commandHandlerClient, mdManager)
+		midTime := initEvents(commandHandlerClient)
 		maxTime := time.Now().UTC()
 
 		When("getting by date range", func() {
@@ -134,7 +287,7 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting user actions", func() {
 			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(adminEmail),
+				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -149,7 +302,7 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.Issuer).To(Equal(adminEmail))
+				Expect(e.Issuer).To(Equal(testEnv.gatewayTestEnv.AdminUser.Email))
 			}
 		})
 
@@ -178,7 +331,7 @@ var _ = Describe("AuditLog Test", func() {
 			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
 			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
 			request := &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(adminEmail),
+				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -192,156 +345,3 @@ var _ = Describe("AuditLog Test", func() {
 		})
 	})
 })
-
-func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManager *metadata.DomainMetadataManager) time.Time {
-	// CreateUser
-	command, err := cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-		&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: "jane.dou@monoskope.io"},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	var reply *esApi.CommandReply
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	userId := uuid.MustParse(reply.AggregateId)
-
-	// CreateUserRoleBinding on system level
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-		&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	userRoleBindingId := uuid.MustParse(reply.AggregateId)
-
-	// UpdateUser
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(userId, commandTypes.UpdateUser),
-		&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "Jane New"}},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-
-	// CreateTenant
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
-		&cmdData.CreateTenantCommandData{Name: "Tenant Y", Prefix: "ty"},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	tenantId := uuid.MustParse(reply.AggregateId)
-
-	// CreateUserRoleBinding on tenant level
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-		&cmdData.CreateUserRoleBindingCommandData{Role: roles.User.String(), Scope: scopes.Tenant.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	_ = uuid.MustParse(reply.AggregateId)
-
-	// UpdateTenant
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
-		&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Z"}},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-
-	// 6 events
-	midTime := time.Now().UTC()
-
-	// CreateCluster
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-		&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: []byte("This should be a certificate")},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	clusterId := uuid.MustParse(reply.AggregateId)
-
-	// UpdateCluster
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(clusterId, commandTypes.UpdateCluster),
-		&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: []byte("This should be a new certificate")},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-
-	// CreateTenantClusterBinding
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenantClusterBinding),
-		&cmdData.CreateTenantClusterBindingCommandData{TenantId: tenantId.String(), ClusterId: clusterId.String()},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-	tenantClusterBindingId := uuid.MustParse(reply.AggregateId)
-
-	// RequestCertificate
-	command, err = cmd.AddCommandData(
-		cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
-		&cmdData.RequestCertificate{
-			ReferencedAggregateId:   clusterId.String(),
-			ReferencedAggregateType: aggregates.Cluster.String(),
-			SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
-		},
-	)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
-		g.Expect(err).ToNot(HaveOccurred())
-	}).Should(Succeed())
-
-	// DeleteUser
-	_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-		cmd.CreateCommand(userId, commandTypes.DeleteUser))
-	Expect(err).ToNot(HaveOccurred())
-
-	// DeleteUserRoleBinding
-	_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-		cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
-	Expect(err).ToNot(HaveOccurred())
-
-	// DeleteTenant
-	_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-		cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
-	Expect(err).ToNot(HaveOccurred())
-
-	// DeleteTenantClusterBinding
-	reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-		cmd.CreateCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
-	Expect(err).ToNot(HaveOccurred())
-
-	// DeleteCluster
-	reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
-		cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
-	Expect(err).ToNot(HaveOccurred())
-
-	return midTime
-}

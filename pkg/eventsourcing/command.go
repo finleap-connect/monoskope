@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
 package eventsourcing
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -49,9 +47,6 @@ type Command interface {
 
 	// SetData sets type specific additional data.
 	SetData(*anypb.Any) error
-
-	// Policies returns the Role/Scope/Resource combination allowed to execute.
-	Policies(ctx context.Context) []Policy
 }
 
 // CommandReply is a internal representation of the gRPC struct to avoid constant

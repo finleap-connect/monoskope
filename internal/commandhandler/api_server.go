@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package commandhandler
 import (
 	"context"
 	"fmt"
-	"time"
 
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -27,11 +26,9 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
-	"google.golang.org/grpc"
 )
 
 // apiServer is the implementation of the CommandHandler API
@@ -48,17 +45,6 @@ func NewApiServer(cmdRegistry evs.CommandRegistry) *apiServer {
 		cmdRegistry: cmdRegistry,
 		log:         logger.WithName("commandhandler-api-server"),
 	}
-}
-
-func NewServiceClient(ctx context.Context, commandHandlerAddr string) (*grpc.ClientConn, api.CommandHandlerClient, error) {
-	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(commandHandlerAddr).
-		ConnectWithTimeout(ctx, 10*time.Second)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, api.NewCommandHandlerClient(conn), nil
 }
 
 // Execute implements the API method Execute
@@ -99,28 +85,4 @@ func (s *apiServer) GetPermissionModel(ctx context.Context, in *empty.Empty) (*a
 		permissionModel.Scopes = append(permissionModel.Scopes, scope.String())
 	}
 	return permissionModel, nil
-}
-
-// GetPolicyOverview implements API method GetPolicyOverview
-func (s *apiServer) GetPolicyOverview(ctx context.Context, in *empty.Empty) (*api_domain.PolicyOverview, error) {
-	policyOverview := &api_domain.PolicyOverview{}
-	commandTypes := s.cmdRegistry.GetRegisteredCommandTypes()
-
-	for _, cmdType := range commandTypes {
-		command, err := s.cmdRegistry.CreateCommand(uuid.Nil, cmdType, nil)
-		if err != nil {
-			return nil, err
-		}
-		policies := command.Policies(ctx)
-
-		for _, p := range policies {
-			policyOverview.Policies = append(policyOverview.Policies, &api_domain.Policy{
-				Command: cmdType.String(),
-				Role:    p.Role().String(),
-				Scope:   p.Scope().String(),
-			})
-		}
-	}
-
-	return policyOverview, nil
 }

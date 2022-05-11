@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,38 +45,6 @@ var _ = Describe("Test validation rules for commandhanlder messages", func() {
 
 		It("should check for valid Scopes", func() {
 			pm.Roles = []string{invalidScope, invalidScope, invalidScope}
-			ValidateErrorExpected()
-		})
-	})
-
-	Context("Policy", func() {
-		var pc *domain.Policy
-		JustBeforeEach(func() {
-			pc = NewValidPolicy()
-		})
-
-		ValidateErrorExpected := func() {
-			err := pc.Validate()
-			Expect(err).To(HaveOccurred())
-		}
-
-		It("should ensure rules are valid", func() {
-			err := pc.Validate()
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should check for a valid Command", func() {
-			pc.Command = invalidCommand
-			ValidateErrorExpected()
-		})
-
-		It("should check for a valid Role", func() {
-			pc.Role = invalidRole
-			ValidateErrorExpected()
-		})
-
-		It("should check for a valid Scope", func() {
-			pc.Scope = invalidScope
 			ValidateErrorExpected()
 		})
 	})

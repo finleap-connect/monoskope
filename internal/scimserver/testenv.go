@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import (
 	"github.com/elimity-com/scim"
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	commandHandlerApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	ggrpc "google.golang.org/grpc"
@@ -38,6 +41,7 @@ type TestEnv struct {
 	eventStoreTestEnv     *eventstore.TestEnv
 	commandHandlerTestEnv *commandhandler.TestEnv
 	queryHandlerTestEnv   *queryhandler.TestEnv
+	gatewayTestEnv        *gateway.TestEnv
 	userServiceConn       *ggrpc.ClientConn
 	userSvcClient         domainApi.UserClient
 	commandHandlerConn    *ggrpc.ClientConn
@@ -55,27 +59,32 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 
 	os.Setenv("SUPER_USERS", "")
 
+	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
+	if err != nil {
+		return nil, err
+	}
+
 	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
+	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.queryHandlerTestEnv)
+	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.userServiceConn, env.userSvcClient, err = queryhandler.NewUserClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	env.userServiceConn, env.userSvcClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.queryHandlerTestEnv.GetApiAddr(), false, domainApi.NewUserClient)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerConn, env.commandHandlerClient, err = commandhandler.NewServiceClient(ctx, env.commandHandlerTestEnv.GetApiAddr())
+	env.commandHandlerConn, env.commandHandlerClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.commandHandlerTestEnv.GetApiAddr(), false, commandHandlerApi.NewCommandHandlerClient)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +126,10 @@ func (env *TestEnv) Shutdown() error {
 	}
 
 	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
+		return err
+	}
+
+	if err := env.gatewayTestEnv.Shutdown(); err != nil {
 		return err
 	}
 	return nil

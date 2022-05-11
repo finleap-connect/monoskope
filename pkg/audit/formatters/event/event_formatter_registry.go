@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
 package event
 
 import (
+	"sync"
+
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"sync"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 )
@@ -76,7 +77,7 @@ func (r *eventFormatterRegistry) RegisterEventFormatter(eventType es.EventType, 
 	}
 	r.eventFormatters[eventType] = factory
 
-	r.log.Info("event-formatter factory for event-type has been registered.", "eventType", eventType)
+	r.log.V(logger.DebugLevel).Info("event-formatter factory for event-type has been registered.", "eventType", eventType)
 	return nil
 }
 

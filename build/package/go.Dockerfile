@@ -1,4 +1,4 @@
-# Copyright 2021 Monoskope Authors
+# Copyright 2022 Monoskope Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.17-buster AS builder
+FROM golang:1.18-buster AS builder
 
 ARG VERSION
 ARG GO_MODULE

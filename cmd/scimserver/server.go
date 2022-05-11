@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/finleap-connect/monoskope/internal/commandhandler"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/finleap-connect/monoskope/internal/scimserver"
+	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
+	commandHandlerApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/heptiolabs/healthcheck"
@@ -50,7 +51,7 @@ var serveCmd = &cobra.Command{
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
-		conn, commandHandlerClient, err := commandhandler.NewServiceClient(ctx, commandHandlerAddr)
+		conn, commandHandlerClient, err := grpcUtil.NewClientWithAuthForward(ctx, commandHandlerAddr, false, commandHandlerApi.NewCommandHandlerClient)
 		if err != nil {
 			return err
 		}
@@ -58,7 +59,7 @@ var serveCmd = &cobra.Command{
 
 		// Create User client
 		log.Info("Connecting queryhandler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
+		conn, userClient, err := grpcUtil.NewClientWithAuthForward(ctx, queryHandlerAddr, false, domainApi.NewUserClient)
 		if err != nil {
 			return err
 		}

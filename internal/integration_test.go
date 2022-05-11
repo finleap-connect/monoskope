@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import (
 	"net/http"
 	"time"
 
-	ch "github.com/finleap-connect/monoskope/internal/commandhandler"
-	"github.com/finleap-connect/monoskope/internal/eventstore"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	testReactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
@@ -37,8 +35,9 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -53,57 +52,54 @@ var _ = Describe("integration", func() {
 	expectedClusterApiServerAddress := "one.example.com"
 	expectedClusterCACertBundle := []byte("This should be a certificate")
 
-	mdManager, err := metadata.NewDomainMetadataManager(ctx)
-	Expect(err).ToNot(HaveOccurred())
+	expectedTenantName := "tenantx"
 
-	mdManager.SetUserInformation(&metadata.UserInformation{
-		Name:  "admin",
-		Email: "admin@monoskope.io",
-	})
+	getAdminAuthToken := func() string {
+		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
+		authToken, err := signer.GenerateSignedToken(token)
+		Expect(err).ToNot(HaveOccurred())
+		return authToken
+	}
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
-		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
-		_, chClient, err := ch.NewServiceClient(ctx, chAddr)
+		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.commandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	userServiceClient := func() domainApi.UserClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewUserClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	tenantServiceClient := func() domainApi.TenantClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewTenantClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterServiceClient := func() domainApi.ClusterClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewClusterClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	certificateServiceClient := func() domainApi.CertificateClient {
-		addr := testEnv.queryHandlerTestEnv.GetApiAddr()
-		_, client, err := queryhandler.NewCertificateClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewCertificateClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	eventStoreClient := func() esApi.EventStoreClient {
-		addr := testEnv.eventStoreTestEnv.GetApiAddr()
-		_, client, err := eventstore.NewEventStoreClient(ctx, addr)
+		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	Context("user management", func() {
+
 		It("can manage a user", func() {
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
@@ -114,7 +110,7 @@ var _ = Describe("integration", func() {
 			// handel admin user propagation
 			var reply *esApi.CommandReply
 			Eventually(func(g Gomega) {
-				reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+				reply, err = commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 			}).Should(Succeed())
@@ -137,7 +133,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			// update userRolebBindingId, as the "create" command will have changed it.
@@ -149,7 +145,7 @@ var _ = Describe("integration", func() {
 			// Creating the same rolebinding again should fail
 			Eventually(func(g Gomega) {
 				command.Id = uuid.New().String()
-				_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+				_, err = commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).To(HaveOccurred())
 			}).Should(Succeed())
 
@@ -159,7 +155,7 @@ var _ = Describe("integration", func() {
 			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
 			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -175,7 +171,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 		})
@@ -186,7 +182,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).To(HaveOccurred())
 			Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 		})
@@ -197,14 +193,14 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), createCommand)
+			reply, err := commandHandlerClient().Execute(ctx, createCommand)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
 			// update userId, as the "create" command will have changed it.
 			userId := uuid.MustParse(reply.AggregateId)
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(),
+			_, err = commandHandlerClient().Execute(ctx,
 				cmd.CreateCommand(userId, commandTypes.DeleteUser))
 			Expect(err).ToNot(HaveOccurred())
 
@@ -217,18 +213,10 @@ var _ = Describe("integration", func() {
 				g.Expect(user.Id).To(Equal(userId.String()))
 				g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
 			}).Should(Succeed())
-
-			// Get admin user id to compare with metadata
-			admin, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.GetMetadata().GetDeletedById()).To(Equal(admin.GetId()))
 		})
 	})
 	Context("tenant management", func() {
 		It("can manage a tenant", func() {
-			user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String("admin@monoskope.io"))
-			Expect(err).ToNot(HaveOccurred())
-
 			tenantId := uuid.New()
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
@@ -236,7 +224,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(tenantId.String()).ToNot(Equal(reply.AggregateId))
 
@@ -255,28 +243,26 @@ var _ = Describe("integration", func() {
 
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
-				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "DIIIETER"}},
+				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: expectedTenantName}},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
-				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String(expectedTenantName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(tenant).ToNot(BeNil())
-				g.Expect(tenant.Metadata.GetLastModifiedById()).To(Equal(user.Id))
 			}).Should(Succeed())
 
-			_, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
-				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String("DIIIETER"))
+				tenant, err = tenantServiceClient().GetByName(ctx, wrapperspb.String(expectedTenantName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(tenant).ToNot(BeNil())
-				g.Expect(tenant.Metadata.GetDeletedById()).To(Equal(user.GetId()))
 				g.Expect(tenant.Metadata.Created).NotTo(BeNil())
 			}).Should(Succeed())
 		})
@@ -287,7 +273,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 			Expect(int(reply.Version)).To(BeNumerically("==", 1))
@@ -309,7 +295,7 @@ var _ = Describe("integration", func() {
 			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
-			reply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 
@@ -390,7 +376,7 @@ var _ = Describe("integration", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			certRequestCmdReply, err := commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+			certRequestCmdReply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
 			var observed []es.Event
@@ -402,7 +388,7 @@ var _ = Describe("integration", func() {
 			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
 			err = testReactor.Emit(ctx, es.NewEvent(
-				mdManager.GetOutgoingGrpcContext(),
+				ctx,
 				events.CertificateIssued,
 				es.ToEventDataFromProto(&eventdata.CertificateIssued{
 					Certificate: &common.CertificateChain{

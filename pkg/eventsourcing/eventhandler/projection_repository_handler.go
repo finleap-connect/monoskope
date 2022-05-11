@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	h.log.Info("Projecting event...", "event", event.String())
+	h.log.V(logger.DebugLevel).Info("Projecting event...", "event", event.String())
 
 	projection, err := h.repository.ById(ctx, event.AggregateID())
 

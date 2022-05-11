@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ var _ = Describe("Gateway", func() {
 		ctx = context.Background()
 	)
 	It("can retrieve auth url", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
@@ -41,26 +41,26 @@ var _ = Describe("Gateway", func() {
 		response, err := gwc.RequestUpstreamAuthentication(context.Background(), &api.UpstreamAuthenticationRequest{CallbackUrl: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(response).ToNot(BeNil())
-		env.Log.Info("UpstreamIdpRedirect: " + response.UpstreamIdpRedirect)
+		testEnv.Log.Info("UpstreamIdpRedirect: " + response.UpstreamIdpRedirect)
 	})
 	It("can go through oidc-flow with existing user", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 		gwc := api.NewGatewayClient(conn)
 
 		ready := make(chan string, 1)
-		oidcClientServer, err := env.NewOidcClientServer(ready)
+		oidcClientServer, err := testEnv.NewOidcClientServer(ready)
 		Expect(err).ToNot(HaveOccurred())
 		defer oidcClientServer.Close()
 
-		env.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
+		testEnv.Log.Info("oidc redirect uri: " + oidcClientServer.RedirectURI)
 		response, err := gwc.RequestUpstreamAuthentication(context.Background(), &api.UpstreamAuthenticationRequest{CallbackUrl: "http://localhost:8000"})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(response).ToNot(BeNil())
 
 		var innerErr error
-		res, err := env.HttpClient.Get(response.UpstreamIdpRedirect)
+		res, err := testEnv.HttpClient.Get(response.UpstreamIdpRedirect)
 		Expect(err).NotTo(HaveOccurred())
 
 		doc, err := goquery.NewDocumentFromReader(res.Body)
@@ -69,7 +69,7 @@ var _ = Describe("Gateway", func() {
 		path, ok := doc.Find("form").Attr("action")
 		Expect(ok).To(BeTrue())
 
-		formAction := fmt.Sprintf("%s%s", env.IdentityProviderURL, path)
+		formAction := fmt.Sprintf("%s%s", testEnv.IdentityProviderURL, path)
 
 		var authCode string
 		var statusCode int
@@ -82,9 +82,9 @@ var _ = Describe("Gateway", func() {
 		})
 		eg.Go(func() error {
 			defer GinkgoRecover()
-			env.Log.Info("wait for oidc client server to get ready...")
+			testEnv.Log.Info("wait for oidc client server to get ready...")
 			<-ready
-			res, err = env.HttpClient.PostForm(formAction, url.Values{
+			res, err = testEnv.HttpClient.PostForm(formAction, url.Values{
 				"login": {"admin@monoskope.io"}, "password": {"password"},
 			})
 			if err == nil {
@@ -100,7 +100,7 @@ var _ = Describe("Gateway", func() {
 		Expect(authResponse).ToNot(BeNil())
 		Expect(authResponse.GetAccessToken()).ToNot(Equal(""))
 		Expect(authResponse.GetUsername()).ToNot(Equal(""))
-		env.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetExpiry().AsTime())
+		testEnv.Log.Info("Received user info", "AccessToken", authResponse.GetAccessToken(), "Expiry", authResponse.GetExpiry().AsTime())
 	})
 })
 
@@ -109,7 +109,7 @@ var _ = Describe("HealthCheck", func() {
 		ctx = context.Background()
 	)
 	It("can do health checks", func() {
-		conn, err := CreateInsecureConnection(ctx, env.ApiListenerAPIServer.Addr().String())
+		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 		defer conn.Close()
 

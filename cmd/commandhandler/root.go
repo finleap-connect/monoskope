@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ func main() {
 	rootCmd.AddCommand(version.NewVersionCmd(rootCmd.Name()))
 
 	report := NewReportCmd()
-	report.AddCommand(NewReportPermissions())
 	report.AddCommand(NewReportCommands())
 	rootCmd.AddCommand(report)
 

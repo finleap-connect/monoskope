@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ type getAuthTokenUsecase struct {
 	request     *api.ClusterAuthTokenRequest
 	result      *api.ClusterAuthTokenResponse
 	signer      jwt.JWTSigner
-	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
 	issuer      string
 	validity    map[string]time.Duration
@@ -47,7 +46,6 @@ func NewGetAuthTokenUsecase(
 	request *api.ClusterAuthTokenRequest,
 	response *api.ClusterAuthTokenResponse,
 	signer jwt.JWTSigner,
-	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
 	issuer string,
 	validity map[string]time.Duration,
@@ -57,7 +55,6 @@ func NewGetAuthTokenUsecase(
 		request,
 		response,
 		signer,
-		userRepo,
 		clusterRepo,
 		issuer,
 		validity,
@@ -81,12 +78,6 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		return domainErrors.ErrUnauthenticated
 	}
 
-	s.Log.V(logger.DebugLevel).Info("Getting current user by id...", "id", userInfo.Id, "name", userInfo.Name, "email", userInfo.Email)
-	user, err := s.userRepo.ByUserId(ctx, userInfo.Id)
-	if err != nil {
-		return err
-	}
-
 	clusterId := s.request.GetClusterId()
 	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
 	cluster, err := s.clusterRepo.ByClusterId(ctx, clusterId)
@@ -100,22 +91,22 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		return err
 	}
 
-	username := strings.ToLower(strings.Split(user.GetEmail(), "@")[0])
+	username := strings.ToLower(strings.Split(userInfo.Email, "@")[0])
 	if s.request.GetRole() != string(k8s.DefaultRole) {
 		username = fmt.Sprintf("%s-%s", username, s.request.GetRole())
 	}
 
 	s.Log.V(logger.DebugLevel).Info("Generating token for k8s user...", "username", username)
 	token := auth.NewKubernetesAuthToken(&jwt.StandardClaims{
-		Name:          user.GetName(),
-		Email:         user.GetEmail(),
+		Name:          userInfo.Name,
+		Email:         userInfo.Email,
 		EmailVerified: true,
 	}, &jwt.ClusterClaim{
 		ClusterId:       cluster.GetId(),
 		ClusterName:     cluster.GetName(),
 		ClusterUserName: username,
 		ClusterRole:     s.request.Role,
-	}, s.issuer, user.Id, s.validity[s.request.Role])
+	}, s.issuer, userInfo.Id.String(), s.validity[s.request.Role])
 	s.Log.V(logger.DebugLevel).Info("Token issued successfully.", "RawToken", token, "Expiry", token.Expiry.Time().String())
 
 	signedToken, err := s.signer.GenerateSignedToken(token)

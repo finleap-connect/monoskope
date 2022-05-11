@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ func NewEventStore() (eventsourcing.EventStore, error) {
 
 func NewEventStoreClient(ctx context.Context, eventStoreAddr string) (*grpc.ClientConn, esApi.EventStoreClient, error) {
 	conn, err := grpcUtil.
-		NewGrpcConnectionFactoryWithDefaults(eventStoreAddr).
+		NewGrpcConnectionFactoryWithInsecure(eventStoreAddr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err

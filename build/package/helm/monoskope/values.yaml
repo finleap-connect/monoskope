@@ -19,8 +19,6 @@ vaultOperator:
 pki:
   enabled: true
   certificates:
-    # -- Specify which apiVersion cert-manager resources must have.
-    certManagerApiVersion: v1
     duration: 2160h # 90d
     renewBefore: 1440h # 60d
   issuer:
@@ -60,6 +58,9 @@ gateway:
   # and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically.
   oidcSecret:
     name: m8-gateway-oidc
+  messageBus:
+    configSecret: *msgBusClientConfigSecretName
+    tlsSecret: *msgBusClientAuthCertSecretName
 
 eventstore:
   enabled: true
@@ -76,7 +77,7 @@ eventstore:
 commandhandler:
   enabled: true
   replicaCount: 1
-
+  
 queryhandler:
   enabled: true
   replicaCount: 1
@@ -89,7 +90,7 @@ cockroachdb:
   dropExistingDatabase: false # ATTENTION: If true the existing database will be dropped on crdb init job, only when restoring backup
   image:
     repository: cockroachdb/cockroach
-    tag: v21.1.4
+    tag: v21.2.7
     pullPolicy: Always
   statefulset:
     replicas: 3 # ATTENTION: Do not scale down existing cluster here, see https://www.cockroachlabs.com/docs/v20.2/remove-nodes.html
@@ -184,7 +185,7 @@ ambassador:
   replicaCount: 1
   image:
     repository: datawire/ambassador
-    tag: 1.14.1
+    tag: 1.14.3
   enableAES: false
   agent:
     enabled: false
@@ -194,7 +195,7 @@ ambassador:
   rbac:
     create: false
   serviceAccount:
-    create: false
+    create: true
   scope:
     singleNamespace: true
   resources:
@@ -209,8 +210,6 @@ ambassador:
       enabled: false
   adminService:
     create: false
-  alerting:
-    enabled: false
 
 cluster-bootstrap-reactor:
   enabled: true

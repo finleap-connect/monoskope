@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import (
 	"net"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
-	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
+	gwApi "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -32,26 +33,24 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	apiListener         net.Listener
-	grpcServer          *grpc.Server
-	eventStoreTestEnv   *eventstore.TestEnv
-	queryHandlerTestEnv *queryhandler.TestEnv
-	esConn              *ggrpc.ClientConn
-	esClient            esApi.EventStoreClient
-	userServiceConn     *ggrpc.ClientConn
-	userSvcClient       domainApi.UserClient
-	tenantServiceConn   *ggrpc.ClientConn
-	tenantSvcClient     domainApi.TenantClient
+	apiListener        net.Listener
+	grpcServer         *grpc.Server
+	eventStoreTestEnv  *eventstore.TestEnv
+	gatewayTestEnv     *gateway.TestEnv
+	esConn             *ggrpc.ClientConn
+	esClient           esApi.EventStoreClient
+	gatewayServiceConn *ggrpc.ClientConn
+	gatewaySvcClient   gwApi.GatewayAuthClient
 }
 
-func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *queryhandler.TestEnv) (*TestEnv, error) {
+func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.TestEnv) (*TestEnv, error) {
 	var err error
 	ctx := context.Background()
 
 	env := &TestEnv{
-		TestEnv:             test.NewTestEnv("CommandHandlerTestEnv"),
-		eventStoreTestEnv:   eventStoreTestEnv,
-		queryHandlerTestEnv: queryHandlerTestEnv,
+		TestEnv:           test.NewTestEnv("CommandHandlerTestEnv"),
+		eventStoreTestEnv: eventStoreTestEnv,
+		gatewayTestEnv:    gatewayTestEnv,
 	}
 
 	env.esConn, env.esClient, err = eventstore.NewEventStoreClient(ctx, env.eventStoreTestEnv.GetApiAddr())
@@ -59,23 +58,26 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, queryHandlerTestEnv *quer
 		return nil, err
 	}
 
-	env.userServiceConn, env.userSvcClient, err = queryhandler.NewUserClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
+	env.gatewayServiceConn, env.gatewaySvcClient, err = gateway.NewInsecureAuthServerClient(ctx, env.gatewayTestEnv.GetApiAddr())
 	if err != nil {
 		return nil, err
 	}
 
-	env.tenantServiceConn, env.tenantSvcClient, err = queryhandler.NewTenantClient(ctx, env.queryHandlerTestEnv.GetApiAddr())
-	if err != nil {
-		return nil, err
-	}
+	authMiddleware := auth.NewAuthMiddleware(env.gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
-	err = domain.SetupCommandHandlerDomain(ctx, env.userSvcClient, env.esClient)
+	err = domain.SetupCommandHandlerDomain(ctx, env.esClient)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create server
-	env.grpcServer = grpc.NewServer("commandhandler_grpc", false)
+	env.grpcServer = grpc.NewServerWithOpts("commandhandler-grpc", false,
+		[]ggrpc.UnaryServerInterceptor{
+			authMiddleware.UnaryServerInterceptor(),
+		}, []ggrpc.StreamServerInterceptor{
+			authMiddleware.StreamServerInterceptor(),
+		},
+	)
 
 	commandHandler := NewApiServer(es.DefaultCommandRegistry)
 	env.grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
@@ -107,11 +109,7 @@ func (env *TestEnv) Shutdown() error {
 		return err
 	}
 
-	if err := env.userServiceConn.Close(); err != nil {
-		return err
-	}
-
-	if err := env.tenantServiceConn.Close(); err != nil {
+	if err := env.gatewayServiceConn.Close(); err != nil {
 		return err
 	}
 

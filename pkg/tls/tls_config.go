@@ -27,52 +27,101 @@ import (
 )
 
 type TLSConfigLoader struct {
-	mu         sync.RWMutex
-	caCertFile string
-	certFile   string
-	keyFile    string
-	keyPair    *tls.Certificate
-	rootCAs    *x509.CertPool
-	watcher    *fsnotify.Watcher
-	watching   chan struct{}
-	log        logger.Logger
+	mu                       sync.RWMutex
+	serverCACertificateFile  string
+	serverCertificateFile    string
+	serverCertificateKeyFile string
+	serverCertificate        *tls.Certificate
+	clientCACertificateFile  string
+	clientCertificateFile    string
+	clientCertificateKeyFile string
+	clientCertificate        *tls.Certificate
+	serverCAs                *x509.CertPool
+	watcher                  *fsnotify.Watcher
+	watching                 chan struct{}
+	log                      logger.Logger
 }
 
-func NewTLSConfigLoader(caCertFile, certFile, keyFile string) (*TLSConfigLoader, error) {
-	if caCertFile == "" {
-		return nil, errors.New("caCertFile must not be empty")
-	}
-	if certFile == "" {
-		return nil, errors.New("certFile must not be empty")
-	}
-	if keyFile == "" {
-		return nil, errors.New("keyFile must not be empty")
-	}
-	var err error
-	caCertFile, err = filepath.Abs(caCertFile)
-	if err != nil {
-		return nil, err
-	}
-	certFile, err = filepath.Abs(certFile)
-	if err != nil {
-		return nil, err
-	}
-	keyFile, err = filepath.Abs(keyFile)
-	if err != nil {
-		return nil, err
-	}
-
+func NewTLSConfigLoader() (*TLSConfigLoader, error) {
 	return &TLSConfigLoader{
-		mu:         sync.RWMutex{},
-		caCertFile: caCertFile,
-		certFile:   certFile,
-		keyFile:    keyFile,
-		log:        logger.WithName("tls-config-loader"),
+		mu:  sync.RWMutex{},
+		log: logger.WithName("tls-config-loader"),
 	}, nil
 }
 
-// Watch starts watching for changes to the certificate
-// and key files. On any change the certificate and key
+func (t *TLSConfigLoader) SetServerCACertificate(caCertificateFile string) error {
+	if caCertificateFile == "" {
+		return errors.New("caCertificateFile must not be empty")
+	}
+	var err error
+	caCertificateFile, err = filepath.Abs(caCertificateFile)
+	if err != nil {
+		return err
+	}
+	t.serverCACertificateFile = caCertificateFile
+	return nil
+}
+
+func (t *TLSConfigLoader) SetClientCACertificate(caCertificateFile string) error {
+	if caCertificateFile == "" {
+		return errors.New("caCertificateFile must not be empty")
+	}
+	var err error
+	caCertificateFile, err = filepath.Abs(caCertificateFile)
+	if err != nil {
+		return err
+	}
+	t.clientCACertificateFile = caCertificateFile
+	return nil
+}
+
+func (t *TLSConfigLoader) SetClientCertificate(certificateFile, keyFile string) error {
+	if certificateFile == "" {
+		return errors.New("certificateFile must not be empty")
+	}
+	if keyFile == "" {
+		return errors.New("keyFile must not be empty")
+	}
+
+	var err error
+	certificateFile, err = filepath.Abs(certificateFile)
+	if err != nil {
+		return err
+	}
+	t.clientCertificateFile = certificateFile
+
+	keyFile, err = filepath.Abs(keyFile)
+	if err != nil {
+		return err
+	}
+	t.clientCertificateKeyFile = keyFile
+	return nil
+}
+
+func (t *TLSConfigLoader) SetServerCertificate(certificateFile, keyFile string) error {
+	if certificateFile == "" {
+		return errors.New("certificateFile must not be empty")
+	}
+	if keyFile == "" {
+		return errors.New("keyFile must not be empty")
+	}
+
+	var err error
+	certificateFile, err = filepath.Abs(certificateFile)
+	if err != nil {
+		return err
+	}
+	t.serverCertificateFile = certificateFile
+
+	keyFile, err = filepath.Abs(keyFile)
+	if err != nil {
+		return err
+	}
+	t.serverCertificateKeyFile = keyFile
+	return nil
+}
+
+// On any change the certificate and key
 // are reloaded. If there is an issue the load will fail
 // and the old (if any) certificates and keys will continue
 // to be used.
@@ -81,19 +130,47 @@ func (t *TLSConfigLoader) Watch() error {
 	if t.watcher, err = fsnotify.NewWatcher(); err != nil {
 		return errors.Wrap(err, "can't create watcher")
 	}
-	if err = t.watcher.Add(t.caCertFile); err != nil {
-		return errors.Wrap(err, "can't watch ca cert file")
+
+	if t.serverCACertificateFile != "" {
+		if err = t.watcher.Add(t.serverCACertificateFile); err != nil {
+			return errors.Wrap(err, "can't watch ca cert file")
+		}
 	}
-	if err = t.watcher.Add(t.certFile); err != nil {
-		return errors.Wrap(err, "can't watch cert file")
+
+	if t.clientCACertificateFile != "" {
+		if err = t.watcher.Add(t.clientCACertificateFile); err != nil {
+			return errors.Wrap(err, "can't watch ca cert file")
+		}
 	}
-	if err = t.watcher.Add(t.keyFile); err != nil {
-		return errors.Wrap(err, "can't watch key file")
+
+	if t.clientCertificateFile != "" {
+		if err = t.watcher.Add(t.clientCertificateFile); err != nil {
+			return errors.Wrap(err, "can't watch cert file")
+		}
 	}
+
+	if t.serverCertificateFile != "" {
+		if err = t.watcher.Add(t.serverCertificateFile); err != nil {
+			return errors.Wrap(err, "can't watch cert file")
+		}
+	}
+
+	if t.clientCertificateKeyFile != "" {
+		if err = t.watcher.Add(t.clientCertificateKeyFile); err != nil {
+			return errors.Wrap(err, "can't watch key file")
+		}
+	}
+
+	if t.serverCertificateKeyFile != "" {
+		if err = t.watcher.Add(t.serverCertificateKeyFile); err != nil {
+			return errors.Wrap(err, "can't watch key file")
+		}
+	}
+
 	if err := t.load(); err != nil {
-		t.log.Error(err, "can't load")
+		t.log.Error(err, "couldn't load")
 	}
-	t.log.Info("watching for ca, cert and key change", "caCertFile", t.caCertFile, "certFile", t.certFile, "keyFile", t.keyFile)
+	t.log.Info("watching for changes")
 	t.watching = make(chan struct{})
 	go t.run()
 	return nil
@@ -109,28 +186,56 @@ func (t *TLSConfigLoader) load() error {
 		rootCAs = x509.NewCertPool()
 	}
 
-	// Load local CA
-	certs, err := ioutil.ReadFile(t.caCertFile)
-	if err != nil {
-		return err
+	// Load server CA
+	if t.serverCACertificateFile != "" {
+		certs, err := ioutil.ReadFile(t.serverCACertificateFile)
+		if err != nil {
+			return err
+		}
+		// Append local CA cert to the system pool
+		if rootCAs.AppendCertsFromPEM(certs) {
+			t.log.Info("server CAs loaded")
+		} else {
+			t.log.Info("No server CAs appended, using system CAs only")
+		}
+		t.serverCAs = rootCAs
 	}
 
-	// Append local CA cert to the system pool
-	if rootCAs.AppendCertsFromPEM(certs) {
-		t.log.Info("root CAs loaded")
-	} else {
-		t.log.Info("No root CAs appended, using system CAs only")
+	// Load client CA
+	if t.clientCACertificateFile != "" {
+		certs, err := ioutil.ReadFile(t.clientCACertificateFile)
+		if err != nil {
+			return err
+		}
+		// Append local CA cert to the system pool
+		if rootCAs.AppendCertsFromPEM(certs) {
+			t.log.Info("client CAs loaded")
+		} else {
+			t.log.Info("No client CAs appended, using system CAs only")
+		}
 	}
 
-	t.rootCAs = rootCAs
-
-	keyPair, err := tls.LoadX509KeyPair(t.certFile, t.keyFile)
-	if err == nil {
-		t.keyPair = &keyPair
-		t.log.Info("certificate and key loaded")
+	if t.clientCertificateFile != "" {
+		clientCert, err := tls.LoadX509KeyPair(t.clientCertificateFile, t.clientCertificateKeyFile)
+		if err == nil {
+			t.clientCertificate = &clientCert
+			t.log.Info("client certificate and key loaded")
+		} else {
+			return err
+		}
 	}
 
-	return err
+	if t.serverCertificateFile != "" {
+		serverCert, err := tls.LoadX509KeyPair(t.serverCertificateFile, t.serverCertificateKeyFile)
+		if err == nil {
+			t.serverCertificate = &serverCert
+			t.log.Info("server certificate and key loaded")
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (t *TLSConfigLoader) run() {
@@ -153,19 +258,32 @@ loop:
 }
 
 // GetTLSConfig returns a tls.Config with auto reloading certs.
-func (t *TLSConfigLoader) GetTLSConfig() *tls.Config {
-	return &tls.Config{
-		RootCAs:              t.GetRootCAs(),
-		GetCertificate:       t.GetCertificate,
-		GetClientCertificate: t.GetClientCertificate,
+func (t *TLSConfigLoader) GetClientTLSConfig() *tls.Config {
+	conf := &tls.Config{
+		RootCAs: t.GetRootCAs(),
 	}
+	if t.clientCertificate != nil {
+		conf.GetClientCertificate = t.GetClientCertificate
+	}
+	return conf
+}
+
+func (t *TLSConfigLoader) GetServerTLSConfig(clientAuthType tls.ClientAuthType) *tls.Config {
+	conf := &tls.Config{
+		GetCertificate: t.GetCertificate,
+		ClientAuth:     clientAuthType,
+	}
+	if clientAuthType == tls.RequireAndVerifyClientCert {
+		conf.ClientCAs = t.GetRootCAs()
+	}
+	return conf
 }
 
 // GetRootCAs returns the cert pool to use to verify certificates.
 func (t *TLSConfigLoader) GetRootCAs() *x509.CertPool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	return t.rootCAs
+	return t.serverCAs
 }
 
 // GetCertificate returns the loaded certificate for use by
@@ -173,7 +291,7 @@ func (t *TLSConfigLoader) GetRootCAs() *x509.CertPool {
 func (t *TLSConfigLoader) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	return t.keyPair, nil
+	return t.serverCertificate, nil
 }
 
 // GetClientCertificate returns the loaded certificate for use by
@@ -181,7 +299,7 @@ func (t *TLSConfigLoader) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certi
 func (t *TLSConfigLoader) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	return t.keyPair, nil
+	return t.clientCertificate, nil
 }
 
 // Stop stops watching for changes to the

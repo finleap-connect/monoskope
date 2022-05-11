@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import (
 )
 
 var _ = Describe("Managing Metadata", func() {
-	It("should set user information", func() {
-
+	It("should have user information from context", func() {
 		expectedUserId := uuid.New()
 
 		ctx := context.Background()
@@ -38,7 +37,8 @@ var _ = Describe("Managing Metadata", func() {
 			Email: "admin@monoskope.io",
 		})
 
+		mdManager, err = NewDomainMetadataManager(mdManager.GetContext())
+		Expect(err).ToNot(HaveOccurred())
 		Expect(mdManager.GetMetadata()[auth.HeaderAuthId]).To(Equal(expectedUserId.String()))
-
 	})
 })

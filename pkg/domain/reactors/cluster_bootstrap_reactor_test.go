@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ import (
 	"context"
 	"time"
 
+	apiutil "github.com/cert-manager/cert-manager/pkg/api/util"
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/finleap-connect/monoskope/internal/test"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/certificatemanagement"
@@ -29,15 +32,13 @@ import (
 	mock_k8s "github.com/finleap-connect/monoskope/test/k8s"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("package reactors", func() {
@@ -146,7 +147,7 @@ var _ = Describe("package reactors", func() {
 				k8sClient.EXPECT().Get(gomock.Any(), types.NamespacedName{Name: aggregateId.String(), Namespace: expectedNamespace}, gomock.Any()).
 					Return(errors.NewNotFound(cmapi.Resource(cr.Name), cr.Name))
 
-				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object) error {
+				k8sClient.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, obj runtime.Object, _ ...client.CreateOption) error {
 					cr := obj.(*cmapi.CertificateRequest)
 					k8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ types.NamespacedName, obj runtime.Object) error {
 						crGet := obj.(*cmapi.CertificateRequest)

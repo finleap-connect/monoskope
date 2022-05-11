@@ -76,13 +76,10 @@ affinity: {}
 labels: {}
   # app.kubernetes.io/part-of: my-app
 
-# -- API address of the query handler
-queryHandler:
-  prefix: "" # Defaults to the release name
-  host: "queryhandler"
-  port: 8080
-
 keepAlive: false
+
+# -- Name of the secret containing the tls certificate/key the Gateway grpc endpoint should use for TLS
+tlsSecretName: ""
 
 auth:
   # -- The URL of the issuer to Gateway itself
@@ -119,3 +116,19 @@ k8sTokenLifetime:
 
 # -- Duration for which issued Monoskope auth tokens are valid
 authTokenValidity: 12h
+
+# -- API address of the event store
+eventStore:
+  prefix: "" # Defaults to the release name
+  host: "eventstore"
+  port: 8080
+
+messageBus:
+  # -- Prefix for routing messages via message bus
+  routingKeyPrefix: m8
+  # -- URL of the bus
+  url: amqps://127.0.0.1:5672/
+  # -- Name of the configmap containing the config for the messagebus
+  configSecret: ""
+  # -- Name of the secret containing the tls certificates/keys
+  tlsSecret: ""

@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,17 +78,26 @@ func (conf *RabbitEventBusConfig) SetURL(url string) error {
 
 // configureTLS adds the configuration for TLS secured connection/auth
 func (conf *RabbitEventBusConfig) configureTLS() error {
-	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
+	loader, err := m8tls.NewTLSConfigLoader()
 	if err != nil {
 		return err
 	}
 
+	err = loader.SetServerCACertificate(CACertPath)
+	if err != nil {
+		return err
+	}
+
+	err = loader.SetClientCertificate(TLSCertPath, TLSKeyPath)
+	if err != nil {
+		return err
+	}
 	err = loader.Watch()
 	if err != nil {
 		return err
 	}
 
-	conf.AMQPConfig.TLSClientConfig = loader.GetTLSConfig()
+	conf.AMQPConfig.TLSClientConfig = loader.GetClientTLSConfig()
 	conf.AMQPConfig.SASL = []amqp.Authentication{&CertAuth{}}
 
 	return nil

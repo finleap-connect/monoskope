@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grpc
+package middleware
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc"
 )
 
-func ErrInvalidArgument(msg string) error {
-	return status.Error(codes.InvalidArgument, msg)
+type GRPCMiddleware interface {
+	UnaryServerInterceptor() grpc.UnaryServerInterceptor
+	StreamServerInterceptor() grpc.StreamServerInterceptor
 }

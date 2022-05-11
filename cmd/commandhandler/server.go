@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,29 +17,30 @@ package main
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/internal/gateway"
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
-	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 )
 
 var (
-	apiAddr          string
-	metricsAddr      string
-	keepAlive        bool
-	eventStoreAddr   string
-	queryHandlerAddr string
+	apiAddr        string
+	metricsAddr    string
+	keepAlive      bool
+	eventStoreAddr string
+	gatewayAddr    string
 )
 
 var serverCmd = &cobra.Command{
@@ -59,24 +60,31 @@ var serverCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		// Create UserService client
-		log.Info("Connecting query handler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userSvcClient, err := queryhandler.NewUserClient(ctx, queryHandlerAddr)
+		// Setup domain
+		log.Info("Seting up es/cqrs...")
+		err = domain.SetupCommandHandlerDomain(ctx, esClient)
+		if err != nil {
+			return err
+		}
+
+		// Create Gateway Auth client
+		log.Info("Connecting gateway...", "gatewayAddr", gatewayAddr)
+		conn, gatewaySvcClient, err := gateway.NewInsecureAuthServerClient(ctx, gatewayAddr)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
-
-		// Setup domain
-		log.Info("Seting up es/cqrs...")
-		err = domain.SetupCommandHandlerDomain(ctx, userSvcClient, esClient)
-		if err != nil {
-			return err
-		}
+		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
 		// Create gRPC server and register implementation
 		log.Info("Creating gRPC server...")
-		grpcServer := grpc.NewServer("commandhandler-grpc", keepAlive)
+		grpcServer := grpc.NewServerWithOpts("commandhandler-grpc", keepAlive,
+			[]ggrpc.UnaryServerInterceptor{
+				authMiddleware.UnaryServerInterceptor(),
+			}, []ggrpc.StreamServerInterceptor{
+				authMiddleware.StreamServerInterceptor(),
+			},
+		)
 
 		commandHandlerApiServer := commandhandler.NewApiServer(es.DefaultCommandRegistry)
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
@@ -99,5 +107,5 @@ func init() {
 	flags.StringVarP(&apiAddr, "api-addr", "a", ":8080", "Address the gRPC service will listen on")
 	flags.StringVar(&metricsAddr, "metrics-addr", ":9102", "Address the metrics http service will listen on")
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
-	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8081", "Address the queryhandler gRPC service is listening on")
+	flags.StringVar(&gatewayAddr, "gateway-api-addr", ":8081", "Address the gateway gRPC service is listening on")
 }

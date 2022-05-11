@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ func (r *commandRegistry) RegisterCommand(factory func(uuid.UUID) Command) {
 	}
 	r.commands[commandType] = factory
 
-	r.log.Info("command has been registered.", "commandType", commandType)
+	r.log.V(logger.DebugLevel).Info("command has been registered.", "commandType", commandType)
 }
 
 // CreateCommand creates an command of a type with an ID using the factory
@@ -135,5 +135,5 @@ func (r *commandRegistry) SetHandler(handler CommandHandler, commandType Command
 	}
 
 	r.handlers[commandType] = handler
-	r.log.Info("command handler has been registered.", "commandType", commandType)
+	r.log.V(logger.DebugLevel).Info("command handler has been registered.", "commandType", commandType)
 }

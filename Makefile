@@ -28,18 +28,16 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 add-license: ## Adds the license to every file
-	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v .
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense --ignore "**/*.yaml" -c "Monoskope Authors" -l "apache" -v .
 
-check-license: ## Checks thath the license is set on every file
-	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense -c "Monoskope Authors" -l "apache" -v -check .
+check-license: ## Checks that the license is set on every file
+	@docker run --rm -v "$(PWD):/src" -u $(shell id -u) ghcr.io/google/addlicense --ignore "**/*.yaml" -c "Monoskope Authors" -l "apache" -v -check .
 
 show-latest-tag: ## echos the latest tag
 	@echo "Latest tag is $(LATEST_TAG)"
 	
-diagrams: ## Generate pngs from mermaid
-	$(SHELL) ./build/docs/diagrams.sh
-
 export
 include go.mk
 include helm.mk
 include kind.mk
+include opa.mk

@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ type clusterAuthApiServer struct {
 	api.UnimplementedClusterAuthServer
 	log         logger.Logger
 	signer      jwt.JWTSigner
-	userRepo    repositories.ReadOnlyUserRepository
 	clusterRepo repositories.ReadOnlyClusterRepository
 	issuer      string
 	validity    map[string]time.Duration
@@ -39,14 +38,12 @@ type clusterAuthApiServer struct {
 func NewClusterAuthAPIServer(
 	issuer string,
 	signer jwt.JWTSigner,
-	userRepo repositories.ReadOnlyUserRepository,
 	clusterRepo repositories.ReadOnlyClusterRepository,
 	validity map[string]time.Duration,
 ) api.ClusterAuthServer {
 	s := &clusterAuthApiServer{
 		log:         logger.WithName("server"),
 		signer:      signer,
-		userRepo:    userRepo,
 		clusterRepo: clusterRepo,
 		issuer:      issuer,
 		validity:    validity,
@@ -56,7 +53,7 @@ func NewClusterAuthAPIServer(
 
 func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.ClusterAuthTokenRequest) (*api.ClusterAuthTokenResponse, error) {
 	response := new(api.ClusterAuthTokenResponse)
-	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.userRepo, s.clusterRepo, s.issuer, s.validity)
+	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.clusterRepo, s.issuer, s.validity)
 	err := uc.Run(ctx)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)

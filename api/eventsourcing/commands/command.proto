@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,9 +28,12 @@ package commands;
 message Command {
   // Unique identifier of the aggregate the command applies to (UUID 128-bit
   // number)
-  string id = 1 [(validate.rules).string.uuid = true]; // required
+  string id = 1 [ (validate.rules).string.uuid = true ]; // required
   // Type of the command
-  string type = 2 [(validate.rules).string = {pattern: "^[a-zA-Z][A-Za-z0-9_-]+$", max_bytes: 60}];
+  string type = 2 [ (validate.rules).string = {
+    pattern : "^[a-zA-Z][A-Za-z0-9_-]+$",
+    max_bytes : 60
+  } ];
   // Command type specific data
   google.protobuf.Any data = 3;
 }

@@ -72,7 +72,7 @@ spec:
             - name: M8_OPERATION_MODE
               value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
             - name: GIN_MODE
-              value: release
+              value: "release"
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -88,6 +88,9 @@ spec:
                 secretKeyRef:
                   name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-nonce
+          envFrom:
+            - secretRef:
+                name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "gateway.fullname" .) "bus") }}
           args:
             - /app
             - server
@@ -95,12 +98,15 @@ spec:
             - --grpc-api-addr=:8080
             - --http-api-addr=:8081
             - --metrics-addr=:9102
-            - {{ (printf "--query-handler-api-addr=%s-%s:%v" (.Values.queryHandler.prefix | default .Release.Name ) .Values.queryHandler.host .Values.queryHandler.port ) }}
             - --identity-provider-url={{ required "A valid .Values.auth.identityProviderURL entry is required!" .Values.auth.identityProviderURL }}
-            - --scopes={{ join "," .Values.auth.scopes }}
+            {{ range .Values.auth.scopes -}}
+            - --scopes={{ . }}
+            {{ end -}}
             - --redirect-uris={{ join "," .Values.auth.redirectUris }}
             - --auth-token-validity={{ .Values.authTokenValidity }}
             - --gateway-url={{ required "A valid .Values.auth.selfURL entry is required!" .Values.auth.selfURL }}
+            - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
+            - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -125,6 +131,19 @@ spec:
               readOnly: true
             - name: k8s-auth-config
               mountPath: /etc/gateway/k8s-auth
+            - name: policies-secret
+              mountPath: /etc/gateway/policies
+              readOnly: true
+          {{- if .Values.tlsSecretName }}
+            - name: certs
+              mountPath: /etc/gateway/certs
+              readOnly: true
+          {{- end }}
+          {{- if .Values.messageBus.tlsSecret }}
+            - name: buscerts
+              mountPath: /etc/eventstore/certs/buscerts
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -141,9 +160,19 @@ spec:
         - name: key-secret
           secret:
             secretName: {{ required "A valid .Values.keySecret.name entry is required!" .Values.keySecret.name }}
+        - name: policies-secret
+          secret:
+            secretName: {{ include "gateway.fullname" . }}-policies
         - name: k8s-auth-config
           configMap:
             name: {{ include "gateway.fullname" . }}-k8s-auth
-            items:
-            - key: "k8sTokenLifetime"
-              path: "k8sTokenLifetime.yaml"
+      {{- if .Values.tlsSecretName }}
+        - name: certs
+          secret:
+            secretName: {{ .Values.tlsSecretName }}
+      {{- end }}
+      {{- if .Values.messageBus.tlsSecret }}
+        - name: buscerts
+          secret:
+            secretName: {{ .Values.messageBus.tlsSecret }}
+      {{- end }}

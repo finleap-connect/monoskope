@@ -101,8 +101,8 @@ eventStore:
   host: "eventstore"
   port: 8080
 
-# -- API address of the query handler
-queryHandler:
+# -- API address of the gateway
+gateway:
   prefix: "" # Defaults to the release name
-  host: "queryhandler"
+  host: "gateway"
   port: 8080

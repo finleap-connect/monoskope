@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,4 +23,6 @@ const (
 	HeaderAuthNotBefore       = "x-auth-not-before"
 	HeaderAuthNotBeforeFormat = time.RFC3339
 	HeaderForwardedClientCert = "x-forwarded-client-cert"
+	HeaderAuthorization       = "authorization"
+	AuthScheme                = "bearer"
 )

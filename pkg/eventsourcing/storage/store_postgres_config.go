@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,7 +66,17 @@ func NewPostgresStoreConfig(url string) (*postgresStoreConfig, error) {
 
 // ConfigureTLS adds the configuration for TLS secured connection/auth
 func (conf *postgresStoreConfig) ConfigureTLS() error {
-	loader, err := m8tls.NewTLSConfigLoader(CACertPath, TLSCertPath, TLSKeyPath)
+	loader, err := m8tls.NewTLSConfigLoader()
+	if err != nil {
+		return err
+	}
+
+	err = loader.SetServerCACertificate(CACertPath)
+	if err != nil {
+		return err
+	}
+
+	err = loader.SetClientCertificate(TLSCertPath, TLSKeyPath)
 	if err != nil {
 		return err
 	}
@@ -76,7 +86,7 @@ func (conf *postgresStoreConfig) ConfigureTLS() error {
 		return err
 	}
 
-	conf.pgOptions.TLSConfig = loader.GetTLSConfig()
+	conf.pgOptions.TLSConfig = loader.GetClientTLSConfig()
 	conf.pgOptions.TLSConfig.ServerName = strings.Split(conf.pgOptions.Addr, ":")[0]
 
 	return nil

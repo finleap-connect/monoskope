@@ -31,7 +31,15 @@ var _ = Describe("pkg/tls/tls_config", func() {
 		err := testEnv.CreateCertificate()
 		Expect(err).ToNot(HaveOccurred())
 
-		loader, err := NewTLSConfigLoader(testEnv.caCertFile, testEnv.certFile, testEnv.certKeyFile)
+		loader, err := NewTLSConfigLoader()
+		Expect(err).ToNot(HaveOccurred())
+
+		err = loader.SetServerCACertificate(testEnv.caCertFile)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = loader.SetClientCertificate(testEnv.certFile, testEnv.certKeyFile)
+		Expect(err).ToNot(HaveOccurred())
+
 		Expect(err).ToNot(HaveOccurred())
 		defer loader.Stop()
 

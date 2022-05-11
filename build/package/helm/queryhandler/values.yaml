@@ -89,6 +89,12 @@ eventStore:
   host: "eventstore"
   port: 8080
 
+# -- API address of the gateway
+gateway:
+  prefix: "" # Defaults to the release name
+  host: "gateway"
+  port: 8080
+  
 messageBus:
   # -- Prefix for routing messages via message bus
   routingKeyPrefix: m8

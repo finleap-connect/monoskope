@@ -1,4 +1,4 @@
-// Copyright 2021 Monoskope Authors
+// Copyright 2022 Monoskope Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
 package commands
 
 import (
-	"context"
-
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -44,9 +40,4 @@ func NewCreateTenantClusterBindingCommand(id uuid.UUID) es.Command {
 }
 func (c *CreateTenantClusterBindingCommand) SetData(a *anypb.Any) error {
 	return a.UnmarshalTo(&c.CreateTenantClusterBindingCommandData)
-}
-func (c *CreateTenantClusterBindingCommand) Policies(ctx context.Context) []es.Policy {
-	return []es.Policy{
-		es.NewPolicy().WithRole(roles.Admin).WithScope(scopes.System), // System admin
-	}
 }
