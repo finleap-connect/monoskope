@@ -20,10 +20,13 @@ import (
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
+	"strings"
 	"time"
 
 	doApi "github.com/finleap-connect/monoskope/pkg/api/domain"
@@ -80,6 +83,44 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
+		err = stream.Send(hre)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+
+	return nil
+}
+
+// GetByUser returns human-readable events caused by others actions on the given user
+func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi.AuditLog_GetByUserServer) error {
+	user, err := s.userRepo.ByEmail(stream.Context(), request.Email.GetValue())
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+	eventsStream, err := s.esClient.RetrieveOr(stream.Context(), &esApi.EventFilters{
+		Filters: []*esApi.EventFilter{
+			{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
+			{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
+		},
+	})
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for {
+		e, err := eventsStream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+
+		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
+		if !strings.Contains(hre.Details, user.Email) {
+			continue // skip e.g. UserRoleBindings that doesn't affect the given user
+		}
 		err = stream.Send(hre)
 		if err != nil {
 			return errors.TranslateToGrpcError(err)

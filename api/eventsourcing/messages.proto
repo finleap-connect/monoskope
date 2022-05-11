@@ -66,3 +66,8 @@ message EventFilter {
   // Filter events with a timestamp <= max_timestamp
   google.protobuf.Timestamp max_timestamp = 8;
 }
+
+// Request to get Events from to the store by using multiple filters
+message EventFilters {
+  repeated EventFilter filters = 1;
+}

@@ -40,6 +40,7 @@ import (
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
 	adminEmail := "admin@monoskope.io"
+	userEmail := "jane.dou@monoskope.io"
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
@@ -107,7 +108,28 @@ var _ = Describe("AuditLog Test", func() {
 				Expect(err).ToNot(HaveOccurred())
 				counter++
 			}
-			Expect(counter).To(Equal(5)) // see midTime definition
+			Expect(counter).To(Equal(6)) // see midTime definition
+		})
+
+		When("getting by user", func() {
+			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
+				Email: wrapperspb.String(userEmail),
+				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
+					MinTimestamp: timestamppb.New(minTime),
+					MaxTimestamp: timestamppb.New(maxTime),
+				},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			for {
+				e, err := events.Recv()
+				if err == io.EOF {
+					break
+				}
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(e.Details).To(ContainSubstring(userEmail))
+			}
 		})
 
 		When("getting user actions", func() {
@@ -132,7 +154,9 @@ var _ = Describe("AuditLog Test", func() {
 		})
 
 		When("getting users overview", func() {
-			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{Timestamp: timestamppb.New(maxTime)})
+			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{
+				Timestamp: timestamppb.New(maxTime),
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			for {
@@ -162,6 +186,7 @@ var _ = Describe("AuditLog Test", func() {
 			}
 			events, err := auditLogServiceClient().GetUserActions(ctx, request)
 			Expect(err).ToNot(HaveOccurred())
+
 			_, err = events.Recv()
 			Expect(err).To(HaveOccurred())
 		})
@@ -193,6 +218,17 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 	userRoleBindingId := uuid.MustParse(reply.AggregateId)
+
+	// UpdateUser
+	command, err = cmd.AddCommandData(
+		cmd.CreateCommand(userId, commandTypes.UpdateUser),
+		&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "Jane New"}},
+	)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(func(g Gomega) {
+		reply, err = commandHandlerClient().Execute(mdManager.GetOutgoingGrpcContext(), command)
+		g.Expect(err).ToNot(HaveOccurred())
+	}).Should(Succeed())
 
 	// CreateTenant
 	command, err = cmd.AddCommandData(
@@ -229,7 +265,7 @@ func initEvents(commandHandlerClient func() esApi.CommandHandlerClient, mdManage
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 
-	// 5 events
+	// 6 events
 	midTime := time.Now().UTC()
 
 	// CreateCluster
