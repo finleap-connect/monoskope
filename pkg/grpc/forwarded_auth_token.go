@@ -22,17 +22,17 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// oauthAccess supplies PerRPCCredentials from a given token.
-type oauthAccess struct {
+// forwardedOAuthAccess supplies PerRPCCredentials from a given token.
+type forwardedOAuthAccess struct {
 	requireTransportSecurity bool
 }
 
 // NewForwardedOauthAccess constructs the PerRPCCredentials which forwards the authorization from header
 func NewForwardedOauthAccess(requireTransportSecurity bool) credentials.PerRPCCredentials {
-	return oauthAccess{requireTransportSecurity}
+	return forwardedOAuthAccess{requireTransportSecurity}
 }
 
-func (oa oauthAccess) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+func (oa forwardedOAuthAccess) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	// Forward authorization header
 	token, err := grpc_auth.AuthFromMD(ctx, auth.AuthScheme)
 	if err != nil {
@@ -44,6 +44,6 @@ func (oa oauthAccess) GetRequestMetadata(ctx context.Context, uri ...string) (ma
 	}, nil
 }
 
-func (oa oauthAccess) RequireTransportSecurity() bool {
+func (oa forwardedOAuthAccess) RequireTransportSecurity() bool {
 	return oa.requireTransportSecurity
 }
