@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	test_grpc "github.com/finleap-connect/monoskope/test/grpc"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
@@ -122,8 +121,8 @@ func NewClientWithAuthForward[T any](ctx context.Context, addr string, requireTr
 // NewClientWithInsecureAuth (USE ONLY IF SECURED BY SERVICE MESH OR SIMILAR) creates a new gRPC client which sends the auth token without TLS
 func NewClientWithInsecureAuth[T any](ctx context.Context, addr, authToken string, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
 	conn, err := NewGrpcConnectionFactory(addr).
-		WithPerRPCCredentials(test_grpc.NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
 		WithInsecure().
+		WithPerRPCCredentials(NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
 		WithBlock().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
