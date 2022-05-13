@@ -19,10 +19,10 @@ import (
 	"errors"
 	"time"
 
+	mock_eventsourcing "github.com/finleap-connect/monoskope/internal/test/api/eventsourcing"
 	apies "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	mock_eventsourcing "github.com/finleap-connect/monoskope/test/api/eventsourcing"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"

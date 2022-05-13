@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	testReactor "github.com/finleap-connect/monoskope/internal/test/reactor"
+	mock_reactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -289,7 +289,7 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// set up reactor for checking JWTs later
-			testReactor := testReactor.NewTestReactor()
+			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
 			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
@@ -356,7 +356,7 @@ var _ = Describe("integration", func() {
 
 	Context("cert management", func() {
 		It("can create and query a certificate", func() {
-			testReactor := testReactor.NewTestReactor()
+			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
 			err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())

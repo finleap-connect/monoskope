@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	mock_api "github.com/finleap-connect/monoskope/internal/test/api/gateway"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
@@ -26,7 +27,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	domain_metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
-	mock_api "github.com/finleap-connect/monoskope/test/api/gateway"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
