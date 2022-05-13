@@ -33,7 +33,6 @@ type clusterRepository struct {
 type ClusterRepository interface {
 	es.Repository
 	ReadOnlyClusterRepository
-	WriteOnlyClusterRepository
 }
 
 // ReadOnlyClusterRepository is a repository for reading cluster projections.
@@ -46,10 +45,6 @@ type ReadOnlyClusterRepository interface {
 	GetAll(context.Context, bool) ([]*projections.Cluster, error)
 	// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID
 	GetBootstrapToken(context.Context, string) (string, error)
-}
-
-// WriteOnlyClusterRepository is a repository for writing cluster projections.
-type WriteOnlyClusterRepository interface {
 }
 
 // NewClusterRepository creates a repository for reading and writing cluster projections.

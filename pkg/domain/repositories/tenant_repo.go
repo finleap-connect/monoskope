@@ -32,22 +32,12 @@ type tenantRepository struct {
 // TenantRepository is a repository for reading and writing tenant projections.
 type TenantRepository interface {
 	es.Repository
-	ReadOnlyTenantRepository
-	WriteOnlyTenantRepository
-}
-
-// ReadOnlyTenantRepository is a repository for reading tenant projections.
-type ReadOnlyTenantRepository interface {
 	// ById searches for the a tenant projection by it's id.
 	ByTenantId(context.Context, string) (*projections.Tenant, error)
 	// ByName searches for the a tenant projection by it's name
 	ByName(context.Context, string) (*projections.Tenant, error)
 	// GetAll searches for all tenant projections.
 	GetAll(context.Context, bool) ([]*projections.Tenant, error)
-}
-
-// WriteOnlyTenantRepository is a repository for writing tenant projections.
-type WriteOnlyTenantRepository interface {
 }
 
 // NewTenantRepository creates a repository for reading and writing tenant projections.

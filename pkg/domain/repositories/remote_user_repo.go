@@ -22,6 +22,7 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -31,7 +32,7 @@ type remoteUserRepository struct {
 }
 
 // NewRemoteUserRepository creates a repository for reading user projections.
-func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository {
+func NewRemoteUserRepository(userService api.UserClient) UserRepository {
 	return &remoteUserRepository{
 		userService: userService,
 	}
@@ -39,6 +40,26 @@ func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository 
 
 func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+// All returns all projections in the repository.
+func (r *remoteUserRepository) All(context.Context) ([]eventsourcing.Projection, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// ById returns a projection for an ID.
+func (r *remoteUserRepository) ById(ctx context.Context, id uuid.UUID) (eventsourcing.Projection, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// Upsert saves a projection in the storage or replaces an existing one.
+func (r *remoteUserRepository) Upsert(ctx context.Context, p eventsourcing.Projection) error {
+	return fmt.Errorf("not implemented")
+}
+
+// Remove removes a projection by ID from the storage.
+func (r *remoteUserRepository) Remove(ctx context.Context, id uuid.UUID) error {
+	return fmt.Errorf("not implemented")
 }
 
 // ById searches for the a user projection by it's id.

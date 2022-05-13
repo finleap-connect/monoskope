@@ -29,11 +29,11 @@ import (
 type UserServer struct {
 	api.UnimplementedUserServer
 
-	repo repositories.ReadOnlyUserRepository
+	repo repositories.UserRepository
 }
 
 // NewUserServer returns a new configured instance of UserServer
-func NewUserServer(userRepo repositories.ReadOnlyUserRepository) *UserServer {
+func NewUserServer(userRepo repositories.UserRepository) *UserServer {
 	return &UserServer{
 		repo: userRepo,
 	}

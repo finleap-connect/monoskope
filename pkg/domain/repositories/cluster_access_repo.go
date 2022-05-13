@@ -28,8 +28,8 @@ type clusterAccessRepository struct {
 	tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository
 }
 
-// ReadOnlyClusterAccessRepository is a repository for reading accesses to a cluster.
-type ReadOnlyClusterAccessRepository interface {
+// ClusterAccessRepository is a repository for reading accesses to a cluster.
+type ClusterAccessRepository interface {
 	// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
 	GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error)
 	// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
@@ -37,7 +37,7 @@ type ReadOnlyClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository, clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
+func NewClusterAccessRepository(tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository, clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ClusterAccessRepository {
 	return &clusterAccessRepository{
 		clusterRepo:              clusterRepo,
 		userRoleBindingRepo:      userRoleBindingRepo,

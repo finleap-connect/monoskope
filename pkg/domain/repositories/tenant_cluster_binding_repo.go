@@ -32,7 +32,6 @@ type tenantClusterBindingRepository struct {
 type TenantClusterBindingRepository interface {
 	es.Repository
 	ReadOnlyTenantClusterBindingRepository
-	WriteOnlyTenantClusterBindingRepository
 }
 
 // ReadOnlyTenantClusterBindingRepository is a repository for reading tenantclusterbinding projections.
@@ -43,10 +42,6 @@ type ReadOnlyTenantClusterBindingRepository interface {
 	GetByTenantId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
 	GetByClusterId(ctx context.Context, tenantId uuid.UUID) ([]*projections.TenantClusterBinding, error)
 	GetByTenantAndClusterId(ctx context.Context, tenantId, clusterId uuid.UUID) (*projections.TenantClusterBinding, error)
-}
-
-// WriteOnlyTenantClusterBindingRepository is a repository for writing tenantclusterbinding projections.
-type WriteOnlyTenantClusterBindingRepository interface {
 }
 
 // NewTenantClusterBindingRepository creates a repository for reading and writing tenantclusterbinding projections.

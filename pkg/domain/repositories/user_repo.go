@@ -34,12 +34,6 @@ type userRepository struct {
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
 	es.Repository
-	ReadOnlyUserRepository
-	WriteOnlyUserRepository
-}
-
-// ReadOnlyUserRepository is a repository for reading user projections.
-type ReadOnlyUserRepository interface {
 	// ById searches for the a user projection by it's id.
 	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
@@ -48,10 +42,6 @@ type ReadOnlyUserRepository interface {
 	GetAll(context.Context, bool) ([]*projections.User, error)
 	// GetCount returns the user count
 	GetCount(context.Context, bool) (int, error)
-}
-
-// WriteOnlyUserRepository is a repository for writing user projections.
-type WriteOnlyUserRepository interface {
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.

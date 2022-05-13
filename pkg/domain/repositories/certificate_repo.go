@@ -31,17 +31,12 @@ type certificateRepository struct {
 type CertificateRepository interface {
 	es.Repository
 	ReadOnlyCertificateRepository
-	WriteOnlyCertificateRepository
 }
 
 // ReadOnlyCertificateRepository is a repository for reading certificate projections.
 type ReadOnlyCertificateRepository interface {
 	// GetCertificate retrieves certificates by aggregate type and id
 	GetCertificate(context.Context, *domApi.GetCertificateRequest) (*projections.Certificate, error)
-}
-
-// WriteOnlyCertificateRepository is a repository for writing certificate projections.
-type WriteOnlyCertificateRepository interface {
 }
 
 // NewCertificateRepository creates a repository for reading and writing certificate projections.

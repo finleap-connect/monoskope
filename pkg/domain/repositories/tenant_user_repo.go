@@ -23,18 +23,18 @@ import (
 )
 
 type tenantuserRepository struct {
-	userRepo            ReadOnlyUserRepository
+	userRepo            UserRepository
 	userRoleBindingRepo ReadOnlyUserRoleBindingRepository
 }
 
-// ReadOnlyTenantUserRepository is a repository for reading users of a tenant.
-type ReadOnlyTenantUserRepository interface {
+// TenantUserRepository is a repository for reading users of a tenant.
+type TenantUserRepository interface {
 	// GetTenantUsersById searches for users belonging to a tenant.
 	GetTenantUsersById(context.Context, uuid.UUID) ([]*projections.TenantUser, error)
 }
 
 // NewTenantUserRepository creates a repository for reading and writing tenantuser projections.
-func NewTenantUserRepository(userRepo ReadOnlyUserRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyTenantUserRepository {
+func NewTenantUserRepository(userRepo UserRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) TenantUserRepository {
 	return &tenantuserRepository{
 		userRepo:            userRepo,
 		userRoleBindingRepo: userRoleBindingRepo,

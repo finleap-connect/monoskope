@@ -32,12 +32,12 @@ import (
 type tenantServer struct {
 	api.UnimplementedTenantServer
 
-	repoTenant repositories.ReadOnlyTenantRepository
-	repoUsers  repositories.ReadOnlyTenantUserRepository
+	repoTenant repositories.TenantRepository
+	repoUsers  repositories.TenantUserRepository
 }
 
 // NewTenantServiceServer returns a new configured instance of tenantServiceServer
-func NewTenantServer(tenantRepo repositories.ReadOnlyTenantRepository, tenantUserRepo repositories.ReadOnlyTenantUserRepository) *tenantServer {
+func NewTenantServer(tenantRepo repositories.TenantRepository, tenantUserRepo repositories.TenantUserRepository) *tenantServer {
 	return &tenantServer{
 		repoTenant: tenantRepo,
 		repoUsers:  tenantUserRepo,

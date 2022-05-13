@@ -32,11 +32,11 @@ type QueryHandlerDomain struct {
 	UserRoleBindingRepository      repositories.UserRoleBindingRepository
 	UserRepository                 repositories.UserRepository
 	TenantRepository               repositories.TenantRepository
-	TenantUserRepository           repositories.ReadOnlyTenantUserRepository
+	TenantUserRepository           repositories.TenantUserRepository
 	ClusterRepository              repositories.ClusterRepository
 	CertificateRepository          repositories.CertificateRepository
 	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
-	ClusterAccessRepo              repositories.ReadOnlyClusterAccessRepository
+	ClusterAccessRepo              repositories.ClusterAccessRepository
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {

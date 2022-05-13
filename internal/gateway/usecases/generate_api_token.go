@@ -34,7 +34,7 @@ type generateAPITokenUsecase struct {
 	request  *api.APITokenRequest
 	response *api.APITokenResponse
 	signer   jwt.JWTSigner
-	userRepo repositories.ReadOnlyUserRepository
+	userRepo repositories.UserRepository
 	issuer   string
 }
 
@@ -42,7 +42,7 @@ func NewGenerateAPITokenUsecase(
 	request *api.APITokenRequest,
 	response *api.APITokenResponse,
 	signer jwt.JWTSigner,
-	userRepo repositories.ReadOnlyUserRepository,
+	userRepo repositories.UserRepository,
 	issuer string,
 ) usecase.UseCase {
 	return &generateAPITokenUsecase{
