@@ -23,7 +23,8 @@ on:
 env:
   GO_MODULE: github.com/finleap-connect/monoskope
   GO_VERSION: 1.18.x
-  GINKGO_VERSION: v1.16.4
+  GINKGO_VERSION: v1.16.5
+  GO_CI_LINT_VERSION: v1.46.1
 
 jobs:
   lint:
@@ -38,7 +39,7 @@ jobs:
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.2
+          version: ${{ env.GO_CI_LINT_VERSION }}
           args: --timeout=5m
 
   test:
