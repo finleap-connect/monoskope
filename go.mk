@@ -6,10 +6,10 @@ GO             ?= go
 GOGET          ?= $(HACK_DIR)/goget-wrapper
 
 GINKGO         ?= $(TOOLS_DIR)/ginkgo
-GINKO_VERSION  ?= v1.16.4
+GINKO_VERSION  ?= v1.16.5
 
 LINTER 	   	   ?= $(TOOLS_DIR)/golangci-lint
-LINTER_VERSION ?= v1.45.2
+LINTER_VERSION ?= v1.46.1
 
 MOCKGEN         ?= $(TOOLS_DIR)/mockgen
 GOMOCK_VERSION  ?= v1.5.0

@@ -3,13 +3,16 @@ name: Draft Release
 on:
   push:
     branches: [ main ]
+  # pull_request event is required only for autolabeler
   pull_request:
-    branches: [ main ]
-      
+    # Only following types are handled by the action, but one can default to all as well
+    types: [opened, reopened, synchronize]
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
 jobs:
   draft-release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Update draft
         uses: release-drafter/release-drafter@v5
