@@ -16,39 +16,35 @@ package repositories
 
 import (
 	"context"
-	"sort"
 
 	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/google/uuid"
 )
 
 type userRepository struct {
-	es.Repository
+	DomainRepository[*projections.User]
 	roleBindingRepo UserRoleBindingRepository
 }
 
 // Repository is a repository for reading and writing user projections.
 type UserRepository interface {
-	es.Repository
+	DomainRepository[*projections.User]
 	// ById searches for the a user projection by it's id.
 	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
-	// GetAll searches for all user projection.
-	GetAll(context.Context, bool) ([]*projections.User, error)
 	// GetCount returns the user count
 	GetCount(context.Context, bool) (int, error)
 }
 
 // NewUserRepository creates a repository for reading and writing user projections.
-func NewUserRepository(repository es.Repository, roleBindingRepo UserRoleBindingRepository) UserRepository {
+func NewUserRepository(repository es.Repository[*projections.User], roleBindingRepo UserRoleBindingRepository) UserRepository {
 	return &userRepository{
-		Repository:      repository,
-		roleBindingRepo: roleBindingRepo,
+		DomainRepository: NewDomainRepository(repository),
+		roleBindingRepo:  roleBindingRepo,
 	}
 }
 
@@ -73,27 +69,23 @@ func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRo
 
 // ById searches for the a user projection by it's id.
 func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
-	projection, err := r.ById(ctx, id)
+	user, err := r.ById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	if user, ok := projection.(*projections.User); !ok {
-		return nil, esErrors.ErrInvalidProjectionType
-	} else {
-		// Find roles of user
-		err = r.addRolesToUser(ctx, user)
-		if err != nil {
-			return nil, err
-		}
-
-		return user, nil
+	// Find roles of user
+	err = r.addRolesToUser(ctx, user)
+	if err != nil {
+		return nil, err
 	}
+
+	return user, nil
 }
 
 // ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
-	ps, err := r.GetAll(ctx, true)
+	ps, err := r.AllWith(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -108,36 +100,8 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 }
 
 // All searches for all user projections.
-func (r *userRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
-	ps, err := r.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var users []*projections.User
-	for _, p := range ps {
-		if u, ok := p.(*projections.User); ok {
-			// Find roles of user
-			err = r.addRolesToUser(ctx, u)
-			if err != nil {
-				return nil, err
-			}
-			if !u.GetDeleted().IsValid() || includeDeleted {
-				users = append(users, u)
-			}
-		}
-	}
-
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].Name > users[j].Name
-	})
-
-	return users, nil
-}
-
-// All searches for all user projections.
 func (r *userRepository) GetCount(ctx context.Context, includeDeleted bool) (int, error) {
-	users, err := r.GetAll(ctx, includeDeleted)
+	users, err := r.AllWith(ctx, includeDeleted)
 	if err != nil {
 		return 0, err
 	}

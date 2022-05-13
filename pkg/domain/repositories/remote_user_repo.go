@@ -22,7 +22,6 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -38,22 +37,27 @@ func NewRemoteUserRepository(userService api.UserClient) UserRepository {
 	}
 }
 
-func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
+func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // All returns all projections in the repository.
-func (r *remoteUserRepository) All(context.Context) ([]eventsourcing.Projection, error) {
+func (r *remoteUserRepository) All(context.Context) ([]*projections.User, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// All returns all projections in the repository.
+func (r *remoteUserRepository) AllWith(context.Context, bool) ([]*projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // ById returns a projection for an ID.
-func (r *remoteUserRepository) ById(ctx context.Context, id uuid.UUID) (eventsourcing.Projection, error) {
+func (r *remoteUserRepository) ById(ctx context.Context, id uuid.UUID) (*projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // Upsert saves a projection in the storage or replaces an existing one.
-func (r *remoteUserRepository) Upsert(ctx context.Context, p eventsourcing.Projection) error {
+func (r *remoteUserRepository) Upsert(ctx context.Context, p *projections.User) error {
 	return fmt.Errorf("not implemented")
 }
 

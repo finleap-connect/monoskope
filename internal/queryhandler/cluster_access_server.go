@@ -32,11 +32,11 @@ import (
 type clusterAccessServer struct {
 	api.UnimplementedClusterAccessServer
 	clusterAccessRepo        repositories.ClusterAccessRepository
-	tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository
+	tenantClusterBindingRepo repositories.TenantClusterBindingRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterAccessServer(clusterAccessRepo repositories.ClusterAccessRepository, tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository) *clusterAccessServer {
+func NewClusterAccessServer(clusterAccessRepo repositories.ClusterAccessRepository, tenantClusterBindingRepo repositories.TenantClusterBindingRepository) *clusterAccessServer {
 	return &clusterAccessServer{
 		clusterAccessRepo:        clusterAccessRepo,
 		tenantClusterBindingRepo: tenantClusterBindingRepo,

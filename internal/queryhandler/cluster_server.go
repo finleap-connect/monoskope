@@ -32,11 +32,11 @@ import (
 type clusterServer struct {
 	api.UnimplementedClusterServer
 
-	repoCluster repositories.ReadOnlyClusterRepository
+	repoCluster repositories.ClusterRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterServer(clusterRepo repositories.ReadOnlyClusterRepository) *clusterServer {
+func NewClusterServer(clusterRepo repositories.ClusterRepository) *clusterServer {
 	return &clusterServer{
 		repoCluster: clusterRepo,
 	}

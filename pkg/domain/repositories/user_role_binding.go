@@ -16,7 +16,6 @@ package repositories
 
 import (
 	"context"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -24,19 +23,12 @@ import (
 )
 
 type userRoleBindingRepository struct {
-	es.Repository
+	DomainRepository[*projections.UserRoleBinding]
 }
 
 // Repository is a repository for reading and writing UserRoleBinding projections.
 type UserRoleBindingRepository interface {
-	es.Repository
-	ReadOnlyUserRoleBindingRepository
-}
-
-// ReadOnlyUserRepository is a repository for reading UserRoleBinding projections.
-type ReadOnlyUserRoleBindingRepository interface {
-	// GetByUserRoleBindingId searches for the UserRoleBinding projections by its id.
-	GetByUserRoleBindingId(ctx context.Context, id string) (*projections.UserRoleBinding, error)
+	DomainRepository[*projections.UserRoleBinding]
 	// ByUserId searches for all UserRoleBinding projection's by the user id.
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
 	// ByUserIdAndScope searches for all UserRoleBinding projection's by the user id and the scope.
@@ -46,45 +38,23 @@ type ReadOnlyUserRoleBindingRepository interface {
 }
 
 // NewUserRepository creates a repository for reading and writing UserRoleBinding projections.
-func NewUserRoleBindingRepository(repository es.Repository) UserRoleBindingRepository {
+func NewUserRoleBindingRepository(repository es.Repository[*projections.UserRoleBinding]) UserRoleBindingRepository {
 	return &userRoleBindingRepository{
-		Repository: repository,
+		NewDomainRepository(repository),
 	}
-}
-
-// GetByUserRoleBindingId searches for the UserRoleBinding projections by its id.
-func (r *userRoleBindingRepository) GetByUserRoleBindingId(ctx context.Context, id string) (*projections.UserRoleBinding, error) {
-	projectionUUID, err := uuid.Parse(id)
-	if err != nil {
-		return nil, err
-	}
-
-	projection, err := r.ById(ctx, projectionUUID)
-	if err != nil {
-		return nil, err
-	}
-
-	userRoleBinding, ok := projection.(*projections.UserRoleBinding)
-	if !ok {
-		return nil, esErrors.ErrInvalidProjectionType
-	}
-
-	return userRoleBinding, nil
 }
 
 // ByUserId searches for all UserRoleBinding projection's by the a user id.
 func (r *userRoleBindingRepository) ByUserId(ctx context.Context, userId uuid.UUID) ([]*projections.UserRoleBinding, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.AllWith(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 
 	var userRoleBindings []*projections.UserRoleBinding
-	for _, projection := range ps {
-		if userRoleBinding, ok := projection.(*projections.UserRoleBinding); ok {
-			if userId.String() == userRoleBinding.GetUserId() {
-				userRoleBindings = append(userRoleBindings, userRoleBinding)
-			}
+	for _, userRoleBinding := range ps {
+		if userId.String() == userRoleBinding.GetUserId() {
+			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}
 	return userRoleBindings, nil
@@ -92,17 +62,15 @@ func (r *userRoleBindingRepository) ByUserId(ctx context.Context, userId uuid.UU
 
 // ByUserIdAndScope searches for all UserRoleBinding projection's by the a user id and the scope.
 func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId uuid.UUID, scope es.Scope) ([]*projections.UserRoleBinding, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.AllWith(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 
 	var userRoleBindings []*projections.UserRoleBinding
-	for _, projection := range ps {
-		if userRoleBinding, ok := projection.(*projections.UserRoleBinding); ok {
-			if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == scope.String() {
-				userRoleBindings = append(userRoleBindings, userRoleBinding)
-			}
+	for _, userRoleBinding := range ps {
+		if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == scope.String() {
+			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}
 	return userRoleBindings, nil
@@ -110,17 +78,15 @@ func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId
 
 // ByScopeAndResource returns all UserRoleBinding projections matching the given scope and resource.
 func (r *userRoleBindingRepository) ByScopeAndResource(ctx context.Context, scope es.Scope, resource uuid.UUID) ([]*projections.UserRoleBinding, error) {
-	ps, err := r.All(ctx)
+	ps, err := r.AllWith(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 
 	var userRoleBindings []*projections.UserRoleBinding
-	for _, projection := range ps {
-		if userRoleBinding, ok := projection.(*projections.UserRoleBinding); ok {
-			if scope.String() == userRoleBinding.GetScope() && resource.String() == userRoleBinding.Resource {
-				userRoleBindings = append(userRoleBindings, userRoleBinding)
-			}
+	for _, userRoleBinding := range ps {
+		if scope.String() == userRoleBinding.GetScope() && resource.String() == userRoleBinding.Resource {
+			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}
 	return userRoleBindings, nil

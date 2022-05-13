@@ -21,7 +21,7 @@ import (
 )
 
 type User struct {
-	*DomainProjection
+	DomainProjection
 	*projections.User
 }
 
@@ -31,7 +31,7 @@ func NewUserProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		User: &projections.User{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

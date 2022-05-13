@@ -56,7 +56,7 @@ var _ = Describe("domain/certificate_repo", func() {
 		Certificate:           expectedCert,
 		CaCertBundle:          expectedCACert,
 	}
-	newCertificate.Created = timestamp.New(time.Now())
+	newCertificate.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 
 	It("can retrieve the certificate", func() {
 		inMemCertRepo := es_repos.NewInMemoryRepository()

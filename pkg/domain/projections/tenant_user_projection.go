@@ -20,7 +20,7 @@ import (
 )
 
 type TenantUser struct {
-	*DomainProjection
+	DomainProjection
 	*projections.TenantUser
 }
 
@@ -33,7 +33,7 @@ func NewTenantUserProjection(tenantId uuid.UUID, user *User, rolebindings []*Use
 			Name:     user.Name,
 			Email:    user.Email,
 			TenantId: tenantId.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 	for _, roleBinding := range rolebindings {

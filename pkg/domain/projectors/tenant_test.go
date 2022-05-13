@@ -69,7 +69,7 @@ var _ = Describe("process tenant", func() {
 		Expect(tenant.GetName()).To(Equal(expectedName))
 		Expect(tenant.GetPrefix()).To(Equal(expectedPrefix))
 
-		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
 	})
 
 })

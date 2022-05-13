@@ -24,25 +24,20 @@ import (
 )
 
 type certificateRepository struct {
-	es.Repository
+	DomainRepository[*projections.Certificate]
 }
 
 // CertificateRepository is a repository for reading and writing certificate projections.
 type CertificateRepository interface {
-	es.Repository
-	ReadOnlyCertificateRepository
-}
-
-// ReadOnlyCertificateRepository is a repository for reading certificate projections.
-type ReadOnlyCertificateRepository interface {
+	DomainRepository[*projections.Certificate]
 	// GetCertificate retrieves certificates by aggregate type and id
 	GetCertificate(context.Context, *domApi.GetCertificateRequest) (*projections.Certificate, error)
 }
 
 // NewCertificateRepository creates a repository for reading and writing certificate projections.
-func NewCertificateRepository(repository es.Repository) CertificateRepository {
+func NewCertificateRepository(repository es.Repository[*projections.Certificate]) CertificateRepository {
 	return &certificateRepository{
-		Repository: repository,
+		NewDomainRepository(repository),
 	}
 }
 
@@ -53,11 +48,7 @@ func (r *certificateRepository) GetCertificate(ctx context.Context, req *domApi.
 		return nil, err
 	}
 
-	for _, projection := range ps {
-		certificate, ok := projection.(*projections.Certificate)
-		if !ok {
-			return nil, esErrors.ErrInvalidProjectionType
-		}
+	for _, certificate := range ps {
 		if certificate.ReferencedAggregateId == req.AggregateId && certificate.AggregateType == req.AggregateType {
 			return certificate, nil
 		}

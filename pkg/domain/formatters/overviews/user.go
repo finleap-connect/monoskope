@@ -17,6 +17,9 @@ package overviews
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -24,8 +27,6 @@ import (
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"time"
 )
 
 // userOverviewFormatter OverviewFormatter implementation for the user-aggregate
@@ -44,7 +45,7 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	var details string
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
 
-	eventFilter.AggregateId = wrapperspb.String(user.CreatedById)
+	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
 	creatorSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
 	if err != nil {
 		return "", err
@@ -54,13 +55,13 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.Created.AsTime().Format(time.RFC822))
+	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.GetCreated().AsTime().Format(time.RFC822))
 
-	if len(user.DeletedById) == 0 {
+	if len(user.GetDeletedById()) == 0 {
 		return details, nil
 	}
 
-	eventFilter.AggregateId = wrapperspb.String(user.DeletedById)
+	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
 	deleterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
 	if err != nil {
 		return "", err
@@ -70,7 +71,7 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 		return "", esErrors.ErrInvalidProjectionType
 	}
 
-	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.Deleted.AsTime().Format(time.RFC822))
+	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.GetDeleted().AsTime().Format(time.RFC822))
 
 	return details, nil
 }

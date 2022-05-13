@@ -60,7 +60,12 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 			}
 
 			for _, clusterBinding := range tenantClusterBinding {
-				cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+				id, err := uuid.Parse(clusterBinding.ClusterId)
+				if err != nil {
+					return nil, err
+				}
+
+				cluster, err := r.clusterRepo.ById(ctx, id)
 				if err != nil {
 					return nil, err
 				}
@@ -79,7 +84,12 @@ func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Co
 
 	var clusters []*projections.Cluster
 	for _, clusterBinding := range bindings {
-		cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+		id, err := uuid.Parse(clusterBinding.ClusterId)
+		if err != nil {
+			return nil, err
+		}
+
+		cluster, err := r.clusterRepo.ById(ctx, id)
 		if err != nil {
 			return nil, err
 		}

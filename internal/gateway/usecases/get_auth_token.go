@@ -37,7 +37,7 @@ type getAuthTokenUsecase struct {
 	request     *api.ClusterAuthTokenRequest
 	result      *api.ClusterAuthTokenResponse
 	signer      jwt.JWTSigner
-	clusterRepo repositories.ReadOnlyClusterRepository
+	clusterRepo repositories.ClusterRepository
 	issuer      string
 	validity    map[string]time.Duration
 }
@@ -46,7 +46,7 @@ func NewGetAuthTokenUsecase(
 	request *api.ClusterAuthTokenRequest,
 	response *api.ClusterAuthTokenResponse,
 	signer jwt.JWTSigner,
-	clusterRepo repositories.ReadOnlyClusterRepository,
+	clusterRepo repositories.ClusterRepository,
 	issuer string,
 	validity map[string]time.Duration,
 ) usecase.UseCase {
@@ -80,7 +80,7 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 
 	clusterId := s.request.GetClusterId()
 	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
-	cluster, err := s.clusterRepo.ByClusterId(ctx, clusterId)
+	cluster, err := s.clusterRepo.ById(ctx, clusterId)
 	if err != nil {
 		return err
 	}

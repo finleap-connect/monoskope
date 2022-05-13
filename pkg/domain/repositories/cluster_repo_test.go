@@ -50,7 +50,7 @@ var _ = Describe("domain/cluster_repo", func() {
 
 	newCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
 	newCluster.Name = expectedClusterName
-	newCluster.Created = timestamp.New(time.Now())
+	newCluster.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 
 	It("can retrieve cluster by name", func() {
 		inMemClusterRepo := es_repos.NewInMemoryRepository()
@@ -62,7 +62,7 @@ var _ = Describe("domain/cluster_repo", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(cluster.Name).To(Equal(expectedClusterName))
-		Expect(cluster.Created).NotTo(BeNil())
+		Expect(cluster.GetLifecycleMetadata().Created).NotTo(BeNil())
 	})
 
 	It("can retrieve cluster by ID", func() {
@@ -71,10 +71,10 @@ var _ = Describe("domain/cluster_repo", func() {
 
 		err := inMemClusterRepo.Upsert(context.Background(), newCluster)
 		Expect(err).NotTo(HaveOccurred())
-		cluster, err := clusterRepo.ByClusterId(context.Background(), clusterId.String())
+		cluster, err := clusterRepo.ById(context.Background(), clusterId)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(cluster.Name).To(Equal(expectedClusterName))
-		Expect(cluster.Created).NotTo(BeNil())
+		Expect(cluster.GetLifecycleMetadata().Created).NotTo(BeNil())
 	})
 })

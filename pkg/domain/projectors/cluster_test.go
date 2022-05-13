@@ -75,7 +75,7 @@ var _ = Describe("domain/projectors/cluster", func() {
 		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		dp := cluster.DomainProjection
-		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
 	})
 
 	It("can handle ClusterCreatedV2 events", func() {
@@ -104,7 +104,7 @@ var _ = Describe("domain/projectors/cluster", func() {
 		Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 		dp := cluster.DomainProjection
-		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
 	})
 
 	It("can handle ClusterBootstrapTokenCreated events", func() {
@@ -149,7 +149,7 @@ var _ = Describe("domain/projectors/cluster", func() {
 		Expect(cluster.GetBootstrapToken()).To(Equal(expectedJWT))
 
 		dp := cluster.DomainProjection
-		Expect(dp.LastModified).ToNot(BeNil())
+		Expect(dp.GetLastModified()).ToNot(BeNil())
 	})
 
 	It("can handle ClusterUpdated events", func() {

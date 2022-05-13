@@ -35,12 +35,12 @@ func (e *ProjectionOutdatedError) Error() string {
 type projectionRepoEventHandler struct {
 	log        logger.Logger
 	projector  es.Projector
-	repository es.Repository
+	repository es.Repository[es.Projection]
 	mutex      sync.Mutex
 }
 
 // NewProjectingEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
-func NewProjectingEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
+func NewProjectingEventHandler(projector es.Projector, repository es.Repository[es.Projection]) es.EventHandler {
 	return &projectionRepoEventHandler{
 		log:        logger.WithName("projection-repo-middleware"),
 		projector:  projector,

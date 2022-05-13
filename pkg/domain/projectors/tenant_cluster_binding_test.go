@@ -65,9 +65,9 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 		Expect(binding.GetClusterId()).To(Equal(expectedClusterId.String()))
 
 		dp := binding.DomainProjection
-		Expect(dp.Created).ToNot(BeNil())
-		Expect(dp.LastModified).ToNot(BeNil())
-		Expect(dp.Deleted).To(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
+		Expect(dp.GetLastModified()).ToNot(BeNil())
+		Expect(dp.GetDeleted()).To(BeNil())
 	})
 	It("can project event TenantClusterBindingDeleted", func() {
 		event := es.NewEvent(ctx, events.TenantClusterBindingDeleted, nil, time.Now().UTC(), aggregates.TenantClusterBinding, expectedBindingId, 2)
@@ -80,8 +80,8 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 		Expect(ok).To(BeTrue())
 
 		dp := binding.DomainProjection
-		Expect(dp.Created).ToNot(BeNil())
-		Expect(dp.LastModified).ToNot(BeNil())
-		Expect(dp.Deleted).ToNot(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
+		Expect(dp.GetLastModified()).ToNot(BeNil())
+		Expect(dp.GetDeleted()).ToNot(BeNil())
 	})
 })

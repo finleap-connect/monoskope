@@ -21,7 +21,7 @@ import (
 )
 
 type Tenant struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Tenant
 }
 
@@ -31,7 +31,7 @@ func NewTenantProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		Tenant: &projections.Tenant{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

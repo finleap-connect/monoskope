@@ -21,7 +21,7 @@ import (
 )
 
 type TenantClusterBinding struct {
-	*DomainProjection
+	DomainProjection
 	*projections.TenantClusterBinding
 }
 
@@ -31,7 +31,7 @@ func NewTenantClusterBindingProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		TenantClusterBinding: &projections.TenantClusterBinding{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

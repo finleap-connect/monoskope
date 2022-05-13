@@ -21,7 +21,7 @@ import (
 )
 
 type Cluster struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Cluster
 }
 
@@ -31,7 +31,7 @@ func NewClusterProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		Cluster: &projections.Cluster{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

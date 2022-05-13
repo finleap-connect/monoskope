@@ -21,7 +21,7 @@ import (
 )
 
 type Certificate struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Certificate
 	SigningRequest []byte
 }
@@ -32,7 +32,7 @@ func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {
 		DomainProjection: dp,
 		Certificate: &projections.Certificate{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

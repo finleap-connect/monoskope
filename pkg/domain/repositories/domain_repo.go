@@ -14,8 +14,42 @@
 
 package repositories
 
-import es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+import (
+	"context"
 
-type domainRepository struct {
-	es.Repository
+	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
+	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+)
+
+type domainRepository[T projections.DomainProjection] struct {
+	es.Repository[T]
+}
+
+// Repository is a repository for reading projections.
+type DomainRepository[T projections.DomainProjection] interface {
+	es.Repository[T]
+	// All returns all projections in the repository.
+	AllWith(ctx context.Context, includeDeleted bool) ([]T, error)
+}
+
+// NewDomainRepository creates a repository for reading and writing domain projections.
+func NewDomainRepository[T projections.DomainProjection](repository es.Repository[T]) DomainRepository[T] {
+	return &domainRepository[T]{
+		repository,
+	}
+}
+
+// All returns all projections in the repository.
+func (r *domainRepository[T]) AllWith(ctx context.Context, includeDeleted bool) ([]T, error) {
+	ps, err := r.Repository.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var projections []T
+	for _, p := range ps {
+		if !p.GetDeleted().IsValid() || includeDeleted {
+			projections = append(projections, p)
+		}
+	}
+	return projections, nil
 }

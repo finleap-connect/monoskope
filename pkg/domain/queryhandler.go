@@ -21,6 +21,7 @@ import (
 	eventsourcingApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/handler"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -43,13 +44,13 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d := new(QueryHandlerDomain)
 
 	// Setup repositories
-	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
-	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
-	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository())
+	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository[*projections.UserRoleBinding]())
+	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository[*projections.User](), d.UserRoleBindingRepository)
+	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository[*projections.Tenant]())
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
-	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
-	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
-	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository())
+	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
+	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository[*projections.Certificate]())
+	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
 	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository)
 
 	// Setup projectors

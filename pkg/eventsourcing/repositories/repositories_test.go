@@ -25,7 +25,7 @@ import (
 
 var _ = Describe("repositories/in_memory", func() {
 	testProjection := newTestProjection(uuid.New())
-	testReadWrite := func(repo es.Repository) {
+	testReadWrite := func(repo es.Repository[es.Projection]) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -42,7 +42,7 @@ var _ = Describe("repositories/in_memory", func() {
 		Expect(len(projections)).To(BeNumerically("==", 1))
 		Expect(projections[0]).To(Equal(testProjection))
 	}
-	testRemove := func(repo es.Repository) {
+	testRemove := func(repo es.Repository[es.Projection]) {
 		err := repo.Upsert(context.Background(), testProjection)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -56,9 +56,9 @@ var _ = Describe("repositories/in_memory", func() {
 	}
 
 	It("can read/write projections", func() {
-		testReadWrite(NewInMemoryRepository())
+		testReadWrite(NewInMemoryRepository[es.Projection]())
 	})
 	It("can remove projections", func() {
-		testRemove(NewInMemoryRepository())
+		testRemove(NewInMemoryRepository[es.Projection]())
 	})
 })
