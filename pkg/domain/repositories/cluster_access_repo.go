@@ -23,9 +23,9 @@ import (
 )
 
 type clusterAccessRepository struct {
-	clusterRepo              ReadOnlyClusterRepository
-	userRoleBindingRepo      ReadOnlyUserRoleBindingRepository
-	tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository
+	clusterRepo              ClusterRepository
+	userRoleBindingRepo      UserRoleBindingRepository
+	tenantClusterBindingRepo TenantClusterBindingRepository
 }
 
 // ClusterAccessRepository is a repository for reading accesses to a cluster.
@@ -37,7 +37,7 @@ type ClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository, clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ClusterAccessRepository {
+func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRepository, clusterRepo ClusterRepository, userRoleBindingRepo UserRoleBindingRepository) ClusterAccessRepository {
 	return &clusterAccessRepository{
 		clusterRepo:              clusterRepo,
 		userRoleBindingRepo:      userRoleBindingRepo,

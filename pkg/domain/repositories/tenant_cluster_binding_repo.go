@@ -31,11 +31,6 @@ type tenantClusterBindingRepository struct {
 // TenantClusterBindingRepository is a repository for reading and writing tenantclusterbinding projections.
 type TenantClusterBindingRepository interface {
 	es.Repository
-	ReadOnlyTenantClusterBindingRepository
-}
-
-// ReadOnlyTenantClusterBindingRepository is a repository for reading tenantclusterbinding projections.
-type ReadOnlyTenantClusterBindingRepository interface {
 	// GetAll searches for the TenantClusterBinding projections.
 	GetAll(ctx context.Context, showDeleted bool) ([]*projections.TenantClusterBinding, error)
 	GetByTenantClusterBindingId(ctx context.Context, id string) (*projections.TenantClusterBinding, error)

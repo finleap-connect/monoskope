@@ -32,11 +32,6 @@ type clusterRepository struct {
 // ClusterRepository is a repository for reading and writing cluster projections.
 type ClusterRepository interface {
 	es.Repository
-	ReadOnlyClusterRepository
-}
-
-// ReadOnlyClusterRepository is a repository for reading cluster projections.
-type ReadOnlyClusterRepository interface {
 	// ById searches for the a tenant projection by it's id.
 	ByClusterId(context.Context, string) (*projections.Cluster, error)
 	// ByName searches for the a tenant projection by it's name
