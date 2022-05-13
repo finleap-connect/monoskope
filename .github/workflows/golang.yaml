@@ -57,12 +57,12 @@ jobs:
         run: |
           go install github.com/onsi/ginkgo/ginkgo@${{ env.GINKGO_VERSION }}
           GINKGO=ginkgo make go-test-ci
-      - name: Convert coverage to lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.8
-        with:
-          infile: monoskope.coverprofile
-      - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@1.1.3
-        with:
-          github-token: ${{ secrets.github_token }}
-          path-to-lcov: coverage.lcov
+      # - name: Convert coverage to lcov
+      #   uses: jandelgado/gcov2lcov-action@v1.0.8
+      #   with:
+      #     infile: monoskope.coverprofile
+      # - name: Coveralls GitHub Action
+      #   uses: coverallsapp/github-action@1.1.3
+      #   with:
+      #     github-token: ${{ secrets.github_token }}
+      #     path-to-lcov: coverage.lcov
