@@ -59,7 +59,7 @@ jobs:
           GINKGO=ginkgo make go-test-ci
           make go-coverage
       - name: Convert coverage to lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.8
+        uses: jandelgado/gcov2lcov-action@v1.2.0
         with:
           infile: monoskope.coverprofile
       - name: Coveralls GitHub Action
