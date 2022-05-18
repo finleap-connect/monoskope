@@ -21,10 +21,10 @@ import (
 )
 
 // Projector is the interface for projectors.
-type Projector interface {
+type Projector[T Projection] interface {
 	// NewProjection creates a new Projection of the type the Projector projects.
-	NewProjection(uuid.UUID) Projection
+	NewProjection(uuid.UUID) T
 
 	// Project updates the state of the projection according to the given event.
-	Project(context.Context, Event, Projection) (Projection, error)
+	Project(context.Context, Event, T) (T, error)
 }

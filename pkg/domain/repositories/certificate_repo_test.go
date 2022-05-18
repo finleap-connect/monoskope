@@ -59,7 +59,7 @@ var _ = Describe("domain/certificate_repo", func() {
 	newCertificate.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 
 	It("can retrieve the certificate", func() {
-		inMemCertRepo := es_repos.NewInMemoryRepository()
+		inMemCertRepo := es_repos.NewInMemoryRepository[*projections.Certificate]()
 		certRepo := NewCertificateRepository(inMemCertRepo)
 
 		err := inMemCertRepo.Upsert(context.Background(), newCertificate)

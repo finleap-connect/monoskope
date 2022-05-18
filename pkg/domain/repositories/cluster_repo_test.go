@@ -53,7 +53,7 @@ var _ = Describe("domain/cluster_repo", func() {
 	newCluster.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 
 	It("can retrieve cluster by name", func() {
-		inMemClusterRepo := es_repos.NewInMemoryRepository()
+		inMemClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
 		clusterRepo := NewClusterRepository(inMemClusterRepo)
 
 		err := inMemClusterRepo.Upsert(context.Background(), newCluster)
@@ -66,7 +66,7 @@ var _ = Describe("domain/cluster_repo", func() {
 	})
 
 	It("can retrieve cluster by ID", func() {
-		inMemClusterRepo := es_repos.NewInMemoryRepository()
+		inMemClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
 		clusterRepo := NewClusterRepository(inMemClusterRepo)
 
 		err := inMemClusterRepo.Upsert(context.Background(), newCluster)

@@ -29,30 +29,24 @@ type userProjector struct {
 	*domainProjector
 }
 
-func NewUserProjector() es.Projector {
+func NewUserProjector() es.Projector[*projections.User] {
 	return &userProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (u *userProjector) NewProjection(id uuid.UUID) es.Projection {
+func (u *userProjector) NewProjection(id uuid.UUID) *projections.User {
 	return projections.NewUserProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (u *userProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.User)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (u *userProjector) Project(ctx context.Context, event es.Event, p *projections.User) (*projections.User, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.UserCreated:
 		data := &eventdata.UserCreated{}
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 
 		p.Email = data.GetEmail()
@@ -65,7 +59,7 @@ func (u *userProjector) Project(ctx context.Context, event es.Event, projection 
 	case events.UserUpdated:
 		data := &eventdata.UserUpdated{}
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 
 		p.Name = data.GetName()
