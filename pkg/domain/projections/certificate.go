@@ -16,7 +16,6 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
@@ -26,7 +25,7 @@ type Certificate struct {
 	SigningRequest []byte
 }
 
-func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {
+func NewCertificateProjection(id uuid.UUID) *Certificate {
 	dp := NewDomainProjection()
 	return &Certificate{
 		DomainProjection: dp,
