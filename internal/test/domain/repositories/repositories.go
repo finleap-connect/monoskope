@@ -23,7 +23,6 @@ import (
 	reflect "reflect"
 
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
-	eventsourcing "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )
@@ -52,10 +51,10 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // All mocks base method.
-func (m *MockUserRepository) All(arg0 context.Context) ([]eventsourcing.Projection, error) {
+func (m *MockUserRepository) All(arg0 context.Context) ([]*projections.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "All", arg0)
-	ret0, _ := ret[0].([]eventsourcing.Projection)
+	ret0, _ := ret[0].([]*projections.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -64,6 +63,21 @@ func (m *MockUserRepository) All(arg0 context.Context) ([]eventsourcing.Projecti
 func (mr *MockUserRepositoryMockRecorder) All(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "All", reflect.TypeOf((*MockUserRepository)(nil).All), arg0)
+}
+
+// AllWith mocks base method.
+func (m *MockUserRepository) AllWith(arg0 context.Context, arg1 bool) ([]*projections.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AllWith", arg0, arg1)
+	ret0, _ := ret[0].([]*projections.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AllWith indicates an expected call of AllWith.
+func (mr *MockUserRepositoryMockRecorder) AllWith(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllWith", reflect.TypeOf((*MockUserRepository)(nil).AllWith), arg0, arg1)
 }
 
 // ByEmail mocks base method.
@@ -82,10 +96,10 @@ func (mr *MockUserRepositoryMockRecorder) ByEmail(arg0, arg1 interface{}) *gomoc
 }
 
 // ById mocks base method.
-func (m *MockUserRepository) ById(arg0 context.Context, arg1 uuid.UUID) (eventsourcing.Projection, error) {
+func (m *MockUserRepository) ById(arg0 context.Context, arg1 uuid.UUID) (*projections.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ById", arg0, arg1)
-	ret0, _ := ret[0].(eventsourcing.Projection)
+	ret0, _ := ret[0].(*projections.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -109,21 +123,6 @@ func (m *MockUserRepository) ByUserId(arg0 context.Context, arg1 uuid.UUID) (*pr
 func (mr *MockUserRepositoryMockRecorder) ByUserId(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByUserId", reflect.TypeOf((*MockUserRepository)(nil).ByUserId), arg0, arg1)
-}
-
-// GetAll mocks base method.
-func (m *MockUserRepository) GetAll(arg0 context.Context, arg1 bool) ([]*projections.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0, arg1)
-	ret0, _ := ret[0].([]*projections.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAll indicates an expected call of GetAll.
-func (mr *MockUserRepositoryMockRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockUserRepository)(nil).GetAll), arg0, arg1)
 }
 
 // GetCount mocks base method.
@@ -156,7 +155,7 @@ func (mr *MockUserRepositoryMockRecorder) Remove(arg0, arg1 interface{}) *gomock
 }
 
 // Upsert mocks base method.
-func (m *MockUserRepository) Upsert(arg0 context.Context, arg1 eventsourcing.Projection) error {
+func (m *MockUserRepository) Upsert(arg0 context.Context, arg1 *projections.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upsert", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -193,10 +192,10 @@ func (m *MockClusterRepository) EXPECT() *MockClusterRepositoryMockRecorder {
 }
 
 // All mocks base method.
-func (m *MockClusterRepository) All(arg0 context.Context) ([]eventsourcing.Projection, error) {
+func (m *MockClusterRepository) All(arg0 context.Context) ([]*projections.Cluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "All", arg0)
-	ret0, _ := ret[0].([]eventsourcing.Projection)
+	ret0, _ := ret[0].([]*projections.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -207,19 +206,19 @@ func (mr *MockClusterRepositoryMockRecorder) All(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "All", reflect.TypeOf((*MockClusterRepository)(nil).All), arg0)
 }
 
-// ByClusterId mocks base method.
-func (m *MockClusterRepository) ByClusterId(arg0 context.Context, arg1 string) (*projections.Cluster, error) {
+// AllWith mocks base method.
+func (m *MockClusterRepository) AllWith(arg0 context.Context, arg1 bool) ([]*projections.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ByClusterId", arg0, arg1)
-	ret0, _ := ret[0].(*projections.Cluster)
+	ret := m.ctrl.Call(m, "AllWith", arg0, arg1)
+	ret0, _ := ret[0].([]*projections.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ByClusterId indicates an expected call of ByClusterId.
-func (mr *MockClusterRepositoryMockRecorder) ByClusterId(arg0, arg1 interface{}) *gomock.Call {
+// AllWith indicates an expected call of AllWith.
+func (mr *MockClusterRepositoryMockRecorder) AllWith(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByClusterId", reflect.TypeOf((*MockClusterRepository)(nil).ByClusterId), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllWith", reflect.TypeOf((*MockClusterRepository)(nil).AllWith), arg0, arg1)
 }
 
 // ByClusterName mocks base method.
@@ -238,10 +237,10 @@ func (mr *MockClusterRepositoryMockRecorder) ByClusterName(arg0, arg1 interface{
 }
 
 // ById mocks base method.
-func (m *MockClusterRepository) ById(arg0 context.Context, arg1 uuid.UUID) (eventsourcing.Projection, error) {
+func (m *MockClusterRepository) ById(arg0 context.Context, arg1 uuid.UUID) (*projections.Cluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ById", arg0, arg1)
-	ret0, _ := ret[0].(eventsourcing.Projection)
+	ret0, _ := ret[0].(*projections.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -250,21 +249,6 @@ func (m *MockClusterRepository) ById(arg0 context.Context, arg1 uuid.UUID) (even
 func (mr *MockClusterRepositoryMockRecorder) ById(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ById", reflect.TypeOf((*MockClusterRepository)(nil).ById), arg0, arg1)
-}
-
-// GetAll mocks base method.
-func (m *MockClusterRepository) GetAll(arg0 context.Context, arg1 bool) ([]*projections.Cluster, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0, arg1)
-	ret0, _ := ret[0].([]*projections.Cluster)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAll indicates an expected call of GetAll.
-func (mr *MockClusterRepositoryMockRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockClusterRepository)(nil).GetAll), arg0, arg1)
 }
 
 // GetBootstrapToken mocks base method.
@@ -297,7 +281,7 @@ func (mr *MockClusterRepositoryMockRecorder) Remove(arg0, arg1 interface{}) *gom
 }
 
 // Upsert mocks base method.
-func (m *MockClusterRepository) Upsert(arg0 context.Context, arg1 eventsourcing.Projection) error {
+func (m *MockClusterRepository) Upsert(arg0 context.Context, arg1 *projections.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upsert", arg0, arg1)
 	ret0, _ := ret[0].(error)
