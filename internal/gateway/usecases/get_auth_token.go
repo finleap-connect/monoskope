@@ -29,6 +29,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -80,7 +81,13 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 
 	clusterId := s.request.GetClusterId()
 	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
-	cluster, err := s.clusterRepo.ById(ctx, clusterId)
+
+	uuid, err := uuid.Parse(clusterId)
+	if err != nil {
+		return err
+	}
+
+	cluster, err := s.clusterRepo.ById(ctx, uuid)
 	if err != nil {
 		return err
 	}
