@@ -83,7 +83,7 @@ func (s *UserServer) GetRoleBindingsById(userId *wrappers.StringValue, stream ap
 }
 
 func (s *UserServer) GetAll(request *api.GetAllRequest, stream api.User_GetAllServer) error {
-	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
+	users, err := s.repo.AllWith(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

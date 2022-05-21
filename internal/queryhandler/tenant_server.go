@@ -57,7 +57,12 @@ func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.Client
 
 // GetById returns the tenant found by the given id.
 func (s *tenantServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Tenant, error) {
-	tenant, err := s.repoTenant.ByTenantId(ctx, id.GetValue())
+	uuid, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return nil, err
+	}
+
+	tenant, err := s.repoTenant.ById(ctx, uuid)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +80,7 @@ func (s *tenantServer) GetByName(ctx context.Context, name *wrappers.StringValue
 
 // GetAll returns all tenants.
 func (s *tenantServer) GetAll(request *api.GetAllRequest, stream api.Tenant_GetAllServer) error {
-	tenants, err := s.repoTenant.GetAll(stream.Context(), request.GetIncludeDeleted())
+	tenants, err := s.repoTenant.AllWith(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
