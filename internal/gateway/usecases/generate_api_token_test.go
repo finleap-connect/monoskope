@@ -75,7 +75,7 @@ var _ = Describe("GenerateAPIToken", func() {
 			Email: expectedUserEmail,
 		})
 
-		userProjection := projections.NewUserProjection(expectedUserId).(*projections.User)
+		userProjection := projections.NewUserProjection(expectedUserId)
 		userProjection.Id = expectedUserId.String()
 		userProjection.Name = expectedUserName
 		userProjection.Email = expectedUserEmail

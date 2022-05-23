@@ -17,11 +17,13 @@ package events
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -30,8 +32,6 @@ import (
 	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -43,12 +43,13 @@ func init() {
 // tenantEventFormatter EventFormatter implementation for the tenant-aggregate
 type tenantEventFormatter struct {
 	*event.EventFormatterBase
+	esClient esApi.EventStoreClient
 }
 
 // NewTenantEventFormatter creates a new event formatter for the tenant-aggregate
 func NewTenantEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &tenantEventFormatter{
-		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
+		&event.EventFormatterBase{}, esClient,
 	}
 }
 

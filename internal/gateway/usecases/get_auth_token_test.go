@@ -78,7 +78,7 @@ var _ = Describe("GetAuthToken", func() {
 			NotBefore: time.Now().UTC(),
 		})
 
-		userProjection := projections.NewUserProjection(expectedUserId).(*projections.User)
+		userProjection := projections.NewUserProjection(expectedUserId)
 		userProjection.Id = expectedUserId.String()
 		userProjection.Name = expectedUserName
 		userProjection.Email = expectedUserEmail

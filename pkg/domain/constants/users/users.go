@@ -64,7 +64,7 @@ func newSystemUser(name string) *projections.User {
 	adminRoleBinding.Scope = string(scopes.System)
 
 	// Create system user
-	user := projections.NewUserProjection(userId).(*projections.User)
+	user := projections.NewUserProjection(userId)
 	user.Name = name
 	user.Email = generateSystemEmailAddress(name)
 	user.Roles = append(user.Roles, adminRoleBinding.UserRoleBinding)

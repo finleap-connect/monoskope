@@ -159,7 +159,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup user repo
-	adminUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+	adminUser := projections.NewUserProjection(uuid.New())
 	adminUser.Name = "admin"
 	adminUser.Email = "admin@monoskope.io"
 
@@ -168,15 +168,15 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
-	existingUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+	existingUser := projections.NewUserProjection(uuid.New())
 	existingUser.Name = "someone"
 	existingUser.Email = "someone@monoskope.io"
 
-	notExistingUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+	notExistingUser := projections.NewUserProjection(uuid.New())
 	notExistingUser.Name = "nobody"
 	notExistingUser.Email = "nobody@monoskope.io"
 
-	tenantAdminUser := projections.NewUserProjection(uuid.New()).(*projections.User)
+	tenantAdminUser := projections.NewUserProjection(uuid.New())
 	tenantAdminUser.Name = "tenant-admin"
 	tenantAdminUser.Email = "tenant-admin@monoskope.io"
 
@@ -191,8 +191,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	env.ExistingUser = existingUser
 	env.NotExistingUser = notExistingUser
 
-	inMemoryUserRepo := es_repos.NewInMemoryRepository()
-	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository()
+	inMemoryUserRepo := es_repos.NewInMemoryRepository[*projections.User]()
+	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()
 	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
 		return nil, err
 	}
@@ -217,13 +217,13 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 
 	// Setup cluster repo
 	clusterId := uuid.New()
-	testCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
+	testCluster := projections.NewClusterProjection(clusterId)
 	testCluster.Name = "test-cluster"
 	testCluster.DisplayName = "Test Cluster"
 	testCluster.ApiServerAddress = "https://somecluster.io"
 	testCluster.CaCertBundle = []byte("some-bundle")
 
-	inMemoryClusterRepo := es_repos.NewInMemoryRepository()
+	inMemoryClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
 	if err := inMemoryClusterRepo.Upsert(context.Background(), testCluster); err != nil {
 		return nil, err
 	}

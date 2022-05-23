@@ -29,30 +29,24 @@ type tenantProjector struct {
 	*domainProjector
 }
 
-func NewTenantProjector() es.Projector {
+func NewTenantProjector() es.Projector[*projections.Tenant] {
 	return &tenantProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (t *tenantProjector) NewProjection(id uuid.UUID) es.Projection {
+func (t *tenantProjector) NewProjection(id uuid.UUID) *projections.Tenant {
 	return projections.NewTenantProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (t *tenantProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.Tenant)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (t *tenantProjector) Project(ctx context.Context, event es.Event, p *projections.Tenant) (*projections.Tenant, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.TenantCreated:
 		data := new(eventdata.TenantCreated)
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 
 		p.Name = data.GetName()
@@ -64,7 +58,7 @@ func (t *tenantProjector) Project(ctx context.Context, event es.Event, projectio
 	case events.TenantUpdated:
 		data := new(eventdata.TenantUpdated)
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 		p.Name = data.GetName().GetValue()
 	case events.TenantDeleted:

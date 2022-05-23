@@ -48,7 +48,7 @@ var _ = Describe("domain/certificate_repo", func() {
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
-	newCertificate := projections.NewCertificateProjection(certId).(*projections.Certificate)
+	newCertificate := projections.NewCertificateProjection(certId)
 	newCertificate.Certificate = &projectionsApi.Certificate{
 		Id:                    certId.String(),
 		ReferencedAggregateId: someAggregateId.String(),

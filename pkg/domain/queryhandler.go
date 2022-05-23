@@ -62,12 +62,12 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
 
 	// Setup handler
-	userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, d.UserRepository)
-	tenantProjectingHandler := eventhandler.NewProjectingEventHandler(tenantProjector, d.TenantRepository)
-	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, d.UserRoleBindingRepository)
-	clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, d.ClusterRepository)
-	certificateProjectingHandler := eventhandler.NewProjectingEventHandler(certificateProjector, d.CertificateRepository)
-	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler(tenantClusterBindingProjector, d.TenantClusterBindingRepository)
+	userProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.User](userProjector, d.UserRepository)
+	tenantProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Tenant](tenantProjector, d.TenantRepository)
+	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, d.UserRoleBindingRepository)
+	clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, d.ClusterRepository)
+	certificateProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Certificate](certificateProjector, d.CertificateRepository)
+	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, d.TenantClusterBindingRepository)
 
 	// Setup middleware
 	refreshDuration := time.Second * 30

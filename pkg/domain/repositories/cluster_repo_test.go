@@ -48,7 +48,7 @@ var _ = Describe("domain/cluster_repo", func() {
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
-	newCluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
+	newCluster := projections.NewClusterProjection(clusterId)
 	newCluster.Name = expectedClusterName
 	newCluster.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 

@@ -17,10 +17,10 @@ package events
 import (
 	"context"
 	"fmt"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -35,12 +35,13 @@ func init() {
 // certificateEventFormatter EventFormatter implementation for the certificate-aggregate
 type certificateEventFormatter struct {
 	*event.EventFormatterBase
+	esClient esApi.EventStoreClient
 }
 
 // NewCertificateEventFormatter creates a new event formatter for the certificate-aggregate
 func NewCertificateEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &certificateEventFormatter{
-		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
+		&event.EventFormatterBase{}, esClient,
 	}
 }
 

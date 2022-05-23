@@ -29,30 +29,24 @@ type tenantclusterbindingProjector struct {
 	*domainProjector
 }
 
-func NewTenantClusterBindingProjector() es.Projector {
+func NewTenantClusterBindingProjector() es.Projector[*projections.TenantClusterBinding] {
 	return &tenantclusterbindingProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (t *tenantclusterbindingProjector) NewProjection(id uuid.UUID) es.Projection {
+func (t *tenantclusterbindingProjector) NewProjection(id uuid.UUID) *projections.TenantClusterBinding {
 	return projections.NewTenantClusterBindingProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (t *tenantclusterbindingProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.TenantClusterBinding)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (t *tenantclusterbindingProjector) Project(ctx context.Context, event es.Event, p *projections.TenantClusterBinding) (*projections.TenantClusterBinding, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.TenantClusterBindingCreated:
 		data := new(eventdata.TenantClusterBindingCreated)
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 
 		p.TenantId = data.GetTenantId()

@@ -22,7 +22,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -58,13 +57,10 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(projection.Version()).To(Equal(uint64(1)))
 
-		binding, ok := projection.(*projections.TenantClusterBinding)
-		Expect(ok).To(BeTrue())
+		Expect(projection.GetTenantId()).To(Equal(expectedTenantId.String()))
+		Expect(projection.GetClusterId()).To(Equal(expectedClusterId.String()))
 
-		Expect(binding.GetTenantId()).To(Equal(expectedTenantId.String()))
-		Expect(binding.GetClusterId()).To(Equal(expectedClusterId.String()))
-
-		dp := binding.DomainProjection
+		dp := projection.DomainProjection
 		Expect(dp.GetCreated()).ToNot(BeNil())
 		Expect(dp.GetLastModified()).ToNot(BeNil())
 		Expect(dp.GetDeleted()).To(BeNil())
@@ -76,10 +72,7 @@ var _ = Describe("domain/projectors/tenant_cluster_binding", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(projection.Version()).To(Equal(uint64(2)))
 
-		binding, ok := projection.(*projections.TenantClusterBinding)
-		Expect(ok).To(BeTrue())
-
-		dp := binding.DomainProjection
+		dp := projection.DomainProjection
 		Expect(dp.GetCreated()).ToNot(BeNil())
 		Expect(dp.GetLastModified()).ToNot(BeNil())
 		Expect(dp.GetDeleted()).ToNot(BeNil())

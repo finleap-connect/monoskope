@@ -48,11 +48,11 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 	otherUserRoleBinding.Scope = scopes.Tenant.String()
 	otherUserRoleBinding.Resource = tenantId.String()
 
-	cluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
+	cluster := projections.NewClusterProjection(clusterId)
 	cluster.Name = "test-cluster"
 	cluster.DisplayName = "Test Cluster"
 
-	binding := projections.NewTenantClusterBindingProjection(uuid.New()).(*projections.TenantClusterBinding)
+	binding := projections.NewTenantClusterBindingProjection(uuid.New())
 	binding.ClusterId = clusterId.String()
 	binding.TenantId = tenantId.String()
 
