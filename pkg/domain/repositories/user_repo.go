@@ -85,14 +85,20 @@ func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projectio
 
 // ByEmail searches for the a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
-	ps, err := r.AllWith(ctx, true)
+	users, err := r.AllWith(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, u := range ps {
-		if email == u.Email {
-			return u, nil
+	for _, user := range users {
+		if email == user.Email {
+			// Find roles of user
+			err = r.addRolesToUser(ctx, user)
+			if err != nil {
+				return nil, err
+			}
+
+			return user, nil
 		}
 	}
 

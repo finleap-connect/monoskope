@@ -89,7 +89,7 @@ var _ = Describe("GetAuthToken", func() {
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()
-		clusterRepo.EXPECT().ById(ctxWithUser, expectedClusterId.String()).Return(clusterProjection, nil)
+		clusterRepo.EXPECT().ById(ctxWithUser, expectedClusterId).Return(clusterProjection, nil)
 
 		err := uc.Run(ctxWithUser)
 		Expect(err).ToNot(HaveOccurred())
