@@ -24,12 +24,11 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
+	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -84,43 +83,37 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Eve
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
-	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
+	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+
+	tenant, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
 	})
 	if err != nil {
 		return "", err
 	}
-	oldTenant, ok := tenantSnapshot.(*projections.Tenant)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
 
 	var details strings.Builder
 	details.WriteString(fmt.Sprintf("“%s“ updated the Tenant", event.Metadata[auth.HeaderAuthEmail]))
-	f.AppendUpdate("Name", eventData.Name.Value, oldTenant.Name, &details)
+	f.AppendUpdate("Name", eventData.Name.Value, tenant.Name, &details)
 	return details.String(), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantClusterBindingCreated) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.TenantId}
-	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
+
+	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
-	}
-	tenant, ok := tenantSnapshot.(*projections.Tenant)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.ClusterId}
-	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
+
+	clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
-	}
-	cluster, ok := clusterSnapshot.(*projections.Cluster)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ bounded tenant “%s“ to cluster “%s”",
@@ -128,16 +121,13 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), &esApi.EventFilter{
+	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
 	})
 	if err != nil {
 		return "", err
-	}
-	tenant, ok := tenantSnapshot.(*projections.Tenant)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ deleted tenant “%s“", event.Metadata[auth.HeaderAuthEmail], tenant.Name), nil
@@ -146,31 +136,25 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Cont
 func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
-	tcbSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantClusterBindingProjector(), eventFilter)
+
+	tenantClusterBindingSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantClusterBindingProjector())
+	tcb, err := tenantClusterBindingSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
-	tcb, ok := tcbSnapshot.(*projections.TenantClusterBinding)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
+
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.TenantId}
-	tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
+	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
-	tenant, ok := tenantSnapshot.(*projections.Tenant)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
+
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.ClusterId}
-	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
+	clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
-	}
-	cluster, ok := clusterSnapshot.(*projections.Cluster)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ deleted the bound between cluster “%s“ and tenant “%s“",
