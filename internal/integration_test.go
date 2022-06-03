@@ -24,10 +24,12 @@ import (
 	mock_reactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
@@ -84,11 +86,11 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	// certificateServiceClient := func() domainApi.CertificateClient {
-	// 	_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewCertificateClient)
-	// 	Expect(err).ToNot(HaveOccurred())
-	// 	return client
-	// }
+	certificateServiceClient := func() domainApi.CertificateClient {
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewCertificateClient)
+		Expect(err).ToNot(HaveOccurred())
+		return client
+	}
 
 	eventStoreClient := func() esApi.EventStoreClient {
 		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
@@ -352,67 +354,67 @@ var _ = Describe("integration", func() {
 		})
 	})
 
-	// Context("cert management", func() {
-	// 	It("can create and query a certificate", func() {
-	// 		testReactor := mock_reactor.NewTestReactor()
-	// 		defer testReactor.Close()
+	Context("cert management", func() {
+		It("can create and query a certificate", func() {
+			testReactor := mock_reactor.NewTestReactor()
+			defer testReactor.Close()
 
-	// 		err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
-	// 		Expect(err).ToNot(HaveOccurred())
+			err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			Expect(err).ToNot(HaveOccurred())
 
-	// 		clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
-	// 		Expect(err).ToNot(HaveOccurred())
-	// 		Expect(clusterInfo).ToNot(BeNil())
+			clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(clusterInfo).ToNot(BeNil())
 
-	// 		command, err := cmd.AddCommandData(
-	// 			cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
-	// 			&cmdData.RequestCertificate{
-	// 				ReferencedAggregateId:   clusterInfo.Id,
-	// 				ReferencedAggregateType: aggregates.Cluster.String(),
-	// 				SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
-	// 			},
-	// 		)
-	// 		Expect(err).ToNot(HaveOccurred())
+			command, err := cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
+				&cmdData.RequestCertificate{
+					ReferencedAggregateId:   clusterInfo.Id,
+					ReferencedAggregateType: aggregates.Cluster.String(),
+					SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
 
-	// 		certRequestCmdReply, err := commandHandlerClient().Execute(ctx, command)
-	// 		Expect(err).ToNot(HaveOccurred())
+			certRequestCmdReply, err := commandHandlerClient().Execute(ctx, command)
+			Expect(err).ToNot(HaveOccurred())
 
-	// 		var observed []es.Event
-	// 		Eventually(func(g Gomega) {
-	// 			observed = testReactor.GetObservedEvents()
-	// 			g.Expect(len(observed)).To(Equal(1))
-	// 		}).Should(Succeed())
-	// 		certRequestedEvent := observed[0]
-	// 		Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
+			var observed []es.Event
+			Eventually(func(g Gomega) {
+				observed = testReactor.GetObservedEvents()
+				g.Expect(len(observed)).To(Equal(1))
+			}).Should(Succeed())
+			certRequestedEvent := observed[0]
+			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
-	// 		err = testReactor.Emit(ctx, es.NewEvent(
-	// 			ctx,
-	// 			events.CertificateIssued,
-	// 			es.ToEventDataFromProto(&eventdata.CertificateIssued{
-	// 				Certificate: &common.CertificateChain{
-	// 					Ca:          expectedClusterCACertBundle,
-	// 					Certificate: []byte("this is a cert"),
-	// 				},
-	// 			}),
-	// 			time.Now().UTC(),
-	// 			certRequestedEvent.AggregateType(),
-	// 			certRequestedEvent.AggregateID(),
-	// 			certRequestedEvent.AggregateVersion()+1),
-	// 		)
-	// 		Expect(err).ToNot(HaveOccurred())
+			err = testReactor.Emit(ctx, es.NewEventWithMetadata(
+				events.CertificateIssued,
+				es.ToEventDataFromProto(&eventdata.CertificateIssued{
+					Certificate: &common.CertificateChain{
+						Ca:          expectedClusterCACertBundle,
+						Certificate: []byte("this is a cert"),
+					},
+				}),
+				time.Now().UTC(),
+				certRequestedEvent.AggregateType(),
+				certRequestedEvent.AggregateID(),
+				certRequestedEvent.AggregateVersion()+1,
+				certRequestedEvent.Metadata(),
+			))
+			Expect(err).ToNot(HaveOccurred())
 
-	// 		Eventually(func(g Gomega) {
-	// 			certificate, err := certificateServiceClient().GetCertificate(ctx,
-	// 				&domainApi.GetCertificateRequest{
-	// 					AggregateId:   clusterInfo.GetId(),
-	// 					AggregateType: aggregates.Cluster.String(),
-	// 				})
-	// 			g.Expect(err).ToNot(HaveOccurred())
-	// 			g.Expect(certificate.GetCertificate()).ToNot(BeNil())
-	// 			g.Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
-	// 		}).Should(Succeed())
-	// 	})
-	// })
+			Eventually(func(g Gomega) {
+				certificate, err := certificateServiceClient().GetCertificate(ctx,
+					&domainApi.GetCertificateRequest{
+						AggregateId:   clusterInfo.GetId(),
+						AggregateType: aggregates.Cluster.String(),
+					})
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(certificate.GetCertificate()).ToNot(BeNil())
+				g.Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
+			}).Should(Succeed())
+		})
+	})
 })
 
 var _ = Describe("PrometheusMetrics", func() {
