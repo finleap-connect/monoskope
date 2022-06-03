@@ -29,10 +29,10 @@ type userRepository struct {
 	roleBindingRepo UserRoleBindingRepository
 }
 
-// Repository is a repository for reading and writing user projections.
+// UserRepository is a repository for reading and writing user projections.
 type UserRepository interface {
 	DomainRepository[*projections.User]
-	// ById searches for the a user projection by it's id.
+	// ByUserId searches for the a user projection by it's id.
 	ByUserId(context.Context, uuid.UUID) (*projections.User, error)
 	// ByEmail searches for the a user projection by it's email address.
 	ByEmail(context.Context, string) (*projections.User, error)
@@ -67,7 +67,7 @@ func toProtoRoles(roles []*projections.UserRoleBinding) []*projectionsApi.UserRo
 	return mapped
 }
 
-// ById searches for the a user projection by it's id.
+// ByUserId searches for the a user projection by it's id.
 func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
 	user, err := r.ById(ctx, id)
 	if err != nil {
@@ -83,7 +83,7 @@ func (r *userRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projectio
 	return user, nil
 }
 
-// ByEmail searches for the a user projection by it's email address.
+// ByEmail searches for a user projection by it's email address.
 func (r *userRepository) ByEmail(ctx context.Context, email string) (*projections.User, error) {
 	users, err := r.AllWith(ctx, true)
 	if err != nil {

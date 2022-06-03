@@ -37,6 +37,7 @@ func NewRemoteUserRepository(userService api.UserClient) UserRepository {
 	}
 }
 
+// GetAll returns all projections
 func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
 }

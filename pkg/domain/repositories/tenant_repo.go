@@ -40,7 +40,7 @@ func NewTenantRepository(repository es.Repository[*projections.Tenant]) TenantRe
 	}
 }
 
-// ByTenantName searches for a tenant projection by its name.
+// ByName searches for a tenant projection by its name.
 func (r *tenantRepository) ByName(ctx context.Context, name string) (*projections.Tenant, error) {
 	ps, err := r.AllWith(ctx, true)
 	if err != nil {
