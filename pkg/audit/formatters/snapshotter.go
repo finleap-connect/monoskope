@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Snapshotter is the base implementation for all audit formatters
+// Snapshotter implements basic snapshot creation for audit formatters
 type Snapshotter[T es.Projection] struct {
 	esClient  esApi.EventStoreClient
 	projector es.Projector[T]
