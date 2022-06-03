@@ -39,7 +39,7 @@ func NewDomainRepository[T projections.DomainProjection](repository es.Repositor
 	}
 }
 
-// All returns all projections in the repository.
+// AllWith returns all projections in the repository.
 func (r *domainRepository[T]) AllWith(ctx context.Context, includeDeleted bool) ([]T, error) {
 	ps, err := r.Repository.All(ctx)
 	if err != nil {
