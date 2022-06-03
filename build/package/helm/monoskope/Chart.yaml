@@ -52,7 +52,7 @@ dependencies: # A list of the chart requirements
     repository: https://charts.cockroachdb.com/
     condition: cockroachdb.enabled,global.cockroachdb.enabled
   - name: rabbitmq
-    version: 8.24.3
+    version: 10.1.1
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled,global.rabbitmq.enabled
   - name: ambassador
