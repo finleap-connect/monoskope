@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/test"
-	mockRepos "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
+	mock_repos "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -62,7 +62,7 @@ var _ = Describe("GetAuthToken", func() {
 	})
 
 	It("can retrieve openid conf", func() {
-		clusterRepo := mockRepos.NewMockClusterRepository(mockCtrl)
+		clusterRepo := mock_repos.NewMockClusterRepository(mockCtrl)
 
 		request := &api.ClusterAuthTokenRequest{
 			ClusterId: expectedClusterId.String(),

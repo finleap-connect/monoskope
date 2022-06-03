@@ -46,7 +46,7 @@ func NewDomainProjection() DomainProjection {
 	return &domainProjection{}
 }
 
-// Version implements the Version method of the Projection interface.
+// ID implements the ID method of the Projection interface.
 func (p *domainProjection) ID() uuid.UUID {
 	panic("not implemented")
 }

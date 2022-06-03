@@ -26,7 +26,7 @@ type userRoleBindingRepository struct {
 	DomainRepository[*projections.UserRoleBinding]
 }
 
-// Repository is a repository for reading and writing UserRoleBinding projections.
+// UserRoleBindingRepository is a repository for reading and writing UserRoleBinding projections.
 type UserRoleBindingRepository interface {
 	DomainRepository[*projections.UserRoleBinding]
 	// ByUserId searches for all UserRoleBinding projection's by the user id.
@@ -37,7 +37,7 @@ type UserRoleBindingRepository interface {
 	ByScopeAndResource(context.Context, es.Scope, uuid.UUID) ([]*projections.UserRoleBinding, error)
 }
 
-// NewUserRepository creates a repository for reading and writing UserRoleBinding projections.
+// NewUserRoleBindingRepository creates a repository for reading and writing UserRoleBinding projections.
 func NewUserRoleBindingRepository(repository es.Repository[*projections.UserRoleBinding]) UserRoleBindingRepository {
 	return &userRoleBindingRepository{
 		NewDomainRepository(repository),
