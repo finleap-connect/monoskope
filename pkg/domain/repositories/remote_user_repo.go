@@ -62,7 +62,7 @@ func (r *remoteUserRepository) Remove(ctx context.Context, id uuid.UUID) error {
 	return fmt.Errorf("not implemented")
 }
 
-// ById searches for the a user projection by it's id.
+// ByUserId searches for the a user projection by it's id.
 func (r *remoteUserRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
 	userProto, err := r.userService.GetById(ctx, wrapperspb.String(id.String()))
 	if err != nil {
