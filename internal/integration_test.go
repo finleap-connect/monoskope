@@ -307,27 +307,12 @@ var _ = Describe("integration", func() {
 				cluster, err = clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(cluster).ToNot(BeNil())
+				g.Expect(cluster.Id).To(Equal(clusterId.String()))
 				g.Expect(cluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
 				g.Expect(cluster.GetName()).To(Equal(expectedClusterName))
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 			}).Should(Succeed())
-
-			By("getting all existing clusters")
-
-			clusterStream, err := clusterServiceClient().GetAll(ctx, &domainApi.GetAllRequest{
-				IncludeDeleted: true,
-			})
-			Expect(err).ToNot(HaveOccurred())
-			// Read next
-			firstCluster, err := clusterStream.Recv()
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(firstCluster).ToNot(BeNil())
-			Expect(firstCluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
-			Expect(firstCluster.GetName()).To(Equal(expectedClusterName))
-			Expect(firstCluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
-			Expect(firstCluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 			By("by retrieving the bootstrap token")
 			observed := testReactor.GetObservedEvents()
