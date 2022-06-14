@@ -192,8 +192,8 @@ func createUserRoleBinding(ctx context.Context, agg es.Aggregate, userId uuid.UU
 	Expect(ok).To(BeTrue())
 
 	esCommand.UserId = userId.String()
-	esCommand.Role = expectedAdminRole.String()
-	esCommand.Scope = expectedTenantScope.String()
+	esCommand.Role = string(expectedAdminRole)
+	esCommand.Scope = string(expectedTenantScope)
 	esCommand.Resource = wrapperspb.String(expectedResourceId.String())
 
 	return agg.HandleCommand(ctx, esCommand)

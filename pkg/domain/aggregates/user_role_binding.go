@@ -187,8 +187,8 @@ func containsRoleBinding(values []es.Aggregate, userId string, role, scope, reso
 		d, ok := value.(*UserRoleBindingAggregate)
 		if ok &&
 			d.userId.String() == userId &&
-			d.role.String() == role &&
-			d.scope.String() == scope &&
+			string(d.role) == role &&
+			string(d.scope) == scope &&
 			d.resource == resourceId {
 			return true
 		}

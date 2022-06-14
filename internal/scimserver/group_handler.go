@@ -178,7 +178,7 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 
 				command, err := cmd.AddCommandData(
 					cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-					&cmdData.CreateUserRoleBindingCommandData{Role: role.String(), Scope: scopes.System.String(), UserId: userId},
+					&cmdData.CreateUserRoleBindingCommandData{Role: string(role), Scope: string(scopes.System), UserId: userId},
 				)
 				if err != nil {
 					h.log.Error(err, "Failed to create command to patch group.")

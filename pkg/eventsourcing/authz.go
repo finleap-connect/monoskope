@@ -17,16 +17,8 @@ package eventsourcing
 // Role is the name of a user's role.
 type Role string
 
-func (r Role) String() string {
-	return string(r)
-}
-
 // Scope is the scope of a role.
 type Scope string
-
-func (s Scope) String() string {
-	return string(s)
-}
 
 const (
 	AnyRole  Role  = "*"

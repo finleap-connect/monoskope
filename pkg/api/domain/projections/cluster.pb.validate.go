@@ -170,3 +170,131 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterValidationError{}
+
+// Validate checks the field values on ClusterAccess with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ClusterAccess) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClusterAccess with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ClusterAccessMultiError, or
+// nil if none found.
+func (m *ClusterAccess) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClusterAccess) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCluster()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClusterAccessValidationError{
+					field:  "Cluster",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClusterAccessValidationError{
+					field:  "Cluster",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCluster()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClusterAccessValidationError{
+				field:  "Cluster",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ClusterAccessMultiError(errors)
+	}
+	return nil
+}
+
+// ClusterAccessMultiError is an error wrapping multiple validation errors
+// returned by ClusterAccess.ValidateAll() if the designated constraints
+// aren't met.
+type ClusterAccessMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClusterAccessMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClusterAccessMultiError) AllErrors() []error { return m }
+
+// ClusterAccessValidationError is the validation error returned by
+// ClusterAccess.Validate if the designated constraints aren't met.
+type ClusterAccessValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterAccessValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterAccessValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterAccessValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterAccessValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterAccessValidationError) ErrorName() string { return "ClusterAccessValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterAccessValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterAccess.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterAccessValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterAccessValidationError{}

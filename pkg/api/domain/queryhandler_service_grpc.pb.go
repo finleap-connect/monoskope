@@ -806,7 +806,7 @@ func (c *clusterAccessClient) GetClusterAccessByTenantId(ctx context.Context, in
 }
 
 type ClusterAccess_GetClusterAccessByTenantIdClient interface {
-	Recv() (*projections.Cluster, error)
+	Recv() (*projections.ClusterAccess, error)
 	grpc.ClientStream
 }
 
@@ -814,8 +814,8 @@ type clusterAccessGetClusterAccessByTenantIdClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterAccessGetClusterAccessByTenantIdClient) Recv() (*projections.Cluster, error) {
-	m := new(projections.Cluster)
+func (x *clusterAccessGetClusterAccessByTenantIdClient) Recv() (*projections.ClusterAccess, error) {
+	m := new(projections.ClusterAccess)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -838,7 +838,7 @@ func (c *clusterAccessClient) GetClusterAccessByUserId(ctx context.Context, in *
 }
 
 type ClusterAccess_GetClusterAccessByUserIdClient interface {
-	Recv() (*projections.Cluster, error)
+	Recv() (*projections.ClusterAccess, error)
 	grpc.ClientStream
 }
 
@@ -846,8 +846,8 @@ type clusterAccessGetClusterAccessByUserIdClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.Cluster, error) {
-	m := new(projections.Cluster)
+func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.ClusterAccess, error) {
+	m := new(projections.ClusterAccess)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -990,7 +990,7 @@ func _ClusterAccess_GetClusterAccessByTenantId_Handler(srv interface{}, stream g
 }
 
 type ClusterAccess_GetClusterAccessByTenantIdServer interface {
-	Send(*projections.Cluster) error
+	Send(*projections.ClusterAccess) error
 	grpc.ServerStream
 }
 
@@ -998,7 +998,7 @@ type clusterAccessGetClusterAccessByTenantIdServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterAccessGetClusterAccessByTenantIdServer) Send(m *projections.Cluster) error {
+func (x *clusterAccessGetClusterAccessByTenantIdServer) Send(m *projections.ClusterAccess) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1011,7 +1011,7 @@ func _ClusterAccess_GetClusterAccessByUserId_Handler(srv interface{}, stream grp
 }
 
 type ClusterAccess_GetClusterAccessByUserIdServer interface {
-	Send(*projections.Cluster) error
+	Send(*projections.ClusterAccess) error
 	grpc.ServerStream
 }
 
@@ -1019,7 +1019,7 @@ type clusterAccessGetClusterAccessByUserIdServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterAccessGetClusterAccessByUserIdServer) Send(m *projections.Cluster) error {
+func (x *clusterAccessGetClusterAccessByUserIdServer) Send(m *projections.ClusterAccess) error {
 	return x.ServerStream.SendMsg(m)
 }
 

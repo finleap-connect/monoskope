@@ -127,7 +127,7 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 			return err
 		}
 
-		err = setupRoleBinding(ctx, userId, roles.Admin.String(), scopes.System.String(), handler)
+		err = setupRoleBinding(ctx, userId, string(roles.Admin), string(scopes.System), handler)
 		if err != nil {
 			return err
 		}

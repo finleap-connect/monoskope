@@ -31,21 +31,17 @@ const (
 
 	// Tenant scope
 	Tenant es.Scope = "tenant"
-
-	// Cluster scope
-	Cluster es.Scope = "cluster"
 )
 
 // A list of all existing scopes.
 var AvailableScopes = []es.Scope{
 	System,
 	Tenant,
-	Cluster,
 }
 
 func ValidateScope(scope string) error {
 	for _, v := range AvailableScopes {
-		if v.String() == scope {
+		if string(v) == scope {
 			return nil
 		}
 	}

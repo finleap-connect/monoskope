@@ -42,8 +42,8 @@ var _ = Describe("Gateway Auth Server", func() {
 	var (
 		ctx              = context.Background()
 		expectedUserId   = uuid.New()
-		expectedRole     = roles.User.String()
-		expectedScope    = scopes.Tenant.String()
+		expectedRole     = roles.User
+		expectedScope    = scopes.Tenant
 		expectedResource = "1234"
 	)
 
@@ -61,8 +61,8 @@ var _ = Describe("Gateway Auth Server", func() {
 		_, err := cmd.AddCommandData(command,
 			&cmdData.CreateUserRoleBindingCommandData{
 				UserId:   expectedUserId.String(),
-				Role:     expectedRole,
-				Scope:    expectedScope,
+				Role:     string(expectedRole),
+				Scope:    string(expectedScope),
 				Resource: wrapperspb.String(expectedResource),
 			},
 		)

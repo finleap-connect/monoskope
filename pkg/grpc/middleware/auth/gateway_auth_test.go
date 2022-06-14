@@ -62,16 +62,16 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			authClient := mock_api.NewMockGatewayAuthClient(mockCtrl)
 			expectedMethodName := "test"
 			expectedUserId := uuid.New()
-			expectedRole := roles.Admin.String()
-			exptectedScope := scopes.Tenant.String()
+			expectedRole := roles.Admin
+			exptectedScope := scopes.Tenant
 			expectedResource := uuid.New()
 
 			command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding)
 			_, err := cmd.AddCommandData(command,
 				&cmdData.CreateUserRoleBindingCommandData{
 					UserId:   expectedUserId.String(),
-					Role:     expectedRole,
-					Scope:    exptectedScope,
+					Role:     string(expectedRole),
+					Scope:    string(exptectedScope),
 					Resource: wrapperspb.String(expectedResource.String()),
 				},
 			)

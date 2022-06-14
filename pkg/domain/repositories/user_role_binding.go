@@ -69,7 +69,7 @@ func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId
 
 	var userRoleBindings []*projections.UserRoleBinding
 	for _, userRoleBinding := range ps {
-		if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == scope.String() {
+		if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == string(scope) {
 			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}
@@ -85,7 +85,7 @@ func (r *userRoleBindingRepository) ByScopeAndResource(ctx context.Context, scop
 
 	var userRoleBindings []*projections.UserRoleBinding
 	for _, userRoleBinding := range ps {
-		if scope.String() == userRoleBinding.GetScope() && resource.String() == userRoleBinding.Resource {
+		if string(scope) == userRoleBinding.GetScope() && resource.String() == userRoleBinding.Resource {
 			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}

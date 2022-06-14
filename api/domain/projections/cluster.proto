@@ -39,3 +39,10 @@ message Cluster {
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
 }
+
+// ClusterAccess represents an access to a specific cluster with a list of roles
+// within that cluster for a user
+message ClusterAccess {
+  projections.Cluster cluster = 1;
+  repeated string roles = 2;
+}

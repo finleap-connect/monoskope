@@ -38,14 +38,14 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.Tenant.String()
+	adminRoleBinding.Role = string(roles.Admin)
+	adminRoleBinding.Scope = string(scopes.Tenant)
 	adminRoleBinding.Resource = tenantId.String()
 
 	otherUserRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	otherUserRoleBinding.UserId = otherUser.Id
-	otherUserRoleBinding.Role = roles.User.String()
-	otherUserRoleBinding.Scope = scopes.Tenant.String()
+	otherUserRoleBinding.Role = string(roles.User)
+	otherUserRoleBinding.Scope = string(scopes.Tenant)
 	otherUserRoleBinding.Resource = tenantId.String()
 
 	cluster := projections.NewClusterProjection(clusterId)
@@ -77,12 +77,12 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(clusters).NotTo(BeEmpty())
 		Expect(len(clusters)).To(BeNumerically("==", 1))
-		Expect(clusters[0].Id).To(Equal(clusterId.String()))
+		Expect(clusters[0].Cluster.Id).To(Equal(clusterId.String()))
 
 		clusters, err = clusterAccessRepo.GetClustersAccessibleByTenantId(context.Background(), tenantId)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(clusters).NotTo(BeEmpty())
 		Expect(len(clusters)).To(BeNumerically("==", 1))
-		Expect(clusters[0].Id).To(Equal(clusterId.String()))
+		Expect(clusters[0].Cluster.Id).To(Equal(clusterId.String()))
 	})
 })

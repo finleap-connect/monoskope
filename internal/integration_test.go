@@ -118,7 +118,7 @@ var _ = Describe("integration", func() {
 
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
+				&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.Admin), Scope: string(scopes.System), UserId: userId.String()},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -141,8 +141,8 @@ var _ = Describe("integration", func() {
 			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(user).ToNot(BeNil())
-			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
-			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
+			Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
+			Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 
 			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())

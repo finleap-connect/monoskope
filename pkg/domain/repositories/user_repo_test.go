@@ -33,8 +33,8 @@ var _ = Describe("domain/user_repo", func() {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.System.String()
+	adminRoleBinding.Role = string(roles.Admin)
+	adminRoleBinding.Scope = string(scopes.System)
 
 	It("can read/write projections", func() {
 		inMemoryRoleRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()

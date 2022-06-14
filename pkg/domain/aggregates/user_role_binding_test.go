@@ -63,8 +63,8 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 
 		Expect(data.UserId).To(Equal(expectedUserId.String()))
 		Expect(data.Resource).To(Equal(expectedResourceId.String()))
-		Expect(data.Scope).To(Equal(expectedTenantScope.String()))
-		Expect(data.Role).To(Equal(expectedAdminRole.String()))
+		Expect(data.Scope).To(Equal(string(expectedTenantScope)))
+		Expect(data.Role).To(Equal(string(expectedAdminRole)))
 
 	})
 
@@ -75,8 +75,8 @@ var _ = Describe("Unit Test for UserRoleBinding Aggregate", func() {
 
 		ed := es.ToEventDataFromProto(&eventdata.UserRoleAdded{
 			UserId:   expectedUserId.String(),
-			Role:     expectedAdminRole.String(),
-			Scope:    expectedTenantScope.String(),
+			Role:     string(expectedAdminRole),
+			Scope:    string(expectedTenantScope),
 			Resource: expectedResourceId.String(),
 		})
 		esEvent := es.NewEvent(ctx, events.UserRoleBindingCreated, ed, time.Now().UTC(),

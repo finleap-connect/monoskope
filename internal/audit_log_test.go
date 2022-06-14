@@ -81,7 +81,7 @@ var _ = Describe("AuditLog Test", func() {
 		// CreateUserRoleBinding on system level
 		command, err = cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-			&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
+			&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.Admin), Scope: string(scopes.System), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
@@ -116,7 +116,7 @@ var _ = Describe("AuditLog Test", func() {
 		// CreateUserRoleBinding on tenant level
 		command, err = cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-			&cmdData.CreateUserRoleBindingCommandData{Role: roles.User.String(), Scope: scopes.Tenant.String(), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
+			&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.User), Scope: string(scopes.Tenant), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
