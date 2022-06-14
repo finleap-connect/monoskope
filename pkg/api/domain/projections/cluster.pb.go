@@ -129,6 +129,8 @@ func (x *Cluster) GetMetadata() *LifecycleMetadata {
 	return nil
 }
 
+// ClusterAccess represents an access to a specific cluster with a list of roles
+// within that cluster for a user
 type ClusterAccess struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

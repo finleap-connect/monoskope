@@ -35,8 +35,6 @@ type clusterAccessRepository struct {
 type ClusterAccessRepository interface {
 	// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
 	GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.ClusterAccess, error)
-	// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
-	GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) ([]*projections.ClusterAccess, error)
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
@@ -97,17 +95,5 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 			clusters, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
 		}
 	}
-	return
-}
-
-// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
-func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) (clusters []*projections.ClusterAccess, err error) {
-	// get accessible cluster by tenant and append
-	var bindings []*domain_projections.TenantClusterBinding
-	bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, id)
-	if err != nil {
-		return
-	}
-	clusters, err = r.getClustersByBindings(ctx, bindings, nil)
 	return
 }

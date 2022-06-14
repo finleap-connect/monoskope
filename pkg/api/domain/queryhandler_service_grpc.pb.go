@@ -9,6 +9,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -765,12 +766,9 @@ var Cluster_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ClusterAccessClient interface {
-	// GetClusterAccessByTenantId returns clusters which the given tenant has
-	// access to by it's UUID
-	GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error)
 	// GetClusterAccessByUserId returns clusters which the given user has access
 	// to by it's UUID
-	GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error)
+	GetClusterAccess(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessClient, error)
 	// GetTenantClusterMappingsByTenantId returns bindings which belong to the
 	// given tenant by it's UUID
 	GetTenantClusterMappingsByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetTenantClusterMappingsByTenantIdClient, error)
@@ -790,12 +788,12 @@ func NewClusterAccessClient(cc grpc.ClientConnInterface) ClusterAccessClient {
 	return &clusterAccessClient{cc}
 }
 
-func (c *clusterAccessClient) GetClusterAccessByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByTenantIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[0], "/domain.ClusterAccess/GetClusterAccessByTenantId", opts...)
+func (c *clusterAccessClient) GetClusterAccess(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[0], "/domain.ClusterAccess/GetClusterAccess", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &clusterAccessGetClusterAccessByTenantIdClient{stream}
+	x := &clusterAccessGetClusterAccessClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -805,48 +803,16 @@ func (c *clusterAccessClient) GetClusterAccessByTenantId(ctx context.Context, in
 	return x, nil
 }
 
-type ClusterAccess_GetClusterAccessByTenantIdClient interface {
+type ClusterAccess_GetClusterAccessClient interface {
 	Recv() (*projections.ClusterAccess, error)
 	grpc.ClientStream
 }
 
-type clusterAccessGetClusterAccessByTenantIdClient struct {
+type clusterAccessGetClusterAccessClient struct {
 	grpc.ClientStream
 }
 
-func (x *clusterAccessGetClusterAccessByTenantIdClient) Recv() (*projections.ClusterAccess, error) {
-	m := new(projections.ClusterAccess)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *clusterAccessClient) GetClusterAccessByUserId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetClusterAccessByUserIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[1], "/domain.ClusterAccess/GetClusterAccessByUserId", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &clusterAccessGetClusterAccessByUserIdClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type ClusterAccess_GetClusterAccessByUserIdClient interface {
-	Recv() (*projections.ClusterAccess, error)
-	grpc.ClientStream
-}
-
-type clusterAccessGetClusterAccessByUserIdClient struct {
-	grpc.ClientStream
-}
-
-func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.ClusterAccess, error) {
+func (x *clusterAccessGetClusterAccessClient) Recv() (*projections.ClusterAccess, error) {
 	m := new(projections.ClusterAccess)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -855,7 +821,7 @@ func (x *clusterAccessGetClusterAccessByUserIdClient) Recv() (*projections.Clust
 }
 
 func (c *clusterAccessClient) GetTenantClusterMappingsByTenantId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetTenantClusterMappingsByTenantIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[2], "/domain.ClusterAccess/GetTenantClusterMappingsByTenantId", opts...)
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[1], "/domain.ClusterAccess/GetTenantClusterMappingsByTenantId", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -887,7 +853,7 @@ func (x *clusterAccessGetTenantClusterMappingsByTenantIdClient) Recv() (*project
 }
 
 func (c *clusterAccessClient) GetTenantClusterMappingsByClusterId(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (ClusterAccess_GetTenantClusterMappingsByClusterIdClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[3], "/domain.ClusterAccess/GetTenantClusterMappingsByClusterId", opts...)
+	stream, err := c.cc.NewStream(ctx, &ClusterAccess_ServiceDesc.Streams[2], "/domain.ClusterAccess/GetTenantClusterMappingsByClusterId", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -931,12 +897,9 @@ func (c *clusterAccessClient) GetTenantClusterMappingByTenantAndClusterId(ctx co
 // All implementations must embed UnimplementedClusterAccessServer
 // for forward compatibility
 type ClusterAccessServer interface {
-	// GetClusterAccessByTenantId returns clusters which the given tenant has
-	// access to by it's UUID
-	GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error
 	// GetClusterAccessByUserId returns clusters which the given user has access
 	// to by it's UUID
-	GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error
+	GetClusterAccess(*emptypb.Empty, ClusterAccess_GetClusterAccessServer) error
 	// GetTenantClusterMappingsByTenantId returns bindings which belong to the
 	// given tenant by it's UUID
 	GetTenantClusterMappingsByTenantId(*wrapperspb.StringValue, ClusterAccess_GetTenantClusterMappingsByTenantIdServer) error
@@ -953,11 +916,8 @@ type ClusterAccessServer interface {
 type UnimplementedClusterAccessServer struct {
 }
 
-func (UnimplementedClusterAccessServer) GetClusterAccessByTenantId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByTenantIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByTenantId not implemented")
-}
-func (UnimplementedClusterAccessServer) GetClusterAccessByUserId(*wrapperspb.StringValue, ClusterAccess_GetClusterAccessByUserIdServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetClusterAccessByUserId not implemented")
+func (UnimplementedClusterAccessServer) GetClusterAccess(*emptypb.Empty, ClusterAccess_GetClusterAccessServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetClusterAccess not implemented")
 }
 func (UnimplementedClusterAccessServer) GetTenantClusterMappingsByTenantId(*wrapperspb.StringValue, ClusterAccess_GetTenantClusterMappingsByTenantIdServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetTenantClusterMappingsByTenantId not implemented")
@@ -981,45 +941,24 @@ func RegisterClusterAccessServer(s grpc.ServiceRegistrar, srv ClusterAccessServe
 	s.RegisterService(&ClusterAccess_ServiceDesc, srv)
 }
 
-func _ClusterAccess_GetClusterAccessByTenantId_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrapperspb.StringValue)
+func _ClusterAccess_GetClusterAccess_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ClusterAccessServer).GetClusterAccessByTenantId(m, &clusterAccessGetClusterAccessByTenantIdServer{stream})
+	return srv.(ClusterAccessServer).GetClusterAccess(m, &clusterAccessGetClusterAccessServer{stream})
 }
 
-type ClusterAccess_GetClusterAccessByTenantIdServer interface {
+type ClusterAccess_GetClusterAccessServer interface {
 	Send(*projections.ClusterAccess) error
 	grpc.ServerStream
 }
 
-type clusterAccessGetClusterAccessByTenantIdServer struct {
+type clusterAccessGetClusterAccessServer struct {
 	grpc.ServerStream
 }
 
-func (x *clusterAccessGetClusterAccessByTenantIdServer) Send(m *projections.ClusterAccess) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _ClusterAccess_GetClusterAccessByUserId_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(wrapperspb.StringValue)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(ClusterAccessServer).GetClusterAccessByUserId(m, &clusterAccessGetClusterAccessByUserIdServer{stream})
-}
-
-type ClusterAccess_GetClusterAccessByUserIdServer interface {
-	Send(*projections.ClusterAccess) error
-	grpc.ServerStream
-}
-
-type clusterAccessGetClusterAccessByUserIdServer struct {
-	grpc.ServerStream
-}
-
-func (x *clusterAccessGetClusterAccessByUserIdServer) Send(m *projections.ClusterAccess) error {
+func (x *clusterAccessGetClusterAccessServer) Send(m *projections.ClusterAccess) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1097,13 +1036,8 @@ var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetClusterAccessByTenantId",
-			Handler:       _ClusterAccess_GetClusterAccessByTenantId_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "GetClusterAccessByUserId",
-			Handler:       _ClusterAccess_GetClusterAccessByUserId_Handler,
+			StreamName:    "GetClusterAccess",
+			Handler:       _ClusterAccess_GetClusterAccess_Handler,
 			ServerStreams: true,
 		},
 		{

@@ -26,6 +26,7 @@ import "api/domain/audit/event.proto";
 import "validate/validate.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
 
@@ -71,13 +72,9 @@ service Cluster {
 
 // ClusterAccess is a service to query access information about clusters.
 service ClusterAccess {
-  // GetClusterAccessByTenantId returns clusters which the given tenant has
-  // access to by it's UUID
-  rpc GetClusterAccessByTenantId(google.protobuf.StringValue)
-      returns (stream projections.ClusterAccess);
   // GetClusterAccessByUserId returns clusters which the given user has access
   // to by it's UUID
-  rpc GetClusterAccessByUserId(google.protobuf.StringValue)
+  rpc GetClusterAccess(google.protobuf.Empty)
       returns (stream projections.ClusterAccess);
   // GetTenantClusterMappingsByTenantId returns bindings which belong to the
   // given tenant by it's UUID

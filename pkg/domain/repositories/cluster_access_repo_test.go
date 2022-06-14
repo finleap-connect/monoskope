@@ -78,11 +78,5 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 		Expect(clusters).NotTo(BeEmpty())
 		Expect(len(clusters)).To(BeNumerically("==", 1))
 		Expect(clusters[0].Cluster.Id).To(Equal(clusterId.String()))
-
-		clusters, err = clusterAccessRepo.GetClustersAccessibleByTenantId(context.Background(), tenantId)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(clusters).NotTo(BeEmpty())
-		Expect(len(clusters)).To(BeNumerically("==", 1))
-		Expect(clusters[0].Cluster.Id).To(Equal(clusterId.String()))
 	})
 })
