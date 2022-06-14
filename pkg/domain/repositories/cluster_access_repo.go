@@ -19,6 +19,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	domain_projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/google/uuid"
 )
 
@@ -45,55 +46,50 @@ func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRep
 	}
 }
 
-func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error) {
-	roleBindings, err := r.userRoleBindingRepo.ByUserId(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	var clusters []*projections.Cluster
-	for _, roleBinding := range roleBindings {
-		if roleBinding.Scope == scopes.Tenant.String() {
-			tenantClusterBinding, err := r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(roleBinding.GetResource()))
-			if err != nil {
-				return nil, err
-			}
-
-			for _, clusterBinding := range tenantClusterBinding {
-				id, err := uuid.Parse(clusterBinding.ClusterId)
-				if err != nil {
-					return nil, err
-				}
-
-				cluster, err := r.clusterRepo.ById(ctx, id)
-				if err != nil {
-					return nil, err
-				}
-				clusters = append(clusters, cluster.Cluster)
-			}
-		}
-	}
-	return clusters, nil
-}
-
-func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error) {
-	bindings, err := r.tenantClusterBindingRepo.GetByTenantId(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	var clusters []*projections.Cluster
+func (r *clusterAccessRepository) appendClusters(ctx context.Context, bindings []*domain_projections.TenantClusterBinding) (clusters []*projections.Cluster, err error) {
 	for _, clusterBinding := range bindings {
-		id, err := uuid.Parse(clusterBinding.ClusterId)
+		var cluster *domain_projections.Cluster
+		cluster, err = r.clusterRepo.ById(ctx, uuid.MustParse(clusterBinding.ClusterId))
 		if err != nil {
-			return nil, err
-		}
-
-		cluster, err := r.clusterRepo.ById(ctx, id)
-		if err != nil {
-			return nil, err
+			return
 		}
 		clusters = append(clusters, cluster.Cluster)
 	}
-	return clusters, nil
+	return
+}
+
+// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
+func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) (clusters []*projections.Cluster, err error) {
+	// get all rolebindings of the user
+	var roleBindings []*domain_projections.UserRoleBinding
+	roleBindings, err = r.userRoleBindingRepo.ByUserId(ctx, id)
+	if err != nil {
+		return
+	}
+
+	for _, roleBinding := range roleBindings {
+		// search rolebindings for tenant scoped bindings
+		if roleBinding.Scope == scopes.Tenant.String() {
+			// get accessible cluster by tenant and append
+			var bindings []*domain_projections.TenantClusterBinding
+			bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(roleBinding.GetResource()))
+			if err != nil {
+				return
+			}
+			clusters, err = r.appendClusters(ctx, bindings)
+		}
+	}
+	return
+}
+
+// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
+func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Context, id uuid.UUID) (clusters []*projections.Cluster, err error) {
+	// get accessible cluster by tenant and append
+	var bindings []*domain_projections.TenantClusterBinding
+	bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, id)
+	if err != nil {
+		return
+	}
+	clusters, err = r.appendClusters(ctx, bindings)
+	return
 }

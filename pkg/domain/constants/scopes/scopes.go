@@ -40,6 +40,7 @@ const (
 var AvailableScopes = []es.Scope{
 	System,
 	Tenant,
+	Cluster,
 }
 
 func ValidateScope(scope string) error {
