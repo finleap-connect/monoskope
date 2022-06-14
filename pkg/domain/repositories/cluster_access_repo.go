@@ -46,7 +46,8 @@ func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRep
 	}
 }
 
-func (r *clusterAccessRepository) appendClusters(ctx context.Context, bindings []*domain_projections.TenantClusterBinding) (clusters []*projections.Cluster, err error) {
+// getClustersByBindings returns all clusters part of the bindings.
+func (r *clusterAccessRepository) getClustersByBindings(ctx context.Context, bindings []*domain_projections.TenantClusterBinding) (clusters []*projections.Cluster, err error) {
 	for _, clusterBinding := range bindings {
 		var cluster *domain_projections.Cluster
 		cluster, err = r.clusterRepo.ById(ctx, uuid.MustParse(clusterBinding.ClusterId))
@@ -76,7 +77,7 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 			if err != nil {
 				return
 			}
-			clusters, err = r.appendClusters(ctx, bindings)
+			clusters, err = r.getClustersByBindings(ctx, bindings)
 		}
 	}
 	return
@@ -90,6 +91,6 @@ func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Co
 	if err != nil {
 		return
 	}
-	clusters, err = r.appendClusters(ctx, bindings)
+	clusters, err = r.getClustersByBindings(ctx, bindings)
 	return
 }
