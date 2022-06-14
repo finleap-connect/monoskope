@@ -95,8 +95,6 @@ func (m *Cluster) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for BootstrapToken
-
 	if len(errors) > 0 {
 		return ClusterMultiError(errors)
 	}

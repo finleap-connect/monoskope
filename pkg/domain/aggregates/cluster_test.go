@@ -26,10 +26,6 @@ import (
 )
 
 var _ = Describe("Unit Test for Cluster Aggregate", func() {
-	var (
-		expectedJWT = "thisisnotajwt"
-	)
-
 	It("should set the data from a command to the resultant event", func() {
 		ctx := createSysAdminCtx()
 		agg := NewClusterAggregate(NewTestAggregateManager())
@@ -75,22 +71,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		Expect(agg.(*ClusterAggregate).name).To(Equal(expectedClusterName))
 		Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedClusterApiServerAddress))
 		Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedClusterCACertBundle))
-	})
-
-	It("should write the jwt from a BootstrapTokenCreated event to the aggregate", func() {
-		ctx := createSysAdminCtx()
-		agg := NewClusterAggregate(NewTestAggregateManager())
-
-		ed := es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-			Jwt: expectedJWT,
-		})
-		esEvent := es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, ed, time.Now().UTC(),
-			agg.Type(), agg.ID(), agg.Version())
-
-		err := agg.ApplyEvent(esEvent)
-		Expect(err).NotTo(HaveOccurred())
-
-		Expect(agg.(*ClusterAggregate).bootstrapToken).To(Equal(expectedJWT))
 	})
 
 	Context("cluster update", func() {

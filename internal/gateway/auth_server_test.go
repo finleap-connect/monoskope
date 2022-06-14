@@ -173,7 +173,8 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(status.Code()).To(Equal(codes.Unauthenticated))
 	})
 	It("can not authenticate with JWT for wrong scope", func() {
-		token := auth.NewClusterBootstrapToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id)
+		expectedValidity := time.Hour * 1
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id, expectedValidity)
 		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())

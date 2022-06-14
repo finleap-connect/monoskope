@@ -59,7 +59,7 @@ jobs:
 
     strategy:
       matrix:
-        app: [ "gateway" , "eventstore", "commandhandler", "queryhandler", "clusterbootstrapreactor", "scimserver" ]
+        app: [ "gateway" , "eventstore", "commandhandler", "queryhandler", "scimserver" ]
 
     steps:
       - name: Checkout code

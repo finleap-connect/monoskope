@@ -20,7 +20,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"github.com/google/uuid"
 )
 
 type clusterRepository struct {
@@ -32,8 +31,6 @@ type ClusterRepository interface {
 	DomainRepository[*projections.Cluster]
 	// ByName searches for the a tenant projection by it's name
 	ByClusterName(context.Context, string) (*projections.Cluster, error)
-	// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID
-	GetBootstrapToken(context.Context, string) (string, error)
 }
 
 // NewClusterRepository creates a repository for reading and writing cluster projections.
@@ -57,18 +54,4 @@ func (r *clusterRepository) ByClusterName(ctx context.Context, clusterName strin
 	}
 
 	return nil, errors.ErrClusterNotFound
-}
-
-// GetBootstrapToken returns the bootstrap token for a cluster with the given UUID.
-func (r *clusterRepository) GetBootstrapToken(ctx context.Context, id string) (string, error) {
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return "", err
-	}
-
-	cluster, err := r.ById(ctx, uuid)
-	if err != nil {
-		return "", err
-	}
-	return cluster.BootstrapToken, nil
 }

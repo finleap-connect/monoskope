@@ -15,6 +15,7 @@ A Helm chart for the Monoskope QueryHandler
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | eventStore | object | `{"host":"eventstore","port":8080,"prefix":""}` | API address of the event store |
 | fullnameOverride | string | `""` |  |
+| gateway | object | `{"host":"gateway","port":8080,"prefix":""}` | API address of the gateway |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
 | image.repository | string | `"ghcr.io/finleap-connect/monoskope/queryhandler"` |  |

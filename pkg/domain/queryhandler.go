@@ -35,7 +35,6 @@ type QueryHandlerDomain struct {
 	TenantRepository               repositories.TenantRepository
 	TenantUserRepository           repositories.TenantUserRepository
 	ClusterRepository              repositories.ClusterRepository
-	CertificateRepository          repositories.CertificateRepository
 	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
 	ClusterAccessRepo              repositories.ClusterAccessRepository
 }
@@ -49,7 +48,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository[*projections.Tenant]())
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
-	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository[*projections.Certificate]())
 	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
 	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository)
 
@@ -58,7 +56,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
 	tenantProjector := projectors.NewTenantProjector()
 	clusterProjector := projectors.NewClusterProjector()
-	certificateProjector := projectors.NewCertificateProjector()
 	tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
 
 	// Setup handler
@@ -66,7 +63,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	tenantProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Tenant](tenantProjector, d.TenantRepository)
 	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, d.UserRoleBindingRepository)
 	clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, d.ClusterRepository)
-	certificateProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Certificate](certificateProjector, d.CertificateRepository)
 	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, d.TenantClusterBindingRepository)
 
 	// Setup middleware
@@ -75,7 +71,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-	certificateHandlerChain := eventsourcing.UseEventHandlerMiddleware(certificateProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	tenantClusterBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantClusterBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 
 	// Setup matcher for event bus
@@ -83,7 +78,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	tenantMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Tenant)
 	userRoleBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
 	clusterMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Cluster)
-	certificateMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Certificate)
 	tenantClusterBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.TenantClusterBinding)
 
 	// Register event handler with event bus
@@ -97,9 +91,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 		return nil, err
 	}
 	if err := eventBus.AddHandler(ctx, clusterHandlerChain, clusterMatcher); err != nil {
-		return nil, err
-	}
-	if err := eventBus.AddHandler(ctx, certificateHandlerChain, certificateMatcher); err != nil {
 		return nil, err
 	}
 	if err := eventBus.AddHandler(ctx, tenantClusterBindingHandlerChain, tenantClusterBindingMatcher); err != nil {
@@ -117,9 +108,6 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.Cluster, clusterHandlerChain); err != nil {
-		return nil, err
-	}
-	if err := handler.WarmUp(ctx, esClient, aggregates.Certificate, certificateHandlerChain); err != nil {
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.TenantClusterBinding, tenantClusterBindingHandlerChain); err != nil {

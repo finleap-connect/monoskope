@@ -33,7 +33,6 @@ var (
 	expectedName                = "one-cluster"
 	expectedApiServerAddress    = "one.example.com"
 	expectedClusterCACertBundle = []byte("This should be a certificate")
-	expectedJWT                 = "thisisnotajwt"
 )
 
 var _ = Describe("domain/projectors/cluster", func() {
@@ -97,47 +96,6 @@ var _ = Describe("domain/projectors/cluster", func() {
 
 		dp := clusterProjection.DomainProjection
 		Expect(dp.GetCreated()).ToNot(BeNil())
-	})
-
-	It("can handle ClusterBootstrapTokenCreated events", func() {
-		clusterProjector := NewClusterProjector()
-		clusterProjection := clusterProjector.NewProjection(uuid.New())
-
-		clusterProjection, err := clusterProjector.Project(
-			context.Background(),
-			es.NewEvent(ctx,
-				events.ClusterCreatedV2,
-				es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-					DisplayName:         expectedDisplayName,
-					Name:                expectedName,
-					ApiServerAddress:    expectedApiServerAddress,
-					CaCertificateBundle: expectedClusterCACertBundle,
-				}),
-				time.Now().UTC(),
-				aggregates.Cluster,
-				uuid.New(),
-				1),
-			clusterProjection,
-		)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
-
-		Expect(clusterProjection.GetDisplayName()).To(Equal(expectedDisplayName))
-		Expect(clusterProjection.GetName()).To(Equal(expectedName))
-		Expect(clusterProjection.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
-		Expect(clusterProjection.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
-
-		protoTokenCreatedEventData := &eventdata.ClusterBootstrapTokenCreated{
-			Jwt: expectedJWT,
-		}
-		tokenCreatedEventData := es.ToEventDataFromProto(protoTokenCreatedEventData)
-		clusterProjection, err = clusterProjector.Project(context.Background(), es.NewEvent(ctx, events.ClusterBootstrapTokenCreated, tokenCreatedEventData, time.Now().UTC(), aggregates.Cluster, uuid.New(), 1), clusterProjection)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(clusterProjection.Version()).To(Equal(uint64(2)))
-		Expect(clusterProjection.GetBootstrapToken()).To(Equal(expectedJWT))
-
-		dp := clusterProjection.DomainProjection
-		Expect(dp.GetLastModified()).ToNot(BeNil())
 	})
 
 	It("can handle ClusterUpdated events", func() {

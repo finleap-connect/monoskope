@@ -8,13 +8,12 @@ Monoskope implements the management and operation of tenants, users and their ro
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../cluster-bootstrap-reactor | cluster-bootstrap-reactor | 0.0.1-local |
 | file://../commandhandler | commandhandler | 0.0.1-local |
 | file://../eventstore | eventstore | 0.0.1-local |
 | file://../gateway | gateway | 0.0.1-local |
 | file://../queryhandler | queryhandler | 0.0.1-local |
 | file://../scimserver | scimserver | 0.0.1-local |
-| https://charts.bitnami.com/bitnami | rabbitmq | 8.24.3 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 8.32.2 |
 | https://charts.cockroachdb.com/ | cockroachdb | 7.0.1 |
 | https://getambassador.io | ambassador | 6.9.4 |
 
@@ -24,7 +23,6 @@ Monoskope implements the management and operation of tenants, users and their ro
 |-----|------|---------|-------------|
 | ambassador.adminService.create | bool | `false` |  |
 | ambassador.agent.enabled | bool | `false` |  |
-| ambassador.alerting.enabled | bool | `false` |  |
 | ambassador.crds.create | bool | `false` |  |
 | ambassador.crds.enabled | bool | `false` |  |
 | ambassador.deploy | bool | `true` |  |
@@ -40,12 +38,7 @@ Monoskope implements the management and operation of tenants, users and their ro
 | ambassador.resources.requests.cpu | string | `"100m"` |  |
 | ambassador.resources.requests.memory | string | `"512Mi"` |  |
 | ambassador.scope.singleNamespace | bool | `true` |  |
-| ambassador.serviceAccount.create | bool | `false` |  |
-| cluster-bootstrap-reactor.enabled | bool | `true` |  |
-| cluster-bootstrap-reactor.keySecret.name | string | `"m8-authentication"` |  |
-| cluster-bootstrap-reactor.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
-| cluster-bootstrap-reactor.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
-| cluster-bootstrap-reactor.replicaCount | int | `1` |  |
+| ambassador.serviceAccount.create | bool | `true` |  |
 | cockroachdb.conf.cache | string | `"25%"` |  |
 | cockroachdb.conf.maxSQLMemory | string | `"25%"` |  |
 | cockroachdb.dropExistingDatabase | bool | `false` |  |
@@ -88,6 +81,8 @@ Monoskope implements the management and operation of tenants, users and their ro
 | gateway.enabled | bool | `true` |  |
 | gateway.keySecret | object | `{"name":"m8-authentication"}` | The secret containing private key for signing JWTs. |
 | gateway.keySecret.name | string | `"m8-authentication"` | Name of the secret to be used by the gateway, required |
+| gateway.messageBus.configSecret | string | `"m8-messagebus-client-config"` |  |
+| gateway.messageBus.tlsSecret | string | `"m8-messagebus-client-auth-cert"` |  |
 | gateway.oidcSecret | object | `{"name":"m8-gateway-oidc"}` | The secret where the gateway finds the OIDC secrets. If vaultOperator.enabled:true the secret must be available at vaultOperator.basePath/gateway/oidc and must contain the fields oidc-clientsecret, oidc-clientid. The oidc-nonce is generated automatically. |
 | gateway.replicaCount | int | `1` |  |
 | global.imagePullSecrets | list | `[]` |  |

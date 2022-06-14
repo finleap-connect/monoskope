@@ -22,10 +22,6 @@ commandhandler:
 queryhandler:
   replicaCount: 1
 
-cluster-bootstrap-reactor:
-  replicaCount: 1
-  issuerURL: http://127.0.0.1:5555
-
 rabbitmq:
   metrics:
     enabled: false

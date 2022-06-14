@@ -96,7 +96,7 @@ func (r *testReactor) HandleEvent(ctx context.Context, event eventsourcing.Event
 	metadataManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).NotTo(HaveOccurred())
 	userInfo := metadataManager.GetUserInformation()
-	userInfo.Id = uuid.NewSHA1(uuid.NameSpaceURL, []byte("clusterbootstrapreactor.monoskope.local"))
+	userInfo.Id = uuid.NewSHA1(uuid.NameSpaceURL, []byte("reactor.monoskope.local"))
 	metadataManager.SetUserInformation(userInfo)
 	ctx = metadataManager.GetContext()
 

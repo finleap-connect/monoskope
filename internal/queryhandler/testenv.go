@@ -101,7 +101,6 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		api.RegisterUserServer(s, NewUserServer(qhDomain.UserRepository))
 		api.RegisterTenantServer(s, NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 		api.RegisterClusterServer(s, NewClusterServer(qhDomain.ClusterRepository))
-		api.RegisterCertificateServer(s, NewCertificateServer(qhDomain.CertificateRepository))
 		api.RegisterClusterAccessServer(s, NewClusterAccessServer(qhDomain.ClusterAccessRepo, qhDomain.TenantClusterBindingRepository))
 		api.RegisterAuditLogServer(s, NewAuditLogServer(env.esClient, ef.DefaultEventFormatterRegistry, qhDomain.UserRepository))
 	})

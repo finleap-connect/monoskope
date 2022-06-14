@@ -211,14 +211,5 @@ ambassador:
   adminService:
     create: false
 
-cluster-bootstrap-reactor:
-  enabled: true
-  replicaCount: 1
-  keySecret:
-    name: *authKeySecretName
-  messageBus:
-    configSecret: *msgBusClientConfigSecretName
-    tlsSecret: *msgBusClientAuthCertSecretName
-
 scimserver:
   enabled: false

@@ -38,6 +38,4 @@ message Cluster {
   bytes ca_cert_bundle = 5;
   // Metadata about the projection
   LifecycleMetadata metadata = 6;
-  // Bootstrap token for cluster authentication
-  string bootstrap_token = 7;
 }

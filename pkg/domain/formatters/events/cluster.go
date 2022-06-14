@@ -69,8 +69,6 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 		return f.getFormattedDetailsClusterCreated(event, ed)
 	case *eventdata.ClusterCreatedV2:
 		return f.getFormattedDetailsClusterCreatedV2(event, ed)
-	case *eventdata.ClusterBootstrapTokenCreated:
-		return f.getFormattedDetailsClusterBootstrapTokenCreated(event)
 	case *eventdata.ClusterUpdated:
 		return f.getFormattedDetailsClusterUpdated(ctx, event, ed)
 	}
@@ -84,10 +82,6 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterCreated(event *esApi.E
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV2(event *esApi.Event, eventData *eventdata.ClusterCreatedV2) (string, error) {
 	return fmt.Sprintf("“%s“ created cluster “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
-}
-
-func (f *clusterEventFormatter) getFormattedDetailsClusterBootstrapTokenCreated(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ created a cluster bootstrap token", event.Metadata[auth.HeaderAuthEmail]), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
