@@ -10,6 +10,7 @@ allowed_paths := [
 	"/gateway.ClusterAuth/GetAuthToken",
 	"/domain.CommandHandlerExtensions",
 	"/common.ServiceInformationService/GetServiceInformation",
+	"/domain.ClusterAccess/GetClusterAccess",
 ]
 
 scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]
