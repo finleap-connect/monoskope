@@ -32,16 +32,16 @@ func (e *ProjectionOutdatedError) Error() string {
 	return fmt.Sprintf("projection version %v is outdated", e.ProjectionVersion)
 }
 
-type projectionRepoEventHandler struct {
+type projectionRepoEventHandler[T es.Projection] struct {
 	log        logger.Logger
-	projector  es.Projector
-	repository es.Repository
+	projector  es.Projector[T]
+	repository es.Repository[T]
 	mutex      sync.Mutex
 }
 
 // NewProjectingEventHandler creates an EventHandler which applies incoming events on a Projector and updates the Repository accordingly.
-func NewProjectingEventHandler(projector es.Projector, repository es.Repository) es.EventHandler {
-	return &projectionRepoEventHandler{
+func NewProjectingEventHandler[T es.Projection](projector es.Projector[T], repository es.Repository[T]) es.EventHandler {
+	return &projectionRepoEventHandler[T]{
 		log:        logger.WithName("projection-repo-middleware"),
 		projector:  projector,
 		repository: repository,
@@ -49,7 +49,7 @@ func NewProjectingEventHandler(projector es.Projector, repository es.Repository)
 }
 
 // HandleEvent implements the HandleEvent method of the es.EventHandler interface.
-func (h *projectionRepoEventHandler) HandleEvent(ctx context.Context, event es.Event) error {
+func (h *projectionRepoEventHandler[T]) HandleEvent(ctx context.Context, event es.Event) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	h.log.V(logger.DebugLevel).Info("Projecting event...", "event", event.String())

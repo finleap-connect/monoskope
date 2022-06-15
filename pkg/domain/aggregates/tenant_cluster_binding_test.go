@@ -15,12 +15,12 @@
 package aggregates
 
 import (
+	esMock "github.com/finleap-connect/monoskope/internal/test/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	esMock "github.com/finleap-connect/monoskope/test/eventsourcing"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"

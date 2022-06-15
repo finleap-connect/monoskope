@@ -30,11 +30,11 @@ import (
 type certificateServer struct {
 	api.UnimplementedCertificateServer
 
-	repoCertificate repositories.ReadOnlyCertificateRepository
+	repoCertificate repositories.CertificateRepository
 }
 
 // NewCertificateServiceServer returns a new configured instance of certificateServiceServer
-func NewCertificateServer(certificateRepo repositories.ReadOnlyCertificateRepository) *certificateServer {
+func NewCertificateServer(certificateRepo repositories.CertificateRepository) *certificateServer {
 	return &certificateServer{
 		repoCertificate: certificateRepo,
 	}

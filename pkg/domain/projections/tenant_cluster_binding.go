@@ -16,22 +16,21 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
 type TenantClusterBinding struct {
-	*DomainProjection
+	DomainProjection
 	*projections.TenantClusterBinding
 }
 
-func NewTenantClusterBindingProjection(id uuid.UUID) eventsourcing.Projection {
+func NewTenantClusterBindingProjection(id uuid.UUID) *TenantClusterBinding {
 	dp := NewDomainProjection()
 	return &TenantClusterBinding{
 		DomainProjection: dp,
 		TenantClusterBinding: &projections.TenantClusterBinding{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

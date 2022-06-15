@@ -28,14 +28,14 @@ type apiTokenServer struct {
 	api.UnimplementedAPITokenServer
 	log      logger.Logger
 	signer   jwt.JWTSigner
-	userRepo repositories.ReadOnlyUserRepository
+	userRepo repositories.UserRepository
 	issuer   string
 }
 
 func NewAPITokenServer(
 	issuer string,
 	signer jwt.JWTSigner,
-	userRepo repositories.ReadOnlyUserRepository,
+	userRepo repositories.UserRepository,
 ) api.APITokenServer {
 	s := &apiTokenServer{
 		log:      logger.WithName("server"),

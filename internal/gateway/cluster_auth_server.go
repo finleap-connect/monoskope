@@ -30,7 +30,7 @@ type clusterAuthApiServer struct {
 	api.UnimplementedClusterAuthServer
 	log         logger.Logger
 	signer      jwt.JWTSigner
-	clusterRepo repositories.ReadOnlyClusterRepository
+	clusterRepo repositories.ClusterRepository
 	issuer      string
 	validity    map[string]time.Duration
 }
@@ -38,7 +38,7 @@ type clusterAuthApiServer struct {
 func NewClusterAuthAPIServer(
 	issuer string,
 	signer jwt.JWTSigner,
-	clusterRepo repositories.ReadOnlyClusterRepository,
+	clusterRepo repositories.ClusterRepository,
 	validity map[string]time.Duration,
 ) api.ClusterAuthServer {
 	s := &clusterAuthApiServer{

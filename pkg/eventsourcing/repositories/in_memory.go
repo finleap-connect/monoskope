@@ -24,35 +24,36 @@ import (
 )
 
 // inMemoryRepository is a repository which stores projections in memory.
-type inMemoryRepository struct {
-	store map[uuid.UUID]es.Projection
+type inMemoryRepository[T es.Projection] struct {
+	store map[uuid.UUID]T
 	mutex sync.RWMutex
 }
 
 // NewInMemoryRepository creates a new repository which stores projections in memory.
-func NewInMemoryRepository() es.Repository {
-	return &inMemoryRepository{
-		store: make(map[uuid.UUID]es.Projection),
+func NewInMemoryRepository[T es.Projection]() es.Repository[T] {
+	return &inMemoryRepository[T]{
+		store: make(map[uuid.UUID]T),
 	}
 }
 
 // ById returns a projection for an ID.
-func (r *inMemoryRepository) ById(ctx context.Context, id uuid.UUID) (es.Projection, error) {
+func (r *inMemoryRepository[T]) ById(ctx context.Context, id uuid.UUID) (T, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
 	if val, ok := r.store[id]; ok {
 		return val, nil
 	}
-	return nil, errors.ErrProjectionNotFound
+	var result T
+	return result, errors.ErrProjectionNotFound
 }
 
 // All returns all projections in the repository.
-func (r *inMemoryRepository) All(context.Context) ([]es.Projection, error) {
+func (r *inMemoryRepository[T]) All(context.Context) ([]T, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	all := make([]es.Projection, 0)
+	all := make([]T, 0)
 	for _, v := range r.store {
 		all = append(all, v)
 	}
@@ -60,7 +61,7 @@ func (r *inMemoryRepository) All(context.Context) ([]es.Projection, error) {
 }
 
 // Upsert saves a projection in the storage or replaces an existing one.
-func (r *inMemoryRepository) Upsert(ctx context.Context, p es.Projection) error {
+func (r *inMemoryRepository[T]) Upsert(ctx context.Context, p T) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -69,7 +70,7 @@ func (r *inMemoryRepository) Upsert(ctx context.Context, p es.Projection) error 
 }
 
 // Remove removes a projection by ID from the storage.
-func (r *inMemoryRepository) Remove(ctx context.Context, id uuid.UUID) error {
+func (r *inMemoryRepository[T]) Remove(ctx context.Context, id uuid.UUID) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 

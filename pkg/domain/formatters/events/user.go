@@ -17,6 +17,9 @@ package events
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -24,14 +27,10 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -43,12 +42,13 @@ func init() {
 // userEventFormatter EventFormatter implementation for the user-aggregate
 type userEventFormatter struct {
 	*event.EventFormatterBase
+	esClient esApi.EventStoreClient
 }
 
 // NewUserEventFormatter creates a new event formatter for the user-aggregate
 func NewUserEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &userEventFormatter{
-		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
+		&event.EventFormatterBase{}, esClient,
 	}
 }
 
@@ -83,35 +83,29 @@ func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, 
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.UserUpdated) (string, error) {
-	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	userSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
 	}
-	oldUser, ok := userSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
 
 	var details strings.Builder
 	details.WriteString(fmt.Sprintf("“%s“ updated the User", event.Metadata[auth.HeaderAuthEmail]))
-	f.AppendUpdate("Name", eventData.Name, oldUser.Name, &details)
+	f.AppendUpdate("Name", eventData.Name, user.Name, &details)
 	return details.String(), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Context, event *esApi.Event, eventData *eventdata.UserRoleAdded) (string, error) {
-	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	userSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: eventData.UserId}},
 	)
 	if err != nil {
 		return "", err
-	}
-	user, ok := userSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ assigned the role “%s“ for scope “%s“ to user “%s“",
@@ -119,17 +113,13 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	userSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
-	}
-
-	user, ok := userSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ deleted user “%s“", event.Metadata[auth.HeaderAuthEmail], user.Email), nil
@@ -138,22 +128,18 @@ func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context,
 func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
-	urbSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserRoleBindingProjector(), eventFilter)
+
+	userRoleBindingSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserRoleBindingProjector())
+	urb, err := userRoleBindingSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
-	urb, ok := urbSnapshot.(*projections.UserRoleBinding)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
+
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: urb.UserId}
-	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
+	userSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	user, err := userSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
-	}
-	user, ok := userSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ removed the role “%s“ for scope “%s“ from user “%s“",

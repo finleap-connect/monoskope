@@ -124,14 +124,14 @@ go-protobuf: .protobuf-deps
 	export PATH="$(TOOLS_DIR):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=github.com/finleap-connect/monoskope --go_out=. --validate_out="lang=go,module=github.com/finleap-connect/monoskope:." {} \;
 
 go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
-	$(MOCKGEN) -package k8s -destination test/k8s/mock_client.go sigs.k8s.io/controller-runtime/pkg/client Client
-	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/eventstore_client_mock.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
-	$(MOCKGEN) -package eventsourcing -destination test/api/eventsourcing/commandhandler_client_mock.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
-	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
-	$(MOCKGEN) -package domain -destination test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
-	$(MOCKGEN) -package eventsourcing -destination test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
-	$(MOCKGEN) -package domain -destination test/api/domain/user_client_mock.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
-	$(MOCKGEN) -package gateway -destination test/api/gateway/gateway_auth_client_mock.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthClient
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/sigs.k8s.io/controller-runtime/pkg/client.go sigs.k8s.io/controller-runtime/pkg/client Client
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/eventstore_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/commandhandler_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/domain/user_client.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/gateway/gateway_auth_client.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthClient
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
 
 go-run-: ## run cmd, e.g. `make go-run-gateway ARGS="server"` to pass arguments
 	$(GO) run cmd/$*/*.go $(ARGS)

@@ -16,22 +16,21 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
 type Cluster struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Cluster
 }
 
-func NewClusterProjection(id uuid.UUID) eventsourcing.Projection {
+func NewClusterProjection(id uuid.UUID) *Cluster {
 	dp := NewDomainProjection()
 	return &Cluster{
 		DomainProjection: dp,
 		Cluster: &projections.Cluster{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

@@ -29,54 +29,48 @@ type certificateProjector struct {
 	*domainProjector
 }
 
-func NewCertificateProjector() es.Projector {
+func NewCertificateProjector() es.Projector[*projections.Certificate] {
 	return &certificateProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (u *certificateProjector) NewProjection(id uuid.UUID) es.Projection {
+func (u *certificateProjector) NewProjection(id uuid.UUID) *projections.Certificate {
 	return projections.NewCertificateProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (c *certificateProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.Certificate)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (c *certificateProjector) Project(ctx context.Context, event es.Event, cert *projections.Certificate) (*projections.Certificate, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.CertificateRequested:
 		data := &eventdata.CertificateRequested{}
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return cert, err
 		}
-		p.ReferencedAggregateId = data.GetReferencedAggregateId()
-		p.AggregateType = data.GetReferencedAggregateType()
-		p.SigningRequest = data.GetSigningRequest()
+		cert.ReferencedAggregateId = data.GetReferencedAggregateId()
+		cert.AggregateType = data.GetReferencedAggregateType()
+		cert.SigningRequest = data.GetSigningRequest()
 
-		if err := c.projectCreated(event, p.DomainProjection); err != nil {
+		if err := c.projectCreated(event, cert.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.CertificateIssued:
 		data := &eventdata.CertificateIssued{}
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return cert, err
 		}
-		p.CaCertBundle = data.GetCertificate().GetCa()
-		p.Certificate.Certificate = data.Certificate.GetCertificate()
-		p.CaCertBundle = data.Certificate.GetCa()
+		cert.CaCertBundle = data.GetCertificate().GetCa()
+		cert.Certificate.Certificate = data.Certificate.GetCertificate()
+		cert.CaCertBundle = data.Certificate.GetCa()
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
 
-	if err := c.projectModified(event, p.DomainProjection); err != nil {
+	if err := c.projectModified(event, cert.DomainProjection); err != nil {
 		return nil, err
 	}
-	p.IncrementVersion()
+	cert.IncrementVersion()
 
-	return p, nil
+	return cert, nil
 }

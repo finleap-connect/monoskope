@@ -19,12 +19,12 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/test"
+	mock_repositories "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/util"
-	mockRepos "github.com/finleap-connect/monoskope/test/domain/repositories"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -57,7 +57,7 @@ var _ = Describe("GenerateAPIToken", func() {
 	})
 
 	It("can retrieve an API token", func() {
-		userRepo := mockRepos.NewMockUserRepository(mockCtrl)
+		userRepo := mock_repositories.NewMockUserRepository(mockCtrl)
 
 		request := &api.APITokenRequest{
 			AuthorizationScopes: []api.AuthorizationScope{
@@ -75,7 +75,7 @@ var _ = Describe("GenerateAPIToken", func() {
 			Email: expectedUserEmail,
 		})
 
-		userProjection := projections.NewUserProjection(expectedUserId).(*projections.User)
+		userProjection := projections.NewUserProjection(expectedUserId)
 		userProjection.Id = expectedUserId.String()
 		userProjection.Name = expectedUserName
 		userProjection.Email = expectedUserEmail

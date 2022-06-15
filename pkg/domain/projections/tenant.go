@@ -16,22 +16,21 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
 type Tenant struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Tenant
 }
 
-func NewTenantProjection(id uuid.UUID) eventsourcing.Projection {
+func NewTenantProjection(id uuid.UUID) *Tenant {
 	dp := NewDomainProjection()
 	return &Tenant{
 		DomainProjection: dp,
 		Tenant: &projections.Tenant{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

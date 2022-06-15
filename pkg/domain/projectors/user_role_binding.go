@@ -29,30 +29,24 @@ type userRoleBindingProjector struct {
 	*domainProjector
 }
 
-func NewUserRoleBindingProjector() es.Projector {
+func NewUserRoleBindingProjector() es.Projector[*projections.UserRoleBinding] {
 	return &userRoleBindingProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (u *userRoleBindingProjector) NewProjection(id uuid.UUID) es.Projection {
+func (u *userRoleBindingProjector) NewProjection(id uuid.UUID) *projections.UserRoleBinding {
 	return projections.NewUserRoleBinding(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.UserRoleBinding)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (u *userRoleBindingProjector) Project(ctx context.Context, event es.Event, p *projections.UserRoleBinding) (*projections.UserRoleBinding, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.UserRoleBindingCreated:
 		data := &eventdata.UserRoleAdded{}
 		if err := event.Data().ToProto(data); err != nil {
-			return projection, err
+			return p, err
 		}
 
 		p.UserId = data.GetUserId()

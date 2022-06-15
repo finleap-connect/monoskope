@@ -34,10 +34,10 @@ type gatewayApiServer struct {
 	clientConfig *auth.ClientConfig
 	authClient   *auth.Client
 	authServer   *auth.Server
-	userRepo     repositories.ReadOnlyUserRepository
+	userRepo     repositories.UserRepository
 }
 
-func NewGatewayAPIServer(authConfig *auth.ClientConfig, client *auth.Client, server *auth.Server, userRepo repositories.ReadOnlyUserRepository) api.GatewayServer {
+func NewGatewayAPIServer(authConfig *auth.ClientConfig, client *auth.Client, server *auth.Server, userRepo repositories.UserRepository) api.GatewayServer {
 	s := &gatewayApiServer{
 		log:          logger.WithName("server"),
 		clientConfig: authConfig,

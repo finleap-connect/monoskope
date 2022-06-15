@@ -29,6 +29,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -37,7 +38,7 @@ type getAuthTokenUsecase struct {
 	request     *api.ClusterAuthTokenRequest
 	result      *api.ClusterAuthTokenResponse
 	signer      jwt.JWTSigner
-	clusterRepo repositories.ReadOnlyClusterRepository
+	clusterRepo repositories.ClusterRepository
 	issuer      string
 	validity    map[string]time.Duration
 }
@@ -46,7 +47,7 @@ func NewGetAuthTokenUsecase(
 	request *api.ClusterAuthTokenRequest,
 	response *api.ClusterAuthTokenResponse,
 	signer jwt.JWTSigner,
-	clusterRepo repositories.ReadOnlyClusterRepository,
+	clusterRepo repositories.ClusterRepository,
 	issuer string,
 	validity map[string]time.Duration,
 ) usecase.UseCase {
@@ -80,7 +81,13 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 
 	clusterId := s.request.GetClusterId()
 	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
-	cluster, err := s.clusterRepo.ByClusterId(ctx, clusterId)
+
+	uuid, err := uuid.Parse(clusterId)
+	if err != nil {
+		return err
+	}
+
+	cluster, err := s.clusterRepo.ById(ctx, uuid)
 	if err != nil {
 		return err
 	}

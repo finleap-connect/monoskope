@@ -16,23 +16,22 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 )
 
 type Certificate struct {
-	*DomainProjection
+	DomainProjection
 	*projections.Certificate
 	SigningRequest []byte
 }
 
-func NewCertificateProjection(id uuid.UUID) eventsourcing.Projection {
+func NewCertificateProjection(id uuid.UUID) *Certificate {
 	dp := NewDomainProjection()
 	return &Certificate{
 		DomainProjection: dp,
 		Certificate: &projections.Certificate{
 			Id:       id.String(),
-			Metadata: &dp.LifecycleMetadata,
+			Metadata: dp.GetLifecycleMetadata(),
 		},
 	}
 }

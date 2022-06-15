@@ -22,11 +22,11 @@ import (
 
 	"github.com/elimity-com/scim"
 	scim_errors "github.com/elimity-com/scim/errors"
+	mock_domain "github.com/finleap-connect/monoskope/internal/test/api/domain"
+	mock_eventsourcing "github.com/finleap-connect/monoskope/internal/test/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	domain_errors "github.com/finleap-connect/monoskope/pkg/domain/errors"
-	mockdomain "github.com/finleap-connect/monoskope/test/api/domain"
-	"github.com/finleap-connect/monoskope/test/api/eventsourcing"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -52,8 +52,8 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			It("returns the user referenced by id", func() {
-				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
-				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 				expectedUser := &projections.User{
 					Id:    uuid.New().String(),
@@ -73,8 +73,8 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				Expect(userResource.Attributes["userName"]).To(Equal(expectedUser.Email))
 			})
 			It("returns an error if there is a problem upstream", func() {
-				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
-				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 
 				userClient.EXPECT().GetById(ctx, gomock.Any()).Return(nil, domain_errors.ErrUserNotFound)
@@ -94,8 +94,8 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			It("returns the total user count with count set to zero in params", func() {
-				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
-				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 
 				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(&domain.GetCountResult{Count: 1337}, nil)
@@ -106,8 +106,8 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				Expect(page.TotalResults).To(Equal(1337))
 			})
 			It("returns an error if there is a problem upstream", func() {
-				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
-				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 
 				someError := errors.New("some error")
@@ -140,11 +140,11 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 						LastModified: timestamppb.Now(),
 					},
 				}
-				commandHandlerClient := eventsourcing.NewMockCommandHandlerClient(mockCtrl)
-				userClient := mockdomain.NewMockUserClient(mockCtrl)
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 
-				getAllCient := mockdomain.NewMockUser_GetAllClient(mockCtrl)
+				getAllCient := mock_domain.NewMockUser_GetAllClient(mockCtrl)
 
 				userClient.EXPECT().GetCount(ctx, gomock.Any()).Return(&domain.GetCountResult{Count: 2}, nil)
 				userClient.EXPECT().GetAll(ctx, gomock.Any()).Return(getAllCient, nil)

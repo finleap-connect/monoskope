@@ -44,7 +44,7 @@ func (*domainProjector) getUserIdFromEvent(event es.Event) (uuid.UUID, error) {
 }
 
 // projectModified updates the modified metadata
-func (p *domainProjector) projectModified(event es.Event, dp *projections.DomainProjection) error {
+func (p *domainProjector) projectModified(event es.Event, dp projections.DomainProjection) error {
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
@@ -52,14 +52,14 @@ func (p *domainProjector) projectModified(event es.Event, dp *projections.Domain
 		return err
 	}
 
-	dp.LastModified = timestamp.New(event.Timestamp())
-	dp.LastModifiedById = userId.String()
+	dp.GetLifecycleMetadata().LastModified = timestamp.New(event.Timestamp())
+	dp.GetLifecycleMetadata().LastModifiedById = userId.String()
 
 	return nil
 }
 
 // projectCreated updates the created metadata
-func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainProjection) error {
+func (p *domainProjector) projectCreated(event es.Event, dp projections.DomainProjection) error {
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
@@ -67,14 +67,14 @@ func (p *domainProjector) projectCreated(event es.Event, dp *projections.DomainP
 		return err
 	}
 
-	dp.Created = timestamp.New(event.Timestamp())
-	dp.CreatedById = userId.String()
+	dp.GetLifecycleMetadata().Created = timestamp.New(event.Timestamp())
+	dp.GetLifecycleMetadata().CreatedById = userId.String()
 
 	return p.projectModified(event, dp)
 }
 
 // projectDeleted updates the deleted metadata
-func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainProjection) error {
+func (p *domainProjector) projectDeleted(event es.Event, dp projections.DomainProjection) error {
 	// Get UserID from event metadata
 	userId, err := p.getUserIdFromEvent(event)
 	if err != nil {
@@ -82,8 +82,8 @@ func (p *domainProjector) projectDeleted(event es.Event, dp *projections.DomainP
 		return err
 	}
 
-	dp.Deleted = timestamp.New(event.Timestamp())
-	dp.DeletedById = userId.String()
+	dp.GetLifecycleMetadata().Deleted = timestamp.New(event.Timestamp())
+	dp.GetLifecycleMetadata().DeletedById = userId.String()
 
 	return p.projectModified(event, dp)
 }

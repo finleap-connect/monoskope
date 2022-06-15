@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
+	mock_eventsourcing_api "github.com/finleap-connect/monoskope/internal/test/api/eventsourcing"
+	mock_eventsourcing "github.com/finleap-connect/monoskope/internal/test/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	mock_eventsourcing_api "github.com/finleap-connect/monoskope/test/api/eventsourcing"
-	mock_eventsourcing "github.com/finleap-connect/monoskope/test/eventsourcing"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"

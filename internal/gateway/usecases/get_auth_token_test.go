@@ -19,13 +19,13 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/test"
+	mock_repos "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/util"
-	mockRepos "github.com/finleap-connect/monoskope/test/domain/repositories"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -62,7 +62,7 @@ var _ = Describe("GetAuthToken", func() {
 	})
 
 	It("can retrieve openid conf", func() {
-		clusterRepo := mockRepos.NewMockClusterRepository(mockCtrl)
+		clusterRepo := mock_repos.NewMockClusterRepository(mockCtrl)
 
 		request := &api.ClusterAuthTokenRequest{
 			ClusterId: expectedClusterId.String(),
@@ -78,18 +78,18 @@ var _ = Describe("GetAuthToken", func() {
 			NotBefore: time.Now().UTC(),
 		})
 
-		userProjection := projections.NewUserProjection(expectedUserId).(*projections.User)
+		userProjection := projections.NewUserProjection(expectedUserId)
 		userProjection.Id = expectedUserId.String()
 		userProjection.Name = expectedUserName
 		userProjection.Email = expectedUserEmail
 
-		clusterProjection := projections.NewClusterProjection(expectedClusterId).(*projections.Cluster)
+		clusterProjection := projections.NewClusterProjection(expectedClusterId)
 		clusterProjection.Id = expectedClusterId.String()
 		clusterProjection.Name = expectedClusterName
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()
-		clusterRepo.EXPECT().ByClusterId(ctxWithUser, expectedClusterId.String()).Return(clusterProjection, nil)
+		clusterRepo.EXPECT().ById(ctxWithUser, expectedClusterId).Return(clusterProjection, nil)
 
 		err := uc.Run(ctxWithUser)
 		Expect(err).ToNot(HaveOccurred())

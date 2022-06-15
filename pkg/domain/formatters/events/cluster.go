@@ -17,6 +17,9 @@ package events
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -24,14 +27,10 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -43,12 +42,13 @@ func init() {
 // clusterEventFormatter EventFormatter implementation for the cluster-aggregate
 type clusterEventFormatter struct {
 	*event.EventFormatterBase
+	esClient esApi.EventStoreClient
 }
 
 // NewClusterEventFormatter creates a new event formatter for the cluster-aggregate
 func NewClusterEventFormatter(esClient esApi.EventStoreClient) event.EventFormatter {
 	return &clusterEventFormatter{
-		EventFormatterBase: &event.EventFormatterBase{FormatterBase: &formatters.FormatterBase{EsClient: esClient}},
+		&event.EventFormatterBase{}, esClient,
 	}
 }
 
@@ -91,22 +91,20 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterBootstrapTokenCreated(
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
-	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
+	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+
+	cluster, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
 	}
-	oldCluster, ok := clusterSnapshot.(*projections.Cluster)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
 
 	var details strings.Builder
 	details.WriteString(fmt.Sprintf("“%s“ updated the cluster", event.Metadata[auth.HeaderAuthEmail]))
-	f.AppendUpdate("Display name", eventData.DisplayName, oldCluster.DisplayName, &details)
-	f.AppendUpdate("API server address", eventData.ApiServerAddress, oldCluster.ApiServerAddress, &details)
+	f.AppendUpdate("Display name", eventData.DisplayName, cluster.DisplayName, &details)
+	f.AppendUpdate("API server address", eventData.ApiServerAddress, cluster.ApiServerAddress, &details)
 	if len(eventData.CaCertificateBundle) != 0 {
 		f.AppendUpdate("Certificate", "a new one", "", &details)
 	}
@@ -114,16 +112,14 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), &esApi.EventFilter{
+	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+
+	cluster, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
 	if err != nil {
 		return "", err
-	}
-	cluster, ok := clusterSnapshot.(*projections.Cluster)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
 	}
 
 	return fmt.Sprintf("“%s“ deleted cluster “%s“", event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName), nil

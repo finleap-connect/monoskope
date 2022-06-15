@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
+	mock_eventsourcing "github.com/finleap-connect/monoskope/internal/test/eventsourcing"
 	testEd "github.com/finleap-connect/monoskope/pkg/api/eventsourcing/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	mock_eventsourcing "github.com/finleap-connect/monoskope/test/eventsourcing"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"

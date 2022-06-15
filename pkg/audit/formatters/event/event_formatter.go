@@ -17,9 +17,9 @@ package event
 import (
 	"context"
 	"fmt"
-	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
-	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"strings"
+
+	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 )
 
 // EventFormatter is the interface definition for all event formatters
@@ -30,7 +30,6 @@ type EventFormatter interface {
 
 // EventFormatterBase is the base implementation for all event formatters
 type EventFormatterBase struct {
-	*formatters.FormatterBase
 }
 
 // AppendUpdate appends updates to a string builder in human-readable format

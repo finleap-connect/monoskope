@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	testReactor "github.com/finleap-connect/monoskope/internal/test/reactor"
+	mock_reactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -289,7 +289,7 @@ var _ = Describe("integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// set up reactor for checking JWTs later
-			testReactor := testReactor.NewTestReactor()
+			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
 			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
@@ -307,27 +307,12 @@ var _ = Describe("integration", func() {
 				cluster, err = clusterServiceClient().GetByName(ctx, wrapperspb.String(expectedClusterName))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(cluster).ToNot(BeNil())
+				g.Expect(cluster.Id).To(Equal(clusterId.String()))
 				g.Expect(cluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
 				g.Expect(cluster.GetName()).To(Equal(expectedClusterName))
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 			}).Should(Succeed())
-
-			By("getting all existing clusters")
-
-			clusterStream, err := clusterServiceClient().GetAll(ctx, &domainApi.GetAllRequest{
-				IncludeDeleted: true,
-			})
-			Expect(err).ToNot(HaveOccurred())
-			// Read next
-			firstCluster, err := clusterStream.Recv()
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(firstCluster).ToNot(BeNil())
-			Expect(firstCluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
-			Expect(firstCluster.GetName()).To(Equal(expectedClusterName))
-			Expect(firstCluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
-			Expect(firstCluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 
 			By("by retrieving the bootstrap token")
 			observed := testReactor.GetObservedEvents()
@@ -356,7 +341,7 @@ var _ = Describe("integration", func() {
 
 	Context("cert management", func() {
 		It("can create and query a certificate", func() {
-			testReactor := testReactor.NewTestReactor()
+			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
 			err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
@@ -387,8 +372,7 @@ var _ = Describe("integration", func() {
 			certRequestedEvent := observed[0]
 			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
 
-			err = testReactor.Emit(ctx, es.NewEvent(
-				ctx,
+			err = testReactor.Emit(ctx, es.NewEventWithMetadata(
 				events.CertificateIssued,
 				es.ToEventDataFromProto(&eventdata.CertificateIssued{
 					Certificate: &common.CertificateChain{
@@ -399,8 +383,9 @@ var _ = Describe("integration", func() {
 				time.Now().UTC(),
 				certRequestedEvent.AggregateType(),
 				certRequestedEvent.AggregateID(),
-				certRequestedEvent.AggregateVersion()+1),
-			)
+				certRequestedEvent.AggregateVersion()+1,
+				certRequestedEvent.Metadata(),
+			))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {

@@ -31,12 +31,12 @@ import (
 // clusterAccessServer is the implementation of the ClusterAccessService API
 type clusterAccessServer struct {
 	api.UnimplementedClusterAccessServer
-	clusterAccessRepo        repositories.ReadOnlyClusterAccessRepository
-	tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository
+	clusterAccessRepo        repositories.ClusterAccessRepository
+	tenantClusterBindingRepo repositories.TenantClusterBindingRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterAccessServer(clusterAccessRepo repositories.ReadOnlyClusterAccessRepository, tenantClusterBindingRepo repositories.ReadOnlyTenantClusterBindingRepository) *clusterAccessServer {
+func NewClusterAccessServer(clusterAccessRepo repositories.ClusterAccessRepository, tenantClusterBindingRepo repositories.TenantClusterBindingRepository) *clusterAccessServer {
 	return &clusterAccessServer{
 		clusterAccessRepo:        clusterAccessRepo,
 		tenantClusterBindingRepo: tenantClusterBindingRepo,

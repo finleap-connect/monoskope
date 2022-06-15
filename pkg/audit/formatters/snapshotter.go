@@ -16,26 +16,34 @@ package formatters
 
 import (
 	"context"
+	"io"
+
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
-	"io"
 )
 
-// FormatterBase is the base implementation for all audit formatters
-type FormatterBase struct {
-	EsClient esApi.EventStoreClient
+// Snapshotter implements basic snapshot creation for audit formatters
+type Snapshotter[T es.Projection] struct {
+	esClient  esApi.EventStoreClient
+	projector es.Projector[T]
+}
+
+func NewSnapshotter[T es.Projection](esClient esApi.EventStoreClient, projector es.Projector[T]) *Snapshotter[T] {
+	return &Snapshotter[T]{esClient, projector}
 }
 
 // CreateSnapshot creates a snapshot based on an event-filter and the corresponding projector for
 // the aggregate of which the id is used in the filter.
 // This is a temporary implementation until snapshots are fully implemented,
 // and it is not meant to be used extensively.
-func (f *FormatterBase) CreateSnapshot(ctx context.Context, projector es.Projector, eventFilter *esApi.EventFilter) (es.Projection, error) {
-	projection := projector.NewProjection(uuid.New())
-	aggregateEvents, err := f.EsClient.Retrieve(ctx, eventFilter)
+func (s *Snapshotter[T]) CreateSnapshot(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
+	projection := s.projector.NewProjection(uuid.New())
+	aggregateEvents, err := s.esClient.Retrieve(ctx, eventFilter)
+
+	var nilResult T
 	if err != nil {
-		return nil, err
+		return nilResult, err
 	}
 
 	for {
@@ -44,19 +52,18 @@ func (f *FormatterBase) CreateSnapshot(ctx context.Context, projector es.Project
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nilResult, err
 		}
 
 		event, err := es.NewEventFromProto(e)
 		if err != nil {
-			return nil, err
+			return nilResult, err
 		}
 
-		projection, err = projector.Project(ctx, event, projection)
+		projection, err = s.projector.Project(ctx, event, projection)
 		if err != nil {
-			return nil, err
+			return nilResult, err
 		}
-
 	}
 
 	return projection, nil

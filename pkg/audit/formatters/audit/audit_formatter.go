@@ -16,6 +16,8 @@ package audit
 
 import (
 	"context"
+	"time"
+
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -23,14 +25,12 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/formatters/overviews"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"time"
 )
 
 // AuditFormatter is the interface definition for the formatter used by the auditLogServer
@@ -41,17 +41,15 @@ type AuditFormatter interface {
 
 // auditFormatter is the implementation of AuditFormatter used by auditLogServer
 type auditFormatter struct {
-	*formatters.FormatterBase
 	log        logger.Logger
 	efRegistry event.EventFormatterRegistry
+	esClient   esApi.EventStoreClient
 }
 
 // NewAuditFormatter creates an auditFormatter
 func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry event.EventFormatterRegistry) *auditFormatter {
 	return &auditFormatter{
-		FormatterBase: &formatters.FormatterBase{EsClient: esClient},
-		log:           logger.WithName("audit-formatter"),
-		efRegistry:    efRegistry,
+		logger.WithName("audit-formatter"), efRegistry, esClient,
 	}
 }
 
@@ -64,7 +62,7 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 		EventType: event.Type,
 	}
 
-	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.EsClient, es.EventType(event.Type))
+	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
 	if err != nil {
 		return humanReadableEvent
 	}
@@ -82,7 +80,8 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, timestamp time.Time) *audit.UserOverview {
 	userOverview := &audit.UserOverview{}
 
-	userSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), &esApi.EventFilter{
+	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	user, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(timestamp),
 		AggregateId:  wrapperspb.String(userId.String()),
 	})
@@ -90,15 +89,11 @@ func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, 
 		f.log.Error(err, "failed to create user snapshot", "userId", userId, "timeStamp", timestamp)
 		return userOverview
 	}
-	user, ok := userSnapshot.(*projections.User)
-	if !ok {
-		f.log.Error(err, "failed to cast user snapshot to user projection", "userId", userId, "timeStamp", timestamp)
-		return userOverview
-	}
+
 	userOverview.Name = user.Name
 	userOverview.Email = user.Email
 
-	overviewFormatter := overviews.NewUserOverviewFormatter(f.EsClient)
+	overviewFormatter := overviews.NewUserOverviewFormatter(f.esClient)
 	userOverview.Roles, userOverview.Tenants, userOverview.Clusters, err = overviewFormatter.GetRolesDetails(ctx, user, timestamp)
 	if err != nil {
 		f.log.Error(err, "failed to format roles details", "userId", user, "timeStamp", timestamp)

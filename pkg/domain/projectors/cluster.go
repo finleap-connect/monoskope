@@ -30,24 +30,18 @@ type clusterProjector struct {
 	*domainProjector
 }
 
-func NewClusterProjector() es.Projector {
+func NewClusterProjector() es.Projector[*projections.Cluster] {
 	return &clusterProjector{
 		domainProjector: NewDomainProjector(),
 	}
 }
 
-func (u *clusterProjector) NewProjection(id uuid.UUID) es.Projection {
+func (u *clusterProjector) NewProjection(id uuid.UUID) *projections.Cluster {
 	return projections.NewClusterProjection(id)
 }
 
 // Project updates the state of the projection according to the given event.
-func (c *clusterProjector) Project(ctx context.Context, event es.Event, projection es.Projection) (es.Projection, error) {
-	// Get the actual projection type
-	p, ok := projection.(*projections.Cluster)
-	if !ok {
-		return nil, errors.ErrInvalidProjectionType
-	}
-
+func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster *projections.Cluster) (*projections.Cluster, error) {
 	// Apply the changes for the event.
 	switch event.EventType() {
 	case events.ClusterCreated:
@@ -56,12 +50,12 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 			return nil, err
 		}
 
-		p.DisplayName = data.GetName()
-		p.Name = data.GetLabel()
-		p.ApiServerAddress = data.GetApiServerAddress()
-		p.CaCertBundle = data.GetCaCertificateBundle()
+		cluster.DisplayName = data.GetName()
+		cluster.Name = data.GetLabel()
+		cluster.ApiServerAddress = data.GetApiServerAddress()
+		cluster.CaCertBundle = data.GetCaCertificateBundle()
 
-		if err := c.projectCreated(event, p.DomainProjection); err != nil {
+		if err := c.projectCreated(event, cluster.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.ClusterCreatedV2:
@@ -70,12 +64,12 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 			return nil, err
 		}
 
-		p.DisplayName = data.GetDisplayName()
-		p.Name = data.GetName()
-		p.ApiServerAddress = data.GetApiServerAddress()
-		p.CaCertBundle = data.GetCaCertificateBundle()
+		cluster.DisplayName = data.GetDisplayName()
+		cluster.Name = data.GetName()
+		cluster.ApiServerAddress = data.GetApiServerAddress()
+		cluster.CaCertBundle = data.GetCaCertificateBundle()
 
-		if err := c.projectCreated(event, p.DomainProjection); err != nil {
+		if err := c.projectCreated(event, cluster.DomainProjection); err != nil {
 			return nil, err
 		}
 	case events.ClusterUpdated:
@@ -83,33 +77,33 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, projecti
 		if err := event.Data().ToProto(data); err != nil {
 			return nil, err
 		}
-		if len(data.GetDisplayName()) > 0 && p.DisplayName != data.GetDisplayName() {
-			p.DisplayName = data.GetDisplayName()
+		if len(data.GetDisplayName()) > 0 && cluster.DisplayName != data.GetDisplayName() {
+			cluster.DisplayName = data.GetDisplayName()
 		}
-		if len(data.GetApiServerAddress()) > 0 && p.ApiServerAddress != data.GetApiServerAddress() {
-			p.ApiServerAddress = data.GetApiServerAddress()
+		if len(data.GetApiServerAddress()) > 0 && cluster.ApiServerAddress != data.GetApiServerAddress() {
+			cluster.ApiServerAddress = data.GetApiServerAddress()
 		}
-		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(p.CaCertBundle, data.GetCaCertificateBundle()) {
-			p.CaCertBundle = data.GetCaCertificateBundle()
+		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(cluster.CaCertBundle, data.GetCaCertificateBundle()) {
+			cluster.CaCertBundle = data.GetCaCertificateBundle()
 		}
 	case events.ClusterBootstrapTokenCreated:
 		data := new(eventdata.ClusterBootstrapTokenCreated)
 		if err := event.Data().ToProto(data); err != nil {
 			return nil, err
 		}
-		p.BootstrapToken = data.GetJwt()
+		cluster.BootstrapToken = data.GetJwt()
 	case events.ClusterDeleted:
-		if err := c.projectDeleted(event, p.DomainProjection); err != nil {
+		if err := c.projectDeleted(event, cluster.DomainProjection); err != nil {
 			return nil, err
 		}
 	default:
 		return nil, errors.ErrInvalidEventType
 	}
 
-	if err := c.projectModified(event, p.DomainProjection); err != nil {
+	if err := c.projectModified(event, cluster.DomainProjection); err != nil {
 		return nil, err
 	}
-	p.IncrementVersion()
+	cluster.IncrementVersion()
 
-	return p, nil
+	return cluster, nil
 }

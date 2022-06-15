@@ -21,6 +21,7 @@ import (
 	eventsourcingApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/handler"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -32,24 +33,24 @@ type QueryHandlerDomain struct {
 	UserRoleBindingRepository      repositories.UserRoleBindingRepository
 	UserRepository                 repositories.UserRepository
 	TenantRepository               repositories.TenantRepository
-	TenantUserRepository           repositories.ReadOnlyTenantUserRepository
+	TenantUserRepository           repositories.TenantUserRepository
 	ClusterRepository              repositories.ClusterRepository
 	CertificateRepository          repositories.CertificateRepository
 	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
-	ClusterAccessRepo              repositories.ReadOnlyClusterAccessRepository
+	ClusterAccessRepo              repositories.ClusterAccessRepository
 }
 
 func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusConsumer, esClient eventsourcingApi.EventStoreClient) (*QueryHandlerDomain, error) {
 	d := new(QueryHandlerDomain)
 
 	// Setup repositories
-	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
-	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository(), d.UserRoleBindingRepository)
-	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository())
+	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository[*projections.UserRoleBinding]())
+	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository[*projections.User](), d.UserRoleBindingRepository)
+	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository[*projections.Tenant]())
 	d.TenantUserRepository = repositories.NewTenantUserRepository(d.UserRepository, d.UserRoleBindingRepository)
-	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository())
-	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository())
-	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository())
+	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
+	d.CertificateRepository = repositories.NewCertificateRepository(esr.NewInMemoryRepository[*projections.Certificate]())
+	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
 	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository)
 
 	// Setup projectors
@@ -61,12 +62,12 @@ func NewQueryHandlerDomain(ctx context.Context, eventBus eventsourcing.EventBusC
 	tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
 
 	// Setup handler
-	userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, d.UserRepository)
-	tenantProjectingHandler := eventhandler.NewProjectingEventHandler(tenantProjector, d.TenantRepository)
-	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, d.UserRoleBindingRepository)
-	clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, d.ClusterRepository)
-	certificateProjectingHandler := eventhandler.NewProjectingEventHandler(certificateProjector, d.CertificateRepository)
-	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler(tenantClusterBindingProjector, d.TenantClusterBindingRepository)
+	userProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.User](userProjector, d.UserRepository)
+	tenantProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Tenant](tenantProjector, d.TenantRepository)
+	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, d.UserRoleBindingRepository)
+	clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, d.ClusterRepository)
+	certificateProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Certificate](certificateProjector, d.CertificateRepository)
+	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, d.TenantClusterBindingRepository)
 
 	// Setup middleware
 	refreshDuration := time.Second * 30

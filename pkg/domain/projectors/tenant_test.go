@@ -22,7 +22,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -61,15 +60,12 @@ var _ = Describe("process tenant", func() {
 
 		Expect(tenantProjection.Version()).To(Equal(uint64(1)))
 
-		tenant, ok := tenantProjection.(*projections.Tenant)
-		Expect(ok).To(BeTrue())
+		dp := tenantProjection.DomainProjection
 
-		dp := tenant.DomainProjection
+		Expect(tenantProjection.GetName()).To(Equal(expectedName))
+		Expect(tenantProjection.GetPrefix()).To(Equal(expectedPrefix))
 
-		Expect(tenant.GetName()).To(Equal(expectedName))
-		Expect(tenant.GetPrefix()).To(Equal(expectedPrefix))
-
-		Expect(dp.Created).ToNot(BeNil())
+		Expect(dp.GetCreated()).ToNot(BeNil())
 	})
 
 })

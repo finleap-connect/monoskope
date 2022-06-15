@@ -42,11 +42,11 @@ type auditLogServer struct {
 
 	esClient       esApi.EventStoreClient
 	auditFormatter audit.AuditFormatter
-	userRepo       repositories.ReadOnlyUserRepository
+	userRepo       repositories.UserRepository
 }
 
 // NewAuditLogServer returns a new configured instance of auditLogServer
-func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry event.EventFormatterRegistry, userRepo repositories.ReadOnlyUserRepository) *auditLogServer {
+func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry event.EventFormatterRegistry, userRepo repositories.UserRepository) *auditLogServer {
 	return &auditLogServer{
 		esClient:       esClient,
 		auditFormatter: audit.NewAuditFormatter(esClient, efRegistry),

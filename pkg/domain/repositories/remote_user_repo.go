@@ -31,17 +31,38 @@ type remoteUserRepository struct {
 }
 
 // NewRemoteUserRepository creates a repository for reading user projections.
-func NewRemoteUserRepository(userService api.UserClient) ReadOnlyUserRepository {
+func NewRemoteUserRepository(userService api.UserClient) UserRepository {
 	return &remoteUserRepository{
 		userService: userService,
 	}
 }
 
-func (r *remoteUserRepository) GetAll(ctx context.Context, includeDeleted bool) ([]*projections.User, error) {
+// All returns all users in the repository.
+func (r *remoteUserRepository) All(context.Context) ([]*projections.User, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-// ById searches for the a user projection by it's id.
+// AllWith returns all users in the repository.
+func (r *remoteUserRepository) AllWith(context.Context, bool) ([]*projections.User, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// ById returns a projection for an ID.
+func (r *remoteUserRepository) ById(ctx context.Context, id uuid.UUID) (*projections.User, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// Upsert saves a projection in the storage or replaces an existing one.
+func (r *remoteUserRepository) Upsert(ctx context.Context, p *projections.User) error {
+	return fmt.Errorf("not implemented")
+}
+
+// Remove removes a projection by ID from the storage.
+func (r *remoteUserRepository) Remove(ctx context.Context, id uuid.UUID) error {
+	return fmt.Errorf("not implemented")
+}
+
+// ByUserId searches for the a user projection by it's id.
 func (r *remoteUserRepository) ByUserId(ctx context.Context, id uuid.UUID) (*projections.User, error) {
 	userProto, err := r.userService.GetById(ctx, wrapperspb.String(id.String()))
 	if err != nil {

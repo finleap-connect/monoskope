@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reactor
+// Package mock_reactor is a package for reactor testing.
+package mock_reactor
 
 import (
 	"context"

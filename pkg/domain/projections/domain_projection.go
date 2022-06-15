@@ -16,23 +16,52 @@ package projections
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type DomainProjection struct {
+type domainProjection struct {
 	projections.LifecycleMetadata
 	version uint64
 }
 
-func NewDomainProjection() *DomainProjection {
-	return &DomainProjection{}
+type DomainProjection interface {
+	LifecycleMetadata
+	ID() uuid.UUID
+	Version() uint64
+	IncrementVersion()
+	GetLifecycleMetadata() *projections.LifecycleMetadata
+}
+
+type LifecycleMetadata interface {
+	GetCreated() *timestamppb.Timestamp
+	GetCreatedById() string
+	GetLastModified() *timestamppb.Timestamp
+	GetLastModifiedById() string
+	GetDeletedById() string
+	GetDeleted() *timestamppb.Timestamp
+}
+
+func NewDomainProjection() DomainProjection {
+	return &domainProjection{}
+}
+
+// ID implements the ID method of the Projection interface.
+func (p *domainProjection) ID() uuid.UUID {
+	panic("not implemented")
 }
 
 // Version implements the Version method of the Projection interface.
-func (p *DomainProjection) Version() uint64 {
+func (p *domainProjection) Version() uint64 {
 	return p.version
 }
 
 // IncrementVersion implements the IncrementVersion method of the Projection interface.
-func (p *DomainProjection) IncrementVersion() {
+func (p *domainProjection) IncrementVersion() {
 	p.version++
+}
+
+// GetLifecycleMetadata implements the GetLifecycleMetadata method of the Projection interface.
+func (p *domainProjection) GetLifecycleMetadata() *projections.LifecycleMetadata {
+	return &p.LifecycleMetadata
 }

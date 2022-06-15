@@ -23,13 +23,13 @@ import (
 )
 
 type clusterAccessRepository struct {
-	clusterRepo              ReadOnlyClusterRepository
-	userRoleBindingRepo      ReadOnlyUserRoleBindingRepository
-	tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository
+	clusterRepo              ClusterRepository
+	userRoleBindingRepo      UserRoleBindingRepository
+	tenantClusterBindingRepo TenantClusterBindingRepository
 }
 
-// ReadOnlyClusterAccessRepository is a repository for reading accesses to a cluster.
-type ReadOnlyClusterAccessRepository interface {
+// ClusterAccessRepository is a repository for reading accesses to a cluster.
+type ClusterAccessRepository interface {
 	// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
 	GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.Cluster, error)
 	// GetClustersAccessibleByTenantId returns all clusters accessible by a tenant identified by tenant id
@@ -37,7 +37,7 @@ type ReadOnlyClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(tenantClusterBindingRepo ReadOnlyTenantClusterBindingRepository, clusterRepo ReadOnlyClusterRepository, userRoleBindingRepo ReadOnlyUserRoleBindingRepository) ReadOnlyClusterAccessRepository {
+func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRepository, clusterRepo ClusterRepository, userRoleBindingRepo UserRoleBindingRepository) ClusterAccessRepository {
 	return &clusterAccessRepository{
 		clusterRepo:              clusterRepo,
 		userRoleBindingRepo:      userRoleBindingRepo,
@@ -60,7 +60,12 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 			}
 
 			for _, clusterBinding := range tenantClusterBinding {
-				cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+				id, err := uuid.Parse(clusterBinding.ClusterId)
+				if err != nil {
+					return nil, err
+				}
+
+				cluster, err := r.clusterRepo.ById(ctx, id)
 				if err != nil {
 					return nil, err
 				}
@@ -79,7 +84,12 @@ func (r *clusterAccessRepository) GetClustersAccessibleByTenantId(ctx context.Co
 
 	var clusters []*projections.Cluster
 	for _, clusterBinding := range bindings {
-		cluster, err := r.clusterRepo.ByClusterId(ctx, clusterBinding.ClusterId)
+		id, err := uuid.Parse(clusterBinding.ClusterId)
+		if err != nil {
+			return nil, err
+		}
+
+		cluster, err := r.clusterRepo.ById(ctx, id)
 		if err != nil {
 			return nil, err
 		}

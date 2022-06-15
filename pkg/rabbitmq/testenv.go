@@ -62,7 +62,7 @@ func (env *TestEnv) startRabbitMQ() error {
 	_, err = env.Run(&dockertest.RunOptions{
 		Name:       "rabbitmq",
 		Repository: "rabbitmq",
-		Tag:        "3.9.8",
+		Tag:        "3.10.2",
 		Env: []string{
 			"RABBITMQ_PLUGINS=rabbitmq_management",
 		},

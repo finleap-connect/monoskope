@@ -27,6 +27,7 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/handler"
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -152,27 +153,27 @@ var serverCmd = &cobra.Command{
 		// Setup necessary projections
 		refreshDuration := time.Second * 30
 
-		userRoleBindingRepository := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository())
+		userRoleBindingRepository := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository[*projections.UserRoleBinding]())
 		userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
-		userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler(userRoleBindingProjector, userRoleBindingRepository)
+		userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, userRoleBindingRepository)
 		userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 		userRoleBindingMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
 		if err := ebConsumer.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
 			return err
 		}
 
-		userRepository := repositories.NewUserRepository(esr.NewInMemoryRepository(), userRoleBindingRepository)
+		userRepository := repositories.NewUserRepository(esr.NewInMemoryRepository[*projections.User](), userRoleBindingRepository)
 		userProjector := projectors.NewUserProjector()
-		userProjectingHandler := eventhandler.NewProjectingEventHandler(userProjector, userRepository)
+		userProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.User](userProjector, userRepository)
 		userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 		userMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.User)
 		if err := ebConsumer.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
 			return err
 		}
 
-		clusterRepository := repositories.NewClusterRepository(esr.NewInMemoryRepository())
+		clusterRepository := repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
 		clusterProjector := projectors.NewClusterProjector()
-		clusterProjectingHandler := eventhandler.NewProjectingEventHandler(clusterProjector, clusterRepository)
+		clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, clusterRepository)
 		clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 		clusterMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.Cluster)
 		if err := ebConsumer.AddHandler(ctx, clusterHandlerChain, clusterMatcher); err != nil {

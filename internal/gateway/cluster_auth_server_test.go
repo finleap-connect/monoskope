@@ -37,7 +37,7 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 
-		clusters, err := testEnv.ClusterRepo.GetAll(ctx, false)
+		clusters, err := testEnv.ClusterRepo.AllWith(ctx, false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(clusters)).To(BeNumerically(">=", 1))
 		defer conn.Close()

@@ -24,6 +24,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -32,11 +33,11 @@ import (
 type clusterServer struct {
 	api.UnimplementedClusterServer
 
-	repoCluster repositories.ReadOnlyClusterRepository
+	repoCluster repositories.ClusterRepository
 }
 
 // NewClusterServiceServer returns a new configured instance of clusterServiceServer
-func NewClusterServer(clusterRepo repositories.ReadOnlyClusterRepository) *clusterServer {
+func NewClusterServer(clusterRepo repositories.ClusterRepository) *clusterServer {
 	return &clusterServer{
 		repoCluster: clusterRepo,
 	}
@@ -55,7 +56,12 @@ func NewClusterClient(ctx context.Context, queryHandlerAddr string) (*grpc.Clien
 
 // GetById returns the cluster found by the given id.
 func (s *clusterServer) GetById(ctx context.Context, id *wrappers.StringValue) (*projections.Cluster, error) {
-	cluster, err := s.repoCluster.ByClusterId(ctx, id.GetValue())
+	uid, err := uuid.Parse(id.GetValue())
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := s.repoCluster.ById(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +79,7 @@ func (s *clusterServer) GetByName(ctx context.Context, name *wrappers.StringValu
 
 // GetAll returns all clusters.
 func (s *clusterServer) GetAll(request *api.GetAllRequest, stream api.Cluster_GetAllServer) error {
-	clusters, err := s.repoCluster.GetAll(stream.Context(), request.GetIncludeDeleted())
+	clusters, err := s.repoCluster.AllWith(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

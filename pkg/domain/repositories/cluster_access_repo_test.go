@@ -48,26 +48,26 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 	otherUserRoleBinding.Scope = scopes.Tenant.String()
 	otherUserRoleBinding.Resource = tenantId.String()
 
-	cluster := projections.NewClusterProjection(clusterId).(*projections.Cluster)
+	cluster := projections.NewClusterProjection(clusterId)
 	cluster.Name = "test-cluster"
 	cluster.DisplayName = "Test Cluster"
 
-	binding := projections.NewTenantClusterBindingProjection(uuid.New()).(*projections.TenantClusterBinding)
+	binding := projections.NewTenantClusterBindingProjection(uuid.New())
 	binding.ClusterId = clusterId.String()
 	binding.TenantId = tenantId.String()
 
 	It("can read/write projections", func() {
-		inMemoryRoleRepo := es_repos.NewInMemoryRepository()
+		inMemoryRoleRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()
 		Expect(inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)).NotTo(HaveOccurred())
 		Expect(inMemoryRoleRepo.Upsert(context.Background(), otherUserRoleBinding)).NotTo(HaveOccurred())
 
-		inMemoryClusterRepo := es_repos.NewInMemoryRepository()
+		inMemoryClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
 		Expect(inMemoryClusterRepo.Upsert(context.Background(), cluster)).NotTo(HaveOccurred())
 
 		clusterRepo := NewClusterRepository(inMemoryClusterRepo)
 		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
 
-		inMemoryTenantClusterBindingRepo := es_repos.NewInMemoryRepository()
+		inMemoryTenantClusterBindingRepo := es_repos.NewInMemoryRepository[*projections.TenantClusterBinding]()
 		Expect(inMemoryTenantClusterBindingRepo.Upsert(context.Background(), binding)).NotTo(HaveOccurred())
 		tenantClusterBindingRepo := NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
 

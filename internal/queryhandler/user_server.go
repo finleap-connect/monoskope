@@ -29,11 +29,11 @@ import (
 type UserServer struct {
 	api.UnimplementedUserServer
 
-	repo repositories.ReadOnlyUserRepository
+	repo repositories.UserRepository
 }
 
 // NewUserServer returns a new configured instance of UserServer
-func NewUserServer(userRepo repositories.ReadOnlyUserRepository) *UserServer {
+func NewUserServer(userRepo repositories.UserRepository) *UserServer {
 	return &UserServer{
 		repo: userRepo,
 	}
@@ -83,7 +83,7 @@ func (s *UserServer) GetRoleBindingsById(userId *wrappers.StringValue, stream ap
 }
 
 func (s *UserServer) GetAll(request *api.GetAllRequest, stream api.User_GetAllServer) error {
-	users, err := s.repo.GetAll(stream.Context(), request.GetIncludeDeleted())
+	users, err := s.repo.AllWith(stream.Context(), request.GetIncludeDeleted())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

@@ -17,25 +17,25 @@ package overviews
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
-	esErrors "github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
-	"time"
 )
 
 // userOverviewFormatter OverviewFormatter implementation for the user-aggregate
 type userOverviewFormatter struct {
-	*formatters.FormatterBase
+	esClient esApi.EventStoreClient
 }
 
 // NewUserOverviewFormatter creates a new overview formatter for the user-aggregate
 func NewUserOverviewFormatter(esClient esApi.EventStoreClient) *userOverviewFormatter {
-	return &userOverviewFormatter{FormatterBase: &formatters.FormatterBase{EsClient: esClient}}
+	return &userOverviewFormatter{esClient}
 }
 
 // GetFormattedDetails returns the user overview details in a human-readable format.
@@ -44,33 +44,28 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	var details string
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
 
-	eventFilter.AggregateId = wrapperspb.String(user.CreatedById)
-	creatorSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
+	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
+
+	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+
+	creator, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
-	creator, ok := creatorSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
 
-	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.Created.AsTime().Format(time.RFC822))
+	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.GetCreated().AsTime().Format(time.RFC822))
 
-	if len(user.DeletedById) == 0 {
+	if len(user.GetDeletedById()) == 0 {
 		return details, nil
 	}
 
-	eventFilter.AggregateId = wrapperspb.String(user.DeletedById)
-	deleterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewUserProjector(), eventFilter)
+	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
+	deleter, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
-	deleter, ok := deleterSnapshot.(*projections.User)
-	if !ok {
-		return "", esErrors.ErrInvalidProjectionType
-	}
 
-	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.Deleted.AsTime().Format(time.RFC822))
+	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.GetDeleted().AsTime().Format(time.RFC822))
 
 	return details, nil
 }
@@ -92,20 +87,18 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 		}
 
 		eventFilter.AggregateId = wrapperspb.String(role.Resource)
-		tenantSnapshot, err := f.CreateSnapshot(ctx, projectors.NewTenantProjector(), eventFilter)
+
+		tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+		tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
-			tenant, ok := tenantSnapshot.(*projections.Tenant)
-			if ok {
-				tenantsDetails += fmt.Sprintf("- %s (%s)\n", tenant.Name, role.Role)
-				continue // it's either a tenant or cluster
-			}
+			tenantsDetails += fmt.Sprintf("- %s (%s)\n", tenant.Name, role.Role)
+			continue // it's either a tenant or cluster
 		}
-		clusterSnapshot, err := f.CreateSnapshot(ctx, projectors.NewClusterProjector(), eventFilter)
+
+		clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+		cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
-			cluster, ok := clusterSnapshot.(*projections.Cluster)
-			if ok {
-				clustersDetails += fmt.Sprintf("- %s (%s)\n", cluster.DisplayName, role.Role)
-			}
+			clustersDetails += fmt.Sprintf("- %s (%s)\n", cluster.DisplayName, role.Role)
 		}
 	}
 

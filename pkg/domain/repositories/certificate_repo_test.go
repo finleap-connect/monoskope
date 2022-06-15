@@ -48,7 +48,7 @@ var _ = Describe("domain/certificate_repo", func() {
 	adminRoleBinding.Role = roles.Admin.String()
 	adminRoleBinding.Scope = scopes.System.String()
 
-	newCertificate := projections.NewCertificateProjection(certId).(*projections.Certificate)
+	newCertificate := projections.NewCertificateProjection(certId)
 	newCertificate.Certificate = &projectionsApi.Certificate{
 		Id:                    certId.String(),
 		ReferencedAggregateId: someAggregateId.String(),
@@ -56,10 +56,10 @@ var _ = Describe("domain/certificate_repo", func() {
 		Certificate:           expectedCert,
 		CaCertBundle:          expectedCACert,
 	}
-	newCertificate.Created = timestamp.New(time.Now())
+	newCertificate.GetLifecycleMetadata().Created = timestamp.New(time.Now())
 
 	It("can retrieve the certificate", func() {
-		inMemCertRepo := es_repos.NewInMemoryRepository()
+		inMemCertRepo := es_repos.NewInMemoryRepository[*projections.Certificate]()
 		certRepo := NewCertificateRepository(inMemCertRepo)
 
 		err := inMemCertRepo.Upsert(context.Background(), newCertificate)
