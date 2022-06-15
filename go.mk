@@ -69,10 +69,12 @@ go-report: ## create report of commands and permission
 
 go-test: ## run all tests
 # https://onsi.github.io/ginkgo/#running-tests
+	@find . -name '*.coverprofile' -exec rm {} \;
 	@$(GINKGO) -r -v -cover --failFast -requireSuite -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
 
 go-test-ci: ## run all tests in CICD
 # https://onsi.github.io/ginkgo/#running-tests
+	@find . -name '*.coverprofile' -exec rm {} \;
 	@$(GINKGO) -r -cover --failFast -requireSuite -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
 
 go-coverage: ## print coverage from coverprofiles
