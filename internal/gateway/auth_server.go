@@ -92,7 +92,7 @@ func NewInsecureAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc
 }
 
 func (s *authServer) Print(_ print.Context, msg string) error {
-	s.log.V(logger.DebugLevel).Info(msg)
+	s.log.V(logger.DebugLevel).WithValues("source", "rego").Info(msg)
 	return nil
 }
 
