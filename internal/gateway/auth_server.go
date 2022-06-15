@@ -180,11 +180,6 @@ func (s *authServer) Check(ctx context.Context, req *gateway.CheckRequest) (*gat
 
 // validatePolicies validates the configured policies using OPA
 func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckRequest, authToken *jwt.AuthToken) (bool, error) {
-	userId, err := uuid.Parse(authToken.Subject)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse user id from token: %w", err)
-	}
-
 	input := policyInput{
 		User: policyUser{
 			Id:   authToken.Subject,
@@ -198,18 +193,21 @@ func (s *authServer) validatePolicies(ctx context.Context, req *gateway.CheckReq
 		CommandTypes: commands.CommandTypes,
 	}
 
-	roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
-	if err != nil {
-		return false, fmt.Errorf("failed get rolebindings for user: %w", err)
-	}
+	userId, err := uuid.Parse(authToken.Subject)
+	if err == nil {
+		roleBindings, err := s.roleBindingRepo.ByUserId(ctx, userId)
+		if err != nil {
+			return false, fmt.Errorf("failed get rolebindings for user: %w", err)
+		}
 
-	input.User.Roles = make([]policyRoles, 0)
-	for _, role := range roleBindings {
-		input.User.Roles = append(input.User.Roles, policyRoles{
-			Name:     role.Role,
-			Scope:    role.Scope,
-			Resource: role.Resource,
-		})
+		input.User.Roles = make([]policyRoles, 0)
+		for _, role := range roleBindings {
+			input.User.Roles = append(input.User.Roles, policyRoles{
+				Name:     role.Role,
+				Scope:    role.Scope,
+				Resource: role.Resource,
+			})
+		}
 	}
 
 	scopes := strings.Split(authToken.Scope, " ")

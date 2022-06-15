@@ -26,6 +26,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -36,9 +37,16 @@ import (
 var _ = Describe("internal/scimserver/Server", func() {
 	var userId uuid.UUID
 
-	getAdminAuthToken := func() string {
+	getAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
+		token := auth.NewApiToken(
+			&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name,
+				Email: testEnv.gatewayTestEnv.AdminUser.Email},
+			testEnv.gatewayTestEnv.GetApiAddr(),
+			testEnv.gatewayTestEnv.AdminUser.ID().String(),
+			time.Minute*10,
+			[]gateway.AuthorizationScope{gateway.AuthorizationScope_WRITE_SCIM},
+		)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
@@ -46,7 +54,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 
 	getRequest := func(method string, target string, body io.Reader) *http.Request {
 		req := httptest.NewRequest(method, target, body)
-		req.Header.Add("authorization", auth.AuthScheme+" "+getAdminAuthToken())
+		req.Header.Add("authorization", auth.AuthScheme+" "+getAuthToken())
 		return req
 	}
 
