@@ -43,7 +43,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 			&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name,
 				Email: testEnv.gatewayTestEnv.AdminUser.Email},
 			testEnv.gatewayTestEnv.GetApiAddr(),
-			testEnv.gatewayTestEnv.AdminUser.ID().String(),
+			"test",
 			time.Minute*10,
 			[]gateway.AuthorizationScope{gateway.AuthorizationScope_WRITE_SCIM},
 		)

@@ -238,7 +238,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 
 	gatewayAuthServer, errAuthServer := NewAuthServer(context.Background(), localAddrAPIServer, authServer, env.PoliciesPath, userRoleBindingRepo)
 	if errAuthServer != nil {
-		return nil, err
+		return nil, errAuthServer
 	}
 
 	// Create gRPC server and register implementation
