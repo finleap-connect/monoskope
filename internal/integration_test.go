@@ -24,18 +24,13 @@ import (
 	mock_reactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
-	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -86,12 +81,6 @@ var _ = Describe("integration", func() {
 		return client
 	}
 
-	certificateServiceClient := func() domainApi.CertificateClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewCertificateClient)
-		Expect(err).ToNot(HaveOccurred())
-		return client
-	}
-
 	eventStoreClient := func() esApi.EventStoreClient {
 		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
 		Expect(err).ToNot(HaveOccurred())
@@ -129,7 +118,7 @@ var _ = Describe("integration", func() {
 
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
-				&cmdData.CreateUserRoleBindingCommandData{Role: roles.Admin.String(), Scope: scopes.System.String(), UserId: userId.String()},
+				&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.Admin), Scope: string(scopes.System), UserId: userId.String()},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -152,8 +141,8 @@ var _ = Describe("integration", func() {
 			user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String("jane.doe@monoskope.io"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(user).ToNot(BeNil())
-			Expect(user.Roles[0].Role).To(Equal(roles.Admin.String()))
-			Expect(user.Roles[0].Scope).To(Equal(scopes.System.String()))
+			Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
+			Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 
 			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())
@@ -313,93 +302,9 @@ var _ = Describe("integration", func() {
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 			}).Should(Succeed())
-
-			By("by retrieving the bootstrap token")
-			observed := testReactor.GetObservedEvents()
-			Expect(len(observed)).ToNot(Equal(0))
-			Expect(observed[0].AggregateID()).To(Equal(clusterId))
-
-			eventMD := observed[0].Metadata()
-			event := es.NewEventWithMetadata(events.ClusterBootstrapTokenCreated,
-				es.ToEventDataFromProto(&eventdata.ClusterBootstrapTokenCreated{
-					Jwt: "this is a valid JWT, honest!",
-				}), time.Now().UTC(),
-				observed[0].AggregateType(), observed[0].AggregateID(),
-				observed[0].AggregateVersion()+1,
-				eventMD)
-
-			err = testReactor.Emit(ctx, event)
-			Expect(err).ToNot(HaveOccurred())
-
-			Eventually(func(g Gomega) {
-				tokenValue, err := clusterServiceClient().GetBootstrapToken(ctx, wrapperspb.String(clusterId.String()))
-				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(tokenValue.GetValue()).To(Equal("this is a valid JWT, honest!"))
-			}).Should(Succeed())
 		})
 	})
 
-	Context("cert management", func() {
-		It("can create and query a certificate", func() {
-			testReactor := mock_reactor.NewTestReactor()
-			defer testReactor.Close()
-
-			err := testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
-			Expect(err).ToNot(HaveOccurred())
-
-			clusterInfo, err := clusterServiceClient().GetByName(ctx, &wrapperspb.StringValue{Value: expectedClusterName})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(clusterInfo).ToNot(BeNil())
-
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
-				&cmdData.RequestCertificate{
-					ReferencedAggregateId:   clusterInfo.Id,
-					ReferencedAggregateType: aggregates.Cluster.String(),
-					SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-
-			certRequestCmdReply, err := commandHandlerClient().Execute(ctx, command)
-			Expect(err).ToNot(HaveOccurred())
-
-			var observed []es.Event
-			Eventually(func(g Gomega) {
-				observed = testReactor.GetObservedEvents()
-				g.Expect(len(observed)).To(Equal(1))
-			}).Should(Succeed())
-			certRequestedEvent := observed[0]
-			Expect(certRequestedEvent.AggregateID().String()).To(Equal(certRequestCmdReply.AggregateId))
-
-			err = testReactor.Emit(ctx, es.NewEventWithMetadata(
-				events.CertificateIssued,
-				es.ToEventDataFromProto(&eventdata.CertificateIssued{
-					Certificate: &common.CertificateChain{
-						Ca:          expectedClusterCACertBundle,
-						Certificate: []byte("this is a cert"),
-					},
-				}),
-				time.Now().UTC(),
-				certRequestedEvent.AggregateType(),
-				certRequestedEvent.AggregateID(),
-				certRequestedEvent.AggregateVersion()+1,
-				certRequestedEvent.Metadata(),
-			))
-			Expect(err).ToNot(HaveOccurred())
-
-			Eventually(func(g Gomega) {
-				certificate, err := certificateServiceClient().GetCertificate(ctx,
-					&domainApi.GetCertificateRequest{
-						AggregateId:   clusterInfo.GetId(),
-						AggregateType: aggregates.Cluster.String(),
-					})
-				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(certificate.GetCertificate()).ToNot(BeNil())
-				g.Expect(certificate.GetCaCertBundle()).ToNot(BeNil())
-			}).Should(Succeed())
-		})
-	})
 })
 
 var _ = Describe("PrometheusMetrics", func() {

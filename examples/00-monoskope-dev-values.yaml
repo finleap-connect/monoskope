@@ -78,19 +78,6 @@ ambassador:
       selector:
         release: monitoring
 
-cluster-bootstrap-reactor:
-  replicaCount: 1
-  image:
-    tag: *imageTag
-  resources:
-    limits:
-      cpu: 2000m
-      memory: 128Mi
-    requests:
-      cpu: 500m
-      memory: 64Mi
-  issuerURL: https://api.monoskope.yourdomain.io
-
 rabbitmq:
   metrics:
     enabled: true

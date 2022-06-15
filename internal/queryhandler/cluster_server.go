@@ -26,7 +26,6 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // clusterServer is the implementation of the ClusterService API
@@ -91,13 +90,4 @@ func (s *clusterServer) GetAll(request *api.GetAllRequest, stream api.Cluster_Ge
 		}
 	}
 	return nil
-}
-
-// GetBootstrapToken returns the bootstrap token for the cluster with the given id.
-func (s *clusterServer) GetBootstrapToken(ctx context.Context, id *wrappers.StringValue) (*wrappers.StringValue, error) {
-	token, err := s.repoCluster.GetBootstrapToken(ctx, id.GetValue())
-	if err != nil {
-		return nil, err
-	}
-	return &wrapperspb.StringValue{Value: token}, nil
 }

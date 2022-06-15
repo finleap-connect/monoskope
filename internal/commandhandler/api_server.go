@@ -79,10 +79,10 @@ func (s *apiServer) Execute(ctx context.Context, command *commands.Command) (*ap
 func (s *apiServer) GetPermissionModel(ctx context.Context, in *empty.Empty) (*api_domain.PermissionModel, error) {
 	permissionModel := &api_domain.PermissionModel{}
 	for _, role := range roles.AvailableRoles {
-		permissionModel.Roles = append(permissionModel.Roles, role.String())
+		permissionModel.Roles = append(permissionModel.Roles, string(role))
 	}
 	for _, scope := range scopes.AvailableScopes {
-		permissionModel.Scopes = append(permissionModel.Scopes, scope.String())
+		permissionModel.Scopes = append(permissionModel.Scopes, string(scope))
 	}
 	return permissionModel, nil
 }

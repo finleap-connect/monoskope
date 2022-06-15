@@ -26,10 +26,7 @@ import (
 var _ = Describe("internal/gateway/auth/token", func() {
 	expectedIssuer := "https://localhost"
 	expectedValidity := time.Hour * 1
-	It("validate cluster bootstrap token", func() {
-		t := NewClusterBootstrapToken(&jwt.StandardClaims{}, expectedIssuer, "me")
-		Expect(t.Validate(expectedIssuer)).ToNot(HaveOccurred())
-	})
+
 	It("fail validate auth token", func() {
 		t := NewAuthToken(&jwt.StandardClaims{}, expectedIssuer, "me", expectedValidity)
 		t.Expiry = jose_jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * -12))

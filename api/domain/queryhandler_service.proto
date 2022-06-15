@@ -20,13 +20,13 @@ syntax = "proto3";
 import "api/domain/projections/user.proto";
 import "api/domain/projections/tenant.proto";
 import "api/domain/projections/cluster.proto";
-import "api/domain/projections/certificate.proto";
 import "api/domain/projections/tenant_cluster_binding.proto";
 import "api/domain/audit/user.proto";
 import "api/domain/audit/event.proto";
 import "validate/validate.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain";
 
@@ -41,7 +41,8 @@ service User {
   // GetByEmail returns the user found by the given email address.
   rpc GetByEmail(google.protobuf.StringValue) returns (projections.User);
   // GetRoleBindingsById returns all role bindings related to the given user id.
-  rpc GetRoleBindingsById(google.protobuf.StringValue) returns (stream projections.UserRoleBinding);
+  rpc GetRoleBindingsById(google.protobuf.StringValue)
+      returns (stream projections.UserRoleBinding);
   // GetCount returns the count of users
   rpc GetCount(GetCountRequest) returns (GetCountResult);
 }
@@ -55,7 +56,8 @@ service Tenant {
   // GetByName returns the tenant found by the given name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Tenant);
   // GetUsers returns users belonging to the given tenant id.
-  rpc GetUsers(google.protobuf.StringValue) returns (stream projections.TenantUser);
+  rpc GetUsers(google.protobuf.StringValue)
+      returns (stream projections.TenantUser);
 }
 
 // Cluster is a service to query information about known clusters.
@@ -66,50 +68,49 @@ service Cluster {
   rpc GetById(google.protobuf.StringValue) returns (projections.Cluster);
   // GetByName returns a cluster by its name
   rpc GetByName(google.protobuf.StringValue) returns (projections.Cluster);
-  // GetBootstrapToken returns the JWT token for cluster authentication for the
-  // cluster with the given UUID
-  rpc GetBootstrapToken(google.protobuf.StringValue)
-      returns (google.protobuf.StringValue);
 }
 
 // ClusterAccess is a service to query access information about clusters.
-service ClusterAccess{
-  // GetClusterAccessByTenantId returns clusters which the given tenant has access to by it's UUID
-  rpc GetClusterAccessByTenantId(google.protobuf.StringValue) returns (stream projections.Cluster);
-  // GetClusterAccessByUserId returns clusters which the given user has access to by it's UUID
-  rpc GetClusterAccessByUserId(google.protobuf.StringValue) returns (stream projections.Cluster);
-  // GetTenantClusterMappingsByTenantId returns bindings which belong to the given tenant by it's UUID
-  rpc GetTenantClusterMappingsByTenantId(google.protobuf.StringValue) returns (stream projections.TenantClusterBinding);
-  // GetTenantClusterMappingsByClusterId returns bindings which belong to the given cluster by it's UUID
-  rpc GetTenantClusterMappingsByClusterId(google.protobuf.StringValue) returns (stream projections.TenantClusterBinding);
-  // GetTenantClusterMappingsByClusterId returns the binding which belongs to the given tenant and cluster by their UUIDs
-  rpc GetTenantClusterMappingByTenantAndClusterId(GetClusterMappingRequest) returns (projections.TenantClusterBinding);
+service ClusterAccess {
+  // GetClusterAccessByUserId returns clusters which the given user has access
+  // to by it's UUID
+  rpc GetClusterAccess(google.protobuf.Empty)
+      returns (stream projections.ClusterAccess);
+  // GetTenantClusterMappingsByTenantId returns bindings which belong to the
+  // given tenant by it's UUID
+  rpc GetTenantClusterMappingsByTenantId(google.protobuf.StringValue)
+      returns (stream projections.TenantClusterBinding);
+  // GetTenantClusterMappingsByClusterId returns bindings which belong to the
+  // given cluster by it's UUID
+  rpc GetTenantClusterMappingsByClusterId(google.protobuf.StringValue)
+      returns (stream projections.TenantClusterBinding);
+  // GetTenantClusterMappingsByClusterId returns the binding which belongs to
+  // the given tenant and cluster by their UUIDs
+  rpc GetTenantClusterMappingByTenantAndClusterId(GetClusterMappingRequest)
+      returns (projections.TenantClusterBinding);
 }
 
-service AuditLog{
-  // GetByDateRange returns human-readable events within the specified data range
-  rpc GetByDateRange(GetAuditLogByDateRangeRequest) returns (stream audit.HumanReadableEvent);
-  // GetByUser returns human-readable events caused by others actions on the given user
+service AuditLog {
+  // GetByDateRange returns human-readable events within the specified data
+  // range
+  rpc GetByDateRange(GetAuditLogByDateRangeRequest)
+      returns (stream audit.HumanReadableEvent);
+  // GetByUser returns human-readable events caused by others actions on the
+  // given user
   rpc GetByUser(GetByUserRequest) returns (stream audit.HumanReadableEvent);
-  // GetUserActions returns human-readable events caused by the given user actions
-  rpc GetUserActions(GetUserActionsRequest) returns (stream audit.HumanReadableEvent);
-  // GetUsersOverview returns users overview at the specified timestamp, tenants/clusters they belong to, and their roles
-  rpc GetUsersOverview(GetUsersOverviewRequest) returns (stream audit.UserOverview);
+  // GetUserActions returns human-readable events caused by the given user
+  // actions
+  rpc GetUserActions(GetUserActionsRequest)
+      returns (stream audit.HumanReadableEvent);
+  // GetUsersOverview returns users overview at the specified timestamp,
+  // tenants/clusters they belong to, and their roles
+  rpc GetUsersOverview(GetUsersOverviewRequest)
+      returns (stream audit.UserOverview);
 }
 
-service Certificate {
-  rpc GetCertificate(GetCertificateRequest) returns (projections.Certificate);
-}
-
-// GetAllRequest is the generic request to query all instances of a certain projection
+// GetAllRequest is the generic request to query all instances of a certain
+// projection
 message GetAllRequest { bool include_deleted = 1; }
-
-message GetCertificateRequest {
-  // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string aggregate_id = 1;
-  // Type of the aggregate referenced
-  string aggregate_type = 2;
-}
 
 message GetClusterMappingRequest {
   string tenant_id = 1;
@@ -126,15 +127,15 @@ message GetAuditLogByDateRangeRequest {
 }
 
 message GetByUserRequest {
-  google.protobuf.StringValue email = 1 [ (validate.rules).string.email = true ];
+  google.protobuf.StringValue email = 1
+      [ (validate.rules).string.email = true ];
   GetAuditLogByDateRangeRequest date_range = 2;
 }
 
 message GetUserActionsRequest {
-  google.protobuf.StringValue email = 1 [ (validate.rules).string.email = true ];
+  google.protobuf.StringValue email = 1
+      [ (validate.rules).string.email = true ];
   GetAuditLogByDateRangeRequest date_range = 2;
 }
 
-message GetUsersOverviewRequest {
-  google.protobuf.Timestamp timestamp = 1;
-}
+message GetUsersOverviewRequest { google.protobuf.Timestamp timestamp = 1; }

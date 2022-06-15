@@ -20,7 +20,6 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "validate/validate.proto";
-import "google/protobuf/any.proto";
 
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/gateway";
 

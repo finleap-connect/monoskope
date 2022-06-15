@@ -21,10 +21,12 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -54,33 +56,14 @@ func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc
 	return conn, api.NewClusterAccessClient(conn), nil
 }
 
-func (s *clusterAccessServer) GetClusterAccessByTenantId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByTenantIdServer) error {
-	tenantId, err := uuid.Parse(id.GetValue())
+func (s *clusterAccessServer) GetClusterAccess(_ *emptypb.Empty, stream api.ClusterAccess_GetClusterAccessServer) error {
+	metadataManager, err := metadata.NewDomainMetadataManager(stream.Context())
 	if err != nil {
 		return err
 	}
+	userInfo := metadataManager.GetUserInformation()
 
-	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByTenantId(stream.Context(), tenantId)
-	if err != nil {
-		return errors.TranslateToGrpcError(err)
-	}
-
-	for _, c := range clusters {
-		err := stream.Send(c)
-		if err != nil {
-			return errors.TranslateToGrpcError(err)
-		}
-	}
-	return nil
-}
-
-func (s *clusterAccessServer) GetClusterAccessByUserId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetClusterAccessByUserIdServer) error {
-	userId, err := uuid.Parse(id.GetValue())
-	if err != nil {
-		return err
-	}
-
-	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByUserId(stream.Context(), userId)
+	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByUserId(stream.Context(), userInfo.Id)
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}

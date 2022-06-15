@@ -18,6 +18,7 @@ Monoskope Gateway
 | autoscaling.maxReplicas | int | `10` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
+| eventStore | object | `{"host":"eventstore","port":8080,"prefix":""}` | API address of the event store |
 | fullnameOverride | string | `""` |  |
 | global | object | `{}` |  |
 | image.pullPolicy | string | `"Always"` |  |
@@ -33,13 +34,16 @@ Monoskope Gateway
 | livenessProbe.failureThreshold | int | `10` |  |
 | livenessProbe.initialDelaySeconds | int | `10` |  |
 | livenessProbe.periodSeconds | int | `5` |  |
+| messageBus.configSecret | string | `""` | Name of the configmap containing the config for the messagebus |
+| messageBus.routingKeyPrefix | string | `"m8"` | Prefix for routing messages via message bus |
+| messageBus.tlsSecret | string | `""` | Name of the secret containing the tls certificates/keys |
+| messageBus.url | string | `"amqps://127.0.0.1:5672/"` | URL of the bus |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | oidcSecret | object | `{"name":""}` | The secret where the gateway finds the OIDC secrets. Must contain the fields oidc-clientsecret, oidc-clientid and oidc-nonce. |
 | oidcSecret.name | string | `""` | Name of the secret to be used by the gateway, required |
 | podAnnotations | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
-| queryHandler | object | `{"host":"queryhandler","port":8080,"prefix":""}` | API address of the query handler |
 | readinessProbe.enabled | bool | `true` |  |
 | readinessProbe.failureThreshold | int | `5` |  |
 | readinessProbe.initialDelaySeconds | int | `5` |  |
@@ -51,6 +55,7 @@ Monoskope Gateway
 | service.httpApiPort | int | `8081` |  |
 | service.metricsPort | int | `9102` |  |
 | service.type | string | `"ClusterIP"` |  |
+| tlsSecretName | string | `""` | Name of the secret containing the tls certificate/key the Gateway grpc endpoint should use for TLS |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

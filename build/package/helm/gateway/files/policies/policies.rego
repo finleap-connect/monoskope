@@ -7,12 +7,10 @@ default authorized = false
 # list of allowed paths for any user
 allowed_paths := [
 	"/gateway.Gateway",
-	"/domain.Cluster/GetAll",
-	"/domain.Cluster/GetByName",
 	"/gateway.ClusterAuth/GetAuthToken",
 	"/domain.CommandHandlerExtensions",
 	"/common.ServiceInformationService/GetServiceInformation",
-	"/domain.Cluster/GetByName",
+	"/domain.ClusterAccess/GetClusterAccess",
 ]
 
 scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]

@@ -41,7 +41,6 @@ const (
 var AvailableRoles = []es.Role{
 	Admin,
 	User,
-	K8sOperator,
 	OnCall,
 }
 
@@ -56,7 +55,7 @@ func init() {
 
 func ValidateRole(role string) error {
 	for _, v := range AvailableRoles {
-		if v.String() == role {
+		if string(v) == role {
 			return nil
 		}
 	}

@@ -165,8 +165,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = roles.Admin.String()
-	adminRoleBinding.Scope = scopes.System.String()
+	adminRoleBinding.Role = string(roles.Admin)
+	adminRoleBinding.Scope = string(scopes.System)
 
 	existingUser := projections.NewUserProjection(uuid.New())
 	existingUser.Name = "someone"
@@ -182,8 +182,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 
 	tenantAdminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	tenantAdminRoleBinding.UserId = tenantAdminUser.Id
-	tenantAdminRoleBinding.Role = roles.Admin.String()
-	tenantAdminRoleBinding.Scope = scopes.Tenant.String()
+	tenantAdminRoleBinding.Role = string(roles.Admin)
+	tenantAdminRoleBinding.Scope = string(scopes.Tenant)
 	tenantAdminRoleBinding.Resource = "1234"
 
 	env.AdminUser = adminUser

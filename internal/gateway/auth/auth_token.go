@@ -67,28 +67,6 @@ func NewKubernetesAuthToken(claims *jwt.StandardClaims, clusterClaim *jwt.Cluste
 	}
 }
 
-const (
-	ClusterBootstrapTokenValidity = 10 * time.Minute
-)
-
-func NewClusterBootstrapToken(claims *jwt.StandardClaims, issuer, userId string) *jwt.AuthToken {
-	now := time.Now().UTC()
-
-	return &jwt.AuthToken{
-		Claims: &jose_jwt.Claims{
-			ID:        uuid.New().String(),
-			Issuer:    issuer,
-			Subject:   userId,
-			Expiry:    jose_jwt.NewNumericDate(now.Add(ClusterBootstrapTokenValidity)),
-			NotBefore: jose_jwt.NewNumericDate(now),
-			IssuedAt:  jose_jwt.NewNumericDate(now),
-			Audience:  jose_jwt.Audience{AudienceAPI},
-		},
-		StandardClaims: claims,
-		Scope:          gateway.AuthorizationScope_WRITE_K8SOPERATOR.String(),
-	}
-}
-
 func NewApiToken(claims *jwt.StandardClaims, issuer, userId string, validity time.Duration, scopes []gateway.AuthorizationScope) *jwt.AuthToken {
 	now := time.Now().UTC()
 

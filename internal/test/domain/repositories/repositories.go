@@ -251,21 +251,6 @@ func (mr *MockClusterRepositoryMockRecorder) ById(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ById", reflect.TypeOf((*MockClusterRepository)(nil).ById), arg0, arg1)
 }
 
-// GetBootstrapToken mocks base method.
-func (m *MockClusterRepository) GetBootstrapToken(arg0 context.Context, arg1 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBootstrapToken", arg0, arg1)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBootstrapToken indicates an expected call of GetBootstrapToken.
-func (mr *MockClusterRepositoryMockRecorder) GetBootstrapToken(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBootstrapToken", reflect.TypeOf((*MockClusterRepository)(nil).GetBootstrapToken), arg0, arg1)
-}
-
 // Remove mocks base method.
 func (m *MockClusterRepository) Remove(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()

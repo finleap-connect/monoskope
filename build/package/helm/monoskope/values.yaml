@@ -153,7 +153,6 @@ rabbitmq:
     existingSecret: m8-rabbitmq-load-definition
   extraPlugins: 'rabbitmq_auth_mechanism_ssl'
   extraConfiguration: |-
-    load_definitions = /app/rabbitmq-definitions.json
     auth_mechanisms.1 = EXTERNAL
     ssl_cert_login_from = common_name
     ssl_options.depth = 2
@@ -210,15 +209,6 @@ ambassador:
       enabled: false
   adminService:
     create: false
-
-cluster-bootstrap-reactor:
-  enabled: true
-  replicaCount: 1
-  keySecret:
-    name: *authKeySecretName
-  messageBus:
-    configSecret: *msgBusClientConfigSecretName
-    tlsSecret: *msgBusClientAuthCertSecretName
 
 scimserver:
   enabled: false

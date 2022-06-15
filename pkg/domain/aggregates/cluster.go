@@ -35,7 +35,6 @@ type ClusterAggregate struct {
 	name             string
 	apiServerAddr    string
 	caCertBundle     []byte
-	bootstrapToken   string
 }
 
 // ClusterAggregate creates a new ClusterAggregate
@@ -146,13 +145,6 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.name = clusterCreatedV2.GetName()
 		a.apiServerAddr = clusterCreatedV2.GetApiServerAddress()
 		a.caCertBundle = clusterCreatedV2.GetCaCertificateBundle()
-	case events.ClusterBootstrapTokenCreated:
-		data := new(eventdata.ClusterBootstrapTokenCreated)
-		err := event.Data().ToProto(data)
-		if err != nil {
-			return err
-		}
-		a.bootstrapToken = data.GetJwt()
 	case events.ClusterUpdated:
 		data := new(eventdata.ClusterUpdated)
 		err := event.Data().ToProto(data)

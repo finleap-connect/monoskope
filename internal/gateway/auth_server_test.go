@@ -42,8 +42,8 @@ var _ = Describe("Gateway Auth Server", func() {
 	var (
 		ctx              = context.Background()
 		expectedUserId   = uuid.New()
-		expectedRole     = roles.User.String()
-		expectedScope    = scopes.Tenant.String()
+		expectedRole     = roles.User
+		expectedScope    = scopes.Tenant
 		expectedResource = "1234"
 	)
 
@@ -61,8 +61,8 @@ var _ = Describe("Gateway Auth Server", func() {
 		_, err := cmd.AddCommandData(command,
 			&cmdData.CreateUserRoleBindingCommandData{
 				UserId:   expectedUserId.String(),
-				Role:     expectedRole,
-				Scope:    expectedScope,
+				Role:     string(expectedRole),
+				Scope:    string(expectedScope),
 				Resource: wrapperspb.String(expectedResource),
 			},
 		)
@@ -173,7 +173,8 @@ var _ = Describe("Gateway Auth Server", func() {
 		Expect(status.Code()).To(Equal(codes.Unauthenticated))
 	})
 	It("can not authenticate with JWT for wrong scope", func() {
-		token := auth.NewClusterBootstrapToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id)
+		expectedValidity := time.Hour * 1
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id, expectedValidity)
 		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
