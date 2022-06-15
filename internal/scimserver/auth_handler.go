@@ -45,8 +45,8 @@ func (h *authHandler) withAuthContext(r *http.Request) (*http.Request, error) {
 			Detail: "Request unauthenticated with " + auth.AuthScheme,
 		}
 	}
-	md := metadata.Pairs(auth.HeaderAuthorization, auth.AuthScheme+" "+token)
-	nCtx := metautils.NiceMD(md).ToOutgoing(r.Context())
+	md := metadata.Pairs(auth.HeaderAuthorization, token)
+	nCtx := metautils.NiceMD(md).ToIncoming(r.Context())
 	return r.WithContext(nCtx), nil
 }
 

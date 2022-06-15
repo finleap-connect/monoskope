@@ -46,7 +46,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 
 	getRequest := func(method string, target string, body io.Reader) *http.Request {
 		req := httptest.NewRequest(method, target, body)
-		req.Header.Add("authorization", getAdminAuthToken())
+		req.Header.Add("authorization", auth.AuthScheme+" "+getAdminAuthToken())
 		return req
 	}
 
