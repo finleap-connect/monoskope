@@ -58,7 +58,7 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 	humanReadableEvent := &audit.HumanReadableEvent{
 		When:      event.Timestamp.AsTime().Format(time.RFC822),
 		Issuer:    event.Metadata[auth.HeaderAuthEmail],
-		IssuerId:  event.AggregateId,
+		IssuerId:  event.Metadata[auth.HeaderAuthId],
 		EventType: event.Type,
 	}
 
