@@ -40,12 +40,11 @@ import (
 
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
-	userEmail := "jane.dou@monoskope.io"
 	expectedValidity := time.Hour * 1
 
 	getAdminAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.Id, expectedValidity)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
@@ -60,6 +59,12 @@ var _ = Describe("AuditLog Test", func() {
 
 	auditLogServiceClient := func() domainApi.AuditLogClient {
 		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewAuditLogClient)
+		Expect(err).ToNot(HaveOccurred())
+		return client
+	}
+
+	userServiceClient := func() domainApi.UserClient {
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
@@ -265,15 +270,21 @@ var _ = Describe("AuditLog Test", func() {
 		})
 
 		When("getting by user", func() {
+			// TODO: why aren't they the same? and is it a good idea to allow two users with the same email?
+			adminUser, err := userServiceClient().GetById(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Id))
+			//adminUser, err := userServiceClient().GetByEmail(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email))
+			Expect(err).ToNot(HaveOccurred())
+
 			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
-				Email: wrapperspb.String(userEmail),
+				Email: wrapperspb.String(adminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
-					MinTimestamp: timestamppb.New(minTime),
+					MinTimestamp: timestamppb.New(time.Now().Add(time.Hour * -1).UTC()),
 					MaxTimestamp: timestamppb.New(maxTime),
 				},
 			})
 			Expect(err).ToNot(HaveOccurred())
 
+			counter := 0
 			for {
 				e, err := events.Recv()
 				if err == io.EOF {
@@ -281,13 +292,19 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.Details).To(ContainSubstring(userEmail))
+				Expect(e.IssuerId).ToNot(Equal(adminUser.Id))
+				Expect(e.Details).To(ContainSubstring(adminUser.Email))
+				counter++
 			}
+			Expect(counter).ToNot(Equal(0))
 		})
 
 		When("getting user actions", func() {
+			adminUser, err := userServiceClient().GetById(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Id))
+			Expect(err).ToNot(HaveOccurred())
+
 			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
+				Email: wrapperspb.String(adminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -295,6 +312,7 @@ var _ = Describe("AuditLog Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
+			counter := 0
 			for {
 				e, err := events.Recv()
 				if err == io.EOF {
@@ -302,8 +320,11 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.Issuer).To(Equal(testEnv.gatewayTestEnv.AdminUser.Email))
+				Expect(e.Issuer).To(Equal(adminUser.Email))
+				Expect(e.IssuerId).To(Equal(adminUser.Id))
+				counter++
 			}
+			Expect(counter).ToNot(Equal(0))
 		})
 
 		When("getting users overview", func() {
@@ -312,6 +333,7 @@ var _ = Describe("AuditLog Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
+			counter := 0
 			for {
 				o, err := overviews.Recv()
 				if err == io.EOF {
@@ -322,7 +344,9 @@ var _ = Describe("AuditLog Test", func() {
 				Expect(o.Name).ToNot(BeEmpty())
 				Expect(o.Email).ToNot(BeEmpty())
 				Expect(o.Details).ToNot(BeEmpty())
+				counter++
 			}
+			Expect(counter).ToNot(Equal(0))
 		})
 	})
 
