@@ -25,6 +25,7 @@ import (
 type tenantuserRepository struct {
 	userRepo            UserRepository
 	userRoleBindingRepo UserRoleBindingRepository
+	tenantRepo          TenantRepository
 }
 
 // TenantUserRepository is a repository for reading users of a tenant.
@@ -34,10 +35,11 @@ type TenantUserRepository interface {
 }
 
 // NewTenantUserRepository creates a repository for reading and writing tenantuser projections.
-func NewTenantUserRepository(userRepo UserRepository, userRoleBindingRepo UserRoleBindingRepository) TenantUserRepository {
+func NewTenantUserRepository(userRepo UserRepository, userRoleBindingRepo UserRoleBindingRepository, tenantRepo TenantRepository) TenantUserRepository {
 	return &tenantuserRepository{
 		userRepo:            userRepo,
 		userRoleBindingRepo: userRoleBindingRepo,
+		tenantRepo:          tenantRepo,
 	}
 }
 
@@ -57,11 +59,21 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 			return nil, err
 		}
 
+		// Skip deleted tenants
+		tenant, err := r.tenantRepo.ById(ctx, uuid.MustParse(binding.Resource))
+		if err != nil {
+			return nil, err
+		}
+		if tenant.GetDeleted().AsTime().Unix() != 0 {
+			continue
+		}
+
 		if _, ok := userMap[user.Id]; !ok {
 			bindings, err := r.userRoleBindingRepo.ByUserIdAndScope(ctx, user.ID(), scopes.Tenant)
 			if err != nil {
 				return nil, err
 			}
+
 			userMap[user.Id] = true
 			tenantUsers = append(tenantUsers, projections.NewTenantUserProjection(id, user, bindings))
 		}
