@@ -31,6 +31,16 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 	tenantId := uuid.New()
 	adminUserId := uuid.New()
 	otherUserId := uuid.New()
+
+	tenant := &projections.Tenant{
+		Tenant: &projectionsApi.Tenant{
+			Id:     tenantId.String(),
+			Name:   "tenant-a",
+			Prefix: "ta",
+		},
+		DomainProjection: projections.NewDomainProjection(),
+	}
+
 	adminUser := &projections.User{User: &projectionsApi.User{Id: adminUserId.String(), Name: "admin", Email: "admin@monoskope.io"}}
 	otherUser := &projections.User{User: &projectionsApi.User{Id: otherUserId.String(), Name: "otheruser", Email: "otheruser@monoskope.io"}}
 
@@ -47,6 +57,10 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 	otherUserRoleBinding.Resource = tenantId.String()
 
 	It("can read/write projections", func() {
+		inMemoryTenantRepo := es_repos.NewInMemoryRepository[*projections.Tenant]()
+		tenantRepo := NewTenantRepository(inMemoryTenantRepo)
+		tenantRepo.Upsert(context.Background(), tenant)
+
 		inMemoryRoleRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()
 		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
 		Expect(err).NotTo(HaveOccurred())
@@ -62,7 +76,7 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 		err = inMemoryUserRepo.Upsert(context.Background(), otherUser)
 		Expect(err).NotTo(HaveOccurred())
 
-		tenantUserRepo := NewTenantUserRepository(userRepo, userRoleBindingRepo)
+		tenantUserRepo := NewTenantUserRepository(userRepo, userRoleBindingRepo, tenantRepo)
 		users, err := tenantUserRepo.GetTenantUsersById(context.Background(), tenantId)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(users).NotTo(BeEmpty())
