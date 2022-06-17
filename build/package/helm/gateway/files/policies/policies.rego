@@ -13,11 +13,11 @@ allowed_paths := [
 	"/domain.ClusterAccess/GetClusterAccess",
 ]
 
-scoped_paths := [
-	{"path": "/scim/", "scope": "WRITE_SCIM"},
-	{"path": "/eventsourcing.CommandHandler/Execute", "scope": "WRITE_SCIM"},
-	{"path": "/domain.User/", "scope": "WRITE_SCIM"},
-]
+scoped_paths := [{"scope": "WRITE_SCIM", "paths": [
+	"/scim/",
+	"/eventsourcing.CommandHandler/Execute",
+	"/domain.User/",
+]}]
 
 command_path := "/eventsourcing.CommandHandler/Execute"
 
@@ -82,8 +82,9 @@ authorized {
 authorized {
 	print("entering scoped_paths")
 	some scoped_path in scoped_paths
-	startswith(input.Path, scoped_path.path)
 	some scope in input.Authentication.Scopes
 	scope == scoped_path.scope
-	print("scope", scope, "allows access to path", scoped_path.path)
+	some path in scoped_path.paths
+	startswith(input.Path, path)
+	print("scope", scope, "allows access to path", path)
 }
