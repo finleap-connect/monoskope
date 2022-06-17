@@ -59,10 +59,11 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 	It("can read/write projections", func() {
 		inMemoryTenantRepo := es_repos.NewInMemoryRepository[*projections.Tenant]()
 		tenantRepo := NewTenantRepository(inMemoryTenantRepo)
-		tenantRepo.Upsert(context.Background(), tenant)
+		err := tenantRepo.Upsert(context.Background(), tenant)
+		Expect(err).NotTo(HaveOccurred())
 
 		inMemoryRoleRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()
-		err := inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
+		err = inMemoryRoleRepo.Upsert(context.Background(), adminRoleBinding)
 		Expect(err).NotTo(HaveOccurred())
 		err = inMemoryRoleRepo.Upsert(context.Background(), otherUserRoleBinding)
 		Expect(err).NotTo(HaveOccurred())
