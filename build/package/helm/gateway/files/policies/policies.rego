@@ -13,7 +13,11 @@ allowed_paths := [
 	"/domain.ClusterAccess/GetClusterAccess",
 ]
 
-scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]
+scoped_paths := [{"scope": "WRITE_SCIM", "paths": [
+	"/scim/",
+	"/eventsourcing.CommandHandler/Execute",
+	"/domain.User/",
+]}]
 
 command_path := "/eventsourcing.CommandHandler/Execute"
 
@@ -25,6 +29,7 @@ role_admin = "admin"
 
 # check if system admin
 is_system_admin {
+	print("entering is_system_admin")
 	some role in input.User.Roles
 	role.Scope == scope_system
 	role.Name == role_admin
@@ -33,6 +38,8 @@ is_system_admin {
 
 # check if user is tenant admin and adjusts rolebindings of other users of the tenant
 tenant_admin_rolebindings {
+	print("entering tenant_admin_rolebindings")
+
 	# check that it is a command
 	startswith(input.Path, command_path)
 	req := json.unmarshal(input.Request)
@@ -50,7 +57,7 @@ tenant_admin_rolebindings {
 	role.Name == role_admin
 	role.Resource == req.data.resource
 
-	print(input.User.Name, "is tenant admin and allowed to execute", req.type)
+	print(input.User.Name, "is tenant admin and allowed to execute", req.type, "for tenant", req.data.resource)
 }
 
 # authorized because system admin
@@ -65,6 +72,7 @@ authorized {
 
 # authorized via allowed_paths
 authorized {
+	print("entering allowed_paths")
 	some path in allowed_paths
 	startswith(input.Path, path)
 	print(path, "is allowed to everyone")
@@ -72,9 +80,11 @@ authorized {
 
 # authorized via scope
 authorized {
+	print("entering scoped_paths")
 	some scoped_path in scoped_paths
-	startswith(input.Path, scoped_path.path)
 	some scope in input.Authentication.Scopes
 	scope == scoped_path.scope
-	print("scope", scope, "allows access to path", scoped_path.path)
+	some path in scoped_path.paths
+	startswith(input.Path, path)
+	print("scope", scope, "allows access to path", path)
 }

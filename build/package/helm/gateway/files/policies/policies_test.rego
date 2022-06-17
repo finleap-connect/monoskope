@@ -3,6 +3,7 @@ package m8.authz
 alice_admin = {"User": {
 	"Id": "1234", "Name": "alice",
 	"Roles": [{"Name": "admin", "Scope": "system"}, {"Name": "admin", "Scope": "tenant", "Resource": "1234"}],
+	"Path": "/domain.User/GetAll",
 }}
 
 bob_tenant_admin = {

@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/finleap-connect/monoskope/internal/test"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -36,6 +37,7 @@ var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
+		defer ginkgo.GinkgoRecover()
 		var err error
 		By("bootstrapping test env")
 		baseTestEnv = test.NewTestEnv("scimserver-testenv")

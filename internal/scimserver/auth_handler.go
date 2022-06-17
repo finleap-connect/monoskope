@@ -15,7 +15,6 @@
 package scimserver
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -46,7 +45,7 @@ func (h *authHandler) withAuthContext(r *http.Request) (*http.Request, error) {
 			Detail: "Request unauthenticated with " + auth.AuthScheme,
 		}
 	}
-	md := metadata.Pairs(auth.HeaderAuthorization, fmt.Sprintf("%s %v", auth.AuthScheme, token))
+	md := metadata.Pairs(auth.HeaderAuthorization, token)
 	nCtx := metautils.NiceMD(md).ToIncoming(r.Context())
 	return r.WithContext(nCtx), nil
 }

@@ -17,6 +17,7 @@ package auth
 import (
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,5 +32,12 @@ var _ = Describe("internal/gateway/auth/token", func() {
 		t := NewAuthToken(&jwt.StandardClaims{}, expectedIssuer, "me", expectedValidity)
 		t.Expiry = jose_jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * -12))
 		Expect(t.Validate(expectedIssuer)).To(HaveOccurred())
+	})
+
+	It("validate api token", func() {
+		t := NewApiToken(&jwt.StandardClaims{}, expectedIssuer, "me", expectedValidity, []gateway.AuthorizationScope{gateway.AuthorizationScope_WRITE_SCIM})
+		t.Expiry = jose_jwt.NewNumericDate(time.Now().UTC().Add(time.Hour * 1))
+		Expect(t.Validate(expectedIssuer)).ToNot(HaveOccurred())
+		Expect(t.Scope).To(Equal(gateway.AuthorizationScope_WRITE_SCIM.String()))
 	})
 })
