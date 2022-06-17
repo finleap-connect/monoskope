@@ -13,7 +13,11 @@ allowed_paths := [
 	"/domain.ClusterAccess/GetClusterAccess",
 ]
 
-scoped_paths := [{"path": "/scim/", "scope": "WRITE_SCIM"}]
+scoped_paths := [
+	{"path": "/scim/", "scope": "WRITE_SCIM"},
+	{"path": "/eventsourcing.CommandHandler/Execute", "scope": "WRITE_SCIM"},
+	{"path": "/domain.User/", "scope": "WRITE_SCIM"},
+]
 
 command_path := "/eventsourcing.CommandHandler/Execute"
 
@@ -53,7 +57,7 @@ tenant_admin_rolebindings {
 	role.Name == role_admin
 	role.Resource == req.data.resource
 
-	print(input.User.Name, "is tenant admin and allowed to execute", req.type)
+	print(input.User.Name, "is tenant admin and allowed to execute", req.type, "for tenant", req.data.resource)
 }
 
 # authorized because system admin
