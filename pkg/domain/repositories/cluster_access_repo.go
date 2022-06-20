@@ -82,10 +82,13 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 		}
 		for _, cluster := range c {
 			clusters = append(clusters,
-				&projections.ClusterAccess{Cluster: cluster.Cluster, Roles: []string{
-					string(k8s.DefaultRole),
-					string(k8s.AdminRole),
-				}})
+				&projections.ClusterAccess{
+					Cluster: cluster.Cluster,
+					Roles: []string{
+						string(k8s.DefaultRole),
+						string(k8s.OnCallRole),
+						string(k8s.AdminRole),
+					}})
 		}
 	} else { // regular users have access based on tenant membership
 		for _, roleBinding := range roleBindings {
