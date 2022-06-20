@@ -133,7 +133,7 @@ go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/gateway/gateway_auth_client.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthClient
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository
+	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository,ClusterAccessRepository
 
 go-run-: ## run cmd, e.g. `make go-run-gateway ARGS="server"` to pass arguments
 	$(GO) run cmd/$*/*.go $(ARGS)

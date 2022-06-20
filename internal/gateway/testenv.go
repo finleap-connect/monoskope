@@ -65,6 +65,8 @@ type TestEnv struct {
 	ExistingUser                  *projections.User
 	NotExistingUser               *projections.User
 	PoliciesPath                  string
+	SomeTenantId                  uuid.UUID
+	TestClusterId                 uuid.UUID
 }
 
 func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
@@ -158,6 +160,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
+	env.SomeTenantId = uuid.New()
+
 	// Setup user repo
 	adminUser := projections.NewUserProjection(uuid.New())
 	adminUser.Name = "admin"
@@ -184,7 +188,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	tenantAdminRoleBinding.UserId = tenantAdminUser.Id
 	tenantAdminRoleBinding.Role = string(roles.Admin)
 	tenantAdminRoleBinding.Scope = string(scopes.Tenant)
-	tenantAdminRoleBinding.Resource = "1234"
+	tenantAdminRoleBinding.Resource = env.SomeTenantId.String()
 
 	env.AdminUser = adminUser
 	env.TenantAdminUser = tenantAdminUser
@@ -216,8 +220,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup cluster repo
-	clusterId := uuid.New()
-	testCluster := projections.NewClusterProjection(clusterId)
+	env.TestClusterId = uuid.New()
+	testCluster := projections.NewClusterProjection(env.TestClusterId)
 	testCluster.Name = "test-cluster"
 	testCluster.DisplayName = "Test Cluster"
 	testCluster.ApiServerAddress = "https://somecluster.io"
@@ -228,11 +232,23 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
+	tenantClusterBindingId := uuid.New()
+	tenantClusterBinding := projections.NewTenantClusterBindingProjection(tenantClusterBindingId)
+	tenantClusterBinding.ClusterId = env.TestClusterId.String()
+	tenantClusterBinding.TenantId = env.SomeTenantId.String()
+
+	inMemoryTemamtClusterBindingRepo := es_repos.NewInMemoryRepository[*projections.TenantClusterBinding]()
+	if err := inMemoryTemamtClusterBindingRepo.Upsert(context.Background(), tenantClusterBinding); err != nil {
+		return nil, err
+	}
+
 	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
+	tenantClusterbindingRepo := repositories.NewTenantClusterBindingRepository(inMemoryTemamtClusterBindingRepo)
 	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
+
 	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, userRepo)
-	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, env.ClusterRepo, map[string]time.Duration{
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(tenantClusterbindingRepo, env.ClusterRepo, userRoleBindingRepo), map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 

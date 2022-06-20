@@ -180,6 +180,17 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 
+		tenantClusterBindingRepository := repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
+		tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
+		tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, tenantClusterBindingRepository)
+		tenantClusterBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantClusterBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+		tenantClusterBindingMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.TenantClusterBinding)
+		if err := ebConsumer.AddHandler(ctx, tenantClusterBindingHandlerChain, tenantClusterBindingMatcher); err != nil {
+			return err
+		}
+
+		clusterAccessRepo := repositories.NewClusterAccessRepository(tenantClusterBindingRepository, clusterRepository, userRoleBindingRepository)
+
 		if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
 			return err
 		}
@@ -187,6 +198,9 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		if err := handler.WarmUp(ctx, esClient, aggregates.Cluster, clusterHandlerChain); err != nil {
+			return err
+		}
+		if err := handler.WarmUp(ctx, esClient, aggregates.TenantClusterBinding, tenantClusterBindingHandlerChain); err != nil {
 			return err
 		}
 
@@ -223,7 +237,7 @@ var serverCmd = &cobra.Command{
 			}
 			tokenLifeTimePerRole[k] = k8sTokenValidityDuration
 		}
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, clusterRepository, tokenLifeTimePerRole)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, clusterAccessRepo, tokenLifeTimePerRole)
 		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepository)
 
 		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient(), []string{
