@@ -40,11 +40,10 @@ import (
 
 var _ = Describe("Gateway Auth Server", func() {
 	var (
-		ctx              = context.Background()
-		expectedUserId   = uuid.New()
-		expectedRole     = roles.User
-		expectedScope    = scopes.Tenant
-		expectedResource = "1234"
+		ctx            = context.Background()
+		expectedUserId = uuid.New()
+		expectedRole   = roles.User
+		expectedScope  = scopes.Tenant
 	)
 
 	getTokenForUser := func(user *projections.User) string {
@@ -63,7 +62,7 @@ var _ = Describe("Gateway Auth Server", func() {
 				UserId:   expectedUserId.String(),
 				Role:     string(expectedRole),
 				Scope:    string(expectedScope),
-				Resource: wrapperspb.String(expectedResource),
+				Resource: wrapperspb.String(testEnv.SomeTenantId.String()),
 			},
 		)
 		Expect(err).ToNot(HaveOccurred())

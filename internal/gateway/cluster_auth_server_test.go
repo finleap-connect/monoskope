@@ -33,25 +33,22 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
-	It("can retrieve auth url", func() {
+	It("can request a cluster auth token", func() {
 		conn, err := CreateInsecureConnection(ctx, testEnv.ApiListenerAPIServer.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
 
-		clusters, err := testEnv.ClusterRepo.AllWith(ctx, false)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(len(clusters)).To(BeNumerically(">=", 1))
 		defer conn.Close()
 		apiClient := api.NewClusterAuthClient(conn)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        uuid.MustParse(testEnv.AdminUser.GetId()),
-			Name:      testEnv.AdminUser.Name,
-			Email:     testEnv.AdminUser.Email,
+			Id:        uuid.MustParse(testEnv.TenantAdminUser.GetId()),
+			Name:      testEnv.TenantAdminUser.Name,
+			Email:     testEnv.TenantAdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
 		response, err := apiClient.GetAuthToken(mdManager.GetOutgoingGrpcContext(), &api.ClusterAuthTokenRequest{
-			ClusterId: clusters[0].Id,
+			ClusterId: testEnv.TestClusterId.String(),
 			Role:      string(expectedRole),
 		})
 		Expect(err).ToNot(HaveOccurred())

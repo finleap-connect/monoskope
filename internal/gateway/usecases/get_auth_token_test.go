@@ -20,6 +20,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/test"
 	mock_repos "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
+	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -62,14 +63,14 @@ var _ = Describe("GetAuthToken", func() {
 	})
 
 	It("can retrieve openid conf", func() {
-		clusterRepo := mock_repos.NewMockClusterRepository(mockCtrl)
+		clusterAccessRepo := mock_repos.NewMockClusterAccessRepository(mockCtrl)
 
 		request := &api.ClusterAuthTokenRequest{
 			ClusterId: expectedClusterId.String(),
 			Role:      string(k8s.DefaultRole),
 		}
 		result := new(api.ClusterAuthTokenResponse)
-		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterRepo, expectedIssuer, expectedValidity)
+		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
 			Id:        expectedUserId,
@@ -78,10 +79,42 @@ var _ = Describe("GetAuthToken", func() {
 			NotBefore: time.Now().UTC(),
 		})
 
-		userProjection := projections.NewUserProjection(expectedUserId)
-		userProjection.Id = expectedUserId.String()
-		userProjection.Name = expectedUserName
-		userProjection.Email = expectedUserEmail
+		clusterProjection := projections.NewClusterProjection(expectedClusterId)
+		clusterProjection.Id = expectedClusterId.String()
+		clusterProjection.Name = expectedClusterName
+		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
+
+		clusterAccessProjection := &api_projections.ClusterAccess{
+			Cluster: clusterProjection.Proto(),
+			Roles: []string{
+				string(k8s.DefaultRole),
+			},
+		}
+
+		ctxWithUser := mdManager.GetContext()
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
+
+		err := uc.Run(ctxWithUser)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result).ToNot(BeNil())
+		Expect(result.AccessToken).ToNot(BeEmpty())
+	})
+	It("can not retrieve openid conf", func() {
+		clusterAccessRepo := mock_repos.NewMockClusterAccessRepository(mockCtrl)
+
+		request := &api.ClusterAuthTokenRequest{
+			ClusterId: expectedClusterId.String(),
+			Role:      string(k8s.DefaultRole),
+		}
+		result := new(api.ClusterAuthTokenResponse)
+		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
+
+		mdManager.SetUserInformation(&metadata.UserInformation{
+			Id:        expectedUserId,
+			Name:      expectedUserName,
+			Email:     expectedUserEmail,
+			NotBefore: time.Now().UTC(),
+		})
 
 		clusterProjection := projections.NewClusterProjection(expectedClusterId)
 		clusterProjection.Id = expectedClusterId.String()
@@ -89,12 +122,48 @@ var _ = Describe("GetAuthToken", func() {
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()
-		clusterRepo.EXPECT().ById(ctxWithUser, expectedClusterId).Return(clusterProjection, nil)
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{}, nil)
 
 		err := uc.Run(ctxWithUser)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).To(HaveOccurred())
 		Expect(result).ToNot(BeNil())
-		Expect(result.AccessToken).ToNot(BeEmpty())
+		Expect(result.AccessToken).To(BeEmpty())
 	})
+	It("can not retrieve openid conf for admin role", func() {
+		clusterAccessRepo := mock_repos.NewMockClusterAccessRepository(mockCtrl)
 
+		request := &api.ClusterAuthTokenRequest{
+			ClusterId: expectedClusterId.String(),
+			Role:      string(k8s.AdminRole),
+		}
+		result := new(api.ClusterAuthTokenResponse)
+		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
+
+		mdManager.SetUserInformation(&metadata.UserInformation{
+			Id:        expectedUserId,
+			Name:      expectedUserName,
+			Email:     expectedUserEmail,
+			NotBefore: time.Now().UTC(),
+		})
+
+		clusterProjection := projections.NewClusterProjection(expectedClusterId)
+		clusterProjection.Id = expectedClusterId.String()
+		clusterProjection.Name = expectedClusterName
+		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
+
+		clusterAccessProjection := &api_projections.ClusterAccess{
+			Cluster: clusterProjection.Proto(),
+			Roles: []string{
+				string(k8s.DefaultRole),
+			},
+		}
+
+		ctxWithUser := mdManager.GetContext()
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
+
+		err := uc.Run(ctxWithUser)
+		Expect(err).To(HaveOccurred())
+		Expect(result).ToNot(BeNil())
+		Expect(result.AccessToken).To(BeEmpty())
+	})
 })
