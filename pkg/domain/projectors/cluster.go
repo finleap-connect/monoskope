@@ -90,6 +90,8 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 		if err := c.projectDeleted(event, cluster.DomainProjection); err != nil {
 			return nil, err
 		}
+	case events.ClusterBootstrapTokenCreated:
+		// IGNORED, not in use anymore
 	default:
 		return nil, errors.ErrInvalidEventType
 	}

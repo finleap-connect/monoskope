@@ -42,6 +42,8 @@ const (
 	ClusterUpdated es.EventType = "ClusterUpdated"
 	// ClusterDeleted event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
+	// IGNORED: ClusterBootstrapTokenCreated event emitted when a bootstrap token has been created
+	ClusterBootstrapTokenCreated es.EventType = "ClusterBootstrapTokenCreated"
 
 	// CertificateRequested event emitted when a certificate has been requested
 	CertificateRequested es.EventType = "CertificateRequested"
