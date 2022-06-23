@@ -41,9 +41,11 @@ import (
 
 var _ = Describe("AuditLog Test", func() {
 	ctx := context.Background()
+	userId := uuid.New()
+	userEmail := "jane.dou@monoskope.io"
 	expectedValidity := time.Hour * 1
 	expectedNumUsers := 2                    // SUPER_USERS
-	expectedNumEventsDoneOnAdmin := 2        // creation and admin role
+	expectedNumEventsDoneOnUser := 0         // to be counted see initEvents
 	expectedNumEventsDoneByAdmin := 0        // to be counted see initEvents
 	expectedNumEventsDoneByAdminMidTime := 0 // to be counted see initEvents
 
@@ -110,7 +112,7 @@ var _ = Describe("AuditLog Test", func() {
 		// CreateUser
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: "jane.dou@monoskope.io"},
+			&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: userEmail},
 		)
 		Expect(err).ToNot(HaveOccurred())
 		var reply *esApi.CommandReply
@@ -118,8 +120,9 @@ var _ = Describe("AuditLog Test", func() {
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
-		userId := uuid.MustParse(reply.AggregateId)
+		userId = uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
+		expectedNumEventsDoneOnUser++
 		expectedNumUsers++
 
 		// CreateUserRoleBinding on system level
@@ -134,6 +137,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		userRoleBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
+		expectedNumEventsDoneOnUser++
 
 		// UpdateUser
 		command, err = cmd.AddCommandData(
@@ -146,6 +150,7 @@ var _ = Describe("AuditLog Test", func() {
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
 		expectedNumEventsDoneByAdmin++
+		expectedNumEventsDoneOnUser++
 
 		// CreateTenant
 		command, err = cmd.AddCommandData(
@@ -172,6 +177,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		_ = uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
+		expectedNumEventsDoneOnUser++
 
 		// UpdateTenant
 		command, err = cmd.AddCommandData(
@@ -247,6 +253,7 @@ var _ = Describe("AuditLog Test", func() {
 			cmd.CreateCommand(userId, commandTypes.DeleteUser))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
+		expectedNumEventsDoneOnUser++
 
 		// DeleteUserRoleBinding
 		_, err = commandHandlerClient().Execute(ctx,
@@ -327,9 +334,9 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting by user", func() {
 			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
-				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
+				Email: wrapperspb.String(userEmail),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
-					MinTimestamp: timestamppb.New(time.Now().Add(time.Hour * -1).UTC()),
+					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
 				},
 			})
@@ -343,11 +350,11 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.IssuerId).ToNot(Equal(testEnv.gatewayTestEnv.AdminUser.Id))
-				Expect(e.Details).To(ContainSubstring(testEnv.gatewayTestEnv.AdminUser.Email))
+				Expect(e.IssuerId).ToNot(Equal(userId))
+				Expect(e.Details).To(ContainSubstring(userEmail))
 				counter++
 			}
-			Expect(counter).To(Equal(expectedNumEventsDoneOnAdmin))
+			Expect(counter).To(Equal(expectedNumEventsDoneOnUser))
 		})
 
 		When("getting user actions", func() {
@@ -394,7 +401,7 @@ var _ = Describe("AuditLog Test", func() {
 				Expect(o.Details).ToNot(BeEmpty())
 				counter++
 			}
-			Expect(counter).To(Equal(expectedNumUsers))
+			Expect(counter).To(BeNumerically(">=", expectedNumUsers))
 		})
 	})
 
