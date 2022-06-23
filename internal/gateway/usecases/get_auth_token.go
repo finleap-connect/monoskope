@@ -21,7 +21,9 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
+	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -29,25 +31,25 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
-	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"k8s.io/utils/strings/slices"
 )
 
 type getAuthTokenUsecase struct {
 	*usecase.UseCaseBase
-	request     *api.ClusterAuthTokenRequest
-	result      *api.ClusterAuthTokenResponse
-	signer      jwt.JWTSigner
-	clusterRepo repositories.ClusterRepository
-	issuer      string
-	validity    map[string]time.Duration
+	request           *api.ClusterAuthTokenRequest
+	result            *api.ClusterAuthTokenResponse
+	signer            jwt.JWTSigner
+	clusterAccessRepo repositories.ClusterAccessRepository
+	issuer            string
+	validity          map[string]time.Duration
 }
 
 func NewGetAuthTokenUsecase(
 	request *api.ClusterAuthTokenRequest,
 	response *api.ClusterAuthTokenResponse,
 	signer jwt.JWTSigner,
-	clusterRepo repositories.ClusterRepository,
+	clusterAccessRepo repositories.ClusterAccessRepository,
 	issuer string,
 	validity map[string]time.Duration,
 ) usecase.UseCase {
@@ -56,7 +58,7 @@ func NewGetAuthTokenUsecase(
 		request,
 		response,
 		signer,
-		clusterRepo,
+		clusterAccessRepo,
 		issuer,
 		validity,
 	}
@@ -80,22 +82,28 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 	}
 
 	clusterId := s.request.GetClusterId()
-	s.Log.V(logger.DebugLevel).Info("Getting cluster by id...", "id", clusterId)
-
-	uuid, err := uuid.Parse(clusterId)
+	s.Log.V(logger.DebugLevel).Info("Checking user is allowed to access cluster...", "clusterId", clusterId)
+	clusterAccesses, err := s.clusterAccessRepo.GetClustersAccessibleByUserId(ctx, userInfo.Id)
 	if err != nil {
 		return err
 	}
 
-	cluster, err := s.clusterRepo.ById(ctx, uuid)
-	if err != nil {
-		return err
+	var foundClusterAccess *projections.ClusterAccess
+	for _, clusterAccess := range clusterAccesses {
+		if clusterAccess.Cluster.Id == clusterId {
+			foundClusterAccess = clusterAccess
+			break
+		}
 	}
 
-	k8sRole := s.request.GetRole()
-	s.Log.V(logger.DebugLevel).Info("Validating role exists...", "role", k8sRole)
-	if err := k8s.ValidateRole(k8sRole); err != nil {
-		return err
+	if foundClusterAccess == nil {
+		s.Log.V(logger.DebugLevel).Info("User is not authorized to access cluster.", "clusterId", clusterId)
+		return errors.ErrUnauthorized
+	}
+
+	if !slices.Contains(foundClusterAccess.Roles, s.request.Role) {
+		s.Log.V(logger.DebugLevel).Info("User is not authorized to access cluster with role.", "clusterId", clusterId, "role", s.request.Role)
+		return errors.ErrUnauthorized
 	}
 
 	username := strings.ToLower(strings.Split(userInfo.Email, "@")[0])
@@ -109,8 +117,8 @@ func (s *getAuthTokenUsecase) Run(ctx context.Context) error {
 		Email:         userInfo.Email,
 		EmailVerified: true,
 	}, &jwt.ClusterClaim{
-		ClusterId:       cluster.GetId(),
-		ClusterName:     cluster.GetName(),
+		ClusterId:       foundClusterAccess.Cluster.GetId(),
+		ClusterName:     foundClusterAccess.Cluster.GetName(),
 		ClusterUserName: username,
 		ClusterRole:     s.request.Role,
 	}, s.issuer, userInfo.Id.String(), s.validity[s.request.Role])

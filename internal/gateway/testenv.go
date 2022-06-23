@@ -25,14 +25,14 @@ import (
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/test"
-	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
+	apiCommon "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	es_repos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
+	esRepos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -67,6 +67,8 @@ type TestEnv struct {
 	ExistingUser                  *projections.User
 	NotExistingUser               *projections.User
 	PoliciesPath                  string
+	SomeTenantId                  uuid.UUID
+	TestClusterId                 uuid.UUID
 }
 
 func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
@@ -160,6 +162,8 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
+	env.SomeTenantId = uuid.New()
+
 	// Setup user repo
 	adminUser := projections.NewUserProjection(uuid.New())
 	adminUser.Name = "admin"
@@ -186,15 +190,15 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	tenantAdminRoleBinding.UserId = tenantAdminUser.Id
 	tenantAdminRoleBinding.Role = string(roles.Admin)
 	tenantAdminRoleBinding.Scope = string(scopes.Tenant)
-	tenantAdminRoleBinding.Resource = "1234"
+	tenantAdminRoleBinding.Resource = env.SomeTenantId.String()
 
 	env.AdminUser = adminUser
 	env.TenantAdminUser = tenantAdminUser
 	env.ExistingUser = existingUser
 	env.NotExistingUser = notExistingUser
 
-	inMemoryUserRepo := es_repos.NewInMemoryRepository[*projections.User]()
-	inMemoryUserRoleBindingRepo := es_repos.NewInMemoryRepository[*projections.UserRoleBinding]()
+	inMemoryUserRepo := esRepos.NewInMemoryRepository[*projections.User]()
+	inMemoryUserRoleBindingRepo := esRepos.NewInMemoryRepository[*projections.UserRoleBinding]()
 	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
 		return nil, err
 	}
@@ -218,29 +222,41 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup cluster repo
-	clusterId := uuid.New()
-	testCluster := projections.NewClusterProjection(clusterId)
+	env.TestClusterId = uuid.New()
+	testCluster := projections.NewClusterProjection(env.TestClusterId)
 	testCluster.Name = "test-cluster"
 	testCluster.DisplayName = "Test Cluster"
 	testCluster.ApiServerAddress = "https://somecluster.io"
 	testCluster.CaCertBundle = []byte("some-bundle")
 
-	inMemoryClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
+	inMemoryClusterRepo := esRepos.NewInMemoryRepository[*projections.Cluster]()
 	if err := inMemoryClusterRepo.Upsert(context.Background(), testCluster); err != nil {
+		return nil, err
+	}
+
+	tenantClusterBindingId := uuid.New()
+	tenantClusterBinding := projections.NewTenantClusterBindingProjection(tenantClusterBindingId)
+	tenantClusterBinding.ClusterId = env.TestClusterId.String()
+	tenantClusterBinding.TenantId = env.SomeTenantId.String()
+
+	inMemoryTenantClusterBindingRepo := esRepos.NewInMemoryRepository[*projections.TenantClusterBinding]()
+	if err := inMemoryTenantClusterBindingRepo.Upsert(context.Background(), tenantClusterBinding); err != nil {
 		return nil, err
 	}
 
 	env.UserRoleBindingRepo = repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 	env.UserRepo = repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
+	tenantClusterbindingRepo := repositories.NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
 	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
+
 	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, env.UserRepo)
-	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, env.ClusterRepo, map[string]time.Duration{
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(tenantClusterbindingRepo, env.ClusterRepo, env.UserRoleBindingRepo), map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 
 	gatewayAuthServer, errAuthServer := NewAuthServer(context.Background(), localAddrAPIServer, authServer, env.PoliciesPath, env.UserRoleBindingRepo)
 	if errAuthServer != nil {
-		return nil, err
+		return nil, errAuthServer
 	}
 
 	// Create gRPC server and register implementation
@@ -248,7 +264,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	env.GrpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 		api.RegisterGatewayServer(s, gatewayApiServer)
 		api.RegisterClusterAuthServer(s, authApiServer)
-		api_common.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
+		apiCommon.RegisterServiceInformationServiceServer(s, common.NewServiceInformationService())
 		api.RegisterGatewayAuthServer(s, gatewayAuthServer)
 	})
 

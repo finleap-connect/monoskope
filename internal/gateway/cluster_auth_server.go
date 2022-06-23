@@ -28,32 +28,32 @@ import (
 
 type clusterAuthApiServer struct {
 	api.UnimplementedClusterAuthServer
-	log         logger.Logger
-	signer      jwt.JWTSigner
-	clusterRepo repositories.ClusterRepository
-	issuer      string
-	validity    map[string]time.Duration
+	log               logger.Logger
+	signer            jwt.JWTSigner
+	clusterAccessRepo repositories.ClusterAccessRepository
+	issuer            string
+	validity          map[string]time.Duration
 }
 
 func NewClusterAuthAPIServer(
 	issuer string,
 	signer jwt.JWTSigner,
-	clusterRepo repositories.ClusterRepository,
+	clusterAccessRepo repositories.ClusterAccessRepository,
 	validity map[string]time.Duration,
 ) api.ClusterAuthServer {
 	s := &clusterAuthApiServer{
-		log:         logger.WithName("server"),
-		signer:      signer,
-		clusterRepo: clusterRepo,
-		issuer:      issuer,
-		validity:    validity,
+		log:               logger.WithName("server"),
+		signer:            signer,
+		clusterAccessRepo: clusterAccessRepo,
+		issuer:            issuer,
+		validity:          validity,
 	}
 	return s
 }
 
 func (s *clusterAuthApiServer) GetAuthToken(ctx context.Context, request *api.ClusterAuthTokenRequest) (*api.ClusterAuthTokenResponse, error) {
 	response := new(api.ClusterAuthTokenResponse)
-	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.clusterRepo, s.issuer, s.validity)
+	uc := usecases.NewGetAuthTokenUsecase(request, response, s.signer, s.clusterAccessRepo, s.issuer, s.validity)
 	err := uc.Run(ctx)
 	if err != nil {
 		return nil, errors.TranslateToGrpcError(err)
