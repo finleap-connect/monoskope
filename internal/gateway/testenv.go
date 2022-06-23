@@ -60,6 +60,8 @@ type TestEnv struct {
 	GrpcServer                    *grpc.Server
 	LocalOIDCProviderServer       *oidcProviderServer
 	ClusterRepo                   repositories.ClusterRepository
+	UserRoleBindingRepo           repositories.UserRoleBindingRepository
+	UserRepo                      repositories.UserRepository
 	AdminUser                     *projections.User
 	TenantAdminUser               *projections.User
 	ExistingUser                  *projections.User
@@ -228,15 +230,15 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	userRoleBindingRepo := repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
-	userRepo := repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
+	env.UserRoleBindingRepo = repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
+	env.UserRepo = repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
 	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
-	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, userRepo)
+	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, env.UserRepo)
 	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, env.ClusterRepo, map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 
-	gatewayAuthServer, errAuthServer := NewAuthServer(context.Background(), localAddrAPIServer, authServer, env.PoliciesPath, userRoleBindingRepo)
+	gatewayAuthServer, errAuthServer := NewAuthServer(context.Background(), localAddrAPIServer, authServer, env.PoliciesPath, env.UserRoleBindingRepo)
 	if errAuthServer != nil {
 		return nil, err
 	}

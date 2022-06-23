@@ -15,12 +15,11 @@
 package internal
 
 import (
-	"os"
-
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"os"
 
 	"github.com/finleap-connect/monoskope/internal/test"
 )

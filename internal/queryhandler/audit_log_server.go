@@ -119,7 +119,7 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
-		if !strings.Contains(hre.Details, user.Email) || hre.IssuerId == user.Id {
+		if !strings.Contains(hre.Details, "“"+user.Email+"“") || hre.IssuerId == user.Id {
 			continue // skip e.g. UserRoleBindings that doesn't affect the given user or were created by him
 		}
 		err = stream.Send(hre)
