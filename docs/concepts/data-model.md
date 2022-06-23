@@ -41,16 +41,9 @@ erDiagram
         uuid tenant_id
     }
 
-    ClusterSecretStoreBinding {
-        uuid id
-        uuid cluster_id
-    }
-
     User ||--o{ UserRoleBinding : part_of
     Tenant ||--o{ UserRoleBinding : part_of
 
     Tenant ||--o{ TenantClusterBinding : part_of
     Cluster ||--o{ TenantClusterBinding : part_of
-
-    Cluster ||--o{ ClusterSecretStoreBinding : part_of
 ```
