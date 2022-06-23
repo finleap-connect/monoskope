@@ -44,36 +44,7 @@ erDiagram
     ClusterSecretStoreBinding {
         uuid id
         uuid cluster_id
-        uuid secret_store_id
     }
-
-    SecretStore {
-        uuid id
-        string name
-        string type
-        bytes config
-    }
-
-    Secret {
-        uuid id
-        uuid secret_upload_key_id
-        uri upstream_id
-        string status
-        string hash
-        bytes uploader_public_key
-        bytes encrypted_payload
-    }
-
-    SecretUploadKey {
-       uuid id
-       uuid secret_store_id
-       bytes public_key
-       timestamp expiry
-    }
-
-    Secret ||--|| SecretUploadKey : references
-
-    SecretUploadKey ||--|| SecretStore : references
 
     User ||--o{ UserRoleBinding : part_of
     Tenant ||--o{ UserRoleBinding : part_of
@@ -82,5 +53,4 @@ erDiagram
     Cluster ||--o{ TenantClusterBinding : part_of
 
     Cluster ||--o{ ClusterSecretStoreBinding : part_of
-    SecretStore ||--o{ ClusterSecretStoreBinding : part_of
 ```
