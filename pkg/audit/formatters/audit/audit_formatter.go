@@ -61,11 +61,11 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 		IssuerId:  event.Metadata[auth.HeaderAuthId],
 		EventType: event.Type,
 	}
-
 	eventFormatter, err := f.efRegistry.CreateEventFormatter(f.esClient, es.EventType(event.Type))
 	if err != nil {
 		return humanReadableEvent
 	}
+
 	humanReadableEvent.Details, err = eventFormatter.GetFormattedDetails(ctx, event)
 	if err != nil {
 		f.log.Error(err, "failed to format event details",
@@ -79,9 +79,10 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 // NewUserOverview creates a UserOverview of the given user by its id according to the given timestamp
 func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, timestamp time.Time) *audit.UserOverview {
 	userOverview := &audit.UserOverview{}
+	overviewFormatter := overviews.NewUserOverviewFormatter(f.esClient)
+	userSnapshotter := formatters.NewUserSnapshotter(f.esClient, projectors.NewUserProjector())
 
-	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
-	user, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
+	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(timestamp),
 		AggregateId:  wrapperspb.String(userId.String()),
 	})
@@ -90,10 +91,12 @@ func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, 
 		return userOverview
 	}
 
+	for _, role := range userSnapshotter.CreateRoleBindingSnapshots(ctx, userId, timestamp) {
+		user.Roles = append(user.Roles, role.Proto())
+	}
+
 	userOverview.Name = user.Name
 	userOverview.Email = user.Email
-
-	overviewFormatter := overviews.NewUserOverviewFormatter(f.esClient)
 	userOverview.Roles, userOverview.Tenants, userOverview.Clusters, err = overviewFormatter.GetRolesDetails(ctx, user, timestamp)
 	if err != nil {
 		f.log.Error(err, "failed to format roles details", "userId", user, "timeStamp", timestamp)

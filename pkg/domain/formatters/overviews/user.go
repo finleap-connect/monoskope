@@ -17,6 +17,8 @@ package overviews
 import (
 	"context"
 	"fmt"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
+	"github.com/google/uuid"
 	"strings"
 	"time"
 
@@ -43,16 +45,15 @@ func NewUserOverviewFormatter(esClient esApi.EventStoreClient) *userOverviewForm
 func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *projections.User, timestamp time.Time) (string, error) {
 	var details string
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
+	userProjector := projectors.NewUserProjector()
+	snapshotter := formatters.NewSnapshotter(f.esClient, userProjector)
 
 	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
-
-	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
-
 	creator, err := snapshotter.CreateSnapshot(ctx, eventFilter)
-	if err != nil {
-		return "", err
+	if err != nil { // possible if user was created by a system user that was created manually (no events)
+		creator = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+		creator.Email = "system@" + users.BASE_DOMAIN
 	}
-
 	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.GetCreated().AsTime().Format(time.RFC822))
 
 	if len(user.GetDeletedById()) == 0 {
@@ -62,9 +63,9 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
 	deleter, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
-		return "", err
+		deleter = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+		deleter.Email = "system@" + users.BASE_DOMAIN
 	}
-
 	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.GetDeleted().AsTime().Format(time.RFC822))
 
 	return details, nil
@@ -77,6 +78,10 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
 
 	for _, role := range user.Roles {
+		if role.Metadata.Deleted != nil {
+			continue
+		}
+
 		roleDetails := fmt.Sprintf("- %s %s\n", role.Scope, role.Role)
 		if !strings.Contains(rolesDetails, roleDetails) { // avoid having the same role multiple times
 			rolesDetails += roleDetails
