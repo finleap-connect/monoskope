@@ -16,7 +16,6 @@ package events
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -77,11 +77,11 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreated(event *esApi.Event, eventData *eventdata.ClusterCreated) (string, error) {
-	return fmt.Sprintf("“%s“ created cluster “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
+	return fConsts.ClusterCreatedV2DetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV2(event *esApi.Event, eventData *eventdata.ClusterCreatedV2) (string, error) {
-	return fmt.Sprintf("“%s“ created cluster “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
+	return fConsts.ClusterCreatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
@@ -96,7 +96,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 	}
 
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf("“%s“ updated the cluster", event.Metadata[auth.HeaderAuthEmail]))
+	details.WriteString(fConsts.ClusterUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
 	f.AppendUpdate("Display name", eventData.DisplayName, cluster.DisplayName, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, cluster.ApiServerAddress, &details)
 	if len(eventData.CaCertificateBundle) != 0 {
@@ -116,5 +116,5 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Co
 		return "", err
 	}
 
-	return fmt.Sprintf("“%s“ deleted cluster “%s“", event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName), nil
+	return fConsts.ClusterDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName), nil
 }

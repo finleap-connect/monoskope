@@ -21,19 +21,19 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	doApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/audit"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	doApi "github.com/finleap-connect/monoskope/pkg/api/domain"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // auditLogServer is the implementation of the auditLogService API
@@ -119,7 +119,7 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
-		if !strings.Contains(hre.Details, "“"+user.Email+"“") || hre.IssuerId == user.Id {
+		if !strings.Contains(hre.Details, fConsts.Quote(user.Email)) || hre.IssuerId == user.Id {
 			continue // skip e.g. UserRoleBindings that doesn't affect the given user or were created by him
 		}
 		err = stream.Send(hre)

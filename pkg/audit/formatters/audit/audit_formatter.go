@@ -23,6 +23,7 @@ import (
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/formatters/overviews"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
@@ -56,7 +57,7 @@ func NewAuditFormatter(esClient esApi.EventStoreClient, efRegistry event.EventFo
 // NewHumanReadableEvent creates a HumanReadableEvent of a given event
 func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi.Event) *audit.HumanReadableEvent {
 	humanReadableEvent := &audit.HumanReadableEvent{
-		When:      event.Timestamp.AsTime().Format(time.RFC822),
+		When:      event.Timestamp.AsTime().Format(fConsts.TimeFormat),
 		Issuer:    event.Metadata[auth.HeaderAuthEmail],
 		IssuerId:  event.Metadata[auth.HeaderAuthId],
 		EventType: event.Type,

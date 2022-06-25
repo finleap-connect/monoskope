@@ -16,7 +16,6 @@ package events
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -79,7 +79,7 @@ func (f *userEventFormatter) GetFormattedDetails(ctx context.Context, event *esA
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserCreated(event *esApi.Event, eventData *eventdata.UserCreated) (string, error) {
-	return fmt.Sprintf("“%s“ created user “%s“", event.Metadata[auth.HeaderAuthEmail], eventData.Email), nil
+	return fConsts.UserCreatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], eventData.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.UserUpdated) (string, error) {
@@ -93,7 +93,7 @@ func (f *userEventFormatter) getFormattedDetailsUserUpdated(ctx context.Context,
 	}
 
 	var details strings.Builder
-	details.WriteString(fmt.Sprintf("“%s“ updated the User", event.Metadata[auth.HeaderAuthEmail]))
+	details.WriteString(fConsts.UserUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
 	f.AppendUpdate("Name", eventData.Name, user.Name, &details)
 	return details.String(), nil
 }
@@ -108,7 +108,7 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleAdded(ctx context.Contex
 		return "", err
 	}
 
-	return fmt.Sprintf("“%s“ assigned the role “%s“ for scope “%s“ to user “%s“",
+	return fConsts.UserRoleAddedDetailsFormat.Sprint(
 		event.Metadata[auth.HeaderAuthEmail], eventData.Role, eventData.Scope, user.Email), nil
 }
 
@@ -122,7 +122,7 @@ func (f *userEventFormatter) getFormattedDetailsUserDeleted(ctx context.Context,
 		return "", err
 	}
 
-	return fmt.Sprintf("“%s“ deleted user “%s“", event.Metadata[auth.HeaderAuthEmail], user.Email), nil
+	return fConsts.UserDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], user.Email), nil
 }
 
 func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -142,6 +142,6 @@ func (f *userEventFormatter) getFormattedDetailsUserRoleBindingDeleted(ctx conte
 		return "", err
 	}
 
-	return fmt.Sprintf("“%s“ removed the role “%s“ for scope “%s“ from user “%s“",
+	return fConsts.UserRoleBindingDeletedDetailsFormat.Sprint(
 		event.Metadata[auth.HeaderAuthEmail], urb.Role, urb.Scope, user.Email), nil
 }
