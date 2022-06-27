@@ -128,9 +128,6 @@ var _ = Describe("integration", func() {
 			// update userRolebBindingId, as the "create" command will have changed it.
 			userRoleBindingId := uuid.MustParse(reply.AggregateId)
 
-			// Wait to propagate
-			time.Sleep(500 * time.Millisecond)
-
 			// Creating the same rolebinding again should fail
 			Eventually(func(g Gomega) {
 				command.Id = uuid.New().String()

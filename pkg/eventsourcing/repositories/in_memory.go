@@ -37,7 +37,7 @@ func NewInMemoryRepository[T es.Projection]() es.Repository[T] {
 }
 
 // ById returns a projection for an ID.
-func (r *inMemoryRepository[T]) ById(ctx context.Context, id uuid.UUID) (T, error) {
+func (r *inMemoryRepository[T]) ById(_ context.Context, id uuid.UUID) (T, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -49,7 +49,7 @@ func (r *inMemoryRepository[T]) ById(ctx context.Context, id uuid.UUID) (T, erro
 }
 
 // All returns all projections in the repository.
-func (r *inMemoryRepository[T]) All(context.Context) ([]T, error) {
+func (r *inMemoryRepository[T]) All(_ context.Context) ([]T, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -61,7 +61,7 @@ func (r *inMemoryRepository[T]) All(context.Context) ([]T, error) {
 }
 
 // Upsert saves a projection in the storage or replaces an existing one.
-func (r *inMemoryRepository[T]) Upsert(ctx context.Context, p T) error {
+func (r *inMemoryRepository[T]) Upsert(_ context.Context, p T) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -70,7 +70,7 @@ func (r *inMemoryRepository[T]) Upsert(ctx context.Context, p T) error {
 }
 
 // Remove removes a projection by ID from the storage.
-func (r *inMemoryRepository[T]) Remove(ctx context.Context, id uuid.UUID) error {
+func (r *inMemoryRepository[T]) Remove(_ context.Context, id uuid.UUID) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
