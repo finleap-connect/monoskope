@@ -161,6 +161,8 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
 			a.caCertBundle = data.GetCaCertificateBundle()
 		}
+	case events.ClusterBootstrapTokenCreated:
+		// IGNORED, not in use anymore
 	case events.ClusterDeleted:
 		a.SetDeleted(true)
 	default:
