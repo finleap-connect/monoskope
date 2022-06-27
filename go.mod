@@ -31,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/scim2/filter-parser/v2 v2.2.0
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
