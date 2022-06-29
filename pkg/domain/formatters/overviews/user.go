@@ -16,12 +16,14 @@ package overviews
 
 import (
 	"context"
-	"fmt"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
+	"github.com/google/uuid"
 	"strings"
 	"time"
 
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -43,17 +45,16 @@ func NewUserOverviewFormatter(esClient esApi.EventStoreClient) *userOverviewForm
 func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *projections.User, timestamp time.Time) (string, error) {
 	var details string
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
+	userProjector := projectors.NewUserProjector()
+	snapshotter := formatters.NewSnapshotter(f.esClient, userProjector)
 
 	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
-
-	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewUserProjector())
-
 	creator, err := snapshotter.CreateSnapshot(ctx, eventFilter)
-	if err != nil {
-		return "", err
+	if err != nil { // possible if user was created by a system user that was created manually (no events)
+		creator = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+		creator.Email = "system@" + users.BASE_DOMAIN
 	}
-
-	details += fmt.Sprintf("“%s“ was created by “%s“ at “%s“", user.Email, creator.Email, user.GetCreated().AsTime().Format(time.RFC822))
+	details += fConsts.UserCreatedOverviewDetailsFormat.Sprint(user.Email, creator.Email, user.GetCreated().AsTime().Format(fConsts.TimeFormat))
 
 	if len(user.GetDeletedById()) == 0 {
 		return details, nil
@@ -62,10 +63,10 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
 	deleter, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
-		return "", err
+		deleter = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+		deleter.Email = "system@" + users.BASE_DOMAIN
 	}
-
-	details += fmt.Sprintf(" and was deleted by “%s“ at “%s“", deleter.Email, user.GetDeleted().AsTime().Format(time.RFC822))
+	details += fConsts.UserDeletedOverviewDetailsFormat.Sprint(deleter.Email, user.GetDeleted().AsTime().Format(fConsts.TimeFormat))
 
 	return details, nil
 }
@@ -77,7 +78,11 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
 
 	for _, role := range user.Roles {
-		roleDetails := fmt.Sprintf("- %s %s\n", role.Scope, role.Role)
+		if role.Metadata.Deleted != nil {
+			continue
+		}
+
+		roleDetails := fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(role.Scope, role.Role)
 		if !strings.Contains(rolesDetails, roleDetails) { // avoid having the same role multiple times
 			rolesDetails += roleDetails
 		}
@@ -91,14 +96,14 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 		tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 		tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
-			tenantsDetails += fmt.Sprintf("- %s (%s)\n", tenant.Name, role.Role)
+			tenantsDetails += fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint(tenant.Name, role.Role)
 			continue // it's either a tenant or cluster
 		}
 
 		clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 		cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
-			clustersDetails += fmt.Sprintf("- %s (%s)\n", cluster.DisplayName, role.Role)
+			clustersDetails += fConsts.ClusterUserRoleBindingOverviewDetailsFormat.Sprint(cluster.DisplayName, role.Role)
 		}
 	}
 

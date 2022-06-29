@@ -16,13 +16,13 @@ package events
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
@@ -62,17 +62,17 @@ func (f *certificateEventFormatter) GetFormattedDetails(_ context.Context, event
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequestIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ issued a certificate request", event.Metadata[auth.HeaderAuthEmail]), nil
+	return fConsts.RequestIssuedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateRequested(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ requested a certificate", event.Metadata[auth.HeaderAuthEmail]), nil
+	return fConsts.CertificateRequestedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssued(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("“%s“ issued a certificate", event.Metadata[auth.HeaderAuthEmail]), nil
+	return fConsts.CertificateIssuedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]), nil
 }
 
 func (f *certificateEventFormatter) getFormattedDetailsCertificateIssuingFailed(event *esApi.Event) (string, error) {
-	return fmt.Sprintf("certificate request issuing faild for “%s“", event.Metadata[auth.HeaderAuthEmail]), nil
+	return fConsts.CertificateIssuingFailedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]), nil
 }

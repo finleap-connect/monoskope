@@ -16,6 +16,7 @@ package formatters
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -38,10 +39,14 @@ func NewSnapshotter[T es.Projection](esClient esApi.EventStoreClient, projector 
 // This is a temporary implementation until snapshots are fully implemented,
 // and it is not meant to be used extensively.
 func (s *Snapshotter[T]) CreateSnapshot(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
-	projection := s.projector.NewProjection(uuid.New())
-	aggregateEvents, err := s.esClient.Retrieve(ctx, eventFilter)
-
 	var nilResult T
+
+	id, err := uuid.Parse(eventFilter.AggregateId.Value)
+	if err != nil {
+		id = uuid.New()
+	}
+	projection := s.projector.NewProjection(id)
+	aggregateEvents, err := s.esClient.Retrieve(ctx, eventFilter)
 	if err != nil {
 		return nilResult, err
 	}
@@ -66,5 +71,8 @@ func (s *Snapshotter[T]) CreateSnapshot(ctx context.Context, eventFilter *esApi.
 		}
 	}
 
+	if projection.Version() == 0 {
+		return nilResult, errors.New("no events found to create a snapshot for aggregate ID: " + eventFilter.AggregateId.Value)
+	}
 	return projection, nil
 }
