@@ -22,7 +22,7 @@ import (
 type DetailsFormat string
 
 const (
-	TimeFormat       = time.RFC822
+	TimeFormat       = time.RFC3339
 	LeftQuoteSymbol  = "“"
 	RightQuoteSymbol = "“"
 

@@ -342,7 +342,7 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.When).ToNot(BeEmpty())
+				Expect(e.Timestamp).ToNot(BeNil())
 				Expect(e.Issuer).ToNot(BeEmpty())
 				Expect(e.IssuerId).ToNot(BeEmpty())
 				Expect(e.EventType).ToNot(BeEmpty())
