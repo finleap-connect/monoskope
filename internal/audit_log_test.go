@@ -26,7 +26,6 @@ import (
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
@@ -262,23 +261,6 @@ var _ = Describe("AuditLog Test", func() {
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Tenant Z", "Cluster Z"))
 
-		// RequestCertificate
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.RequestCertificate),
-			&cmdData.RequestCertificate{
-				ReferencedAggregateId:   clusterId.String(),
-				ReferencedAggregateType: aggregates.Cluster.String(),
-				SigningRequest:          []byte("-----BEGIN CERTIFICATE REQUEST-----this is a CSR-----END CERTIFICATE REQUEST-----"),
-			},
-		)
-		Expect(err).ToNot(HaveOccurred())
-		Eventually(func(g Gomega) {
-			reply, err = commandHandlerClient().Execute(ctx, command)
-			g.Expect(err).ToNot(HaveOccurred())
-		}).Should(Succeed())
-		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.CertificateRequestedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email))
-
 		// DeleteUser
 		_, err = commandHandlerClient().Execute(ctx,
 			cmd.CreateCommand(userId, commandTypes.DeleteUser))
@@ -342,7 +324,7 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.When).ToNot(BeEmpty())
+				Expect(e.Timestamp).ToNot(BeNil())
 				Expect(e.Issuer).ToNot(BeEmpty())
 				Expect(e.IssuerId).ToNot(BeEmpty())
 				Expect(e.EventType).ToNot(BeEmpty())

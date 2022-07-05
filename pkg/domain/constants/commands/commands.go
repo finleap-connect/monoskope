@@ -43,9 +43,6 @@ const (
 	// Command to update a Cluster
 	UpdateCluster es.CommandType = "UpdateCluster"
 
-	// Command to request a certificate
-	RequestCertificate es.CommandType = "RequestCertificate"
-
 	// Command to allow a tenant to access a certain cluster
 	CreateTenantClusterBinding es.CommandType = "CreateTenantClusterBinding"
 	// Command to remove access of a tenant to a certain cluster
@@ -81,16 +78,11 @@ var (
 		DeleteTenantClusterBinding,
 	}
 
-	CertificateCommands = []es.CommandType{
-		RequestCertificate,
-	}
-
 	CommandTypes = map[string][]es.CommandType{
 		"User":                 UserCommands,
 		"UserRoleBinding":      UserRoleBindingCommands,
 		"Tenant":               TenantCommands,
 		"Cluster":              ClusterCommands,
 		"TenantClusterBinding": TenantClusterBindingCommands,
-		"Certificate":          CertificateCommands,
 	}
 )

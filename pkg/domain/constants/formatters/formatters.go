@@ -22,31 +22,26 @@ import (
 type DetailsFormat string
 
 const (
-	TimeFormat       = time.RFC822
+	TimeFormat       = time.RFC3339
 	LeftQuoteSymbol  = "“"
 	RightQuoteSymbol = "“"
 
 	UserCreatedDetailsFormat            DetailsFormat = "“%s“ created user “%s“"
-	UserUpdatedDetailsFormat            DetailsFormat = "“%s“ updated the User"
+	UserUpdatedDetailsFormat            DetailsFormat = "“%s“ updated the user"
 	UserRoleAddedDetailsFormat          DetailsFormat = "“%s“ assigned the role “%s“ for scope “%s“ to user “%s“"
 	UserDeletedDetailsFormat            DetailsFormat = "“%s“ deleted user “%s“"
 	UserRoleBindingDeletedDetailsFormat DetailsFormat = "“%s“ removed the role “%s“ for scope “%s“ from user “%s“"
 
 	TenantCreatedDetailsFormat               DetailsFormat = "“%s“ created tenant “%s“ with prefix “%s“"
-	TenantUpdatedDetailsFormat               DetailsFormat = "“%s“ updated the Tenant"
-	TenantClusterBindingCreatedDetailsFormat DetailsFormat = "“%s“ bounded tenant “%s“ to cluster “%s”"
+	TenantUpdatedDetailsFormat               DetailsFormat = "“%s“ updated the tenant"
+	TenantClusterBindingCreatedDetailsFormat DetailsFormat = "“%s“ granted tenant “%s“ access to cluster “%s”"
 	TenantDeletedDetailsFormat               DetailsFormat = "“%s“ deleted tenant “%s“"
-	TenantClusterBindingDeletedDetailsFormat DetailsFormat = "“%s“ deleted the bound between cluster “%s“ and tenant “%s“"
+	TenantClusterBindingDeletedDetailsFormat DetailsFormat = "“%s“ revoked access to cluster “%s“ for tenant “%s“"
 
 	ClusterCreatedDetailsFormat   DetailsFormat = "“%s“ created cluster “%s“"
 	ClusterCreatedV2DetailsFormat DetailsFormat = ClusterCreatedDetailsFormat
 	ClusterUpdatedDetailsFormat   DetailsFormat = "“%s“ updated the cluster"
 	ClusterDeletedDetailsFormat   DetailsFormat = "“%s“ deleted cluster “%s“"
-
-	RequestIssuedDetailsFormat            DetailsFormat = "“%s“ issued a certificate request"
-	CertificateRequestedDetailsFormat     DetailsFormat = "“%s“ requested a certificate"
-	CertificateIssuedDetailsFormat        DetailsFormat = "“%s“ issued a certificate"
-	CertificateIssuingFailedDetailsFormat DetailsFormat = "certificate request issuing faild for “%s“"
 
 	UserCreatedOverviewDetailsFormat            DetailsFormat = "“%s“ was created by “%s“ at “%s“"
 	UserDeletedOverviewDetailsFormat            DetailsFormat = " and was deleted by “%s“ at “%s“"

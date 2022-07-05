@@ -18,7 +18,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/finleap-connect/monoskope/pkg/domain/commands"
 	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
@@ -40,11 +39,6 @@ var (
 	expectedAdminRole   = roles.Admin
 	expectedResourceId  = uuid.New()
 	expectedUserId      = uuid.New()
-
-	expectedCSR                     = []byte("This should be a CSR")
-	expectedReferencedAggregateId   = uuid.New()
-	expectedReferencedAggregateType = aggregates.Cluster
-	expectedCertificate             = []byte("this should be the certificate")
 
 	expectedClusterDisplayName      = "the one cluster"
 	expectedClusterName             = "one-cluster"
@@ -78,17 +72,6 @@ func createCluster(ctx context.Context, agg es.Aggregate) (*es.CommandReply, err
 	esCommand.CreateCluster.Name = expectedClusterName
 	esCommand.CreateCluster.ApiServerAddress = expectedClusterApiServerAddress
 	esCommand.CreateCluster.CaCertBundle = expectedClusterCACertBundle
-
-	return agg.HandleCommand(ctx, esCommand)
-}
-
-func newRequestCertificateCommand(ctx context.Context, agg es.Aggregate) (*es.CommandReply, error) {
-	esCommand, ok := cmd.NewRequestCertificateCommand(uuid.New()).(*commands.RequestCertificateCommand)
-	Expect(ok).To(BeTrue())
-
-	esCommand.SigningRequest = expectedCSR
-	esCommand.ReferencedAggregateId = expectedReferencedAggregateId.String()
-	esCommand.ReferencedAggregateType = expectedReferencedAggregateType.String()
 
 	return agg.HandleCommand(ctx, esCommand)
 }

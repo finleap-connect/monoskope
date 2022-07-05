@@ -91,7 +91,7 @@ service ClusterAccess {
 }
 
 service AuditLog {
-  // GetByDateRange returns human-readable events within the specified data
+  // GetByDateRange returns human-readable events within the specified date
   // range
   rpc GetByDateRange(GetAuditLogByDateRangeRequest)
       returns (stream audit.HumanReadableEvent);
