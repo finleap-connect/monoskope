@@ -1058,7 +1058,7 @@ var ClusterAccess_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuditLogClient interface {
-	// GetByDateRange returns human-readable events within the specified data
+	// GetByDateRange returns human-readable events within the specified date
 	// range
 	GetByDateRange(ctx context.Context, in *GetAuditLogByDateRangeRequest, opts ...grpc.CallOption) (AuditLog_GetByDateRangeClient, error)
 	// GetByUser returns human-readable events caused by others actions on the
@@ -1212,7 +1212,7 @@ func (x *auditLogGetUsersOverviewClient) Recv() (*audit.UserOverview, error) {
 // All implementations must embed UnimplementedAuditLogServer
 // for forward compatibility
 type AuditLogServer interface {
-	// GetByDateRange returns human-readable events within the specified data
+	// GetByDateRange returns human-readable events within the specified date
 	// range
 	GetByDateRange(*GetAuditLogByDateRangeRequest, AuditLog_GetByDateRangeServer) error
 	// GetByUser returns human-readable events caused by others actions on the
