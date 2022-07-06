@@ -26,7 +26,6 @@ sequenceDiagram
     G-->>-m8ctl: returns token for k8s auth
     m8ctl-->>-K: return token
     K-->>+A: calls get nodes
-    A-->>A: do webhook authentication
     A-->>G: query JWKs
     A-->>A: validate JWT
     A-->>-K: return nodes of cluster
