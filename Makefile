@@ -1,7 +1,6 @@
 SHELL := bash
 
 # Directory, where all required tools are located (absolute path required)
-TOOLS_DIR   ?= $(shell cd tools 2>/dev/null && pwd)
 HACK_DIR    ?= $(shell cd hack 2>/dev/null && pwd)
 
 YQ ?= yq
