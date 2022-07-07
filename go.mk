@@ -15,7 +15,6 @@ endif
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
-
 ##@ Go
 
 .PHONY: go-mod
@@ -62,7 +61,7 @@ go-protobuf: .protobuf-deps
 	export PATH="$(LOCALBIN):$$PATH" ; find ./api -name '*.proto' -exec $(PROTOC) -I. -I$(PROTOC_IMPORTS_DIR) --go_opt=module=github.com/finleap-connect/monoskope --go_out=. --validate_out="lang=go,module=github.com/finleap-connect/monoskope:." {} \;
 
 .PHONY: go-rebuild-mocks
-go-rebuild-mocks: .protobuf-deps $(MOCKGEN)
+go-rebuild-mocks: .protobuf-deps gomock
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/sigs.k8s.io/controller-runtime/pkg/client.go sigs.k8s.io/controller-runtime/pkg/client Client
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/eventstore_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
 	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/commandhandler_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
