@@ -22,7 +22,7 @@ project.dict
 /.scannerwork
 /tmp/
 
-/tools/
+/bin/
 /include/*
 *.coverprofile
 .protobuf-deps
