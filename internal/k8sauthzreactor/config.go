@@ -21,6 +21,7 @@ import (
 
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"gopkg.in/yaml.v2"
@@ -97,10 +98,15 @@ func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
 			return nil, ErrIntervalIsRequired
 		}
 
+		if len(repo.Branch) == 0 {
+			return nil, ErrBranchIsRequired
+		}
+
 		// Set default values
 		if repo.Timeout == nil {
 			repo.Timeout = &DefaultTimeout
 		}
+
 	}
 
 	return conf, nil
@@ -109,7 +115,12 @@ func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
 // parseCloneOptions parses the configuration using the git library to validate.
 func (c *GitRepoReconcilerConfig) parseCloneOptions(repo *GitRepository) error {
 	cloneOptions := &git.CloneOptions{
-		URL: repo.URL,
+		URL:           repo.URL,
+		ReferenceName: plumbing.NewBranchReferenceName(repo.Branch),
+		SingleBranch:  true,
+		NoCheckout:    false,
+		Depth:         1,
+		CABundle:      []byte(repo.CA),
 	}
 
 	// Configure basic auth optionally
