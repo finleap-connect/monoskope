@@ -1,14 +1,16 @@
 repositories:
   - url: https://monoskope.io/test1.git
     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
-    credentialsBasicAccessAuth:
+    basicAuth:
       username: test1
       password: testpw
     allClusters: true
+    interval: 5m
   - url: https://monoskope.io/test2.git
+    interval: 5m
     sshAuth:
-      identity: dGhpcy1pcy1hLXByaXZhdGUta2V5
-      knownHosts: a25vd24taG9zdC1rZXlz
+      privateKeyPath: testkey.pem
+      password: a25vd24taG9zdC1rZXlz
     clusters:
       - "dev"
       - "prod"
