@@ -15,40 +15,31 @@
 package k8sauthzreactor
 
 import (
-	"github.com/google/uuid"
+	_ "embed"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("internal/k8sauthzreactor", func() {
-	var repoURL = "https://monoskope.io/test.git"
-	var repoUser = "testuser"
-	var repoPassword = "testpassword"
-	var clusters = []uuid.UUID{uuid.New(), uuid.New()}
+//go:embed test_config.yaml
+var test_config []byte
 
+var _ = Describe("internal/k8sauthzreactor", func() {
 	Context("GitRepository", func() {
 		It("NewGitRepository() creates a new instance with defaults", func() {
-			repo := NewGitRepository(repoURL, repoUser, repoPassword)
-			Expect(repo).NotTo(BeNil())
-			Expect(repo.url).To(Equal(repoURL))
-			Expect(repo.username).To(Equal(repoUser))
-			Expect(repo.password).To(Equal(repoPassword))
-			Expect(repo.allClusters).To(BeTrue())
-			Expect(len(repo.GetClusters())).To(BeNumerically("==", 0))
-		})
-		It("SetClusters() sets clusters and adjusts allClusters", func() {
-			repo := NewGitRepository(repoURL, repoUser, repoPassword)
-			Expect(repo).NotTo(BeNil())
+			conf, err := NewConfigFromFile(test_config)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(conf).ToNot(BeNil())
+			Expect(len(conf.Repositories)).To(BeNumerically("==", 2))
+			Expect(len(conf.Mappings)).To(BeNumerically("==", 2))
 
-			// set clusters
-			repo.SetClusters(clusters)
-			Expect(repo.allClusters).To(BeFalse())
-			Expect(repo.GetClusters()).To(Equal(clusters))
+			firstRepo := conf.Repositories[0]
+			Expect(firstRepo.AllClusters).To(BeTrue())
+			Expect(len(firstRepo.Clusters)).To(BeNumerically("==", 0))
 
-			// clear clusters
-			repo.SetClusters(nil)
-			Expect(repo.allClusters).To(BeTrue())
-			Expect(len(repo.GetClusters())).To(BeNumerically("==", 0))
+			secondRepo := conf.Repositories[1]
+			Expect(secondRepo.AllClusters).To(BeFalse())
+			Expect(len(secondRepo.Clusters)).To(BeNumerically("==", 2))
 		})
 	})
 })

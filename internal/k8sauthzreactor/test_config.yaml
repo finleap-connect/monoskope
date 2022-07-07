@@ -1,0 +1,18 @@
+repositories:
+  - url: https://monoskope.io/test1.git
+    user: test1
+    password: testpw
+    allClusters: true
+  - url: https://monoskope.io/test2.git
+    user: test2
+    password: testpw
+    clusters:
+      - "dev"
+      - "prod"
+mappings:
+  - scope: system
+    role: admin
+    clusterRoleName: cluster-admin
+  - scope: tenant
+    role: oncall
+    clusterRoleName: app-oncallee
