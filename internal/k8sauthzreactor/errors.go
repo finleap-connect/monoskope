@@ -18,4 +18,5 @@ import "errors"
 
 var (
 	ErrIntervalIsRequired = errors.New("interval is required")
+	ErrBranchIsRequired   = errors.New("branch is required")
 )
