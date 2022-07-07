@@ -36,6 +36,7 @@ import (
 var (
 	eventStoreAddr string
 	msgbusPrefix   string
+	configPath     string
 )
 
 var serveCmd = &cobra.Command{
@@ -122,4 +123,5 @@ func init() {
 	flags := serveCmd.Flags()
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
+	flags.StringVar(&configPath, "config-path", "/etc/app/config", "Path to the configuration")
 }

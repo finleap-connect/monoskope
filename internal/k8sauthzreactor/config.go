@@ -16,49 +16,39 @@ package k8sauthzreactor
 
 import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"github.com/google/uuid"
+	"gopkg.in/yaml.v2"
 )
+
+type Config struct {
+	Repositories []GitRepository      `yaml:"repositories"`
+	Mappings     []ClusterRoleMapping `yaml:"mappings"`
+}
 
 // GitRepository is configuration to connect to a git repository.
 type GitRepository struct {
-	url      string
-	username string
-	password string
+	URL      string `yaml:"url"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 	// allClusters specifies if the RBAC for all clusters should be managed.
-	allClusters bool
+	AllClusters bool `yaml:"allClusters"`
 	// Clusters specifies a list of clusters for which the RBAC should be managed.
-	clusters []uuid.UUID
-}
-
-// NewClusterRoleMapping creates a new ClusterRoleMapping from the given values
-func NewGitRepository(URL, username, password string) *GitRepository {
-	return &GitRepository{
-		url:         URL,
-		username:    username,
-		password:    password,
-		allClusters: true,
-	}
-}
-
-// SetClusters sets the clusters on this instance and sets the flag `allClusters` to true if clusters is empty or false otherwise.
-func (gr *GitRepository) SetClusters(clusters []uuid.UUID) {
-	gr.clusters = clusters
-	gr.allClusters = len(clusters) == 0
-}
-
-// GetClusters returns the slice of clusters
-func (gr *GitRepository) GetClusters() []uuid.UUID {
-	return gr.clusters
+	Clusters []string `yaml:"clusters"`
 }
 
 // ClusterRoleMapping is a mapping from m8 roles to ClusterRole's in a K8s cluster
 type ClusterRoleMapping struct {
-	scope           es.Scope
-	role            es.Role
-	clusterRoleName string
+	Scope           es.Scope `yaml:"scope"`
+	Role            es.Role  `yaml:"role"`
+	ClusterRoleName string   `yaml:"clusterRoleName"`
 }
 
-// NewClusterRoleMapping creates a new ClusterRoleMapping from the given values
-func NewClusterRoleMapping(scope es.Scope, role es.Role, clusterRoleName string) *ClusterRoleMapping {
-	return &ClusterRoleMapping{scope: scope, role: role, clusterRoleName: clusterRoleName}
+// NewConfigFromFile creates a new Config from a given yaml file
+func NewConfigFromFile(data []byte) (*Config, error) {
+	conf := &Config{}
+	err := yaml.Unmarshal(data, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }
