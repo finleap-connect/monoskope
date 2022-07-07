@@ -15,7 +15,9 @@
 package k8sauthzreactor
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
 
@@ -66,10 +68,10 @@ type GitRepository struct {
 	AllClusters bool `yaml:"allClusters"`
 	// Clusters is an optional field to specify a list of clusters for which the RBAC should be managed.
 	Clusters []string `yaml:"clusters"`
-	// BasicAuth is an optional field to specify credentials to authenticate towards a Git repository over HTTPS using basic access authentication.
-	BasicAuth *GitBasicAuth `yaml:"basicAuth"`
-	// SSHAuth is an optional field to specify credentials to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
-	SSHAuth *GitSSHAuth `yaml:"sshAuth"`
+	// BasicAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over HTTPS using basic access authentication.
+	BasicAuthPath string `yaml:"basicAuthPath"`
+	// SSHAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
+	SSHAuthPath string `yaml:"sshAuthPath"`
 }
 
 // ClusterRoleMapping is a mapping from m8 roles to ClusterRole's in a K8s cluster
@@ -112,6 +114,59 @@ func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
 	return conf, nil
 }
 
+// configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.
+func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
+	// read file
+	data, err := ioutil.ReadFile(repo.BasicAuthPath)
+	if err != nil {
+		return err
+	}
+
+	// unmarshal
+	basicAuth := &GitBasicAuth{}
+	err = yaml.Unmarshal(data, basicAuth)
+	if err != nil {
+		return err
+	}
+
+	// set clone options auth
+	cloneOptions.Auth = &http.BasicAuth{
+		Username: basicAuth.Username,
+		Password: basicAuth.Password,
+	}
+
+	return nil
+}
+
+// configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
+func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
+	// read file
+	data, err := ioutil.ReadFile(repo.SSHAuthPath)
+	if err != nil {
+		return err
+	}
+
+	// unmarshal
+	sshAuth := &GitSSHAuth{}
+	err = yaml.Unmarshal(data, sshAuth)
+	if err != nil {
+		return err
+	}
+
+	// set clone options auth
+	if _, err := os.Stat(sshAuth.PrivateKeyPath); err != nil {
+		return fmt.Errorf("read file %s failed: %w", sshAuth.PrivateKeyPath, err)
+	}
+
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", sshAuth.PrivateKeyPath, sshAuth.Password)
+	if err != nil {
+		return err
+	}
+	cloneOptions.Auth = publicKeys
+
+	return nil
+}
+
 // parseCloneOptions parses the configuration using the git library to validate.
 func (c *GitRepoReconcilerConfig) parseCloneOptions(repo *GitRepository) error {
 	cloneOptions := &git.CloneOptions{
@@ -120,34 +175,35 @@ func (c *GitRepoReconcilerConfig) parseCloneOptions(repo *GitRepository) error {
 		SingleBranch:  true,
 		NoCheckout:    false,
 		Depth:         1,
-		CABundle:      []byte(repo.CA),
+	}
+
+	// Set CA
+	if len(repo.CA) != 0 {
+		if data, err := base64.StdEncoding.DecodeString(repo.CA); err != nil {
+			return err
+		} else {
+			cloneOptions.CABundle = data
+		}
 	}
 
 	// Configure basic auth optionally
-	if repo.BasicAuth != nil {
-		cloneOptions.Auth = &http.BasicAuth{
-			Username: repo.BasicAuth.Username,
-			Password: repo.BasicAuth.Password,
+	if len(repo.BasicAuthPath) != 0 {
+		if err := configureBasicAuth(repo, cloneOptions); err != nil {
+			return err
 		}
 	}
 
 	// Configure ssh auth
-	if repo.SSHAuth != nil {
-		_, err := os.Stat(repo.SSHAuth.PrivateKeyPath)
-		if err != nil {
-			return fmt.Errorf("read file %s failed: %w", repo.SSHAuth.PrivateKeyPath, err)
-		}
-
-		publicKeys, err := ssh.NewPublicKeysFromFile("git", repo.SSHAuth.PrivateKeyPath, repo.SSHAuth.Password)
-		if err != nil {
+	if len(repo.SSHAuthPath) != 0 {
+		if err := configureSSHAuth(repo, cloneOptions); err != nil {
 			return err
 		}
-		cloneOptions.Auth = publicKeys
 	}
 
 	if err := cloneOptions.Validate(); err != nil {
 		return err
 	}
 	c.cloneOptions = cloneOptions
+
 	return nil
 }
