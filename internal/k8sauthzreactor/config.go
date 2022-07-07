@@ -21,7 +21,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+// GitRepoReconcilerConfig is the configuration for the GitRepoReconciler.
+type GitRepoReconcilerConfig struct {
 	Repositories []GitRepository      `yaml:"repositories"`
 	Mappings     []ClusterRoleMapping `yaml:"mappings"`
 }
@@ -68,8 +69,8 @@ type ClusterRoleMapping struct {
 }
 
 // NewConfigFromFile creates a new Config from a given yaml file
-func NewConfigFromFile(data []byte) (*Config, error) {
-	conf := &Config{}
+func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
+	conf := &GitRepoReconcilerConfig{}
 	err := yaml.Unmarshal(data, conf)
 	if err != nil {
 		return nil, err
