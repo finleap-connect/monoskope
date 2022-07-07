@@ -39,7 +39,7 @@ func NewK8sAuthZReactor() es.Reactor {
 }
 
 // HandleEvent handles a given event returns 0..* Events in reaction or an error
-func (r *k8sAuthZReactor) HandleEvent(ctx context.Context, event es.Event, eventsChannel chan<- es.Event) error {
+func (r *k8sAuthZReactor) HandleEvent(ctx context.Context, event es.Event, _ chan<- es.Event) error {
 	_, err := users.CreateUserContext(ctx, users.NewSystemUser(reactor_name))
 	if err != nil {
 		return err
@@ -59,6 +59,5 @@ func (r *k8sAuthZReactor) HandleEvent(ctx context.Context, event es.Event, event
 		}
 		return nil
 	}
-
 	return nil
 }

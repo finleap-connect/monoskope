@@ -15,6 +15,8 @@
 package k8sauthzreactor
 
 import (
+	"time"
+
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"gopkg.in/yaml.v2"
 )
@@ -24,15 +26,38 @@ type Config struct {
 	Mappings     []ClusterRoleMapping `yaml:"mappings"`
 }
 
+// GitCredentialsBasicAccessAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
+type GitCredentialsBasicAccessAuth struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+// GitSSHAuth is used to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
+type GitSSHAuth struct {
+	Identity   string `yaml:"identity"`
+	KnownHosts string `yaml:"knownHosts"`
+}
+
 // GitRepository is configuration to connect to a git repository.
 type GitRepository struct {
-	URL      string `yaml:"url"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
+	// URL is a required field that specifies the HTTP/S or SSH address of the Git repository.
+	URL string `yaml:"url"`
+	// CA is the Certificate Authority to trust while connecting with a Git repository over HTTPS.
+	CA string `yaml:"caCert"`
+	// Branch is the branch of the repository to use.
+	Branch string `yaml:"branch"`
+	// Internal is a required field that specifies the interval at which the Git repository must be fetched.
+	Interval time.Duration `yaml:"interval"`
+	// Timeout is an optional field to specify a timeout for Git operations like cloning.
+	Timeout time.Duration `yaml:"timeout"`
 	// allClusters specifies if the RBAC for all clusters should be managed.
 	AllClusters bool `yaml:"allClusters"`
 	// Clusters specifies a list of clusters for which the RBAC should be managed.
 	Clusters []string `yaml:"clusters"`
+	// CredentialsBasicAccessAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
+	CredentialsBasicAccessAuth *GitCredentialsBasicAccessAuth `yaml:"credentialsBasicAccessAuth"`
+	// SSHAuth is used to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
+	SSHAuth *GitSSHAuth `yaml:"sshAuth"`
 }
 
 // ClusterRoleMapping is a mapping from m8 roles to ClusterRole's in a K8s cluster
