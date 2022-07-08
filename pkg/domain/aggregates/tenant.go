@@ -80,7 +80,7 @@ func containsTenant(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*TenantAggregate)
 		if ok {
-			if !d.Deleted() && strings.ToLower(strings.TrimSpace(d.name)) == strings.ToLower(strings.TrimSpace(name)) {
+			if !d.Deleted() && strings.EqualFold(strings.TrimSpace(d.name), strings.TrimSpace(name)) {
 				return true
 			}
 		}

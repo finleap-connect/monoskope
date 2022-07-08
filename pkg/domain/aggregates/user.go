@@ -161,7 +161,7 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 	for _, value := range values {
 		d, ok := value.(*UserAggregate)
 		if ok {
-			if !d.Deleted() && strings.ToLower(strings.TrimSpace(d.Email)) == strings.ToLower(strings.TrimSpace(emailAddress)) {
+			if !d.Deleted() && strings.EqualFold(strings.TrimSpace(d.Email), strings.TrimSpace(emailAddress)) {
 				return true
 			}
 		}
