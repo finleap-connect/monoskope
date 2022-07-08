@@ -189,7 +189,8 @@ func containsRoleBinding(values []es.Aggregate, userId string, role, scope, reso
 			d.userId.String() == userId &&
 			string(d.role) == role &&
 			string(d.scope) == scope &&
-			d.resource == resourceId {
+			d.resource == resourceId &&
+			!d.Deleted() {
 			return true
 		}
 	}
