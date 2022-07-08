@@ -96,7 +96,7 @@ func (a *UserRoleBindingAggregate) validate(ctx context.Context, cmd es.Command)
 		if err != nil {
 			return err
 		}
-		if hasRoleBinding(roleBindings, cmd.UserId, cmd.Role, cmd.Scope, resource.String()) {
+		if containsRoleBinding(roleBindings, cmd.UserId, cmd.Role, cmd.Scope, resource.String()) {
 			return domainErrors.ErrUserRoleBindingAlreadyExists
 		}
 		return nil
@@ -173,7 +173,7 @@ func (a *UserRoleBindingAggregate) userRoleBindingCreated(event es.Event) error 
 	return nil
 }
 
-func hasRoleBinding(values []es.Aggregate, userId string, role, scope, resource string) bool {
+func containsRoleBinding(values []es.Aggregate, userId string, role, scope, resource string) bool {
 	resourceId := uuid.Nil
 	if resource != "" {
 		id, err := uuid.Parse(resource)
