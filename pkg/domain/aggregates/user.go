@@ -17,6 +17,7 @@ package aggregates
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
@@ -160,7 +161,7 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 	for _, value := range values {
 		d, ok := value.(*UserAggregate)
 		if ok {
-			if !d.Deleted() && d.Email == emailAddress {
+			if !d.Deleted() && strings.ToLower(strings.TrimSpace(d.Email)) == strings.ToLower(strings.TrimSpace(emailAddress)) {
 				return true
 			}
 		}
