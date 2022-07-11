@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8sauthzreactor
+package k8sauthz
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 
 func TestCommandHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "internal/k8sauthzreactor")
+	RunSpecs(t, "internal/k8sauthz")
 }
 
 var _ = BeforeSuite(func() {

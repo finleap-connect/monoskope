@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8sauthzreactor
+package k8sauthz
 
 import (
 	_ "embed"
@@ -24,7 +24,7 @@ import (
 //go:embed test_config.yaml
 var test_config []byte
 
-var _ = Describe("internal/k8sauthzreactor", func() {
+var _ = Describe("internal/k8sauthz", func() {
 	Context("GitRepository", func() {
 		It("NewGitRepository() creates a new instance with defaults", func() {
 			conf, err := NewConfigFromFile(test_config)

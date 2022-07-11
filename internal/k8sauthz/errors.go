@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8sauthzreactor
+package k8sauthz
 
-// GitRepoReconciler reconciles the resources within the target repo to match the expected state.
-type GitRepoReconciler struct {
-}
+import "errors"
 
-// NewGitRepoReconciler creates a new GitRepoReconciler configured via the given config.
-func NewGitRepoReconciler(config *GitRepoReconcilerConfig) (*GitRepoReconciler, error) {
-	panic("not implemented")
-}
+var (
+	ErrIntervalIsRequired = errors.New("interval is required")
+	ErrBranchIsRequired   = errors.New("branch is required")
+)
