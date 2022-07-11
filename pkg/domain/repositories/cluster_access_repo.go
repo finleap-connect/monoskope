@@ -90,31 +90,45 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 						string(k8s.AdminRole),
 					}})
 		}
-	} else { // regular users have access based on tenant membership
-		for _, roleBinding := range roleBindings {
-			// search rolebindings for tenant scoped bindings
-			if roleBinding.Scope == string(scopes.Tenant) {
-				// Set roles within cluster
-				var k8sRoles []string = []string{
-					string(k8s.DefaultRole),
-				}
-				// System admins are admins in k8s clusters too
-				if isSystemAdmin {
-					k8sRoles = append(k8sRoles, string(k8s.AdminRole))
-				}
-				if roleBinding.Role == string(roles.OnCall) {
+		return
+	}
+
+	tenantMap := make(map[string]bool)
+	// regular users have access based on tenant membership
+	for _, binding := range roleBindings {
+		// search rolebindings for tenant scoped bindings
+		if binding.Scope == string(scopes.Tenant) {
+			// check if we already had this tenant
+			if _, ok := tenantMap[binding.Resource]; ok {
+				continue
+			}
+			tenantMap[binding.Resource] = true
+
+			var tenantBindings []*domain_projections.UserRoleBinding
+			tenantBindings, err = r.userRoleBindingRepo.ByUserIdScopeAndResource(ctx, id, scopes.Tenant, binding.Resource)
+			if err != nil {
+				return
+			}
+
+			// Set roles within cluster
+			var k8sRoles []string = []string{
+				string(k8s.DefaultRole),
+			}
+			for _, tenantBinding := range tenantBindings {
+				if tenantBinding.Role == string(roles.OnCall) {
 					k8sRoles = append(k8sRoles, string(k8s.OnCallRole))
 				}
-
-				// get accessible cluster by tenant and append
-				var bindings []*domain_projections.TenantClusterBinding
-				bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(roleBinding.GetResource()))
-				if err != nil {
-					return
-				}
-				clusters, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
 			}
+
+			// get accessible cluster by tenant and append
+			var bindings []*domain_projections.TenantClusterBinding
+			bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(binding.GetResource()))
+			if err != nil {
+				return
+			}
+			clusters, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
 		}
 	}
+
 	return
 }
