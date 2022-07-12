@@ -17,6 +17,7 @@ package commandhandler
 import (
 	"context"
 	"net"
+	"os"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
@@ -65,6 +66,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.T
 
 	authMiddleware := auth.NewAuthMiddleware(env.gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
+	os.Setenv("SUPER_USERS", "admin@monoskope.io")
 	err = domain.SetupCommandHandlerDomain(ctx, env.esClient)
 	if err != nil {
 		return nil, err
@@ -96,7 +98,6 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.T
 			panic(err)
 		}
 	}()
-
 	return env, nil
 }
 

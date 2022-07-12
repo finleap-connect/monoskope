@@ -71,8 +71,13 @@ func init() {
 }
 
 func AddMockUsers(ctx context.Context, repo repositories.UserRepository) error {
-	if err := repo.Upsert(ctx, TestAdminUser); err != nil {
-		return err
+	existingAdminUser, err := repo.ByEmail(ctx, TestAdminUser.Email)
+	if err != nil {
+		if err := repo.Upsert(ctx, TestAdminUser); err != nil {
+			return err
+		}
+	} else {
+		TestAdminUser = existingAdminUser
 	}
 	if err := repo.Upsert(ctx, TestTenantAdminUser); err != nil {
 		return err
