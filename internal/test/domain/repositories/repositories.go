@@ -96,6 +96,21 @@ func (mr *MockUserRepositoryMockRecorder) ByEmail(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByEmail", reflect.TypeOf((*MockUserRepository)(nil).ByEmail), arg0, arg1)
 }
 
+// ByEmailIncludingDeleted mocks base method.
+func (m *MockUserRepository) ByEmailIncludingDeleted(arg0 context.Context, arg1 string) ([]*projections0.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ByEmailIncludingDeleted", arg0, arg1)
+	ret0, _ := ret[0].([]*projections0.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ByEmailIncludingDeleted indicates an expected call of ByEmailIncludingDeleted.
+func (mr *MockUserRepositoryMockRecorder) ByEmailIncludingDeleted(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByEmailIncludingDeleted", reflect.TypeOf((*MockUserRepository)(nil).ByEmailIncludingDeleted), arg0, arg1)
+}
+
 // ById mocks base method.
 func (m *MockUserRepository) ById(arg0 context.Context, arg1 uuid.UUID) (*projections0.User, error) {
 	m.ctrl.T.Helper()

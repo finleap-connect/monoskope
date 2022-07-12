@@ -185,11 +185,8 @@ var _ = Describe("integration", func() {
 
 			Eventually(func(g Gomega) {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
-				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(user).ToNot(BeNil())
-				g.Expect(user.GetEmail()).To(Equal(expectedUserEmail))
-				g.Expect(user.Id).To(Equal(userId.String()))
-				g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(user).To(BeNil())
 			}).Should(Succeed())
 
 			By("recreating the user after deletion")
