@@ -19,6 +19,7 @@ import (
 	"net"
 
 	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore"
@@ -85,12 +86,16 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	if err != nil {
 		return nil, err
 	}
-	err = qhDomain.UserRepository.Upsert(ctx, gatewayTestEnv.AdminUser)
-	if err != nil {
+	if err := mock.AddMockUsers(ctx, qhDomain.UserRepository); err != nil {
 		return nil, err
 	}
-	err = qhDomain.UserRoleBindingRepository.Upsert(ctx, gatewayTestEnv.AdminUserRoleBinding)
-	if err != nil {
+	if err := mock.AddMockUserRoleBindings(ctx, qhDomain.UserRoleBindingRepository); err != nil {
+		return nil, err
+	}
+	if err := mock.AddMockClusters(ctx, qhDomain.ClusterRepository); err != nil {
+		return nil, err
+	}
+	if err := mock.AddMockTenants(ctx, qhDomain.TenantRepository); err != nil {
 		return nil, err
 	}
 

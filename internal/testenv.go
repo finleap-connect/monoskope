@@ -15,9 +15,6 @@
 package internal
 
 import (
-	"os"
-	"strings"
-
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
@@ -27,7 +24,6 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	superUsers            []string
 	gatewayTestEnv        *gateway.TestEnv
 	eventStoreTestEnv     *eventstore.TestEnv
 	queryHandlerTestEnv   *queryhandler.TestEnv
@@ -39,8 +35,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	env := &TestEnv{
 		TestEnv: testEnv,
 	}
-
-	env.superUsers = []string{"admin@monoskope.io", "other-admin@monoskope.io"}
 
 	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
 	if err != nil {
@@ -57,7 +51,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	os.Setenv("SUPER_USERS", strings.Join(env.superUsers, ","))
 	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err

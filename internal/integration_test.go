@@ -31,6 +31,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -56,7 +57,7 @@ var _ = Describe("integration", func() {
 
 	getAdminAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, time.Minute*10)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
@@ -223,7 +224,7 @@ var _ = Describe("integration", func() {
 		It("fail to create a user which already exists", func() {
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
-				&cmdData.CreateUserCommandData{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email},
+				&cmdData.CreateUserCommandData{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email},
 			)
 			Expect(err).ToNot(HaveOccurred())
 

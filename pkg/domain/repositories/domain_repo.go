@@ -47,7 +47,7 @@ func (r *domainRepository[T]) AllWith(ctx context.Context, includeDeleted bool) 
 	}
 	var projections []T
 	for _, p := range ps {
-		if p.GetDeleted() != nil || includeDeleted {
+		if p.GetDeleted() == nil || includeDeleted {
 			projections = append(projections, p)
 		}
 	}

@@ -28,14 +28,12 @@ import (
 	apiCommon "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	esRepos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
-	"github.com/google/uuid"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	ggrpc "google.golang.org/grpc"
@@ -62,17 +60,12 @@ type TestEnv struct {
 	ClusterRepo                   repositories.ClusterRepository
 	UserRoleBindingRepo           repositories.UserRoleBindingRepository
 	UserRepo                      repositories.UserRepository
-	AdminUser                     *projections.User
-	AdminUserRoleBinding          *projections.UserRoleBinding
-	TenantAdminUser               *projections.User
-	ExistingUser                  *projections.User
-	NotExistingUser               *projections.User
 	PoliciesPath                  string
-	SomeTenantId                  uuid.UUID
-	TestClusterId                 uuid.UUID
 }
 
 func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
+	ctx := context.Background()
+
 	env := &TestEnv{
 		TestEnv: testeEnv,
 	}
@@ -158,105 +151,37 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	// Setup OIDC
-	err = authClient.SetupOIDC(context.Background())
+	err = authClient.SetupOIDC(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	env.SomeTenantId = uuid.New()
-
 	// Setup user repo
-	adminUser := projections.NewUserProjection(uuid.New())
-	adminUser.Name = "admin"
-	adminUser.Email = "admin@monoskope.io"
-
-	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-	adminRoleBinding.UserId = adminUser.Id
-	adminRoleBinding.Role = string(roles.Admin)
-	adminRoleBinding.Scope = string(scopes.System)
-
-	existingUser := projections.NewUserProjection(uuid.New())
-	existingUser.Name = "someone"
-	existingUser.Email = "someone@monoskope.io"
-
-	notExistingUser := projections.NewUserProjection(uuid.New())
-	notExistingUser.Name = "nobody"
-	notExistingUser.Email = "nobody@monoskope.io"
-
-	tenantAdminUser := projections.NewUserProjection(uuid.New())
-	tenantAdminUser.Name = "tenant-admin"
-	tenantAdminUser.Email = "tenant-admin@monoskope.io"
-
-	tenantAdminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-	tenantAdminRoleBinding.UserId = tenantAdminUser.Id
-	tenantAdminRoleBinding.Role = string(roles.Admin)
-	tenantAdminRoleBinding.Scope = string(scopes.Tenant)
-	tenantAdminRoleBinding.Resource = env.SomeTenantId.String()
-
-	env.AdminUser = adminUser
-	env.AdminUserRoleBinding = adminRoleBinding
-	env.TenantAdminUser = tenantAdminUser
-	env.ExistingUser = existingUser
-	env.NotExistingUser = notExistingUser
-
 	inMemoryUserRepo := esRepos.NewInMemoryRepository[*projections.User]()
 	inMemoryUserRoleBindingRepo := esRepos.NewInMemoryRepository[*projections.UserRoleBinding]()
-	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), tenantAdminUser); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), existingUser); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRoleBindingRepo.Upsert(context.Background(), adminRoleBinding); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), adminUser); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRoleBindingRepo.Upsert(context.Background(), tenantAdminRoleBinding); err != nil {
-		return nil, err
-	}
-	if err := inMemoryUserRepo.Upsert(context.Background(), tenantAdminUser); err != nil {
-		return nil, err
-	}
-
-	// Setup cluster repo
-	env.TestClusterId = uuid.New()
-	testCluster := projections.NewClusterProjection(env.TestClusterId)
-	testCluster.Name = "test-cluster"
-	testCluster.DisplayName = "Test Cluster"
-	testCluster.ApiServerAddress = "https://somecluster.io"
-	testCluster.CaCertBundle = []byte("some-bundle")
-
 	inMemoryClusterRepo := esRepos.NewInMemoryRepository[*projections.Cluster]()
-	if err := inMemoryClusterRepo.Upsert(context.Background(), testCluster); err != nil {
-		return nil, err
-	}
-
-	tenantClusterBindingId := uuid.New()
-	tenantClusterBinding := projections.NewTenantClusterBindingProjection(tenantClusterBindingId)
-	tenantClusterBinding.ClusterId = env.TestClusterId.String()
-	tenantClusterBinding.TenantId = env.SomeTenantId.String()
-
 	inMemoryTenantClusterBindingRepo := esRepos.NewInMemoryRepository[*projections.TenantClusterBinding]()
-	if err := inMemoryTenantClusterBindingRepo.Upsert(context.Background(), tenantClusterBinding); err != nil {
-		return nil, err
-	}
-
 	env.UserRoleBindingRepo = repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
 	env.UserRepo = repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	tenantClusterbindingRepo := repositories.NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
+	tenantClusterBindingRepo := repositories.NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
 	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
 
+	if err := mock.AddMockUsers(ctx, env.UserRepo); err != nil {
+		return nil, err
+	}
+	if err := mock.AddMockUserRoleBindings(ctx, env.UserRoleBindingRepo); err != nil {
+		return nil, err
+	}
+	if err := mock.AddMockClusters(ctx, env.ClusterRepo); err != nil {
+		return nil, err
+	}
+
 	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, env.UserRepo)
-	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(tenantClusterbindingRepo, env.ClusterRepo, env.UserRoleBindingRepo), map[string]time.Duration{
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(tenantClusterBindingRepo, env.ClusterRepo, env.UserRoleBindingRepo), map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 
-	gatewayAuthServer, errAuthServer := NewAuthServer(context.Background(), localAddrAPIServer, authServer, env.PoliciesPath, env.UserRoleBindingRepo)
+	gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, env.PoliciesPath, env.UserRoleBindingRepo)
 	if errAuthServer != nil {
 		return nil, errAuthServer
 	}

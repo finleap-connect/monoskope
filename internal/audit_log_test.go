@@ -30,7 +30,7 @@ import (
 	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -60,7 +60,7 @@ var _ = Describe("AuditLog Test", func() {
 
 	getAdminAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, expectedValidity)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
@@ -79,53 +79,7 @@ var _ = Describe("AuditLog Test", func() {
 		return client
 	}
 
-	// userServiceClient := func() domainApi.UserClient {
-	// 	_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
-	// 	Expect(err).ToNot(HaveOccurred())
-	// 	return client
-	// }
-
-	// see PR #172
-	// adminWorkaround := func() {
-	// 	// the admin user created by commandhandler (SUPER_USERS) and known by queryHandler
-	// 	adminUser, err := userServiceClient().GetByEmail(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email))
-	// 	Expect(err).ToNot(HaveOccurred())
-
-	// 	// clean up gateway repos to avoid side effects
-	// 	err = testEnv.gatewayTestEnv.UserRepo.Remove(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
-	// 	Expect(err).ToNot(HaveOccurred())
-	// 	gatewayAdminRoleBindings, err := testEnv.gatewayTestEnv.UserRoleBindingRepo.ByUserId(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
-	// 	Expect(err).ToNot(HaveOccurred())
-	// 	err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Remove(ctx, gatewayAdminRoleBindings[0].ID())
-	// 	Expect(err).ToNot(HaveOccurred())
-
-	// 	// replace the gateway admin user with queryHandler one
-	// 	testEnv.gatewayTestEnv.AdminUser = projections.NewUserProjection(uuid.MustParse(adminUser.Id))
-	// 	testEnv.gatewayTestEnv.AdminUser.Email = adminUser.Email
-	// 	testEnv.gatewayTestEnv.AdminUser.Name = adminUser.Name
-	// 	testEnv.gatewayTestEnv.AdminUser.Metadata = adminUser.Metadata
-	// 	testEnv.gatewayTestEnv.AdminUser.Source = adminUser.Source
-	// 	err = testEnv.gatewayTestEnv.UserRepo.Upsert(ctx, testEnv.gatewayTestEnv.AdminUser)
-	// 	Expect(err).ToNot(HaveOccurred())
-	// 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-	// 	adminRoleBinding.UserId = adminUser.Id
-	// 	adminRoleBinding.Role = string(roles.Admin)
-	// 	adminRoleBinding.Scope = string(scopes.System)
-	// 	err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
-	// 	Expect(err).ToNot(HaveOccurred())
-	// }
-
 	initEvents := func(commandHandlerClient func() esApi.CommandHandlerClient) time.Time {
-		// adminWorkaround() // remove when issue #182 is resolved
-
-		// SUPER_USERS
-		for _, su := range testEnv.superUsers {
-			expectedUserOverviewDetailMsgs = append(expectedUserOverviewDetailMsgs, strings.ReplaceAll(fConsts.UserCreatedOverviewDetailsFormat.Sprint(su, "system@"+users.BASE_DOMAIN, "x"), fConsts.Quote("x"), ""))
-			expectedUserOverviewRoleMsgs = append(expectedUserOverviewRoleMsgs, fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(scopes.System, roles.Admin))
-			expectedUserOverviewTenantMsgs = append(expectedUserOverviewTenantMsgs, "")
-			expectedNumUsers++
-		}
-
 		// CreateUser
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
@@ -141,7 +95,7 @@ var _ = Describe("AuditLog Test", func() {
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
 		expectedNumUsers++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserCreatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, userEmail))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, userEmail))
 
 		// CreateUserRoleBinding on system level
 		command, err = cmd.AddCommandData(
@@ -156,7 +110,7 @@ var _ = Describe("AuditLog Test", func() {
 		userRoleBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, roles.Admin, scopes.System, userEmail))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// UpdateUser
 		command, err = cmd.AddCommandData(
@@ -170,7 +124,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserUpdatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		// CreateTenant
 		command, err = cmd.AddCommandData(
@@ -184,7 +138,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		tenantId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantCreatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Tenant Y", "ty"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Y", "ty"))
 
 		// CreateUserRoleBinding on tenant level
 		command, err = cmd.AddCommandData(
@@ -199,7 +153,7 @@ var _ = Describe("AuditLog Test", func() {
 		_ = uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, roles.User, scopes.Tenant, userEmail))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.User, scopes.Tenant, userEmail))
 		expectedUserOverviewRoleMsgs = append(expectedUserOverviewRoleMsgs, fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(scopes.Tenant, roles.User))
 		expectedUserOverviewTenantMsgs = append(expectedUserOverviewTenantMsgs, fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint("Tenant Z", roles.User))
 
@@ -214,7 +168,7 @@ var _ = Describe("AuditLog Test", func() {
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantUpdatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		midTime := time.Now().UTC()
 		expectedNumEventsDoneByAdminMidTime = expectedNumEventsDoneByAdmin
@@ -231,7 +185,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		clusterId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterCreatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "cluster-y"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "cluster-y"))
 
 		// UpdateCluster
 		command, err = cmd.AddCommandData(
@@ -244,7 +198,7 @@ var _ = Describe("AuditLog Test", func() {
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterUpdatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		// CreateTenantClusterBinding
 		command, err = cmd.AddCommandData(
@@ -258,7 +212,7 @@ var _ = Describe("AuditLog Test", func() {
 		}).Should(Succeed())
 		tenantClusterBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Tenant Z", "Cluster Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z", "Cluster Z"))
 
 		// DeleteUser
 		_, err = commandHandlerClient().Execute(ctx,
@@ -266,36 +220,36 @@ var _ = Describe("AuditLog Test", func() {
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserDeletedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, userEmail))
-		expectedUserOverviewDetailMsgs = append(expectedUserOverviewDetailMsgs, strings.ReplaceAll(fConsts.UserDeletedOverviewDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "x"), fConsts.Quote("x"), ""))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, userEmail))
+		expectedUserOverviewDetailMsgs = append(expectedUserOverviewDetailMsgs, strings.ReplaceAll(fConsts.UserDeletedOverviewDetailsFormat.Sprint(mock.TestAdminUser.Email, "x"), fConsts.Quote("x"), ""))
 
 		// DeleteUserRoleBinding
 		_, err = commandHandlerClient().Execute(ctx,
 			cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleBindingDeletedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, roles.Admin, scopes.System, userEmail))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// DeleteTenant
 		_, err = commandHandlerClient().Execute(ctx,
 			cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantDeletedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Tenant Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z"))
 
 		// DeleteTenantClusterBinding
 		reply, err = commandHandlerClient().Execute(ctx,
 			cmd.CreateCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Cluster Z", "Tenant Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z", "Tenant Z"))
 
 		// DeleteCluster
 		reply, err = commandHandlerClient().Execute(ctx,
 			cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterDeletedDetailsFormat.Sprint(testEnv.gatewayTestEnv.AdminUser.Email, "Cluster Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z"))
 
 		return midTime
 	}
@@ -377,7 +331,7 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting user actions", func() {
 			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
+				Email: wrapperspb.String(mock.TestAdminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
@@ -393,8 +347,8 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(e.Issuer).To(Equal(testEnv.gatewayTestEnv.AdminUser.Email))
-				Expect(e.IssuerId).To(Equal(testEnv.gatewayTestEnv.AdminUser.Id))
+				Expect(e.Issuer).To(Equal(mock.TestAdminUser.Email))
+				Expect(e.IssuerId).To(Equal(mock.TestAdminUser.Id))
 				counter++
 			}
 			Expect(counter).To(Equal(expectedNumEventsDoneByAdmin))
@@ -408,10 +362,7 @@ var _ = Describe("AuditLog Test", func() {
 
 			// "shared" testEnv workaround
 			// ginkgo v2 should solve this by utilizing baforeAll/afterAll?
-			knownUsersSet := make(map[string]struct{}, len(testEnv.superUsers)+1)
-			for _, s := range testEnv.superUsers {
-				knownUsersSet[s] = struct{}{}
-			}
+			knownUsersSet := make(map[string]struct{})
 			knownUsersSet[userEmail] = struct{}{}
 
 			counter := 0
@@ -440,7 +391,7 @@ var _ = Describe("AuditLog Test", func() {
 			minTime := time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC)
 			maxTime := time.Date(2022, time.December, 1, 0, 0, 0, 1, time.UTC)
 			request := &domainApi.GetUserActionsRequest{
-				Email: wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email),
+				Email: wrapperspb.String(mock.TestAdminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
 					MinTimestamp: timestamppb.New(minTime),
 					MaxTimestamp: timestamppb.New(maxTime),
