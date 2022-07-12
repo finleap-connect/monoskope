@@ -30,6 +30,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esCommandHandler "github.com/finleap-connect/monoskope/pkg/eventsourcing/commandhandler"
 	"github.com/google/uuid"
@@ -79,24 +80,53 @@ func setupUser(ctx context.Context, name, email string, handler es.CommandHandle
 }
 
 // setupRoleBinding creates rolebindings
-func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string, handler es.CommandHandler) error {
+func setupRoleBinding(ctx context.Context, userId uuid.UUID, role, scope string, handler es.CommandHandler) (uuid.UUID, error) {
 	data, err := commands.CreateCommandData(&cmdData.CreateUserRoleBindingCommandData{
 		UserId: userId.String(),
 		Role:   role,
 		Scope:  scope,
 	})
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	cmd, err := es.DefaultCommandRegistry.CreateCommand(uuid.New(), commandTypes.CreateUserRoleBinding, data)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	_, err = handler.HandleCommand(ctx, cmd)
+	reply, err := handler.HandleCommand(ctx, cmd)
 	if err != nil && !errors.Is(err, domainErrors.ErrUserRoleBindingAlreadyExists) {
-		return err
+		return uuid.Nil, err
+	}
+
+	return reply.Id, nil
+}
+
+// setupMockUsers creates mock users for tests
+func setupMockUsers(ctx context.Context, handler es.CommandHandler) error {
+	createMocks := os.Getenv("CREATE_MOCKS")
+	if createMocks != "true" {
+		return nil
+	}
+
+	for _, mockUser := range mock.TestMockUsers {
+		userId, err := setupUser(ctx, mockUser.Name, mockUser.Email, handler)
+		if err != nil {
+			if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+				return nil
+			}
+			return err
+		}
+		mockUser.Id = userId.String()
+
+		for _, mockRole := range mockUser.Roles {
+			roleBindingId, err := setupRoleBinding(ctx, userId, mockRole.Role, mockRole.Scope, handler)
+			if err != nil {
+				return err
+			}
+			mockRole.Id = roleBindingId.String()
+		}
 	}
 
 	return nil
@@ -124,7 +154,7 @@ func setupSuperUsers(ctx context.Context, handler es.CommandHandler) error {
 			return err
 		}
 
-		err = setupRoleBinding(ctx, userId, string(roles.Admin), string(scopes.System), handler)
+		_, err = setupRoleBinding(ctx, userId, string(roles.Admin), string(scopes.System), handler)
 		if err != nil {
 			return err
 		}
@@ -147,6 +177,9 @@ func setupUsers(ctx context.Context, handler es.CommandHandler) error {
 	ctx = metadataMgr.GetContext()
 
 	if err := setupSuperUsers(ctx, handler); err != nil {
+		return err
+	}
+	if err := setupMockUsers(ctx, handler); err != nil {
 		return err
 	}
 	return nil

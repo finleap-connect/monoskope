@@ -15,28 +15,31 @@
 package mock
 
 import (
-	"context"
-
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	"github.com/google/uuid"
 )
 
 var (
-	TestAdminUser        = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
-	TestTenantAdminUser  = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000002"))
-	TestExistingUser     = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000003"))
-	TestNoneExistingUser = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000004"))
+	TestAdminUser        = projections.NewUserProjection(uuid.Nil)
+	TestTenantAdminUser  = projections.NewUserProjection(uuid.Nil)
+	TestExistingUser     = projections.NewUserProjection(uuid.Nil)
+	TestNoneExistingUser = projections.NewUserProjection(uuid.Nil)
 
-	TestAdminUserRoleBinding       = projections.NewUserRoleBinding(uuid.MustParse("79e61bbb-9373-4905-885b-a24eadc04bb7"))
-	TestTenantAdminUserRoleBinding = projections.NewUserRoleBinding(uuid.MustParse("9d13bed6-00b5-4010-a787-60044dbc709a"))
+	TestMockUsers = []*projections.User{
+		TestAdminUser,
+		TestTenantAdminUser,
+		TestExistingUser,
+	}
 
-	TestTenant  = projections.NewTenantProjection(uuid.MustParse("00000000-0000-0000-0001-000000000001"))
-	TestCluster = projections.NewClusterProjection(uuid.MustParse("00000000-0000-0000-0002-000000000001"))
+	TestAdminUserRoleBinding       = projections.NewUserRoleBinding(uuid.Nil)
+	TestTenantAdminUserRoleBinding = projections.NewUserRoleBinding(uuid.Nil)
 
-	TestTenantClusterBinding = projections.NewTenantClusterBindingProjection(uuid.MustParse("ad3e7523-3f32-433f-a6ed-5e0fe4ea6848"))
+	TestTenant  = projections.NewTenantProjection(uuid.Nil)
+	TestCluster = projections.NewClusterProjection(uuid.Nil)
+
+	TestTenantClusterBinding = projections.NewTenantClusterBindingProjection(uuid.Nil)
 )
 
 func init() {
@@ -55,11 +58,13 @@ func init() {
 	TestAdminUserRoleBinding.UserId = TestAdminUser.Id
 	TestAdminUserRoleBinding.Role = string(roles.Admin)
 	TestAdminUserRoleBinding.Scope = string(scopes.System)
+	TestAdminUser.Roles = append(TestAdminUser.Roles, TestAdminUserRoleBinding.Proto())
 
 	TestTenantAdminUserRoleBinding.UserId = TestTenantAdminUser.Id
 	TestTenantAdminUserRoleBinding.Role = string(roles.Admin)
 	TestTenantAdminUserRoleBinding.Scope = string(scopes.Tenant)
 	TestTenantAdminUserRoleBinding.Resource = TestTenant.Id
+	TestTenantAdminUser.Roles = append(TestTenantAdminUser.Roles, TestTenantAdminUserRoleBinding.Proto())
 
 	TestCluster.Name = "test-cluster"
 	TestCluster.DisplayName = "Test Cluster"
@@ -68,53 +73,4 @@ func init() {
 
 	TestTenantClusterBinding.ClusterId = TestCluster.Id
 	TestTenantClusterBinding.TenantId = TestTenant.Id
-}
-
-func AddMockUsers(ctx context.Context, repo repositories.UserRepository) error {
-	existingAdminUser, err := repo.ByEmail(ctx, TestAdminUser.Email)
-	if err != nil {
-		if err := repo.Upsert(ctx, TestAdminUser); err != nil {
-			return err
-		}
-	} else {
-		TestAdminUser = existingAdminUser
-	}
-	if err := repo.Upsert(ctx, TestTenantAdminUser); err != nil {
-		return err
-	}
-	if err := repo.Upsert(ctx, TestExistingUser); err != nil {
-		return err
-	}
-	return nil
-}
-
-func AddMockUserRoleBindings(ctx context.Context, repo repositories.UserRoleBindingRepository) error {
-	if err := repo.Upsert(ctx, TestAdminUserRoleBinding); err != nil {
-		return err
-	}
-	if err := repo.Upsert(ctx, TestTenantAdminUserRoleBinding); err != nil {
-		return err
-	}
-	return nil
-}
-
-func AddMockClusters(ctx context.Context, repo repositories.ClusterRepository) error {
-	if err := repo.Upsert(ctx, TestCluster); err != nil {
-		return err
-	}
-	return nil
-}
-
-func AddMockTenantClusterBindings(ctx context.Context, repo repositories.TenantClusterBindingRepository) error {
-	if err := repo.Upsert(ctx, TestTenantClusterBinding); err != nil {
-		return err
-	}
-	return nil
-}
-
-func AddMockTenants(ctx context.Context, repo repositories.TenantRepository) error {
-	if err := repo.Upsert(ctx, TestTenant); err != nil {
-		return err
-	}
-	return nil
 }

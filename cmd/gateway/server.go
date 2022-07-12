@@ -25,12 +25,7 @@ import (
 
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
-	"github.com/finleap-connect/monoskope/pkg/domain/handler"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
-	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
-	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/domain"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	authm "github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
@@ -46,8 +41,6 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
-	"github.com/finleap-connect/monoskope/pkg/eventsourcing/eventhandler"
-	esr "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
@@ -150,68 +143,19 @@ var serverCmd = &cobra.Command{
 		}
 		defer ebConsumer.Close()
 
-		// Setup necessary projections
-		refreshDuration := time.Second * 30
-
-		userRoleBindingRepository := repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository[*projections.UserRoleBinding]())
-		userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
-		userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, userRoleBindingRepository)
-		userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-		userRoleBindingMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
-		if err := ebConsumer.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
-			return err
-		}
-
-		userRepository := repositories.NewUserRepository(esr.NewInMemoryRepository[*projections.User](), userRoleBindingRepository)
-		userProjector := projectors.NewUserProjector()
-		userProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.User](userProjector, userRepository)
-		userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-		userMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.User)
-		if err := ebConsumer.AddHandler(ctx, userHandlerChain, userMatcher); err != nil {
-			return err
-		}
-
-		clusterRepository := repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
-		clusterProjector := projectors.NewClusterProjector()
-		clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, clusterRepository)
-		clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-		clusterMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.Cluster)
-		if err := ebConsumer.AddHandler(ctx, clusterHandlerChain, clusterMatcher); err != nil {
-			return err
-		}
-
-		tenantClusterBindingRepository := repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
-		tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
-		tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, tenantClusterBindingRepository)
-		tenantClusterBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantClusterBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
-		tenantClusterBindingMatcher := ebConsumer.Matcher().MatchAggregateType(aggregates.TenantClusterBinding)
-		if err := ebConsumer.AddHandler(ctx, tenantClusterBindingHandlerChain, tenantClusterBindingMatcher); err != nil {
-			return err
-		}
-
-		clusterAccessRepo := repositories.NewClusterAccessRepository(tenantClusterBindingRepository, clusterRepository, userRoleBindingRepository)
-
-		if err := handler.WarmUp(ctx, esClient, aggregates.User, userHandlerChain); err != nil {
-			return err
-		}
-		if err := handler.WarmUp(ctx, esClient, aggregates.UserRoleBinding, userRoleBindingHandlerChain); err != nil {
-			return err
-		}
-		if err := handler.WarmUp(ctx, esClient, aggregates.Cluster, clusterHandlerChain); err != nil {
-			return err
-		}
-		if err := handler.WarmUp(ctx, esClient, aggregates.TenantClusterBinding, tenantClusterBindingHandlerChain); err != nil {
+		gwDomain, err := domain.NewGatewayDomain(ctx, ebConsumer, esClient)
+		if err != nil {
 			return err
 		}
 
 		// API servers
-		authServer, err := gateway.NewAuthServer(ctx, gatewayURL, server, policiesPath, userRoleBindingRepository)
+		authServer, err := gateway.NewAuthServer(ctx, gatewayURL, server, policiesPath, gwDomain.UserRoleBindingRepository)
 		if err != nil {
 			return err
 		}
 
 		oidcProviderServer := gateway.NewOIDCProviderServer(server)
-		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, userRepository)
+		gatewayApiServer := gateway.NewGatewayAPIServer(&authClientConfig, client, server, gwDomain.UserRepository)
 
 		// Look for config
 		if len(k8sTokenLifetime) == 0 {
@@ -237,8 +181,8 @@ var serverCmd = &cobra.Command{
 			}
 			tokenLifeTimePerRole[k] = k8sTokenValidityDuration
 		}
-		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, clusterAccessRepo, tokenLifeTimePerRole)
-		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, userRepository)
+		clusterAuthApiServer := gateway.NewClusterAuthAPIServer(gatewayURL, signer, gwDomain.ClusterAccessRepo, tokenLifeTimePerRole)
+		apiTokenServer := gateway.NewAPITokenServer(gatewayURL, signer, gwDomain.UserRepository)
 
 		authMiddleware := authm.NewAuthMiddleware(authServer.AsClient(), []string{
 			"/grpc.health.v1.Health/Check",

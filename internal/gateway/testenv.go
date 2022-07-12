@@ -23,15 +23,18 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/common"
+	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/internal/messagebus"
 	"github.com/finleap-connect/monoskope/internal/test"
 	apiCommon "github.com/finleap-connect/monoskope/pkg/api/domain/common"
+	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
-	"github.com/finleap-connect/monoskope/pkg/domain/mock"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
-	esRepos "github.com/finleap-connect/monoskope/pkg/eventsourcing/repositories"
+	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	esMessaging "github.com/finleap-connect/monoskope/pkg/eventsourcing/messaging"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/ory/dockertest/v3"
@@ -57,17 +60,34 @@ type TestEnv struct {
 	HttpClient                    *http.Client
 	GrpcServer                    *grpc.Server
 	LocalOIDCProviderServer       *oidcProviderServer
-	ClusterRepo                   repositories.ClusterRepository
-	UserRoleBindingRepo           repositories.UserRoleBindingRepository
-	UserRepo                      repositories.UserRepository
 	PoliciesPath                  string
+	eventStoreTestEnv             *eventstore.TestEnv
+	ebConsumer                    es.EventBusConsumer
+	esConn                        *ggrpc.ClientConn
+	esClient                      esApi.EventStoreClient
 }
 
-func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
+func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
 	ctx := context.Background()
 
 	env := &TestEnv{
-		TestEnv: testeEnv,
+		TestEnv:           testeEnv,
+		eventStoreTestEnv: eventStoreTestEnv,
+	}
+
+	rabbitConf, err := esMessaging.NewRabbitEventBusConfig("queryhandler", env.eventStoreTestEnv.GetMessagingTestEnv().AmqpURL, "")
+	if err != nil {
+		return nil, err
+	}
+
+	env.ebConsumer, err = messagebus.NewEventBusConsumerFromConfig(rabbitConf)
+	if err != nil {
+		return nil, err
+	}
+
+	env.esConn, env.esClient, err = eventstore.NewEventStoreClient(ctx, env.eventStoreTestEnv.GetApiAddr())
+	if err != nil {
+		return nil, err
 	}
 
 	jwtTestEnv, err := jwt.NewTestEnv(env.TestEnv)
@@ -156,32 +176,18 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	// Setup user repo
-	inMemoryUserRepo := esRepos.NewInMemoryRepository[*projections.User]()
-	inMemoryUserRoleBindingRepo := esRepos.NewInMemoryRepository[*projections.UserRoleBinding]()
-	inMemoryClusterRepo := esRepos.NewInMemoryRepository[*projections.Cluster]()
-	inMemoryTenantClusterBindingRepo := esRepos.NewInMemoryRepository[*projections.TenantClusterBinding]()
-	env.UserRoleBindingRepo = repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo)
-	env.UserRepo = repositories.NewUserRepository(inMemoryUserRepo, repositories.NewUserRoleBindingRepository(inMemoryUserRoleBindingRepo))
-	tenantClusterBindingRepo := repositories.NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
-	env.ClusterRepo = repositories.NewClusterRepository(inMemoryClusterRepo)
-
-	if err := mock.AddMockUsers(ctx, env.UserRepo); err != nil {
-		return nil, err
-	}
-	if err := mock.AddMockUserRoleBindings(ctx, env.UserRoleBindingRepo); err != nil {
-		return nil, err
-	}
-	if err := mock.AddMockClusters(ctx, env.ClusterRepo); err != nil {
+	// Setup domain
+	gwDomain, err := domain.NewGatewayDomain(ctx, env.ebConsumer, env.esClient)
+	if err != nil {
 		return nil, err
 	}
 
-	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, env.UserRepo)
-	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(tenantClusterBindingRepo, env.ClusterRepo, env.UserRoleBindingRepo), map[string]time.Duration{
+	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, gwDomain.UserRepository)
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(gwDomain.TenantClusterBindingRepository, gwDomain.ClusterRepository, gwDomain.UserRoleBindingRepository), map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 
-	gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, env.PoliciesPath, env.UserRoleBindingRepo)
+	gatewayAuthServer, errAuthServer := NewAuthServer(ctx, localAddrAPIServer, authServer, env.PoliciesPath, gwDomain.UserRoleBindingRepository)
 	if errAuthServer != nil {
 		return nil, errAuthServer
 	}

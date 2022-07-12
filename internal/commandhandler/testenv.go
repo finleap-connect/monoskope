@@ -26,6 +26,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
+
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -66,7 +67,8 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.T
 
 	authMiddleware := auth.NewAuthMiddleware(env.gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
-	os.Setenv("SUPER_USERS", "admin@monoskope.io")
+	os.Setenv("CREATE_MOCKS", "true")
+
 	err = domain.SetupCommandHandlerDomain(ctx, env.esClient)
 	if err != nil {
 		return nil, err
@@ -98,6 +100,7 @@ func NewTestEnv(eventStoreTestEnv *eventstore.TestEnv, gatewayTestEnv *gateway.T
 			panic(err)
 		}
 	}()
+
 	return env, nil
 }
 

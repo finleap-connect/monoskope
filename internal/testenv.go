@@ -36,12 +36,12 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		TestEnv: testEnv,
 	}
 
-	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
+	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
+	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv)
 	if err != nil {
 		return nil, err
 	}

@@ -360,11 +360,6 @@ var _ = Describe("AuditLog Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			// "shared" testEnv workaround
-			// ginkgo v2 should solve this by utilizing baforeAll/afterAll?
-			knownUsersSet := make(map[string]struct{})
-			knownUsersSet[userEmail] = struct{}{}
-
 			counter := 0
 			for {
 				o, err := overviews.Recv()
@@ -375,12 +370,10 @@ var _ = Describe("AuditLog Test", func() {
 
 				Expect(o.Name).ToNot(BeEmpty())
 				Expect(o.Email).ToNot(BeEmpty())
-				if _, known := knownUsersSet[o.Email]; known {
-					Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewRoleMsgs[counter]))+`.*`, o.Roles)).To(BeTrue())
-					Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewTenantMsgs[counter]))+`.*`, o.Tenants)).To(BeTrue())
-					Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewDetailMsgs[counter]))+`.*`, o.Details)).To(BeTrue())
-					counter++
-				}
+				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewRoleMsgs[counter]))+`.*`, o.Roles)).To(BeTrue())
+				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewTenantMsgs[counter]))+`.*`, o.Tenants)).To(BeTrue())
+				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewDetailMsgs[counter]))+`.*`, o.Details)).To(BeTrue())
+				counter++
 			}
 			Expect(counter).To(Equal(expectedNumUsers))
 		})
