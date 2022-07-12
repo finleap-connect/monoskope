@@ -63,6 +63,7 @@ type TestEnv struct {
 	UserRoleBindingRepo           repositories.UserRoleBindingRepository
 	UserRepo                      repositories.UserRepository
 	AdminUser                     *projections.User
+	AdminUserRoleBinding          *projections.UserRoleBinding
 	TenantAdminUser               *projections.User
 	ExistingUser                  *projections.User
 	NotExistingUser               *projections.User
@@ -193,6 +194,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv) (*TestEnv, error) {
 	tenantAdminRoleBinding.Resource = env.SomeTenantId.String()
 
 	env.AdminUser = adminUser
+	env.AdminUserRoleBinding = adminRoleBinding
 	env.TenantAdminUser = tenantAdminUser
 	env.ExistingUser = existingUser
 	env.NotExistingUser = notExistingUser

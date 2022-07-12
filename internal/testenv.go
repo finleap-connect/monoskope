@@ -41,7 +41,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	}
 
 	env.superUsers = []string{"admin@monoskope.io", "other-admin@monoskope.io"}
-	os.Setenv("SUPER_USERS", strings.Join(env.superUsers, ","))
 
 	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
 	if err != nil {
@@ -58,6 +57,7 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
+	os.Setenv("SUPER_USERS", strings.Join(env.superUsers, ","))
 	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err

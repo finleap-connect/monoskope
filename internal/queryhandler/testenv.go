@@ -81,7 +81,15 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	}
 
 	// Setup domain
-	qhDomain, err := domain.NewQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	qhDomain, err := domain.NewQueryHandlerDomain(ctx, env.ebConsumer, env.esClient)
+	if err != nil {
+		return nil, err
+	}
+	err = qhDomain.UserRepository.Upsert(ctx, gatewayTestEnv.AdminUser)
+	if err != nil {
+		return nil, err
+	}
+	err = qhDomain.UserRoleBindingRepository.Upsert(ctx, gatewayTestEnv.AdminUserRoleBinding)
 	if err != nil {
 		return nil, err
 	}

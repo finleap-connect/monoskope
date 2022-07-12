@@ -31,7 +31,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
-	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -80,44 +79,44 @@ var _ = Describe("AuditLog Test", func() {
 		return client
 	}
 
-	userServiceClient := func() domainApi.UserClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
-		Expect(err).ToNot(HaveOccurred())
-		return client
-	}
+	// userServiceClient := func() domainApi.UserClient {
+	// 	_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
+	// 	Expect(err).ToNot(HaveOccurred())
+	// 	return client
+	// }
 
 	// see PR #172
-	adminWorkaround := func() {
-		// the admin user created by commandhandler (SUPER_USERS) and known by queryHandler
-		adminUser, err := userServiceClient().GetByEmail(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email))
-		Expect(err).ToNot(HaveOccurred())
+	// adminWorkaround := func() {
+	// 	// the admin user created by commandhandler (SUPER_USERS) and known by queryHandler
+	// 	adminUser, err := userServiceClient().GetByEmail(ctx, wrapperspb.String(testEnv.gatewayTestEnv.AdminUser.Email))
+	// 	Expect(err).ToNot(HaveOccurred())
 
-		// clean up gateway repos to avoid side effects
-		err = testEnv.gatewayTestEnv.UserRepo.Remove(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
-		Expect(err).ToNot(HaveOccurred())
-		gatewayAdminRoleBindings, err := testEnv.gatewayTestEnv.UserRoleBindingRepo.ByUserId(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
-		Expect(err).ToNot(HaveOccurred())
-		err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Remove(ctx, gatewayAdminRoleBindings[0].ID())
-		Expect(err).ToNot(HaveOccurred())
+	// 	// clean up gateway repos to avoid side effects
+	// 	err = testEnv.gatewayTestEnv.UserRepo.Remove(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
+	// 	Expect(err).ToNot(HaveOccurred())
+	// 	gatewayAdminRoleBindings, err := testEnv.gatewayTestEnv.UserRoleBindingRepo.ByUserId(ctx, testEnv.gatewayTestEnv.AdminUser.ID())
+	// 	Expect(err).ToNot(HaveOccurred())
+	// 	err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Remove(ctx, gatewayAdminRoleBindings[0].ID())
+	// 	Expect(err).ToNot(HaveOccurred())
 
-		// replace the gateway admin user with queryHandler one
-		testEnv.gatewayTestEnv.AdminUser = projections.NewUserProjection(uuid.MustParse(adminUser.Id))
-		testEnv.gatewayTestEnv.AdminUser.Email = adminUser.Email
-		testEnv.gatewayTestEnv.AdminUser.Name = adminUser.Name
-		testEnv.gatewayTestEnv.AdminUser.Metadata = adminUser.Metadata
-		testEnv.gatewayTestEnv.AdminUser.Source = adminUser.Source
-		err = testEnv.gatewayTestEnv.UserRepo.Upsert(ctx, testEnv.gatewayTestEnv.AdminUser)
-		Expect(err).ToNot(HaveOccurred())
-		adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
-		adminRoleBinding.UserId = adminUser.Id
-		adminRoleBinding.Role = string(roles.Admin)
-		adminRoleBinding.Scope = string(scopes.System)
-		err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
-		Expect(err).ToNot(HaveOccurred())
-	}
+	// 	// replace the gateway admin user with queryHandler one
+	// 	testEnv.gatewayTestEnv.AdminUser = projections.NewUserProjection(uuid.MustParse(adminUser.Id))
+	// 	testEnv.gatewayTestEnv.AdminUser.Email = adminUser.Email
+	// 	testEnv.gatewayTestEnv.AdminUser.Name = adminUser.Name
+	// 	testEnv.gatewayTestEnv.AdminUser.Metadata = adminUser.Metadata
+	// 	testEnv.gatewayTestEnv.AdminUser.Source = adminUser.Source
+	// 	err = testEnv.gatewayTestEnv.UserRepo.Upsert(ctx, testEnv.gatewayTestEnv.AdminUser)
+	// 	Expect(err).ToNot(HaveOccurred())
+	// 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
+	// 	adminRoleBinding.UserId = adminUser.Id
+	// 	adminRoleBinding.Role = string(roles.Admin)
+	// 	adminRoleBinding.Scope = string(scopes.System)
+	// 	err = testEnv.gatewayTestEnv.UserRoleBindingRepo.Upsert(ctx, adminRoleBinding)
+	// 	Expect(err).ToNot(HaveOccurred())
+	// }
 
 	initEvents := func(commandHandlerClient func() esApi.CommandHandlerClient) time.Time {
-		adminWorkaround() // remove when issue #182 is resolved
+		// adminWorkaround() // remove when issue #182 is resolved
 
 		// SUPER_USERS
 		for _, su := range testEnv.superUsers {
