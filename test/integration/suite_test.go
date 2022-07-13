@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package integration
 
 import (
 	"testing"
 
+	"github.com/finleap-connect/monoskope/internal"
 	"github.com/finleap-connect/monoskope/internal/test"
 
 	. "github.com/onsi/ginkgo"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	testEnv *TestEnv
+	testEnv *internal.TestEnv
 )
 
 func TestIntegrationHandler(t *testing.T) {
@@ -36,20 +37,17 @@ var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
-		var err error
-
 		By("bootstrapping test env")
+		var err error
 		baseTestEnv := test.NewTestEnv("integration-testenv")
-		testEnv, err = NewTestEnv(baseTestEnv)
+		testEnv, err = internal.NewTestEnv(baseTestEnv)
 		Expect(err).To(Not(HaveOccurred()))
 		close(done)
 	}()
-
 	Eventually(done, 60).Should(BeClosed())
 })
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-
 	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
 })

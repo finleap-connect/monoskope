@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package audit
 
 import (
 	"context"
@@ -41,10 +41,9 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-var _ = Describe("AuditLog Test", func() {
-	ctx := context.Background()
-
+var _ = Describe("test/audit/audit_log_test", func() {
 	var (
+		ctx              = context.Background()
 		userId           = uuid.New()
 		userEmail        = "userxyz@monoskope.io"
 		expectedValidity = time.Hour * 1
@@ -60,22 +59,22 @@ var _ = Describe("AuditLog Test", func() {
 	)
 
 	getAdminAuthToken := func() string {
-		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, expectedValidity)
+		signer := testEnv.GatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.GatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, expectedValidity)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
 	}
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
-		chAddr := testEnv.commandHandlerTestEnv.GetApiAddr()
+		chAddr := testEnv.CommandHandlerTestEnv.GetApiAddr()
 		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, chAddr, getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	auditLogServiceClient := func() domainApi.AuditLogClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewAuditLogClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewAuditLogClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}

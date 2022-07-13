@@ -24,55 +24,57 @@ import (
 
 type TestEnv struct {
 	*test.TestEnv
-	gatewayTestEnv        *gateway.TestEnv
-	eventStoreTestEnv     *eventstore.TestEnv
-	queryHandlerTestEnv   *queryhandler.TestEnv
-	commandHandlerTestEnv *commandhandler.TestEnv
+	GatewayTestEnv        *gateway.TestEnv
+	EventStoreTestEnv     *eventstore.TestEnv
+	QueryHandlerTestEnv   *queryhandler.TestEnv
+	CommandHandlerTestEnv *commandhandler.TestEnv
 }
 
-func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
-	var err error
-	env := &TestEnv{
+func NewTestEnv(testEnv *test.TestEnv) (env *TestEnv, err error) {
+	env = &TestEnv{
 		TestEnv: testEnv,
 	}
+	err = env.setup()
+	return
+}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
+func (env *TestEnv) setup() (err error) {
+	env.EventStoreTestEnv, err = eventstore.NewTestEnvWithParent(env.TestEnv)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, true)
+	env.GatewayTestEnv, err = gateway.NewTestEnvWithParent(env.TestEnv, env.EventStoreTestEnv, true)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, env.gatewayTestEnv)
+	env.QueryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(env.TestEnv, env.EventStoreTestEnv, env.GatewayTestEnv)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	env.commandHandlerTestEnv, err = commandhandler.NewTestEnv(env.eventStoreTestEnv, env.gatewayTestEnv)
+	env.CommandHandlerTestEnv, err = commandhandler.NewTestEnv(env.EventStoreTestEnv, env.GatewayTestEnv)
 	if err != nil {
-		return nil, err
+		return
 	}
-
-	return env, nil
+	return
 }
 
 func (env *TestEnv) Shutdown() error {
-	if err := env.queryHandlerTestEnv.Shutdown(); err != nil {
+	if err := env.QueryHandlerTestEnv.Shutdown(); err != nil {
 		return err
 	}
 
-	if err := env.commandHandlerTestEnv.Shutdown(); err != nil {
+	if err := env.CommandHandlerTestEnv.Shutdown(); err != nil {
 		return err
 	}
 
-	if err := env.eventStoreTestEnv.Shutdown(); err != nil {
+	if err := env.EventStoreTestEnv.Shutdown(); err != nil {
 		return err
 	}
 
-	if err := env.gatewayTestEnv.Shutdown(); err != nil {
+	if err := env.GatewayTestEnv.Shutdown(); err != nil {
 		return err
 	}
 	return nil

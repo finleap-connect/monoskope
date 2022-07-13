@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package integration
 
 import (
 	"context"
@@ -40,7 +40,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-var _ = Describe("integration", func() {
+var _ = Describe("internal/integration_test", func() {
 	ctx := context.Background()
 
 	expectedUserName := "Jane Doe"
@@ -56,45 +56,45 @@ var _ = Describe("integration", func() {
 	expectedClusterCACertBundle := []byte("This should be a certificate")
 
 	getAdminAuthToken := func() string {
-		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, time.Minute*10)
+		signer := testEnv.GatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.GatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, time.Minute*10)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
 	}
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
-		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.commandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
+		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.CommandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	userServiceClient := func() domainApi.UserClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	tenantServiceClient := func() domainApi.TenantClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterServiceClient := func() domainApi.ClusterClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterAccessClient := func() domainApi.ClusterAccessClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterAccessClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterAccessClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	eventStoreClient := func() esApi.EventStoreClient {
-		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
+		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.EventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
@@ -323,7 +323,6 @@ var _ = Describe("integration", func() {
 			Expect(int(reply.Version)).To(BeNumerically("==", 1))
 		})
 	})
-
 	Context("cluster management", func() {
 		It("can manage a cluster", func() {
 			By("creating the cluster")
@@ -337,7 +336,7 @@ var _ = Describe("integration", func() {
 			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
-			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			err = testReactor.Setup(ctx, testEnv.EventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
@@ -485,11 +484,8 @@ var _ = Describe("integration", func() {
 			}).Should(Succeed())
 		})
 	})
-})
-
-var _ = Describe("PrometheusMetrics", func() {
 	It("can scrape event store metrics", func() {
-		res, err := http.Get(fmt.Sprintf("http://%s/metrics", testEnv.eventStoreTestEnv.MetricsListener.Addr()))
+		res, err := http.Get(fmt.Sprintf("http://%s/metrics", testEnv.EventStoreTestEnv.MetricsListener.Addr()))
 		Expect(err).ToNot(HaveOccurred())
 		defer res.Body.Close()
 		Expect(res.StatusCode).To(Equal(200))
