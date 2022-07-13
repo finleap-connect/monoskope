@@ -30,14 +30,16 @@ import (
 )
 
 var (
-	DefaultTimeout = 60 * time.Second
+	DefaultTimeout        = 60 * time.Second
+	DefaultUsernamePrefix = "oidc:"
 )
 
 // GitRepoReconcilerConfig is the configuration for the GitRepoReconciler.
 type GitRepoReconcilerConfig struct {
-	Repositories []*GitRepository      `yaml:"repositories"`
-	Mappings     []*ClusterRoleMapping `yaml:"mappings"`
-	cloneOptions *git.CloneOptions
+	Repositories   []*GitRepository      `yaml:"repositories"`
+	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
+	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
+	cloneOptions   *git.CloneOptions
 }
 
 // GitBasicAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
@@ -90,6 +92,11 @@ func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
 		return nil, err
 	}
 
+	// Set default values
+	if len(conf.UsernamePrefix) == 0 {
+		conf.UsernamePrefix = DefaultUsernamePrefix
+	}
+
 	for _, repo := range conf.Repositories {
 		// Check required fields are set
 		if err := conf.parseCloneOptions(repo); err != nil {
@@ -108,7 +115,6 @@ func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
 		if repo.Timeout == nil {
 			repo.Timeout = &DefaultTimeout
 		}
-
 	}
 
 	return conf, nil
