@@ -306,7 +306,7 @@ var _ = Describe("integration", func() {
 				g.Expect(tenant.Id).ToNot(Equal(tenantId.String()))
 				g.Expect(tenant.Id).To(Equal(tenantIdNew.String()))
 				g.Expect(tenant.Metadata.Deleted).To(BeNil())
-			}).Should(Succeed())
+			}, "100ms").Should(Succeed())
 		})
 		It("can accept Nil as ID when creating a tenant", func() {
 			command, err := cmd.AddCommandData(

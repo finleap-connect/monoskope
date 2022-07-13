@@ -45,7 +45,7 @@ var _ = Describe("AuditLog Test", func() {
 
 	var (
 		userId           = uuid.New()
-		userEmail        = "jane.dou@monoskope.io"
+		userEmail        = "userxyz@monoskope.io"
 		expectedValidity = time.Hour * 1
 		// see initEvents
 		expectedNumUsers                    = 0
@@ -83,7 +83,7 @@ var _ = Describe("AuditLog Test", func() {
 		// CreateUser
 		command, err := cmd.AddCommandData(
 			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
-			&cmdData.CreateUserCommandData{Name: "Jane Dou", Email: userEmail},
+			&cmdData.CreateUserCommandData{Name: "XYZ", Email: userEmail},
 		)
 		Expect(err).ToNot(HaveOccurred())
 		var reply *esApi.CommandReply
@@ -110,12 +110,13 @@ var _ = Describe("AuditLog Test", func() {
 		userRoleBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
+		expectedUserOverviewRoleMsgs = append(expectedUserOverviewRoleMsgs, fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(scopes.System, roles.Admin))
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// UpdateUser
 		command, err = cmd.AddCommandData(
 			cmd.CreateCommand(userId, commandTypes.UpdateUser),
-			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "Jane New"}},
+			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "XYZ New"}},
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
@@ -356,7 +357,7 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting users overview", func() {
 			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{
-				Timestamp: timestamppb.New(maxTime),
+				Timestamp: timestamppb.New(minTime),
 			})
 			Expect(err).ToNot(HaveOccurred())
 
