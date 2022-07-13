@@ -174,7 +174,8 @@ func (s *auditLogServer) GetUserActions(request *doApi.GetUserActionsRequest, st
 			return errors.TranslateToGrpcError(err)
 		}
 
-		if slices.Contains(userIds, e.Metadata[auth.HeaderAuthId]) {
+		eventIssuerId := e.Metadata[auth.HeaderAuthId]
+		if !slices.Contains(userIds, eventIssuerId) {
 			continue
 		}
 

@@ -360,6 +360,7 @@ var _ = Describe("AuditLog Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
+			eventsToSkip := 3
 			counter := 0
 			for {
 				o, err := overviews.Recv()
@@ -367,6 +368,11 @@ var _ = Describe("AuditLog Test", func() {
 					break
 				}
 				Expect(err).ToNot(HaveOccurred())
+
+				if eventsToSkip > 0 {
+					eventsToSkip--
+					continue
+				}
 
 				Expect(o.Name).ToNot(BeEmpty())
 				Expect(o.Email).ToNot(BeEmpty())

@@ -43,18 +43,6 @@ var (
 )
 
 func init() {
-	TestAdminUser.Name = "admin"
-	TestAdminUser.Email = "admin@monoskope.io"
-
-	TestExistingUser.Name = "someone"
-	TestExistingUser.Email = "someone@monoskope.io"
-
-	TestNoneExistingUser.Name = "nobody"
-	TestNoneExistingUser.Email = "nobody@monoskope.io"
-
-	TestTenantAdminUser.Name = "tenant-admin"
-	TestTenantAdminUser.Email = "tenant-admin@monoskope.io"
-
 	TestAdminUserRoleBinding.UserId = TestAdminUser.Id
 	TestAdminUserRoleBinding.Role = string(roles.Admin)
 	TestAdminUserRoleBinding.Scope = string(scopes.System)
@@ -73,4 +61,18 @@ func init() {
 
 	TestTenantClusterBinding.ClusterId = TestCluster.Id
 	TestTenantClusterBinding.TenantId = TestTenant.Id
+
+	TestAdminUser.Name = "admin"
+	TestAdminUser.Email = "admin@monoskope.io"
+
+	TestExistingUser.Name = "someone"
+	TestExistingUser.Email = "someone@monoskope.io"
+
+	TestNoneExistingUser.Name = "nobody"
+	TestNoneExistingUser.Email = "nobody@monoskope.io"
+
+	TestTenantAdminUser.Name = "tenant-admin"
+	TestTenantAdminUser.Email = "tenant-admin@monoskope.io"
+
+	TestTenant.Name = "test-tenant"
 }
