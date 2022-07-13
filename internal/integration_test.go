@@ -308,7 +308,7 @@ var _ = Describe("integration", func() {
 				g.Expect(tenant.Id).ToNot(Equal(tenantId.String()))
 				g.Expect(tenant.Id).To(Equal(tenantIdNew.String()))
 				g.Expect(tenant.Metadata.Deleted).To(BeNil())
-			}, "100ms").Should(Succeed())
+			}, "5s").Should(Succeed())
 		})
 		It("can accept Nil as ID when creating a tenant", func() {
 			command, err := cmd.AddCommandData(
@@ -449,7 +449,7 @@ var _ = Describe("integration", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(tenantClusterBinding).ToNot(BeNil())
 				Expect(tenantClusterBinding.Id).To(Equal(tenantClusterBindingId.String()))
-			}).Should(Succeed())
+			}, "5s").Should(Succeed())
 
 			By("ensuring the same access can't be granted again")
 			command.Id = uuid.New().String()

@@ -69,11 +69,6 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
-	if err != nil {
-		return nil, err
-	}
-
 	env.queryHandlerTestEnv, err = queryhandler.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, env.gatewayTestEnv)
 	if err != nil {
 		return nil, err
