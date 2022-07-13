@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -110,7 +111,6 @@ var _ = Describe("AuditLog Test", func() {
 		userRoleBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
-		expectedUserOverviewRoleMsgs = append(expectedUserOverviewRoleMsgs, fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(scopes.System, roles.Admin))
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// UpdateUser
@@ -256,15 +256,15 @@ var _ = Describe("AuditLog Test", func() {
 	}
 
 	It("can provide human-readable events/overviews", func() {
-		minTime := time.Now().UTC()
-		midTime := initEvents(commandHandlerClient)
-		maxTime := time.Now().UTC()
+		fromTime := time.Now().UTC()
+		betweenTime := initEvents(commandHandlerClient)
+		toTime := time.Now().UTC()
 
 		When("getting by date range", func() {
 			By("using a general range")
 			dateRange := &domainApi.GetAuditLogByDateRangeRequest{
-				MinTimestamp: timestamppb.New(minTime),
-				MaxTimestamp: timestamppb.New(maxTime),
+				MinTimestamp: timestamppb.New(fromTime),
+				MaxTimestamp: timestamppb.New(toTime),
 			}
 
 			events, err := auditLogServiceClient().GetByDateRange(ctx, dateRange)
@@ -288,7 +288,7 @@ var _ = Describe("AuditLog Test", func() {
 			Expect(counter).To(Equal(expectedNumEventsDoneByAdmin))
 
 			By("using a custom range")
-			dateRange.MaxTimestamp = timestamppb.New(midTime)
+			dateRange.MaxTimestamp = timestamppb.New(betweenTime)
 
 			events, err = auditLogServiceClient().GetByDateRange(ctx, dateRange)
 			Expect(err).ToNot(HaveOccurred())
@@ -309,8 +309,8 @@ var _ = Describe("AuditLog Test", func() {
 			events, err := auditLogServiceClient().GetByUser(ctx, &domainApi.GetByUserRequest{
 				Email: wrapperspb.String(userEmail),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
-					MinTimestamp: timestamppb.New(minTime),
-					MaxTimestamp: timestamppb.New(maxTime),
+					MinTimestamp: timestamppb.New(fromTime),
+					MaxTimestamp: timestamppb.New(toTime),
 				},
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -334,8 +334,8 @@ var _ = Describe("AuditLog Test", func() {
 			events, err := auditLogServiceClient().GetUserActions(ctx, &domainApi.GetUserActionsRequest{
 				Email: wrapperspb.String(mock.TestAdminUser.Email),
 				DateRange: &domainApi.GetAuditLogByDateRangeRequest{
-					MinTimestamp: timestamppb.New(minTime),
-					MaxTimestamp: timestamppb.New(maxTime),
+					MinTimestamp: timestamppb.New(fromTime),
+					MaxTimestamp: timestamppb.New(toTime),
 				},
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -357,11 +357,17 @@ var _ = Describe("AuditLog Test", func() {
 
 		When("getting users overview", func() {
 			overviews, err := auditLogServiceClient().GetUsersOverview(ctx, &domainApi.GetUsersOverviewRequest{
-				Timestamp: timestamppb.New(minTime),
+				Timestamp: timestamppb.New(toTime),
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			eventsToSkip := 3
+			// "shared" testEnv workaround
+			// ginkgo v2 should solve this by utilizing baforeAll/afterAll?
+			knownUsersSet := make(map[string]struct{})
+			for _, s := range mock.TestMockUsers {
+				knownUsersSet[s.Email] = struct{}{}
+			}
+
 			counter := 0
 			for {
 				o, err := overviews.Recv()
@@ -370,11 +376,11 @@ var _ = Describe("AuditLog Test", func() {
 				}
 				Expect(err).ToNot(HaveOccurred())
 
-				if eventsToSkip > 0 {
-					eventsToSkip--
+				if _, known := knownUsersSet[o.Email]; known {
 					continue
 				}
 
+				fmt.Printf("%v", o)
 				Expect(o.Name).ToNot(BeEmpty())
 				Expect(o.Email).ToNot(BeEmpty())
 				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedUserOverviewRoleMsgs[counter]))+`.*`, o.Roles)).To(BeTrue())
