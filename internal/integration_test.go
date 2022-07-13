@@ -142,10 +142,11 @@ var _ = Describe("integration", func() {
 
 			Eventually(func(g Gomega) {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).ToNot(BeNil())
-				Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
-				Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(user).ToNot(BeNil())
+				g.Expect(len(user.Roles)).To(BeNumerically(">=", 1))
+				g.Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
+				g.Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 			}).Should(Succeed())
 
 			By("ensuring the same role (system admin) can't be given again")
@@ -175,6 +176,7 @@ var _ = Describe("integration", func() {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(user).ToNot(BeNil())
+				g.Expect(len(user.Roles)).To(BeNumerically(">=", 1))
 				g.Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
 				g.Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 			}).Should(Succeed())
