@@ -32,6 +32,7 @@ import (
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	clientAuth "github.com/finleap-connect/monoskope/pkg/auth"
 	"github.com/finleap-connect/monoskope/pkg/domain"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	esMessaging "github.com/finleap-connect/monoskope/pkg/eventsourcing/messaging"
@@ -67,7 +68,7 @@ type TestEnv struct {
 	esClient                      esApi.EventStoreClient
 }
 
-func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv) (*TestEnv, error) {
+func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.TestEnv, mockData bool) (*TestEnv, error) {
 	ctx := context.Background()
 
 	env := &TestEnv{
@@ -180,6 +181,37 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	gwDomain, err := domain.NewGatewayDomain(ctx, env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
+	}
+
+	if mockData {
+		err = gwDomain.UserRepository.Upsert(ctx, mock.TestAdminUser)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.UserRepository.Upsert(ctx, mock.TestExistingUser)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.UserRepository.Upsert(ctx, mock.TestTenantAdminUser)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.UserRoleBindingRepository.Upsert(ctx, mock.TestAdminUserRoleBinding)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.UserRoleBindingRepository.Upsert(ctx, mock.TestTenantAdminUserRoleBinding)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.ClusterRepository.Upsert(ctx, mock.TestCluster)
+		if err != nil {
+			return nil, err
+		}
+		err = gwDomain.TenantClusterBindingRepository.Upsert(ctx, mock.TestTenantClusterBinding)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, gwDomain.UserRepository)

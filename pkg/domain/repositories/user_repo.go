@@ -99,7 +99,6 @@ func (r *userRepository) ByEmail(ctx context.Context, email string) (*projection
 			if err != nil {
 				return nil, err
 			}
-
 			return user, nil
 		}
 	}

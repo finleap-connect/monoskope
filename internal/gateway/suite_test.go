@@ -45,7 +45,7 @@ var _ = BeforeSuite(func() {
 		baseTestEnv := test.NewTestEnv("queryhandler-testenv")
 		eventStoreTestEnv, err := eventstore.NewTestEnvWithParent(baseTestEnv)
 		Expect(err).To(Not(HaveOccurred()))
-		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv)
+		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv, true)
 		Expect(err).ToNot(HaveOccurred())
 		close(done)
 	}()

@@ -126,6 +126,7 @@ func setupMockUsers(ctx context.Context, handler es.CommandHandler) error {
 				return err
 			}
 			mockRole.Id = roleBindingId.String()
+			mockRole.UserId = userId.String()
 		}
 	}
 

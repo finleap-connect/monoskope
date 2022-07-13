@@ -22,10 +22,10 @@ import (
 )
 
 var (
-	TestAdminUser        = projections.NewUserProjection(uuid.Nil)
-	TestTenantAdminUser  = projections.NewUserProjection(uuid.Nil)
-	TestExistingUser     = projections.NewUserProjection(uuid.Nil)
-	TestNoneExistingUser = projections.NewUserProjection(uuid.Nil)
+	TestAdminUser        = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000000"))
+	TestTenantAdminUser  = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
+	TestExistingUser     = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000002"))
+	TestNoneExistingUser = projections.NewUserProjection(uuid.MustParse("00000000-0000-0000-0000-000000000003"))
 
 	TestMockUsers = []*projections.User{
 		TestAdminUser,
@@ -33,13 +33,13 @@ var (
 		TestExistingUser,
 	}
 
-	TestAdminUserRoleBinding       = projections.NewUserRoleBinding(uuid.Nil)
-	TestTenantAdminUserRoleBinding = projections.NewUserRoleBinding(uuid.Nil)
+	TestAdminUserRoleBinding       = projections.NewUserRoleBinding(uuid.MustParse("00000000-0000-0000-0001-000000000000"))
+	TestTenantAdminUserRoleBinding = projections.NewUserRoleBinding(uuid.MustParse("00000000-0000-0000-0002-000000000000"))
 
-	TestTenant  = projections.NewTenantProjection(uuid.Nil)
-	TestCluster = projections.NewClusterProjection(uuid.Nil)
+	TestTenant  = projections.NewTenantProjection(uuid.MustParse("00000000-0000-0001-0000-000000000000"))
+	TestCluster = projections.NewClusterProjection(uuid.MustParse("00000000-0000-0001-0000-000000000000"))
 
-	TestTenantClusterBinding = projections.NewTenantClusterBindingProjection(uuid.Nil)
+	TestTenantClusterBinding = projections.NewTenantClusterBindingProjection(uuid.MustParse("00000000-0001-0000-0000-000000000000"))
 )
 
 func init() {
