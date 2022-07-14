@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
@@ -37,7 +38,7 @@ type ClusterAggregate struct {
 	caCertBundle     []byte
 }
 
-// ClusterAggregate creates a new ClusterAggregate
+// NewClusterAggregate creates a new ClusterAggregate
 func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 	return &ClusterAggregate{
 		DomainAggregateBase: &DomainAggregateBase{
@@ -114,7 +115,7 @@ func containsCluster(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*ClusterAggregate)
 		if ok {
-			if !d.Deleted() && d.name == name {
+			if !d.Deleted() && strings.EqualFold(d.name, name) {
 				return true
 			}
 		}

@@ -27,9 +27,11 @@ package commanddata;
 // Command data to create a new user
 message CreateUserCommandData {
   // Email address of the user
-  string email = 1 [ (validate.rules).string.email = true ];
+  string email = 1
+    [ (validate.rules).string.email = true ];
   // Name of the user
-  string name = 2 [ (validate.rules).string = {min_len : 3, max_len : 150} ];
+  string name = 2
+    [ (validate.rules).string = {pattern: "^[^\\s]+(\\s+[^\\s]+)*$", min_len : 3, max_len : 150} ];
 }
 
 // Command data to create a rolebinding for an user
@@ -52,5 +54,5 @@ message CreateUserRoleBindingCommandData {
 message UpdateUserCommandData {
   // New name of the user
   google.protobuf.StringValue name = 1
-      [ (validate.rules).string = {min_len : 5, max_len : 150} ];
+      [ (validate.rules).string = {pattern: "^[^\\s]+(\\s+[^\\s]+)*$", min_len : 3, max_len : 150} ];
 }

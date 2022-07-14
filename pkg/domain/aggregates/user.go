@@ -17,15 +17,16 @@ package aggregates
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
-	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
-	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 )
 
@@ -53,6 +54,29 @@ func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.
 		return nil, err
 	}
 	return a.execute(ctx, cmd)
+}
+
+func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
+	switch cmd := cmd.(type) {
+	case *commands.CreateUserCommand:
+		if a.Exists() {
+			return domainErrors.ErrUserAlreadyExists
+		}
+
+		// Get all aggregates of same type
+		aggregates, err := a.aggregateManager.All(ctx, a.Type())
+		if err != nil {
+			return err
+		}
+
+		// Check if user already exists
+		if containsUser(aggregates, cmd.GetEmail()) {
+			return domainErrors.ErrUserAlreadyExists
+		}
+		return nil
+	default:
+		return a.Validate(ctx, cmd)
+	}
 }
 
 func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
@@ -96,29 +120,6 @@ func (a *UserAggregate) execute(ctx context.Context, cmd es.Command) (*es.Comman
 	return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 }
 
-func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {
-	switch cmd := cmd.(type) {
-	case *commands.CreateUserCommand:
-		if a.Exists() {
-			return domainErrors.ErrUserAlreadyExists
-		}
-
-		// Get all aggregates of same type
-		aggregates, err := a.aggregateManager.All(ctx, a.Type())
-		if err != nil {
-			return err
-		}
-
-		// Check if user already exists
-		if containsUser(aggregates, cmd.GetEmail()) {
-			return domainErrors.ErrUserAlreadyExists
-		}
-		return nil
-	default:
-		return a.Validate(ctx, cmd)
-	}
-}
-
 // ApplyEvent implements the ApplyEvent method of the Aggregate interface.
 func (a *UserAggregate) ApplyEvent(event es.Event) error {
 	switch event.EventType() {
@@ -160,7 +161,7 @@ func containsUser(values []es.Aggregate, emailAddress string) bool {
 	for _, value := range values {
 		d, ok := value.(*UserAggregate)
 		if ok {
-			if !d.Deleted() && d.Email == emailAddress {
+			if !d.Deleted() && strings.EqualFold(d.Email, emailAddress) {
 				return true
 			}
 		}

@@ -31,12 +31,8 @@ service CommandHandlerExtensions {
 }
 
 message PermissionModel {
-  repeated string roles = 1 [ (validate.rules).repeated .items.string = {
-    pattern : "^[a-z]+$",
-    max_bytes : 60
-  } ];
-  repeated string scopes = 2 [ (validate.rules).repeated .items.string = {
-    pattern : "^[a-z]+$",
-    max_bytes : 60
-  } ];
+  repeated string roles = 1
+    [(validate.rules).repeated.items.string = {pattern : "^[a-z]+$", max_bytes : 60}];
+  repeated string scopes = 2
+    [(validate.rules).repeated.items.string = {pattern : "^[a-z]+$", max_bytes : 60}];
 }

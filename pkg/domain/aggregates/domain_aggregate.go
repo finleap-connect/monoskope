@@ -26,7 +26,7 @@ type DomainAggregateBase struct {
 }
 
 // Validate validates if the aggregate exists and is not deleted
-func (a *DomainAggregateBase) Validate(ctx context.Context, cmd es.Command) error {
+func (a *DomainAggregateBase) Validate(_ context.Context, _ es.Command) error {
 	if !a.Exists() {
 		return domainErrors.ErrNotFound
 	}

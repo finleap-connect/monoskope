@@ -39,8 +39,15 @@ var _ = Describe("Test validation rules for user messages", func() {
 		})
 
 		It("should check for a valid Name", func() {
-			cd.Name = invalidDisplayNameTooLong
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.Name = invalidDisplayNameTooLong
+				ValidateErrorExpected()
+			})
+
+			By("not containing white spaces", func() {
+				cd.Name = invalidDisplayNameWhiteSpaces
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid Email", func() {

@@ -26,12 +26,11 @@ package commanddata;
 // Command data to request a new certificate
 message RequestCertificate {
   // Unique identifier of the aggregate referenced (UUID 128-bit number)
-  string referenced_aggregate_id = 1 [ (validate.rules).string.uuid = true ];
+  string referenced_aggregate_id = 1
+    [(validate.rules).string.uuid = true];
   // Type of the aggregate referenced
-  string referenced_aggregate_type = 2 [ (validate.rules).string = {
-    pattern : "^[a-zA-Z][A-Za-z0-9_-]+$",
-    max_len : 60
-  } ];
+  string referenced_aggregate_type = 2
+    [(validate.rules).string = {pattern : "^[a-zA-Z][A-Za-z0-9_-]+$", max_len : 60}];
   // Certificate signing request
   bytes signing_request = 3 [
     (validate.rules).bytes.prefix = "-----BEGIN CERTIFICATE REQUEST-----",

@@ -83,6 +83,17 @@ func (m *CreateUserCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if !_CreateUserCommandData_Name_Pattern.MatchString(m.GetName()) {
+		err := CreateUserCommandDataValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return CreateUserCommandDataMultiError(errors)
 	}
@@ -211,6 +222,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CreateUserCommandDataValidationError{}
+
+var _CreateUserCommandData_Name_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
 
 // Validate checks the field values on CreateUserRoleBindingCommandData with
 // the rules defined in the proto definition for this message. If any rules
@@ -424,10 +437,21 @@ func (m *UpdateUserCommandData) validate(all bool) error {
 
 	if wrapper := m.GetName(); wrapper != nil {
 
-		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 5 || l > 150 {
+		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 3 || l > 150 {
 			err := UpdateUserCommandDataValidationError{
 				field:  "Name",
-				reason: "value length must be between 5 and 150 runes, inclusive",
+				reason: "value length must be between 3 and 150 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_UpdateUserCommandData_Name_Pattern.MatchString(wrapper.GetValue()) {
+			err := UpdateUserCommandDataValidationError{
+				field:  "Name",
+				reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
 			}
 			if !all {
 				return err
@@ -515,3 +539,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateUserCommandDataValidationError{}
+
+var _UpdateUserCommandData_Name_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")

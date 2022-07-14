@@ -16,7 +16,6 @@ package validator
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -25,85 +24,73 @@ import (
 var _ = Describe("Test validation rules for cluster messages", func() {
 	Context("Creating cluster", func() {
 		var cd *commanddata.CreateCluster
-		var ed *eventdata.ClusterCreated
-		var edV2 *eventdata.ClusterCreatedV2
 		JustBeforeEach(func() {
 			cd = NewValidCreateCluster()
-			ed = NewValidClusterCreated()
-			edV2 = NewValidClusterCreatedV2()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).To(HaveOccurred())
-			err = edV2.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
-			err = edV2.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid Name", func() {
 			cd.Name = invalidName
-			ed.Label = invalidName
-			edV2.Name = invalidName
 			ValidateErrorExpected()
 		})
 
 		It("should check for a valid DisplayName", func() {
-			cd.DisplayName = invalidDisplayNameTooLong
-			ed.Name = invalidDisplayNameTooLong
-			edV2.DisplayName = invalidDisplayNameTooLong
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.Name = invalidDisplayNameTooLong
+				ValidateErrorExpected()
+			})
+
+			By("not containing white spaces", func() {
+				cd.Name = invalidDisplayNameWhiteSpaces
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid ApiServerAddress", func() {
 			cd.ApiServerAddress = invalidApiServerAddress
-			ed.ApiServerAddress = invalidApiServerAddress
-			edV2.ApiServerAddress = invalidApiServerAddress
 			ValidateErrorExpected()
 		})
 	})
 
 	Context("Updating cluster", func() {
 		var cd *commanddata.UpdateCluster
-		var ed *eventdata.ClusterUpdated
 		JustBeforeEach(func() {
 			cd = NewValidUpdateCluster()
-			ed = NewValidClusterUpdated()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid DisplayName", func() {
-			cd.DisplayName = &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
-			ed.DisplayName = invalidDisplayNameTooLong
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.DisplayName = wrapperspb.String(invalidDisplayNameTooLong)
+				ValidateErrorExpected()
+			})
+
+			By("not containing white spaces", func() {
+				cd.DisplayName = wrapperspb.String(invalidDisplayNameWhiteSpaces)
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid ApiServerAddress", func() {
-			cd.ApiServerAddress = &wrapperspb.StringValue{Value: invalidApiServerAddress}
-			ed.ApiServerAddress = invalidApiServerAddress
+			cd.ApiServerAddress = wrapperspb.String(invalidApiServerAddress)
 			ValidateErrorExpected()
 		})
 	})

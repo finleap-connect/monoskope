@@ -17,24 +17,18 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
-import "validate/validate.proto";
-
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
 package eventdata;
 
 message ClusterCreated {
   // Display name of the cluster
-  string name = 1 [ (validate.rules).string.max_bytes = 150 ];
+  string name = 1;
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string label = 2 [ (validate.rules).string = {
-    pattern : "^[a-zA-Z][A-Za-z0-9_-]+$",
-    max_bytes : 60
-  } ];
+  string label = 2;
   // Address of the KubeApiServer
-  string api_server_address = 3 [ (validate.rules).string.pattern =
-                                      "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string api_server_address = 3;
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
@@ -42,25 +36,20 @@ message ClusterCreated {
 message ClusterCreatedV2 {
   // Unique name of the cluster, to be utilized for generating unique labels
   // and symbols, e.g. with metrics.
-  string name = 1 [ (validate.rules).string = {
-    pattern : "^[a-zA-Z][A-Za-z0-9_-]+$",
-    max_bytes : 60
-  } ];
+  string name = 1;
   // Display name of the cluster
-  string display_name = 2 [ (validate.rules).string.max_bytes = 150 ];
+  string display_name = 2;
   // Address of the KubeApiServer
-  string api_server_address = 3 [ (validate.rules).string.pattern =
-                                      "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string api_server_address = 3;
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 4;
 }
 
 message ClusterUpdated {
   // Display name of the cluster
-  string display_name = 1 [ (validate.rules).string.max_bytes = 150 ];
+  string display_name = 1;
   // Address of the KubeApiServer
-  string api_server_address = 2 [ (validate.rules).string.pattern =
-                                      "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
+  string api_server_address = 2;
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 3;
 }

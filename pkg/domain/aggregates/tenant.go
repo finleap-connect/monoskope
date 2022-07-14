@@ -17,10 +17,11 @@ package aggregates
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	"github.com/finleap-connect/monoskope/pkg/domain/commands"
-	aggregates "github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
@@ -79,7 +80,7 @@ func containsTenant(values []es.Aggregate, name string) bool {
 	for _, value := range values {
 		d, ok := value.(*TenantAggregate)
 		if ok {
-			if !d.Deleted() && d.name == name {
+			if !d.Deleted() && strings.EqualFold(d.name, name) {
 				return true
 			}
 		}

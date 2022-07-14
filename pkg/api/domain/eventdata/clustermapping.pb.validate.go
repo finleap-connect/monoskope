@@ -35,9 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// define the regex for a UUID once up-front
-var _clustermapping_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on TenantClusterBindingCreated with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -60,41 +57,13 @@ func (m *TenantClusterBindingCreated) validate(all bool) error {
 
 	var errors []error
 
-	if err := m._validateUuid(m.GetTenantId()); err != nil {
-		err = TenantClusterBindingCreatedValidationError{
-			field:  "TenantId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for TenantId
 
-	if err := m._validateUuid(m.GetClusterId()); err != nil {
-		err = TenantClusterBindingCreatedValidationError{
-			field:  "ClusterId",
-			reason: "value must be a valid UUID",
-			cause:  err,
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ClusterId
 
 	if len(errors) > 0 {
 		return TenantClusterBindingCreatedMultiError(errors)
 	}
-	return nil
-}
-
-func (m *TenantClusterBindingCreated) _validateUuid(uuid string) error {
-	if matched := _clustermapping_uuidPattern.MatchString(uuid); !matched {
-		return errors.New("invalid uuid format")
-	}
-
 	return nil
 }
 

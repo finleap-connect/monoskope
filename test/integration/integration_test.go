@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
@@ -126,6 +127,15 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(user.GetEmail()).To(Equal(expectedUserEmail))
 				g.Expect(user.Id).To(Equal(userId.String()))
 			}).Should(Succeed())
+
+			By("ensuring the same user can't be created again")
+			command, err = cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+				&cmdData.CreateUserCommandData{Name: expectedUserName,
+					Email: strings.ToUpper(expectedUserEmail)}, // regardless of the case
+			)
+			_, err = commandHandlerClient().Execute(ctx, command)
+			Expect(err).To(HaveOccurred())
 
 			By("giving the user system admin role")
 			command, err = cmd.AddCommandData(
@@ -262,6 +272,15 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(tenant.Id).To(Equal(tenantId.String()))
 			}).Should(Succeed())
 
+			By("ensuring the same tenant can't be created again")
+			command, err = cmd.AddCommandData(
+				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+				&cmdData.CreateTenantCommandData{Name: strings.ToUpper(expectedTenantName), // regardless of the case
+					Prefix: expectedTenantPrefix},
+			)
+			_, err = commandHandlerClient().Execute(ctx, command)
+			Expect(err).To(HaveOccurred())
+
 			By("updating the tenant")
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
@@ -357,6 +376,16 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
 			}).Should(Succeed())
+
+			By("ensuring the same cluster can't be created again")
+			command, err = cmd.AddCommandData(
+				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName,
+					Name:             strings.ToUpper(expectedClusterName), // regardless of the case and white spaces
+					ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+			)
+			_, err = commandHandlerClient().Execute(ctx, command)
+			Expect(err).To(HaveOccurred())
 
 			By("deleting the cluster")
 			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
