@@ -1,5 +1,7 @@
 BUILD_PATH ?= $(shell pwd)
 
+COPYRIGHT_FILE ?= hack/copyright.lic
+
 GO ?= go
 CURL ?= curl
 
@@ -62,14 +64,14 @@ go-protobuf: .protobuf-deps
 
 .PHONY: go-rebuild-mocks
 go-rebuild-mocks: .protobuf-deps gomock
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/sigs.k8s.io/controller-runtime/pkg/client.go sigs.k8s.io/controller-runtime/pkg/client Client
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/eventstore_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/eventsourcing/commandhandler_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/domain/user_client.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/api/gateway/gateway_auth_client.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthClient
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
-	$(MOCKGEN) -copyright_file hack/copyright.lic -destination internal/test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository,ClusterAccessRepository
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/sigs.k8s.io/controller-runtime/pkg/client.go sigs.k8s.io/controller-runtime/pkg/client Client
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/api/eventsourcing/eventstore_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing EventStoreClient,EventStore_StoreClient,EventStore_RetrieveClient
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/api/eventsourcing/commandhandler_client.go github.com/finleap-connect/monoskope/pkg/api/eventsourcing CommandHandlerClient
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/api/domain/user_client.go github.com/finleap-connect/monoskope/pkg/api/domain UserClient,User_GetAllClient
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/api/gateway/gateway_auth_client.go github.com/finleap-connect/monoskope/pkg/api/gateway GatewayAuthClient
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/eventsourcing/mock_handler.go github.com/finleap-connect/monoskope/pkg/eventsourcing EventHandler
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/eventsourcing/aggregate_store.go github.com/finleap-connect/monoskope/pkg/eventsourcing AggregateStore
+	$(MOCKGEN) -copyright_file $(COPYRIGHT_FILE) -destination internal/test/domain/repositories/repositories.go github.com/finleap-connect/monoskope/pkg/domain/repositories UserRepository,ClusterRepository,ClusterAccessRepository
 
 ##@ Build Dependencies
 
@@ -101,17 +103,14 @@ PROTOC_GEN_VALIDATE_VERSION ?= 0.6.2
 PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/include
 PROTO_FILES                 != find api -name "*.proto"
 
-.PHONY: ginkgo
 ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
 $(GINKGO): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/ginkgo@$(GINKGO_VERSION)
 
-.PHONY: golangcilint
 golangcilint: $(GOLANGCILINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCILINT): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VERSION)
 
-.PHONY: gomock
 gomock: $(MOCKGEN) ## Download mockgen locally if necessary.
 $(MOCKGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/golang/mock/mockgen@$(GOMOCK_VERSION)
