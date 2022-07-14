@@ -68,6 +68,17 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if !_CreateTenantCommandData_Name_Pattern.MatchString(m.GetName()) {
+		err := CreateTenantCommandDataValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if l := utf8.RuneCountInString(m.GetPrefix()); l < 2 || l > 12 {
 		err := CreateTenantCommandDataValidationError{
 			field:  "Prefix",
@@ -169,6 +180,8 @@ var _ interface {
 	ErrorName() string
 } = CreateTenantCommandDataValidationError{}
 
+var _CreateTenantCommandData_Name_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
+
 var _CreateTenantCommandData_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 // Validate checks the field values on UpdateTenantCommandData with the rules
@@ -199,6 +212,17 @@ func (m *UpdateTenantCommandData) validate(all bool) error {
 			err := UpdateTenantCommandDataValidationError{
 				field:  "Name",
 				reason: "value length must be between 3 and 150 runes, inclusive",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_UpdateTenantCommandData_Name_Pattern.MatchString(wrapper.GetValue()) {
+			err := UpdateTenantCommandDataValidationError{
+				field:  "Name",
+				reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
 			}
 			if !all {
 				return err
@@ -286,3 +310,5 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateTenantCommandDataValidationError{}
+
+var _UpdateTenantCommandData_Name_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")

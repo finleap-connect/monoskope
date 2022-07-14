@@ -49,7 +49,7 @@ var (
 
 	validTenantPrefix = validRestrictedString[0:12]
 
-	validEmail = "email@invalid.com"
+	validEmail = "email@valid.com"
 	validRole  = validLowercaseString
 	validScope = validLowercaseString
 
@@ -61,15 +61,17 @@ var (
 	invalidRestrictedString       = "0Start_withNumber-V1"
 	invalidRestrictedStringLength = strings.Repeat("x", 61)
 	invalidLowercaseString        = "onlyLowerCase"
+	invalidStringWhitespace       = " " + validString + "\n"
 
 	invalidUUID                         = "invalid uuid"
 	invalidAggregateTypeStartWithNumber = invalidRestrictedString
 	invalidAggregateTypeTooLong         = invalidRestrictedStringLength
 	invalidCSR                          = []byte("invalid CSR")
 
-	invalidName               = invalidRestrictedString
-	invalidDisplayNameTooLong = invalidStringLength
-	invalidApiServerAddress   = "k8s-api.lab. example.com:6443"
+	invalidName                   = invalidRestrictedString
+	invalidDisplayNameTooLong     = invalidStringLength
+	invalidDisplayNameWhiteSpaces = invalidStringWhitespace
+	invalidApiServerAddress       = "k8s-api.lab. example.com:6443"
 
 	invalidTenantPrefixTooLong         = validRestrictedString
 	invalidTenantPrefixStartWithNumber = invalidRestrictedString[0:12]

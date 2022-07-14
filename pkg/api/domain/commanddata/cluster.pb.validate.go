@@ -90,6 +90,17 @@ func (m *CreateCluster) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if !_CreateCluster_DisplayName_Pattern.MatchString(m.GetDisplayName()) {
+		err := CreateClusterValidationError{
+			field:  "DisplayName",
+			reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if !_CreateCluster_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := CreateClusterValidationError{
 			field:  "ApiServerAddress",
@@ -182,6 +193,8 @@ var _ interface {
 
 var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
+var _CreateCluster_DisplayName_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
+
 var _CreateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on UpdateCluster with the rules defined in
@@ -212,6 +225,17 @@ func (m *UpdateCluster) validate(all bool) error {
 			err := UpdateClusterValidationError{
 				field:  "DisplayName",
 				reason: "value length must be at most 150 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if !_UpdateCluster_DisplayName_Pattern.MatchString(wrapper.GetValue()) {
+			err := UpdateClusterValidationError{
+				field:  "DisplayName",
+				reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
 			}
 			if !all {
 				return err
@@ -314,5 +338,7 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = UpdateClusterValidationError{}
+
+var _UpdateCluster_DisplayName_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
 
 var _UpdateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")

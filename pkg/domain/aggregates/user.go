@@ -28,7 +28,6 @@ import (
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // UserAggregate is an aggregate for Users.
@@ -51,22 +50,10 @@ func NewUserAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *UserAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	a.cleanup(ctx, cmd)
 	if err := a.validate(ctx, cmd); err != nil {
 		return nil, err
 	}
 	return a.execute(ctx, cmd)
-}
-
-// cleanup cleans up the command before validation
-func (a *UserAggregate) cleanup(_ context.Context, cmd es.Command) {
-	switch cmd := cmd.(type) {
-	case *commands.CreateUserCommand:
-		cmd.Name = strings.TrimSpace(cmd.Name)
-		cmd.Email = strings.TrimSpace(cmd.Email)
-	case *commands.UpdateUserCommand:
-		cmd.Name = wrapperspb.String(strings.TrimSpace(cmd.Name.Value))
-	}
 }
 
 func (a *UserAggregate) validate(ctx context.Context, cmd es.Command) error {

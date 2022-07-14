@@ -25,7 +25,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // TenantAggregate is an aggregate for Tenants.
@@ -48,22 +47,10 @@ func NewTenantAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *TenantAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	a.cleanup(ctx, cmd)
 	if err := a.validate(ctx, cmd); err != nil {
 		return nil, err
 	}
 	return a.execute(ctx, cmd)
-}
-
-// cleanup cleans up the command before validation
-func (a *TenantAggregate) cleanup(_ context.Context, cmd es.Command) {
-	switch cmd := cmd.(type) {
-	case *commands.CreateTenantCommand:
-		cmd.Name = strings.TrimSpace(cmd.Name)
-		cmd.Prefix = strings.TrimSpace(cmd.Prefix)
-	case *commands.UpdateTenantCommand:
-		cmd.Name = wrapperspb.String(strings.TrimSpace(cmd.Name.Value))
-	}
 }
 
 // validate validates the current state of the aggregate and if a specific command is valid in the current state

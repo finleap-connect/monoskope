@@ -16,7 +16,6 @@ package validator
 
 import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
-	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -25,41 +24,39 @@ import (
 var _ = Describe("Test validation rules for tenant messages", func() {
 	Context("Creating Tenant", func() {
 		var cd *commanddata.CreateTenantCommandData
-		var ed *eventdata.TenantCreated
 		JustBeforeEach(func() {
 			cd = NewValidCreateTenantCommandData()
-			ed = NewValidTenantCreated()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid Name", func() {
-			cd.Name = invalidDisplayNameTooLong
-			ed.Name = invalidDisplayNameTooLong
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.Name = invalidDisplayNameTooLong
+				ValidateErrorExpected()
+			})
+
+			By("not containing white spaces", func() {
+				cd.Name = invalidDisplayNameWhiteSpaces
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid Prefix", func() {
 			By("not starting with a number", func() {
 				cd.Prefix = invalidTenantPrefixStartWithNumber
-				ed.Prefix = invalidTenantPrefixStartWithNumber
 				ValidateErrorExpected()
 			})
-			By("not being too longr", func() {
+			By("not being too long", func() {
 				cd.Prefix = invalidTenantPrefixTooLong
-				ed.Prefix = invalidTenantPrefixTooLong
 				ValidateErrorExpected()
 			})
 		})
@@ -67,30 +64,30 @@ var _ = Describe("Test validation rules for tenant messages", func() {
 
 	Context("Updating Tenant", func() {
 		var cd *commanddata.UpdateTenantCommandData
-		var ed *eventdata.TenantUpdated
 		JustBeforeEach(func() {
 			cd = NewValidUpdateTenantCommandData()
-			ed = NewValidTenantUpdated()
 		})
 
 		ValidateErrorExpected := func() {
 			err := cd.Validate()
-			Expect(err).To(HaveOccurred())
-			err = ed.Validate()
 			Expect(err).To(HaveOccurred())
 		}
 
 		It("should ensure rules are valid", func() {
 			err := cd.Validate()
 			Expect(err).NotTo(HaveOccurred())
-			err = ed.Validate()
-			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should check for a valid Name", func() {
-			cd.Name = &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
-			ed.Name = &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.Name = wrapperspb.String(invalidDisplayNameTooLong)
+				ValidateErrorExpected()
+			})
+
+			By("not containing white spaces", func() {
+				cd.Name = wrapperspb.String(invalidDisplayNameWhiteSpaces)
+				ValidateErrorExpected()
+			})
 		})
 	})
 })

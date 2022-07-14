@@ -131,7 +131,7 @@ var _ = Describe("integration", func() {
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
 				&cmdData.CreateUserCommandData{Name: expectedUserName,
-					Email: strings.ToUpper(" " + expectedUserEmail + " ")}, // regardless of the case and white spaces
+					Email: strings.ToUpper(expectedUserEmail)}, // regardless of the case
 			)
 			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).To(HaveOccurred())
@@ -275,7 +275,7 @@ var _ = Describe("integration", func() {
 			By("ensuring the same tenant can't be created again")
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
-				&cmdData.CreateTenantCommandData{Name: strings.ToUpper(" " + expectedTenantName + " "), // regardless of the case and white spaces
+				&cmdData.CreateTenantCommandData{Name: strings.ToUpper(expectedTenantName), // regardless of the case
 					Prefix: expectedTenantPrefix},
 			)
 			_, err = commandHandlerClient().Execute(ctx, command)
@@ -382,7 +382,7 @@ var _ = Describe("integration", func() {
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
 				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName,
-					Name:             " " + strings.ToUpper(expectedClusterName) + " ", // regardless of the case and white spaces
+					Name:             strings.ToUpper(expectedClusterName), // regardless of the case and white spaces
 					ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
 			_, err = commandHandlerClient().Execute(ctx, command)

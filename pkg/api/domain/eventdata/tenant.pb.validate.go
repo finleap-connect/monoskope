@@ -57,38 +57,9 @@ func (m *TenantCreated) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetName()) > 150 {
-		err := TenantCreatedValidationError{
-			field:  "Name",
-			reason: "value length must be at most 150 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Name
 
-	if len(m.GetPrefix()) > 12 {
-		err := TenantCreatedValidationError{
-			field:  "Prefix",
-			reason: "value length must be at most 12 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_TenantCreated_Prefix_Pattern.MatchString(m.GetPrefix()) {
-		err := TenantCreatedValidationError{
-			field:  "Prefix",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Prefix
 
 	if len(errors) > 0 {
 		return TenantCreatedMultiError(errors)
@@ -167,8 +138,6 @@ var _ interface {
 	ErrorName() string
 } = TenantCreatedValidationError{}
 
-var _TenantCreated_Prefix_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
-
 // Validate checks the field values on TenantUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -191,19 +160,33 @@ func (m *TenantUpdated) validate(all bool) error {
 
 	var errors []error
 
-	if wrapper := m.GetName(); wrapper != nil {
-
-		if len(wrapper.GetValue()) > 150 {
-			err := TenantUpdatedValidationError{
-				field:  "Name",
-				reason: "value length must be at most 150 bytes",
+	if all {
+		switch v := interface{}(m.GetName()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TenantUpdatedValidationError{
+					field:  "Name",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
-			if !all {
-				return err
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TenantUpdatedValidationError{
+					field:  "Name",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
-			errors = append(errors, err)
 		}
-
+	} else if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TenantUpdatedValidationError{
+				field:  "Name",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {

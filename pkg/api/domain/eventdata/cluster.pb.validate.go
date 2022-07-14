@@ -57,49 +57,11 @@ func (m *ClusterCreated) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetName()) > 150 {
-		err := ClusterCreatedValidationError{
-			field:  "Name",
-			reason: "value length must be at most 150 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Name
 
-	if len(m.GetLabel()) > 60 {
-		err := ClusterCreatedValidationError{
-			field:  "Label",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Label
 
-	if !_ClusterCreated_Label_Pattern.MatchString(m.GetLabel()) {
-		err := ClusterCreatedValidationError{
-			field:  "Label",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_ClusterCreated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
-		err := ClusterCreatedValidationError{
-			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ApiServerAddress
 
 	// no validation rules for CaCertificateBundle
 
@@ -180,10 +142,6 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedValidationError{}
 
-var _ClusterCreated_Label_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
-
-var _ClusterCreated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
-
 // Validate checks the field values on ClusterCreatedV2 with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -206,49 +164,11 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetName()) > 60 {
-		err := ClusterCreatedV2ValidationError{
-			field:  "Name",
-			reason: "value length must be at most 60 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Name
 
-	if !_ClusterCreatedV2_Name_Pattern.MatchString(m.GetName()) {
-		err := ClusterCreatedV2ValidationError{
-			field:  "Name",
-			reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for DisplayName
 
-	if len(m.GetDisplayName()) > 150 {
-		err := ClusterCreatedV2ValidationError{
-			field:  "DisplayName",
-			reason: "value length must be at most 150 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_ClusterCreatedV2_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
-		err := ClusterCreatedV2ValidationError{
-			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ApiServerAddress
 
 	// no validation rules for CaCertificateBundle
 
@@ -329,10 +249,6 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedV2ValidationError{}
 
-var _ClusterCreatedV2_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
-
-var _ClusterCreatedV2_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
-
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -355,27 +271,9 @@ func (m *ClusterUpdated) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetDisplayName()) > 150 {
-		err := ClusterUpdatedValidationError{
-			field:  "DisplayName",
-			reason: "value length must be at most 150 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for DisplayName
 
-	if !_ClusterUpdated_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
-		err := ClusterUpdatedValidationError{
-			field:  "ApiServerAddress",
-			reason: "value does not match regex pattern \"^(https?://)?[^\\\\s/$.?#/_].[^\\\\s_]*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for ApiServerAddress
 
 	// no validation rules for CaCertificateBundle
 
@@ -455,5 +353,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterUpdatedValidationError{}
-
-var _ClusterUpdated_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")

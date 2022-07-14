@@ -26,7 +26,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	domainErrors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // ClusterAggregate is an aggregate for K8s Clusters.
@@ -51,7 +50,6 @@ func NewClusterAggregate(aggregateManager es.AggregateStore) es.Aggregate {
 
 // HandleCommand implements the HandleCommand method of the Aggregate interface.
 func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
-	a.cleanup(ctx, cmd)
 	if err := a.validate(ctx, cmd); err != nil {
 		return nil, err
 	}
@@ -88,19 +86,6 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 		return nil, fmt.Errorf("couldn't handle command of type '%s'", cmd.CommandType())
 	}
 	return a.DefaultReply(), nil
-}
-
-// cleanup cleans up the command before validation
-func (a *ClusterAggregate) cleanup(_ context.Context, cmd es.Command) {
-	switch cmd := cmd.(type) {
-	case *commands.CreateClusterCommand:
-		cmd.Name = strings.TrimSpace(cmd.Name)
-		cmd.DisplayName = strings.TrimSpace(cmd.DisplayName)
-		cmd.ApiServerAddress = strings.TrimSpace(cmd.ApiServerAddress)
-	case *commands.UpdateClusterCommand:
-		cmd.DisplayName = wrapperspb.String(strings.TrimSpace(cmd.DisplayName.Value))
-		cmd.ApiServerAddress = wrapperspb.String(strings.TrimSpace(cmd.ApiServerAddress.Value))
-	}
 }
 
 // validate validates the current state of the aggregate and if a specific command is valid in the current state
