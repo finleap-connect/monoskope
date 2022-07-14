@@ -118,7 +118,7 @@ func NewValidClusterCreated() *eventdata.ClusterCreated {
 		Name:                validDisplayName,
 		Label:               validName,
 		ApiServerAddress:    validApiServerAddress,
-		CaCertificateBundle: []byte(noValidationRules),
+		CaCertificateBundle: []byte(validCertificate),
 	}
 }
 
@@ -127,7 +127,7 @@ func NewValidClusterCreatedV2() *eventdata.ClusterCreatedV2 {
 		Name:                validName,
 		DisplayName:         validDisplayName,
 		ApiServerAddress:    validApiServerAddress,
-		CaCertificateBundle: []byte(noValidationRules),
+		CaCertificateBundle: []byte(validCertificate),
 	}
 }
 
@@ -135,7 +135,7 @@ func NewValidUpdateCluster() *commanddata.UpdateCluster {
 	return &commanddata.UpdateCluster{
 		DisplayName:      &wrapperspb.StringValue{Value: validDisplayName},
 		ApiServerAddress: &wrapperspb.StringValue{Value: validApiServerAddress},
-		CaCertBundle:     []byte(noValidationRules),
+		CaCertBundle:     []byte(validCertificate),
 	}
 }
 
@@ -143,7 +143,7 @@ func NewValidClusterUpdated() *eventdata.ClusterUpdated {
 	return &eventdata.ClusterUpdated{
 		DisplayName:         validDisplayName,
 		ApiServerAddress:    validApiServerAddress,
-		CaCertificateBundle: []byte(noValidationRules),
+		CaCertificateBundle: []byte(validCertificate),
 	}
 }
 
