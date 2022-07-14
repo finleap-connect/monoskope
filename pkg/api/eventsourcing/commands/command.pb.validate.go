@@ -125,6 +125,7 @@ func (m *Command) validate(all bool) error {
 	if len(errors) > 0 {
 		return CommandMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -237,6 +238,7 @@ func (m *TestCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -97,6 +97,7 @@ func (m *CreateUserCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return CreateUserCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -323,6 +324,7 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return CreateUserRoleBindingCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -464,6 +466,7 @@ func (m *UpdateUserCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return UpdateUserCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -41,7 +41,6 @@ var (
 
 	validUUID          = uuid.New().String()
 	validAggregateType = validRestrictedString
-	validCSR           = []byte("-----BEGIN CERTIFICATE REQUEST-----valid CSR-----END CERTIFICATE REQUEST-----")
 
 	validName             = validRestrictedString
 	validDisplayName      = validString
@@ -57,16 +56,12 @@ var (
 
 	validEventType = validRestrictedString
 
-	invalidStringLength           = strings.Repeat("x", 151)
-	invalidRestrictedString       = "0Start_withNumber-V1"
-	invalidRestrictedStringLength = strings.Repeat("x", 61)
-	invalidLowercaseString        = "onlyLowerCase"
-	invalidStringWhitespace       = " " + validString + "\n"
+	invalidStringLength     = strings.Repeat("x", 151)
+	invalidRestrictedString = "0Start_withNumber-V1"
+	invalidLowercaseString  = "onlyLowerCase"
 
 	invalidUUID                         = "invalid uuid"
 	invalidAggregateTypeStartWithNumber = invalidRestrictedString
-	invalidAggregateTypeTooLong         = invalidRestrictedStringLength
-	invalidCSR                          = []byte("invalid CSR")
 
 	invalidName                   = invalidRestrictedString
 	invalidDisplayNameTooLong     = invalidStringLength
@@ -88,22 +83,6 @@ var (
 func TestUtil(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "gRPC Validator Middleware Test Suite")
-}
-
-func NewValidCertificateRequest() *commanddata.RequestCertificate {
-	return &commanddata.RequestCertificate{
-		ReferencedAggregateId:   validUUID,
-		ReferencedAggregateType: validAggregateType,
-		SigningRequest:          validCSR,
-	}
-}
-
-func NewValidRequestedCertificate() *eventdata.CertificateRequested {
-	return &eventdata.CertificateRequested{
-		ReferencedAggregateId:   validUUID,
-		ReferencedAggregateType: validAggregateType,
-		SigningRequest:          validCSR,
-	}
 }
 
 func NewValidCreateCluster() *commanddata.CreateCluster {

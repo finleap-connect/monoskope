@@ -98,6 +98,7 @@ func (m *Cluster) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -225,6 +226,7 @@ func (m *ClusterAccess) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterAccessMultiError(errors)
 	}
+
 	return nil
 }
 

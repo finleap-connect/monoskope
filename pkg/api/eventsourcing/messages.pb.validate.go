@@ -180,6 +180,7 @@ func (m *Event) validate(all bool) error {
 	if len(errors) > 0 {
 		return EventMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -448,6 +449,7 @@ func (m *EventFilter) validate(all bool) error {
 	if len(errors) > 0 {
 		return EventFilterMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -590,6 +592,7 @@ func (m *EventFilters) validate(all bool) error {
 	if len(errors) > 0 {
 		return EventFiltersMultiError(errors)
 	}
+
 	return nil
 }
 

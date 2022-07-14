@@ -134,6 +134,7 @@ func (m *User) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -271,6 +272,7 @@ func (m *UserRoleBinding) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserRoleBindingMultiError(errors)
 	}
+
 	return nil
 }
 

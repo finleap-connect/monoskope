@@ -23,11 +23,9 @@ project.dict
 /tmp/
 
 /bin/
-/include/*
+/api_includes/
 *.coverprofile
 .protobuf-deps
-
-/gateway
 
 build/package/helm/monoskope/Chart.lock
 build/package/helm/monoskope/charts/**

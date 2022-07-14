@@ -70,6 +70,7 @@ func (m *UserCreated) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserCreatedMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -176,6 +177,7 @@ func (m *UserRoleAdded) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserRoleAddedMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -277,6 +279,7 @@ func (m *UserUpdated) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserUpdatedMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -5,15 +5,6 @@ COPYRIGHT_FILE ?= hack/copyright.lic
 GO ?= go
 CURL ?= curl
 
-uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-
-ifeq ($(uname_S),Linux)
-ARCH = linux-x86_64
-endif
-ifeq ($(uname_S),Darwin)
-ARCH = osx-x86_64
-endif
-
 export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
@@ -94,13 +85,26 @@ PROTOC ?= $(LOCALBIN)/protoc
 GOMOCK_VERSION  ?= v1.5.0
 GINKGO_VERSION ?= v1.16.5
 GOLANGCILINT_VERSION ?= v1.46.1
-PROTOC_VERSION ?= 3.17.0
-PROTOC_GEN_GO_VERSION ?= v1.26.0
-PROTOC_GEN_GO_GRPC_VERSION ?= v1.1.0
-PROTOC_GEN_VALIDATE_VERSION ?= 0.6.2
+PROTOC_VERSION ?= 21.2
+PROTOC_GEN_GO_VERSION ?= v1.28
+PROTOC_GEN_GO_GRPC_VERSION ?= v1.2
+PROTOC_GEN_VALIDATE_VERSION ?= 0.6.7
+
+GOARCH := $(shell go env GOARCH)
+GOOS := $(shell go env GOOS)
+PROTO_ARCH := $(GOARCH)
+PROTO_OS := $(GOOS)
+
+ifeq ($(PROTO_OS),darwin)
+PROTO_OS = osx
+endif
+ifeq ($(PROTO_ARCH),arm64)
+PROTO_ARCH = aarch_64
+endif
+PROTO_ARCH_OS := $(PROTO_OS)-$(PROTO_ARCH)
 
 ## Tool Config
-PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/include
+PROTOC_IMPORTS_DIR          ?= $(BUILD_PATH)/api_includes
 PROTO_FILES                 != find api -name "*.proto"
 
 ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
@@ -116,22 +120,24 @@ $(MOCKGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/golang/mock/mockgen@$(GOMOCK_VERSION)
 
 .protobuf-deps: protoc-get $(PROTO_FILES)
-	for file in $$(find pkg/api/ -name "*.pb.go") ; do source=$$(awk '/^\/\/ source:/ { print $$3 }' $$file) ; echo "$$file: $$source"; done >.protobuf-deps
-	echo -n "GENERATED_GO_FILES := " >>.protobuf-deps
-	for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
-	echo >>.protobuf-deps
+	@for file in $$(find pkg/api/ -name "*.pb.go") ; do source=$$(awk '/^\/\/ source:/ { print $$3 }' $$file) ; echo "$$file: $$source"; done >.protobuf-deps
+	@echo -n "GENERATED_GO_FILES := " >>.protobuf-deps
+	@for file in $$(find pkg/api/ -name "*.pb.go") ; do echo -n " $$file"; done >>.protobuf-deps
+	@echo >>.protobuf-deps
 	
 protoc-get $(PROTOC):
 	mkdir -p $(PROTOC_IMPORTS_DIR)/
-	$(CURL) -LO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(ARCH).zip"
-	unzip protoc-$(PROTOC_VERSION)-$(ARCH).zip -d $(LOCALBIN)/.protoc-unpack
-	mv $(LOCALBIN)/.protoc-unpack/bin/protoc $(LOCALBIN)/protoc
+	$(CURL) -fLO "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(PROTO_ARCH_OS).zip"
+	unzip protoc-$(PROTOC_VERSION)-$(PROTO_ARCH_OS).zip -d $(LOCALBIN)/.protoc-unpack
+	mv -f $(LOCALBIN)/.protoc-unpack/bin/protoc $(LOCALBIN)/protoc
 	cp -a $(LOCALBIN)/.protoc-unpack/include/* $(PROTOC_IMPORTS_DIR)/
-	rm -rf $(LOCALBIN)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(ARCH).zip
-	$(CURL) -LO "https://github.com/envoyproxy/protoc-gen-validate/archive/refs/tags/v$(PROTOC_GEN_VALIDATE_VERSION).zip"
+	rm -rf $(LOCALBIN)/.protoc-unpack/ protoc-$(PROTOC_VERSION)-$(PROTO_ARCH_OS).zip
+	$(CURL) -fLO "https://github.com/envoyproxy/protoc-gen-validate/archive/refs/tags/v$(PROTOC_GEN_VALIDATE_VERSION).zip"
 	unzip v$(PROTOC_GEN_VALIDATE_VERSION).zip -d $(LOCALBIN)/
-	cp -a $(LOCALBIN)/protoc-gen-validate-$(PROTOC_GEN_VALIDATE_VERSION)/validate $(PROTOC_IMPORTS_DIR)/
+	mkdir -p $(PROTOC_IMPORTS_DIR)/validate/
+	cp -a $(LOCALBIN)/protoc-gen-validate-$(PROTOC_GEN_VALIDATE_VERSION)/validate/validate.proto $(PROTOC_IMPORTS_DIR)/validate/
 	rm -rf $(LOCALBIN)/protoc-gen-validate-$(PROTOC_GEN_VALIDATE_VERSION) v$(PROTOC_GEN_VALIDATE_VERSION).zip
 	GOBIN=$(LOCALBIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
 	GOBIN=$(LOCALBIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	GOBIN=$(LOCALBIN) go install github.com/envoyproxy/protoc-gen-validate@v$(PROTOC_GEN_VALIDATE_VERSION)
+	

@@ -1,10 +1,10 @@
 repositories:
   - url: https://monoskope.io/test1.git
     branch: main
+    interval: 5m
     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
     basicAuthPath: test_repo_one_basic_auth.yaml
     allClusters: true
-    interval: 5m
   - url: https://monoskope.io/test2.git
     branch: test
     interval: 5m
