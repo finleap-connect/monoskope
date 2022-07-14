@@ -44,7 +44,7 @@ type Command struct {
 
 	// Unique identifier of the aggregate the command applies to (UUID 128-bit
 	// number)
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // required
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Type of the command
 	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
 	// Command type specific data
