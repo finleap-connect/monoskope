@@ -33,8 +33,6 @@ import (
 )
 
 var (
-	noValidationRules = "No Validation rules on this level"
-
 	validString           = "123 Whatever, no re$triction character wise !@#$%^&*()"
 	validRestrictedString = "ValidRestricted-String_V1"
 	validLowercaseString  = "onlylowercase"

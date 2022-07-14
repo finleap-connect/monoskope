@@ -33,7 +33,10 @@ message CreateCluster {
     max_len : 60
   } ];
   // Display name of the cluster
-  string display_name = 2 [ (validate.rules).string.max_len = 150 ];
+  string display_name = 2 [ (validate.rules).string = {
+    pattern : "^[^\\s]+(\\s+[^\\s]+)*$",
+    max_len : 150
+  } ];
   // DNS name or IP address of the clusters KubeAPIServer
   string api_server_address = 3 [ (validate.rules).string.pattern =
                                       "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
@@ -47,8 +50,10 @@ message CreateCluster {
 // Command data to update information about a cluster
 message UpdateCluster {
   // Display name of the cluster
-  google.protobuf.StringValue display_name = 1
-      [ (validate.rules).string.max_len = 150 ];
+  google.protobuf.StringValue display_name = 1 [ (validate.rules).string = {
+    pattern : "^[^\\s]+(\\s+[^\\s]+)*$",
+    max_len : 150
+  } ];
   // DNS name or IP address of the clusters KubeAPIServer
   google.protobuf.StringValue api_server_address = 2
       [ (validate.rules).string.pattern =
