@@ -54,16 +54,8 @@ message UpdateCluster {
       [ (validate.rules).string.pattern =
             "^(https?://)?[^\\s/$.?#/_].[^\\s_]*$" ];
   // Bundle of CA certificates of the cluster, PEM encoded
-  bytes ca_cert_bundle = 3;
-  // not supported yet
-  //  [
-  //    (validate.rules).bytes.prefix = {in: [
-  //      "-----BEGIN CERTIFICATE REQUEST-----",
-  //      "-----BEGIN RSA PRIVATE KEY-----",
-  //      "-----BEGIN CERTIFICATE-----"]},
-  //    (validate.rules).bytes.suffix = {in: [
-  //      "-----END CERTIFICATE REQUEST-----",
-  //      "-----END RSA PRIVATE KEY-----",
-  //      "-----END CERTIFICATE-----"]}
-  //  ];
+  bytes ca_cert_bundle = 3 [
+    (validate.rules).bytes.prefix = "-----BEGIN CERTIFICATE-----",
+    (validate.rules).bytes.suffix = "-----END CERTIFICATE-----"
+  ];
 }
