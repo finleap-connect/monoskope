@@ -44,11 +44,15 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		})
 
 		It("should check for a valid DisplayName", func() {
-			cd.DisplayName = invalidDisplayNameTooLong
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.Name = invalidDisplayNameTooLong
+				ValidateErrorExpected()
+			})
 
-			cd.DisplayName = invalidDisplayNameWhiteSpaces
-			ValidateErrorExpected()
+			By("not containing white spaces", func() {
+				cd.Name = invalidDisplayNameWhiteSpaces
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid ApiServerAddress", func() {
@@ -74,15 +78,19 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 		})
 
 		It("should check for a valid DisplayName", func() {
-			cd.DisplayName = &wrapperspb.StringValue{Value: invalidDisplayNameTooLong}
-			ValidateErrorExpected()
+			By("not being too long", func() {
+				cd.DisplayName = wrapperspb.String(invalidDisplayNameTooLong)
+				ValidateErrorExpected()
+			})
 
-			cd.DisplayName = &wrapperspb.StringValue{Value: invalidDisplayNameWhiteSpaces}
-			ValidateErrorExpected()
+			By("not containing white spaces", func() {
+				cd.DisplayName = wrapperspb.String(invalidDisplayNameWhiteSpaces)
+				ValidateErrorExpected()
+			})
 		})
 
 		It("should check for a valid ApiServerAddress", func() {
-			cd.ApiServerAddress = &wrapperspb.StringValue{Value: invalidApiServerAddress}
+			cd.ApiServerAddress = wrapperspb.String(invalidApiServerAddress)
 			ValidateErrorExpected()
 		})
 	})
