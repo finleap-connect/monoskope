@@ -74,11 +74,10 @@ var (
 	8w==
 	-----END CERTIFICATE-----`)
 
-	invalidStringLength           = strings.Repeat("x", 151)
-	invalidRestrictedString       = "0Start_withNumber-V1"
-	invalidRestrictedStringLength = strings.Repeat("x", 61)
-	invalidLowercaseString        = "onlyLowerCase"
-	invalidStringWhitespace       = " " + validString + "\n"
+	invalidStringLength     = strings.Repeat("x", 151)
+	invalidRestrictedString = "0Start_withNumber-V1"
+	invalidLowercaseString  = "onlyLowerCase"
+	invalidStringWhitespace = " " + validString + "\n"
 
 	invalidUUID                         = "invalid uuid"
 	invalidAggregateTypeStartWithNumber = invalidRestrictedString
