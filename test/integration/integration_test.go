@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package integration
 
 import (
 	"context"
@@ -31,6 +31,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-var _ = Describe("integration", func() {
+var _ = Describe("internal/integration_test", func() {
 	ctx := context.Background()
 
 	expectedUserName := "Jane Doe"
@@ -55,45 +56,45 @@ var _ = Describe("integration", func() {
 	expectedClusterCACertBundle := []byte("This should be a certificate")
 
 	getAdminAuthToken := func() string {
-		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email}, testEnv.gatewayTestEnv.GetApiAddr(), testEnv.gatewayTestEnv.AdminUser.ID().String(), time.Minute*10)
+		signer := testEnv.GatewayTestEnv.JwtTestEnv.CreateSigner()
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email}, testEnv.GatewayTestEnv.GetApiAddr(), mock.TestAdminUser.Id, time.Minute*10)
 		authToken, err := signer.GenerateSignedToken(token)
 		Expect(err).ToNot(HaveOccurred())
 		return authToken
 	}
 
 	commandHandlerClient := func() esApi.CommandHandlerClient {
-		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.commandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
+		_, chClient, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.CommandHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), esApi.NewCommandHandlerClient)
 		Expect(err).ToNot(HaveOccurred())
 		return chClient
 	}
 
 	userServiceClient := func() domainApi.UserClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewUserClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	tenantServiceClient := func() domainApi.TenantClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewTenantClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterServiceClient := func() domainApi.ClusterClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	clusterAccessClient := func() domainApi.ClusterAccessClient {
-		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.queryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterAccessClient)
+		_, client, err := grpcUtil.NewClientWithInsecureAuth(ctx, testEnv.QueryHandlerTestEnv.GetApiAddr(), getAdminAuthToken(), domainApi.NewClusterAccessClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
 
 	eventStoreClient := func() esApi.EventStoreClient {
-		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.eventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
+		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.EventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
 		Expect(err).ToNot(HaveOccurred())
 		return client
 	}
@@ -141,10 +142,11 @@ var _ = Describe("integration", func() {
 
 			Eventually(func(g Gomega) {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).ToNot(BeNil())
-				Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
-				Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(user).ToNot(BeNil())
+				g.Expect(len(user.Roles)).To(BeNumerically(">=", 1))
+				g.Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
+				g.Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 			}).Should(Succeed())
 
 			By("ensuring the same role (system admin) can't be given again")
@@ -174,6 +176,7 @@ var _ = Describe("integration", func() {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(user).ToNot(BeNil())
+				g.Expect(len(user.Roles)).To(BeNumerically(">=", 1))
 				g.Expect(user.Roles[0].Role).To(Equal(string(roles.Admin)))
 				g.Expect(user.Roles[0].Scope).To(Equal(string(scopes.System)))
 			}).Should(Succeed())
@@ -185,11 +188,8 @@ var _ = Describe("integration", func() {
 
 			Eventually(func(g Gomega) {
 				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
-				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(user).ToNot(BeNil())
-				g.Expect(user.GetEmail()).To(Equal(expectedUserEmail))
-				g.Expect(user.Id).To(Equal(userId.String()))
-				g.Expect(user.GetMetadata().GetDeleted()).ToNot(BeNil())
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(user).To(BeNil())
 			}).Should(Succeed())
 
 			By("recreating the user after deletion")
@@ -226,7 +226,7 @@ var _ = Describe("integration", func() {
 		It("fail to create a user which already exists", func() {
 			command, err := cmd.AddCommandData(
 				cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
-				&cmdData.CreateUserCommandData{Name: testEnv.gatewayTestEnv.AdminUser.Name, Email: testEnv.gatewayTestEnv.AdminUser.Email},
+				&cmdData.CreateUserCommandData{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -308,7 +308,7 @@ var _ = Describe("integration", func() {
 				g.Expect(tenant.Id).ToNot(Equal(tenantId.String()))
 				g.Expect(tenant.Id).To(Equal(tenantIdNew.String()))
 				g.Expect(tenant.Metadata.Deleted).To(BeNil())
-			}).Should(Succeed())
+			}, "5s").Should(Succeed())
 		})
 		It("can accept Nil as ID when creating a tenant", func() {
 			command, err := cmd.AddCommandData(
@@ -323,7 +323,6 @@ var _ = Describe("integration", func() {
 			Expect(int(reply.Version)).To(BeNumerically("==", 1))
 		})
 	})
-
 	Context("cluster management", func() {
 		It("can manage a cluster", func() {
 			By("creating the cluster")
@@ -337,7 +336,7 @@ var _ = Describe("integration", func() {
 			testReactor := mock_reactor.NewTestReactor()
 			defer testReactor.Close()
 
-			err = testReactor.Setup(ctx, testEnv.eventStoreTestEnv, eventStoreClient())
+			err = testReactor.Setup(ctx, testEnv.EventStoreTestEnv, eventStoreClient())
 			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
@@ -449,7 +448,7 @@ var _ = Describe("integration", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(tenantClusterBinding).ToNot(BeNil())
 				Expect(tenantClusterBinding.Id).To(Equal(tenantClusterBindingId.String()))
-			}).Should(Succeed())
+			}, "5s").Should(Succeed())
 
 			By("ensuring the same access can't be granted again")
 			command.Id = uuid.New().String()
@@ -485,11 +484,8 @@ var _ = Describe("integration", func() {
 			}).Should(Succeed())
 		})
 	})
-})
-
-var _ = Describe("PrometheusMetrics", func() {
 	It("can scrape event store metrics", func() {
-		res, err := http.Get(fmt.Sprintf("http://%s/metrics", testEnv.eventStoreTestEnv.MetricsListener.Addr()))
+		res, err := http.Get(fmt.Sprintf("http://%s/metrics", testEnv.EventStoreTestEnv.MetricsListener.Addr()))
 		Expect(err).ToNot(HaveOccurred())
 		defer res.Body.Close()
 		Expect(res.StatusCode).To(Equal(200))

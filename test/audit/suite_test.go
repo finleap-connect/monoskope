@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package queryhandler
+package audit
 
 import (
 	"testing"
 
-	"github.com/finleap-connect/monoskope/internal/eventstore"
-	"github.com/finleap-connect/monoskope/internal/gateway"
+	"github.com/finleap-connect/monoskope/internal"
 	"github.com/finleap-connect/monoskope/internal/test"
 
 	. "github.com/onsi/ginkgo"
@@ -26,46 +25,29 @@ import (
 )
 
 var (
-	testEnv *TestEnv
+	testEnv *internal.TestEnv
 )
 
-func TestQueryHandler(t *testing.T) {
+func TestAuditLogHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "queryhandler/integration")
+	RunSpecs(t, "audit log")
 }
 
 var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
-		var err error
-
 		By("bootstrapping test env")
-		baseTestEnv := test.NewTestEnv("queryhandler-testenv")
-		eventStoreTestEnv, err := eventstore.NewTestEnvWithParent(baseTestEnv)
-		Expect(err).To(Not(HaveOccurred()))
-
-		gatewayTestEnv, err := gateway.NewTestEnvWithParent(baseTestEnv)
-		Expect(err).To(Not(HaveOccurred()))
-
-		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv, gatewayTestEnv)
+		var err error
+		baseTestEnv := test.NewTestEnv("auditlog-testenv")
+		testEnv, err = internal.NewTestEnv(baseTestEnv)
 		Expect(err).To(Not(HaveOccurred()))
 		close(done)
 	}()
-
 	Eventually(done, 60).Should(BeClosed())
 })
 
 var _ = AfterSuite(func() {
-	var err error
 	By("tearing down the test environment")
-
-	err = testEnv.Shutdown()
-	Expect(err).To(Not(HaveOccurred()))
-
-	err = testEnv.eventStoreTestEnv.Shutdown()
-	Expect(err).To(Not(HaveOccurred()))
-
-	err = testEnv.gatewayTestEnv.Shutdown()
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(testEnv.Shutdown()).To(Not(HaveOccurred()))
 })

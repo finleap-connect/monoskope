@@ -16,10 +16,11 @@ package overviews
 
 import (
 	"context"
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
+	"github.com/google/uuid"
 
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
@@ -51,8 +52,12 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
 	creator, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil { // possible if user was created by a system user that was created manually (no events)
-		creator = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
-		creator.Email = "system@" + users.BASE_DOMAIN
+		ok := false
+		creator, ok = users.AvailableSystemUsers[uuid.MustParse(eventFilter.AggregateId.Value)]
+		if !ok {
+			creator = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+			creator.Email = "system@" + users.BASE_DOMAIN
+		}
 	}
 	details += fConsts.UserCreatedOverviewDetailsFormat.Sprint(user.Email, creator.Email, user.GetCreated().AsTime().Format(fConsts.TimeFormat))
 
@@ -63,8 +68,12 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
 	deleter, err := snapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
-		deleter = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
-		deleter.Email = "system@" + users.BASE_DOMAIN
+		ok := false
+		deleter, ok = users.AvailableSystemUsers[uuid.MustParse(eventFilter.AggregateId.Value)]
+		if !ok {
+			deleter = userProjector.NewProjection(uuid.MustParse(eventFilter.AggregateId.Value))
+			deleter.Email = "system@" + users.BASE_DOMAIN
+		}
 	}
 	details += fConsts.UserDeletedOverviewDetailsFormat.Sprint(deleter.Email, user.GetDeleted().AsTime().Format(fConsts.TimeFormat))
 

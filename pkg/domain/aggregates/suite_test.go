@@ -24,6 +24,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	meta "github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -56,9 +57,9 @@ func createSysAdminCtx() context.Context {
 	Expect(err).NotTo(HaveOccurred())
 
 	metaMgr.SetUserInformation(&meta.UserInformation{
-		Id:    uuid.New(),
-		Name:  "admin",
-		Email: "admin@monoskope.io",
+		Id:    mock.TestAdminUser.ID(),
+		Name:  mock.TestAdminUser.Name,
+		Email: mock.TestAdminUser.Email,
 	})
 
 	return metaMgr.GetContext()

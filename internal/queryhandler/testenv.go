@@ -81,7 +81,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	}
 
 	// Setup domain
-	qhDomain, err := domain.NewQueryHandlerDomain(context.Background(), env.ebConsumer, env.esClient)
+	qhDomain, err := domain.NewQueryHandlerDomain(ctx, env.ebConsumer, env.esClient)
 	if err != nil {
 		return nil, err
 	}

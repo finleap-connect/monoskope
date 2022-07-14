@@ -20,6 +20,7 @@ import (
 
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -41,14 +42,14 @@ var _ = Describe("Internal/Gateway/ClusterAuthServer", func() {
 		apiClient := api.NewClusterAuthClient(conn)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        uuid.MustParse(testEnv.TenantAdminUser.GetId()),
-			Name:      testEnv.TenantAdminUser.Name,
-			Email:     testEnv.TenantAdminUser.Email,
+			Id:        uuid.MustParse(mock.TestTenantAdminUser.GetId()),
+			Name:      mock.TestTenantAdminUser.Name,
+			Email:     mock.TestTenantAdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
 		response, err := apiClient.GetAuthToken(mdManager.GetOutgoingGrpcContext(), &api.ClusterAuthTokenRequest{
-			ClusterId: testEnv.TestClusterId.String(),
+			ClusterId: mock.TestCluster.Id,
 			Role:      string(expectedRole),
 		})
 		Expect(err).ToNot(HaveOccurred())

@@ -22,6 +22,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	metadata "github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -37,14 +38,13 @@ var (
 
 var _ = Describe("domain/projectors/cluster", func() {
 	ctx := context.Background()
-	userId := uuid.New()
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	mdManager.SetUserInformation(&metadata.UserInformation{
-		Id:    userId,
-		Name:  "admin",
-		Email: "admin@monoskope.io",
+		Id:    mock.TestAdminUser.ID(),
+		Name:  mock.TestAdminUser.Name,
+		Email: mock.TestAdminUser.Email,
 	})
 	ctx = mdManager.GetContext()
 

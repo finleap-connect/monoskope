@@ -17,6 +17,7 @@ package gateway
 import (
 	"testing"
 
+	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/test"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
@@ -42,8 +43,9 @@ var _ = BeforeSuite(func() {
 
 		By("bootstrapping test env")
 		baseTestEnv := test.NewTestEnv("queryhandler-testenv")
-
-		testEnv, err = NewTestEnvWithParent(baseTestEnv)
+		eventStoreTestEnv, err := eventstore.NewTestEnvWithParent(baseTestEnv)
+		Expect(err).To(Not(HaveOccurred()))
+		testEnv, err = NewTestEnvWithParent(baseTestEnv, eventStoreTestEnv, true)
 		Expect(err).ToNot(HaveOccurred())
 		close(done)
 	}()
@@ -52,10 +54,9 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	var err error
 	By("tearing down the test environment")
-	err = testEnv.Shutdown()
-	Expect(err).To(BeNil())
+	Expect(testEnv.Shutdown()).To(BeNil())
+	Expect(testEnv.eventStoreTestEnv.Shutdown()).To(Not(HaveOccurred()))
 
 	testEnv.GrpcServer.Shutdown()
 	testEnv.LocalOIDCProviderServer.Shutdown()

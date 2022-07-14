@@ -31,8 +31,8 @@ type UserRoleBindingRepository interface {
 	DomainRepository[*projections.UserRoleBinding]
 	// ByUserId searches for all UserRoleBinding projection's by the user id.
 	ByUserId(context.Context, uuid.UUID) ([]*projections.UserRoleBinding, error)
-	// ByUserIdAndScope searches for all UserRoleBinding projection's by the user id and the scope.
-	ByUserIdAndScope(context.Context, uuid.UUID, es.Scope) ([]*projections.UserRoleBinding, error)
+	// ByUserIdScopeAndResource searches for all UserRoleBinding projection's by the user id and the scope.
+	ByUserIdScopeAndResource(context.Context, uuid.UUID, es.Scope, string) ([]*projections.UserRoleBinding, error)
 	// ByScopeAndResource returns all UserRoleBinding projections matching the given scope and resource.
 	ByScopeAndResource(context.Context, es.Scope, uuid.UUID) ([]*projections.UserRoleBinding, error)
 }
@@ -60,8 +60,8 @@ func (r *userRoleBindingRepository) ByUserId(ctx context.Context, userId uuid.UU
 	return userRoleBindings, nil
 }
 
-// ByUserIdAndScope searches for all UserRoleBinding projection's by the a user id and the scope.
-func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId uuid.UUID, scope es.Scope) ([]*projections.UserRoleBinding, error) {
+// ByUserIdScopeAndResource searches for all UserRoleBinding projection's by the a user id and the scope.
+func (r *userRoleBindingRepository) ByUserIdScopeAndResource(ctx context.Context, userId uuid.UUID, scope es.Scope, resource string) ([]*projections.UserRoleBinding, error) {
 	ps, err := r.AllWith(ctx, false)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (r *userRoleBindingRepository) ByUserIdAndScope(ctx context.Context, userId
 
 	var userRoleBindings []*projections.UserRoleBinding
 	for _, userRoleBinding := range ps {
-		if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == string(scope) {
+		if userId.String() == userRoleBinding.GetUserId() && userRoleBinding.Scope == string(scope) && userRoleBinding.Resource == resource {
 			userRoleBindings = append(userRoleBindings, userRoleBinding)
 		}
 	}

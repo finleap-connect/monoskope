@@ -23,6 +23,7 @@ import (
 	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	api "github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/metadata"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
@@ -39,9 +40,6 @@ var _ = Describe("GetAuthToken", func() {
 	expectedClusterId := uuid.New()
 	expectedClusterName := "testcluster"
 	expectedClusterApiServerAddress := "https://somecluster.io"
-	expectedUserId := uuid.New()
-	expectedUserName := "admin"
-	expectedUserEmail := "admin@monoskope.io"
 	expectedIssuer := "https://someissuer.io"
 	expectedValidity := map[string]time.Duration{
 		"default": time.Hour * 1,
@@ -73,9 +71,9 @@ var _ = Describe("GetAuthToken", func() {
 		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        expectedUserId,
-			Name:      expectedUserName,
-			Email:     expectedUserEmail,
+			Id:        mock.TestAdminUser.ID(),
+			Name:      mock.TestAdminUser.Name,
+			Email:     mock.TestAdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
@@ -92,7 +90,7 @@ var _ = Describe("GetAuthToken", func() {
 		}
 
 		ctxWithUser := mdManager.GetContext()
-		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, mock.TestAdminUser.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
 
 		err := uc.Run(ctxWithUser)
 		Expect(err).ToNot(HaveOccurred())
@@ -110,9 +108,9 @@ var _ = Describe("GetAuthToken", func() {
 		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        expectedUserId,
-			Name:      expectedUserName,
-			Email:     expectedUserEmail,
+			Id:        mock.TestAdminUser.ID(),
+			Name:      mock.TestAdminUser.Name,
+			Email:     mock.TestAdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
@@ -122,7 +120,7 @@ var _ = Describe("GetAuthToken", func() {
 		clusterProjection.ApiServerAddress = expectedClusterApiServerAddress
 
 		ctxWithUser := mdManager.GetContext()
-		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{}, nil)
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, mock.TestAdminUser.ID()).Return([]*api_projections.ClusterAccess{}, nil)
 
 		err := uc.Run(ctxWithUser)
 		Expect(err).To(HaveOccurred())
@@ -140,9 +138,9 @@ var _ = Describe("GetAuthToken", func() {
 		uc := NewGetAuthTokenUsecase(request, result, jwtTestEnv.CreateSigner(), clusterAccessRepo, expectedIssuer, expectedValidity)
 
 		mdManager.SetUserInformation(&metadata.UserInformation{
-			Id:        expectedUserId,
-			Name:      expectedUserName,
-			Email:     expectedUserEmail,
+			Id:        mock.TestAdminUser.ID(),
+			Name:      mock.TestAdminUser.Name,
+			Email:     mock.TestAdminUser.Email,
 			NotBefore: time.Now().UTC(),
 		})
 
@@ -159,7 +157,7 @@ var _ = Describe("GetAuthToken", func() {
 		}
 
 		ctxWithUser := mdManager.GetContext()
-		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, expectedUserId).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
+		clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(ctxWithUser, mock.TestAdminUser.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
 
 		err := uc.Run(ctxWithUser)
 		Expect(err).To(HaveOccurred())

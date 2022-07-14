@@ -34,6 +34,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"k8s.io/utils/strings/slices"
 )
 
 // auditLogServer is the implementation of the auditLogService API
@@ -95,15 +96,19 @@ func (s *auditLogServer) GetByDateRange(request *doApi.GetAuditLogByDateRangeReq
 
 // GetByUser returns human-readable events caused by others actions on the given user
 func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi.AuditLog_GetByUserServer) error {
-	user, err := s.userRepo.ByEmail(stream.Context(), request.Email.GetValue())
+	users, err := s.userRepo.ByEmailIncludingDeleted(stream.Context(), request.Email.GetValue())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
+
+	var filter []*esApi.EventFilter
+	filter = append(filter, &esApi.EventFilter{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp})
+	for _, user := range users {
+		filter = append(filter, &esApi.EventFilter{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp})
+	}
+
 	eventsStream, err := s.esClient.RetrieveOr(stream.Context(), &esApi.EventFilters{
-		Filters: []*esApi.EventFilter{
-			{AggregateId: wrapperspb.String(user.Id), AggregateType: wrapperspb.String(aggregates.User.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
-			{AggregateType: wrapperspb.String(aggregates.UserRoleBinding.String()), MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp},
-		},
+		Filters: filter,
 	})
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
@@ -119,9 +124,17 @@ func (s *auditLogServer) GetByUser(request *doApi.GetByUserRequest, stream doApi
 		}
 
 		hre := s.auditFormatter.NewHumanReadableEvent(stream.Context(), e)
-		if !strings.Contains(hre.Details, fConsts.Quote(user.Email)) || hre.IssuerId == user.Id {
-			continue // skip e.g. UserRoleBindings that doesn't affect the given user or were created by him
+		skip := false
+		for _, user := range users {
+			if !strings.Contains(hre.Details, fConsts.Quote(user.Email)) || hre.IssuerId == user.Id {
+				skip = true // skip e.g. UserRoleBindings that doesn't affect the given user or where created by him
+			}
 		}
+
+		if skip {
+			continue
+		}
+
 		err = stream.Send(hre)
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
@@ -137,10 +150,15 @@ func (s *auditLogServer) GetUserActions(request *doApi.GetUserActionsRequest, st
 		return errors.TranslateToGrpcError(errors.ErrInvalidArgument("date range cannot exceed one year")) // see PR #90
 	}
 
-	user, err := s.userRepo.ByEmail(stream.Context(), request.Email.GetValue())
+	users, err := s.userRepo.ByEmailIncludingDeleted(stream.Context(), request.Email.GetValue())
 	if err != nil {
 		return errors.TranslateToGrpcError(err)
 	}
+	var userIds []string
+	for _, user := range users {
+		userIds = append(userIds, user.Id)
+	}
+
 	eventFilter := &esApi.EventFilter{MinTimestamp: request.DateRange.MinTimestamp, MaxTimestamp: request.DateRange.MaxTimestamp}
 	eventsStream, err := s.esClient.Retrieve(stream.Context(), eventFilter)
 	if err != nil {
@@ -155,7 +173,9 @@ func (s *auditLogServer) GetUserActions(request *doApi.GetUserActionsRequest, st
 		if err != nil {
 			return errors.TranslateToGrpcError(err)
 		}
-		if e.Metadata[auth.HeaderAuthId] != user.Id {
+
+		eventIssuerId := e.Metadata[auth.HeaderAuthId]
+		if !slices.Contains(userIds, eventIssuerId) {
 			continue
 		}
 
