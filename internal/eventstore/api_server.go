@@ -15,6 +15,8 @@
 package eventstore
 
 import (
+	"fmt"
+
 	"github.com/finleap-connect/monoskope/internal/eventstore/metrics"
 	"github.com/finleap-connect/monoskope/internal/eventstore/usecases"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -35,11 +37,16 @@ type apiServer struct {
 
 // NewApiServer returns a new configured instance of apiServer
 func NewApiServer(store es.EventStore, bus es.EventBusPublisher) *apiServer {
+	m, err := metrics.NewEventStoreMetrics()
+	if err != nil {
+		panic(fmt.Errorf("Error setting up metrics server: %w", err))
+	}
+
 	s := &apiServer{
 		log:     logger.WithName("server"),
 		store:   store,
 		bus:     bus,
-		metrics: metrics.NewEventStoreMetrics(),
+		metrics: m,
 	}
 
 	return s

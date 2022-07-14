@@ -20,9 +20,9 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
-	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/aggregates"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -32,23 +32,22 @@ import (
 var _ = Describe("domain/user_repo", func() {
 	ctx := context.Background()
 	userId := uuid.New()
-	adminUser := &projections.User{Id: userId.String(), Name: "admin", Email: "admin@monoskope.io"}
 
 	It("can handle events", func() {
 		userProjector := NewUserProjector()
 		userProjection := userProjector.NewProjection(uuid.New())
 		protoEventData := &eventdata.UserCreated{
-			Name:  adminUser.Name,
-			Email: adminUser.Email,
+			Name:  mock.TestAdminUser.Name,
+			Email: mock.TestAdminUser.Email,
 		}
 		eventData := eventsourcing.ToEventDataFromProto(protoEventData)
-		event := eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 1)
+		event := eventsourcing.NewEvent(ctx, events.UserCreated, eventData, time.Now().UTC(), aggregates.User, uuid.MustParse(mock.TestAdminUser.Id), 1)
 		event.Metadata()[auth.HeaderAuthId] = userId.String()
 		userProjection, err := userProjector.Project(context.Background(), event, userProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(userProjection.Version()).To(Equal(uint64(1)))
 
-		deleteEvent := eventsourcing.NewEvent(ctx, events.UserDeleted, nil, time.Now().UTC(), aggregates.User, uuid.MustParse(adminUser.Id), 2)
+		deleteEvent := eventsourcing.NewEvent(ctx, events.UserDeleted, nil, time.Now().UTC(), aggregates.User, uuid.MustParse(mock.TestAdminUser.Id), 2)
 		deleteEvent.Metadata()[auth.HeaderAuthId] = userId.String()
 		userProjection, err = userProjector.Project(context.Background(), deleteEvent, userProjection)
 		Expect(err).NotTo(HaveOccurred())

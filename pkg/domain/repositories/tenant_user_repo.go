@@ -58,6 +58,10 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 		if err != nil {
 			return nil, err
 		}
+		// skip deleted users
+		if user.Metadata.GetDeleted().AsTime().Unix() != 0 {
+			continue
+		}
 
 		// Skip deleted tenants
 		tenant, err := r.tenantRepo.ById(ctx, uuid.MustParse(binding.Resource))
@@ -68,8 +72,9 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 			continue
 		}
 
-		if _, ok := userMap[user.Id]; !ok {
-			bindings, err := r.userRoleBindingRepo.ByUserIdAndScope(ctx, user.ID(), scopes.Tenant)
+		// check if we already had this user for this tenant
+		if _, ok := userMap[binding.UserId]; !ok {
+			bindings, err := r.userRoleBindingRepo.ByUserIdScopeAndResource(ctx, user.ID(), scopes.Tenant, binding.Resource)
 			if err != nil {
 				return nil, err
 			}

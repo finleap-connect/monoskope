@@ -28,6 +28,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/gateway"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -40,8 +41,8 @@ var _ = Describe("internal/scimserver/Server", func() {
 	getAuthToken := func() string {
 		signer := testEnv.gatewayTestEnv.JwtTestEnv.CreateSigner()
 		token := auth.NewApiToken(
-			&jwt.StandardClaims{Name: testEnv.gatewayTestEnv.AdminUser.Name,
-				Email: testEnv.gatewayTestEnv.AdminUser.Email},
+			&jwt.StandardClaims{Name: mock.TestAdminUser.Name,
+				Email: mock.TestAdminUser.Email},
 			testEnv.gatewayTestEnv.GetApiAddr(),
 			"test",
 			time.Minute*10,

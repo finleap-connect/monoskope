@@ -32,7 +32,7 @@ type EventStoreMetrics struct {
 // ServerMetrics when not using the default Prometheus metrics registry, for
 // example when wanting to control which metrics are added to a registry as
 // opposed to automatically adding metrics via init functions.
-func NewEventStoreMetrics() *EventStoreMetrics {
+func NewEventStoreMetrics() (*EventStoreMetrics, error) {
 	m := &EventStoreMetrics{}
 	labels := []string{"event_type", "aggregate_type"}
 
@@ -71,16 +71,26 @@ func NewEventStoreMetrics() *EventStoreMetrics {
 		labels,
 	)
 
-	return m.
-		register(m.TransmittedTotalCounter.MetricVec).
-		register(m.StoredTotalCounter.MetricVec).
-		register(m.RetrievedTotalCounter.MetricVec).
-		register(m.StoredHistogram.MetricVec).
-		register(m.RetrievedHistogram.MetricVec)
+	metricVacs := []*prom.MetricVec{
+		m.TransmittedTotalCounter.MetricVec,
+		m.StoredTotalCounter.MetricVec,
+		m.RetrievedTotalCounter.MetricVec,
+		m.StoredHistogram.MetricVec,
+		m.RetrievedHistogram.MetricVec,
+	}
+	return m, m.register(metricVacs)
 }
 
 // Registers all metrics with prometheus default registerer
-func (m *EventStoreMetrics) register(v *prom.MetricVec) *EventStoreMetrics {
-	prom.MustRegister(v)
-	return m
+func (m *EventStoreMetrics) register(vecs []*prom.MetricVec) error {
+	for _, v := range vecs {
+		err := prom.Register(v)
+		if err != nil {
+			_, ok := err.(prom.AlreadyRegisteredError)
+			if !ok {
+				return err
+			}
+		}
+	}
+	return nil
 }

@@ -25,6 +25,7 @@ import (
 	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
+	"github.com/finleap-connect/monoskope/pkg/domain/mock"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/jwt"
 	"github.com/google/uuid"
@@ -62,7 +63,7 @@ var _ = Describe("Gateway Auth Server", func() {
 				UserId:   expectedUserId.String(),
 				Role:     string(expectedRole),
 				Scope:    string(expectedScope),
-				Resource: wrapperspb.String(testEnv.SomeTenantId.String()),
+				Resource: wrapperspb.String(mock.TestTenant.Id),
 			},
 		)
 		Expect(err).ToNot(HaveOccurred())
@@ -83,7 +84,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/",
-			AccessToken:    getTokenForUser(testEnv.AdminUser),
+			AccessToken:    getTokenForUser(mock.TestAdminUser),
 			Request:        bytes,
 		})
 		Expect(err).NotTo(HaveOccurred())
@@ -102,7 +103,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/Execute",
-			AccessToken:    getTokenForUser(testEnv.TenantAdminUser),
+			AccessToken:    getTokenForUser(mock.TestTenantAdminUser),
 			Request:        bytes,
 		})
 		Expect(err).NotTo(HaveOccurred())
@@ -118,7 +119,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 		resp, err := authClient.Check(ctx, &gateway.CheckRequest{
 			FullMethodName: "/eventsourcing.CommandHandler/Execute",
-			AccessToken:    getTokenForUser(testEnv.ExistingUser),
+			AccessToken:    getTokenForUser(mock.TestExistingUser),
 		})
 		Expect(err).To(HaveOccurred())
 		Expect(resp).To(BeNil())
@@ -148,7 +149,7 @@ var _ = Describe("Gateway Auth Server", func() {
 
 	It("fails authentication with expired JWT", func() {
 		expectedValidity := -30 * time.Minute
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestExistingUser.Name, Email: mock.TestExistingUser.Email}, localAddrAPIServer, mock.TestExistingUser.Id, expectedValidity)
 		token.NotBefore = jose_jwt.NewNumericDate(time.Now().UTC().Add(-1 * time.Hour))
 
 		signer := testEnv.JwtTestEnv.CreateSigner()
@@ -173,7 +174,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can not authenticate with JWT for wrong scope", func() {
 		expectedValidity := time.Hour * 1
-		token := auth.NewAuthToken(&jwt.StandardClaims{Name: testEnv.ExistingUser.Name, Email: testEnv.ExistingUser.Email}, localAddrAPIServer, testEnv.ExistingUser.Id, expectedValidity)
+		token := auth.NewAuthToken(&jwt.StandardClaims{Name: mock.TestExistingUser.Name, Email: mock.TestExistingUser.Email}, localAddrAPIServer, mock.TestExistingUser.Id, expectedValidity)
 		signer := testEnv.JwtTestEnv.CreateSigner()
 		signedToken, err := signer.GenerateSignedToken(token)
 		Expect(err).NotTo(HaveOccurred())
@@ -196,7 +197,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	})
 	It("can authenticate with JWT for correct scope", func() {
 		expectedValidity := time.Hour * 1
-		token := auth.NewApiToken(&jwt.StandardClaims{Name: testEnv.NotExistingUser.Name}, localAddrAPIServer, testEnv.NotExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
+		token := auth.NewApiToken(&jwt.StandardClaims{Name: mock.TestNoneExistingUser.Name}, localAddrAPIServer, mock.TestNoneExistingUser.Id, expectedValidity, []gateway.AuthorizationScope{
 			gateway.AuthorizationScope_WRITE_SCIM,
 		})
 		signer := testEnv.JwtTestEnv.CreateSigner()

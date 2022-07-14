@@ -59,12 +59,12 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 
 	os.Setenv("SUPER_USERS", "")
 
-	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv)
+	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	env.eventStoreTestEnv, err = eventstore.NewTestEnvWithParent(testEnv)
+	env.gatewayTestEnv, err = gateway.NewTestEnvWithParent(testEnv, env.eventStoreTestEnv, false)
 	if err != nil {
 		return nil, err
 	}
