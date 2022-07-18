@@ -34,12 +34,21 @@ var (
 	DefaultUsernamePrefix = "oidc:"
 )
 
-// GitRepoReconcilerConfig is the configuration for the GitRepoReconciler.
-type GitRepoReconcilerConfig struct {
+// Config is the configuration for the GitRepoReconciler.
+type Config struct {
 	Repositories   []*GitRepository      `yaml:"repositories"`
 	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
 	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
-	cloneOptions   *git.CloneOptions
+}
+
+type ReconcilerConfig struct {
+	LocalDirectory string
+	UsernamePrefix string
+	Mappings       []*ClusterRoleMapping
+}
+
+func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
+	return &ReconcilerConfig{localDirectory, usernamePrefix, mappings}
 }
 
 // GitBasicAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
@@ -74,6 +83,8 @@ type GitRepository struct {
 	BasicAuthPath string `yaml:"basicAuthPath"`
 	// SSHAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
 	SSHAuthPath string `yaml:"sshAuthPath"`
+	// cloneOptions are the parsed settings
+	cloneOptions *git.CloneOptions
 }
 
 // ClusterRoleMapping is a mapping from m8 roles to ClusterRole's in a K8s cluster
@@ -84,9 +95,9 @@ type ClusterRoleMapping struct {
 }
 
 // NewConfigFromFile creates a new GitRepoReconcilerConfig from a given yaml file
-func NewConfigFromFile(data []byte) (*GitRepoReconcilerConfig, error) {
+func NewConfigFromFile(data []byte) (*Config, error) {
 	// Unmarshal
-	conf := &GitRepoReconcilerConfig{}
+	conf := &Config{}
 	err := yaml.Unmarshal(data, conf)
 	if err != nil {
 		return nil, err
@@ -174,7 +185,7 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 }
 
 // parseCloneOptions parses the configuration using the git library to validate.
-func (c *GitRepoReconcilerConfig) parseCloneOptions(repo *GitRepository) error {
+func (c *Config) parseCloneOptions(repo *GitRepository) error {
 	cloneOptions := &git.CloneOptions{
 		URL:           repo.URL,
 		ReferenceName: plumbing.NewBranchReferenceName(repo.Branch),
@@ -209,7 +220,7 @@ func (c *GitRepoReconcilerConfig) parseCloneOptions(repo *GitRepository) error {
 	if err := cloneOptions.Validate(); err != nil {
 		return err
 	}
-	c.cloneOptions = cloneOptions
+	repo.cloneOptions = cloneOptions
 
 	return nil
 }

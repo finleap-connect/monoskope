@@ -17,27 +17,66 @@ package k8sauthz
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
+	"strings"
+	"sync"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/go-git/go-git/v5"
 )
 
 // GitRepoReconciler reconciles the resources within the target repo to match the expected state.
 type GitRepoReconciler struct {
+	log             logger.Logger
+	config          *ReconcilerConfig
+	users           repositories.UserRepository
+	clusterAccesses repositories.ClusterAccessRepository
+	gitRepo         *git.Repository
+	mutex           sync.Mutex
 }
 
 // NewGitRepoReconciler creates a new GitRepoReconciler configured via the given config.
-func NewGitRepoReconciler(config *GitRepoReconcilerConfig) (*GitRepoReconciler, error) {
-	panic("not implemented")
+func NewGitRepoReconciler(
+	config *ReconcilerConfig,
+	userRepo repositories.UserRepository,
+	clusterAccessRepo repositories.ClusterAccessRepository,
+	gitRepo *git.Repository,
+) *GitRepoReconciler {
+	remote, _ := gitRepo.Remote("origin")
+	return &GitRepoReconciler{logger.WithName("GitRepoReconciler").WithValues("remote", remote.Config().URLs), config, userRepo, clusterAccessRepo, gitRepo, sync.Mutex{}}
 }
 
-func DoIt(ctx context.Context, userRepo repositories.UserRepository, clusterAccessRepo repositories.ClusterAccessRepository) error {
-	users, err := userRepo.AllWith(ctx, true)
-	if err != nil {
-		return err
+func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.log.V(logger.DebugLevel).Info("Started reconciling..")
+
+	r.log.V(logger.DebugLevel).Info("Fetching git repo..")
+	if err := r.gitRepo.Fetch(&git.FetchOptions{}); err != nil && err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("error fetching latest changes from repository: %w", err)
 	}
+
+	r.log.V(logger.DebugLevel).Info("Reconciling users...")
+	if err := r.reconcileUsers(ctx); err != nil {
+		return fmt.Errorf("error reconciling users: %w", err)
+	}
+
+	return nil
+}
+
+func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
+	// Get all users including deleted ones
+	users, err := r.users.AllWith(ctx, true)
+	if err != nil {
+		return fmt.Errorf("error getting users: %w", err)
+	}
+
+	// reconcile each user
 	for _, user := range users {
-		if err := DoItForUser(ctx, user, clusterAccessRepo); err != nil {
+		if err := r.reconcileUser(ctx, user); err != nil {
 			return err
 		}
 	}
@@ -45,13 +84,28 @@ func DoIt(ctx context.Context, userRepo repositories.UserRepository, clusterAcce
 	return nil
 }
 
-func DoItForUser(ctx context.Context, user *projections.User, clusterAccessRepo repositories.ClusterAccessRepository) error {
-	clusters, err := clusterAccessRepo.GetClustersAccessibleByUserId(ctx, user.ID())
+func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections.User) error {
+	r.log.V(logger.DebugLevel).Info("Reconciling user...", "user", user.Email)
+
+	// get all clusters accessible for the user
+	clusters, err := r.clusterAccesses.GetClustersAccessibleByUserId(ctx, user.ID())
 	if err != nil {
 		return err
 	}
+
+	username := strings.Split(user.Email, "@")[0]
 	for _, cluster := range clusters {
-		fmt.Println(cluster.Cluster.Name)
+		path := path.Join(r.config.LocalDirectory, cluster.Cluster.Name, fmt.Sprintf("%s.yaml", username))
+
+		// Remove bindings for deleted users
+		if user.IsDeleted() {
+			r.log.V(logger.DebugLevel).Info("User is deleted. Removing bindings", "user", user.Email)
+			if _, err := os.Stat(path); err == nil {
+				if err := os.Remove(path); err != nil {
+					r.log.Error(err, "failed to remove file", "file", path, "user", user.Email, "cluster", cluster.Cluster.Name)
+				}
+			}
+		}
 	}
 	return nil
 }
