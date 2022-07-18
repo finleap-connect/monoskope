@@ -50,7 +50,6 @@ func DoItForUser(ctx context.Context, user *projections.User, clusterAccessRepo 
 	if err != nil {
 		return err
 	}
-
 	for _, cluster := range clusters {
 		fmt.Println(cluster.Cluster.Name)
 	}
