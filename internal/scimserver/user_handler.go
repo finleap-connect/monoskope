@@ -65,7 +65,7 @@ func (h *userHandler) getBy(f func() (*projections.User, error)) (scim.Resource,
 			Detail: err.Error(),
 		}
 	}
-	if user.GetMetadata().Deleted != nil && user.GetMetadata().Deleted.IsValid() {
+	if user.Metadata.Deleted != nil {
 		return scim.Resource{}, scim_errors.ScimError{
 			Status: http.StatusNotFound,
 		}

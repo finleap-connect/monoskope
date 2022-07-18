@@ -62,6 +62,7 @@ func (m *TestEventData) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestEventDataMultiError(errors)
 	}
+
 	return nil
 }
 

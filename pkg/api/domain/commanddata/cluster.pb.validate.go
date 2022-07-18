@@ -112,11 +112,32 @@ func (m *CreateCluster) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for CaCertBundle
+	if !bytes.HasPrefix(m.GetCaCertBundle(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x42, 0x45, 0x47, 0x49, 0x4E, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := CreateClusterValidationError{
+			field:  "CaCertBundle",
+			reason: "value does not have prefix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x42\\x45\\x47\\x49\\x4E\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !bytes.HasSuffix(m.GetCaCertBundle(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x45, 0x4E, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := CreateClusterValidationError{
+			field:  "CaCertBundle",
+			reason: "value does not have suffix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x45\\x4E\\x44\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return CreateClusterMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -260,11 +281,32 @@ func (m *UpdateCluster) validate(all bool) error {
 
 	}
 
-	// no validation rules for CaCertBundle
+	if !bytes.HasPrefix(m.GetCaCertBundle(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x42, 0x45, 0x47, 0x49, 0x4E, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := UpdateClusterValidationError{
+			field:  "CaCertBundle",
+			reason: "value does not have prefix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x42\\x45\\x47\\x49\\x4E\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !bytes.HasSuffix(m.GetCaCertBundle(), []uint8{0x2D, 0x2D, 0x2D, 0x2D, 0x2D, 0x45, 0x4E, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2D, 0x2D, 0x2D, 0x2D, 0x2D}) {
+		err := UpdateClusterValidationError{
+			field:  "CaCertBundle",
+			reason: "value does not have suffix \"\\x2D\\x2D\\x2D\\x2D\\x2D\\x45\\x4E\\x44\\x20\\x43\\x45\\x52\\x54\\x49\\x46\\x49\\x43\\x41\\x54\\x45\\x2D\\x2D\\x2D\\x2D\\x2D\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return UpdateClusterMultiError(errors)
 	}
+
 	return nil
 }
 

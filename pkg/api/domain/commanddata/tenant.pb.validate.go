@@ -104,6 +104,7 @@ func (m *CreateTenantCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return CreateTenantCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -235,6 +236,7 @@ func (m *UpdateTenantCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return UpdateTenantCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 

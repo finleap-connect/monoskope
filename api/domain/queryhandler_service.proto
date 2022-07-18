@@ -108,6 +108,15 @@ service AuditLog {
       returns (stream audit.UserOverview);
 }
 
+// K8sAuthZ is the service
+service K8sAuthZ {
+  // GetAll returns all K8s resources for all clusters
+  rpc GetAll(google.protobuf.Empty) returns (stream google.protobuf.BytesValue);
+  // GetByClusterId returns all resources related to the given cluster
+  rpc GetByClusterId(google.protobuf.StringValue)
+      returns (stream google.protobuf.BytesValue);
+}
+
 // GetAllRequest is the generic request to query all instances of a certain
 // projection
 message GetAllRequest { bool include_deleted = 1; }

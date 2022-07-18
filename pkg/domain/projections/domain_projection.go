@@ -24,7 +24,6 @@ type domainProjection struct {
 	projections.LifecycleMetadata
 	version uint64
 }
-
 type DomainProjection interface {
 	LifecycleMetadata
 	ID() uuid.UUID
@@ -34,12 +33,20 @@ type DomainProjection interface {
 }
 
 type LifecycleMetadata interface {
+	// GetCreated returns when the projection has been created
 	GetCreated() *timestamppb.Timestamp
+	// GetCreatedById returns by whom the projection has been created
 	GetCreatedById() string
+	// GetLastModified returns when the projection has been last modified
 	GetLastModified() *timestamppb.Timestamp
+	// GetLastModifiedById returns by whom the projection has been last modified
 	GetLastModifiedById() string
+	// GetDeletedById returns ry whom the projection has been deleted
 	GetDeletedById() string
+	// GetDeleted returns when the projection has been deleted
 	GetDeleted() *timestamppb.Timestamp
+	// IsDeleted returns if the projection has been deleted
+	IsDeleted() bool
 }
 
 func NewDomainProjection() DomainProjection {
@@ -64,4 +71,9 @@ func (p *domainProjection) IncrementVersion() {
 // GetLifecycleMetadata implements the GetLifecycleMetadata method of the Projection interface.
 func (p *domainProjection) GetLifecycleMetadata() *projections.LifecycleMetadata {
 	return &p.LifecycleMetadata
+}
+
+// IsDeleted implements DomainProjection
+func (p *domainProjection) IsDeleted() bool {
+	return p.Deleted != nil
 }

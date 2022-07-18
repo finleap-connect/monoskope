@@ -97,6 +97,7 @@ func (m *HumanReadableEvent) validate(all bool) error {
 	if len(errors) > 0 {
 		return HumanReadableEventMultiError(errors)
 	}
+
 	return nil
 }
 

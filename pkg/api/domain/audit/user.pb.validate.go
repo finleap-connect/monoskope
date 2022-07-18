@@ -72,6 +72,7 @@ func (m *UserOverview) validate(all bool) error {
 	if len(errors) > 0 {
 		return UserOverviewMultiError(errors)
 	}
+
 	return nil
 }
 

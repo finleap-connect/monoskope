@@ -88,6 +88,7 @@ func (m *CreateTenantClusterBindingCommandData) validate(all bool) error {
 	if len(errors) > 0 {
 		return CreateTenantClusterBindingCommandDataMultiError(errors)
 	}
+
 	return nil
 }
 

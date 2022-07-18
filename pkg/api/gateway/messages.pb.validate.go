@@ -84,6 +84,7 @@ func (m *UpstreamAuthenticationRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return UpstreamAuthenticationRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -190,6 +191,7 @@ func (m *UpstreamAuthenticationResponse) validate(all bool) error {
 	if len(errors) > 0 {
 		return UpstreamAuthenticationResponseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -314,6 +316,7 @@ func (m *AuthenticationRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return AuthenticationRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -448,6 +451,7 @@ func (m *AuthenticationResponse) validate(all bool) error {
 	if len(errors) > 0 {
 		return AuthenticationResponseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -583,6 +587,7 @@ func (m *ClusterAuthTokenRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterAuthTokenRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -725,6 +730,7 @@ func (m *ClusterAuthTokenResponse) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterAuthTokenResponseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -886,6 +892,7 @@ func (m *APITokenRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return APITokenRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1024,6 +1031,7 @@ func (m *APITokenResponse) validate(all bool) error {
 	if len(errors) > 0 {
 		return APITokenResponseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1147,6 +1155,7 @@ func (m *CheckRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1279,6 +1288,7 @@ func (m *CheckResponse) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckResponseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1382,6 +1392,7 @@ func (m *CheckResponse_CheckResponseTag) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckResponse_CheckResponseTagMultiError(errors)
 	}
+
 	return nil
 }
 

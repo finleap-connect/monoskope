@@ -62,6 +62,7 @@ func (m *GetAllRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetAllRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -165,6 +166,7 @@ func (m *GetClusterMappingRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetClusterMappingRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -268,6 +270,7 @@ func (m *GetCountRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetCountRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -369,6 +372,7 @@ func (m *GetCountResult) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetCountResultMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -526,6 +530,7 @@ func (m *GetAuditLogByDateRangeRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetAuditLogByDateRangeRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -673,6 +678,7 @@ func (m *GetByUserRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetByUserRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -867,6 +873,7 @@ func (m *GetUserActionsRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetUserActionsRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1047,6 +1054,7 @@ func (m *GetUsersOverviewRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetUsersOverviewRequestMultiError(errors)
 	}
+
 	return nil
 }
 

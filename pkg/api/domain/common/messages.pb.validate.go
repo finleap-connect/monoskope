@@ -66,6 +66,7 @@ func (m *ServiceInformation) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServiceInformationMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -171,6 +172,7 @@ func (m *CertificateChain) validate(all bool) error {
 	if len(errors) > 0 {
 		return CertificateChainMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -32,8 +32,6 @@ const (
 var (
 	// CommandHandlerUser is the system user representing the CommandHandler
 	CommandHandlerUser *projections.User
-	// ReactorUser is the system user representing any Reactor
-	ReactorUser *projections.User
 	// SCIMServerUser is the system user representing the SCIM server
 	SCIMServerUser *projections.User
 )
@@ -42,19 +40,17 @@ var (
 var AvailableSystemUsers map[uuid.UUID]*projections.User
 
 func init() {
-	CommandHandlerUser = newSystemUser("commandhandler")
-	ReactorUser = newSystemUser("reactor")
-	SCIMServerUser = newSystemUser("scimserver")
+	CommandHandlerUser = NewSystemUser("commandhandler")
+	SCIMServerUser = NewSystemUser("scimserver")
 
 	AvailableSystemUsers = map[uuid.UUID]*projections.User{
 		CommandHandlerUser.ID(): CommandHandlerUser,
-		ReactorUser.ID():        ReactorUser,
 		SCIMServerUser.ID():     SCIMServerUser,
 	}
 }
 
-// newSystemUser creates a new system user with a reproducible name based on the name and an admin rolebinding
-func newSystemUser(name string) *projections.User {
+// NewSystemUser creates a new system user with a reproducible name based on the name and an admin rolebinding
+func NewSystemUser(name string) *projections.User {
 	userId := generateSystemUserUUID(name)
 
 	// Create admin rolebinding
