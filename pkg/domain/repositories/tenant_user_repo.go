@@ -59,7 +59,7 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 			return nil, err
 		}
 		// skip deleted users
-		if user.Metadata.GetDeleted().AsTime().Unix() != 0 {
+		if user.GetDeleted() != nil {
 			continue
 		}
 
@@ -68,7 +68,7 @@ func (r *tenantuserRepository) GetTenantUsersById(ctx context.Context, id uuid.U
 		if err != nil {
 			return nil, err
 		}
-		if tenant.GetDeleted().AsTime().Unix() != 0 {
+		if tenant.GetDeleted() != nil {
 			continue
 		}
 

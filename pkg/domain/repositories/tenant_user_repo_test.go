@@ -17,7 +17,6 @@ package repositories
 import (
 	"context"
 
-	projectionsApi "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/roles"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/scopes"
 	projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -32,17 +31,17 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 	adminUserId := uuid.New()
 	otherUserId := uuid.New()
 
-	tenant := &projections.Tenant{
-		Tenant: &projectionsApi.Tenant{
-			Id:     tenantId.String(),
-			Name:   "tenant-a",
-			Prefix: "ta",
-		},
-		DomainProjection: projections.NewDomainProjection(),
-	}
+	tenant := projections.NewTenantProjection(tenantId)
+	tenant.Name = "tenant-a"
+	tenant.Prefix = "ta"
 
-	adminUser := &projections.User{User: &projectionsApi.User{Id: adminUserId.String(), Name: "admin", Email: "admin@monoskope.io"}}
-	otherUser := &projections.User{User: &projectionsApi.User{Id: otherUserId.String(), Name: "otheruser", Email: "otheruser@monoskope.io"}}
+	adminUser := projections.NewUserProjection(adminUserId)
+	adminUser.Name = "admin"
+	adminUser.Email = "admin@monoskope.io"
+
+	otherUser := projections.NewUserProjection(otherUserId)
+	otherUser.Name = "otheruser"
+	otherUser.Email = "otheruser@monoskope.io"
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id

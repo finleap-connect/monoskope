@@ -14,6 +14,14 @@
 
 package k8sauthz
 
+import (
+	"context"
+	"fmt"
+
+	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+)
+
 // GitRepoReconciler reconciles the resources within the target repo to match the expected state.
 type GitRepoReconciler struct {
 }
@@ -21,4 +29,30 @@ type GitRepoReconciler struct {
 // NewGitRepoReconciler creates a new GitRepoReconciler configured via the given config.
 func NewGitRepoReconciler(config *GitRepoReconcilerConfig) (*GitRepoReconciler, error) {
 	panic("not implemented")
+}
+
+func DoIt(ctx context.Context, userRepo repositories.UserRepository, clusterAccessRepo repositories.ClusterAccessRepository) error {
+	users, err := userRepo.AllWith(ctx, true)
+	if err != nil {
+		return err
+	}
+	for _, user := range users {
+		if err := DoItForUser(ctx, user, clusterAccessRepo); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func DoItForUser(ctx context.Context, user *projections.User, clusterAccessRepo repositories.ClusterAccessRepository) error {
+	clusters, err := clusterAccessRepo.GetClustersAccessibleByUserId(ctx, user.ID())
+	if err != nil {
+		return err
+	}
+
+	for _, cluster := range clusters {
+		fmt.Println(cluster.Cluster.Name)
+	}
+	return nil
 }
