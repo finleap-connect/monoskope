@@ -51,7 +51,7 @@ dependencies: # A list of the chart requirements
     version: 8.32.2
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled,global.rabbitmq.enabled
-  - helm: emissary-ingress
+  - name: emissary-ingress
     alias: ambassador
     version: 8.0.0
     repository: https://getambassador.io
