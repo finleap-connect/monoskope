@@ -183,8 +183,8 @@ ambassador:
   deploy: true
   replicaCount: 1
   image:
-    repository: datawire/ambassador
-    tag: 1.14.3
+    repository: docker.io/emissaryingress/emissary
+    tag: 3.0.0
   enableAES: false
   agent:
     enabled: false
