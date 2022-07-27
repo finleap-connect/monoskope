@@ -72,12 +72,12 @@ eventstore:
     tlsSecret: *msgBusClientAuthCertSecretName
   storeDatabase:
     configSecret: "m8-db-client-config"
-    tlsSecret:  "m8-db-client-auth-cert"
+    tlsSecret: "m8-db-client-auth-cert"
 
 commandhandler:
   enabled: true
   replicaCount: 1
-  
+
 queryhandler:
   enabled: true
   replicaCount: 1
@@ -151,7 +151,7 @@ rabbitmq:
   loadDefinition:
     enabled: true
     existingSecret: m8-rabbitmq-load-definition
-  extraPlugins: 'rabbitmq_auth_mechanism_ssl'
+  extraPlugins: "rabbitmq_auth_mechanism_ssl"
   extraConfiguration: |-
     auth_mechanisms.1 = EXTERNAL
     ssl_cert_login_from = common_name
@@ -164,7 +164,7 @@ rabbitmq:
     tlsPort: 5671
   auth:
     username: eventstore # admin user with read/write access
-    password: "w1!!b3r3pl4c3d"  # in case you use VaultOperator this will be overwritten by the load definition which takes the password from a generated secret
+    password: "w1!!b3r3pl4c3d" # in case you use VaultOperator this will be overwritten by the load definition which takes the password from a generated secret
     # -- Name of the secret containing the erlang secret
     # If vaultOperator.enabled:true the secret will eb auto generated
     existingErlangSecret: m8-rabbitmq-erlang-cookie
@@ -184,7 +184,7 @@ ambassador:
   replicaCount: 1
   image:
     repository: docker.io/emissaryingress/emissary
-    tag: 3.0.0
+    tag: 2.3.1
   enableAES: false
   agent:
     enabled: false

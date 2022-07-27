@@ -29,6 +29,5 @@ project.dict
 
 /gateway
 
-build/package/helm/monoskope/Chart.lock
 build/package/helm/monoskope/charts/**
 .dccache
