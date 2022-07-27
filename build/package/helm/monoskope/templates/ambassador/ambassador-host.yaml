@@ -5,7 +5,7 @@
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: {{ include "monoskope.fullname" . }}-tls
+  name: {{ include "monoskope.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
@@ -16,11 +16,15 @@ spec:
   hostname: {{ $tlsDomain }}
   acmeProvider:
     authority: none
+  tlsSecret:
+    name: {{ $tlsSecretName }}
+  tlsContext:
+    name: {{ include "monoskope.fullname" . }}-tls
 ---
 apiVersion: getambassador.io/v3alpha1
 kind: TLSContext
 metadata:
-  name: tls
+  name: {{ include "monoskope.fullname" . }}-tls
 spec:
   hosts:
   - "*"
