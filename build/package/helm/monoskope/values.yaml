@@ -185,11 +185,7 @@ ambassador:
   image:
     repository: docker.io/emissaryingress/emissary
     tag: 2.3.1
-  enableAES: false
   agent:
-    enabled: false
-  crds:
-    create: false
     enabled: false
   rbac:
     create: false
@@ -197,13 +193,6 @@ ambassador:
     create: true
   scope:
     singleNamespace: true
-  resources:
-    limits:
-      cpu: 4
-      memory: 1000Mi
-    requests:
-      cpu: 100m
-      memory: 512Mi
   metrics:
     serviceMonitor:
       enabled: false
