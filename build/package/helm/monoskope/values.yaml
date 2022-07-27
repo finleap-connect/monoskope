@@ -184,7 +184,7 @@ ambassador:
   replicaCount: 1
   image:
     repository: docker.io/emissaryingress/emissary
-    tag: 2.3.1
+    tag: 3.0.0
   agent:
     enabled: false
   rbac:
@@ -198,6 +198,8 @@ ambassador:
       enabled: false
   adminService:
     create: false
+  module:
+    strip_matching_host_port: true # necessary for gRPC, see https://www.getambassador.io/docs/emissary/latest/howtos/grpc/#mappings-with-hosts
 
 scimserver:
   enabled: false
