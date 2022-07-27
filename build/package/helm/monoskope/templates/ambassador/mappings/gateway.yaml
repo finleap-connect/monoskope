@@ -13,7 +13,7 @@ metadata:
     {{- end }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
@@ -30,7 +30,7 @@ metadata:
     {{- end }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /gateway.ClusterAuth/
   rewrite: /gateway.ClusterAuth/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
@@ -44,7 +44,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
@@ -87,7 +87,7 @@ metadata:
     {{- end }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /gateway.APIToken/
   rewrite: /gateway.APIToken/
   service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
