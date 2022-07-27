@@ -14,8 +14,6 @@ metadata:
     {{- end }}
 spec:
   hostname: {{ $tlsDomain }}
-  acmeProvider:
-    authority: none
   tlsSecret:
     name: {{ $tlsSecretName }}
   tlsContext:
@@ -26,10 +24,9 @@ kind: TLSContext
 metadata:
   name: {{ include "monoskope.fullname" . }}-tls
 spec:
-  hosts:
-  - "*"
   secret: {{ $tlsSecretName }}
-  alpn_protocols: h2
+  hosts: ["*"]
+  alpn_protocols: h2,http/1.1
   min_tls_version: v1.2
 {{- end }}
 {{- end }}
