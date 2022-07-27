@@ -1,0 +1,27 @@
+dependencies:
+- name: gateway
+  repository: file://../gateway
+  version: 0.0.1-local
+- name: eventstore
+  repository: file://../eventstore
+  version: 0.0.1-local
+- name: commandhandler
+  repository: file://../commandhandler
+  version: 0.0.1-local
+- name: queryhandler
+  repository: file://../queryhandler
+  version: 0.0.1-local
+- name: scimserver
+  repository: file://../scimserver
+  version: 0.0.1-local
+- name: cockroachdb
+  repository: https://charts.cockroachdb.com/
+  version: 7.0.1
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.32.2
+- name: emissary-ingress
+  repository: https://getambassador.io
+  version: 8.0.0
+digest: sha256:76299ec2f3da8693fe07db6183dc3183ef8a56e30007a5388d04e25d6bca8f0c
+generated: "2022-07-27T09:56:50.706907+02:00"
