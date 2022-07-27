@@ -1,5 +1,4 @@
 {{- if .Values.ambassador.enabled }}
-{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.commandhandler.enabled }}
 apiVersion: getambassador.io/v2
 kind: Mapping

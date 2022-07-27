@@ -1,8 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- $tlsSecretName := (include "monoskope.tlsSecretName" .) }}
 {{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
-{{- $mtlsSecretName := (include "monoskope.mtlsSecretName" .) }}
-{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -20,30 +18,4 @@ spec:
     kind: ClusterIssuer
   dnsNames:
   - {{ $tlsDomain }}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: {{ $mtlsSecretName }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "monoskope.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  secretName: {{ $mtlsSecretName }}
-  duration: {{ .Values.pki.certificates.duration }}
-  renewBefore: {{ .Values.pki.certificates.renewBefore }}
-  issuerRef:
-    name: {{ .Values.pki.issuer.name }}
-    kind: Issuer
-  subject:
-    organizations:
-      - Monoskope
-  dnsNames:
-  - {{ $mtlsDomain }}
-  usages:
-  - client auth
-  - server auth
 {{- end }}
