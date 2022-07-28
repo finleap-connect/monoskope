@@ -198,6 +198,7 @@ ambassador:
       enabled: false
   adminService:
     create: false
+  createDefaultListeners: true
   module:
     # from https://github.com/emissary-ingress/emissary/issues/2276
     # strips away any port from the Host header before route mapping
