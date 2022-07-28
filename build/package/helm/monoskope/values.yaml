@@ -199,6 +199,18 @@ ambassador:
   adminService:
     create: false
   module:
+    # from https://github.com/emissary-ingress/emissary/issues/2276
+    # strips away any port from the Host header before route mapping
+    lua_scripts: |
+      function envoy_on_request(request_handle)
+        local authority = request_handle:headers():get(":authority")
+        if(string.find(authority, ":") ~= nil)
+        then
+          local authority_index = string.find(authority, ":")
+          local stripped_authority = string.sub(authority, 1, authority_index - 1)
+          request_handle:headers():replace(":authority", stripped_authority)
+        end
+      end
     strip_matching_host_port: true # necessary for gRPC, see https://www.getambassador.io/docs/emissary/latest/howtos/grpc/#mappings-with-hosts
 
 scimserver:
