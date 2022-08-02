@@ -87,6 +87,28 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 
 				Expect(scimErr.Status).To(Equal(http.StatusNotFound))
 			})
+			It("doesn't return deleted user", func() {
+				deletedUser := &projections.User{
+					Id:    uuid.New().String(),
+					Name:  "test.user.a",
+					Email: "test.user.a@monoskope.io",
+					Metadata: &projections.LifecycleMetadata{
+						Deleted: timestamppb.Now(),
+					},
+				}
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				userClient.EXPECT().GetById(ctx, gomock.Any()).Return(deletedUser, nil)
+
+				_, err := userHandler.Get(request, deletedUser.Id)
+				Expect(err).To(HaveOccurred())
+				scimErr, ok := err.(scim_errors.ScimError)
+				Expect(ok).To(BeTrue())
+
+				Expect(scimErr.Status).To(Equal(http.StatusNotFound))
+			})
 		})
 
 		When("calling GetAll()", func() {
