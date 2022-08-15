@@ -33,7 +33,7 @@ require (
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/spf13/cobra v1.5.0
 	go.uber.org/automaxprocs v1.5.1
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.22.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
