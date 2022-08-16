@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -65,7 +64,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		testEnv.Log.Info(string(body))
 	}
@@ -80,7 +79,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusCreated))
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		Expect(body).To(MatchRegexp(`^{"displayName":"Some User","id":"[0-9a-z\-]+","meta":{"resourceType":"User","location":"Users/[0-9a-z\-]+"},"schemas":\["urn:ietf:params:scim:schemas:core:2.0:User"\],"userName":"some.user@monoskope.io"}$`))
 		testEnv.Log.Info(string(body))
@@ -105,7 +104,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		}, backoff.NewExponentialBackOff())
 		Expect(err).To(Not(HaveOccurred()))
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		testEnv.Log.Info(string(body))
 	}
@@ -157,7 +156,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		testEnv.Log.Info(string(body))
 	}
@@ -168,7 +167,7 @@ var _ = Describe("internal/scimserver/Server", func() {
 		testEnv.scimServer.ServeHTTP(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		testEnv.Log.Info(string(body))
 	}

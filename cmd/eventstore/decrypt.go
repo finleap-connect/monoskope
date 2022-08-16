@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"syscall"
 
 	"github.com/finleap-connect/monoskope/pkg/util"
@@ -31,7 +31,7 @@ var decryptCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filename := args[0]
-		ciphertext, err := ioutil.ReadFile(filename)
+		ciphertext, err := os.ReadFile(filename)
 		if err != nil {
 			return err
 		}

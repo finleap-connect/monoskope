@@ -16,7 +16,7 @@ package eventstore
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore/backup"
@@ -50,7 +50,7 @@ func NewBackupManager(store eventsourcing.EventStore, retention int) (*BackupMan
 
 func (bm *BackupManager) configure() error {
 	// Get backup destination configuration
-	fileInfos, err := ioutil.ReadDir(BackupPath)
+	fileInfos, err := os.ReadDir(BackupPath)
 	if err != nil {
 		return err
 	}

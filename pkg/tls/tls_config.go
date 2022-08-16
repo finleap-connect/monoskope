@@ -17,7 +17,7 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -188,7 +188,7 @@ func (t *TLSConfigLoader) load() error {
 
 	// Load server CA
 	if t.serverCACertificateFile != "" {
-		certs, err := ioutil.ReadFile(t.serverCACertificateFile)
+		certs, err := os.ReadFile(t.serverCACertificateFile)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (t *TLSConfigLoader) load() error {
 
 	// Load client CA
 	if t.clientCACertificateFile != "" {
-		certs, err := ioutil.ReadFile(t.clientCACertificateFile)
+		certs, err := os.ReadFile(t.clientCACertificateFile)
 		if err != nil {
 			return err
 		}

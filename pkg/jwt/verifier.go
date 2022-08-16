@@ -16,7 +16,7 @@ package jwt
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
@@ -96,7 +96,7 @@ func (v *jwtVerifier) rotatePublicKey(filename string) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
-	pubKeyBytes, err := ioutil.ReadFile(filename)
+	pubKeyBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}

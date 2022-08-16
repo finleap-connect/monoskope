@@ -15,7 +15,7 @@
 package jwt
 
 import (
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -46,7 +46,7 @@ func NewSigner(privateKeyFilename string) JWTSigner {
 // createSigner loads the private key and a returns a new jose.Signer
 func (signer *jwtSigner) createSigner() (jose.Signer, error) {
 	// Read private key from file
-	privKeyBytes, err := ioutil.ReadFile(signer.privateKeyFileName)
+	privKeyBytes, err := os.ReadFile(signer.privateKeyFileName)
 	if err != nil {
 		return nil, err
 	}
