@@ -19,7 +19,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"io/fs"
-	"io/ioutil"
+	"os"
 
 	"github.com/finleap-connect/monoskope/internal/test"
 )
@@ -38,14 +38,14 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		TestEnv: testEnv,
 	}
 
-	privKeyFile, err := ioutil.TempFile("", "private.key")
+	privKeyFile, err := os.CreateTemp("", "private.key")
 	if err != nil {
 		return env, err
 	}
 	defer privKeyFile.Close()
 	env.privateKeyFile = privKeyFile.Name()
 
-	pubKeyFile, err := ioutil.TempFile("", "public.key")
+	pubKeyFile, err := os.CreateTemp("", "public.key")
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (env *TestEnv) RotateCertificate() error {
 	}
 	env.privateKey = privKey
 
-	err = ioutil.WriteFile(env.privateKeyFile, x509.MarshalPKCS1PrivateKey(privKey), fs.ModeAppend)
+	err = os.WriteFile(env.privateKeyFile, x509.MarshalPKCS1PrivateKey(privKey), fs.ModeAppend)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (env *TestEnv) RotateCertificate() error {
 		return err
 	}
 
-	err = ioutil.WriteFile(env.publicKeyFile, pubKeyPem, fs.ModeAppend)
+	err = os.WriteFile(env.publicKeyFile, pubKeyPem, fs.ModeAppend)
 	if err != nil {
 		return err
 	}

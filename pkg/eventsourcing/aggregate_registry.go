@@ -50,7 +50,8 @@ func NewAggregateRegistry() AggregateRegistry {
 // used to create concrete aggregate types.
 //
 // An example would be:
-//     RegisterAggregate(func() Aggregate { return &MyAggregate{} })
+//
+//	RegisterAggregate(func() Aggregate { return &MyAggregate{} })
 func (r *aggregateRegistry) RegisterAggregate(factory func() Aggregate) {
 	aggregate := factory()
 	if aggregate == nil {

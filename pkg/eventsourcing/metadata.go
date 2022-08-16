@@ -25,8 +25,8 @@ type metadataKeyType struct {
 }
 
 /*
- MetadataManager is an interface for a storage of metadata.
- It can be used to easily store any metadata in the context of a call.
+MetadataManager is an interface for a storage of metadata.
+It can be used to easily store any metadata in the context of a call.
 */
 type MetadataManager interface {
 	// GetContext returns a new context enriched with the metadata of this manager.

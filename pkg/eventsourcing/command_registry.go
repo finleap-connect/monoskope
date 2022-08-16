@@ -67,7 +67,8 @@ func (r *commandRegistry) GetRegisteredCommandTypes() []CommandType {
 // used to create concrete command types.
 //
 // An example would be:
-//     RegisterCommand(func() Command { return &MyCommand{} })
+//
+//	RegisterCommand(func() Command { return &MyCommand{} })
 func (r *commandRegistry) RegisterCommand(factory func(uuid.UUID) Command) {
 	cmd := factory(uuid.Nil)
 	if cmd == nil {
