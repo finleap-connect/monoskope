@@ -50,6 +50,8 @@ require (
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
+	k8s.io/api v0.24.3
+	k8s.io/cli-runtime v0.24.3
 	k8s.io/utils v0.0.0-20220713171938-56c0de1e6f5e
 )
 
@@ -106,6 +108,7 @@ require (
 	github.com/klauspost/compress v1.14.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect
+	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
@@ -157,7 +160,6 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.24.3 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220627174259-011e075b9cb8 // indirect
 	mellium.im/sasl v0.2.1 // indirect

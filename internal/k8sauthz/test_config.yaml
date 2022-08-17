@@ -13,10 +13,6 @@ repositories:
       - "dev"
       - "prod"
 mappings:
-  - scope: system
-    role: admin
-    clusterRoleName: cluster-admin
-  - scope: tenant
-    role: oncall
-    clusterRoleName: app-oncallee
+  admin: cluster-admin
+  oncall: app-oncallee
 usernamePrefix: "m8-"

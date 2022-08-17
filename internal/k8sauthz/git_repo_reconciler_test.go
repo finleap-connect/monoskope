@@ -65,10 +65,13 @@ var _ = Describe("internal/k8sauthz", func() {
 			}
 			defer os.RemoveAll(dir) // clean up
 
-			reconcilerConfig := NewReconcilerConfig(dir, "m8-", []*ClusterRoleMapping{})
+			reconcilerConfig := NewReconcilerConfig(dir, "m8-", map[string]string{
+				"admin": "cluster-admin",
+			})
 
-			r, err := git.PlainClone(dir, false, &git.CloneOptions{
-				URL: "https://github.com/git-fixtures/basic.git",
+			r, err := git.PlainCloneContext(context.Background(), dir, false, &git.CloneOptions{
+				URL:               "https://github.com/git-fixtures/basic.git",
+				RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -77,7 +80,7 @@ var _ = Describe("internal/k8sauthz", func() {
 					Id:   uuid.NewString(),
 					Name: "cluster-a",
 				},
-				Roles: []string{string(k8s.DefaultRole)},
+				Roles: []string{string(k8s.AdminRole)},
 			}
 
 			// expected calls to mocks

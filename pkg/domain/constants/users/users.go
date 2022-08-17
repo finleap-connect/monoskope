@@ -33,7 +33,8 @@ var (
 	// CommandHandlerUser is the system user representing the CommandHandler
 	CommandHandlerUser *projections.User
 	// SCIMServerUser is the system user representing the SCIM server
-	SCIMServerUser *projections.User
+	SCIMServerUser        *projections.User
+	GitRepoReconcilerUser *projections.User
 )
 
 // A maps of all existing system users.
@@ -42,10 +43,12 @@ var AvailableSystemUsers map[uuid.UUID]*projections.User
 func init() {
 	CommandHandlerUser = NewSystemUser("commandhandler")
 	SCIMServerUser = NewSystemUser("scimserver")
+	GitRepoReconcilerUser = NewSystemUser("gitreporeconciler")
 
 	AvailableSystemUsers = map[uuid.UUID]*projections.User{
-		CommandHandlerUser.ID(): CommandHandlerUser,
-		SCIMServerUser.ID():     SCIMServerUser,
+		CommandHandlerUser.ID():    CommandHandlerUser,
+		SCIMServerUser.ID():        SCIMServerUser,
+		GitRepoReconcilerUser.ID(): GitRepoReconcilerUser,
 	}
 }
 

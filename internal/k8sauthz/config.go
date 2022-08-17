@@ -20,7 +20,6 @@ import (
 	"os"
 	"time"
 
-	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -35,18 +34,18 @@ var (
 
 // Config is the configuration for the GitRepoReconciler.
 type Config struct {
-	Repositories   []*GitRepository      `yaml:"repositories"`
-	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
-	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
+	Repositories   []*GitRepository  `yaml:"repositories"`
+	Mappings       map[string]string `yaml:"mappings"`
+	UsernamePrefix string            `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
 }
 
 type ReconcilerConfig struct {
 	LocalDirectory string
 	UsernamePrefix string
-	Mappings       []*ClusterRoleMapping
+	Mappings       map[string]string
 }
 
-func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
+func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings map[string]string) *ReconcilerConfig {
 	return &ReconcilerConfig{localDirectory, usernamePrefix, mappings}
 }
 
@@ -84,13 +83,6 @@ type GitRepository struct {
 	SSHAuthPath string `yaml:"sshAuthPath"`
 	// cloneOptions are the parsed settings
 	cloneOptions *git.CloneOptions
-}
-
-// ClusterRoleMapping is a mapping from m8 roles to ClusterRole's in a K8s cluster
-type ClusterRoleMapping struct {
-	Scope           es.Scope `yaml:"scope"`
-	Role            es.Role  `yaml:"role"`
-	ClusterRoleName string   `yaml:"clusterRoleName"`
 }
 
 // NewConfigFromFile creates a new GitRepoReconcilerConfig from a given yaml file
