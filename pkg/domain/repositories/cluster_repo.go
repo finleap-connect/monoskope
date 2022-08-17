@@ -42,7 +42,7 @@ func NewClusterRepository(repository es.Repository[*projections.Cluster]) Cluste
 
 // ByClusterName searches for a cluster projection by its name.
 func (r *clusterRepository) ByClusterName(ctx context.Context, clusterName string) (*projections.Cluster, error) {
-	ps, err := r.AllWith(ctx, true)
+	ps, err := r.AllWith(ctx, false)
 	if err != nil {
 		return nil, err
 	}
