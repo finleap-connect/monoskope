@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -49,7 +48,7 @@ type S3Config struct {
 
 // NewS3ConfigFromFile creates a new S3 config from a given yaml file
 func NewS3ConfigFromFile(path string) (*S3Config, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,8 @@ import (
 	mock_eventsourcing "github.com/finleap-connect/monoskope/internal/test/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/api/domain"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
+	cmd "github.com/finleap-connect/monoskope/pkg/domain/commands"
+	commandTypes "github.com/finleap-connect/monoskope/pkg/domain/constants/commands"
 	domain_errors "github.com/finleap-connect/monoskope/pkg/domain/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -82,6 +84,28 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				_, err = userHandler.Get(request, "somefakeid")
 				Expect(err).To(HaveOccurred())
 
+				scimErr, ok := err.(scim_errors.ScimError)
+				Expect(ok).To(BeTrue())
+
+				Expect(scimErr.Status).To(Equal(http.StatusNotFound))
+			})
+			It("doesn't return deleted user", func() {
+				deletedUser := &projections.User{
+					Id:    uuid.New().String(),
+					Name:  "test.user.a",
+					Email: "test.user.a@monoskope.io",
+					Metadata: &projections.LifecycleMetadata{
+						Deleted: timestamppb.Now(),
+					},
+				}
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				userClient.EXPECT().GetById(ctx, gomock.Any()).Return(deletedUser, nil)
+
+				_, err := userHandler.Get(request, deletedUser.Id)
+				Expect(err).To(HaveOccurred())
 				scimErr, ok := err.(scim_errors.ScimError)
 				Expect(ok).To(BeTrue())
 
@@ -156,6 +180,21 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(len(page.Resources)).To(Equal(2))
 				Expect(page.TotalResults).To(Equal(2))
+			})
+		})
+
+		When("calling Delete()", func() {
+			request, err := http.NewRequestWithContext(ctx, http.MethodPost, "delete", nil)
+			Expect(err).ToNot(HaveOccurred())
+
+			It("deletes the user even if it is deleted already", func() {
+				userId := uuid.New()
+				commandHandlerClient := mock_eventsourcing.NewMockCommandHandlerClient(mockCtrl)
+				userClient := mock_domain.NewMockUserClient(mockCtrl)
+				userHandler := NewUserHandler(commandHandlerClient, userClient)
+
+				commandHandlerClient.EXPECT().Execute(gomock.Any(), cmd.CreateCommand(userId, commandTypes.DeleteUser)).Return(nil, domain_errors.TranslateToGrpcError(domain_errors.ErrDeleted))
+				Expect(userHandler.Delete(request, userId.String())).To(Succeed())
 			})
 		})
 	})

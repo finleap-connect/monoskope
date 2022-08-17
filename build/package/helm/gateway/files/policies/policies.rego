@@ -11,6 +11,9 @@ allowed_paths := [
 	"/domain.CommandHandlerExtensions",
 	"/common.ServiceInformationService/GetServiceInformation",
 	"/domain.ClusterAccess/GetClusterAccess",
+	"/domain.User",
+	"/domain.Tenant",
+	"/domain.Cluster",
 ]
 
 scoped_paths := [{"scope": "WRITE_SCIM", "paths": [

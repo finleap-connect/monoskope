@@ -17,7 +17,7 @@ package tls
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -69,7 +69,7 @@ var _ = Describe("pkg/tls/tls_config", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// verify the response
-		respBodyBytes, err := ioutil.ReadAll(resp.Body)
+		respBodyBytes, err := io.ReadAll(resp.Body)
 		Expect(err).ToNot(HaveOccurred())
 
 		body := strings.TrimSpace(string(respBodyBytes[:]))

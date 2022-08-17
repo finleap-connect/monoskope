@@ -69,20 +69,12 @@ Create the name of the service account to use
 {{- printf "%s-tls-cert" (include "monoskope.fullname" .) }}
 {{- end }}
 
-{{- define "monoskope.mtlsSecretName" -}}
-{{- printf "%s-mtls-cert" (include "monoskope.fullname" .) }}
-{{- end }}
-
 {{- define "monoskope.identityCAName" -}}
 {{- printf "%s-identity" (include "monoskope.fullname" .) }}
 {{- end }}
 
 {{- define "monoskope.domain" -}}
 {{- required "a value for .Values.hosting.domain has to be provided" .Values.hosting.domain }}
-{{- end }}
-
-{{- define "monoskope.mtlsDomain" -}}
-{{- printf "mapi.%s" .Values.hosting.domain }}
 {{- end }}
 
 {{- define "monoskope.tlsDomain" -}}

@@ -15,7 +15,7 @@
 package scimserver
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/elimity-com/scim"
@@ -53,7 +53,7 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 func logDebug(log logger.Logger, r *http.Request) {
 	body := []byte("")
 	if r.Body != nil {
-		body, _ = ioutil.ReadAll(r.Body)
+		body, _ = io.ReadAll(r.Body)
 	}
 	log.V(logger.DebugLevel).Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body), "Header", r.Header)
 }

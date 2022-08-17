@@ -71,6 +71,7 @@ var (
 var (
 	errorMap = map[codes.Code][]error{
 		codes.NotFound: {
+			ErrDeleted,
 			ErrUserNotFound,
 			ErrTenantNotFound,
 			ErrClusterRegistrationNotFound,

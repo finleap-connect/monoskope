@@ -314,6 +314,11 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 
 	_, err = h.cmdHandlerClient.Execute(ctx, cmd.CreateCommand(uid, commandTypes.DeleteUser))
 	if err != nil {
+		err = errors.TranslateFromGrpcError(err)
+		if err == errors.ErrDeleted {
+			return nil
+		}
+
 		return scim_errors.ScimError{
 			Status: http.StatusInternalServerError,
 			Detail: err.Error(),

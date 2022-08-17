@@ -1,5 +1,4 @@
 {{- if .Values.ambassador.enabled }}
-{{- $mtlsDomain := (include "monoskope.mtlsDomain" .) }}
 {{- if .Values.queryhandler.enabled }}
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -10,7 +9,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.User/
   rewrite: /domain.User/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
@@ -24,7 +23,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.Tenant/
   rewrite: /domain.Tenant/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
@@ -38,7 +37,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.Cluster/
   rewrite: /domain.Cluster/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
@@ -52,7 +51,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.ClusterAccess/
   rewrite: /domain.ClusterAccess/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
@@ -66,7 +65,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.Certificate/
   rewrite: /domain.Certificate/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
@@ -80,7 +79,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   grpc: true
-  timeout_ms: 20000
+  hostname: "*"
   prefix: /domain.AuditLog/
   rewrite: /domain.AuditLog/
   service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}

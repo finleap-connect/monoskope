@@ -17,7 +17,6 @@ package util
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,7 +46,7 @@ var _ = Describe("License", func() {
 			if filepath.Ext(path) != ".go" {
 				return nil
 			}
-			content, err := ioutil.ReadFile(path)
+			content, err := os.ReadFile(path)
 			if err != nil {
 				return nil
 			}

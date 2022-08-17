@@ -23,9 +23,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"io/fs"
-	"io/ioutil"
 	"math/big"
 	"net"
+	"os"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/test"
@@ -94,14 +94,14 @@ func (t *TestEnv) CreateCACertificate() error {
 		return err
 	}
 
-	caCertFile, err := ioutil.TempFile("", "ca.crt")
+	caCertFile, err := os.CreateTemp("", "ca.crt")
 	if err != nil {
 		return err
 	}
 	defer caCertFile.Close()
 	t.caCertFile = caCertFile.Name()
 
-	err = ioutil.WriteFile(t.caCertFile, caPEM.Bytes(), fs.ModeAppend)
+	err = os.WriteFile(t.caCertFile, caPEM.Bytes(), fs.ModeAppend)
 	if err != nil {
 		return err
 	}
@@ -151,14 +151,14 @@ func (t *TestEnv) CreateCertificate() error {
 		return err
 	}
 
-	certFile, err := ioutil.TempFile("", "cert.crt")
+	certFile, err := os.CreateTemp("", "cert.crt")
 	if err != nil {
 		return err
 	}
 	defer certFile.Close()
 	t.certFile = certFile.Name()
 
-	err = ioutil.WriteFile(t.certFile, certPEM.Bytes(), fs.ModeAppend)
+	err = os.WriteFile(t.certFile, certPEM.Bytes(), fs.ModeAppend)
 	if err != nil {
 		return err
 	}
@@ -172,14 +172,14 @@ func (t *TestEnv) CreateCertificate() error {
 		return err
 	}
 
-	certKeyFile, err := ioutil.TempFile("", "cert.key")
+	certKeyFile, err := os.CreateTemp("", "cert.key")
 	if err != nil {
 		return err
 	}
 	defer certKeyFile.Close()
 	t.certKeyFile = certKeyFile.Name()
 
-	err = ioutil.WriteFile(t.certKeyFile, certPrivKeyPEM.Bytes(), fs.ModeAppend)
+	err = os.WriteFile(t.certKeyFile, certPrivKeyPEM.Bytes(), fs.ModeAppend)
 	if err != nil {
 		return err
 	}

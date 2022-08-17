@@ -16,7 +16,7 @@ package jwt
 
 import (
 	"crypto/rsa"
-	"io/ioutil"
+	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,7 +24,7 @@ import (
 
 var _ = Describe("jwt/key", func() {
 	It("can load private key from file", func() {
-		bytes, err := ioutil.ReadFile(testEnv.privateKeyFile)
+		bytes, err := os.ReadFile(testEnv.privateKeyFile)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(bytes).ToNot(BeNil())
 
@@ -34,7 +34,7 @@ var _ = Describe("jwt/key", func() {
 		Expect(privKey.Key).To(Equal(testEnv.privateKey))
 	})
 	It("can load public key from file", func() {
-		bytes, err := ioutil.ReadFile(testEnv.publicKeyFile)
+		bytes, err := os.ReadFile(testEnv.publicKeyFile)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(bytes).ToNot(BeNil())
 
