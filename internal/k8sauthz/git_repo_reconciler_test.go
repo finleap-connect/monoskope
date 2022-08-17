@@ -17,7 +17,6 @@ package k8sauthz
 import (
 	"context"
 	_ "embed"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -60,7 +59,7 @@ var _ = Describe("internal/k8sauthz", func() {
 			clusterAccessRepo := mock_repositories.NewMockClusterAccessRepository(mockCtrl)
 
 			// Temp dir to clone the repository
-			dir, err := ioutil.TempDir("", "m8-git-repo-reconciler")
+			dir, err := os.MkdirTemp("", "m8-git-repo-reconciler")
 			if err != nil {
 				log.Fatal(err)
 			}

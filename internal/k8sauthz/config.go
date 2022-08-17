@@ -17,7 +17,6 @@ package k8sauthz
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -134,7 +133,7 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 // configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.
 func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
 	// read file
-	data, err := ioutil.ReadFile(repo.BasicAuthPath)
+	data, err := os.ReadFile(repo.BasicAuthPath)
 	if err != nil {
 		return err
 	}
@@ -158,7 +157,7 @@ func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) err
 // configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
 func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
 	// read file
-	data, err := ioutil.ReadFile(repo.SSHAuthPath)
+	data, err := os.ReadFile(repo.SSHAuthPath)
 	if err != nil {
 		return err
 	}
