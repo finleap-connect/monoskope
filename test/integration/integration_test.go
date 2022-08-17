@@ -322,7 +322,7 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(tenant).ToNot(BeNil())
 				g.Expect(tenant.Metadata.Deleted).NotTo(BeNil())
-			}).Should(Succeed())
+			}).ShouldNot(Succeed())
 
 			By("recreating the tenant after deletion")
 			command, err = cmd.AddCommandData(
@@ -412,7 +412,7 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(cluster).ToNot(BeNil())
 				g.Expect(cluster.Metadata.Deleted).NotTo(BeNil())
-			}).Should(Succeed())
+			}).ShouldNot(Succeed())
 
 			By("recreating the cluster after deletion")
 			command, err = cmd.AddCommandData(
