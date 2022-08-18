@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 type TestEnv struct {
@@ -63,7 +64,11 @@ func NewTestEnv() (*TestEnv, error) {
 	if env.err(err) != nil {
 		return nil, err
 	}
-	_, err = wt.Commit("init", &git.CommitOptions{})
+	_, err = wt.Commit("init", &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "testenv",
+		},
+	})
 	if env.err(err) != nil {
 		return nil, err
 	}
