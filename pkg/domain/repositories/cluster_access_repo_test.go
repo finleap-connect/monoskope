@@ -52,6 +52,10 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 	cluster.Name = "test-cluster"
 	cluster.DisplayName = "Test Cluster"
 
+	tenant := projections.NewTenantProjection(tenantId)
+	tenant.Name = "test-tenant"
+	tenant.Prefix = "tt"
+
 	binding := projections.NewTenantClusterBindingProjection(uuid.New())
 	binding.ClusterId = clusterId.String()
 	binding.TenantId = tenantId.String()
@@ -64,14 +68,18 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 		inMemoryClusterRepo := es_repos.NewInMemoryRepository[*projections.Cluster]()
 		Expect(inMemoryClusterRepo.Upsert(context.Background(), cluster)).NotTo(HaveOccurred())
 
+		inMemoryTenantRepo := es_repos.NewInMemoryRepository[*projections.Tenant]()
+		Expect(inMemoryTenantRepo.Upsert(context.Background(), tenant)).NotTo(HaveOccurred())
+
 		clusterRepo := NewClusterRepository(inMemoryClusterRepo)
 		userRoleBindingRepo := NewUserRoleBindingRepository(inMemoryRoleRepo)
+		tenantRepo := NewTenantRepository(inMemoryTenantRepo)
 
 		inMemoryTenantClusterBindingRepo := es_repos.NewInMemoryRepository[*projections.TenantClusterBinding]()
 		Expect(inMemoryTenantClusterBindingRepo.Upsert(context.Background(), binding)).NotTo(HaveOccurred())
 		tenantClusterBindingRepo := NewTenantClusterBindingRepository(inMemoryTenantClusterBindingRepo)
 
-		clusterAccessRepo := NewClusterAccessRepository(tenantClusterBindingRepo, clusterRepo, userRoleBindingRepo)
+		clusterAccessRepo := NewClusterAccessRepository(tenantClusterBindingRepo, clusterRepo, userRoleBindingRepo, tenantRepo)
 
 		clusters, err := clusterAccessRepo.GetClustersAccessibleByUserId(context.Background(), otherUserId)
 		Expect(err).NotTo(HaveOccurred())
