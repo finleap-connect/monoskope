@@ -55,8 +55,7 @@ func NewGitRepoReconciler(
 	clusterAccessRepo repositories.ClusterAccessRepository,
 	gitRepo *git.Repository,
 ) *GitRepoReconciler {
-	remote, _ := gitRepo.Remote("origin")
-	return &GitRepoReconciler{logger.WithName("GitRepoReconciler").WithValues("remote", remote.Config().URLs), config, userRepo, clusterAccessRepo, gitRepo, sync.Mutex{}}
+	return &GitRepoReconciler{logger.WithName("GitRepoReconciler"), config, userRepo, clusterAccessRepo, gitRepo, sync.Mutex{}}
 }
 
 func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {

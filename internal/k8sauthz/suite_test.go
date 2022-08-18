@@ -21,6 +21,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var testEnv *TestEnv
+
 func TestCommandHandler(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "internal/k8sauthz")
@@ -31,6 +33,9 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		By("bootstrapping test env")
+		env, err := NewTestEnv()
+		Expect(err).NotTo(HaveOccurred())
+		testEnv = env
 		close(done)
 	}()
 
@@ -39,4 +44,5 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	Expect(testEnv.Shutdown()).To(Succeed())
 })

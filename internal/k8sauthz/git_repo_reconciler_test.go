@@ -17,15 +17,12 @@ package k8sauthz
 import (
 	"context"
 	_ "embed"
-	"log"
-	"os"
 	"time"
 
 	mock_repositories "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
-	"github.com/go-git/go-git/v5"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -58,22 +55,9 @@ var _ = Describe("internal/k8sauthz", func() {
 			userRepo := mock_repositories.NewMockUserRepository(mockCtrl)
 			clusterAccessRepo := mock_repositories.NewMockClusterAccessRepository(mockCtrl)
 
-			// Temp dir to clone the repository
-			dir, err := os.MkdirTemp("", "m8-git-repo-reconciler")
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer os.RemoveAll(dir) // clean up
-
-			reconcilerConfig := NewReconcilerConfig(dir, "m8-", map[string]string{
+			reconcilerConfig := NewReconcilerConfig(testEnv.repoDir, "m8-", map[string]string{
 				"admin": "cluster-admin",
 			})
-
-			r, err := git.PlainCloneContext(context.Background(), dir, false, &git.CloneOptions{
-				URL:               "https://github.com/git-fixtures/basic.git",
-				RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-			})
-			Expect(err).ToNot(HaveOccurred())
 
 			clusterAccessProjection := &api_projections.ClusterAccess{
 				Cluster: &api_projections.Cluster{
@@ -88,7 +72,7 @@ var _ = Describe("internal/k8sauthz", func() {
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
 
-			reconciler := NewGitRepoReconciler(reconcilerConfig, userRepo, clusterAccessRepo, r)
+			reconciler := NewGitRepoReconciler(reconcilerConfig, userRepo, clusterAccessRepo, testEnv.gitRepo)
 			Expect(reconciler.Reconcile(context.Background())).To(Succeed())
 		})
 	})
