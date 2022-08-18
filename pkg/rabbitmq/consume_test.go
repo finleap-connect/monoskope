@@ -15,6 +15,8 @@
 package rabbitmq
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -50,7 +52,7 @@ var _ = Describe("Pkg/Rabbitmq/Consume", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer consumer.StopConsuming(expectedConsumerName, false)
 
-		err = publisher.Publish([]byte("test"), []string{expectedRoutingKey}, WithPublishOptionsExchange(expectedExchangeName))
+		err = publisher.Publish(context.Background(), []byte("test"), []string{expectedRoutingKey}, WithPublishOptionsExchange(expectedExchangeName))
 		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(done, 60).Should(BeClosed())

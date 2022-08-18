@@ -108,6 +108,7 @@ func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) erro
 	}
 
 	err = b.publisher.Publish(
+		ctx,
 		rabbitMessageBytes,
 		[]string{b.generateRoutingKey(event)},
 		rabbitmq.WithPublishOptionsContentType("application/json"),
