@@ -32,6 +32,7 @@ import (
 type GatewayDomain struct {
 	UserRoleBindingRepository      repositories.UserRoleBindingRepository
 	UserRepository                 repositories.UserRepository
+	TenantRepository               repositories.TenantRepository
 	TenantUserRepository           repositories.TenantUserRepository
 	ClusterRepository              repositories.ClusterRepository
 	TenantClusterBindingRepository repositories.TenantClusterBindingRepository
@@ -44,18 +45,21 @@ func NewGatewayDomain(ctx context.Context, eventBus eventsourcing.EventBusConsum
 	// Setup repositories
 	d.UserRoleBindingRepository = repositories.NewUserRoleBindingRepository(esr.NewInMemoryRepository[*projections.UserRoleBinding]())
 	d.UserRepository = repositories.NewUserRepository(esr.NewInMemoryRepository[*projections.User](), d.UserRoleBindingRepository)
+	d.TenantRepository = repositories.NewTenantRepository(esr.NewInMemoryRepository[*projections.Tenant]())
 	d.ClusterRepository = repositories.NewClusterRepository(esr.NewInMemoryRepository[*projections.Cluster]())
 	d.TenantClusterBindingRepository = repositories.NewTenantClusterBindingRepository(esr.NewInMemoryRepository[*projections.TenantClusterBinding]())
-	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository)
+	d.ClusterAccessRepo = repositories.NewClusterAccessRepository(d.TenantClusterBindingRepository, d.ClusterRepository, d.UserRoleBindingRepository, d.TenantRepository)
 
 	// Setup projectors
 	userProjector := projectors.NewUserProjector()
 	userRoleBindingProjector := projectors.NewUserRoleBindingProjector()
+	tenantProjector := projectors.NewTenantProjector()
 	clusterProjector := projectors.NewClusterProjector()
 	tenantClusterBindingProjector := projectors.NewTenantClusterBindingProjector()
 
 	// Setup handler
 	userProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.User](userProjector, d.UserRepository)
+	tenantProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Tenant](tenantProjector, d.TenantRepository)
 	userRoleBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.UserRoleBinding](userRoleBindingProjector, d.UserRoleBindingRepository)
 	clusterProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.Cluster](clusterProjector, d.ClusterRepository)
 	tenantClusterBindingProjectingHandler := eventhandler.NewProjectingEventHandler[*projections.TenantClusterBinding](tenantClusterBindingProjector, d.TenantClusterBindingRepository)
@@ -64,12 +68,14 @@ func NewGatewayDomain(ctx context.Context, eventBus eventsourcing.EventBusConsum
 	refreshDuration := time.Second * 30
 	userHandlerChain := eventsourcing.UseEventHandlerMiddleware(userProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	userRoleBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(userRoleBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
+	tenantHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	clusterHandlerChain := eventsourcing.UseEventHandlerMiddleware(clusterProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 	tenantClusterBindingHandlerChain := eventsourcing.UseEventHandlerMiddleware(tenantClusterBindingProjectingHandler, eventhandler.NewEventStoreReplayMiddleware(esClient), eventhandler.NewEventStoreRefreshMiddleware(esClient, refreshDuration))
 
 	// Setup matcher for event bus
 	userMatcher := eventBus.Matcher().MatchAggregateType(aggregates.User)
 	userRoleBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.UserRoleBinding)
+	tenantMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Tenant)
 	clusterMatcher := eventBus.Matcher().MatchAggregateType(aggregates.Cluster)
 	tenantClusterBindingMatcher := eventBus.Matcher().MatchAggregateType(aggregates.TenantClusterBinding)
 
@@ -78,6 +84,9 @@ func NewGatewayDomain(ctx context.Context, eventBus eventsourcing.EventBusConsum
 		return nil, err
 	}
 	if err := eventBus.AddHandler(ctx, userRoleBindingHandlerChain, userRoleBindingMatcher); err != nil {
+		return nil, err
+	}
+	if err := eventBus.AddHandler(ctx, tenantHandlerChain, tenantMatcher); err != nil {
 		return nil, err
 	}
 	if err := eventBus.AddHandler(ctx, clusterHandlerChain, clusterMatcher); err != nil {
@@ -92,6 +101,9 @@ func NewGatewayDomain(ctx context.Context, eventBus eventsourcing.EventBusConsum
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.UserRoleBinding, userRoleBindingHandlerChain); err != nil {
+		return nil, err
+	}
+	if err := handler.WarmUp(ctx, esClient, aggregates.Tenant, tenantHandlerChain); err != nil {
 		return nil, err
 	}
 	if err := handler.WarmUp(ctx, esClient, aggregates.Cluster, clusterHandlerChain); err != nil {

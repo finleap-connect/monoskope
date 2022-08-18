@@ -23,9 +23,11 @@ import (
 	domain_projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/google/uuid"
+	"k8s.io/utils/strings/slices"
 )
 
 type clusterAccessRepository struct {
+	tenantRepo               TenantRepository
 	clusterRepo              ClusterRepository
 	userRoleBindingRepo      UserRoleBindingRepository
 	tenantClusterBindingRepo TenantClusterBindingRepository
@@ -38,11 +40,12 @@ type ClusterAccessRepository interface {
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
-func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRepository, clusterRepo ClusterRepository, userRoleBindingRepo UserRoleBindingRepository) ClusterAccessRepository {
+func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRepository, clusterRepo ClusterRepository, userRoleBindingRepo UserRoleBindingRepository, tenantRepo TenantRepository) ClusterAccessRepository {
 	return &clusterAccessRepository{
 		clusterRepo:              clusterRepo,
 		userRoleBindingRepo:      userRoleBindingRepo,
 		tenantClusterBindingRepo: tenantClusterBindingRepo,
+		tenantRepo:               tenantRepo,
 	}
 }
 
@@ -53,6 +56,11 @@ func (r *clusterAccessRepository) getClustersByBindings(ctx context.Context, bin
 		cluster, err = r.clusterRepo.ById(ctx, uuid.MustParse(clusterBinding.ClusterId))
 		if err != nil {
 			return
+		}
+
+		// Skip deleted clusters
+		if cluster.Metadata.Deleted != nil {
+			continue
 		}
 		clusters = append(clusters, &projections.ClusterAccess{Cluster: cluster.Cluster, Roles: roles})
 	}
@@ -94,6 +102,8 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 	}
 
 	tenantMap := make(map[string]bool)
+	clusterMap := make(map[string]*projections.ClusterAccess)
+
 	// regular users have access based on tenant membership
 	for _, binding := range roleBindings {
 		// search rolebindings for tenant scoped bindings
@@ -103,6 +113,17 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 				continue
 			}
 			tenantMap[binding.Resource] = true
+			tenantId := uuid.MustParse(binding.Resource)
+
+			var tenant *domain_projections.Tenant
+			tenant, err = r.tenantRepo.ById(ctx, tenantId)
+			if err != nil {
+				return
+			}
+			// Skip deleted tenants
+			if tenant.Metadata.Deleted != nil {
+				continue
+			}
 
 			var tenantBindings []*domain_projections.UserRoleBinding
 			tenantBindings, err = r.userRoleBindingRepo.ByUserIdScopeAndResource(ctx, id, scopes.Tenant, binding.Resource)
@@ -122,12 +143,34 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 
 			// get accessible cluster by tenant and append
 			var bindings []*domain_projections.TenantClusterBinding
-			bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, uuid.MustParse(binding.GetResource()))
+			bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, tenantId)
 			if err != nil {
 				return
 			}
-			clusters, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
+
+			var clustersForTenant []*projections.ClusterAccess
+			clustersForTenant, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
+			if err != nil {
+				return
+			}
+
+			// Add/modify clusters
+			for _, cluster := range clustersForTenant {
+				if c, ok := clusterMap[cluster.Cluster.Id]; ok {
+					for _, role := range c.Roles {
+						if !slices.Contains(cluster.Roles, role) {
+							cluster.Roles = append(cluster.Roles, role)
+						}
+					}
+				} else {
+					clusterMap[cluster.Cluster.Id] = cluster
+				}
+			}
 		}
+	}
+
+	for _, cluster := range clusterMap {
+		clusters = append(clusters, cluster)
 	}
 
 	return
