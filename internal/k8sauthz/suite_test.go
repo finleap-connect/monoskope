@@ -32,6 +32,7 @@ var _ = BeforeSuite(func() {
 	done := make(chan interface{})
 
 	go func() {
+		defer GinkgoRecover()
 		By("bootstrapping test env")
 		env, err := NewTestEnv()
 		Expect(err).NotTo(HaveOccurred())
