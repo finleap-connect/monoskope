@@ -208,6 +208,10 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 		if err != nil {
 			return nil, err
 		}
+		err = gwDomain.TenantRepository.Upsert(ctx, mock.TestTenant)
+		if err != nil {
+			return nil, err
+		}
 		err = gwDomain.TenantClusterBindingRepository.Upsert(ctx, mock.TestTenantClusterBinding)
 		if err != nil {
 			return nil, err
@@ -215,7 +219,7 @@ func NewTestEnvWithParent(testeEnv *test.TestEnv, eventStoreTestEnv *eventstore.
 	}
 
 	gatewayApiServer := NewGatewayAPIServer(env.ClientAuthConfig, authClient, authServer, gwDomain.UserRepository)
-	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(gwDomain.TenantClusterBindingRepository, gwDomain.ClusterRepository, gwDomain.UserRoleBindingRepository), map[string]time.Duration{
+	authApiServer := NewClusterAuthAPIServer("https://localhost", signer, repositories.NewClusterAccessRepository(gwDomain.TenantClusterBindingRepository, gwDomain.ClusterRepository, gwDomain.UserRoleBindingRepository, gwDomain.TenantRepository), map[string]time.Duration{
 		"default": time.Hour * 1,
 	})
 

@@ -101,6 +101,16 @@ func (s *tenantServer) GetUsers(id *wrappers.StringValue, stream api.Tenant_GetU
 		return err
 	}
 
+	tenant, err := s.repoTenant.ById(stream.Context(), uuid)
+	if err != nil {
+		return err
+	}
+
+	// skip deleted
+	if tenant.Metadata.GetDeleted() != nil {
+		return nil
+	}
+
 	users, err := s.repoUsers.GetTenantUsersById(stream.Context(), uuid)
 	if err != nil {
 		return err

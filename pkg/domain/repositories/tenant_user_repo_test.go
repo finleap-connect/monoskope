@@ -41,8 +41,8 @@ var _ = Describe("domain/tenant_user_repo_test", func() {
 		DomainProjection: projections.NewDomainProjection(),
 	}
 
-	adminUser := &projections.User{User: &projectionsApi.User{Id: adminUserId.String(), Name: "admin", Email: "admin@monoskope.io"}}
-	otherUser := &projections.User{User: &projectionsApi.User{Id: otherUserId.String(), Name: "otheruser", Email: "otheruser@monoskope.io"}}
+	adminUser := &projections.User{User: &projectionsApi.User{Id: adminUserId.String(), Name: "admin", Email: "admin@monoskope.io", Metadata: &projectionsApi.LifecycleMetadata{}}}
+	otherUser := &projections.User{User: &projectionsApi.User{Id: otherUserId.String(), Name: "otheruser", Email: "otheruser@monoskope.io", Metadata: &projectionsApi.LifecycleMetadata{}}}
 
 	adminRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	adminRoleBinding.UserId = adminUser.Id

@@ -45,7 +45,7 @@ go-test: ginkgo ## Run tests.
 go-test-ci: ## Run tests in CI/CD.
 # https://onsi.github.io/ginkgo/#running-tests
 	@find . -name '*.coverprofile' -exec rm {} \;
-	@$(GINKGO) -r -cover --failFast -requireSuite -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
+	@$(GINKGO) --repeat=3 -r -cover --failFast -requireSuite -covermode count -outputdir=$(BUILD_PATH) -coverprofile=monoskope.coverprofile 
 
 .PHONY: go-coverage
 go-coverage: ## Print coverage from coverprofiles.

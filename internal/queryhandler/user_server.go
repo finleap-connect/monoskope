@@ -73,6 +73,11 @@ func (s *UserServer) GetRoleBindingsById(userId *wrappers.StringValue, stream ap
 		return errors.TranslateToGrpcError(err)
 	}
 
+	// skip deleted users
+	if user.Metadata.GetDeleted() != nil {
+		return nil
+	}
+
 	for _, role := range user.Roles {
 		err := stream.Send(role)
 		if err != nil {
