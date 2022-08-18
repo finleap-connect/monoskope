@@ -15,6 +15,7 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -150,6 +151,7 @@ func NewPublisher(url string, config *amqp.Config) (*Publisher, <-chan amqp.Retu
 
 // Publish publishes the provided data to the given routing keys over the connection
 func (publisher *Publisher) Publish(
+	ctx context.Context,
 	data []byte,
 	routingKeys []string,
 	optionFuncs ...func(*PublishOptions),
@@ -177,7 +179,7 @@ func (publisher *Publisher) Publish(
 		message.Expiration = options.Expiration
 
 		// Actual publish.
-		err := publisher.chManager.channel.Publish(
+		err := publisher.chManager.channel.PublishWithContext(ctx,
 			options.Exchange,
 			routingKey,
 			options.Mandatory,
