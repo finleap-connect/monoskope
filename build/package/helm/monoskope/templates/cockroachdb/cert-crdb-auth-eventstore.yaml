@@ -18,8 +18,8 @@ spec:
   subject:
     organizations:
       - Cockroach
-  duration: 672h
-  renewBefore: 48h
+  duration: {{ .Values.pki.certificates.duration }}
+  renewBefore: {{ .Values.pki.certificates.renewBefore }}
   usages:
     - digital signature
     - key encipherment
