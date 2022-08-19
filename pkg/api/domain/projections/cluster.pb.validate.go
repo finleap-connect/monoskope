@@ -300,3 +300,269 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterAccessValidationError{}
+
+// Validate checks the field values on ClusterAccessV2 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ClusterAccessV2) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClusterAccessV2 with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ClusterAccessV2MultiError, or nil if none found.
+func (m *ClusterAccessV2) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClusterAccessV2) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCluster()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClusterAccessV2ValidationError{
+					field:  "Cluster",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClusterAccessV2ValidationError{
+					field:  "Cluster",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCluster()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClusterAccessV2ValidationError{
+				field:  "Cluster",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetClusterRoles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ClusterAccessV2ValidationError{
+						field:  fmt.Sprintf("ClusterRoles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ClusterAccessV2ValidationError{
+						field:  fmt.Sprintf("ClusterRoles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ClusterAccessV2ValidationError{
+					field:  fmt.Sprintf("ClusterRoles[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ClusterAccessV2MultiError(errors)
+	}
+
+	return nil
+}
+
+// ClusterAccessV2MultiError is an error wrapping multiple validation errors
+// returned by ClusterAccessV2.ValidateAll() if the designated constraints
+// aren't met.
+type ClusterAccessV2MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClusterAccessV2MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClusterAccessV2MultiError) AllErrors() []error { return m }
+
+// ClusterAccessV2ValidationError is the validation error returned by
+// ClusterAccessV2.Validate if the designated constraints aren't met.
+type ClusterAccessV2ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterAccessV2ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterAccessV2ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterAccessV2ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterAccessV2ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterAccessV2ValidationError) ErrorName() string { return "ClusterAccessV2ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterAccessV2ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterAccessV2.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterAccessV2ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterAccessV2ValidationError{}
+
+// Validate checks the field values on ClusterRole with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ClusterRole) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClusterRole with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ClusterRoleMultiError, or
+// nil if none found.
+func (m *ClusterRole) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClusterRole) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Scope
+
+	// no validation rules for Role
+
+	if len(errors) > 0 {
+		return ClusterRoleMultiError(errors)
+	}
+
+	return nil
+}
+
+// ClusterRoleMultiError is an error wrapping multiple validation errors
+// returned by ClusterRole.ValidateAll() if the designated constraints aren't met.
+type ClusterRoleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClusterRoleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClusterRoleMultiError) AllErrors() []error { return m }
+
+// ClusterRoleValidationError is the validation error returned by
+// ClusterRole.Validate if the designated constraints aren't met.
+type ClusterRoleValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterRoleValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterRoleValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterRoleValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterRoleValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterRoleValidationError) ErrorName() string { return "ClusterRoleValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterRoleValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterRole.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterRoleValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterRoleValidationError{}

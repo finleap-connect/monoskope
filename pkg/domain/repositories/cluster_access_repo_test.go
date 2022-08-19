@@ -44,7 +44,7 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 
 	otherUserRoleBinding := projections.NewUserRoleBinding(uuid.New())
 	otherUserRoleBinding.UserId = otherUser.Id
-	otherUserRoleBinding.Role = string(roles.User)
+	otherUserRoleBinding.Role = string(roles.OnCall)
 	otherUserRoleBinding.Scope = string(scopes.Tenant)
 	otherUserRoleBinding.Resource = tenantId.String()
 
@@ -86,5 +86,11 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 		Expect(clusters).NotTo(BeEmpty())
 		Expect(len(clusters)).To(BeNumerically("==", 1))
 		Expect(clusters[0].Cluster.Id).To(Equal(clusterId.String()))
+
+		clustersV2, err := clusterAccessRepo.GetClustersAccessibleByUserIdV2(context.Background(), otherUserId)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(clustersV2).NotTo(BeEmpty())
+		Expect(len(clustersV2)).To(BeNumerically("==", 1))
+		Expect(clustersV2[0].Cluster.Id).To(Equal(clusterId.String()))
 	})
 })

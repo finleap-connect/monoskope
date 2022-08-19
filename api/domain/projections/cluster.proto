@@ -46,3 +46,21 @@ message ClusterAccess {
   projections.Cluster cluster = 1;
   repeated string roles = 2;
 }
+
+// ClusterAccessV2 represents an access to a specific cluster with a list of
+// roles within that cluster for a user
+message ClusterAccessV2 {
+  projections.Cluster cluster = 1;
+  repeated ClusterRole clusterRoles = 2;
+}
+
+// ClusterRole is the role a user has in a cluster
+message ClusterRole {
+  ClusterRoleScope scope = 1;
+  string role = 2;
+
+  enum ClusterRoleScope {
+    CLUSTER = 0;
+    TENANT = 1;
+  }
+}

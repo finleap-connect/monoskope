@@ -332,3 +332,18 @@ func (mr *MockClusterAccessRepositoryMockRecorder) GetClustersAccessibleByUserId
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClustersAccessibleByUserId", reflect.TypeOf((*MockClusterAccessRepository)(nil).GetClustersAccessibleByUserId), arg0, arg1)
 }
+
+// GetClustersAccessibleByUserIdV2 mocks base method.
+func (m *MockClusterAccessRepository) GetClustersAccessibleByUserIdV2(arg0 context.Context, arg1 uuid.UUID) ([]*projections.ClusterAccessV2, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClustersAccessibleByUserIdV2", arg0, arg1)
+	ret0, _ := ret[0].([]*projections.ClusterAccessV2)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClustersAccessibleByUserIdV2 indicates an expected call of GetClustersAccessibleByUserIdV2.
+func (mr *MockClusterAccessRepositoryMockRecorder) GetClustersAccessibleByUserIdV2(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClustersAccessibleByUserIdV2", reflect.TypeOf((*MockClusterAccessRepository)(nil).GetClustersAccessibleByUserIdV2), arg0, arg1)
+}
