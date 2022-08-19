@@ -110,23 +110,23 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 		return err
 	}
 
-	// Remove bindings for deleted users
-	if user.IsDeleted() {
-		return r.removeClusterRolesForUser(user, clusterAccesses)
-	}
-
-	// Create/reconcile bindings for existing users
-	return r.createClusterRolesForUser(ctx, user, clusterAccesses)
-}
-
-func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, clusterAccesses []*api_projections.ClusterAccess) error {
-	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email)
-
 	// sanitize user name
 	sanitizedName, err := mk8s.GetK8sName(user.Name)
 	if err != nil {
 		return err
 	}
+
+	// Remove bindings for deleted users
+	if user.IsDeleted() {
+		return r.removeClusterRolesForUser(user, sanitizedName, clusterAccesses)
+	}
+
+	// Create/reconcile bindings for existing users
+	return r.createClusterRolesForUser(ctx, user, sanitizedName, clusterAccesses)
+}
+
+func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccess) error {
+	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email)
 
 	for _, clusterAccess := range clusterAccesses {
 		path := filepath.Join(r.config.LocalDirectory, clusterAccess.Cluster.Name, sanitizedName)
@@ -140,7 +140,7 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 		// Reconcile bindings for existing users
 		for _, role := range clusterAccess.Roles {
 			if clusterRole, ok := r.config.Mappings[role]; ok {
-				if err := r.createClusterRoleBinding(ctx, path, clusterRole, user); err != nil {
+				if err := r.createClusterRoleBinding(ctx, path, clusterRole, user, sanitizedName); err != nil {
 					return err
 				}
 			}
@@ -149,14 +149,8 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 	return nil
 }
 
-func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, clusterAccesses []*api_projections.ClusterAccess) error {
+func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccess) error {
 	r.log.V(logger.DebugLevel).Info("User is deleted. Removing bindings...", "user", user.Email)
-
-	// sanitize user name
-	sanitizedName, err := mk8s.GetK8sName(user.Name)
-	if err != nil {
-		return err
-	}
 
 	w, err := r.gitRepo.Worktree()
 	if err != nil {
@@ -197,7 +191,7 @@ func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, cl
 	return nil
 }
 
-func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, clusterRoleName string, user *projections.User) error {
+func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, clusterRoleName string, user *projections.User, sanitizedName string) error {
 	filePath := filepath.Join(dir, fmt.Sprintf("%s.yaml", clusterRoleName))
 	relFilePath, err := filepath.Rel(r.config.LocalDirectory, filePath)
 	if err != nil {
@@ -207,12 +201,6 @@ func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, c
 	r.log.V(logger.DebugLevel).Info("Creating cluster role binding...", "path", filePath)
 
 	file, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-
-	// sanitize user name
-	sanitizedName, err := mk8s.GetK8sName(user.Name)
 	if err != nil {
 		return err
 	}
