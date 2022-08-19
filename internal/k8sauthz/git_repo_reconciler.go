@@ -36,7 +36,6 @@ import (
 
 const (
 	defaultDirectoryMode = 0755
-	domain               = "monoskope.io"
 )
 
 // GitRepoReconciler reconciles the resources within the target repo to match the expected state.
@@ -220,8 +219,9 @@ func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, c
 
 	// create new cluster role binding for user and clusterrole
 	crb := mk8s.NewClusterRoleBinding(clusterRoleName, sanitizedName, r.config.UsernamePrefix, map[string]string{
-		fmt.Sprintf("%s/user", domain): user.Email,
+		"user": user.Email,
 	})
+
 	err = new(printers.YAMLPrinter).PrintObj(crb, file)
 	if err != nil {
 		return err

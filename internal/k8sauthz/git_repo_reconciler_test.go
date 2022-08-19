@@ -50,27 +50,46 @@ var _ = Describe("internal/k8sauthz", func() {
 		userB.Name = "test-b"
 		userB.Email = "test-b@monoskope.io"
 		userB.Metadata.Deleted = timestamppb.New(time.Now().UTC())
+		userC := projections.NewUserProjection(uuid.New())
+		userC.Name = "test-c"
+		userC.Email = "test-c@monoskope.io"
 
 		It("Reconcile() reconciles the git repo", func() {
 			userRepo := mock_repositories.NewMockUserRepository(mockCtrl)
 			clusterAccessRepo := mock_repositories.NewMockClusterAccessRepository(mockCtrl)
 
 			reconcilerConfig := NewReconcilerConfig(testEnv.repoDir, "m8-", map[string]string{
-				"admin": "cluster-admin",
+				"admin":  "cluster-admin",
+				"oncall": "fcloud-oncallee",
 			})
 
-			clusterAccessProjection := &api_projections.ClusterAccess{
+			clusterAccessProjectionA := &api_projections.ClusterAccess{
 				Cluster: &api_projections.Cluster{
 					Id:   uuid.NewString(),
 					Name: "cluster-a",
 				},
 				Roles: []string{string(k8s.AdminRole)},
 			}
+			clusterAccessProjectionB := &api_projections.ClusterAccess{
+				Cluster: &api_projections.Cluster{
+					Id:   uuid.NewString(),
+					Name: "cluster-a",
+				},
+				Roles: []string{string(k8s.DefaultRole)},
+			}
+			clusterAccessProjectionC := &api_projections.ClusterAccess{
+				Cluster: &api_projections.Cluster{
+					Id:   uuid.NewString(),
+					Name: "cluster-a",
+				},
+				Roles: []string{string(k8s.OnCallRole)},
+			}
 
 			// expected calls to mocks
-			userRepo.EXPECT().AllWith(context.Background(), true).Return([]*projections.User{userA, userB}, nil)
-			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
-			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjection}, nil)
+			userRepo.EXPECT().AllWith(context.Background(), true).Return([]*projections.User{userA, userB, userC}, nil)
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjectionA}, nil)
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjectionB}, nil)
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserId(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccess{clusterAccessProjectionC}, nil)
 
 			reconciler := NewGitRepoReconciler(reconcilerConfig, userRepo, clusterAccessRepo, testEnv.gitRepo)
 			Expect(reconciler.Reconcile(context.Background())).To(Succeed())

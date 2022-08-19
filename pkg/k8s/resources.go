@@ -22,29 +22,36 @@ import (
 )
 
 const (
-	BASE_DOMAIN = "monoskope.io"
+	MonoskopeDomain        = "monoskope.io"
+	ClusterRoleBindingKind = "ClusterRoleBinding"
+	ClusterRoleKind        = "ClusterRole"
 )
 
 // NewClusterRoleBinding creates a new K8s API ClusterRoleBinding resource
 func NewClusterRoleBinding(clusterRoleName, userName, userNamePrefix string, labels map[string]string) *rbac.ClusterRoleBinding {
+	// prefix labels with MonoskopeDomain
+	labelsWithPrefix := make(map[string]string)
+	for k, v := range labels {
+		labelsWithPrefix[fmt.Sprintf("%s/%s", MonoskopeDomain, k)] = v
+	}
 	return &rbac.ClusterRoleBinding{
 		TypeMeta: api.TypeMeta{
-			Kind:       "ClusterRoleBinding",
-			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       ClusterRoleBindingKind,
+			APIVersion: rbac.SchemeGroupVersion.Identifier(),
 		},
 		ObjectMeta: api.ObjectMeta{
 			Name:   fmt.Sprintf("%s:%s", clusterRoleName, userName),
-			Labels: labels,
+			Labels: labelsWithPrefix,
 		},
 		RoleRef: rbac.RoleRef{
-			Kind:     "ClusterRole", // ClusterRoleBindings can only refer to ClusterRole
+			Kind:     ClusterRoleKind,
 			Name:     clusterRoleName,
-			APIGroup: "rbac.authorization.k8s.io",
+			APIGroup: rbac.SchemeGroupVersion.Group,
 		},
 		Subjects: []rbac.Subject{
 			{
 				Name: fmt.Sprintf("%s%s", userNamePrefix, userName),
-				Kind: "User",
+				Kind: rbac.UserKind,
 			},
 		},
 	}

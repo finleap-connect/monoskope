@@ -15,6 +15,8 @@
 package k8sauthz
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -37,7 +39,7 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 	env.tempDir = dir
-	env.repoDir = filepath.Join(dir, "repo")
+	env.repoDir = filepath.Join(dir, "repo", "rbac")
 	repoOriginDir := filepath.Join(dir, "origin")
 
 	r, err := git.PlainInit(repoOriginDir, false)
@@ -92,6 +94,17 @@ func (env *TestEnv) err(err error) error {
 }
 
 func (env *TestEnv) Shutdown() error {
+	err := filepath.Walk(env.repoDir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			fmt.Println(path)
+			return nil
+		})
+	if err != nil {
+		log.Println(err)
+	}
 	os.RemoveAll(env.tempDir) // clean up
 
 	return nil
