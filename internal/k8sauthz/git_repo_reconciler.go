@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
@@ -61,28 +62,30 @@ func NewGitRepoReconciler(
 func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	r.log.V(logger.DebugLevel).Info("Started reconciling..")
+	r.log.Info("Started reconciling...")
 
-	r.log.V(logger.DebugLevel).Info("Fetching git repo..")
+	r.log.Info("Fetching git repo..")
 	if err := r.gitRepo.Fetch(&git.FetchOptions{}); err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("error fetching latest changes from repository: %w", err)
 	}
 
-	w, err := r.gitRepo.Worktree()
-	if err != nil {
-		return err
-	}
-
-	r.log.V(logger.DebugLevel).Info("Reconciling users...")
-	if err := r.reconcileUsers(ctx, w); err != nil {
+	r.log.Info("Reconciling users...")
+	if err := r.reconcileUsers(ctx); err != nil {
 		return fmt.Errorf("error reconciling users: %w", err)
 	}
 
-	r.log.V(logger.DebugLevel).Info("Pushing changes to git repo...")
-	return r.gitRepo.PushContext(ctx, &git.PushOptions{})
+	r.log.Info("Pushing changes to git repo...")
+	err := r.gitRepo.PushContext(ctx, &git.PushOptions{})
+	if err == nil {
+		r.log.Info("Reconciling finished.")
+
+	} else {
+		r.log.Error(err, "Reconciling finished with errors.")
+	}
+	return err
 }
 
-func (r *GitRepoReconciler) reconcileUsers(ctx context.Context, w *git.Worktree) error {
+func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
 	// Get all users including deleted ones
 	users, err := r.users.AllWith(ctx, true)
 	if err != nil {
@@ -91,7 +94,7 @@ func (r *GitRepoReconciler) reconcileUsers(ctx context.Context, w *git.Worktree)
 
 	// reconcile each user
 	for _, user := range users {
-		if err := r.reconcileUser(ctx, user, w); err != nil {
+		if err := r.reconcileUser(ctx, user); err != nil {
 			return err
 		}
 	}
@@ -99,7 +102,7 @@ func (r *GitRepoReconciler) reconcileUsers(ctx context.Context, w *git.Worktree)
 	return nil
 }
 
-func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections.User, w *git.Worktree) error {
+func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections.User) error {
 	r.log.V(logger.DebugLevel).Info("Reconciling user...", "user", user.Email)
 
 	// get all clusterAccesses accessible for the user
@@ -108,55 +111,38 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 		return err
 	}
 
+	// Remove bindings for deleted users
+	if user.IsDeleted() {
+		return r.removeClusterRolesForUser(user, clusterAccesses)
+	}
+
+	// Create/reconcile bindings for existing users
+	return r.createClusterRolesForUser(ctx, user, clusterAccesses)
+}
+
+func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, clusterAccesses []*api_projections.ClusterAccess) error {
+	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email)
+
+	// sanitize user name
 	sanitizedName, err := mk8s.GetK8sName(user.Name)
 	if err != nil {
 		return err
 	}
+
 	for _, clusterAccess := range clusterAccesses {
 		path := filepath.Join(r.config.LocalDirectory, clusterAccess.Cluster.Name, sanitizedName)
 
-		if user.IsDeleted() {
-			// Remove bindings for deleted users
-			r.log.V(logger.DebugLevel).Info("User is deleted. Removing bindings...", "user", user.Email)
-			if _, err := os.Stat(path); !os.IsNotExist(err) {
-				if err := os.Remove(path); err != nil {
-					r.log.Error(err, "Failed to remove path", "path", path, "user", user.Email)
-					return err
-				}
-				r.log.V(logger.DebugLevel).Info("Committing removal of cluster role bindings...", "path", path, "user", user.Email)
-				if err := w.AddWithOptions(&git.AddOptions{All: true}); err != nil {
-					return err
-				}
+		// Create user sub dir
+		if err := os.MkdirAll(path, defaultDirectoryMode); err != nil {
+			r.log.Error(err, "Failed to create path", "path", path)
+			return err
+		}
 
-				commit, err := w.Commit(fmt.Sprintf("Removing ClusterRoleBindings for user %s", sanitizedName), &git.CommitOptions{
-					Author: &object.Signature{
-						Name:  users.GitRepoReconcilerUser.User.Name,
-						Email: users.GitRepoReconcilerUser.User.Email,
-						When:  time.Now().UTC(),
-					},
-				})
-				if err != nil {
+		// Reconcile bindings for existing users
+		for _, role := range clusterAccess.Roles {
+			if clusterRole, ok := r.config.Mappings[role]; ok {
+				if err := r.createClusterRoleBinding(ctx, path, clusterRole, user); err != nil {
 					return err
-				}
-				_, err = r.gitRepo.CommitObject(commit)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			// Create user sub dir
-			if err := os.MkdirAll(path, defaultDirectoryMode); err != nil {
-				r.log.Error(err, "Failed to create path", "path", path)
-				return err
-			}
-
-			// Reconcile bindings for existing users
-			r.log.V(logger.DebugLevel).Info("User exists. Reconciling bindings...", "user", user.Email)
-			for _, role := range clusterAccess.Roles {
-				if clusterRole, ok := r.config.Mappings[role]; ok {
-					if err := r.createClusterRoleBinding(ctx, path, clusterRole, sanitizedName, user.Email, w); err != nil {
-						return err
-					}
 				}
 			}
 		}
@@ -164,7 +150,55 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 	return nil
 }
 
-func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, clusterRoleName, userName, email string, w *git.Worktree) error {
+func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, clusterAccesses []*api_projections.ClusterAccess) error {
+	r.log.V(logger.DebugLevel).Info("User is deleted. Removing bindings...", "user", user.Email)
+
+	// sanitize user name
+	sanitizedName, err := mk8s.GetK8sName(user.Name)
+	if err != nil {
+		return err
+	}
+
+	w, err := r.gitRepo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	for _, clusterAccess := range clusterAccesses {
+		path := filepath.Join(r.config.LocalDirectory, clusterAccess.Cluster.Name, sanitizedName)
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			// remove folder with bindings if present
+			if err := os.Remove(path); err != nil {
+				r.log.Error(err, "Failed to remove path", "path", path)
+				return err
+			}
+
+			r.log.V(logger.DebugLevel).Info("Committing removal of cluster role bindings...", "path", path)
+			if err := w.AddWithOptions(&git.AddOptions{All: true}); err != nil {
+				return err
+			}
+
+			// commit
+			commit, err := w.Commit(fmt.Sprintf("Removing ClusterRoleBindings for user %s", user.Email), &git.CommitOptions{
+				Author: &object.Signature{
+					Name:  users.GitRepoReconcilerUser.User.Name,
+					Email: users.GitRepoReconcilerUser.User.Email,
+					When:  time.Now().UTC(),
+				},
+			})
+			if err != nil {
+				return err
+			}
+			_, err = r.gitRepo.CommitObject(commit)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, clusterRoleName string, user *projections.User) error {
 	filePath := filepath.Join(dir, fmt.Sprintf("%s.yaml", clusterRoleName))
 	relFilePath, err := filepath.Rel(r.config.LocalDirectory, filePath)
 	if err != nil {
@@ -178,8 +212,15 @@ func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, c
 		return err
 	}
 
-	crb := mk8s.NewClusterRoleBinding(clusterRoleName, userName, r.config.UsernamePrefix, map[string]string{
-		fmt.Sprintf("%s/user", domain): email,
+	// sanitize user name
+	sanitizedName, err := mk8s.GetK8sName(user.Name)
+	if err != nil {
+		return err
+	}
+
+	// create new cluster role binding for user and clusterrole
+	crb := mk8s.NewClusterRoleBinding(clusterRoleName, sanitizedName, r.config.UsernamePrefix, map[string]string{
+		fmt.Sprintf("%s/user", domain): user.Email,
 	})
 	err = new(printers.YAMLPrinter).PrintObj(crb, file)
 	if err != nil {
@@ -187,11 +228,17 @@ func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, c
 	}
 
 	r.log.V(logger.DebugLevel).Info("Committing cluster role binding...", "path", filePath)
+	w, err := r.gitRepo.Worktree()
+	if err != nil {
+		return err
+	}
+
 	if err := w.AddWithOptions(&git.AddOptions{Path: relFilePath}); err != nil {
 		return err
 	}
 
-	commit, err := w.Commit(fmt.Sprintf("Add ClusterRoleBinding for user %s", userName), &git.CommitOptions{
+	// commit
+	commit, err := w.Commit(fmt.Sprintf("Add ClusterRoleBinding for user %s", user.Email), &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  users.GitRepoReconcilerUser.User.Name,
 			Email: users.GitRepoReconcilerUser.User.Email,
