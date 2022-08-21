@@ -43,8 +43,8 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.24.3
-	k8s.io/client-go v0.24.3
+	k8s.io/apimachinery v0.24.4
+	k8s.io/client-go v0.24.4
 	sigs.k8s.io/controller-runtime v0.12.3
 )
 
@@ -146,7 +146,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.24.3 // indirect
+	k8s.io/api v0.24.4 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	mellium.im/sasl v0.2.1 // indirect
