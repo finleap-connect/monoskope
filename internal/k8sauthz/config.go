@@ -32,20 +32,26 @@ var (
 	DefaultUsernamePrefix = "oidc:"
 )
 
+type ClusterRoleMapping struct {
+	Scope       string
+	Role        string
+	ClusterRole string
+}
+
 // Config is the configuration for the GitRepoReconciler.
 type Config struct {
-	Repositories   []*GitRepository  `yaml:"repositories"`
-	Mappings       map[string]string `yaml:"mappings"`
-	UsernamePrefix string            `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
+	Repositories   []*GitRepository      `yaml:"repositories"`
+	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
+	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
 }
 
 type ReconcilerConfig struct {
 	LocalDirectory string
 	UsernamePrefix string
-	Mappings       map[string]string
+	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
 }
 
-func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings map[string]string) *ReconcilerConfig {
+func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
 	return &ReconcilerConfig{localDirectory, usernamePrefix, mappings}
 }
 
@@ -120,6 +126,15 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 	}
 
 	return conf, nil
+}
+
+func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) string {
+	for _, m := range mappings {
+		if m.Scope == scope && m.Role == role {
+			return m.ClusterRole
+		}
+	}
+	return ""
 }
 
 // configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.

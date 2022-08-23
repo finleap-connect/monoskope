@@ -105,7 +105,7 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 	r.log.V(logger.DebugLevel).Info("Reconciling user...", "user", user.Email)
 
 	// get all clusterAccesses accessible for the user
-	clusterAccesses, err := r.clusterAccesses.GetClustersAccessibleByUserId(ctx, user.ID())
+	clusterAccesses, err := r.clusterAccesses.GetClustersAccessibleByUserIdV2(ctx, user.ID())
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 	return r.createClusterRolesForUser(ctx, user, sanitizedName, clusterAccesses)
 }
 
-func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccess) error {
+func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccessV2) error {
 	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email)
 
 	for _, clusterAccess := range clusterAccesses {
@@ -138,8 +138,8 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 		}
 
 		// Reconcile bindings for existing users
-		for _, role := range clusterAccess.Roles {
-			if clusterRole, ok := r.config.Mappings[role]; ok {
+		for _, clusterAccessRole := range clusterAccess.ClusterRoles {
+			if clusterRole := getClusterRoleMapping(r.config.Mappings, clusterAccessRole.Scope.String(), clusterAccessRole.Role); clusterRole != "" {
 				if err := r.createClusterRoleBinding(ctx, path, clusterRole, user, sanitizedName); err != nil {
 					return err
 				}
@@ -149,7 +149,7 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 	return nil
 }
 
-func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccess) error {
+func (r *GitRepoReconciler) removeClusterRolesForUser(user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccessV2) error {
 	r.log.V(logger.DebugLevel).Info("User is deleted. Removing bindings...", "user", user.Email)
 
 	w, err := r.gitRepo.Worktree()
