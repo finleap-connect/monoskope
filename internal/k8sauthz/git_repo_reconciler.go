@@ -84,6 +84,32 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {
 	return err
 }
 
+func (r *GitRepoReconciler) ReconcileUser(ctx context.Context, user *projections.User) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.log.Info("Start reconciling user...", "user", user.Email)
+
+	r.log.Info("Fetching git repo..")
+	if err := r.gitRepo.Fetch(&git.FetchOptions{}); err != nil && err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("error fetching latest changes from repository: %w", err)
+	}
+
+	r.log.Info("Reconciling user...")
+	if err := r.reconcileUser(ctx, user); err != nil {
+		return fmt.Errorf("error reconciling user: %w", err)
+	}
+
+	r.log.Info("Pushing changes to git repo...")
+	err := r.gitRepo.PushContext(ctx, &git.PushOptions{})
+	if err == nil {
+		r.log.Info("Reconciling finished.")
+
+	} else {
+		r.log.Error(err, "Reconciling finished with errors.")
+	}
+	return err
+}
+
 func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
 	// Get all users including deleted ones
 	users, err := r.users.AllWith(ctx, true)

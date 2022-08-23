@@ -107,6 +107,9 @@ var _ = Describe("internal/k8sauthz", func() {
 
 			reconciler := NewGitRepoReconciler(reconcilerConfig, userRepo, clusterAccessRepo, testEnv.gitRepo)
 			Expect(reconciler.Reconcile(context.Background())).To(Succeed())
+
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil)
+			Expect(reconciler.ReconcileUser(context.Background(), userA)).To(Succeed())
 		})
 	})
 })

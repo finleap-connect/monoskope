@@ -25,8 +25,9 @@ import (
 
 // inMemoryRepository is a repository which stores projections in memory.
 type inMemoryRepository[T es.Projection] struct {
-	store map[uuid.UUID]T
-	mutex sync.RWMutex
+	store    map[uuid.UUID]T
+	observer []es.RepositoryObserver[T]
+	mutex    sync.RWMutex
 }
 
 // NewInMemoryRepository creates a new repository which stores projections in memory.
@@ -66,14 +67,31 @@ func (r *inMemoryRepository[T]) Upsert(_ context.Context, p T) error {
 	defer r.mutex.Unlock()
 
 	r.store[p.ID()] = p
+	r.notifyAll(p)
 	return nil
 }
 
-// Remove removes a projection by ID from the storage.
-func (r *inMemoryRepository[T]) Remove(_ context.Context, id uuid.UUID) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+func (r *inMemoryRepository[T]) RegisterObserver(o es.RepositoryObserver[T]) {
+	r.observer = append(r.observer, o)
+}
 
-	delete(r.store, id)
-	return nil
+func (r *inMemoryRepository[T]) DeregisterObserver(o es.RepositoryObserver[T]) {
+	r.observer = removeFromSlice(r.observer, o)
+}
+
+func (r *inMemoryRepository[T]) notifyAll(p T) {
+	for _, observer := range r.observer {
+		observer.Notify(p)
+	}
+}
+
+func removeFromSlice[T es.Projection](observerList []es.RepositoryObserver[T], observerToRemove es.RepositoryObserver[T]) []es.RepositoryObserver[T] {
+	observerListLength := len(observerList)
+	for i, observer := range observerList {
+		if observer == observerToRemove {
+			observerList[observerListLength-1], observerList[i] = observerList[i], observerList[observerListLength-1]
+			return observerList[:observerListLength-1]
+		}
+	}
+	return observerList
 }

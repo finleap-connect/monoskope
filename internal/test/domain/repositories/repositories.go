@@ -20,12 +20,12 @@ package mock_repositories
 
 import (
 	context "context"
-	reflect "reflect"
-
 	projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	projections0 "github.com/finleap-connect/monoskope/pkg/domain/projections"
+	eventsourcing "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
+	reflect "reflect"
 )
 
 // MockUserRepository is a mock of UserRepository interface.
@@ -141,6 +141,18 @@ func (mr *MockUserRepositoryMockRecorder) ByUserId(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByUserId", reflect.TypeOf((*MockUserRepository)(nil).ByUserId), arg0, arg1)
 }
 
+// DeregisterObserver mocks base method.
+func (m *MockUserRepository) DeregisterObserver(arg0 eventsourcing.RepositoryObserver[*projections0.User]) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeregisterObserver", arg0)
+}
+
+// DeregisterObserver indicates an expected call of DeregisterObserver.
+func (mr *MockUserRepositoryMockRecorder) DeregisterObserver(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterObserver", reflect.TypeOf((*MockUserRepository)(nil).DeregisterObserver), arg0)
+}
+
 // GetCount mocks base method.
 func (m *MockUserRepository) GetCount(arg0 context.Context, arg1 bool) (int, error) {
 	m.ctrl.T.Helper()
@@ -156,18 +168,16 @@ func (mr *MockUserRepositoryMockRecorder) GetCount(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCount", reflect.TypeOf((*MockUserRepository)(nil).GetCount), arg0, arg1)
 }
 
-// Remove mocks base method.
-func (m *MockUserRepository) Remove(arg0 context.Context, arg1 uuid.UUID) error {
+// RegisterObserver mocks base method.
+func (m *MockUserRepository) RegisterObserver(arg0 eventsourcing.RepositoryObserver[*projections0.User]) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Remove", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "RegisterObserver", arg0)
 }
 
-// Remove indicates an expected call of Remove.
-func (mr *MockUserRepositoryMockRecorder) Remove(arg0, arg1 interface{}) *gomock.Call {
+// RegisterObserver indicates an expected call of RegisterObserver.
+func (mr *MockUserRepositoryMockRecorder) RegisterObserver(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockUserRepository)(nil).Remove), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterObserver", reflect.TypeOf((*MockUserRepository)(nil).RegisterObserver), arg0)
 }
 
 // Upsert mocks base method.
@@ -267,18 +277,28 @@ func (mr *MockClusterRepositoryMockRecorder) ById(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ById", reflect.TypeOf((*MockClusterRepository)(nil).ById), arg0, arg1)
 }
 
-// Remove mocks base method.
-func (m *MockClusterRepository) Remove(arg0 context.Context, arg1 uuid.UUID) error {
+// DeregisterObserver mocks base method.
+func (m *MockClusterRepository) DeregisterObserver(arg0 eventsourcing.RepositoryObserver[*projections0.Cluster]) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Remove", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "DeregisterObserver", arg0)
 }
 
-// Remove indicates an expected call of Remove.
-func (mr *MockClusterRepositoryMockRecorder) Remove(arg0, arg1 interface{}) *gomock.Call {
+// DeregisterObserver indicates an expected call of DeregisterObserver.
+func (mr *MockClusterRepositoryMockRecorder) DeregisterObserver(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockClusterRepository)(nil).Remove), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterObserver", reflect.TypeOf((*MockClusterRepository)(nil).DeregisterObserver), arg0)
+}
+
+// RegisterObserver mocks base method.
+func (m *MockClusterRepository) RegisterObserver(arg0 eventsourcing.RepositoryObserver[*projections0.Cluster]) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterObserver", arg0)
+}
+
+// RegisterObserver indicates an expected call of RegisterObserver.
+func (mr *MockClusterRepositoryMockRecorder) RegisterObserver(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterObserver", reflect.TypeOf((*MockClusterRepository)(nil).RegisterObserver), arg0)
 }
 
 // Upsert mocks base method.
