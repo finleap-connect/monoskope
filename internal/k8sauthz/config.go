@@ -207,7 +207,6 @@ func (c *Config) parseCloneOptions(repo *GitRepository) error {
 	cloneOptions := &git.CloneOptions{
 		URL:          repo.URL,
 		SingleBranch: true,
-		NoCheckout:   false,
 		Depth:        1,
 	}
 	if repo.Branch != "" {

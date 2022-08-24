@@ -23,6 +23,7 @@ import (
 	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
+	"github.com/go-git/go-git/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -66,6 +67,9 @@ var _ = Describe("internal/k8sauthz", func() {
 					{
 						URL:      testEnv.repoOriginDir,
 						Interval: &interval,
+						cloneOptions: &git.CloneOptions{
+							URL: testEnv.repoOriginDir,
+						},
 					},
 				},
 				Mappings: []*ClusterRoleMapping{
@@ -82,7 +86,6 @@ var _ = Describe("internal/k8sauthz", func() {
 				},
 				UsernamePrefix: "m8-",
 			}
-			Expect(conf.parse()).To(Succeed())
 
 			m := NewManager(userRepo, clusterAccessRepo)
 			Expect(m.Run(context.Background(), conf)).To(Succeed())
@@ -116,12 +119,12 @@ var _ = Describe("internal/k8sauthz", func() {
 			}
 
 			// expected calls to mocks
-			userRepo.EXPECT().AllWith(context.Background(), true).Return([]*projections.User{userA, userB, userC}, nil)
-			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil)
-			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionB}, nil)
-			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil)
+			userRepo.EXPECT().AllWith(context.Background(), true).Return([]*projections.User{userA, userB, userC}, nil).AnyTimes()
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil).AnyTimes()
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionB}, nil).AnyTimes()
+			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil).AnyTimes()
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(2 * time.Second)
 			Expect(m.Close()).To(Succeed())
 		})
 	})
