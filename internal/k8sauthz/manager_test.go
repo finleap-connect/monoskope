@@ -67,6 +67,7 @@ var _ = Describe("internal/k8sauthz", func() {
 					{
 						URL:      testEnv.repoOriginDir,
 						Interval: &interval,
+						SubDir:   "rbactest",
 						cloneOptions: &git.CloneOptions{
 							URL: testEnv.repoOriginDir,
 						},

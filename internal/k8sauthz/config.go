@@ -87,6 +87,8 @@ type GitRepository struct {
 	BasicAuthPath string `yaml:"basicAuthPath"`
 	// SSHAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
 	SSHAuthPath string `yaml:"sshAuthPath"`
+	// SubDir is the relative path within the repo where to reconcile yamls
+	SubDir string `yaml:"subdir"`
 	// cloneOptions are the parsed settings
 	cloneOptions *git.CloneOptions
 }
@@ -109,14 +111,6 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 		return nil, err
 	}
 
-	if err := conf.parse(); err != nil {
-		return nil, err
-	}
-
-	return conf, nil
-}
-
-func (conf *Config) parse() error {
 	// Set default values
 	if len(conf.UsernamePrefix) == 0 {
 		conf.UsernamePrefix = DefaultUsernamePrefix
@@ -125,11 +119,11 @@ func (conf *Config) parse() error {
 	for _, repo := range conf.Repositories {
 		// Check required fields are set
 		if err := conf.parseCloneOptions(repo); err != nil {
-			return err
+			return conf, err
 		}
 
 		if repo.Interval == nil {
-			return ErrIntervalIsRequired
+			return conf, ErrIntervalIsRequired
 		}
 
 		// Set default values
@@ -137,7 +131,8 @@ func (conf *Config) parse() error {
 			repo.Timeout = &DefaultTimeout
 		}
 	}
-	return nil
+
+	return conf, nil
 }
 
 func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) string {

@@ -1,6 +1,7 @@
 repositories:
   - url: https://monoskope.io/test1.git
     branch: main
+    subdir: rbac/test
     interval: 5m
     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
     basicAuthPath: test_repo_one_basic_auth.yaml

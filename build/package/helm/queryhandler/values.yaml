@@ -121,6 +121,7 @@ k8sAuthZ:
     # -- Configure repos
     # repositories:
     #   - url: https://monoskope.io/test1.git
+    #     subdir: test
     #     branch: main
     #     interval: 5m
     #     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
