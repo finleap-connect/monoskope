@@ -79,6 +79,9 @@ spec:
             - {{ (printf "--event-store-api-addr=%s-%s:%v" (.Values.eventStore.prefix | default .Release.Name ) .Values.eventStore.host .Values.eventStore.port ) }}
             - {{ (printf "--gateway-api-addr=%s-%s:%v" (.Values.gateway.prefix | default .Release.Name ) .Values.gateway.host .Values.gateway.port ) }}
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
+          {{- if .Values.k8sAuthZ.enabled }}
+            - --k8s-authz-conf-path=/etc/queryhandler/k8sauthz/config/config.yaml
+          {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
@@ -97,12 +100,17 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.messageBus.tlsSecret }}
           volumeMounts:
+          {{- if .Values.messageBus.tlsSecret }}
             - name: buscerts
               mountPath: /etc/eventstore/certs/buscerts
               readOnly: true
-          {{- end }}
+         {{- end }}
+         {{- if .Values.k8sAuthZ.enabled }}
+            - name: k8sauthz
+              mountPath: /etc/queryhandler/k8sauthz
+              readOnly: true
+         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -121,4 +129,14 @@ spec:
           secret:
             secretName: {{ .Values.messageBus.tlsSecret }}
         {{- end }}
-
+        {{- if .Values.k8sAuthZ.enabled }}
+        - name: k8sauthz
+          projected:
+            sources:
+              - configMap:
+                name: {{ include "queryhandler.fullname" . }}-k8s-authz
+        {{- range .Values.k8sAuthZ.existingSecrets }}
+              - secret:
+                name: {{ . }}
+        {{- end }}
+        {{- end }}

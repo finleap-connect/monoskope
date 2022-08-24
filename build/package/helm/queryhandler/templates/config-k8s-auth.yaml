@@ -1,0 +1,14 @@
+{{- if .Values.k8sAuthZ.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "queryhandler.fullname" . }}-k8s-authz
+  labels:
+    {{- include "queryhandler.labels" . | nindent 4 }}
+    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  config.yaml: |
+    {{- toYaml .Values.k8sAuthZ.config | nindent 4 }}
+{{- end }}
