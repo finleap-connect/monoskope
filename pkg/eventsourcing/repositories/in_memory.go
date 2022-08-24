@@ -62,12 +62,12 @@ func (r *inMemoryRepository[T]) All(_ context.Context) ([]T, error) {
 }
 
 // Upsert saves a projection in the storage or replaces an existing one.
-func (r *inMemoryRepository[T]) Upsert(_ context.Context, p T) error {
+func (r *inMemoryRepository[T]) Upsert(ctx context.Context, p T) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	r.store[p.ID()] = p
-	r.notifyAll(p)
+	r.notifyAll(ctx, p)
 	return nil
 }
 
@@ -79,9 +79,9 @@ func (r *inMemoryRepository[T]) DeregisterObserver(o es.RepositoryObserver[T]) {
 	r.observer = removeFromSlice(r.observer, o)
 }
 
-func (r *inMemoryRepository[T]) notifyAll(p T) {
+func (r *inMemoryRepository[T]) notifyAll(ctx context.Context, p T) {
 	for _, observer := range r.observer {
-		observer.Notify(p)
+		observer.Notify(ctx, p)
 	}
 }
 

@@ -96,6 +96,7 @@ var serverCmd = &cobra.Command{
 				authMiddleware.StreamServerInterceptor(),
 			},
 		)
+
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))

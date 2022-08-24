@@ -25,9 +25,10 @@ import (
 )
 
 type TestEnv struct {
-	tempDir string
-	repoDir string
-	gitRepo *git.Repository
+	tempDir       string
+	repoDir       string
+	repoOriginDir string
+	gitRepo       *git.Repository
 }
 
 func NewTestEnv() (*TestEnv, error) {
@@ -40,20 +41,20 @@ func NewTestEnv() (*TestEnv, error) {
 	}
 	env.tempDir = dir
 	env.repoDir = filepath.Join(dir, "repo", "rbac")
-	repoOriginDir := filepath.Join(dir, "origin")
+	env.repoOriginDir = filepath.Join(dir, "origin")
 
-	r, err := git.PlainInit(repoOriginDir, false)
+	r, err := git.PlainInit(env.repoOriginDir, false)
 	if env.err(err) != nil {
 		return nil, err
 	}
 
-	f, err := os.Create(filepath.Join(repoOriginDir, ".gitignore"))
+	f, err := os.Create(filepath.Join(env.repoOriginDir, ".gitignore"))
 	if env.err(err) != nil {
 		return nil, err
 	}
 	f.Close()
 
-	fRelName, err := filepath.Rel(repoOriginDir, f.Name())
+	fRelName, err := filepath.Rel(env.repoOriginDir, f.Name())
 	if env.err(err) != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func NewTestEnv() (*TestEnv, error) {
 	}
 
 	r, err = git.PlainClone(env.repoDir, false, &git.CloneOptions{
-		URL: repoOriginDir,
+		URL: env.repoOriginDir,
 	})
 	if env.err(err) != nil {
 		return nil, err

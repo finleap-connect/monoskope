@@ -91,15 +91,32 @@ type GitRepository struct {
 	cloneOptions *git.CloneOptions
 }
 
+// NewConfigFromFile creates a new GitRepoReconcilerConfig from a given yaml file path
+func NewConfigFromFilePath(name string) (*Config, error) {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	return NewConfigFromFile(data)
+}
+
 // NewConfigFromFile creates a new GitRepoReconcilerConfig from a given yaml file
 func NewConfigFromFile(data []byte) (*Config, error) {
 	// Unmarshal
 	conf := &Config{}
-	err := yaml.Unmarshal(data, conf)
-	if err != nil {
+
+	if err := yaml.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
 
+	if err := conf.parse(); err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+func (conf *Config) parse() error {
 	// Set default values
 	if len(conf.UsernamePrefix) == 0 {
 		conf.UsernamePrefix = DefaultUsernamePrefix
@@ -108,15 +125,11 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 	for _, repo := range conf.Repositories {
 		// Check required fields are set
 		if err := conf.parseCloneOptions(repo); err != nil {
-			return conf, err
+			return err
 		}
 
 		if repo.Interval == nil {
-			return nil, ErrIntervalIsRequired
-		}
-
-		if len(repo.Branch) == 0 {
-			return nil, ErrBranchIsRequired
+			return ErrIntervalIsRequired
 		}
 
 		// Set default values
@@ -124,8 +137,7 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 			repo.Timeout = &DefaultTimeout
 		}
 	}
-
-	return conf, nil
+	return nil
 }
 
 func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) string {
@@ -193,11 +205,13 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 // parseCloneOptions parses the configuration using the git library to validate.
 func (c *Config) parseCloneOptions(repo *GitRepository) error {
 	cloneOptions := &git.CloneOptions{
-		URL:           repo.URL,
-		ReferenceName: plumbing.NewBranchReferenceName(repo.Branch),
-		SingleBranch:  true,
-		NoCheckout:    false,
-		Depth:         1,
+		URL:          repo.URL,
+		SingleBranch: true,
+		NoCheckout:   false,
+		Depth:        1,
+	}
+	if repo.Branch != "" {
+		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(repo.Branch)
 	}
 
 	// Set CA

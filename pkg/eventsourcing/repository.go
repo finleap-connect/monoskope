@@ -23,7 +23,7 @@ import (
 // RegistryObserver is an interface which must be implemented to register as observer for a Registry.
 type RepositoryObserver[T Projection] interface {
 	// Notify is called by the repository when an projection has been updated
-	Notify(T)
+	Notify(context.Context, T)
 }
 
 // Repository is a repository for reading projections.

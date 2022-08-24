@@ -31,7 +31,7 @@ func (t *testObserver) expect(p *testProjection) {
 	t.stack = append(t.stack, p)
 }
 
-func (t *testObserver) Notify(p *testProjection) {
+func (t *testObserver) Notify(_ context.Context, p *testProjection) {
 	if len(t.stack) < 1 {
 		panic("stack empty")
 	}
