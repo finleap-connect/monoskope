@@ -4,7 +4,6 @@ repositories:
     subdir: rbac/test
     interval: 5m
     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
-    basicAuthPath: test_repo_one_basic_auth.yaml
     allClusters: true
     auth:
       type: basic

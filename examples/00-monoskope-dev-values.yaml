@@ -5,13 +5,10 @@ imageTag: &imageTag "0.0.1-local"
 vaultOperator:
   enabled: true
   basePath: app/{{ .Release.Namespace }}
-  
+
 hosting:
   issuer: letsencrypt
   domain: monoskope.yourdomain.io
-
-# cockroachdb:
-  # dropExistingDatabase: true
 
 gateway:
   replicaCount: 1
@@ -54,7 +51,8 @@ commandhandler:
       cpu: 500m
       memory: 64Mi
   # -- List of email addresses to identify superusers.
-  superusers: []
+  superusers:
+    []
     # - someone@yourdomain.io
 
 queryhandler:
@@ -68,6 +66,42 @@ queryhandler:
     requests:
       cpu: 500m
       memory: 64Mi
+  k8sAuthZ:
+    # -- Enable external git repo reconciliation
+    enabled: true
+    # -- Configure secret provided as env vars
+    # existingSecret: m8-k8sauthz
+    config:
+      # -- Configure repos
+      repositories:
+        - url: https://monoskope.io/test1.git
+          subdir: test
+          branch: main
+          interval: 5m
+          caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
+          auth:
+            type: basic
+            envPrefix: test1
+          allClusters: true
+        - url: https://monoskope.io/test2.git
+          branch: test
+          interval: 5m
+          auth:
+            type: ssh
+            envPrefix: test2
+          clusters:
+            - "dev"
+            - "prod"
+      # -- Configure ClusterRole mapping
+      mappings:
+        - scope: CLUSTER
+          role: admin
+          clusterRole: cluster-admin
+        - scope: TENANT
+          role: oncall
+          clusterRole: app-oncallee
+      # -- Prefix used for users in clusters
+      usernamePrefix: "m8-"
 
 ambassador:
   service:

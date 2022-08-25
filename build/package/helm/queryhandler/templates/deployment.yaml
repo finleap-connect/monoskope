@@ -70,6 +70,8 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
+            - secretRef:
+                name: {{ .Values.k8sAuthZ.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "k8sauthz") }}
           args:
             - /app
             - server
@@ -80,7 +82,7 @@ spec:
             - {{ (printf "--gateway-api-addr=%s-%s:%v" (.Values.gateway.prefix | default .Release.Name ) .Values.gateway.host .Values.gateway.port ) }}
             - --msgbus-routing-key-prefix=$(ROUTING_KEY_PREFIX)
           {{- if .Values.k8sAuthZ.enabled }}
-            - --k8s-authz-conf-path=/etc/queryhandler/k8sauthz/config/config.yaml
+            - --k8s-authz-conf-path=/etc/queryhandler/k8sauthz/config.yaml
           {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
@@ -131,12 +133,6 @@ spec:
         {{- end }}
         {{- if .Values.k8sAuthZ.enabled }}
         - name: k8sauthz
-          projected:
-            sources:
-              - configMap:
-                name: {{ include "queryhandler.fullname" . }}-k8s-authz
-        {{- range .Values.k8sAuthZ.existingSecrets }}
-              - secret:
-                name: {{ . }}
-        {{- end }}
+          configMap:
+            configMapName: {{ include "queryhandler.fullname" . }}-k8s-authz
         {{- end }}

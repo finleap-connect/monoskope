@@ -113,10 +113,8 @@ messageBus:
 k8sAuthZ:
   # -- Enable external git repo reconciliation
   enabled: false
-  # Configure secrets to mount used in configuration
-  existingSecrets:
-    # - test-repo-one-basic-auth
-    # - test-repo-two-basic-auth
+  # -- Configure secret provided as env vars
+  # existingSecret: m8-k8sauthz
   config:
     # -- Configure repos
     # repositories:
@@ -125,12 +123,16 @@ k8sAuthZ:
     #     branch: main
     #     interval: 5m
     #     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
-    #     basicAuthPath: test_repo_one_basic_auth.yaml
+    #     auth:
+    #       type: basic
+    #       envPrefix: test1
     #     allClusters: true
     #   - url: https://monoskope.io/test2.git
     #     branch: test
     #     interval: 5m
-    #     sshAuthPath: test_repo_two_ssh_auth.yaml
+    #     auth:
+    #       type: ssh
+    #       envPrefix: test2
     #     clusters:
     #       - "dev"
     #       - "prod"
