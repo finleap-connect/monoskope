@@ -6,10 +6,15 @@ repositories:
     caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
     basicAuthPath: test_repo_one_basic_auth.yaml
     allClusters: true
+    auth:
+      type: basic
+      envPrefix: test1
   - url: https://monoskope.io/test2.git
     branch: test
     interval: 5m
-    sshAuthPath: test_repo_two_ssh_auth.yaml
+    auth:
+      type: ssh
+      envPrefix: test2
     clusters:
       - "dev"
       - "prod"

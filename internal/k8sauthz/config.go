@@ -27,9 +27,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var (
+const (
 	DefaultTimeout        = 60 * time.Second
 	DefaultUsernamePrefix = "oidc:"
+
+	AuthTypeBasic               = "basic"
+	AuthTypeBasicSuffixUsername = ":basic:username"
+	AuthTypeBasicSuffixPassword = ":basic:password"
+
+	AuthTypeSSH                 = "ssh"
+	AuthTypeSSHSuffixPrivateKey = ":ssh:privateKey"
+	AuthTypeSSHSuffixPassword   = ":ssh:password"
 )
 
 type ClusterRoleMapping struct {
@@ -53,6 +61,11 @@ type ReconcilerConfig struct {
 
 func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
 	return &ReconcilerConfig{localDirectory, usernamePrefix, mappings}
+}
+
+type GitAuth struct {
+	Type      string `yaml:"type"`
+	EnvPrefix string `yaml:"envPrefix"`
 }
 
 // GitBasicAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
@@ -83,12 +96,9 @@ type GitRepository struct {
 	AllClusters bool `yaml:"allClusters"`
 	// Clusters is an optional field to specify a list of clusters for which the RBAC should be managed.
 	Clusters []string `yaml:"clusters"`
-	// BasicAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over HTTPS using basic access authentication.
-	BasicAuthPath string `yaml:"basicAuthPath"`
-	// SSHAuthPath is an optional field to specify the file containing credentials to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
-	SSHAuthPath string `yaml:"sshAuthPath"`
 	// SubDir is the relative path within the repo where to reconcile yamls
-	SubDir string `yaml:"subdir"`
+	SubDir string  `yaml:"subdir"`
+	Auth   GitAuth `yaml:"auth"`
 	// cloneOptions are the parsed settings
 	cloneOptions *git.CloneOptions
 }
@@ -128,7 +138,8 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 
 		// Set default values
 		if repo.Timeout == nil {
-			repo.Timeout = &DefaultTimeout
+			timeout := DefaultTimeout
+			repo.Timeout = &timeout
 		}
 	}
 
@@ -146,23 +157,14 @@ func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) s
 
 // configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.
 func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
-	// read file
-	data, err := os.ReadFile(repo.BasicAuthPath)
-	if err != nil {
-		return err
-	}
-
-	// unmarshal
-	basicAuth := &GitBasicAuth{}
-	err = yaml.Unmarshal(data, basicAuth)
-	if err != nil {
-		return err
-	}
+	// get env
+	username := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixUsername))
+	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixPassword))
 
 	// set clone options auth
 	cloneOptions.Auth = &http.BasicAuth{
-		Username: basicAuth.Username,
-		Password: basicAuth.Password,
+		Username: username,
+		Password: password,
 	}
 
 	return nil
@@ -170,25 +172,26 @@ func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) err
 
 // configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
 func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
-	// read file
-	data, err := os.ReadFile(repo.SSHAuthPath)
-	if err != nil {
-		return err
-	}
-
-	// unmarshal
-	sshAuth := &GitSSHAuth{}
-	err = yaml.Unmarshal(data, sshAuth)
-	if err != nil {
-		return err
-	}
+	// get env
+	privateKeyBase64 := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
+	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
 
 	// set clone options auth
-	if _, err := os.Stat(sshAuth.PrivateKeyPath); err != nil {
-		return fmt.Errorf("read file %s failed: %w", sshAuth.PrivateKeyPath, err)
+	tmpFile, err := os.CreateTemp("", "")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file to write private key to: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	privateKey, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	if err != nil {
+		return fmt.Errorf("failed to decode private key: %w", err)
 	}
 
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", sshAuth.PrivateKeyPath, sshAuth.Password)
+	if err := os.WriteFile(tmpFile.Name(), []byte(privateKey), 0600); err != nil {
+		return fmt.Errorf("failed to write private key to file: %w", err)
+	}
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", tmpFile.Name(), password)
 	if err != nil {
 		return err
 	}
@@ -218,14 +221,14 @@ func (c *Config) parseCloneOptions(repo *GitRepository) error {
 	}
 
 	// Configure basic auth optionally
-	if len(repo.BasicAuthPath) != 0 {
+	if repo.Auth.Type == AuthTypeBasic {
 		if err := configureBasicAuth(repo, cloneOptions); err != nil {
 			return err
 		}
 	}
 
 	// Configure ssh auth
-	if len(repo.SSHAuthPath) != 0 {
+	if repo.Auth.Type == AuthTypeSSH {
 		if err := configureSSHAuth(repo, cloneOptions); err != nil {
 			return err
 		}
