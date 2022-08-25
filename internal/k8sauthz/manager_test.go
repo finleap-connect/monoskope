@@ -60,7 +60,7 @@ var _ = Describe("internal/k8sauthz", func() {
 
 			userRepo.EXPECT().RegisterObserver(gomock.Any())
 
-			interval := time.Second * 1
+			interval := time.Second * 2
 
 			conf := &Config{
 				Repositories: []*GitRepository{
@@ -87,9 +87,6 @@ var _ = Describe("internal/k8sauthz", func() {
 				},
 				UsernamePrefix: "m8-",
 			}
-
-			m := NewManager(userRepo, clusterAccessRepo)
-			Expect(m.Run(context.Background(), conf)).To(Succeed())
 
 			clusterAccessProjectionA := &api_projections.ClusterAccessV2{
 				Cluster: &api_projections.Cluster{
@@ -119,13 +116,16 @@ var _ = Describe("internal/k8sauthz", func() {
 				},
 			}
 
+			m := NewManager(userRepo, clusterAccessRepo)
+
 			// expected calls to mocks
 			userRepo.EXPECT().AllWith(context.Background(), true).Return([]*projections.User{userA, userB, userC}, nil).AnyTimes()
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil).AnyTimes()
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionB}, nil).AnyTimes()
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil).AnyTimes()
 
-			time.Sleep(2 * time.Second)
+			Expect(m.Run(context.Background(), conf)).To(Succeed())
+			time.Sleep(time.Second * 3)
 			Expect(m.Close()).To(Succeed())
 		})
 	})

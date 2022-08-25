@@ -54,13 +54,14 @@ type Config struct {
 }
 
 type ReconcilerConfig struct {
-	LocalDirectory string
+	RootDirectory  string
+	SubPath        string
 	UsernamePrefix string
 	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
 }
 
-func NewReconcilerConfig(localDirectory, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
-	return &ReconcilerConfig{localDirectory, usernamePrefix, mappings}
+func NewReconcilerConfig(rootDir, subPath, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
+	return &ReconcilerConfig{rootDir, subPath, usernamePrefix, mappings}
 }
 
 type GitAuth struct {

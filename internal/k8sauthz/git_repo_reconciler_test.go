@@ -58,7 +58,7 @@ var _ = Describe("internal/k8sauthz", func() {
 			userRepo := mock_repositories.NewMockUserRepository(mockCtrl)
 			clusterAccessRepo := mock_repositories.NewMockClusterAccessRepository(mockCtrl)
 
-			reconcilerConfig := NewReconcilerConfig(testEnv.repoDir, "m8-", []*ClusterRoleMapping{
+			reconcilerConfig := NewReconcilerConfig(testEnv.repoDir, "", "m8-", []*ClusterRoleMapping{
 				{
 					Scope:       api_projections.ClusterRole_CLUSTER.String(),
 					Role:        string(k8s.AdminRole),

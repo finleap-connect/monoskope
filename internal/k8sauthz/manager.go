@@ -17,7 +17,6 @@ package k8sauthz
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -65,7 +64,7 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 		}
 
 		m.log.Info("Configuring reconciler...", "url", repo.URL)
-		recConf := NewReconcilerConfig(filepath.Join(dir, repo.SubDir), conf.UsernamePrefix, conf.Mappings)
+		recConf := NewReconcilerConfig(dir, repo.SubDir, conf.UsernamePrefix, conf.Mappings)
 		reconciler := NewGitRepoReconciler(recConf, m.userRepository, m.clusterAccessRepository, r)
 		m.reconcilers = append(m.reconcilers, reconciler)
 
