@@ -78,7 +78,7 @@ queryhandler:
           subdir: test
           branch: main
           interval: 5m
-          caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
+          caCert: this-is-a-ca-cert-in-pem
           auth:
             type: basic
             envPrefix: test1

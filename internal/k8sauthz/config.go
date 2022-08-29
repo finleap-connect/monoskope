@@ -15,7 +15,6 @@
 package k8sauthz
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -174,7 +173,7 @@ func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) err
 // configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
 func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
 	// get env
-	privateKeyBase64 := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
+	privateKey := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
 
 	// set clone options auth
@@ -183,11 +182,6 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 		return fmt.Errorf("failed to create temp file to write private key to: %w", err)
 	}
 	defer os.Remove(tmpFile.Name())
-
-	privateKey, err := base64.StdEncoding.DecodeString(privateKeyBase64)
-	if err != nil {
-		return fmt.Errorf("failed to decode private key: %w", err)
-	}
 
 	if err := os.WriteFile(tmpFile.Name(), []byte(privateKey), 0600); err != nil {
 		return fmt.Errorf("failed to write private key to file: %w", err)
@@ -214,11 +208,7 @@ func (c *Config) parseCloneOptions(repo *GitRepository) error {
 
 	// Set CA
 	if len(repo.CA) != 0 {
-		if data, err := base64.StdEncoding.DecodeString(repo.CA); err != nil {
-			return err
-		} else {
-			cloneOptions.CABundle = data
-		}
+		cloneOptions.CABundle = []byte(repo.CA)
 	}
 
 	// Configure basic auth optionally

@@ -3,7 +3,7 @@ repositories:
     branch: main
     subdir: rbac/test
     interval: 5m
-    caCert: dGhpcy1pcy1hLWNhLWNlcnQ=
+    caCert: this-is-a-ca-cert-in-pem
     allClusters: true
     auth:
       type: basic
