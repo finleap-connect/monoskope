@@ -19,11 +19,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	go_ssh "golang.org/x/crypto/ssh"
 
 	"gopkg.in/yaml.v2"
 )
@@ -39,6 +39,7 @@ const (
 	AuthTypeSSH                 = "ssh"
 	AuthTypeSSHSuffixPrivateKey = ".ssh.privateKey"
 	AuthTypeSSHSuffixPassword   = ".ssh.password"
+	AuthTypeSSHSuffixKnownHosts = ".ssh.known_hosts"
 )
 
 type ClusterRoleMapping struct {
@@ -49,6 +50,7 @@ type ClusterRoleMapping struct {
 
 // Config is the configuration for the GitRepoReconciler.
 type Config struct {
+	log            logger.Logger
 	Repositories   []*GitRepository      `yaml:"repositories"`
 	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
 	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
@@ -123,6 +125,8 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 		return nil, err
 	}
 
+	conf.log = logger.WithName("config")
+
 	// Set default values
 	if len(conf.UsernamePrefix) == 0 {
 		conf.UsernamePrefix = DefaultUsernamePrefix
@@ -158,12 +162,13 @@ func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) s
 }
 
 // configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.
-func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
+func (c *Config) configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
 	// get env
 	username := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixUsername))
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixPassword))
 
 	// set clone options auth
+	c.log.V(logger.DebugLevel).Info("Configuring basic auth...")
 	cloneOptions.Auth = &http.BasicAuth{
 		Username: username,
 		Password: password,
@@ -173,17 +178,35 @@ func configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) err
 }
 
 // configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
-func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
+func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
 	// get env
 	privateKey := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
+	knownHosts := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixKnownHosts))
 
-	// configure public key ssh auth
-	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), password)
+	f, err := os.CreateTemp("", "known-hosts")
 	if err != nil {
 		return err
 	}
-	publicKeys.HostKeyCallback = go_ssh.InsecureIgnoreHostKey()
+	defer os.Remove(f.Name())
+
+	_, err = f.WriteString(knownHosts)
+	if err != nil {
+		return err
+	}
+
+	// configure public key ssh auth
+	c.log.V(logger.DebugLevel).Info("Configuring public key ssh auth...")
+	publicKeys, err := ssh.NewPublicKeys("", []byte(privateKey), password)
+	if err != nil {
+		return err
+	}
+	callback, err := ssh.NewKnownHostsCallback(f.Name())
+	if err != nil {
+		return err
+	}
+
+	publicKeys.HostKeyCallback = callback
 	cloneOptions.Auth = publicKeys
 
 	return nil
@@ -202,19 +225,20 @@ func (c *Config) parseCloneOptions(repo *GitRepository) error {
 
 	// Set CA
 	if len(repo.CA) != 0 {
+		c.log.V(logger.DebugLevel).Info("Configuring custom CA...")
 		cloneOptions.CABundle = []byte(repo.CA)
 	}
 
 	// Configure basic auth optionally
 	if repo.Auth.Type == AuthTypeBasic {
-		if err := configureBasicAuth(repo, cloneOptions); err != nil {
+		if err := c.configureBasicAuth(repo, cloneOptions); err != nil {
 			return err
 		}
 	}
 
 	// Configure ssh auth
 	if repo.Auth.Type == AuthTypeSSH {
-		if err := configureSSHAuth(repo, cloneOptions); err != nil {
+		if err := c.configureSSHAuth(repo, cloneOptions); err != nil {
 			return err
 		}
 	}
