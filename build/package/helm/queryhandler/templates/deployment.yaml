@@ -134,5 +134,5 @@ spec:
         {{- if .Values.k8sAuthZ.enabled }}
         - name: k8sauthz
           configMap:
-            configMapName: {{ include "queryhandler.fullname" . }}-k8s-authz
+            name: {{ include "queryhandler.fullname" . }}-k8s-authz
         {{- end }}
