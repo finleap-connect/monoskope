@@ -112,6 +112,8 @@ spec:
             - name: k8sauthz
               mountPath: /etc/queryhandler/k8sauthz
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -135,4 +137,6 @@ spec:
         - name: k8sauthz
           configMap:
             name: {{ include "queryhandler.fullname" . }}-k8s-authz
+        - name: tmp
+          emptyDir: {}
         {{- end }}
