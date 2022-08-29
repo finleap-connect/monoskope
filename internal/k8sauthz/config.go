@@ -32,12 +32,12 @@ const (
 	DefaultUsernamePrefix = "oidc:"
 
 	AuthTypeBasic               = "basic"
-	AuthTypeBasicSuffixUsername = ":basic:username"
-	AuthTypeBasicSuffixPassword = ":basic:password"
+	AuthTypeBasicSuffixUsername = ".basic.username"
+	AuthTypeBasicSuffixPassword = ".basic.password"
 
 	AuthTypeSSH                 = "ssh"
-	AuthTypeSSHSuffixPrivateKey = ":ssh:privateKey"
-	AuthTypeSSHSuffixPassword   = ":ssh:password"
+	AuthTypeSSHSuffixPrivateKey = ".ssh.privateKey"
+	AuthTypeSSHSuffixPassword   = ".ssh.password"
 )
 
 type ClusterRoleMapping struct {
