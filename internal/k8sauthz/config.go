@@ -178,7 +178,7 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
 
 	// set clone options auth
-	tmpFile, err := os.CreateTemp("", "")
+	tmpFile, err := os.CreateTemp("", "ssh.key")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file to write private key to: %w", err)
 	}
