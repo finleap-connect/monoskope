@@ -16,6 +16,7 @@ package k8sauthz
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -23,6 +24,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	go_ssh "golang.org/x/crypto/ssh"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -177,19 +180,23 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
 
 	// set clone options auth
-	tmpFile, err := os.CreateTemp("", "ssh.key")
+	privateKeyFile, err := os.CreateTemp("", "ssh.key")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file to write private key to: %w", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer os.Remove(privateKeyFile.Name())
 
-	if err := os.WriteFile(tmpFile.Name(), []byte(privateKey), 0600); err != nil {
+	if err := os.WriteFile(privateKeyFile.Name(), []byte(privateKey), 0600); err != nil {
 		return fmt.Errorf("failed to write private key to file: %w", err)
 	}
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", tmpFile.Name(), password)
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile.Name(), password)
 	if err != nil {
 		return err
 	}
+	publicKeys.HostKeyCallback = func(hostname string, remote net.Addr, key go_ssh.PublicKey) error {
+		return nil
+	}
+
 	cloneOptions.Auth = publicKeys
 
 	return nil

@@ -67,10 +67,6 @@ spec:
           env:
             - name: M8_OPERATION_MODE
               value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
-          {{- if .Values.k8sAuthZ.enabled }}
-            - name: SSH_KNOWN_HOSTS
-              value: /tmp/known_hosts
-          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
