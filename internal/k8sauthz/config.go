@@ -197,7 +197,7 @@ func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOp
 
 	// configure public key ssh auth
 	c.log.V(logger.DebugLevel).Info("Configuring public key ssh auth...")
-	publicKeys, err := ssh.NewPublicKeys("", []byte(privateKey), password)
+	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), password)
 	if err != nil {
 		return err
 	}
