@@ -68,6 +68,12 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 		reconciler := NewGitRepoReconciler(recConf, m.userRepository, m.clusterAccessRepository, r)
 		m.reconcilers = append(m.reconcilers, reconciler)
 
+		// initial reconcile
+		if err := reconciler.Reconcile(ctx); err != nil {
+			m.log.Error(err, "Failed running reconciliation loop.")
+		}
+
+		// schedule reconcile loop
 		ticker := time.NewTicker(*repo.Interval)
 		quit := make(chan struct{})
 		m.quitChannels = append(m.quitChannels, quit)
