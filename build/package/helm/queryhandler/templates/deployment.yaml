@@ -67,8 +67,6 @@ spec:
           env:
             - name: M8_OPERATION_MODE
               value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
-            - name: SSH_AUTH_SOCK
-              value: /tmp/ssh/auth_sock
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}

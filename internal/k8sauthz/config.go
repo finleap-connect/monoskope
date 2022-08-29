@@ -16,7 +16,6 @@ package k8sauthz
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -179,24 +178,12 @@ func configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error
 	privateKey := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
 
-	// set clone options auth
-	privateKeyFile, err := os.CreateTemp("", "ssh.key")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file to write private key to: %w", err)
-	}
-	defer os.Remove(privateKeyFile.Name())
-
-	if err := os.WriteFile(privateKeyFile.Name(), []byte(privateKey), 0600); err != nil {
-		return fmt.Errorf("failed to write private key to file: %w", err)
-	}
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile.Name(), password)
+	// configure public key ssh auth
+	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), password)
 	if err != nil {
 		return err
 	}
-	publicKeys.HostKeyCallback = func(hostname string, remote net.Addr, key go_ssh.PublicKey) error {
-		return nil
-	}
-
+	publicKeys.HostKeyCallback = go_ssh.InsecureIgnoreHostKey()
 	cloneOptions.Auth = publicKeys
 
 	return nil
