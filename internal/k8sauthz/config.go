@@ -199,7 +199,6 @@ func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOp
 	if err != nil {
 		return err
 	}
-	defer os.Remove(f.Name())
 
 	_, err = f.WriteString(knownHosts)
 	if err != nil {

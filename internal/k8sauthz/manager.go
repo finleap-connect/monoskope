@@ -57,13 +57,13 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 		m.tempDirectories = append(m.tempDirectories, dir)
 
 		// Clone repo
-		m.log.Info("Cloning repo...", "url", repo.URL, "dir", dir)
+		m.log.Info("Cloning repo...", "url", repo.cloneOptions.URL, "dir", dir)
 		r, err := git.PlainClone(dir, false, repo.cloneOptions)
 		if err != nil {
 			return err
 		}
 
-		m.log.Info("Configuring reconciler...", "url", repo.URL)
+		m.log.Info("Configuring reconciler...", "url", repo.cloneOptions.URL)
 		recConf := NewReconcilerConfig(dir, repo.SubDir, conf.UsernamePrefix, conf.Mappings)
 		reconciler := NewGitRepoReconciler(recConf, m.userRepository, m.clusterAccessRepository, r)
 		m.reconcilers = append(m.reconcilers, reconciler)
