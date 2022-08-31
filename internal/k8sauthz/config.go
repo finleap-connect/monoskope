@@ -179,10 +179,21 @@ func (c *Config) configureBasicAuth(repo *GitRepository, cloneOptions *git.Clone
 
 // configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
 func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
+	c.log.V(logger.DebugLevel).Info("Configuring public key ssh auth...", "envPrefix", repo.Auth.EnvPrefix)
+
 	// get env
-	privateKey := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey))
+	privateKeyEnvKey := fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey)
+	knownHostsEnvKey := fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixKnownHosts)
+	privateKey := os.Getenv(privateKeyEnvKey)
+	knownHosts := os.Getenv(knownHostsEnvKey)
 	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
-	knownHosts := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixKnownHosts))
+
+	if privateKey == "" {
+		return fmt.Errorf("%s must not be empty", privateKeyEnvKey)
+	}
+	if knownHosts == "" {
+		return fmt.Errorf("%s must not be empty", knownHostsEnvKey)
+	}
 
 	f, err := os.CreateTemp("", "known-hosts")
 	if err != nil {
@@ -196,7 +207,6 @@ func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOp
 	}
 
 	// configure public key ssh auth
-	c.log.V(logger.DebugLevel).Info("Configuring public key ssh auth...")
 	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), password)
 	if err != nil {
 		return err
