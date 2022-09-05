@@ -206,15 +206,14 @@ func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOp
 	}
 
 	// configure public key ssh auth
-	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), password)
-	if err != nil {
-		return err
-	}
 	callback, err := ssh.NewKnownHostsCallback(f.Name())
 	if err != nil {
 		return err
 	}
-
+	publicKeys, err := ssh.NewPublicKeys(ssh.DefaultUsername, []byte(privateKey), password)
+	if err != nil {
+		return err
+	}
 	publicKeys.HostKeyCallback = callback
 	cloneOptions.Auth = publicKeys
 
