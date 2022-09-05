@@ -21,8 +21,8 @@ import (
 
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/repositories"
+	"github.com/finleap-connect/monoskope/pkg/git"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/go-git/go-git/v5"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -48,53 +48,47 @@ func NewManager(userRepository repositories.UserRepository, clusterAccessReposit
 
 func (m *Manager) Run(ctx context.Context, conf *Config) error {
 	m.log.Info("Starting reconciliation loops...")
-	for _, repo := range conf.Repositories {
-		// Temp dir to clone repositories
-		dir, err := os.MkdirTemp("", "m8-k8sauthz")
-		if err != nil {
-			return err
-		}
-		m.tempDirectories = append(m.tempDirectories, dir)
-
-		// Clone repo
-		m.log.Info("Cloning repo...", "url", repo.cloneOptions.URL, "dir", dir)
-		r, err := git.PlainClone(dir, false, repo.cloneOptions)
-		if err != nil {
-			return err
-		}
-
-		m.log.Info("Configuring reconciler...", "url", repo.cloneOptions.URL)
-		recConf := NewReconcilerConfig(dir, repo.SubDir, conf.UsernamePrefix, conf.Mappings)
-		reconciler := NewGitRepoReconciler(recConf, m.userRepository, m.clusterAccessRepository, r)
-		m.reconcilers = append(m.reconcilers, reconciler)
-
-		// initial reconcile
-		if err := reconciler.Reconcile(ctx); err != nil {
-			m.log.Error(err, "Failed running reconciliation loop.")
-		}
-
-		// schedule reconcile loop
-		ticker := time.NewTicker(*repo.Interval)
-		quit := make(chan struct{})
-		m.quitChannels = append(m.quitChannels, quit)
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					m.eg.Go(func() error {
-						err := reconciler.Reconcile(ctx)
-						if err != nil {
-							m.log.Error(err, "Failed running reconciliation loop.")
-						}
-						return err
-					})
-				case <-quit:
-					ticker.Stop()
-					return
-				}
-			}
-		}()
+	gitClient, err := git.NewGitClient(conf.Repository)
+	if err != nil {
+		return err
 	}
+
+	// Clone repo
+	m.log.Info("Cloning repo...", "url", conf.Repository.URL)
+	if err := gitClient.Clone(ctx); err != nil {
+		return err
+	}
+
+	m.log.Info("Configuring reconciler...", "url", conf.Repository.URL)
+	reconciler := NewGitRepoReconciler(conf, m.userRepository, m.clusterAccessRepository, gitClient)
+	m.reconcilers = append(m.reconcilers, reconciler)
+
+	// initial reconcile
+	if err := reconciler.Reconcile(ctx); err != nil {
+		m.log.Error(err, "Failed running reconciliation loop.")
+	}
+
+	// schedule reconcile loop
+	ticker := time.NewTicker(*conf.Interval)
+	quit := make(chan struct{})
+	m.quitChannels = append(m.quitChannels, quit)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				m.eg.Go(func() error {
+					err := reconciler.Reconcile(ctx)
+					if err != nil {
+						m.log.Error(err, "Failed running reconciliation loop.")
+					}
+					return err
+				})
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	return nil
 }
 

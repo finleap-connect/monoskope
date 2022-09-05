@@ -22,8 +22,8 @@ import (
 	mock_repositories "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/git"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
-	"github.com/go-git/go-git/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -63,15 +63,10 @@ var _ = Describe("internal/k8sauthz", func() {
 			interval := time.Second * 2
 
 			conf := &Config{
-				Repositories: []*GitRepository{
-					{
-						URL:      testEnv.repoOriginDir,
-						Interval: &interval,
-						SubDir:   "rbactest",
-						cloneOptions: &git.CloneOptions{
-							URL: testEnv.repoOriginDir,
-						},
-					},
+				Interval: &interval,
+				SubDir:   "rbactest",
+				Repository: &git.GitConfig{
+					URL: testEnv.repoOriginDir,
 				},
 				Mappings: []*ClusterRoleMapping{
 					{

@@ -20,7 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-git/go-git/v5"
+	"github.com/finleap-connect/monoskope/pkg/git"
+	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
@@ -28,7 +29,7 @@ type TestEnv struct {
 	tempDir       string
 	repoDir       string
 	repoOriginDir string
-	gitRepo       *git.Repository
+	gitClient     *git.GitClient
 }
 
 func NewTestEnv() (*TestEnv, error) {
@@ -43,7 +44,7 @@ func NewTestEnv() (*TestEnv, error) {
 	env.repoDir = filepath.Join(dir, "repo", "rbac")
 	env.repoOriginDir = filepath.Join(dir, "origin")
 
-	r, err := git.PlainInit(env.repoOriginDir, false)
+	r, err := gogit.PlainInit(env.repoOriginDir, false)
 	if env.err(err) != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func NewTestEnv() (*TestEnv, error) {
 	if env.err(err) != nil {
 		return nil, err
 	}
-	_, err = wt.Commit("init", &git.CommitOptions{
+	_, err = wt.Commit("init", &gogit.CommitOptions{
 		Author: &object.Signature{
 			Name: "testenv",
 		},
@@ -76,13 +77,20 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	r, err = git.PlainClone(env.repoDir, false, &git.CloneOptions{
+	_, err = gogit.PlainClone(env.repoDir, false, &gogit.CloneOptions{
 		URL: env.repoOriginDir,
 	})
 	if env.err(err) != nil {
 		return nil, err
 	}
-	env.gitRepo = r
+
+	gitClient, err := git.NewGitClient(&git.GitConfig{
+		URL: env.repoOriginDir,
+	})
+	if env.err(err) != nil {
+		return nil, err
+	}
+	env.gitClient = gitClient
 	return env, nil
 }
 

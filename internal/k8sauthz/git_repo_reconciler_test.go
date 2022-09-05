@@ -58,19 +58,6 @@ var _ = Describe("internal/k8sauthz", func() {
 			userRepo := mock_repositories.NewMockUserRepository(mockCtrl)
 			clusterAccessRepo := mock_repositories.NewMockClusterAccessRepository(mockCtrl)
 
-			reconcilerConfig := NewReconcilerConfig(testEnv.repoDir, "", "m8-", []*ClusterRoleMapping{
-				{
-					Scope:       api_projections.ClusterRole_CLUSTER.String(),
-					Role:        string(k8s.AdminRole),
-					ClusterRole: "cluster-admin",
-				},
-				{
-					Scope:       api_projections.ClusterRole_CLUSTER.String(),
-					Role:        string(k8s.OnCallRole),
-					ClusterRole: "cluster-oncallee",
-				},
-			})
-
 			clusterAccessProjectionA := &api_projections.ClusterAccessV2{
 				Cluster: &api_projections.Cluster{
 					Id:   uuid.NewString(),
@@ -105,7 +92,21 @@ var _ = Describe("internal/k8sauthz", func() {
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionB}, nil)
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil)
 
-			reconciler := NewGitRepoReconciler(reconcilerConfig, userRepo, clusterAccessRepo, testEnv.gitRepo)
+			reconciler := NewGitRepoReconciler(&Config{
+				UsernamePrefix: "m8-",
+				Mappings: []*ClusterRoleMapping{
+					{
+						Scope:       api_projections.ClusterRole_CLUSTER.String(),
+						Role:        string(k8s.AdminRole),
+						ClusterRole: "cluster-admin",
+					},
+					{
+						Scope:       api_projections.ClusterRole_CLUSTER.String(),
+						Role:        string(k8s.OnCallRole),
+						ClusterRole: "cluster-oncallee",
+					},
+				},
+			}, userRepo, clusterAccessRepo, testEnv.gitClient)
 			Expect(reconciler.Reconcile(context.Background())).To(Succeed())
 
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil)

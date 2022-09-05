@@ -15,15 +15,11 @@
 package k8sauthz
 
 import (
-	"fmt"
 	"os"
 	"time"
 
+	"github.com/finleap-connect/monoskope/pkg/git"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 
 	"gopkg.in/yaml.v2"
 )
@@ -31,15 +27,6 @@ import (
 const (
 	DefaultTimeout        = 60 * time.Second
 	DefaultUsernamePrefix = "oidc:"
-
-	AuthTypeBasic               = "basic"
-	AuthTypeBasicSuffixUsername = ".basic.username"
-	AuthTypeBasicSuffixPassword = ".basic.password"
-
-	AuthTypeSSH                 = "ssh"
-	AuthTypeSSHSuffixPrivateKey = ".ssh.privateKey"
-	AuthTypeSSHSuffixPassword   = ".ssh.password"
-	AuthTypeSSHSuffixKnownHosts = ".ssh.known_hosts"
 )
 
 type ClusterRoleMapping struct {
@@ -50,61 +37,21 @@ type ClusterRoleMapping struct {
 
 // Config is the configuration for the GitRepoReconciler.
 type Config struct {
-	log            logger.Logger
-	Repositories   []*GitRepository      `yaml:"repositories"`
-	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
-	UsernamePrefix string                `yaml:"usernamePrefix"` // UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
-}
-
-type ReconcilerConfig struct {
-	RootDirectory  string
-	SubPath        string
-	UsernamePrefix string
-	Mappings       []*ClusterRoleMapping `yaml:"mappings"`
-}
-
-func NewReconcilerConfig(rootDir, subPath, usernamePrefix string, mappings []*ClusterRoleMapping) *ReconcilerConfig {
-	return &ReconcilerConfig{rootDir, subPath, usernamePrefix, mappings}
-}
-
-type GitAuth struct {
-	Type      string `yaml:"type"`
-	EnvPrefix string `yaml:"envPrefix"`
-}
-
-// GitBasicAuth is used to authenticate towards a Git repository over HTTPS using basic access authentication.
-type GitBasicAuth struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
-
-// GitSSHAuth is used to authenticate towards a Git repository over SSH. With the respective private key of the SSH key pair, and the host keys of the Git repository.
-type GitSSHAuth struct {
-	PrivateKeyPath string `yaml:"privateKeyPath"`
-	Password       string `yaml:"password"`
-}
-
-// GitRepository is configuration to connect to a git repository.
-type GitRepository struct {
-	// URL is a required field that specifies the HTTP/S or SSH address of the Git repository.
-	URL string `yaml:"url"`
-	// CA is an optional field to specify the Certificate Authority to trust while connecting with a git repository over HTTPS. If not specified OS CA's are used.
-	CA string `yaml:"caCert"`
-	// Branch is a required field that specifies the branch of the repository to use.
-	Branch string `yaml:"branch"`
+	log logger.Logger
 	// Internal is a required field that specifies the interval at which the Git repository must be fetched.
 	Interval *time.Duration `yaml:"interval"`
 	// Timeout is an optional field to specify a timeout for Git operations like cloning. Defaults to 60s.
-	Timeout *time.Duration `yaml:"timeout"`
+	Timeout    *time.Duration        `yaml:"timeout"`
+	Repository *git.GitConfig        `yaml:"repository"`
+	Mappings   []*ClusterRoleMapping `yaml:"mappings"`
+	// UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
+	UsernamePrefix string `yaml:"usernamePrefix"`
 	// AllClusters is an optional field to specify if the RBAC for all clusters should be managed. Defaults to false.
 	AllClusters bool `yaml:"allClusters"`
 	// Clusters is an optional field to specify a list of clusters for which the RBAC should be managed.
 	Clusters []string `yaml:"clusters"`
 	// SubDir is the relative path within the repo where to reconcile yamls
-	SubDir string  `yaml:"subdir"`
-	Auth   GitAuth `yaml:"auth"`
-	// cloneOptions are the parsed settings
-	cloneOptions *git.CloneOptions
+	SubDir string `yaml:"subdir"`
 }
 
 // NewConfigFromFile creates a new GitRepoReconcilerConfig from a given yaml file path
@@ -132,21 +79,14 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 		conf.UsernamePrefix = DefaultUsernamePrefix
 	}
 
-	for _, repo := range conf.Repositories {
-		// Check required fields are set
-		if err := conf.parseCloneOptions(repo); err != nil {
-			return conf, err
-		}
+	if conf.Interval == nil {
+		return conf, ErrIntervalIsRequired
+	}
 
-		if repo.Interval == nil {
-			return conf, ErrIntervalIsRequired
-		}
-
-		// Set default values
-		if repo.Timeout == nil {
-			timeout := DefaultTimeout
-			repo.Timeout = &timeout
-		}
+	// Set default values
+	if conf.Timeout == nil {
+		timeout := DefaultTimeout
+		conf.Timeout = &timeout
 	}
 
 	return conf, nil
@@ -159,102 +99,4 @@ func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) s
 		}
 	}
 	return ""
-}
-
-// configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.
-func (c *Config) configureBasicAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
-	// get env
-	username := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixUsername))
-	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeBasicSuffixPassword))
-
-	// set clone options auth
-	c.log.V(logger.DebugLevel).Info("Configuring basic auth...")
-	cloneOptions.Auth = &http.BasicAuth{
-		Username: username,
-		Password: password,
-	}
-
-	return nil
-}
-
-// configureSSHAuth reads the file containing the ssh auth information and unmarshal's it's content into the clone options given.
-func (c *Config) configureSSHAuth(repo *GitRepository, cloneOptions *git.CloneOptions) error {
-	c.log.V(logger.DebugLevel).Info("Configuring public key ssh auth...", "envPrefix", repo.Auth.EnvPrefix)
-
-	// get env
-	privateKeyEnvKey := fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPrivateKey)
-	knownHostsEnvKey := fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixKnownHosts)
-	privateKey := os.Getenv(privateKeyEnvKey)
-	knownHosts := os.Getenv(knownHostsEnvKey)
-	password := os.Getenv(fmt.Sprintf("%s%s", repo.Auth.EnvPrefix, AuthTypeSSHSuffixPassword))
-
-	if privateKey == "" {
-		return fmt.Errorf("%s must not be empty", privateKeyEnvKey)
-	}
-	if knownHosts == "" {
-		return fmt.Errorf("%s must not be empty", knownHostsEnvKey)
-	}
-
-	f, err := os.CreateTemp("", "known-hosts")
-	if err != nil {
-		return err
-	}
-
-	_, err = f.WriteString(knownHosts)
-	if err != nil {
-		return err
-	}
-
-	// configure public key ssh auth
-	callback, err := ssh.NewKnownHostsCallback(f.Name())
-	if err != nil {
-		return err
-	}
-	publicKeys, err := ssh.NewPublicKeys(ssh.DefaultUsername, []byte(privateKey), password)
-	if err != nil {
-		return err
-	}
-	publicKeys.HostKeyCallback = callback
-	cloneOptions.Auth = publicKeys
-
-	return nil
-}
-
-// parseCloneOptions parses the configuration using the git library to validate.
-func (c *Config) parseCloneOptions(repo *GitRepository) error {
-	cloneOptions := &git.CloneOptions{
-		URL:          repo.URL,
-		SingleBranch: true,
-		Depth:        1,
-	}
-	if repo.Branch != "" {
-		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(repo.Branch)
-	}
-
-	// Set CA
-	if len(repo.CA) != 0 {
-		c.log.V(logger.DebugLevel).Info("Configuring custom CA...")
-		cloneOptions.CABundle = []byte(repo.CA)
-	}
-
-	// Configure basic auth optionally
-	if repo.Auth.Type == AuthTypeBasic {
-		if err := c.configureBasicAuth(repo, cloneOptions); err != nil {
-			return err
-		}
-	}
-
-	// Configure ssh auth
-	if repo.Auth.Type == AuthTypeSSH {
-		if err := c.configureSSHAuth(repo, cloneOptions); err != nil {
-			return err
-		}
-	}
-
-	if err := cloneOptions.Validate(); err != nil {
-		return err
-	}
-	repo.cloneOptions = cloneOptions
-
-	return nil
 }

@@ -1,22 +1,11 @@
-repositories:
-  - url: https://monoskope.io/test1.git
-    branch: main
-    subdir: rbac/test
-    interval: 5m
-    caCert: this-is-a-ca-cert-in-pem
-    allClusters: true
-    auth:
-      type: basic
-      envPrefix: test1
-  - url: https://monoskope.io/test2.git
-    branch: test
-    interval: 5m
-    auth:
-      type: ssh
-      envPrefix: test2
-    clusters:
-      - "dev"
-      - "prod"
+subdir: rbac/test
+interval: 5m
+allClusters: true
+repository:
+  url: https://monoskope.io/test1.git
+  caCert: this-is-a-ca-cert-in-pem
+  authType: basic
+  envPrefix: test1
 mappings:
   - scope: CLUSTER
     role: admin
