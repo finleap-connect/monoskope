@@ -27,6 +27,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/git"
 	mk8s "github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	gogit "github.com/go-git/go-git/v5"
 	"k8s.io/cli-runtime/pkg/printers"
 )
 
@@ -70,7 +71,7 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {
 	}
 
 	r.log.Info("Pushing changes to git repo...")
-	if err := r.gitClient.Push(ctx); err != nil {
+	if err := r.gitClient.Push(ctx); err != nil && err != gogit.NoErrAlreadyUpToDate {
 		r.log.Error(err, "Reconciling finished with errors.")
 		return err
 	}
