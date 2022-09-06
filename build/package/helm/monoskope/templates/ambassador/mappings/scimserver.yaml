@@ -9,7 +9,7 @@ metadata:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
   prefix: /scim/
-  service: {{.Release.Name}}-scimserver:{{.Values.scimserver.service.port}}
+  service: {{.Release.Name}}-scimserver.{{.Release.Namespace}}:{{.Values.scimserver.service.port}}
 ---
 {{- end }}
 {{- end }}
