@@ -130,6 +130,7 @@ func (c *GitConfig) configureSSHAuth() error {
 	return nil
 }
 
+// getAuthMethod returns the auth method generated from the configuration
 func (c *GitConfig) getAuthMethod() (transport.AuthMethod, error) {
 	if c.authMethod != nil {
 		return c.authMethod, nil
@@ -152,6 +153,7 @@ func (c *GitConfig) getAuthMethod() (transport.AuthMethod, error) {
 	return c.authMethod, nil
 }
 
+// getCloneOptions returns the clone options generated from the generation
 func (c *GitConfig) getCloneOptions() (*git.CloneOptions, error) {
 	if c.cloneOptions != nil {
 		return c.cloneOptions, nil
@@ -178,6 +180,7 @@ func (c *GitConfig) getCloneOptions() (*git.CloneOptions, error) {
 	return c.cloneOptions, nil
 }
 
+// getPullOptions returns the pull options generated from the generation
 func (c *GitConfig) getPullOptions() (*git.PullOptions, error) {
 	if c.pullOptions != nil {
 		return c.pullOptions, nil
@@ -203,6 +206,7 @@ func (c *GitConfig) getPullOptions() (*git.PullOptions, error) {
 	return c.pullOptions, nil
 }
 
+// getPushOptions returns the push options generated from the generation
 func (c *GitConfig) getPushOptions() (*git.PushOptions, error) {
 	if c.pushOptions != nil {
 		return c.pushOptions, nil
