@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /eventsourcing.CommandHandler/
   rewrite: /eventsourcing.CommandHandler/
@@ -23,7 +23,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.CommandHandlerExtensions/
   rewrite: /domain.CommandHandlerExtensions/

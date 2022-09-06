@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   prefix: /scim/
   service: {{.Release.Name}}-scimserver.{{.Release.Namespace}}:{{.Values.scimserver.service.port}}
 ---

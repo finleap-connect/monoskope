@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.User/
   rewrite: /domain.User/
@@ -23,7 +23,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.Tenant/
   rewrite: /domain.Tenant/
@@ -37,7 +37,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.Cluster/
   rewrite: /domain.Cluster/
@@ -51,7 +51,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.ClusterAccess/
   rewrite: /domain.ClusterAccess/
@@ -65,7 +65,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.Certificate/
   rewrite: /domain.Certificate/
@@ -79,7 +79,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.AuditLog/
   rewrite: /domain.AuditLog/

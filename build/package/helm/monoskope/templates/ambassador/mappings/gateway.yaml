@@ -12,7 +12,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
@@ -29,7 +29,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /gateway.ClusterAuth/
   rewrite: /gateway.ClusterAuth/
@@ -43,7 +43,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
@@ -57,7 +57,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   method: GET
   prefix: /.well-known/
   rewrite: /.well-known/
@@ -71,7 +71,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   method: GET
   prefix: /keys
   rewrite: /keys
@@ -88,7 +88,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  hostname: {{ $tlsDomain }}
+  host: {{ $tlsDomain }}
   grpc: true
   prefix: /gateway.APIToken/
   rewrite: /gateway.APIToken/
