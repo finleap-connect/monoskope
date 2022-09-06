@@ -16,7 +16,6 @@ package k8sauthz
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
@@ -28,8 +27,8 @@ import (
 
 type Manager struct {
 	log                     logger.Logger
-	tempDirectories         []string
-	reconcilers             []*GitRepoReconciler
+	gitClient               *git.GitClient
+	reconciler              *GitRepoReconciler
 	userRepository          repositories.UserRepository
 	clusterAccessRepository repositories.ClusterAccessRepository
 	eg                      errgroup.Group
@@ -52,6 +51,7 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 	if err != nil {
 		return err
 	}
+	m.gitClient = gitClient
 
 	// Clone repo
 	m.log.Info("Cloning repo...", "url", conf.Repository.URL)
@@ -60,11 +60,10 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 	}
 
 	m.log.Info("Configuring reconciler...", "url", conf.Repository.URL)
-	reconciler := NewGitRepoReconciler(conf, m.userRepository, m.clusterAccessRepository, gitClient)
-	m.reconcilers = append(m.reconcilers, reconciler)
+	m.reconciler = NewGitRepoReconciler(conf, m.userRepository, m.clusterAccessRepository, gitClient)
 
 	// initial reconcile
-	if err := reconciler.Reconcile(ctx); err != nil {
+	if err := m.reconciler.Reconcile(ctx); err != nil {
 		m.log.Error(err, "Failed running reconciliation loop.")
 	}
 
@@ -77,7 +76,7 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 			select {
 			case <-ticker.C:
 				m.eg.Go(func() error {
-					err := reconciler.Reconcile(ctx)
+					err := m.reconciler.Reconcile(ctx)
 					if err != nil {
 						m.log.Error(err, "Failed running reconciliation loop.")
 					}
@@ -94,10 +93,8 @@ func (m *Manager) Run(ctx context.Context, conf *Config) error {
 
 func (m *Manager) Notify(ctx context.Context, u *projections.User) {
 	m.log.V(logger.DebugLevel).Info("Received notification from repo for user.", "user", u.Email)
-	for _, r := range m.reconcilers {
-		if err := r.ReconcileUser(ctx, u); err != nil {
-			m.log.Error(err, "Failed to reconcile user.")
-		}
+	if err := m.reconciler.ReconcileUser(ctx, u); err != nil {
+		m.log.Error(err, "Failed to reconcile user.")
 	}
 }
 
@@ -112,11 +109,10 @@ func (m *Manager) Close() error {
 		m.log.Error(err, "Encountered errors while reconciling.")
 	}
 
-	m.log.Info("Cleaning up temp directories...")
-	for _, dir := range m.tempDirectories {
-		if err := os.RemoveAll(dir); err != nil {
-			return err
-		}
+	m.log.Info("Cleaning up...")
+	if err := m.gitClient.Close(); err != nil {
+		m.log.Error(err, "Encountered errors cleaning up.")
 	}
+
 	return m.eg.Wait()
 }

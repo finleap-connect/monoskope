@@ -26,6 +26,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
+// GitClient is a small wrapper around go-git library methods.
+// It provides clone/pull/push options as needed and has a simpler interface.
 type GitClient struct {
 	config         *GitConfig
 	log            logger.Logger
@@ -33,6 +35,7 @@ type GitClient struct {
 	repo           *git.Repository
 }
 
+// NewGitClient creates a new go-git library wrapper
 func NewGitClient(config *GitConfig) (*GitClient, error) {
 	dir, err := os.MkdirTemp("", "m8-k8sauthz")
 	if err != nil {
@@ -41,10 +44,12 @@ func NewGitClient(config *GitConfig) (*GitClient, error) {
 	return &GitClient{config: config, localDirectory: dir, log: logger.WithName("git-client")}, nil
 }
 
+// GetLocalDirectory returns the directory where the repo is cloned to
 func (c *GitClient) GetLocalDirectory() string {
 	return c.localDirectory
 }
 
+// Clone clones the configured repo
 func (c *GitClient) Clone(ctx context.Context) error {
 	cloneOptions, err := c.config.getCloneOptions()
 	if err != nil {
@@ -59,6 +64,7 @@ func (c *GitClient) Clone(ctx context.Context) error {
 	return nil
 }
 
+// Pull pulls the latest changes of the configured repo
 func (c *GitClient) Pull(ctx context.Context) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -76,6 +82,7 @@ func (c *GitClient) Pull(ctx context.Context) error {
 	return nil
 }
 
+// AddAll stages all changes in the working directory
 func (c *GitClient) AddAll(ctx context.Context) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -89,6 +96,7 @@ func (c *GitClient) AddAll(ctx context.Context) error {
 	return nil
 }
 
+// Add stages the given file
 func (c *GitClient) Add(ctx context.Context, filePath string) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -102,6 +110,7 @@ func (c *GitClient) Add(ctx context.Context, filePath string) error {
 	return nil
 }
 
+// Commit commits all changes with the given commit message
 func (c *GitClient) Commit(ctx context.Context, msg string) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
@@ -127,6 +136,7 @@ func (c *GitClient) Commit(ctx context.Context, msg string) error {
 	return nil
 }
 
+// AddAndCommit stages the given file an creates a commit
 func (c *GitClient) AddAndCommit(ctx context.Context, filePath, msg string) error {
 	if err := c.Add(ctx, filePath); err != nil {
 		return err
@@ -139,6 +149,7 @@ func (c *GitClient) AddAndCommit(ctx context.Context, filePath, msg string) erro
 	return nil
 }
 
+// AddAndCommit stages all changes an creates a commit
 func (c *GitClient) AddAllAndCommit(ctx context.Context, msg string) error {
 	if err := c.AddAll(ctx); err != nil {
 		return err
@@ -151,6 +162,7 @@ func (c *GitClient) AddAllAndCommit(ctx context.Context, msg string) error {
 	return nil
 }
 
+// Push pushes all outstanding changes
 func (c *GitClient) Push(ctx context.Context) error {
 	po, err := c.config.getPushOptions()
 	if err != nil {
@@ -162,6 +174,7 @@ func (c *GitClient) Push(ctx context.Context) error {
 	return nil
 }
 
+// Close cleans up the clone directory
 func (c *GitClient) Close() error {
 	return os.RemoveAll(c.localDirectory)
 }

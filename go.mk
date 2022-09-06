@@ -9,6 +9,8 @@ export DEX_CONFIG = $(BUILD_PATH)/config/dex
 export M8_OPERATION_MODE = development
 
 ##@ Go
+.PHONY: go ## Run all go tasks
+go: go-mod go-lint go-test
 
 .PHONY: go-mod
 go-mod: ## Run go mod tidy, download and verify
