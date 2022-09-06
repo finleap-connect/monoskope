@@ -117,25 +117,12 @@ k8sAuthZ:
   # existingSecret: m8-k8sauthz
   config:
     # -- Configure repos
-    # repositories:
-    #   - url: https://monoskope.io/test1.git
-    #     subdir: test
-    #     branch: main
-    #     interval: 5m
-    #     caCert: this-is-a-ca-cert-in-pem
-    #     auth:
-    #       type: basic
-    #       envPrefix: test1
-    #     allClusters: true
-    #   - url: https://monoskope.io/test2.git
-    #     branch: test
-    #     interval: 5m
-    #     auth:
-    #       type: ssh
-    #       envPrefix: test2
-    #     clusters:
-    #       - "dev"
-    #       - "prod"
+    # repository:
+    #   url: https://monoskope.io/test1.git
+    #   caBundle: this-is-a-ca-cert-in-pem
+    #   auth:
+    #     type: basic
+    #     envPrefix: test1
     # -- Configure ClusterRole mapping
     # mappings:
     #   - scope: CLUSTER
@@ -146,3 +133,6 @@ k8sAuthZ:
     #     clusterRole: app-oncallee
     # -- Prefix used for users in clusters
     # usernamePrefix: "m8-"
+    # subdir: test
+    # interval: 5m
+    # allClusters: true

@@ -34,7 +34,7 @@ type GitConfig struct {
 	// InsecureSkipTLS skips ssl verify if protocol is https
 	InsecureSkipTLS bool `yaml:"insecureSkipTLS"`
 	// CABundle specify additional ca bundle with system cert pool
-	CABundle []byte `yaml:"caBundle"`
+	CABundle string `yaml:"caBundle"`
 	// Remote branch to clone. If empty, uses HEAD.
 	ReferenceName plumbing.ReferenceName `yaml:"referenceName"`
 	// AuthType is the type of authentication
@@ -154,7 +154,7 @@ func (c *GitConfig) getCloneOptions() (*git.CloneOptions, error) {
 		ReferenceName:   c.ReferenceName,
 		Depth:           c.Depth,
 		Progress:        os.Stdout,
-		CABundle:        c.CABundle,
+		CABundle:        []byte(c.CABundle),
 		InsecureSkipTLS: c.InsecureSkipTLS,
 		Auth:            authMethod,
 	}
@@ -179,7 +179,7 @@ func (c *GitConfig) getPullOptions() (*git.PullOptions, error) {
 		ReferenceName:   c.ReferenceName,
 		Depth:           c.Depth,
 		Progress:        os.Stdout,
-		CABundle:        c.CABundle,
+		CABundle:        []byte(c.CABundle),
 		InsecureSkipTLS: c.InsecureSkipTLS,
 		Auth:            authMethod,
 	}
@@ -201,7 +201,7 @@ func (c *GitConfig) getPushOptions() (*git.PushOptions, error) {
 
 	c.pushOptions = &git.PushOptions{
 		Progress:        os.Stdout,
-		CABundle:        c.CABundle,
+		CABundle:        []byte(c.CABundle),
 		InsecureSkipTLS: c.InsecureSkipTLS,
 		Auth:            authMethod,
 	}
