@@ -31,9 +31,9 @@ const (
 )
 
 type ClusterRoleMapping struct {
-	Scope       string
-	Role        string
-	ClusterRole string
+	Scope       string `yaml:"scope"`
+	Role        string `yaml:"role"`
+	ClusterRole string `yaml:"clusterRole"`
 }
 
 // Config is the configuration for the GitRepoReconciler.

@@ -143,9 +143,10 @@ func (r *GitRepoReconciler) reconcileUser(ctx context.Context, user *projections
 }
 
 func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user *projections.User, sanitizedName string, clusterAccesses []*api_projections.ClusterAccessV2) error {
-	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email)
+	r.log.V(logger.DebugLevel).Info("Reconciling bindings...", "user", user.Email, "clusterAccesses", len(clusterAccesses))
 
 	for _, clusterAccess := range clusterAccesses {
+		r.log.V(logger.DebugLevel).Info("Reconciling binding...", "user", user.Email, "cluster", clusterAccess.Cluster.Name)
 		path := filepath.Join(r.gitClient.GetLocalDirectory(), clusterAccess.Cluster.Name, sanitizedName)
 
 		// Create user sub dir
