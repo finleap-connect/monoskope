@@ -1,5 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- if .Values.commandhandler.enabled }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  hostname: {{ $tlsDomain }}
   grpc: true
   prefix: /eventsourcing.CommandHandler/
   rewrite: /eventsourcing.CommandHandler/
@@ -21,6 +23,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  hostname: {{ $tlsDomain }}
   grpc: true
   prefix: /domain.CommandHandlerExtensions/
   rewrite: /domain.CommandHandlerExtensions/

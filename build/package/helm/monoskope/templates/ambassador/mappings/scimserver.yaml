@@ -1,5 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- if .Values.scimserver.enabled }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  hostname: {{ $tlsDomain }}
   prefix: /scim/
   service: {{.Release.Name}}-scimserver.{{.Release.Namespace}}:{{.Values.scimserver.service.port}}
 ---
