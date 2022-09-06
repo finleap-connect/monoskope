@@ -92,7 +92,7 @@ var _ = Describe("internal/k8sauthz", func() {
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userB.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionB}, nil)
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil)
 
-			reconciler := NewGitRepoReconciler(&Config{
+			config := &Config{
 				UsernamePrefix: "m8-",
 				Mappings: []*ClusterRoleMapping{
 					{
@@ -106,7 +106,9 @@ var _ = Describe("internal/k8sauthz", func() {
 						ClusterRole: "cluster-oncallee",
 					},
 				},
-			}, userRepo, clusterAccessRepo, testEnv.gitClient)
+			}
+			Expect(config.setDefaults()).To(Succeed())
+			reconciler := NewGitRepoReconciler(config, userRepo, clusterAccessRepo, testEnv.gitClient)
 			Expect(reconciler.Reconcile(context.Background())).To(Succeed())
 
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userA.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionA}, nil)

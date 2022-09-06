@@ -165,7 +165,7 @@ func (c *GitConfig) getCloneOptions() (*git.CloneOptions, error) {
 }
 
 func (c *GitConfig) getPullOptions() (*git.PullOptions, error) {
-	if c.cloneOptions != nil {
+	if c.pullOptions != nil {
 		return c.pullOptions, nil
 	}
 
@@ -183,14 +183,14 @@ func (c *GitConfig) getPullOptions() (*git.PullOptions, error) {
 		InsecureSkipTLS: c.InsecureSkipTLS,
 		Auth:            authMethod,
 	}
-	if err := c.cloneOptions.Validate(); err != nil {
+	if err := c.pullOptions.Validate(); err != nil {
 		return nil, err
 	}
 	return c.pullOptions, nil
 }
 
 func (c *GitConfig) getPushOptions() (*git.PushOptions, error) {
-	if c.cloneOptions != nil {
+	if c.pushOptions != nil {
 		return c.pushOptions, nil
 	}
 
@@ -205,7 +205,7 @@ func (c *GitConfig) getPushOptions() (*git.PushOptions, error) {
 		InsecureSkipTLS: c.InsecureSkipTLS,
 		Auth:            authMethod,
 	}
-	if err := c.cloneOptions.Validate(); err != nil {
+	if err := c.pushOptions.Validate(); err != nil {
 		return nil, err
 	}
 	return c.pushOptions, nil

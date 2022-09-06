@@ -26,8 +26,8 @@ import (
 var test_config []byte
 
 var _ = Describe("internal/k8sauthz", func() {
-	Context("GitRepository", func() {
-		It("NewGitRepository() creates a new instance with defaults", func() {
+	Context("Config", func() {
+		It("NewConfigFromFile() creates a new instance with defaults", func() {
 			os.Setenv("test1.basic.username", "test1")
 			os.Setenv("test1.basic.password", "testpw")
 
@@ -36,7 +36,6 @@ var _ = Describe("internal/k8sauthz", func() {
 			Expect(conf).ToNot(BeNil())
 			Expect(conf.Repository).ToNot(BeNil())
 			Expect(len(conf.Mappings)).To(BeNumerically("==", 2))
-
 			Expect(conf.AllClusters).To(BeTrue())
 		})
 	})

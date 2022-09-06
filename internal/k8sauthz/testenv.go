@@ -15,8 +15,8 @@
 package k8sauthz
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -27,7 +27,6 @@ import (
 
 type TestEnv struct {
 	tempDir       string
-	repoDir       string
 	repoOriginDir string
 	gitClient     *git.GitClient
 }
@@ -41,7 +40,6 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 	env.tempDir = dir
-	env.repoDir = filepath.Join(dir, "repo", "rbac")
 	env.repoOriginDir = filepath.Join(dir, "origin")
 
 	r, err := gogit.PlainInit(env.repoOriginDir, false)
@@ -77,16 +75,13 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	_, err = gogit.PlainClone(env.repoDir, false, &gogit.CloneOptions{
+	gitClient, err := git.NewGitClient(&git.GitConfig{
 		URL: env.repoOriginDir,
 	})
 	if env.err(err) != nil {
 		return nil, err
 	}
-
-	gitClient, err := git.NewGitClient(&git.GitConfig{
-		URL: env.repoOriginDir,
-	})
+	err = gitClient.Clone(context.Background())
 	if env.err(err) != nil {
 		return nil, err
 	}
@@ -103,18 +98,21 @@ func (env *TestEnv) err(err error) error {
 }
 
 func (env *TestEnv) Shutdown() error {
-	err := filepath.Walk(env.repoDir,
+	if err := filepath.Walk(env.gitClient.GetLocalDirectory(),
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 			fmt.Println(path)
 			return nil
-		})
-	if err != nil {
-		log.Println(err)
+		}); err != nil {
+		return err
 	}
-	os.RemoveAll(env.tempDir) // clean up
-
+	if err := os.RemoveAll(env.tempDir); err != nil {
+		return err
+	}
+	if err := env.gitClient.Close(); err != nil {
+		return err
+	}
 	return nil
 }

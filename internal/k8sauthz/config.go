@@ -26,6 +26,7 @@ import (
 
 const (
 	DefaultTimeout        = 60 * time.Second
+	DefaultInterval       = 10 * time.Minute
 	DefaultUsernamePrefix = "oidc:"
 )
 
@@ -41,9 +42,11 @@ type Config struct {
 	// Internal is a required field that specifies the interval at which the Git repository must be fetched.
 	Interval *time.Duration `yaml:"interval"`
 	// Timeout is an optional field to specify a timeout for Git operations like cloning. Defaults to 60s.
-	Timeout    *time.Duration        `yaml:"timeout"`
-	Repository *git.GitConfig        `yaml:"repository"`
-	Mappings   []*ClusterRoleMapping `yaml:"mappings"`
+	Timeout *time.Duration `yaml:"timeout"`
+	// Repository is the git config to use
+	Repository *git.GitConfig `yaml:"repository"`
+	// Mappings define which k8s role in m8 leads to which cluster role within clusters
+	Mappings []*ClusterRoleMapping `yaml:"mappings"`
 	// UsernamePrefix is prepended to usernames to prevent clashes with existing names (such as system: users). For example, the value oidc: will create usernames like oidc:jane.doe. Defaults to oidc:.
 	UsernamePrefix string `yaml:"usernamePrefix"`
 	// AllClusters is an optional field to specify if the RBAC for all clusters should be managed. Defaults to false.
@@ -67,33 +70,36 @@ func NewConfigFromFilePath(name string) (*Config, error) {
 func NewConfigFromFile(data []byte) (*Config, error) {
 	// Unmarshal
 	conf := &Config{}
-
 	if err := yaml.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
-
 	conf.log = logger.WithName("config")
 
-	// Set default values
-	if len(conf.UsernamePrefix) == 0 {
-		conf.UsernamePrefix = DefaultUsernamePrefix
-	}
-
-	if conf.Interval == nil {
-		return conf, ErrIntervalIsRequired
-	}
-
-	// Set default values
-	if conf.Timeout == nil {
-		timeout := DefaultTimeout
-		conf.Timeout = &timeout
+	if err := conf.setDefaults(); err != nil {
+		return nil, err
 	}
 
 	return conf, nil
 }
 
-func getClusterRoleMapping(mappings []*ClusterRoleMapping, scope, role string) string {
-	for _, m := range mappings {
+// setDefaults sets the default values on the configuration
+func (conf *Config) setDefaults() error {
+	if len(conf.UsernamePrefix) == 0 {
+		conf.UsernamePrefix = DefaultUsernamePrefix
+	}
+	if conf.Interval == nil {
+		interval := DefaultInterval
+		conf.Interval = &interval
+	}
+	if conf.Timeout == nil {
+		timeout := DefaultTimeout
+		conf.Timeout = &timeout
+	}
+	return nil
+}
+
+func (conf *Config) getClusterRoleMapping(scope, role string) string {
+	for _, m := range conf.Mappings {
 		if m.Scope == scope && m.Role == role {
 			return m.ClusterRole
 		}

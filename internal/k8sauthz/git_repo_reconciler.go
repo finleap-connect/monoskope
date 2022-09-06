@@ -155,7 +155,7 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 
 		// Reconcile bindings for existing users
 		for _, clusterAccessRole := range clusterAccess.ClusterRoles {
-			if clusterRole := getClusterRoleMapping(r.config.Mappings, clusterAccessRole.Scope.String(), clusterAccessRole.Role); clusterRole != "" {
+			if clusterRole := r.config.getClusterRoleMapping(clusterAccessRole.Scope.String(), clusterAccessRole.Role); clusterRole != "" {
 				if err := r.createClusterRoleBinding(ctx, path, clusterRole, user, sanitizedName); err != nil {
 					return err
 				}

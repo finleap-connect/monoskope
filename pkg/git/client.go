@@ -147,3 +147,7 @@ func (c *GitClient) Push(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (c *GitClient) Close() error {
+	return os.RemoveAll(c.localDirectory)
+}
