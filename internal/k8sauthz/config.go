@@ -41,8 +41,6 @@ type Config struct {
 	log logger.Logger
 	// Internal is a required field that specifies the interval at which the Git repository must be fetched.
 	Interval *time.Duration `yaml:"interval"`
-	// Timeout is an optional field to specify a timeout for Git operations like cloning. Defaults to 60s.
-	Timeout *time.Duration `yaml:"timeout"`
 	// Repository is the git config to use
 	Repository *git.GitConfig `yaml:"repository"`
 	// Mappings define which k8s role in m8 leads to which cluster role within clusters
@@ -91,9 +89,9 @@ func (conf *Config) setDefaults() error {
 		interval := DefaultInterval
 		conf.Interval = &interval
 	}
-	if conf.Timeout == nil {
+	if conf.Repository.Timeout == nil {
 		timeout := DefaultTimeout
-		conf.Timeout = &timeout
+		conf.Repository.Timeout = &timeout
 	}
 	return nil
 }

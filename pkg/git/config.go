@@ -17,6 +17,7 @@ package git
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -55,6 +56,8 @@ type GitConfig struct {
 	AuthType string `yaml:"authType"`
 	// EnvPrefix is the prefix for environment variables to configure
 	EnvPrefix string `yaml:"envPrefix"`
+	// Timeout is an optional field to specify a timeout for Git operations like cloning. Defaults to 60s.
+	Timeout *time.Duration `yaml:"timeout"`
 
 	authMethod   transport.AuthMethod
 	cloneOptions *git.CloneOptions

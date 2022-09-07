@@ -51,6 +51,12 @@ func (c *GitClient) GetLocalDirectory() string {
 
 // Clone clones the configured repo
 func (c *GitClient) Clone(ctx context.Context) error {
+	var cancel context.CancelFunc
+	if c.config.Timeout != nil {
+		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
+		defer cancel()
+	}
+
 	cloneOptions, err := c.config.getCloneOptions()
 	if err != nil {
 		return err
@@ -66,6 +72,12 @@ func (c *GitClient) Clone(ctx context.Context) error {
 
 // Pull pulls the latest changes of the configured repo
 func (c *GitClient) Pull(ctx context.Context) error {
+	var cancel context.CancelFunc
+	if c.config.Timeout != nil {
+		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
+		defer cancel()
+	}
+
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -84,6 +96,12 @@ func (c *GitClient) Pull(ctx context.Context) error {
 
 // AddAll stages all changes in the working directory
 func (c *GitClient) AddAll(ctx context.Context) error {
+	var cancel context.CancelFunc
+	if c.config.Timeout != nil {
+		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
+		defer cancel()
+	}
+
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -98,6 +116,12 @@ func (c *GitClient) AddAll(ctx context.Context) error {
 
 // Add stages the given file
 func (c *GitClient) Add(ctx context.Context, filePath string) error {
+	var cancel context.CancelFunc
+	if c.config.Timeout != nil {
+		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
+		defer cancel()
+	}
+
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -111,7 +135,7 @@ func (c *GitClient) Add(ctx context.Context, filePath string) error {
 }
 
 // Commit commits all changes with the given commit message
-func (c *GitClient) Commit(ctx context.Context, msg string) error {
+func (c *GitClient) Commit(_ context.Context, msg string) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -164,6 +188,12 @@ func (c *GitClient) AddAllAndCommit(ctx context.Context, msg string) error {
 
 // Push pushes all outstanding changes
 func (c *GitClient) Push(ctx context.Context) error {
+	var cancel context.CancelFunc
+	if c.config.Timeout != nil {
+		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
+		defer cancel()
+	}
+
 	po, err := c.config.getPushOptions()
 	if err != nil {
 		return err

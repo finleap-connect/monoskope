@@ -22,6 +22,7 @@ import (
 	mock_repositories "github.com/finleap-connect/monoskope/internal/test/domain/repositories"
 	api_projections "github.com/finleap-connect/monoskope/pkg/api/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/domain/projections"
+	"github.com/finleap-connect/monoskope/pkg/git"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -93,6 +94,7 @@ var _ = Describe("internal/k8sauthz", func() {
 			clusterAccessRepo.EXPECT().GetClustersAccessibleByUserIdV2(context.Background(), userC.ID()).Return([]*api_projections.ClusterAccessV2{clusterAccessProjectionC}, nil)
 
 			config := &Config{
+				Repository:     &git.GitConfig{},
 				UsernamePrefix: "m8-",
 				Mappings: []*ClusterRoleMapping{
 					{
