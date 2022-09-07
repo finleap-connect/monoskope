@@ -25,7 +25,7 @@ spec:
     - key encipherment
     - client auth
   privateKey:
-    rotationPolicy: Always
+    rotationPolicy: Never
     algorithm: RSA
     encoding: PKCS1
     size: 2048
