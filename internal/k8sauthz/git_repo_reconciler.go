@@ -115,7 +115,7 @@ func (r *GitRepoReconciler) ReconcileUser(ctx context.Context, user *projections
 
 // removeAll cleans up a directory keeping all hidden files and directories
 func removeAll(path string) error {
-	matches, err := filepath.Glob(filepath.Join(path, "*"))
+	matches, err := filepath.Glob(filepath.Join(path, "*/*.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to clean local dir: %w", err)
 	}
