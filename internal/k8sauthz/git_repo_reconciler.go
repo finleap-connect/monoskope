@@ -125,6 +125,9 @@ func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
 	if err := removeAll(r.dir); err != nil {
 		return err
 	}
+	if err := r.gitClient.AddAll(ctx); err != nil {
+		return err
+	}
 
 	// Get all users including deleted ones
 	users, err := r.users.AllWith(ctx, true)
