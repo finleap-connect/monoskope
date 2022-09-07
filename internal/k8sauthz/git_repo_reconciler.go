@@ -72,6 +72,11 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context) error {
 		return fmt.Errorf("error reconciling users: %w", err)
 	}
 
+	r.log.Info("Committing changes...")
+	if err := r.gitClient.AddAllAndCommit(ctx, "Reconciliation of Monoskope based RBAC."); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
+	}
+
 	r.log.Info("Pushing changes to git repo...")
 	if err := r.gitClient.Push(ctx); err != nil && err != gogit.NoErrAlreadyUpToDate {
 		r.log.Error(err, "Reconciling finished with errors.")
@@ -93,6 +98,11 @@ func (r *GitRepoReconciler) ReconcileUser(ctx context.Context, user *projections
 	r.log.Info("Reconciling user...")
 	if err := r.reconcileUser(ctx, user); err != nil {
 		return fmt.Errorf("error reconciling user: %w", err)
+	}
+
+	r.log.Info("Committing changes...")
+	if err := r.gitClient.AddAllAndCommit(ctx, "Reconciliation of Monoskope based RBAC."); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
 	}
 
 	r.log.Info("Pushing changes to git repo...")
@@ -123,9 +133,6 @@ func removeAll(path string) error {
 func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
 	// Clean
 	if err := removeAll(r.dir); err != nil {
-		return err
-	}
-	if err := r.gitClient.AddAll(ctx); err != nil {
 		return err
 	}
 
@@ -196,11 +203,6 @@ func (r *GitRepoReconciler) createClusterRolesForUser(ctx context.Context, user 
 
 func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, clusterRoleName string, user *projections.User, cluster *api_projections.Cluster, sanitizedName string) error {
 	filePath := filepath.Join(dir, fmt.Sprintf("%s.yaml", clusterRoleName))
-	relFilePath, err := filepath.Rel(r.gitClient.GetLocalDirectory(), filePath)
-	if err != nil {
-		return fmt.Errorf("failed to generate relative file path: %w", err)
-	}
-
 	r.log.V(logger.DebugLevel).Info("Creating cluster role binding...", "path", filePath)
 
 	file, err := os.Create(filePath)
@@ -217,12 +219,6 @@ func (r *GitRepoReconciler) createClusterRoleBinding(ctx context.Context, dir, c
 	err = new(printers.YAMLPrinter).PrintObj(crb, file)
 	if err != nil {
 		return fmt.Errorf("failed to print cluster role binding as yaml: %w", err)
-	}
-
-	r.log.V(logger.DebugLevel).Info("Committing cluster role binding...", "path", filePath)
-	err = r.gitClient.AddAndCommit(ctx, relFilePath, fmt.Sprintf("Add ClusterRoleBinding for user %s", user.Email))
-	if err != nil {
-		return fmt.Errorf("failed to create commit: %w", err)
 	}
 
 	return nil
