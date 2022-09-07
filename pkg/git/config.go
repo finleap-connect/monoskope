@@ -15,6 +15,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -37,6 +38,16 @@ const (
 	AuthTypeSSHSuffixKnownHosts = ".ssh.known_hosts"
 )
 
+var (
+	ErrAuthorIsRequired = errors.New("author is required")
+	ErrURLIsRequired    = errors.New("URL is required")
+)
+
+type GitAuthor struct {
+	Name  string
+	Email string
+}
+
 type GitConfig struct {
 	// The (possibly remote) repository URL to clone from.
 	URL string `yaml:"url"`
@@ -58,11 +69,33 @@ type GitConfig struct {
 	EnvPrefix string `yaml:"envPrefix"`
 	// Timeout is an optional field to specify a timeout for Git operations like cloning. Defaults to 60s.
 	Timeout *time.Duration `yaml:"timeout"`
+	// Author is the author of commits done by the client
+	Author *GitAuthor `yaml:"author"`
 
 	authMethod   transport.AuthMethod
 	cloneOptions *git.CloneOptions
 	pullOptions  *git.PullOptions
 	pushOptions  *git.PushOptions
+}
+
+// NewGitConfig creates a new configuration
+func NewGitConfig(url string, author *GitAuthor) (*GitConfig, error) {
+	c := &GitConfig{URL: url, Author: author}
+	if err := c.Validate(); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// Validate validates the configuration
+func (c *GitConfig) Validate() error {
+	if c.URL == "" {
+		return ErrURLIsRequired
+	}
+	if c.Author == nil {
+		return ErrAuthorIsRequired
+	}
+	return nil
 }
 
 // configureBasicAuth reads the file containing the basic auth information and unmarshal's it's content into the clone options given.

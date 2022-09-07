@@ -15,6 +15,7 @@
 package k8sauthz
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -28,6 +29,10 @@ const (
 	DefaultTimeout        = 60 * time.Second
 	DefaultInterval       = 10 * time.Minute
 	DefaultUsernamePrefix = "oidc:"
+)
+
+var (
+	ErrRepositoryIsRequired = errors.New("repository is required")
 )
 
 type ClusterRoleMapping struct {
@@ -77,7 +82,22 @@ func NewConfigFromFile(data []byte) (*Config, error) {
 		return nil, err
 	}
 
+	if err := conf.validate(); err != nil {
+		return nil, err
+	}
+
 	return conf, nil
+}
+
+// validate validates the configuration
+func (c *Config) validate() error {
+	if c.Repository == nil {
+		return ErrRepositoryIsRequired
+	}
+	if err := c.Repository.Validate(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // setDefaults sets the default values on the configuration

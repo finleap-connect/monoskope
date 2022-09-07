@@ -75,16 +75,21 @@ func NewTestEnv() (*TestEnv, error) {
 		return nil, err
 	}
 
-	gitClient, err := git.NewGitClient(&git.GitConfig{
-		URL: env.repoOriginDir,
-	})
+	gitConfig, err := git.NewGitConfig(env.repoOriginDir, &git.GitAuthor{Name: "test", Email: "test@monoskope.io"})
 	if env.err(err) != nil {
 		return nil, err
 	}
+
+	gitClient, err := git.NewGitClient(gitConfig)
+	if env.err(err) != nil {
+		return nil, err
+	}
+
 	err = gitClient.Clone(context.Background())
 	if env.err(err) != nil {
 		return nil, err
 	}
+
 	env.gitClient = gitClient
 	return env, nil
 }

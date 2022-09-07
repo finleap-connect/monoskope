@@ -67,6 +67,10 @@ var _ = Describe("internal/k8sauthz", func() {
 				SubDir:   "rbactest",
 				Repository: &git.GitConfig{
 					URL: testEnv.repoOriginDir,
+					Author: &git.GitAuthor{
+						Name:  "test",
+						Email: "test@monoskope.io",
+					},
 				},
 				Mappings: []*ClusterRoleMapping{
 					{

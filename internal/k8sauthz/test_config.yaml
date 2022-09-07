@@ -6,6 +6,9 @@ repository:
   caBundle: this-is-a-ca-cert-in-pem
   authType: basic
   envPrefix: test1
+  author:
+    name: test
+    email: test@monoskope.io
 mappings:
   - scope: CLUSTER
     role: admin

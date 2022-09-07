@@ -20,7 +20,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/finleap-connect/monoskope/pkg/domain/constants/users"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -95,13 +94,7 @@ func (c *GitClient) Pull(ctx context.Context) error {
 }
 
 // AddAll stages all changes in the working directory
-func (c *GitClient) AddAll(ctx context.Context) error {
-	var cancel context.CancelFunc
-	if c.config.Timeout != nil {
-		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
-		defer cancel()
-	}
-
+func (c *GitClient) AddAll(_ context.Context) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -115,13 +108,7 @@ func (c *GitClient) AddAll(ctx context.Context) error {
 }
 
 // Add stages the given file
-func (c *GitClient) Add(ctx context.Context, filePath string) error {
-	var cancel context.CancelFunc
-	if c.config.Timeout != nil {
-		ctx, cancel = context.WithTimeout(ctx, *c.config.Timeout)
-		defer cancel()
-	}
-
+func (c *GitClient) Add(_ context.Context, filePath string) error {
 	w, err := c.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get git worktree: %w", err)
@@ -143,8 +130,8 @@ func (c *GitClient) Commit(_ context.Context, msg string) error {
 
 	commit, err := w.Commit(msg, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  users.GitRepoReconcilerUser.User.Name,
-			Email: users.GitRepoReconcilerUser.User.Email,
+			Name:  c.config.Author.Name,
+			Email: c.config.Author.Email,
 			When:  time.Now().UTC(),
 		},
 	})

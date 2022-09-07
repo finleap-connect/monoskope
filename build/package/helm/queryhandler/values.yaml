@@ -123,6 +123,9 @@ k8sAuthZ:
     #   auth:
     #     type: basic
     #     envPrefix: test1
+    #   author:
+    #     name: test
+    #     email: test@monoskope.io
     # -- Configure ClusterRole mapping
     # mappings:
     #   - scope: CLUSTER
