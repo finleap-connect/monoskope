@@ -109,7 +109,7 @@ You're good to go!
 
 ## Certificate rotation
 
-the certificate used by Monoskope to sign and verify k8s tokens has a long expire date by design. 
+The certificate used by Monoskope to sign and verify k8s tokens has a long expire date by design. 
 
 Rotating it can be done easily using the [cert-manager CLI](https://cert-manager.io/docs/reference/cmctl/#renew)
 
@@ -117,4 +117,4 @@ Rotating it can be done easily using the [cert-manager CLI](https://cert-manager
 cmctl renew m8-monoskope-tls-cert
 ```
 
-for more information see [here](https://cert-manager.io/docs/usage/certificate#actions-triggering-private-key-rotation)
+For more information see [here](https://cert-manager.io/docs/usage/certificate#actions-triggering-private-key-rotation)
