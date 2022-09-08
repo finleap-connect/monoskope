@@ -106,3 +106,15 @@ Server Version: version.Info{Major:"1", Minor:"20", GitVersion:"v1.20.7", GitCom
 ```
 
 You're good to go!
+
+## Certificate rotation
+
+The certificate used by Monoskope to sign and verify k8s tokens has a long expire date by design. 
+
+Rotating it can be done easily using the [cert-manager CLI](https://cert-manager.io/docs/reference/cmctl/#renew)
+
+```shell
+cmctl renew m8-monoskope-tls-cert
+```
+
+For more information see [here](https://cert-manager.io/docs/usage/certificate#actions-triggering-private-key-rotation)
