@@ -107,7 +107,7 @@ func (r *GitRepoReconciler) ReconcileUser(ctx context.Context, user *projections
 	}
 
 	r.log.Info("Pushing changes to git repo...")
-	if err := r.gitClient.Push(ctx); err != nil {
+	if err := r.gitClient.Push(ctx); err != nil && err != gogit.NoErrAlreadyUpToDate {
 		r.log.Error(err, "Reconciling finished with errors.")
 		return err
 	}

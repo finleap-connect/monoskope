@@ -109,6 +109,15 @@ func (c *GitClient) AddAll(_ context.Context) error {
 		return fmt.Errorf("failed to get git status: %w", err)
 	}
 
+	for file, s := range status {
+		if s.Worktree == git.Deleted {
+			_, err = w.Add(file)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	c.log.V(logger.DebugLevel).Info("Status after add all.", "status", status.String())
 
 	return nil
