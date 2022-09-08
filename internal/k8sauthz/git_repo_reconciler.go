@@ -17,6 +17,7 @@ package k8sauthz
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,25 +115,24 @@ func (r *GitRepoReconciler) ReconcileUser(ctx context.Context, user *projections
 }
 
 // removeAll cleans up a directory keeping all hidden files and directories
-func removeAll(path string) error {
-	matches, err := filepath.Glob(filepath.Join(path, "*/*.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to clean local dir: %w", err)
-	}
-	for _, match := range matches {
-		if strings.HasPrefix(filepath.Base(match), ".") {
-			continue
+func (r *GitRepoReconciler) removeAll() error {
+	return filepath.WalkDir(r.dir, func(path string, d fs.DirEntry, err error) error {
+		if strings.HasPrefix(filepath.Base(path), ".") {
+			return nil
 		}
-		if err := os.RemoveAll(match); err != nil && err != os.ErrNotExist {
-			return fmt.Errorf("failed to clean local dir: %w", err)
+		if filepath.Ext(path) == ".yaml" {
+			r.log.V(logger.DebugLevel).Info("Deleting...", "path", path)
+			if err := os.Remove(path); err != nil {
+				return fmt.Errorf("failed to delete file: %w", err)
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (r *GitRepoReconciler) reconcileUsers(ctx context.Context) error {
 	// Clean
-	if err := removeAll(r.dir); err != nil {
+	if err := r.removeAll(); err != nil {
 		return err
 	}
 
