@@ -104,6 +104,13 @@ func (c *GitClient) AddAll(_ context.Context) error {
 		return fmt.Errorf("failed to add changes: %w", err)
 	}
 
+	status, err := w.Status()
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+
+	c.log.V(logger.DebugLevel).Info("Status after add all.", "status", status.String())
+
 	return nil
 }
 
@@ -118,6 +125,13 @@ func (c *GitClient) Add(_ context.Context, filePath string) error {
 		return fmt.Errorf("failed to add file `%s`: %w", filePath, err)
 	}
 
+	status, err := w.Status()
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+
+	c.log.V(logger.DebugLevel).Info("Status after add.", "filePath", filePath, "status", status.String())
+
 	return nil
 }
 
@@ -128,6 +142,17 @@ func (c *GitClient) Commit(_ context.Context, msg string) error {
 		return fmt.Errorf("failed to get git worktree: %w", err)
 	}
 
+	status, err := w.Status()
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+
+	// Don't create empty commits
+	if status.IsClean() {
+		return nil
+	}
+
+	c.log.V(logger.DebugLevel).Info("Creating commit.", "message", msg, "status", status.String())
 	commit, err := w.Commit(msg, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  c.config.Author.Name,
