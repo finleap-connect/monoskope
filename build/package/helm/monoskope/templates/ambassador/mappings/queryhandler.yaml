@@ -1,5 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- if .Values.queryhandler.enabled }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
@@ -8,11 +9,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.User/
   rewrite: /domain.User/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -22,11 +23,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.Tenant/
   rewrite: /domain.Tenant/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -36,11 +37,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.Cluster/
   rewrite: /domain.Cluster/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -50,11 +51,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.ClusterAccess/
   rewrite: /domain.ClusterAccess/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -64,11 +65,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.Certificate/
   rewrite: /domain.Certificate/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -78,10 +79,10 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.AuditLog/
   rewrite: /domain.AuditLog/
-  service: {{.Release.Name}}-queryhandler:{{.Values.queryhandler.ports.api}}
+  service: {{.Release.Name}}-queryhandler.{{.Release.Namespace}}:{{.Values.queryhandler.ports.api}}
 {{- end }}
 {{- end }}

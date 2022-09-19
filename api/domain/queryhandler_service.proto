@@ -72,10 +72,16 @@ service Cluster {
 
 // ClusterAccess is a service to query access information about clusters.
 service ClusterAccess {
-  // GetClusterAccessByUserId returns clusters which the given user has access
+  // GetClusterAccess returns clusters which the given user has access
   // to by it's UUID
   rpc GetClusterAccess(google.protobuf.Empty)
-      returns (stream projections.ClusterAccess);
+      returns (stream projections.ClusterAccess) {
+    option deprecated = true;
+  }
+  // GetClusterAccessV2 returns clusters which the given user has access
+  // to by it's UUID
+  rpc GetClusterAccessV2(google.protobuf.Empty)
+      returns (stream projections.ClusterAccessV2);
   // GetTenantClusterMappingsByTenantId returns bindings which belong to the
   // given tenant by it's UUID
   rpc GetTenantClusterMappingsByTenantId(google.protobuf.StringValue)
@@ -106,6 +112,15 @@ service AuditLog {
   // tenants/clusters they belong to, and their roles
   rpc GetUsersOverview(GetUsersOverviewRequest)
       returns (stream audit.UserOverview);
+}
+
+// K8sAuthZ is the service
+service K8sAuthZ {
+  // GetAll returns all K8s resources for all clusters
+  rpc GetAll(google.protobuf.Empty) returns (stream google.protobuf.BytesValue);
+  // GetByClusterId returns all resources related to the given cluster
+  rpc GetByClusterId(google.protobuf.StringValue)
+      returns (stream google.protobuf.BytesValue);
 }
 
 // GetAllRequest is the generic request to query all instances of a certain

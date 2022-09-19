@@ -68,6 +68,7 @@ func (m *ClusterCreated) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterCreatedMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -175,6 +176,7 @@ func (m *ClusterCreatedV2) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterCreatedV2MultiError(errors)
 	}
+
 	return nil
 }
 
@@ -280,6 +282,7 @@ func (m *ClusterUpdated) validate(all bool) error {
 	if len(errors) > 0 {
 		return ClusterUpdatedMultiError(errors)
 	}
+
 	return nil
 }
 

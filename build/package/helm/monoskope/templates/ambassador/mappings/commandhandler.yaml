@@ -1,5 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- if .Values.commandhandler.enabled }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
@@ -8,11 +9,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /eventsourcing.CommandHandler/
   rewrite: /eventsourcing.CommandHandler/
-  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+  service: {{.Release.Name}}-commandhandler.{{.Release.Namespace}}:{{.Values.commandhandler.ports.api}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -22,11 +23,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /domain.CommandHandlerExtensions/
   rewrite: /domain.CommandHandlerExtensions/
-  service: {{.Release.Name}}-commandhandler:{{.Values.commandhandler.ports.api}}
+  service: {{.Release.Name}}-commandhandler.{{.Release.Namespace}}:{{.Values.commandhandler.ports.api}}
 ---
 {{- end }}
 {{- end }}

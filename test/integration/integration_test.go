@@ -54,7 +54,23 @@ var _ = Describe("internal/integration_test", func() {
 	expectedClusterDisplayName := "the one cluster"
 	expectedClusterName := "one-cluster"
 	expectedClusterApiServerAddress := "one.example.com"
-	expectedClusterCACertBundle := []byte("This should be a certificate")
+	expectedClusterCACertBundle := []byte(`-----BEGIN CERTIFICATE-----
+	MIICnTCCAkSgAwIBAgIQMo7x823NtJ/Xyy1Wl+8+yzAKBggqhkjOPQQDAjAnMSUw
+	IwYDVQQDExxyb290Lm1vbm9za29wZS5jbHVzdGVyLmxvY2FsMB4XDTIxMDYwMjAy
+	MTAxNVoXDTIxMDYwNDAyMTAxNVowMDESMBAGA1UEChMJTW9ub3Nrb3BlMRowGAYD
+	VQQDExFtOC1hdXRoZW50aWNhdGlvbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+	AQoCggEBANCKZWW0el3OzPw7914TC1Ld2At/xIh/3zoiawQcbS8mrjnVMO2oSomY
+	mks6sEaWp4p80PwJkzSplpgoJmEOYqps+YXo+1NLp66bFPkAbMEZDsZ4QmrQQ7X3
+	iv5IaDFW4vSGJFSkTQnUmedlhrWguasOD3vL0Pek89L8kQ09+YlDk/fpBZUXFADU
+	+ef4GjTkWJzkg32dSOudJDYD4wUPczTFlRO097MBBlaMb4LKYfDfjuUKRCOAL3LD
+	7kKAatHKeoADuBptUv/lQLExGNzlhRteaLocTHHab2hs+NCFYABv2Px5Tcnbw8g+
+	/r/97gwKkpFeF5p4WhdVgbDYd2MGUlMCAwEAAaN+MHwwHQYDVR0lBBYwFAYIKwYB
+	BQUHAwIGCCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUI+RyVqj0
+	J9qH8l3pbY9KUkoTgHQwLAYDVR0RBCUwI4IJbG9jYWxob3N0hwR/AAABhxAAAAAA
+	AAAAAAAAAAAAAAAAMAoGCCqGSM49BAMCA0cAMEQCIEPbvMo2YvqlYQtdkQwlhJci
+	mTlsDv6VmO4WfCjrQdwLAiA+N0eeiL/yLPC5ReaPYQ7PeoXbc9+EPR2FBDrkiBbA
+	8w==
+	-----END CERTIFICATE-----`)
 
 	getAdminAuthToken := func() string {
 		signer := testEnv.GatewayTestEnv.JwtTestEnv.CreateSigner()
@@ -444,7 +460,7 @@ var _ = Describe("internal/integration_test", func() {
 			// create the cluster
 			command, err = cmd.AddCommandData(
 				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
-				&cmdData.CreateCluster{DisplayName: "Cluster Z", Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: []byte("cluster z certificate")},
+				&cmdData.CreateCluster{DisplayName: "Cluster Z", Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 			)
 			Expect(err).ToNot(HaveOccurred())
 

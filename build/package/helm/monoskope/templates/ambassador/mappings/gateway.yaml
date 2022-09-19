@@ -1,5 +1,6 @@
 {{- if .Values.ambassador.enabled }}
 {{- if .Values.gateway.enabled }}
+{{- $tlsDomain := (include "monoskope.tlsDomain" .) }}
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
@@ -11,11 +12,11 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /gateway.Gateway/
   rewrite: /gateway.Gateway/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -28,11 +29,11 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /gateway.ClusterAuth/
   rewrite: /gateway.ClusterAuth/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -42,11 +43,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /common.ServiceInformationService/
   rewrite: /common.ServiceInformationService/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.grpcApiPort}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -56,10 +57,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   method: GET
   prefix: /.well-known/
   rewrite: /.well-known/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.httpApiPort}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -69,10 +71,11 @@ metadata:
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
 spec:
+  host: {{ $tlsDomain }}
   method: GET
   prefix: /keys
   rewrite: /keys
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.httpApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.httpApiPort}}
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -85,10 +88,10 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  host: {{ $tlsDomain }}
   grpc: true
-  hostname: "*"
   prefix: /gateway.APIToken/
   rewrite: /gateway.APIToken/
-  service: {{.Release.Name}}-gateway:{{.Values.gateway.service.grpcApiPort}}
+  service: {{.Release.Name}}-gateway.{{.Release.Namespace}}:{{.Values.gateway.service.grpcApiPort}}
 {{- end }}
 {{- end }}

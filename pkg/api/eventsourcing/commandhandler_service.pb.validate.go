@@ -77,6 +77,7 @@ func (m *CommandReply) validate(all bool) error {
 	if len(errors) > 0 {
 		return CommandReplyMultiError(errors)
 	}
+
 	return nil
 }
 

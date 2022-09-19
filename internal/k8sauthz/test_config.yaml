@@ -1,0 +1,20 @@
+subdir: rbac/test
+interval: 5m
+allClusters: true
+repository:
+  url: https://monoskope.io/test1.git
+  caBundle: this-is-a-ca-cert-in-pem
+  authType: basic
+  envPrefix: test1
+  author:
+    name: test
+    email: test@monoskope.io
+mappings:
+  - scope: CLUSTER
+    role: admin
+    clusterRole: cluster-admin
+  - scope: TENANT
+    role: oncall
+    clusterRole: app-oncallee
+usernamePrefix: "m8-"
+insecureSkipTLS: false

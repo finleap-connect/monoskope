@@ -20,10 +20,10 @@ import (
 	"strings"
 )
 
-// GetNamespaceName returns a sanitized version of the input string
-// which is allowed to be used as a kubernetes namespace.
-func GetNamespaceName(any string) (string, error) {
-	nsName := strings.ToLower(any)
+// GetK8sName returns a sanitized version of the input string
+// which is allowed to be used as a kubernetes namespace or username.
+func GetK8sName(any string) (string, error) {
+	sanitizedName := strings.ToLower(any)
 	replacer := strings.NewReplacer(" ", "",
 		"ü", "ue",
 		"ö", "oe",
@@ -32,16 +32,16 @@ func GetNamespaceName(any string) (string, error) {
 		"_", "-",
 		".", "-",
 		"/", "-")
-	nsName = replacer.Replace(nsName)
+	sanitizedName = replacer.Replace(sanitizedName)
 
-	// regex for checking k8s namespace name
+	// regex for checking k8s compatible name
 	regex, err := regexp.Compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
 	if err != nil {
 		return "", err
 	}
 
-	if !regex.MatchString(nsName) {
-		return "", errors.New("namespace name does not adhere to the naming rules")
+	if !regex.MatchString(sanitizedName) {
+		return "", errors.New("name does not adhere to the naming rules")
 	}
-	return nsName, nil
+	return sanitizedName, nil
 }

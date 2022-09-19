@@ -64,6 +64,7 @@ func (m *TenantCreated) validate(all bool) error {
 	if len(errors) > 0 {
 		return TenantCreatedMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -192,6 +193,7 @@ func (m *TenantUpdated) validate(all bool) error {
 	if len(errors) > 0 {
 		return TenantUpdatedMultiError(errors)
 	}
+
 	return nil
 }
 

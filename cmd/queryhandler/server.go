@@ -30,6 +30,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/gateway"
+	"github.com/finleap-connect/monoskope/internal/k8sauthz"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
 	"github.com/spf13/cobra"
@@ -43,6 +44,7 @@ var (
 	eventStoreAddr string
 	msgbusPrefix   string
 	gatewayAddr    string
+	k8sAuthZConf   string
 )
 
 var serverCmd = &cobra.Command{
@@ -96,6 +98,21 @@ var serverCmd = &cobra.Command{
 				authMiddleware.StreamServerInterceptor(),
 			},
 		)
+
+		// Configure k8s authz reconciliation
+		if k8sAuthZConf != "" {
+			conf, err := k8sauthz.NewConfigFromFilePath(k8sAuthZConf)
+			if err != nil {
+				return err
+			}
+			k8sAuthZManager := k8sauthz.NewManager(qhDomain.UserRepository, qhDomain.ClusterAccessRepo)
+
+			if err := k8sAuthZManager.Run(ctx, conf); err != nil {
+				return err
+			}
+			defer k8sAuthZManager.Close()
+		}
+
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {
 			qhApi.RegisterTenantServer(s, queryhandler.NewTenantServer(qhDomain.TenantRepository, qhDomain.TenantUserRepository))
 			qhApi.RegisterUserServer(s, queryhandler.NewUserServer(qhDomain.UserRepository))
@@ -121,4 +138,5 @@ func init() {
 	flags.StringVar(&eventStoreAddr, "event-store-api-addr", ":8081", "Address the eventstore gRPC service is listening on")
 	flags.StringVar(&msgbusPrefix, "msgbus-routing-key-prefix", "m8", "Prefix for all messages emitted to the msg bus")
 	flags.StringVar(&gatewayAddr, "gateway-api-addr", ":8081", "Address the gateway gRPC service is listening on")
+	flags.StringVar(&k8sAuthZConf, "k8s-authz-conf-path", "", "Path to load K8sAuthZ config from. If not specified the feature is disabled.")
 }

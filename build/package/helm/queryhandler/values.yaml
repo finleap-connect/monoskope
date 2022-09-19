@@ -19,10 +19,12 @@ fullnameOverride: ""
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -37,7 +39,8 @@ service:
   metrics:
     port: 9102
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -74,7 +77,8 @@ tolerations: []
 
 affinity: {}
 
-labels: {}
+labels:
+  {}
   # app.kubernetes.io/part-of: my-app
 
 ports:
@@ -94,7 +98,7 @@ gateway:
   prefix: "" # Defaults to the release name
   host: "gateway"
   port: 8080
-  
+
 messageBus:
   # -- Prefix for routing messages via message bus
   routingKeyPrefix: m8
@@ -104,3 +108,34 @@ messageBus:
   configSecret: ""
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
+
+# -- K8sAuthZ Configuration
+k8sAuthZ:
+  # -- Enable external git repo reconciliation
+  enabled: false
+  # -- Configure secret provided as env vars
+  # existingSecret: m8-k8sauthz
+  config:
+    # -- Configure repos
+    # repository:
+    #   url: https://monoskope.io/test1.git
+    #   caBundle: this-is-a-ca-cert-in-pem
+    #   auth:
+    #     type: basic
+    #     envPrefix: test1
+    #   author:
+    #     name: test
+    #     email: test@monoskope.io
+    # -- Configure ClusterRole mapping
+    # mappings:
+    #   - scope: CLUSTER
+    #     role: admin
+    #     clusterRole: cluster-admin
+    #   - scope: TENANT
+    #     role: oncall
+    #     clusterRole: app-oncallee
+    # -- Prefix used for users in clusters
+    # usernamePrefix: "m8-"
+    # subdir: test
+    # interval: 5m
+    # allClusters: true

@@ -23,7 +23,6 @@ import (
 	domain_projections "github.com/finleap-connect/monoskope/pkg/domain/projections"
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/google/uuid"
-	"k8s.io/utils/strings/slices"
 )
 
 type clusterAccessRepository struct {
@@ -37,6 +36,8 @@ type clusterAccessRepository struct {
 type ClusterAccessRepository interface {
 	// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
 	GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) ([]*projections.ClusterAccess, error)
+	// GetClustersAccessibleByUserIdV2 returns all clusters accessible by a user identified by user id
+	GetClustersAccessibleByUserIdV2(ctx context.Context, id uuid.UUID) ([]*projections.ClusterAccessV2, error)
 }
 
 // NewClusterAccessRepository creates a repository for reading cluster access projections.
@@ -49,26 +50,28 @@ func NewClusterAccessRepository(tenantClusterBindingRepo TenantClusterBindingRep
 	}
 }
 
-// getClustersByBindings returns all clusters part of the bindings.
-func (r *clusterAccessRepository) getClustersByBindings(ctx context.Context, bindings []*domain_projections.TenantClusterBinding, roles []string) (clusters []*projections.ClusterAccess, err error) {
-	for _, clusterBinding := range bindings {
-		var cluster *domain_projections.Cluster
-		cluster, err = r.clusterRepo.ById(ctx, uuid.MustParse(clusterBinding.ClusterId))
-		if err != nil {
-			return
-		}
+// GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
+func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) (clusters []*projections.ClusterAccess, err error) {
+	clustersV2, clustersV2err := r.GetClustersAccessibleByUserIdV2(ctx, id)
+	if clustersV2err != nil {
+		return nil, clustersV2err
+	}
 
-		// Skip deleted clusters
-		if cluster.Metadata.Deleted != nil {
-			continue
+	for _, clusterV2 := range clustersV2 {
+		var roles []string
+		for _, clusterRole := range clusterV2.ClusterRoles {
+			roles = append(roles, clusterRole.Role)
 		}
-		clusters = append(clusters, &projections.ClusterAccess{Cluster: cluster.Cluster, Roles: roles})
+		clusters = append(clusters, &projections.ClusterAccess{
+			Cluster: clusterV2.Cluster,
+			Roles:   roles,
+		})
 	}
 	return
 }
 
 // GetClustersAccessibleByUserId returns all clusters accessible by a user identified by user id
-func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Context, id uuid.UUID) (clusters []*projections.ClusterAccess, err error) {
+func (r *clusterAccessRepository) GetClustersAccessibleByUserIdV2(ctx context.Context, id uuid.UUID) (clusters []*projections.ClusterAccessV2, err error) {
 	// get all rolebindings of the user
 	var roleBindings []*domain_projections.UserRoleBinding
 	roleBindings, err = r.userRoleBindingRepo.ByUserId(ctx, id)
@@ -90,19 +93,28 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 		}
 		for _, cluster := range c {
 			clusters = append(clusters,
-				&projections.ClusterAccess{
+				&projections.ClusterAccessV2{
 					Cluster: cluster.Cluster,
-					Roles: []string{
-						string(k8s.DefaultRole),
-						string(k8s.OnCallRole),
-						string(k8s.AdminRole),
-					}})
+					ClusterRoles: []*projections.ClusterRole{
+						{
+							Scope: projections.ClusterRole_CLUSTER,
+							Role:  string(k8s.DefaultRole),
+						},
+						{
+							Scope: projections.ClusterRole_CLUSTER,
+							Role:  string(k8s.AdminRole),
+						},
+						{
+							Scope: projections.ClusterRole_CLUSTER,
+							Role:  string(k8s.OnCallRole),
+						},
+					},
+				})
 		}
 		return
 	}
 
 	tenantMap := make(map[string]bool)
-	clusterMap := make(map[string]*projections.ClusterAccess)
 
 	// regular users have access based on tenant membership
 	for _, binding := range roleBindings {
@@ -132,45 +144,50 @@ func (r *clusterAccessRepository) GetClustersAccessibleByUserId(ctx context.Cont
 			}
 
 			// Set roles within cluster
-			var k8sRoles []string = []string{
-				string(k8s.DefaultRole),
+			var k8sRoles = []*projections.ClusterRole{
+				{
+					Scope: projections.ClusterRole_CLUSTER,
+					Role:  string(k8s.DefaultRole),
+				},
 			}
+
 			for _, tenantBinding := range tenantBindings {
+				if tenantBinding.Role == string(roles.Admin) {
+					k8sRoles = append(k8sRoles, &projections.ClusterRole{
+						Scope: projections.ClusterRole_TENANT,
+						Role:  string(k8s.AdminRole),
+					})
+				}
 				if tenantBinding.Role == string(roles.OnCall) {
-					k8sRoles = append(k8sRoles, string(k8s.OnCallRole))
+					k8sRoles = append(k8sRoles, &projections.ClusterRole{
+						Scope: projections.ClusterRole_TENANT,
+						Role:  string(k8s.OnCallRole),
+					})
 				}
 			}
 
 			// get accessible cluster by tenant and append
-			var bindings []*domain_projections.TenantClusterBinding
-			bindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, tenantId)
+			var tenantClusterBindings []*domain_projections.TenantClusterBinding
+			tenantClusterBindings, err = r.tenantClusterBindingRepo.GetByTenantId(ctx, tenantId)
 			if err != nil {
 				return
 			}
 
-			var clustersForTenant []*projections.ClusterAccess
-			clustersForTenant, err = r.getClustersByBindings(ctx, bindings, k8sRoles)
-			if err != nil {
-				return
-			}
-
-			// Add/modify clusters
-			for _, cluster := range clustersForTenant {
-				if c, ok := clusterMap[cluster.Cluster.Id]; ok {
-					for _, role := range c.Roles {
-						if !slices.Contains(cluster.Roles, role) {
-							cluster.Roles = append(cluster.Roles, role)
-						}
-					}
-				} else {
-					clusterMap[cluster.Cluster.Id] = cluster
+			for _, tcb := range tenantClusterBindings {
+				var cluster *domain_projections.Cluster
+				cluster, err = r.clusterRepo.ById(ctx, uuid.MustParse(tcb.ClusterId))
+				if err != nil {
+					return
 				}
+
+				// Skip deleted clusters
+				if cluster.Metadata.Deleted != nil {
+					continue
+				}
+
+				clusters = append(clusters, &projections.ClusterAccessV2{Cluster: cluster.Cluster, ClusterRoles: k8sRoles})
 			}
 		}
-	}
-
-	for _, cluster := range clusterMap {
-		clusters = append(clusters, cluster)
 	}
 
 	return

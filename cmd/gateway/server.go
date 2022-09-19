@@ -238,5 +238,5 @@ func init() {
 	util.PanicOnError(serverCmd.MarkFlagRequired("gateway-url"))
 
 	flags.StringVar(&policiesPath, "policies-path", "/etc/gateway/policies/policies.rego", "Path to rego policies to authorize requests against")
-	flags.StringVar(&jwtPath, "jwt-signing-verifying-path", "/etc/gateway/jwt", "Path to tls.key and tlss.cert for signing and verifying JWTs")
+	flags.StringVar(&jwtPath, "jwt-signing-verifying-path", "/etc/gateway/jwt", "Path to tls.key and tls.cert for signing and verifying JWTs")
 }

@@ -18,6 +18,9 @@ spec:
     name: {{ $tlsSecretName }}
   tlsContext:
     name: {{ include "monoskope.fullname" . }}-tls
+  selector:
+    matchLabels:
+      {{- include "monoskope.selectorLabels" . | nindent 6}}
 ---
 apiVersion: getambassador.io/v3alpha1
 kind: TLSContext

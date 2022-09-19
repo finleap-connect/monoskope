@@ -23,42 +23,55 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+type testObserver struct {
+	stack []*testProjection
+}
+
+func (t *testObserver) expect(p *testProjection) {
+	t.stack = append(t.stack, p)
+}
+
+func (t *testObserver) Notify(_ context.Context, p *testProjection) {
+	if len(t.stack) < 1 {
+		panic("stack empty")
+	}
+
+	n := len(t.stack) - 1
+	expected := t.stack[n]
+	t.stack = t.stack[:n] // Pop
+
+	if expected != p {
+		panic("unexpected")
+	}
+}
+
 var _ = Describe("repositories/in_memory", func() {
-	testProjection := newTestProjection(uuid.New())
-	testReadWrite := func(repo es.Repository[es.Projection]) {
-		err := repo.Upsert(context.Background(), testProjection)
+	tp := newTestProjection(uuid.New())
+	testReadWrite := func(repo es.Repository[*testProjection]) {
+		to := new(testObserver)
+		repo.RegisterObserver(to)
+
+		to.expect(tp)
+		err := repo.Upsert(context.Background(), tp)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = repo.Upsert(context.Background(), testProjection)
+		repo.DeregisterObserver(to)
+		err = repo.Upsert(context.Background(), tp)
 		Expect(err).NotTo(HaveOccurred())
 
-		projection, err := repo.ById(context.Background(), testProjection.ID())
+		projection, err := repo.ById(context.Background(), tp.ID())
 		Expect(err).NotTo(HaveOccurred())
-		Expect(projection).To(Equal(testProjection))
+		Expect(projection).To(Equal(tp))
 
 		projections, err := repo.All(context.Background())
 		Expect(err).NotTo(HaveOccurred())
 		Expect(projections).ToNot(BeNil())
 		Expect(len(projections)).To(BeNumerically("==", 1))
-		Expect(projections[0]).To(Equal(testProjection))
-	}
-	testRemove := func(repo es.Repository[es.Projection]) {
-		err := repo.Upsert(context.Background(), testProjection)
-		Expect(err).NotTo(HaveOccurred())
-
-		err = repo.Remove(context.Background(), testProjection.ID())
-		Expect(err).NotTo(HaveOccurred())
-
-		projections, err := repo.All(context.Background())
-		Expect(err).NotTo(HaveOccurred())
-		Expect(projections).ToNot(BeNil())
-		Expect(len(projections)).To(BeNumerically("==", 0))
+		Expect(projections[0]).To(Equal(tp))
 	}
 
 	It("can read/write projections", func() {
-		testReadWrite(NewInMemoryRepository[es.Projection]())
+		testReadWrite(NewInMemoryRepository[*testProjection]())
 	})
-	It("can remove projections", func() {
-		testRemove(NewInMemoryRepository[es.Projection]())
-	})
+
 })

@@ -114,6 +114,7 @@ func (m *PermissionModel) validate(all bool) error {
 	if len(errors) > 0 {
 		return PermissionModelMultiError(errors)
 	}
+
 	return nil
 }
 
