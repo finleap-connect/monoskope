@@ -120,7 +120,8 @@ var _ = Describe("internal/integration_test", func() {
 
 			var reply *esApi.CommandReply
 			Eventually(func(g Gomega) {
-				reply, err := commandHandlerClient().Execute(ctx, command)
+				var err error
+				reply, err = commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 			}).Should(Succeed())
