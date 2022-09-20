@@ -47,7 +47,7 @@ message CreateUserRoleBindingCommandData {
   // Unique identifier of the affected resource within scope (UUID 128-bit
   // number)
   google.protobuf.StringValue resource = 4
-      [ (validate.rules).string.uuid = true ];
+      [ (validate.rules).string = {ignore_empty: true, uuid: true} ];
 }
 
 // Command data to update a user

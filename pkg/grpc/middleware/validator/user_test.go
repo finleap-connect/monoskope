@@ -72,6 +72,12 @@ var _ = Describe("Test validation rules for user messages", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		It("should allow empty resource id for cases like system admin", func() {
+			cd.Resource = wrapperspb.String("")
+			err := cd.Validate()
+			Expect(err).NotTo(HaveOccurred())
+		})
+
 		It("should check for a valid UserId", func() {
 			cd.UserId = invalidUUID
 			ValidateErrorExpected()
