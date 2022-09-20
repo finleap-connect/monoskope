@@ -98,13 +98,13 @@ var _ = Describe("test/audit/audit_log_test", func() {
 
 	initEvents := func(commandHandlerClient func() esApi.CommandHandlerClient) time.Time {
 		// CreateUser
-		command, err := cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+		command := cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateUser,
 			&cmdData.CreateUserCommandData{Name: "XYZ", Email: userEmail},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		var reply *esApi.CommandReply
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -115,12 +115,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, userEmail))
 
 		// CreateUserRoleBinding on system level
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+		command = cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateUserRoleBinding,
 			&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.Admin), Scope: string(scopes.System), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: uuid.New().String()}},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -130,12 +130,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// UpdateUser
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(userId, commandTypes.UpdateUser),
+		command = cmd.NewCommandWithData(
+			userId, commandTypes.UpdateUser,
 			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "XYZ New"}},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -144,12 +144,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		// CreateTenant
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+		command = cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateTenant,
 			&cmdData.CreateTenantCommandData{Name: "Tenant Y", Prefix: "ty"},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -158,12 +158,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Y", "ty"))
 
 		// CreateUserRoleBinding on tenant level
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+		command = cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateUserRoleBinding,
 			&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.User), Scope: string(scopes.Tenant), UserId: userId.String(), Resource: &wrapperspb.StringValue{Value: tenantId.String()}},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -175,12 +175,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedUserOverviewTenantMsgs = append(expectedUserOverviewTenantMsgs, fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint("Tenant Z", roles.User))
 
 		// UpdateTenant
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+		command = cmd.NewCommandWithData(
+			tenantId, commandTypes.UpdateTenant,
 			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Z"}},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -191,12 +191,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedNumEventsDoneByAdminMidTime = expectedNumEventsDoneByAdmin
 
 		// CreateCluster
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+		command = cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateCluster,
 			&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -205,12 +205,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "cluster-y"))
 
 		// UpdateCluster
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(clusterId, commandTypes.UpdateCluster),
+		command = cmd.NewCommandWithData(
+			clusterId, commandTypes.UpdateCluster,
 			&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: expectedClusterCACertBundle},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -218,12 +218,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		// CreateTenantClusterBinding
-		command, err = cmd.AddCommandData(
-			cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenantClusterBinding),
+		command = cmd.NewCommandWithData(
+			uuid.Nil, commandTypes.CreateTenantClusterBinding,
 			&cmdData.CreateTenantClusterBindingCommandData{TenantId: tenantId.String(), ClusterId: clusterId.String()},
 		)
-		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
+			var err error
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			g.Expect(err).ToNot(HaveOccurred())
 		}).Should(Succeed())
@@ -232,8 +232,8 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z", "Cluster Z"))
 
 		// DeleteUser
-		_, err = commandHandlerClient().Execute(ctx,
-			cmd.CreateCommand(userId, commandTypes.DeleteUser))
+		var err error
+		reply, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(userId, commandTypes.DeleteUser))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedNumEventsDoneOnUser++
@@ -242,28 +242,26 @@ var _ = Describe("test/audit/audit_log_test", func() {
 
 		// DeleteUserRoleBinding
 		_, err = commandHandlerClient().Execute(ctx,
-			cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+			cmd.NewCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// DeleteTenant
 		_, err = commandHandlerClient().Execute(ctx,
-			cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+			cmd.NewCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z"))
 
 		// DeleteTenantClusterBinding
-		reply, err = commandHandlerClient().Execute(ctx,
-			cmd.CreateCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
+		_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z", "Tenant Z"))
 
 		// DeleteCluster
-		reply, err = commandHandlerClient().Execute(ctx,
-			cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
+		_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(clusterId, commandTypes.DeleteCluster))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z"))

@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
-	mock_reactor "github.com/finleap-connect/monoskope/internal/test/reactor"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	cmdData "github.com/finleap-connect/monoskope/pkg/api/domain/commanddata"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/projections"
@@ -110,24 +109,18 @@ var _ = Describe("internal/integration_test", func() {
 		return client
 	}
 
-	eventStoreClient := func() esApi.EventStoreClient {
-		_, client, err := grpcUtil.NewClientWithInsecure(ctx, testEnv.EventStoreTestEnv.GetApiAddr(), esApi.NewEventStoreClient)
-		Expect(err).ToNot(HaveOccurred())
-		return client
-	}
-
 	Context("user management", func() {
 		It("can manage a user", func() {
 			By("creating the user")
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			command := cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUser,
 				&cmdData.CreateUserCommandData{Name: expectedUserName, Email: expectedUserEmail},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			var reply *esApi.CommandReply
 			Eventually(func(g Gomega) {
-				reply, err = commandHandlerClient().Execute(ctx, command)
+				reply, err := commandHandlerClient().Execute(ctx, command)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(uuid.Nil).ToNot(Equal(reply.AggregateId))
 			}).Should(Succeed())
@@ -137,7 +130,7 @@ var _ = Describe("internal/integration_test", func() {
 
 			var user *projections.User
 			Eventually(func(g Gomega) {
-				user, err = userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
+				user, err := userServiceClient().GetByEmail(ctx, wrapperspb.String(expectedUserEmail))
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(user).ToNot(BeNil())
 				g.Expect(user.GetEmail()).To(Equal(expectedUserEmail))
@@ -145,20 +138,21 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("ensuring the same user can't be created again")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			command = cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUser,
 				&cmdData.CreateUserCommandData{Name: expectedUserName,
 					Email: strings.ToUpper(expectedUserEmail)}, // regardless of the case
 			)
-			_, err = commandHandlerClient().Execute(ctx, command)
+			_, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).To(HaveOccurred())
 
 			By("giving the user system admin role")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+			command = cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUserRoleBinding,
 				&cmdData.CreateUserRoleBindingCommandData{Role: string(roles.Admin), Scope: string(scopes.System), UserId: userId.String()},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -181,7 +175,7 @@ var _ = Describe("internal/integration_test", func() {
 			Expect(err).To(HaveOccurred())
 
 			By("removing/deleting the users system admin role")
-			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
+			_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(userRoleBindingId, commandTypes.DeleteUserRoleBinding))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -209,7 +203,7 @@ var _ = Describe("internal/integration_test", func() {
 
 			By("deleting the user")
 			_, err = commandHandlerClient().Execute(ctx,
-				cmd.CreateCommand(userId, commandTypes.DeleteUser))
+				cmd.NewCommand(userId, commandTypes.DeleteUser))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -219,11 +213,11 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("recreating the user after deletion")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
+			command = cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUser,
 				&cmdData.CreateUserCommandData{Name: expectedUserName, Email: expectedUserEmail},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -239,24 +233,23 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 		})
 		It("can accept Nil as an Id when creating a user", func() {
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser),
+			command := cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUser,
 				&cmdData.CreateUserCommandData{Name: "Jane Doe", Email: "jane.doe2@monoskope.io"},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(reply.AggregateId).ToNot(Equal(uuid.Nil.String()))
 		})
 		It("fail to create a user which already exists", func() {
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.New(), commandTypes.CreateUser),
+			command := cmd.NewCommandWithData(
+				uuid.Nil,
+				commandTypes.CreateUser,
 				&cmdData.CreateUserCommandData{Name: mock.TestAdminUser.Name, Email: mock.TestAdminUser.Email},
 			)
-			Expect(err).ToNot(HaveOccurred())
-
-			_, err = commandHandlerClient().Execute(ctx, command)
+			_, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).To(HaveOccurred())
 			Expect(errors.TranslateFromGrpcError(err)).To(Equal(errors.ErrUserAlreadyExists))
 		})
@@ -265,11 +258,10 @@ var _ = Describe("internal/integration_test", func() {
 		It("can manage a tenant", func() {
 			By("creating the tenant")
 			tenantId := uuid.New()
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+			command := cmd.NewCommandWithData(
+				tenantId, commandTypes.CreateTenant,
 				&cmdData.CreateTenantCommandData{Name: expectedTenantName, Prefix: expectedTenantPrefix},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -289,8 +281,8 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("ensuring the same tenant can't be created again")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(tenantId, commandTypes.CreateTenant),
+			command = cmd.NewCommandWithData(
+				tenantId, commandTypes.CreateTenant,
 				&cmdData.CreateTenantCommandData{Name: strings.ToUpper(expectedTenantName), // regardless of the case
 					Prefix: expectedTenantPrefix},
 			)
@@ -298,11 +290,10 @@ var _ = Describe("internal/integration_test", func() {
 			Expect(err).To(HaveOccurred())
 
 			By("updating the tenant")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(tenantId, commandTypes.UpdateTenant),
+			command = cmd.NewCommandWithData(
+				tenantId, commandTypes.UpdateTenant,
 				&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: expectedTenantNameUpdated}},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			_, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -314,7 +305,7 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("deleting the tenant")
-			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(tenantId, commandTypes.DeleteTenant))
+			_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(tenantId, commandTypes.DeleteTenant))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -325,11 +316,10 @@ var _ = Describe("internal/integration_test", func() {
 			}).ShouldNot(Succeed())
 
 			By("recreating the tenant after deletion")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.New(), commandTypes.CreateTenant),
+			command = cmd.NewCommandWithData(
+				uuid.New(), commandTypes.CreateTenant,
 				&cmdData.CreateTenantCommandData{Name: expectedTenantNameUpdated, Prefix: expectedTenantPrefix},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -346,11 +336,10 @@ var _ = Describe("internal/integration_test", func() {
 			}, "5s").Should(Succeed())
 		})
 		It("can accept Nil as ID when creating a tenant", func() {
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+			command := cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateTenant,
 				&cmdData.CreateTenantCommandData{Name: "Tenant K", Prefix: "tk"},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -361,18 +350,10 @@ var _ = Describe("internal/integration_test", func() {
 	Context("cluster management", func() {
 		It("can manage a cluster", func() {
 			By("creating the cluster")
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			command := cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateCluster,
 				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
-			Expect(err).ToNot(HaveOccurred())
-
-			// set up reactor for checking JWTs later
-			testReactor := mock_reactor.NewTestReactor()
-			defer testReactor.Close()
-
-			err = testReactor.Setup(ctx, testEnv.EventStoreTestEnv, eventStoreClient())
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -394,8 +375,8 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("ensuring the same cluster can't be created again")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			command = cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateCluster,
 				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName,
 					Name:             strings.ToUpper(expectedClusterName), // regardless of the case and white spaces
 					ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
@@ -404,7 +385,7 @@ var _ = Describe("internal/integration_test", func() {
 			Expect(err).To(HaveOccurred())
 
 			By("deleting the cluster")
-			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(clusterId, commandTypes.DeleteCluster))
+			_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(clusterId, commandTypes.DeleteCluster))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -415,11 +396,10 @@ var _ = Describe("internal/integration_test", func() {
 			}).ShouldNot(Succeed())
 
 			By("recreating the cluster after deletion")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			command = cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateCluster,
 				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -438,11 +418,10 @@ var _ = Describe("internal/integration_test", func() {
 		})
 		It("can grant a tenant access to a cluster", func() {
 			// create the tenant
-			command, err := cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenant),
+			command := cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateTenant,
 				&cmdData.CreateTenantCommandData{Name: "Tenant Z", Prefix: "tz"},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -458,11 +437,10 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			// create the cluster
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateCluster),
+			command = cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateCluster,
 				&cmdData.CreateCluster{DisplayName: "Cluster Z", Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
@@ -478,11 +456,10 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("granting the tenant access to the cluster")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenantClusterBinding),
+			command = cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateTenantClusterBinding,
 				&cmdData.CreateTenantClusterBindingCommandData{TenantId: tenantId.String(), ClusterId: clusterId.String()},
 			)
-			Expect(err).ToNot(HaveOccurred())
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -501,7 +478,7 @@ var _ = Describe("internal/integration_test", func() {
 			Expect(err).To(HaveOccurred())
 
 			By("revoking the tenant access to the cluster")
-			_, err = commandHandlerClient().Execute(ctx, cmd.CreateCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
+			_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {
@@ -510,11 +487,10 @@ var _ = Describe("internal/integration_test", func() {
 			}).Should(Succeed())
 
 			By("granting the tenant access to the cluster again (after revoking the old one)")
-			command, err = cmd.AddCommandData(
-				cmd.CreateCommand(uuid.Nil, commandTypes.CreateTenantClusterBinding),
+			command = cmd.NewCommandWithData(
+				uuid.Nil, commandTypes.CreateTenantClusterBinding,
 				&cmdData.CreateTenantClusterBindingCommandData{TenantId: tenantId.String(), ClusterId: clusterId.String()},
 			)
-			Expect(err).ToNot(HaveOccurred())
 			reply, err = commandHandlerClient().Execute(ctx, command)
 			Expect(err).ToNot(HaveOccurred())
 

@@ -66,8 +66,7 @@ var _ = Describe("Gateway Auth Middleware", func() {
 			exptectedScope := scopes.Tenant
 			expectedResource := uuid.New()
 
-			command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding)
-			_, err := cmd.AddCommandData(command,
+			command := cmd.NewCommandWithData(uuid.Nil, commandTypes.CreateUserRoleBinding,
 				&cmdData.CreateUserRoleBindingCommandData{
 					UserId:   expectedUserId.String(),
 					Role:     string(expectedRole),
@@ -75,7 +74,6 @@ var _ = Describe("Gateway Auth Middleware", func() {
 					Resource: wrapperspb.String(expectedResource.String()),
 				},
 			)
-			Expect(err).ToNot(HaveOccurred())
 
 			bytes, err := protojson.Marshal(command)
 			Expect(err).ToNot(HaveOccurred())

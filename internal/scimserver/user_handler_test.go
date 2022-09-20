@@ -193,7 +193,7 @@ var _ = Describe("internal/scimserver/UserHandler", func() {
 				userClient := mock_domain.NewMockUserClient(mockCtrl)
 				userHandler := NewUserHandler(commandHandlerClient, userClient)
 
-				commandHandlerClient.EXPECT().Execute(gomock.Any(), cmd.CreateCommand(userId, commandTypes.DeleteUser)).Return(nil, domain_errors.TranslateToGrpcError(domain_errors.ErrDeleted))
+				commandHandlerClient.EXPECT().Execute(gomock.Any(), cmd.NewCommand(userId, commandTypes.DeleteUser)).Return(nil, domain_errors.TranslateToGrpcError(domain_errors.ErrDeleted))
 				Expect(userHandler.Delete(request, userId.String())).To(Succeed())
 			})
 		})

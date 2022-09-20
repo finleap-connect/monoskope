@@ -93,7 +93,7 @@ func (h *userHandler) Create(r *http.Request, attributes scim.ResourceAttributes
 		}
 	}
 
-	command, err := cmd.AddCommandData(cmd.CreateCommand(uuid.Nil, commandTypes.CreateUser), &cmdData.CreateUserCommandData{
+	command := cmd.NewCommandWithData(uuid.Nil, commandTypes.CreateUser, &cmdData.CreateUserCommandData{
 		Email: userAttributes.UserName,
 		Name:  userAttributes.DisplayName,
 	})
@@ -269,7 +269,7 @@ func (h *userHandler) Replace(r *http.Request, id string, attributes scim.Resour
 		}
 	}
 
-	command, err := cmd.AddCommandData(cmd.CreateCommand(uuid.MustParse(user.Id), commandTypes.UpdateUser), &cmdData.UpdateUserCommandData{
+	command := cmd.NewCommandWithData(uuid.MustParse(user.Id), commandTypes.UpdateUser, &cmdData.UpdateUserCommandData{
 		Name: wrapperspb.String(userAttributes.DisplayName),
 	})
 	if err != nil {
@@ -312,7 +312,7 @@ func (h *userHandler) Delete(r *http.Request, id string) error {
 		}
 	}
 
-	_, err = h.cmdHandlerClient.Execute(ctx, cmd.CreateCommand(uid, commandTypes.DeleteUser))
+	_, err = h.cmdHandlerClient.Execute(ctx, cmd.NewCommand(uid, commandTypes.DeleteUser))
 	if err != nil {
 		err = errors.TranslateFromGrpcError(err)
 		if err == errors.ErrDeleted {

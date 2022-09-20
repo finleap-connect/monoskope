@@ -176,8 +176,8 @@ func (h *groupHandler) Patch(r *http.Request, id string, operations []scim.Patch
 				userIdAny := userIdValue.(map[string]interface{})[m8scim.GroupMemberValueAttribute]
 				userId := userIdAny.(string)
 
-				command, err := cmd.AddCommandData(
-					cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding),
+				command := cmd.NewCommandWithData(
+					uuid.Nil, commandTypes.CreateUserRoleBinding,
 					&cmdData.CreateUserRoleBindingCommandData{Role: string(role), Scope: string(scopes.System), UserId: userId},
 				)
 				if err != nil {

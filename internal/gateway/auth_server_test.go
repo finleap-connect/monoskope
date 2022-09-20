@@ -57,8 +57,7 @@ var _ = Describe("Gateway Auth Server", func() {
 	}
 
 	getCreateUserRoleBindingCmd := func() *anypb.Any {
-		command := cmd.CreateCommand(uuid.Nil, commandTypes.CreateUserRoleBinding)
-		_, err := cmd.AddCommandData(command,
+		command := cmd.NewCommandWithData(uuid.Nil, commandTypes.CreateUserRoleBinding,
 			&cmdData.CreateUserRoleBindingCommandData{
 				UserId:   expectedUserId.String(),
 				Role:     string(expectedRole),
@@ -66,10 +65,9 @@ var _ = Describe("Gateway Auth Server", func() {
 				Resource: wrapperspb.String(mock.TestTenant.Id),
 			},
 		)
-		Expect(err).ToNot(HaveOccurred())
 
 		a := &anypb.Any{}
-		err = a.MarshalFrom(command)
+		err := a.MarshalFrom(command)
 		Expect(err).ToNot(HaveOccurred())
 		return a
 	}
