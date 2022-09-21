@@ -103,6 +103,9 @@ endif
 ifeq ($(PROTO_ARCH),arm64)
 PROTO_ARCH = aarch_64
 endif
+ifeq ($(PROTO_ARCH),amd64)
+PROTO_ARCH = x86_64
+endif
 PROTO_ARCH_OS := $(PROTO_OS)-$(PROTO_ARCH)
 
 ## Tool Config

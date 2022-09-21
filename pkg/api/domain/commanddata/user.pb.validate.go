@@ -307,16 +307,20 @@ func (m *CreateUserRoleBindingCommandData) validate(all bool) error {
 
 	if wrapper := m.GetResource(); wrapper != nil {
 
-		if err := m._validateUuid(wrapper.GetValue()); err != nil {
-			err = CreateUserRoleBindingCommandDataValidationError{
-				field:  "Resource",
-				reason: "value must be a valid UUID",
-				cause:  err,
+		if wrapper.GetValue() != "" {
+
+			if err := m._validateUuid(wrapper.GetValue()); err != nil {
+				err = CreateUserRoleBindingCommandDataValidationError{
+					field:  "Resource",
+					reason: "value must be a valid UUID",
+					cause:  err,
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
 			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
+
 		}
 
 	}
