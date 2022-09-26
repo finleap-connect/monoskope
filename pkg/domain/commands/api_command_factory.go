@@ -17,26 +17,27 @@ package commands
 import (
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// CreateCommand builds up a new proto command with the given type and data.
-func CreateCommand(aggregateId uuid.UUID, commandType es.CommandType) *esApi.Command {
+// NewCommand builds up a new proto command with the given type.
+func NewCommand(aggregateId uuid.UUID, commandType es.CommandType) *esApi.Command {
 	return &esApi.Command{
 		Id:   aggregateId.String(),
 		Type: commandType.String(),
 	}
 }
 
-func AddCommandData(command *esApi.Command, commandData protoreflect.ProtoMessage) (*esApi.Command, error) {
+// NewCommand builds up a new proto command with the given type and data.
+func NewCommandWithData(aggregateId uuid.UUID, commandType es.CommandType, commandData protoreflect.ProtoMessage) *esApi.Command {
+	command := NewCommand(aggregateId, commandType)
 	data, err := CreateCommandData(commandData)
-	if err != nil {
-		return nil, err
-	}
+	util.PanicOnError(err)
 	command.Data = data
-	return command, nil
+	return command
 }
 
 func CreateCommandData(commandData protoreflect.ProtoMessage) (*anypb.Any, error) {
