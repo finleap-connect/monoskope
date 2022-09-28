@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path"
@@ -31,6 +30,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
+	"go.opentelemetry.io/otel"
 	ggrpc "google.golang.org/grpc"
 
 	"gopkg.in/yaml.v2"
@@ -40,6 +40,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
+	"github.com/finleap-connect/monoskope/internal/tracing"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
@@ -69,8 +70,15 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.WithName("serverCmd")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+
+		shutdownTelemetry, err := tracing.InitOpenTelemetry(cmd.Context())
+		if err != nil {
+			return err
+		}
+		defer util.PanicOnError(shutdownTelemetry())
+
+		ctx, span := otel.Tracer(cmd.Name()).Start(cmd.Context(), "root")
+		defer span.End()
 
 		authClientConfig := auth.ClientConfig{
 			IdentityProvider: identityProvider,
