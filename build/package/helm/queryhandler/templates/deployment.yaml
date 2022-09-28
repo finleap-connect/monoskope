@@ -70,8 +70,10 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "bus") }}
+            {{- if .Values.k8sAuthZ.enabled }}
             - secretRef:
                 name: {{ .Values.k8sAuthZ.existingSecret | default (printf "%s-%s" (include "queryhandler.fullname" .) "k8sauthz") }}
+            {{- end }}
           args:
             - /app
             - server
