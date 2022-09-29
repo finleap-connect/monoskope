@@ -91,7 +91,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "gateway.fullname" .) "bus") }}
-          {{- if .Values.otlp.enabled | default .Values.global.otlp.enabled) }}
+          {{- if .Values.otlp.enabled | default .Values.global.otlp.enabled }}
             - configMapRef:
                 name: {{ .Values.otlp.configMapName | default .Values.global.otlp.enabled }}
           {{- end }}

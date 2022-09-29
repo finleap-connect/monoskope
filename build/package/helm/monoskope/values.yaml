@@ -18,6 +18,8 @@ global:
       OTEL_EXPORTER_OTLP_ENDPOINT=https://localhost:4317
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://localhost:4318
       OTEL_EXPORTER_OTLP_TIMEOUT=10s
+      OTEL_TRACES_SAMPLER="traceidratio"
+      OTEL_TRACES_SAMPLER_ARG="1.0"
 
 vaultOperator:
   enabled: false
