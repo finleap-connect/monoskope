@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tracing
+package telemetry
 
 import (
 	"context"
@@ -30,18 +30,14 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-/*
-Find detailed documentation at https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace#readme-examples.
-*/
-
 // InitOpenTelemetry configures and sets the global MeterProvider and TracerProvider for OpenTelemetry
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
-	meterProviderShutdown, err := InitMeterProvider(ctx)
+	meterProviderShutdown, err := initMeterProvider(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	tracerProviderShutdown, err := InitTracerProvider(ctx)
+	tracerProviderShutdown, err := initTracerProvider(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +53,8 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	}, nil
 }
 
-// InitMeterProvider configures and sets the global MeterProvider
-func InitMeterProvider(ctx context.Context) (func() error, error) {
+// initMeterProvider configures and sets the global MeterProvider
+func initMeterProvider(ctx context.Context) (func() error, error) {
 	meterExporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
 		panic(err)
@@ -70,8 +66,8 @@ func InitMeterProvider(ctx context.Context) (func() error, error) {
 	return func() error { return meterProvider.Shutdown(ctx) }, nil
 }
 
-// InitTracerProvider configures and sets the global TracerProvider
-func InitTracerProvider(ctx context.Context) (func() error, error) {
+// initTracerProvider configures and sets the global TracerProvider
+func initTracerProvider(ctx context.Context) (func() error, error) {
 	client := otlptracegrpc.NewClient()
 	traceExporter, err := otlptrace.New(ctx, client)
 	if err != nil {
