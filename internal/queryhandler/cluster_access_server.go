@@ -77,6 +77,27 @@ func (s *clusterAccessServer) GetClusterAccess(_ *emptypb.Empty, stream api.Clus
 	return nil
 }
 
+func (s *clusterAccessServer) GetClusterAccessV2(_ *emptypb.Empty, stream api.ClusterAccess_GetClusterAccessV2Server) error {
+	metadataManager, err := metadata.NewDomainMetadataManager(stream.Context())
+	if err != nil {
+		return err
+	}
+	userInfo := metadataManager.GetUserInformation()
+
+	clusters, err := s.clusterAccessRepo.GetClustersAccessibleByUserIdV2(stream.Context(), userInfo.Id)
+	if err != nil {
+		return errors.TranslateToGrpcError(err)
+	}
+
+	for _, c := range clusters {
+		err := stream.Send(c)
+		if err != nil {
+			return errors.TranslateToGrpcError(err)
+		}
+	}
+	return nil
+}
+
 func (s *clusterAccessServer) GetTenantClusterMappingsByTenantId(id *wrapperspb.StringValue, stream api.ClusterAccess_GetTenantClusterMappingsByTenantIdServer) error {
 	tenantId, err := uuid.Parse(id.GetValue())
 	if err != nil {
