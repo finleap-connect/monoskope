@@ -17,6 +17,8 @@ package tracing
 import (
 	"context"
 
+	"github.com/finleap-connect/monoskope/internal/version"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -25,6 +27,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 /*
@@ -80,6 +83,11 @@ func InitTracerProvider(ctx context.Context) (func() error, error) {
 		resource.WithHost(),
 		resource.WithOS(),
 		resource.WithContainer(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(version.Name),
+			semconv.ServiceVersionKey.String(version.Version),
+			semconv.ServiceInstanceIDKey.String(uuid.New().String()),
+		),
 	)
 	if err != nil {
 		return nil, err
