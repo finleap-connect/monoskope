@@ -136,3 +136,7 @@ messageBus:
   configSecret: ""
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
+
+otlp:
+  enabled: false
+  configMapName: ""
