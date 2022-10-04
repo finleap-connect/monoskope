@@ -139,3 +139,8 @@ k8sAuthZ:
     # subdir: test
     # interval: 5m
     # allClusters: true
+
+openTelemetry:
+  enabled: false
+  configMapName: ""
+  serviceName: "gateway"
