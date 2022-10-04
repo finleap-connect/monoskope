@@ -16,6 +16,8 @@ package telemetry
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/google/uuid"
@@ -29,6 +31,33 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
+
+const (
+	otelEnabled       = "OTEL_ENABLED"
+	serviceNamePrefix = "OTEL_SERVICE_NAME_PREFIX"
+	serviceName       = "OTEL_SERVICE_NAME"
+	defaultNamePrefix = "m8"
+)
+
+// GetIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set tot "true"
+func GetIsOpenTelemetryEnabled() bool {
+	return os.Getenv(otelEnabled) == "true"
+}
+
+// GetServiceName combines the values of the environment variables OTEL_SERVICE_NAME_PREFIX and OTEL_SERVICE_NAME with fallback to "m8" and "version.Name"
+func GetServiceName() string {
+	name := version.Name
+	prefix := defaultNamePrefix
+
+	if sn := os.Getenv(serviceName); sn != "" {
+		name = sn
+	}
+	if sp := os.Getenv(serviceNamePrefix); sp != "" {
+		prefix = sp
+	}
+
+	return fmt.Sprintf("%s%s", prefix, name)
+}
 
 // InitOpenTelemetry configures and sets the global MeterProvider and TracerProvider for OpenTelemetry
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
@@ -80,7 +109,7 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 		resource.WithOS(),
 		resource.WithContainer(),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(version.Name),
+			semconv.ServiceNameKey.String(GetServiceName()),
 			semconv.ServiceVersionKey.String(version.Version),
 			semconv.ServiceInstanceIDKey.String(uuid.New().String()),
 		),

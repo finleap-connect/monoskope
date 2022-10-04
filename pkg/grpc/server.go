@@ -32,6 +32,7 @@ import (
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_tracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/health"
@@ -77,6 +78,7 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		//grpc_validator.UnaryServerInterceptor(), // add message validator
 		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
 		grpc_tracing.UnaryServerInterceptor(),
+		otelgrpc.UnaryServerInterceptor(),
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
 		grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
@@ -86,6 +88,7 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		//grpc_validator.StreamServerInterceptor(), // add message validator
 		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
 		grpc_tracing.StreamServerInterceptor(),
+		otelgrpc.StreamServerInterceptor(),
 	)
 
 	// Configure gRPC server

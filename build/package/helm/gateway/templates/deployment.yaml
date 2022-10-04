@@ -88,12 +88,14 @@ spec:
                 secretKeyRef:
                   name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-nonce
+            - name: OTEL_ENABLED
+              value: {{ .Values.openTelemetry.enabled | default .Values.global.openTelemetry.enabled | default "false" }}
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "gateway.fullname" .) "bus") }}
-          {{- if or .Values.otlp.enabled .Values.global.otlp.enabled }}
+          {{- if or .Values.openTelemetry.enabled .Values.global.openTelemetry.enabled }}
             - configMapRef:
-                name: {{ .Values.otlp.configMapName | default .Values.global.otlp.configMapName }}
+                name: {{ .Values.openTelemetry.configMapName | default .Values.global.openTelemetry.configMapName }}
           {{- end }}
           args:
             - /app

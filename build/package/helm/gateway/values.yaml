@@ -137,6 +137,7 @@ messageBus:
   # -- Name of the secret containing the tls certificates/keys
   tlsSecret: ""
 
-otlp:
+openTelemetry:
   enabled: false
   configMapName: ""
+  serviceName: "gateway"

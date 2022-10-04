@@ -30,7 +30,6 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/k8s"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
-	"go.opentelemetry.io/otel"
 	ggrpc "google.golang.org/grpc"
 
 	"gopkg.in/yaml.v2"
@@ -72,14 +71,15 @@ var serverCmd = &cobra.Command{
 		log := logger.WithName("serverCmd")
 		ctx := cmd.Context()
 
-		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
-		if err != nil {
-			return err
+		// Enable OpenTelemetry optionally
+		if telemetry.GetIsOpenTelemetryEnabled() {
+			log.Info("Initializing open telemetry...")
+			shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+			if err != nil {
+				return err
+			}
+			defer util.PanicOnError(shutdownTelemetry())
 		}
-		defer util.PanicOnError(shutdownTelemetry())
-
-		ctx, span := otel.Tracer(cmd.Name()).Start(ctx, "root")
-		defer span.End()
 
 		authClientConfig := auth.ClientConfig{
 			IdentityProvider: identityProvider,

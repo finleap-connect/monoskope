@@ -1,13 +1,14 @@
-{{- if .Values.global.otlp.enabled }}
+{{- if .Values.global.openTelemetry.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.global.otlp.configMapName }}
+  name: {{ .Values.global.openTelemetry.configMapName }}
   labels:
     {{- include "monoskope.labels" . | nindent 4 }}
     {{- with (.Values.labels | default .Values.global.labels) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  {{- toYaml .Values.global.otlp.config | nindent 2 }}
+  {{- toYaml .Values.global.openTelemetry.config | nindent 2 }}
+  OTEL_SERVICE_NAME_PREFIX: {{ .Values.global.openTelemetry.serviceNamePrefix }}
 {{- end }}

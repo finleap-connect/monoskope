@@ -11,9 +11,10 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
   operationMode: release
-  otlp:
+  openTelemetry:
     enabled: true
-    configMapName: m8-otlp-config
+    configMapName: m8-opentelemetry-config
+    serviceNamePrefix: "monoskope-"
     config:
       # Target to which the exporter is going to send spans or metrics.
       # A scheme of https indicates a secure connection and takes precedence over the insecure configuration setting.
