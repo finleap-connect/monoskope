@@ -90,7 +90,7 @@ spec:
                   name: {{ required "A valid .Values.oidcSecret.name entry is required!" .Values.oidcSecret.name }}
                   key: oidc-nonce
             - name: OTEL_ENABLED
-              value: {{ dig "enabled" "false" $merged.openTelemetry }}
+              value: {{ (dig "enabled" "false" $merged.openTelemetry) | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Values.messageBus.configSecret | default (printf "%s-%s" (include "gateway.fullname" .) "bus") }}
