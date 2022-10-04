@@ -15,10 +15,9 @@
 package main
 
 import (
-	"context"
-
 	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
+	"github.com/finleap-connect/monoskope/pkg/util"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -33,6 +32,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/k8sauthz"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 )
@@ -54,7 +54,17 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		log := logger.WithName("server-cmd")
-		ctx := context.Background()
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		if telemetry.GetIsOpenTelemetryEnabled() {
+			log.Info("Initializing open telemetry...")
+			shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+			if err != nil {
+				return err
+			}
+			defer util.PanicOnError(shutdownTelemetry())
+		}
 
 		// Create EventStore client
 		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)

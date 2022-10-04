@@ -15,13 +15,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/scimserver"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commandHandlerApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
@@ -47,7 +47,17 @@ var serveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		log := logger.WithName("serve-cmd")
-		ctx := context.Background()
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		if telemetry.GetIsOpenTelemetryEnabled() {
+			log.Info("Initializing open telemetry...")
+			shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+			if err != nil {
+				return err
+			}
+			defer util.PanicOnError(shutdownTelemetry())
+		}
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)

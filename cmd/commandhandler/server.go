@@ -15,9 +15,8 @@
 package main
 
 import (
-	"context"
-
 	"github.com/finleap-connect/monoskope/internal/gateway"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	api_domain "github.com/finleap-connect/monoskope/pkg/api/domain"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
@@ -26,6 +25,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/finleap-connect/monoskope/pkg/util"
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/finleap-connect/monoskope/internal/commandhandler"
@@ -49,8 +49,18 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		ctx := context.Background()
+		ctx := cmd.Context()
 		log := logger.WithName("server-cmd")
+
+		// Enable OpenTelemetry optionally
+		if telemetry.GetIsOpenTelemetryEnabled() {
+			log.Info("Initializing open telemetry...")
+			shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+			if err != nil {
+				return err
+			}
+			defer util.PanicOnError(shutdownTelemetry())
+		}
 
 		// Create EventStore client
 		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
