@@ -118,7 +118,6 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 
 	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
 
-	log.Info("Establishing connection to OpenTelemetry collector...")
 	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
 	if !exists {
 		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
@@ -127,9 +126,10 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
+	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
 	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Error(err, "unable to connect to OpenTelemetry collector", "addr", endpoint)
+		log.Error(err, "unable to connect to OpenTelemetry collector", "endpoint", endpoint)
 		return nil, err
 	}
 
