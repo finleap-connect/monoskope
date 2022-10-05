@@ -23,7 +23,6 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -39,7 +38,7 @@ const (
 	defaultNamePrefix = "m8"
 )
 
-// GetIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set tot "true"
+// GetIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set to "true"
 func GetIsOpenTelemetryEnabled() bool {
 	return os.Getenv(otelEnabled) == "true"
 }
@@ -97,8 +96,7 @@ func initMeterProvider(ctx context.Context) (func() error, error) {
 
 // initTracerProvider configures and sets the global TracerProvider
 func initTracerProvider(ctx context.Context) (func() error, error) {
-	client := otlptracegrpc.NewClient()
-	traceExporter, err := otlptrace.New(ctx, client)
+	traceExporter, err := otlptracegrpc.New(ctx)
 	if err != nil {
 		return nil, err
 	}
