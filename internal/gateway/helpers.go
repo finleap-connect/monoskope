@@ -25,6 +25,7 @@ func CreateInsecureConnection(ctx context.Context, url string) (*ggrpc.ClientCon
 	return grpc.NewGrpcConnectionFactory(url).
 		WithInsecure().
 		WithRetry().
+		WithOpenTelemetry().
 		WithBlock().
 		Connect(ctx)
 }
