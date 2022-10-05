@@ -156,8 +156,9 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	}
 
 	options := []sdktrace.TracerProviderOption{
-		sdktrace.WithBatcher(spanExporter),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
+		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(spanExporter)),
 	}
 	tracerProvider := sdktrace.NewTracerProvider(options...)
 	otel.SetTracerProvider(tracerProvider)
