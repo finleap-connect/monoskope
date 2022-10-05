@@ -18,19 +18,10 @@ global:
     config:
       # Target to which the exporter is going to send spans or metrics.
       # A scheme of https indicates a secure connection and takes precedence over the insecure configuration setting.
-      OTEL_EXPORTER_OTLP_ENDPOINT: https://localhost:4317
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: https://localhost:4317
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: https://localhost:4317
-      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: https://localhost:4317
-      # Maximum time the OTLP exporter will wait for each batch export in milliseconds.
-      OTEL_EXPORTER_OTLP_TIMEOUT: "10000" # 10s
-      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: "10000" # 10s
-      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: "10000" # 10s
-      OTEL_EXPORTER_OTLP_LOGS_TIMEOUT: "10000" # 10s
-      # Specifies the OTLP transport protocol to be used for all data.
-      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      OTEL_EXPORTER_OTLP_TRACES_PROTOCOL: grpc
-      OTEL_EXPORTER_OTLP_METRICS_PROTOCOL: grpc
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://localhost:4317
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://localhost:4317
 
 vaultOperator:
   enabled: false

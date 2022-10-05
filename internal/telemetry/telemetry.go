@@ -20,6 +20,8 @@ import (
 	"os"
 
 	"github.com/finleap-connect/monoskope/internal/version"
+	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/finleap-connect/monoskope/pkg/operation"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -38,6 +40,10 @@ const (
 	serviceNamePrefix = "OTEL_SERVICE_NAME_PREFIX"
 	serviceName       = "OTEL_SERVICE_NAME"
 	defaultNamePrefix = "m8"
+)
+
+var (
+	instanceKey = uuid.New().String()
 )
 
 // GetIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set to "true"
@@ -100,16 +106,23 @@ func initMeterProvider(ctx context.Context) (func() error, error) {
 func initTracerProvider(ctx context.Context) (func() error, error) {
 	var err error
 	var spanExporter sdktrace.SpanExporter
+	serviceName := GetServiceName()
 
-	if true {
+	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
+	log.Info("Configuring TraceProvider...")
+
+	if operation.GetOperationMode() == operation.DEVELOPMENT {
+		log.V(logger.DebugLevel).Info("Initializing stdouttrace...")
 		spanExporter, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
 	} else {
+		log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
 		spanExporter, err = otlptracegrpc.New(ctx)
 	}
 	if err != nil {
 		return nil, err
 	}
 
+	log.V(logger.DebugLevel).Info("Configuring resource...")
 	res, err := resource.New(ctx,
 		resource.WithFromEnv(),
 		resource.WithHost(),
@@ -118,7 +131,7 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(GetServiceName()),
 			semconv.ServiceVersionKey.String(version.Version),
-			semconv.ServiceInstanceIDKey.String(uuid.New().String()),
+			semconv.ServiceInstanceIDKey.String(instanceKey),
 		),
 	)
 	if err != nil {
@@ -135,6 +148,8 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 			propagation.Baggage{},
 		),
 	)
+
+	log.Info("TraceProvider configured.")
 
 	return func() error { return tracerProvider.Shutdown(ctx) }, nil
 }
