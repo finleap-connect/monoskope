@@ -16,12 +16,6 @@ global:
     configMapName: m8-opentelemetry-config
     serviceNamePrefix: "monoskope-"
     config:
-      # Target to which the exporter is going to send spans or metrics.
-      # A scheme of https indicates a secure connection and takes precedence over the insecure configuration setting.
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4317
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://localhost:4317
-      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://localhost:4317
 
 vaultOperator:
   enabled: false
