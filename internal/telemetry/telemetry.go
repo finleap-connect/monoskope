@@ -127,7 +127,7 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	defer cancel()
 
 	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
-	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Error(err, "unable to connect to OpenTelemetry collector", "endpoint", endpoint)
 		return nil, err
