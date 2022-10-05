@@ -33,6 +33,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -89,6 +90,11 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	}, nil
 }
 
+// GetTracer returns a new traces with the current service name set
+func GetTracer() trace.Tracer {
+	return otel.Tracer(GetServiceName())
+}
+
 // initMeterProvider configures and sets the global MeterProvider
 func initMeterProvider(ctx context.Context) (func() error, error) {
 	meterExporter, err := otlpmetricgrpc.New(ctx)
@@ -137,10 +143,15 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	if err != nil {
 		return nil, err
 	}
-	tracerProvider := sdktrace.NewTracerProvider(
+
+	options := []sdktrace.TracerProviderOption{
 		sdktrace.WithBatcher(spanExporter),
 		sdktrace.WithResource(res),
-	)
+	}
+	if operation.GetOperationMode() == operation.DEVELOPMENT {
+		options = append(options, sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	}
+	tracerProvider := sdktrace.NewTracerProvider(options)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(

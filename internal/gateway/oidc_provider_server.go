@@ -22,12 +22,12 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/otel"
 )
 
 type OpenIdConfiguration struct {
@@ -107,7 +107,7 @@ func (s *oidcProviderServer) Shutdown() {
 }
 
 func (s *oidcProviderServer) discovery(c *gin.Context) {
-	_, span := otel.Tracer("").Start(c.Request.Context(), "openid-configuration")
+	_, span := telemetry.GetTracer().Start(c.Request.Context(), "get-openid-configuration")
 	defer span.End()
 	c.JSON(http.StatusOK, &OpenIdConfiguration{
 		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
@@ -116,7 +116,7 @@ func (s *oidcProviderServer) discovery(c *gin.Context) {
 }
 
 func (s *oidcProviderServer) keys(c *gin.Context) {
-	_, span := otel.Tracer("").Start(c.Request.Context(), "keys")
+	_, span := telemetry.GetTracer().Start(c.Request.Context(), "get-keys")
 	defer span.End()
 	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
 	c.JSON(http.StatusOK, s.oidcServer.Keys())
