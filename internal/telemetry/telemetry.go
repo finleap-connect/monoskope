@@ -151,7 +151,7 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	if operation.GetOperationMode() == operation.DEVELOPMENT {
 		options = append(options, sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	}
-	tracerProvider := sdktrace.NewTracerProvider(options)
+	tracerProvider := sdktrace.NewTracerProvider(options...)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
