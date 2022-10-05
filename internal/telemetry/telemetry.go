@@ -119,7 +119,10 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 
 	if operation.GetOperationMode() == operation.DEVELOPMENT {
 		log.V(logger.DebugLevel).Info("Initializing stdouttrace...")
-		spanExporter, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+		spanExporter, err = stdouttrace.New(
+			stdouttrace.WithWriter(os.Stdout),
+			stdouttrace.WithPrettyPrint(),
+		)
 	} else {
 		log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
 		spanExporter, err = otlptracegrpc.New(ctx)
