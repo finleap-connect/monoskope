@@ -24,7 +24,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -96,7 +98,14 @@ func initMeterProvider(ctx context.Context) (func() error, error) {
 
 // initTracerProvider configures and sets the global TracerProvider
 func initTracerProvider(ctx context.Context) (func() error, error) {
-	traceExporter, err := otlptracegrpc.New(ctx)
+	var err error
+	var spanExporter sdktrace.SpanExporter
+
+	if true {
+		spanExporter, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+	} else {
+		spanExporter, err = otlptracegrpc.New(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -116,10 +125,16 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 		return nil, err
 	}
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(traceExporter),
+		sdktrace.WithBatcher(spanExporter),
 		sdktrace.WithResource(res),
 	)
 	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
+	)
 
 	return func() error { return tracerProvider.Shutdown(ctx) }, nil
 }
