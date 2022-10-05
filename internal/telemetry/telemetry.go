@@ -21,12 +21,10 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/finleap-connect/monoskope/pkg/operation"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -117,16 +115,8 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
 	log.Info("Configuring TraceProvider...")
 
-	if operation.GetOperationMode() == operation.DEVELOPMENT {
-		log.V(logger.DebugLevel).Info("Initializing stdouttrace...")
-		spanExporter, err = stdouttrace.New(
-			stdouttrace.WithWriter(os.Stdout),
-			stdouttrace.WithPrettyPrint(),
-		)
-	} else {
-		log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
-		spanExporter, err = otlptracegrpc.New(ctx)
-	}
+	log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
+	spanExporter, err = otlptracegrpc.New(ctx)
 	if err != nil {
 		return nil, err
 	}
