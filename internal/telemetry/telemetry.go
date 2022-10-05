@@ -24,11 +24,8 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -68,20 +65,12 @@ func GetServiceName() string {
 
 // InitOpenTelemetry configures and sets the global MeterProvider and TracerProvider for OpenTelemetry
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
-	meterProviderShutdown, err := initMeterProvider(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	tracerProviderShutdown, err := initTracerProvider(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return func() error {
-		if err := meterProviderShutdown(); err != nil {
-			return err
-		}
 		if err := tracerProviderShutdown(); err != nil {
 			return err
 		}
@@ -94,37 +83,20 @@ func GetTracer() trace.Tracer {
 	return otel.Tracer(GetServiceName())
 }
 
-// initMeterProvider configures and sets the global MeterProvider
-func initMeterProvider(ctx context.Context) (func() error, error) {
-	meterExporter, err := otlpmetricgrpc.New(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(meterExporter)))
-	global.SetMeterProvider(meterProvider)
-
-	return func() error { return meterProvider.Shutdown(ctx) }, nil
-}
-
 // initTracerProvider configures and sets the global TracerProvider
 func initTracerProvider(ctx context.Context) (func() error, error) {
-	var err error
-	var spanExporter sdktrace.SpanExporter
 	serviceName := GetServiceName()
-
 	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
 
 	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
-	spanExporter, err = otlptracegrpc.New(timeoutContext)
+	spanExporter, err := otlptracegrpc.New(timeoutContext)
 	if err != nil {
 		return nil, err
 	}
 
-	log.V(logger.DebugLevel).Info("Configuring resource...")
 	res, err := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
@@ -138,12 +110,11 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 		return nil, err
 	}
 
-	options := []sdktrace.TracerProviderOption{
+	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(spanExporter)),
-	}
-	tracerProvider := sdktrace.NewTracerProvider(options...)
+	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
@@ -151,8 +122,9 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 			propagation.Baggage{},
 		),
 	)
+	otel.SetLogger(log)
 
-	log.Info("TraceProvider configured.")
+	log.Info("OpenTelemetry configured.")
 
 	return func() error { return tracerProvider.Shutdown(ctx) }, nil
 }
