@@ -32,7 +32,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -132,17 +132,15 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	}
 
 	log.V(logger.DebugLevel).Info("Configuring resource...")
-	res, err := resource.New(ctx,
-		resource.WithFromEnv(),
-		resource.WithHost(),
-		resource.WithOS(),
-		resource.WithContainer(),
-		resource.WithAttributes(
+	res, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(GetServiceName()),
 			semconv.ServiceVersionKey.String(version.Version),
 			semconv.ServiceInstanceIDKey.String(instanceKey),
-		),
-	)
+		))
+
 	if err != nil {
 		return nil, err
 	}
@@ -150,9 +148,6 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	options := []sdktrace.TracerProviderOption{
 		sdktrace.WithBatcher(spanExporter),
 		sdktrace.WithResource(res),
-	}
-	if operation.GetOperationMode() == operation.DEVELOPMENT {
-		options = append(options, sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	}
 	tracerProvider := sdktrace.NewTracerProvider(options...)
 	otel.SetTracerProvider(tracerProvider)
