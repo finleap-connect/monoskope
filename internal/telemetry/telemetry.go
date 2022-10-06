@@ -16,6 +16,7 @@ package telemetry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -66,7 +67,10 @@ func GetServiceName() string {
 
 // InitOpenTelemetry configures and sets the global MeterProvider and TracerProvider for OpenTelemetry
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
-	tracerProviderShutdown, err := initTracerProvider(ctx)
+	log := logger.WithName("telemetry").WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
+	otel.SetLogger(log)
+
+	tracerProviderShutdown, err := initTracerProvider(ctx, log)
 	if err != nil {
 		return nil, err
 	}
@@ -84,29 +88,7 @@ func GetTracer() trace.Tracer {
 	return otel.Tracer(GetServiceName())
 }
 
-// initTracerProvider configures and sets the global TracerProvider
-func initTracerProvider(ctx context.Context) (func() error, error) {
-	serviceName := GetServiceName()
-	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
-	otel.SetLogger(log)
-
-	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
-	if !exists {
-		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
-	}
-
-	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
-	opts := []otlptracegrpc.Option{
-		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint(endpoint),
-	}
-
-	client := otlptracegrpc.NewClient(opts...)
-	spanExporter, err := otlptrace.New(ctx, client)
-	if err != nil {
-		return nil, err
-	}
-
+func getResource() (*resource.Resource, error) {
 	res, err := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
@@ -115,15 +97,46 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 			semconv.ServiceVersionKey.String(version.Version),
 			semconv.ServiceInstanceIDKey.String(instanceKey),
 		))
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
 
+// initTracerProvider configures and sets the global TracerProvider
+func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, error) {
+	// get resource
+	res, err := getResource()
 	if err != nil {
 		return nil, err
 	}
 
+	// connect collector
+	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
+	if !exists {
+		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
+	}
+	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
+	opts := []otlptracegrpc.Option{
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(endpoint),
+	}
+	client := otlptracegrpc.NewClient(opts...)
+
+	// create exporter
+	spanExporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+	if spanExporter == nil {
+		return nil, errors.New("failed to create span exporter")
+	}
+
+	// create provider
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(spanExporter)),
+		sdktrace.WithBatcher(spanExporter),
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
