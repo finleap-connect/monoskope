@@ -144,7 +144,7 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(spanExporter)),
+		sdktrace.WithBatcher(spanExporter),
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
@@ -156,5 +156,8 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 
 	log.Info("OpenTelemetry configured.")
 
-	return func() error { return tracerProvider.Shutdown(ctx) }, nil
+	return func() error {
+		_ = conn.Close()
+		return tracerProvider.Shutdown(ctx)
+	}, nil
 }
