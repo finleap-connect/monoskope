@@ -16,13 +16,13 @@ package telemetry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -136,9 +136,6 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 	if err != nil {
 		return nil, err
 	}
-	if spanExporter == nil {
-		return nil, errors.New("failed to create span exporter")
-	}
 
 	// create provider
 	tracerProvider := sdktrace.NewTracerProvider(
@@ -157,7 +154,8 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 	log.Info("OpenTelemetry configured.")
 
 	return func() error {
-		_ = conn.Close()
+		util.PanicOnError(tracerProvider.ForceFlush(ctx))
+		defer util.PanicOnError(conn.Close())
 		return tracerProvider.Shutdown(ctx)
 	}, nil
 }
