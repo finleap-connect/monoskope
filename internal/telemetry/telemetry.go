@@ -87,6 +87,7 @@ func GetTracer() trace.Tracer {
 func initTracerProvider(ctx context.Context) (func() error, error) {
 	serviceName := GetServiceName()
 	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
+	otel.SetLogger(log)
 
 	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
@@ -122,7 +123,6 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 			propagation.Baggage{},
 		),
 	)
-	otel.SetLogger(log)
 
 	log.Info("OpenTelemetry configured.")
 
