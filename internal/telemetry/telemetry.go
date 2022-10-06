@@ -144,7 +144,7 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
-		sdktrace.WithBatcher(spanExporter),
+		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(spanExporter)),
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
