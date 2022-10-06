@@ -18,12 +18,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -33,10 +33,11 @@ import (
 )
 
 const (
-	otelEnabled       = "OTEL_ENABLED"
-	serviceNamePrefix = "OTEL_SERVICE_NAME_PREFIX"
-	serviceName       = "OTEL_SERVICE_NAME"
-	defaultNamePrefix = "m8"
+	otelEnabled        = "OTEL_ENABLED"
+	serviceNamePrefix  = "OTEL_SERVICE_NAME_PREFIX"
+	serviceName        = "OTEL_SERVICE_NAME"
+	defaultNamePrefix  = "m8"
+	otelEndpointEnvVar = "OTEL_EXPORTER_OTLP_ENDPOINT"
 )
 
 var (
@@ -89,11 +90,19 @@ func initTracerProvider(ctx context.Context) (func() error, error) {
 	log := logger.WithName("telemetry").WithValues("serviceName", serviceName, "version", version.Version, "instance", instanceKey)
 	otel.SetLogger(log)
 
-	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
+	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
+	if !exists {
+		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
+	}
 
-	log.V(logger.DebugLevel).Info("Initializing otlptracegrpc...")
-	spanExporter, err := otlptracegrpc.New(timeoutContext)
+	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
+	opts := []otlptracegrpc.Option{
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(endpoint),
+	}
+
+	client := otlptracegrpc.NewClient(opts...)
+	spanExporter, err := otlptrace.New(ctx, client)
 	if err != nil {
 		return nil, err
 	}
