@@ -16,6 +16,7 @@ package telemetry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -48,11 +49,12 @@ const (
 )
 
 var (
-	instanceKey = uuid.New().String()
+	instanceKey                = uuid.New().String()
+	ErrOpenTelemetryNotEnabled = errors.New("OTEL_ENABLED is not set to true")
 )
 
-// GetIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set to "true"
-func GetIsOpenTelemetryEnabled() bool {
+// getIsOpenTelemetryEnabled returns if environment variable OTEL_ENABLED is set to "true"
+func getIsOpenTelemetryEnabled() bool {
 	return os.Getenv(otelEnabled) == "true"
 }
 
@@ -75,6 +77,10 @@ func GetServiceName() string {
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	log := logger.WithName("telemetry").WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
 	otel.SetLogger(log)
+
+	if !getIsOpenTelemetryEnabled() {
+		return nil, ErrOpenTelemetryNotEnabled
+	}
 
 	// connect collector
 	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)

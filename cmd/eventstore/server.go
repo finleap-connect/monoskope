@@ -44,14 +44,12 @@ var serverCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		// Enable OpenTelemetry optionally
-		var shutdownTelemetry func() error
-		var err error
-		if telemetry.GetIsOpenTelemetryEnabled() {
-			log.Info("Initializing open telemetry...")
-			shutdownTelemetry, err = telemetry.InitOpenTelemetry(ctx)
-			if err != nil {
-				return err
-			}
+		log.Info("Initializing open telemetry...")
+		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+		if err != nil && err != telemetry.ErrOpenTelemetryNotEnabled {
+			return err
+		}
+		if shutdownTelemetry != nil {
 			defer util.PanicOnError(shutdownTelemetry())
 		}
 
