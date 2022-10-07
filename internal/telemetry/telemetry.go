@@ -103,6 +103,8 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	}
 
 	return func() error {
+		log.Info("Shutting down OpenTelemetry...")
+
 		if err := meterProviderShutdown(); err != nil {
 			return err
 		}
@@ -191,7 +193,7 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
-		sdktrace.WithBatcher(spanExporter),
+		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(spanExporter)),
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
