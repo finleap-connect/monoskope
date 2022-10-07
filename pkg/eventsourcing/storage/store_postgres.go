@@ -217,26 +217,21 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
-	ctx, span := telemetry.GetTracer().Start(ctx, "load")
-	defer span.End()
-
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQuery(storeQuery, dbQuery)
-	return s.doLoad(dbQuery)
+	return s.doLoad(ctx, dbQuery)
 }
 
 // LoadOr implements the LoadOr method of the EventStore interface.
 func (s *postgresEventStore) LoadOr(ctx context.Context, storeQueries []*evs.StoreQuery) (evs.EventStreamReceiver, error) {
-	ctx, span := telemetry.GetTracer().Start(ctx, "loadOr")
-	defer span.End()
-
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQueriesOr(storeQueries, dbQuery)
-	return s.doLoad(dbQuery)
+	return s.doLoad(ctx, dbQuery)
 }
 
-func (s *postgresEventStore) doLoad(dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
+func (s *postgresEventStore) doLoad(ctx context.Context, dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
 	eventStream := evs.NewEventStream()
+	_, span := telemetry.GetTracer().Start(ctx, "load")
 
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
@@ -245,6 +240,7 @@ func (s *postgresEventStore) doLoad(dbQuery *orm.Query) (evs.EventStreamReceiver
 	dbQuery.Order("timestamp ASC")
 	go func() {
 		defer eventStream.Done()
+		defer span.End()
 		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
 			eventStream.Send(pgEvent{
 				eventRecord: *e,
