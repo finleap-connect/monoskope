@@ -169,6 +169,8 @@ func initMeterProvider(ctx context.Context, conn *grpc.ClientConn, log logger.Lo
 		return nil, err
 	}
 
+	log.Info("Meter provider configured.")
+
 	return func() error {
 		if err := meterProvider.ForceFlush(ctx); err != nil {
 			return err
@@ -209,7 +211,7 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 	)
 	otel.SetTracerProvider(tracerProvider)
 
-	log.Info("OpenTelemetry configured.")
+	log.Info("Trace provider configured.")
 
 	return func() error {
 		if err := tracerProvider.ForceFlush(ctx); err != nil {
