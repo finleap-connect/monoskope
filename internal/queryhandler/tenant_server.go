@@ -47,6 +47,7 @@ func NewTenantServer(tenantRepo repositories.TenantRepository, tenantUserRepo re
 func NewTenantClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.TenantClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
+		WithOpenTelemetry().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)
