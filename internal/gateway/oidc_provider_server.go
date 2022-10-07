@@ -107,7 +107,7 @@ func (s *oidcProviderServer) Shutdown() {
 }
 
 func (s *oidcProviderServer) discovery(c *gin.Context) {
-	_, span := telemetry.GetTracer().Start(c.Request.Context(), "getOpenIDConfiguration")
+	_, span := telemetry.GetSpan(c.Request.Context(), "getOpenIDConfiguration")
 	defer span.End()
 	c.JSON(http.StatusOK, &OpenIdConfiguration{
 		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
@@ -116,7 +116,7 @@ func (s *oidcProviderServer) discovery(c *gin.Context) {
 }
 
 func (s *oidcProviderServer) keys(c *gin.Context) {
-	_, span := telemetry.GetTracer().Start(c.Request.Context(), "getKeys")
+	_, span := telemetry.GetSpan(c.Request.Context(), "getKeys")
 	defer span.End()
 	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
 	c.JSON(http.StatusOK, s.oidcServer.Keys())

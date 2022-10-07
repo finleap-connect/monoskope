@@ -58,7 +58,7 @@ func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.EventSt
 }
 
 func (u *StoreEventsUseCase) Run(ctx context.Context) error {
-	ctx, span := telemetry.GetTracer().Start(ctx, "store-events")
+	ctx, span := telemetry.GetSpan(ctx, "store-events")
 	defer span.End()
 
 	for {

@@ -130,7 +130,7 @@ func (s *postgresEventStore) Open(ctx context.Context) error {
 
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
-	ctx, span := telemetry.GetTracer().Start(ctx, "save")
+	ctx, span := telemetry.GetSpan(ctx, "save")
 	defer span.End()
 
 	if len(events) == 0 {
@@ -231,7 +231,7 @@ func (s *postgresEventStore) LoadOr(ctx context.Context, storeQueries []*evs.Sto
 
 func (s *postgresEventStore) doLoad(ctx context.Context, dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
 	eventStream := evs.NewEventStream()
-	_, span := telemetry.GetTracer().Start(ctx, "load")
+	_, span := telemetry.GetSpan(ctx, "load")
 
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed

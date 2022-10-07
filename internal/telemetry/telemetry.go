@@ -19,14 +19,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/contrib/instrumentation/host"
-	"go.opentelemetry.io/contrib/instrumentation/runtime"
+	instruntime "go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric/global"
@@ -46,6 +49,10 @@ const (
 	serviceName        = "OTEL_SERVICE_NAME"
 	defaultNamePrefix  = "m8"
 	otelEndpointEnvVar = "OTEL_EXPORTER_OTLP_ENDPOINT"
+
+	attrCodeFunctions = "code.function"
+	attrCodeFilePath  = "code.filepath"
+	attrCodeLineNo    = "code.lineno"
 )
 
 var (
@@ -128,6 +135,18 @@ func GetTracer() trace.Tracer {
 	return otel.Tracer(GetServiceName())
 }
 
+// GetSpan creates a span and a context.Context containing the newly-created span with default attributes set.
+func GetSpan(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	ctx, span := otel.Tracer(GetServiceName()).Start(ctx, spanName, opts...)
+	fn, file, line := funcFileLine()
+	span.SetAttributes(
+		attribute.String(attrCodeFunctions, fn),
+		attribute.String(attrCodeFilePath, file),
+		attribute.Int(attrCodeLineNo, line),
+	)
+	return ctx, span
+}
+
 func getResource() (*resource.Resource, error) {
 	res, err := resource.Merge(
 		resource.Default(),
@@ -164,7 +183,7 @@ func initMeterProvider(ctx context.Context, conn *grpc.ClientConn, log logger.Lo
 		return nil, err
 	}
 
-	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
+	err = instruntime.Start(instruntime.WithMinimumReadMemStatsInterval(time.Second))
 	if err != nil {
 		return nil, err
 	}
@@ -221,4 +240,27 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 		}
 		return nil
 	}, nil
+}
+
+func funcFileLine() (string, string, int) {
+	const depth = 16
+	var pcs [depth]uintptr
+	n := runtime.Callers(3, pcs[:])
+	ff := runtime.CallersFrames(pcs[:n])
+
+	var fn, file string
+	var line int
+	for {
+		f, ok := ff.Next()
+		if !ok {
+			break
+		}
+		fn, file, line = f.Function, f.File, f.Line
+	}
+
+	if ind := strings.LastIndexByte(fn, '/'); ind != -1 {
+		fn = fn[ind+1:]
+	}
+
+	return fn, file, line
 }

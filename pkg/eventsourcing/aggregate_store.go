@@ -61,7 +61,7 @@ func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) (
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.All", trace.WithAttributes(
+	ctx, span := telemetry.GetSpan(ctx, "AggregateStore.All", trace.WithAttributes(
 		attribute.String("AggregateType", aggregateType.String()),
 	))
 	defer span.End()
@@ -141,7 +141,10 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.Get")
+	ctx, span := telemetry.GetSpan(ctx, "AggregateStore.Get", trace.WithAttributes(
+		attribute.String("AggregateType", aggregateType.String()),
+		attribute.String("AggregateID", id.String()),
+	))
 	defer span.End()
 
 	// Retrieve events from store
@@ -207,7 +210,7 @@ func (r *aggregateStore) Update(ctx context.Context, aggregate Aggregate) error 
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.Update", trace.WithAttributes(
+	ctx, span := telemetry.GetSpan(ctx, "AggregateStore.Update", trace.WithAttributes(
 		attribute.String("AggregateType", aggregate.Type().String()),
 		attribute.String("AggregateID", aggregate.ID().String()),
 	))

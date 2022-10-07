@@ -59,7 +59,7 @@ func newRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.E
 }
 
 func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
-	ctx, span := telemetry.GetTracer().Start(ctx, "retrieve-events")
+	ctx, span := telemetry.GetSpan(ctx, "retrieve-events")
 	defer span.End()
 
 	// Convert filters

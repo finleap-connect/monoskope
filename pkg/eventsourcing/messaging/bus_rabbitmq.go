@@ -94,7 +94,7 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) error {
-	ctx, span := telemetry.GetTracer().Start(ctx, "RabbitEventBus.PublishEvent", trace.WithAttributes(
+	ctx, span := telemetry.GetSpan(ctx, "RabbitEventBus.PublishEvent", trace.WithAttributes(
 		attribute.String("EventType", event.EventType().String()),
 		attribute.String("AggregateType", event.AggregateType().String()),
 		attribute.String("AggregateID", event.AggregateID().String()),
@@ -239,7 +239,7 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on handler result
 func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, d amqp.Delivery, handler evs.EventHandler) bool {
-	ctx, span := telemetry.GetTracer().Start(ctx, "RabbitEventBus.handleIncomingMessages")
+	ctx, span := telemetry.GetSpan(ctx, "RabbitEventBus.handleIncomingMessages")
 	defer span.End()
 
 	re := &rabbitEvent{}

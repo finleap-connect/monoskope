@@ -41,7 +41,7 @@ func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Comm
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	ctx, span := telemetry.GetTracer().Start(ctx, "StoringAggregateHandler.HandleCommand", trace.WithAttributes(
+	ctx, span := telemetry.GetSpan(ctx, "StoringAggregateHandler.HandleCommand", trace.WithAttributes(
 		attribute.String("AggregateType", cmd.AggregateType().String()),
 		attribute.String("AggregateID", cmd.AggregateID().String()),
 	))
