@@ -22,6 +22,7 @@ import (
 	"time"
 
 	grpc_validator_wrapper "github.com/finleap-connect/monoskope/pkg/grpc/middleware/validator"
+	"go.uber.org/zap/zapgrpc"
 
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/metrics"
@@ -34,7 +35,6 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
@@ -67,7 +67,7 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 	}
 
 	settableLogger := grpc_logsettable.ReplaceGrpcLoggerV2()
-	settableLogger.Set(grpclog.NewLoggerV2(logger.NewGrpcLog(s.log, logger.InfoLevel), logger.NewGrpcLog(s.log, logger.WarnLevel), logger.NewGrpcLog(s.log, logger.ErrorLevel)))
+	settableLogger.Set(zapgrpc.NewLogger(logger.GetZapLogger()))
 
 	// Add default interceptors
 	unaryServerInterceptors = append(unaryServerInterceptors,

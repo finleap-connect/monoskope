@@ -65,6 +65,10 @@ func init() {
 	}
 }
 
+func GetZapLogger() *zap.Logger {
+	return zapLog
+}
+
 func WithOpenTelemetry() *otelzap.Logger {
 	return otelzap.New(zapLog)
 }
@@ -75,26 +79,4 @@ func WithOptions(opts ...zap.Option) Logger {
 
 func WithName(name string) Logger {
 	return WithOptions(zap.AddCaller()).WithName(name)
-}
-
-type grpcLog struct {
-	log   Logger
-	level LogLevel
-}
-
-func (l *grpcLog) Write(p []byte) (n int, err error) {
-	message := string(p)
-	switch l.level {
-	case InfoLevel:
-		l.log.V(DebugLevel).WithValues("level", InfoLevel).Info(message)
-	case WarnLevel:
-		l.log.WithValues("level", WarnLevel).Info(message)
-	case ErrorLevel:
-		l.log.WithValues("level", ErrorLevel).Error(fmt.Errorf(message), message)
-	}
-	return len(p), nil
-}
-
-func NewGrpcLog(log Logger, level LogLevel) *grpcLog {
-	return &grpcLog{log: log, level: level}
 }
