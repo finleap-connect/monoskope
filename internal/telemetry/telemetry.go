@@ -198,7 +198,7 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(spanExporter)),
+		sdktrace.WithBatcher(spanExporter),
 	)
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetTextMapPropagator(
