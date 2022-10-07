@@ -210,7 +210,6 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 		),
 	)
 	otel.SetTracerProvider(tracerProvider)
-
 	log.Info("Trace provider configured.")
 
 	return func() error {

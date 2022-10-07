@@ -76,7 +76,6 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 
 	// Retrieve events from Event Store
 	u.Log.V(logger.DebugLevel).Info("Retrieving events from the database...")
-	span.AddEvent("Retrieving events from the database")
 	eventStream, err := u.load(ctx, sqs)
 	if err != nil {
 		span.RecordError(err)

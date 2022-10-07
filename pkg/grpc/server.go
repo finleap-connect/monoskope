@@ -30,7 +30,6 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	grpc_tracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -75,7 +74,6 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.UnaryServerInterceptor(), // add message validator
 		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
-		grpc_tracing.UnaryServerInterceptor(),
 		otelgrpc.UnaryServerInterceptor(),
 	)
 	streamServerInterceptors = append(streamServerInterceptors,
@@ -85,7 +83,6 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.StreamServerInterceptor(), // add message validator
 		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
-		grpc_tracing.StreamServerInterceptor(),
 		otelgrpc.StreamServerInterceptor(),
 	)
 

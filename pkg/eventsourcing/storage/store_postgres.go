@@ -359,11 +359,11 @@ func (s *postgresEventStore) connect() (*pg.DB, error) {
 	s.log.Info("Attempting to connect...")
 
 	db := pg.Connect(s.conf.pgOptions)
+	db.AddQueryHook(pgotel.NewTracingHook())
+
 	if err := db.Ping(s.ctx); err != nil {
 		return nil, err
 	}
-
-	db.AddQueryHook(pgotel.NewTracingHook())
 
 	s.db = db
 	s.log.Info("Connection established.")
