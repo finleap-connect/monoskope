@@ -104,7 +104,6 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 
 	return func() error {
 		log.Info("Shutting down OpenTelemetry...")
-
 		if err := meterProviderShutdown(); err != nil {
 			return err
 		}

@@ -40,14 +40,15 @@ var serverCmd = &cobra.Command{
 	Short: "Starts the server",
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var err error
 		log := logger.WithName("server-cmd")
 		ctx := cmd.Context()
 
 		// Enable OpenTelemetry optionally
+		var shutdownTelemetry func() error
+		var err error
 		if telemetry.GetIsOpenTelemetryEnabled() {
 			log.Info("Initializing open telemetry...")
-			shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+			shutdownTelemetry, err = telemetry.InitOpenTelemetry(ctx)
 			if err != nil {
 				return err
 			}
@@ -61,7 +62,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure message bus publisher.")
 			return err
 		}
-		defer publisher.Close()
+		defer util.PanicOnError(publisher.Close())
 
 		// init event store
 		log.Info("Setting up event store...")
@@ -70,7 +71,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure event store.")
 			return err
 		}
-		defer store.Close()
+		defer util.PanicOnError(store.Close())
 
 		// Create the server
 		log.Info("Creating gRPC server...")
