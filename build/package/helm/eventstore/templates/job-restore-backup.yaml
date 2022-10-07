@@ -1,3 +1,4 @@
+{{- $merged := merge (deepCopy .Values) (deepCopy (default (dict) .Values.global)) -}}
 {{ if .Values.backup.restore.enabled }}
 apiVersion: batch/v1
 kind: Job
@@ -5,7 +6,7 @@ metadata:
   name: {{ include "eventstore.fullname" . }}-restore
   labels:
     {{- include "eventstore.labels" . | nindent 4 }}
-    {{- with (.Values.labels | default .Values.global.labels) }}
+    {{- with $merged.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
@@ -19,13 +20,15 @@ spec:
   template:
     metadata:
       annotations:
-        linkerd.io/inject: disabled
       {{- with $merged.podAnnotations }}
+        {{- toYaml . | nindent 12 }}
+      {{- end }}
+      {{- with .Values.backup.podAnnotations }}
         {{- toYaml . | nindent 12 }}
       {{- end }}
       labels:
         {{- include "eventstore.selectorLabels" . | nindent 8 }}
-        {{- with (.Values.labels | default .Values.global.labels) }}
+        {{- with $merged.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:

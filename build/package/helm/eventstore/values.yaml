@@ -106,6 +106,8 @@ storeDatabase:
   tlsSecret: ""
 
 backup:
+  podAnnotations:
+    linkerd.io/inject: disabled
   # -- Enables automated backups for the eventstore
   enabled: false
   alerting:
