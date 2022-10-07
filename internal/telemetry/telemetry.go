@@ -200,13 +200,14 @@ func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.L
 		sdktrace.WithResource(res),
 		sdktrace.WithBatcher(spanExporter),
 	)
-	otel.SetTracerProvider(tracerProvider)
+
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},
 			propagation.Baggage{},
 		),
 	)
+	otel.SetTracerProvider(tracerProvider)
 
 	log.Info("OpenTelemetry configured.")
 
