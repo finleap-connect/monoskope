@@ -54,8 +54,12 @@ require (
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-pg/pg/extra/pgotel/v10 v10.10.6
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.1
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.32.1
+	go.opentelemetry.io/otel/metric v0.32.1
+	go.opentelemetry.io/otel/sdk/metric v0.32.1
 	go.opentelemetry.io/otel/trace v1.10.0
 	k8s.io/api v0.25.2
 	k8s.io/cli-runtime v0.25.2
@@ -157,6 +161,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.10.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.32.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect

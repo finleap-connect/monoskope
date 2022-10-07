@@ -21,9 +21,11 @@ import (
 	"math"
 	"time"
 
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/go-pg/pg/extra/pgotel/v10"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
@@ -128,6 +130,9 @@ func (s *postgresEventStore) Open(ctx context.Context) error {
 
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
+	ctx, span := telemetry.GetTracer().Start(ctx, "save")
+	defer span.End()
+
 	if len(events) == 0 {
 		return errors.ErrNoEventsToAppend
 	}
@@ -212,6 +217,9 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 
 // Load implements the Load method of the EventStore interface.
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	ctx, span := telemetry.GetTracer().Start(ctx, "load")
+	defer span.End()
+
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQuery(storeQuery, dbQuery)
 	return s.doLoad(dbQuery)
@@ -219,6 +227,9 @@ func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuer
 
 // LoadOr implements the LoadOr method of the EventStore interface.
 func (s *postgresEventStore) LoadOr(ctx context.Context, storeQueries []*evs.StoreQuery) (evs.EventStreamReceiver, error) {
+	ctx, span := telemetry.GetTracer().Start(ctx, "loadOr")
+	defer span.End()
+
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQueriesOr(storeQueries, dbQuery)
 	return s.doLoad(dbQuery)
@@ -351,6 +362,8 @@ func (s *postgresEventStore) connect() (*pg.DB, error) {
 	if err := db.Ping(s.ctx); err != nil {
 		return nil, err
 	}
+
+	db.AddQueryHook(pgotel.NewTracingHook())
 
 	s.db = db
 	s.log.Info("Connection established.")

@@ -46,16 +46,16 @@ type oidcProviderServer struct {
 
 // NewOIDCProviderServer creates a basic OIDC provider server
 func NewOIDCProviderServer(oidcServer *auth.Server) *oidcProviderServer {
-	engine := gin.Default()
+	r := gin.Default()
 	s := &oidcProviderServer{
-		api:        &http.Server{Handler: engine},
-		engine:     engine,
+		api:        &http.Server{Handler: r},
+		engine:     r,
 		log:        logger.WithName("auth-server"),
 		shutdown:   util.NewShutdownWaitGroup(),
 		oidcServer: oidcServer,
 	}
-	engine.Use(cors.Default())
-	engine.Use(otelgin.Middleware("auth-server"))
+	r.Use(cors.Default())
+	r.Use(otelgin.Middleware("auth-server"))
 	return s
 }
 
@@ -107,7 +107,7 @@ func (s *oidcProviderServer) Shutdown() {
 }
 
 func (s *oidcProviderServer) discovery(c *gin.Context) {
-	_, span := telemetry.GetTracer().Start(c.Request.Context(), "get-openid-configuration")
+	_, span := telemetry.GetTracer().Start(c.Request.Context(), "getOpenIDConfiguration")
 	defer span.End()
 	c.JSON(http.StatusOK, &OpenIdConfiguration{
 		Issuer:  fmt.Sprintf("https://%s", c.Request.Host),
@@ -116,7 +116,7 @@ func (s *oidcProviderServer) discovery(c *gin.Context) {
 }
 
 func (s *oidcProviderServer) keys(c *gin.Context) {
-	_, span := telemetry.GetTracer().Start(c.Request.Context(), "get-keys")
+	_, span := telemetry.GetTracer().Start(c.Request.Context(), "getKeys")
 	defer span.End()
 	c.Writer.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, must-revalidate", int(60*60*24)))
 	c.JSON(http.StatusOK, s.oidcServer.Keys())

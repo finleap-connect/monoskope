@@ -25,8 +25,11 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -72,12 +75,20 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	log := logger.WithName("telemetry").WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
 	otel.SetLogger(log)
 
+	meterProviderShutdown, err := initMeterProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	tracerProviderShutdown, err := initTracerProvider(ctx, log)
 	if err != nil {
 		return nil, err
 	}
 
 	return func() error {
+		if err := meterProviderShutdown(); err != nil {
+			return err
+		}
 		if err := tracerProviderShutdown(); err != nil {
 			return err
 		}
@@ -103,6 +114,19 @@ func getResource() (*resource.Resource, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+// initMeterProvider configures and sets the global MeterProvider
+func initMeterProvider(ctx context.Context) (func() error, error) {
+	meterExporter, err := otlpmetricgrpc.New(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(meterExporter)))
+	global.SetMeterProvider(meterProvider)
+
+	return func() error { return meterProvider.Shutdown(ctx) }, nil
 }
 
 // initTracerProvider configures and sets the global TracerProvider
