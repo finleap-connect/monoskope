@@ -20,12 +20,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	rabbitmq "github.com/finleap-connect/monoskope/pkg/rabbitmq"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // rabbitEventBus implements an EventBus using RabbitMQ.
@@ -91,6 +94,14 @@ func NewRabbitEventBusConsumer(conf *RabbitEventBusConfig) (evs.EventBusConsumer
 
 // PublishEvent publishes the event on the bus.
 func (b *rabbitEventBus) PublishEvent(ctx context.Context, event evs.Event) error {
+	ctx, span := telemetry.GetTracer().Start(ctx, "RabbitEventBus.PublishEvent", trace.WithAttributes(
+		attribute.String("EventType", event.EventType().String()),
+		attribute.String("AggregateType", event.AggregateType().String()),
+		attribute.String("AggregateID", event.AggregateID().String()),
+		attribute.Int64("AggregateVersion", int64(event.AggregateVersion())),
+	))
+	defer span.End()
+
 	re := &rabbitMessage{
 		EventType:        event.EventType(),
 		Data:             event.Data(),
@@ -228,12 +239,22 @@ func (b *rabbitEventBus) generateRoutingKey(event evs.Event) string {
 
 // handleIncomingMessages handles the routing of the received messages and ack/nack based on handler result
 func (b *rabbitEventBus) handleIncomingMessages(ctx context.Context, d amqp.Delivery, handler evs.EventHandler) bool {
+	ctx, span := telemetry.GetTracer().Start(ctx, "RabbitEventBus.handleIncomingMessages")
+	defer span.End()
+
 	re := &rabbitEvent{}
 	err := json.Unmarshal(d.Body, re)
 	if err != nil {
 		b.log.Error(err, "Failed to unmarshal event.", "event", d.Body)
 		return false
 	}
+
+	span.SetAttributes(
+		attribute.String("EventType", re.EventType().String()),
+		attribute.String("AggregateType", re.AggregateType().String()),
+		attribute.String("AggregateID", re.AggregateID().String()),
+		attribute.Int64("AggregateVersion", int64(re.AggregateVersion())),
+	)
 
 	err = handler.HandleEvent(ctx, re)
 	if err != nil {

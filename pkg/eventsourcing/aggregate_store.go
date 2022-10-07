@@ -19,8 +19,11 @@ import (
 	"io"
 	"sync"
 
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -57,6 +60,11 @@ func NewAggregateManager(aggregateRegistry AggregateRegistry, eventStoreClient e
 func (r *aggregateStore) All(ctx context.Context, aggregateType AggregateType) ([]Aggregate, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+
+	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.All", trace.WithAttributes(
+		attribute.String("AggregateType", aggregateType.String()),
+	))
+	defer span.End()
 
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
@@ -133,6 +141,9 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
+	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.Get")
+	defer span.End()
+
 	// Retrieve events from store
 	stream, err := r.esClient.Retrieve(ctx, &esApi.EventFilter{
 		AggregateId:   wrapperspb.String(id.String()),
@@ -195,6 +206,12 @@ func (r *aggregateStore) Get(ctx context.Context, aggregateType AggregateType, i
 func (r *aggregateStore) Update(ctx context.Context, aggregate Aggregate) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+
+	ctx, span := telemetry.GetTracer().Start(ctx, "AggregateStore.Update", trace.WithAttributes(
+		attribute.String("AggregateType", aggregate.Type().String()),
+		attribute.String("AggregateID", aggregate.ID().String()),
+	))
+	defer span.End()
 
 	events := aggregate.UncommittedEvents()
 
