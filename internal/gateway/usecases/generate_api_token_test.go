@@ -43,7 +43,7 @@ var _ = Describe("GenerateAPIToken", func() {
 
 	jwtTestEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestGenerateAPIToken"))
 	Expect(err).NotTo(HaveOccurred())
-	defer util.PanicOnError(jwtTestEnv.Shutdown())
+	defer util.PanicOnErrorFunc(jwtTestEnv.Shutdown)
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())

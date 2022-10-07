@@ -63,7 +63,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		if shutdownTelemetry != nil {
-			defer util.PanicOnError(shutdownTelemetry())
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
 		}
 
 		// Create EventStore client
@@ -72,7 +72,7 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer esConnection.Close()
+		defer util.PanicOnErrorFunc(esConnection.Close)
 
 		// init message bus consumer
 		log.Info("Setting up message bus consumer...")
@@ -80,7 +80,7 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer ebConsumer.Close()
+		defer util.PanicOnErrorFunc(ebConsumer.Close)
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
@@ -96,7 +96,8 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
+
 		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
 		// Create gRPC server and register implementation
@@ -120,7 +121,7 @@ var serverCmd = &cobra.Command{
 			if err := k8sAuthZManager.Run(ctx, conf); err != nil {
 				return err
 			}
-			defer k8sAuthZManager.Close()
+			defer util.PanicOnErrorFunc(k8sAuthZManager.Close)
 		}
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {

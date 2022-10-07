@@ -65,7 +65,7 @@ var backupCmd = &cobra.Command{
 		} else {
 			metricsPublisher = backup.NewNoopMetricsPublisher()
 		}
-		defer util.PanicOnError(metricsPublisher.CloseAndPush())
+		defer util.PanicOnErrorFunc(metricsPublisher.CloseAndPush)
 
 		// setup backup management
 		log.Info("Setting up backup manager...")

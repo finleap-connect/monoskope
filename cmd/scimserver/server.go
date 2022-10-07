@@ -56,7 +56,7 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 		if shutdownTelemetry != nil {
-			defer util.PanicOnError(shutdownTelemetry())
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
 		}
 
 		// Create CommandHandler client
@@ -65,7 +65,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
 
 		// Create User client
 		log.Info("Connecting queryhandler...", "queryHandlerAddr", queryHandlerAddr)
@@ -73,7 +73,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
 
 		// Add readiness check
 		health := healthcheck.NewHandler()
@@ -83,7 +83,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer healthListener.Close()
+		defer util.PanicOnErrorFunc(healthListener.Close)
 
 		// Set up SCIM server
 		log.Info("Setting up SCIM server...")
@@ -92,7 +92,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer scimListener.Close()
+		defer util.PanicOnErrorFunc(scimListener.Close)
 
 		shutdown := util.NewShutdownWaitGroup()
 

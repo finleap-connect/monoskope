@@ -50,7 +50,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		if shutdownTelemetry != nil {
-			defer util.PanicOnError(shutdownTelemetry())
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
 		}
 
 		// init message bus publisher
@@ -60,7 +60,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure message bus publisher.")
 			return err
 		}
-		defer util.PanicOnError(publisher.Close())
+		defer util.PanicOnErrorFunc(publisher.Close)
 
 		// init event store
 		log.Info("Setting up event store...")
@@ -69,7 +69,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure event store.")
 			return err
 		}
-		defer util.PanicOnError(store.Close())
+		defer util.PanicOnErrorFunc(store.Close)
 
 		// Create the server
 		log.Info("Creating gRPC server...")

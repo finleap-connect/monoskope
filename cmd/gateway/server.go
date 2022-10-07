@@ -78,7 +78,7 @@ var serverCmd = &cobra.Command{
 			return err
 		}
 		if shutdownTelemetry != nil {
-			defer util.PanicOnError(shutdownTelemetry())
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
 		}
 
 		authClientConfig := auth.ClientConfig{
