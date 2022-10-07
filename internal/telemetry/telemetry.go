@@ -22,7 +22,6 @@ import (
 
 	"github.com/finleap-connect/monoskope/internal/version"
 	"github.com/finleap-connect/monoskope/pkg/logger"
-	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
@@ -77,12 +76,28 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	log := logger.WithName("telemetry").WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
 	otel.SetLogger(log)
 
-	meterProviderShutdown, err := initMeterProvider(ctx)
+	// connect collector
+	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
+	if !exists {
+		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
+	}
+
+	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
+	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		log.Error(err, "unable to connect to OpenTelemetry collector", "endpoint", endpoint)
+		return nil, err
+	}
+
+	meterProviderShutdown, err := initMeterProvider(ctx, conn, log)
 	if err != nil {
 		return nil, err
 	}
 
-	tracerProviderShutdown, err := initTracerProvider(ctx, log)
+	tracerProviderShutdown, err := initTracerProvider(ctx, conn, log)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +107,9 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 			return err
 		}
 		if err := tracerProviderShutdown(); err != nil {
+			return err
+		}
+		if err := conn.Close(); err != nil {
 			return err
 		}
 		return nil
@@ -119,14 +137,14 @@ func getResource() (*resource.Resource, error) {
 }
 
 // initMeterProvider configures and sets the global MeterProvider
-func initMeterProvider(ctx context.Context) (func() error, error) {
+func initMeterProvider(ctx context.Context, conn *grpc.ClientConn, log logger.Logger) (func() error, error) {
 	// get resource
 	res, err := getResource()
 	if err != nil {
 		return nil, err
 	}
 
-	meterExporter, err := otlpmetricgrpc.New(ctx)
+	meterExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn))
 	if err != nil {
 		return nil, err
 	}
@@ -144,37 +162,27 @@ func initMeterProvider(ctx context.Context) (func() error, error) {
 		return nil, err
 	}
 
-	return func() error { return meterProvider.Shutdown(ctx) }, nil
+	return func() error {
+		if err := meterProvider.ForceFlush(ctx); err != nil {
+			return err
+		}
+		if err := meterProvider.Shutdown(ctx); err != nil {
+			return err
+		}
+		return nil
+	}, nil
 }
 
 // initTracerProvider configures and sets the global TracerProvider
-func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, error) {
+func initTracerProvider(ctx context.Context, conn *grpc.ClientConn, log logger.Logger) (func() error, error) {
 	// get resource
 	res, err := getResource()
 	if err != nil {
 		return nil, err
 	}
 
-	// connect collector
-	endpoint, exists := os.LookupEnv(otelEndpointEnvVar)
-	if !exists {
-		return nil, fmt.Errorf("%s env var must be set", otelEndpointEnvVar)
-	}
-
-	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
-	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		log.Error(err, "unable to connect to OpenTelemetry collector", "endpoint", endpoint)
-		return nil, err
-	}
-
 	// create exporter
-	spanExporter, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithGRPCConn(conn),
-	)
+	spanExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
 		return nil, err
 	}
@@ -196,8 +204,12 @@ func initTracerProvider(ctx context.Context, log logger.Logger) (func() error, e
 	log.Info("OpenTelemetry configured.")
 
 	return func() error {
-		util.PanicOnError(tracerProvider.ForceFlush(ctx))
-		defer util.PanicOnError(conn.Close())
-		return tracerProvider.Shutdown(ctx)
+		if err := tracerProvider.ForceFlush(ctx); err != nil {
+			return err
+		}
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			return err
+		}
+		return nil
 	}, nil
 }
