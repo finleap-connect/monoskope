@@ -23,7 +23,7 @@ spec:
       {{- include "eventstore.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- with $merged.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

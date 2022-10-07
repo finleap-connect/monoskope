@@ -20,7 +20,7 @@ spec:
     metadata:
       annotations:
         linkerd.io/inject: disabled
-      {{- with .Values.podAnnotations }}
+      {{- with $merged.podAnnotations }}
         {{- toYaml . | nindent 12 }}
       {{- end }}
       labels:
