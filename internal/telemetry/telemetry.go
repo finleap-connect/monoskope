@@ -24,6 +24,8 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/contrib/instrumentation/host"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -118,13 +120,29 @@ func getResource() (*resource.Resource, error) {
 
 // initMeterProvider configures and sets the global MeterProvider
 func initMeterProvider(ctx context.Context) (func() error, error) {
-	meterExporter, err := otlpmetricgrpc.New(ctx)
+	// get resource
+	res, err := getResource()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(meterExporter)))
+	meterExporter, err := otlpmetricgrpc.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	meterProvider := metric.NewMeterProvider(metric.WithResource(res), metric.WithReader(metric.NewPeriodicReader(meterExporter)))
 	global.SetMeterProvider(meterProvider)
+
+	err = host.Start(host.WithMeterProvider(meterProvider))
+	if err != nil {
+		return nil, err
+	}
+
+	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
+	if err != nil {
+		return nil, err
+	}
 
 	return func() error { return meterProvider.Shutdown(ctx) }, nil
 }

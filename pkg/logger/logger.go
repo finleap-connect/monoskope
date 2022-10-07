@@ -20,6 +20,7 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/operation"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/uptrace/opentelemetry-go-extra/otelzap"
 	"go.uber.org/zap"
 )
 
@@ -64,11 +65,15 @@ func init() {
 	}
 }
 
-func WithOptions(opts ...zap.Option) logr.Logger {
+func WithOpenTelemetry() *otelzap.Logger {
+	return otelzap.New(zapLog)
+}
+
+func WithOptions(opts ...zap.Option) Logger {
 	return zapr.NewLogger(zapLog.WithOptions(opts...))
 }
 
-func WithName(name string) logr.Logger {
+func WithName(name string) Logger {
 	return WithOptions(zap.AddCaller()).WithName(name)
 }
 
