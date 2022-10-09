@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
-	github.com/envoyproxy/protoc-gen-validate v0.6.8
+	github.com/envoyproxy/protoc-gen-validate v0.6.13
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
