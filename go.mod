@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/aws/aws-sdk-go v1.44.114
+	github.com/aws/aws-sdk-go v1.44.116
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
