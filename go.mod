@@ -44,14 +44,14 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.25.3
-	k8s.io/client-go v0.25.2 // indirect
+	k8s.io/client-go v0.25.3 // indirect
 	sigs.k8s.io/controller-runtime v0.13.0
 )
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
-	k8s.io/api v0.25.2
-	k8s.io/cli-runtime v0.25.2
+	k8s.io/api v0.25.3
+	k8s.io/cli-runtime v0.25.3
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 )
 
