@@ -9,7 +9,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/elimity-com/scim v0.0.0-20220121082953-15165b1a61c8
 	github.com/envoyproxy/protoc-gen-validate v0.6.13
-	github.com/fsnotify/fsnotify v1.5.4
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-logr/logr v1.2.3
@@ -36,7 +36,7 @@ require (
 	go.uber.org/zap v1.23.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	golang.org/x/sys v0.0.0-20220908150016-7ac13a9a928d // indirect
+	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
