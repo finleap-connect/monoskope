@@ -53,6 +53,7 @@ const (
 	attrCodeFunctions = "code.function"
 	attrCodeFilePath  = "code.filepath"
 	attrCodeLineNo    = "code.lineno"
+	pkg               = "github.com/finleap-connect/monoskope/internal/telemetry"
 )
 
 var (
@@ -256,6 +257,9 @@ func funcFileLine() (string, string, int) {
 			break
 		}
 		fn, file, line = f.Function, f.File, f.Line
+		if !strings.Contains(fn, pkg) {
+			break
+		}
 	}
 
 	if ind := strings.LastIndexByte(fn, '/'); ind != -1 {
