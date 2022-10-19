@@ -28,6 +28,6 @@ to your KubeAPIServer. You will find the CA in the kubeconfig file for this clus
 
 Example:
 
-* `grep certificate-authority-data ~/.kube/kubeconfig.yaml | awk '{print $2}' | base64 -d > /tmp/cluster-ca.crt`
-* `KUBE_API_SERVER_ADDRESS=$(grep server ~/.kube/kubeconfig.yaml | awk '{print $2}')`
+* `cat $KUBECONFIG | yq ".clusters[0].cluster.certificate-authority-data" | base64 -d > /tmp/cluster-ca.crt`
+* `KUBE_API_SERVER_ADDRESS=$(cat $KUBECONFIG | yq ".clusters[0].cluster.server")` 
 * `monoctl create cluster $KUBE_API_SERVER_ADDRESS /tmp/cluster-ca.crt -n mycluster`
