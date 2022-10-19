@@ -32,7 +32,7 @@ spec:
           {{- end }}
           labels:
             {{- include "eventstore.selectorLabels" . | nindent 12 }}
-            {{- with  $merged }}
+            {{- with $merged.labels }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
         spec:
