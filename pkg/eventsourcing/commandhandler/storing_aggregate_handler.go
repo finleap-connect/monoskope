@@ -18,7 +18,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type storingAggregateHandler struct {
@@ -37,6 +40,12 @@ func NewAggregateHandler(aggregateManager es.AggregateStore) es.CommandHandler {
 func (h *storingAggregateHandler) HandleCommand(ctx context.Context, cmd es.Command) (*es.CommandReply, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
+
+	ctx, span := telemetry.GetSpan(ctx, "StoringAggregateHandler.HandleCommand", trace.WithAttributes(
+		attribute.String("AggregateType", cmd.AggregateType().String()),
+		attribute.String("AggregateID", cmd.AggregateID().String()),
+	))
+	defer span.End()
 
 	var err error
 	var aggregate es.Aggregate

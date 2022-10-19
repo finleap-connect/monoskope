@@ -21,9 +21,11 @@ import (
 	"math"
 	"time"
 
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	evs "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/eventsourcing/errors"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/go-pg/pg/extra/pgotel/v10"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
@@ -128,6 +130,9 @@ func (s *postgresEventStore) Open(ctx context.Context) error {
 
 // Save implements the Save method of the EventStore interface.
 func (s *postgresEventStore) Save(ctx context.Context, events []evs.Event) error {
+	ctx, span := telemetry.GetSpan(ctx, "save")
+	defer span.End()
+
 	if len(events) == 0 {
 		return errors.ErrNoEventsToAppend
 	}
@@ -214,18 +219,19 @@ func retryWithExponentialBackoff(attempts int, initialBackoff time.Duration, f f
 func (s *postgresEventStore) Load(ctx context.Context, storeQuery *evs.StoreQuery) (evs.EventStreamReceiver, error) {
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQuery(storeQuery, dbQuery)
-	return s.doLoad(dbQuery)
+	return s.doLoad(ctx, dbQuery)
 }
 
 // LoadOr implements the LoadOr method of the EventStore interface.
 func (s *postgresEventStore) LoadOr(ctx context.Context, storeQueries []*evs.StoreQuery) (evs.EventStreamReceiver, error) {
 	dbQuery := s.db.WithContext(ctx).Model((*eventRecord)(nil))
 	mapStoreQueriesOr(storeQueries, dbQuery)
-	return s.doLoad(dbQuery)
+	return s.doLoad(ctx, dbQuery)
 }
 
-func (s *postgresEventStore) doLoad(dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
+func (s *postgresEventStore) doLoad(ctx context.Context, dbQuery *orm.Query) (evs.EventStreamReceiver, error) {
 	eventStream := evs.NewEventStream()
+	_, span := telemetry.GetSpan(ctx, "load")
 
 	if !s.isConnected {
 		return nil, errors.ErrConnectionClosed
@@ -234,6 +240,7 @@ func (s *postgresEventStore) doLoad(dbQuery *orm.Query) (evs.EventStreamReceiver
 	dbQuery.Order("timestamp ASC")
 	go func() {
 		defer eventStream.Done()
+		defer span.End()
 		err := dbQuery.ForEach(func(e *eventRecord) (err error) {
 			eventStream.Send(pgEvent{
 				eventRecord: *e,
@@ -348,6 +355,8 @@ func (s *postgresEventStore) connect() (*pg.DB, error) {
 	s.log.Info("Attempting to connect...")
 
 	db := pg.Connect(s.conf.pgOptions)
+	db.AddQueryHook(pgotel.NewTracingHook())
+
 	if err := db.Ping(s.ctx); err != nil {
 		return nil, err
 	}

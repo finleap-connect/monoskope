@@ -1,3 +1,4 @@
+{{- $merged := merge (deepCopy .Values) (deepCopy (default (dict) .Values.global)) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,7 +22,7 @@ spec:
       {{- include "commandhandler.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- with $merged.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -77,9 +78,15 @@ spec:
             - secretRef:
                 name: {{ include "commandhandler.fullname" . }}-users
                 optional: true
+          {{- if (dig "enabled" "" $merged.openTelemetry) }}
+            - configMapRef:
+                name: {{ dig "configMapName" "" $merged.openTelemetry }}
+          {{- end }}
           env:
             - name: M8_OPERATION_MODE
               value: {{ .Values.operationMode | default .Values.global.operationMode | default "release" }}
+            - name: OTEL_ENABLED
+              value: {{ (dig "enabled" "false" $merged.openTelemetry) | quote }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}

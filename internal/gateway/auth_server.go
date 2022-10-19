@@ -84,6 +84,7 @@ func (c *authServerClientInternal) Check(ctx context.Context, req *gateway.Check
 func NewInsecureAuthServerClient(ctx context.Context, gatewayAddr string) (*grpc.ClientConn, gateway.GatewayAuthClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithInsecure(gatewayAddr).
+		WithOpenTelemetry().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, err

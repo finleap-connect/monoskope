@@ -15,10 +15,9 @@
 package main
 
 import (
-	"context"
-
 	ef "github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/grpc/middleware/auth"
+	"github.com/finleap-connect/monoskope/pkg/util"
 
 	qhApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commonApi "github.com/finleap-connect/monoskope/pkg/api/domain/common"
@@ -33,6 +32,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/k8sauthz"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
 	"github.com/finleap-connect/monoskope/internal/queryhandler"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 )
@@ -54,7 +54,17 @@ var serverCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		log := logger.WithName("server-cmd")
-		ctx := context.Background()
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		log.Info("Initializing open telemetry...")
+		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+		if err != nil && err != telemetry.ErrOpenTelemetryNotEnabled {
+			return err
+		}
+		if shutdownTelemetry != nil {
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
+		}
 
 		// Create EventStore client
 		log.Info("Connecting event store...", "eventStoreAddr", eventStoreAddr)
@@ -62,7 +72,7 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer esConnection.Close()
+		defer util.PanicOnErrorFunc(esConnection.Close)
 
 		// init message bus consumer
 		log.Info("Setting up message bus consumer...")
@@ -70,7 +80,7 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer ebConsumer.Close()
+		defer util.PanicOnErrorFunc(ebConsumer.Close)
 
 		// Setup domain
 		log.Info("Seting up es/cqrs...")
@@ -86,7 +96,8 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
+
 		authMiddleware := auth.NewAuthMiddleware(gatewaySvcClient, []string{"/grpc.health.v1.Health/Check"})
 
 		// Create gRPC server and register implementation
@@ -110,7 +121,7 @@ var serverCmd = &cobra.Command{
 			if err := k8sAuthZManager.Run(ctx, conf); err != nil {
 				return err
 			}
-			defer k8sAuthZManager.Close()
+			defer util.PanicOnErrorFunc(k8sAuthZManager.Close)
 		}
 
 		grpcServer.RegisterService(func(s ggrpc.ServiceRegistrar) {

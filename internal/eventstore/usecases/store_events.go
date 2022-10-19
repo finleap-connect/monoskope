@@ -21,11 +21,13 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/finleap-connect/monoskope/internal/eventstore/metrics"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -56,6 +58,9 @@ func NewStoreEventsUseCase(stream esApi.EventStore_StoreServer, store es.EventSt
 }
 
 func (u *StoreEventsUseCase) Run(ctx context.Context) error {
+	ctx, span := telemetry.GetSpan(ctx, "store-events")
+	defer span.End()
+
 	for {
 		startTime := time.Now()
 
@@ -68,6 +73,8 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 		}
 
 		if err != nil { // Some other error
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return errors.TranslateToGrpcError(err)
 		}
 
@@ -77,12 +84,16 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 		// Convert from proto events to storage events
 		ev, err := es.NewEventFromProto(event)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		// Store events in database
 		u.Log.V(logger.DebugLevel).Info("Saving events in the store...")
 		if err := u.store.Save(ctx, []es.Event{ev}); err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
@@ -99,6 +110,8 @@ func (u *StoreEventsUseCase) Run(ctx context.Context) error {
 			return u.bus.PublishEvent(ctx, ev)
 		}, params)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 		u.metrics.StoredHistogram.WithLabelValues(event.Type, event.AggregateType).Observe(time.Since(startTime).Seconds())

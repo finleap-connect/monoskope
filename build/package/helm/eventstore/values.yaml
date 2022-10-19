@@ -19,10 +19,12 @@ image:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -37,7 +39,8 @@ service:
   metrics:
     port: 9102
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -74,7 +77,8 @@ tolerations: []
 
 affinity: {}
 
-labels: {}
+labels:
+  {}
   # app.kubernetes.io/part-of: my-app
 
 ports:
@@ -102,6 +106,8 @@ storeDatabase:
   tlsSecret: ""
 
 backup:
+  podAnnotations:
+    linkerd.io/inject: disabled
   # -- Enables automated backups for the eventstore
   enabled: false
   alerting:
@@ -120,7 +126,8 @@ backup:
   # -- Timeout for backup job
   timeout: 1h
   # -- Backup destination, e.g. s3
-  destination: {}
+  destination:
+    {}
     # s3:
     #   endpoint: s3.monoskope.io
     #   bucket: my-backup-bucket
@@ -133,3 +140,8 @@ backup:
     backupIdentifier: ""
     # -- Timeout for restore job
     timeout: 1h
+
+openTelemetry:
+  enabled: false
+  configMapName: ""
+  serviceName: "gateway"

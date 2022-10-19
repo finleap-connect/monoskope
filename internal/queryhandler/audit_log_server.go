@@ -59,6 +59,7 @@ func NewAuditLogServer(esClient esApi.EventStoreClient, efRegistry event.EventFo
 func NewAuditLogClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, doApi.AuditLogClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
+		WithOpenTelemetry().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

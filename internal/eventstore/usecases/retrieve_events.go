@@ -20,10 +20,12 @@ import (
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/eventstore/metrics"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/finleap-connect/monoskope/pkg/usecase"
+	"go.opentelemetry.io/otel/codes"
 )
 
 type RetrieveEventsUseCase struct {
@@ -57,11 +59,16 @@ func newRetrieveEventsUseCase(stream esApi.EventStore_RetrieveServer, store es.E
 }
 
 func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
+	ctx, span := telemetry.GetSpan(ctx, "retrieve-events")
+	defer span.End()
+
 	// Convert filters
 	var sqs []*es.StoreQuery
 	for _, filter := range u.filters {
 		sq, err := NewStoreQueryFromProto(filter)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 		sqs = append(sqs, sq)
@@ -71,6 +78,8 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 	u.Log.V(logger.DebugLevel).Info("Retrieving events from the database...")
 	eventStream, err := u.load(ctx, sqs)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -80,17 +89,23 @@ func (u *RetrieveEventsUseCase) Run(ctx context.Context) error {
 			break
 		}
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		streamStartTime := time.Now()
 		protoEvent := es.NewProtoFromEvent(e)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		err = u.stream.Send(protoEvent)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 

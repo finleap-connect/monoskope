@@ -45,6 +45,7 @@ func NewClusterServer(clusterRepo repositories.ClusterRepository) *clusterServer
 func NewClusterClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.ClusterClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
+		WithOpenTelemetry().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

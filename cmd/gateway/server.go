@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path"
@@ -40,6 +39,7 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway"
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
@@ -69,8 +69,17 @@ var serverCmd = &cobra.Command{
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := logger.WithName("serverCmd")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		log.Info("Initializing open telemetry...")
+		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+		if err != nil && err != telemetry.ErrOpenTelemetryNotEnabled {
+			return err
+		}
+		if shutdownTelemetry != nil {
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
+		}
 
 		authClientConfig := auth.ClientConfig{
 			IdentityProvider: identityProvider,
@@ -122,7 +131,7 @@ var serverCmd = &cobra.Command{
 		server := auth.NewServer(&authServerConfig, signer, verifier)
 
 		// Setup OIDC
-		if err := client.SetupOIDC(cmd.Context()); err != nil {
+		if err := client.SetupOIDC(ctx); err != nil {
 			return err
 		}
 
@@ -205,7 +214,7 @@ var serverCmd = &cobra.Command{
 		})
 
 		// Finally start the servers
-		eg, _ := errgroup.WithContext(cmd.Context())
+		eg, _ := errgroup.WithContext(ctx)
 		eg.Go(func() error {
 			return grpcServer.Serve(grpcApiAddr, metricsAddr)
 		})

@@ -48,6 +48,7 @@ func NewClusterAccessServer(clusterAccessRepo repositories.ClusterAccessReposito
 func NewClusterAccessClient(ctx context.Context, queryHandlerAddr string) (*grpc.ClientConn, api.ClusterAccessClient, error) {
 	conn, err := grpcUtil.
 		NewGrpcConnectionFactoryWithInsecure(queryHandlerAddr).
+		WithOpenTelemetry().
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
 		return nil, nil, errors.TranslateToGrpcError(err)

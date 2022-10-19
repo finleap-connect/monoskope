@@ -15,13 +15,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/finleap-connect/monoskope/internal/scimserver"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	domainApi "github.com/finleap-connect/monoskope/pkg/api/domain"
 	commandHandlerApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	grpcUtil "github.com/finleap-connect/monoskope/pkg/grpc"
@@ -47,7 +47,17 @@ var serveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		log := logger.WithName("serve-cmd")
-		ctx := context.Background()
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		log.Info("Initializing open telemetry...")
+		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+		if err != nil && err != telemetry.ErrOpenTelemetryNotEnabled {
+			return err
+		}
+		if shutdownTelemetry != nil {
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
+		}
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
@@ -55,7 +65,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
 
 		// Create User client
 		log.Info("Connecting queryhandler...", "queryHandlerAddr", queryHandlerAddr)
@@ -63,7 +73,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer util.PanicOnErrorFunc(conn.Close)
 
 		// Add readiness check
 		health := healthcheck.NewHandler()
@@ -73,7 +83,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer healthListener.Close()
+		defer util.PanicOnErrorFunc(healthListener.Close)
 
 		// Set up SCIM server
 		log.Info("Setting up SCIM server...")
@@ -82,7 +92,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer scimListener.Close()
+		defer util.PanicOnErrorFunc(scimListener.Close)
 
 		shutdown := util.NewShutdownWaitGroup()
 

@@ -47,7 +47,7 @@ var _ = Describe("GetAuthToken", func() {
 
 	jwtTestEnv, err := jwt.NewTestEnv(test.NewTestEnv("TestReactors"))
 	Expect(err).NotTo(HaveOccurred())
-	defer util.PanicOnError(jwtTestEnv.Shutdown())
+	defer util.PanicOnErrorFunc(jwtTestEnv.Shutdown)
 
 	mdManager, err := metadata.NewDomainMetadataManager(ctx)
 	Expect(err).ToNot(HaveOccurred())

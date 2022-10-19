@@ -18,10 +18,12 @@ import (
 	"github.com/finleap-connect/monoskope/internal/common"
 	"github.com/finleap-connect/monoskope/internal/eventstore"
 	"github.com/finleap-connect/monoskope/internal/messagebus"
+	"github.com/finleap-connect/monoskope/internal/telemetry"
 	api_common "github.com/finleap-connect/monoskope/pkg/api/domain/common"
 	api_es "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/grpc"
 	"github.com/finleap-connect/monoskope/pkg/logger"
+	"github.com/finleap-connect/monoskope/pkg/util"
 	"github.com/spf13/cobra"
 	ggrpc "google.golang.org/grpc"
 )
@@ -38,8 +40,18 @@ var serverCmd = &cobra.Command{
 	Short: "Starts the server",
 	Long:  `Starts the gRPC API and metrics server`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var err error
 		log := logger.WithName("server-cmd")
+		ctx := cmd.Context()
+
+		// Enable OpenTelemetry optionally
+		log.Info("Initializing open telemetry...")
+		shutdownTelemetry, err := telemetry.InitOpenTelemetry(ctx)
+		if err != nil && err != telemetry.ErrOpenTelemetryNotEnabled {
+			return err
+		}
+		if shutdownTelemetry != nil {
+			defer util.PanicOnErrorFunc(shutdownTelemetry)
+		}
 
 		// init message bus publisher
 		log.Info("Setting up message bus publisher...")
@@ -48,7 +60,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure message bus publisher.")
 			return err
 		}
-		defer publisher.Close()
+		defer util.PanicOnErrorFunc(publisher.Close)
 
 		// init event store
 		log.Info("Setting up event store...")
@@ -57,7 +69,7 @@ var serverCmd = &cobra.Command{
 			log.Error(err, "Failed to configure event store.")
 			return err
 		}
-		defer store.Close()
+		defer util.PanicOnErrorFunc(store.Close)
 
 		// Create the server
 		log.Info("Creating gRPC server...")

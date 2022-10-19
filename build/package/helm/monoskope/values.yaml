@@ -11,6 +11,11 @@ global:
   labels:
     app.kubernetes.io/part-of: *name
   operationMode: release
+  openTelemetry:
+    enabled: false
+    configMapName: m8-opentelemetry-config
+    serviceNamePrefix: "monoskope-"
+    config:
 
 vaultOperator:
   enabled: false

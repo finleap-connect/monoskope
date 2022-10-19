@@ -20,6 +20,7 @@ import (
 
 	"github.com/finleap-connect/monoskope/pkg/domain/errors"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -43,6 +44,7 @@ func NewGrpcConnectionFactory(url string) *GrpcConnectionFactory {
 func NewGrpcConnectionFactoryWithInsecure(url string) *GrpcConnectionFactory {
 	return NewGrpcConnectionFactory(url).
 		WithInsecure().
+		WithOpenTelemetry().
 		WithBlock()
 }
 
@@ -67,6 +69,13 @@ func (factory *GrpcConnectionFactory) WithPerRPCCredentials(creds credentials.Pe
 // WithBlock adds a DialOption which makes caller of Dial blocks until the underlying connection is up. Without this, Dial returns immediately and connecting the server happens in background.
 func (factory *GrpcConnectionFactory) WithBlock() *GrpcConnectionFactory {
 	factory.opts = append(factory.opts, grpc.WithBlock())
+	return factory
+}
+
+// WithOpenTelemetry adds a DialOption which adds OpenTelemetry to the client.
+func (factory *GrpcConnectionFactory) WithOpenTelemetry() *GrpcConnectionFactory {
+	factory.opts = append(factory.opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
+	factory.opts = append(factory.opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 	return factory
 }
 
@@ -125,6 +134,7 @@ func NewClientWithInsecureAuth[T any](ctx context.Context, addr, authToken strin
 		WithPerRPCCredentials(NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
 		WithBlock().
 		ConnectWithTimeout(ctx, 10*time.Second)
+
 	if err != nil {
 		var result T
 		return nil, result, err
