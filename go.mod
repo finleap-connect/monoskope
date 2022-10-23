@@ -32,7 +32,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/spf13/cobra v1.6.0
-	go.opentelemetry.io/otel v1.10.0
+	go.opentelemetry.io/otel v1.11.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.10.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.10.0
 	go.opentelemetry.io/otel/sdk v1.10.0
@@ -59,11 +59,11 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.1
 	go.opentelemetry.io/contrib/instrumentation/host v0.36.1
-	go.opentelemetry.io/contrib/instrumentation/runtime v0.36.1
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.36.4
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.32.1
-	go.opentelemetry.io/otel/metric v0.32.1
+	go.opentelemetry.io/otel/metric v0.33.0
 	go.opentelemetry.io/otel/sdk/metric v0.32.1
-	go.opentelemetry.io/otel/trace v1.10.0
+	go.opentelemetry.io/otel/trace v1.11.1
 	k8s.io/api v0.25.3
 	k8s.io/cli-runtime v0.25.3
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
@@ -110,7 +110,7 @@ require (
 	github.com/goccy/go-json v0.9.10 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
