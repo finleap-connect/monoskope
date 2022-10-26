@@ -86,6 +86,20 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(cluster.CaCertBundle, data.GetCaCertificateBundle()) {
 			cluster.CaCertBundle = data.GetCaCertificateBundle()
 		}
+	case events.ClusterUpdatedV2:
+		data := new(eventdata.ClusterUpdatedV2)
+		if err := event.Data().ToProto(data); err != nil {
+			return nil, err
+		}
+		if data.Name != nil {
+			cluster.Name = data.Name.Value
+		}
+		if data.ApiServerAddress != nil {
+			cluster.ApiServerAddress = data.ApiServerAddress.Value
+		}
+		if data.CaCertificateBundle != nil {
+			cluster.CaCertBundle = data.CaCertificateBundle
+		}
 	case events.ClusterDeleted:
 		if err := c.projectDeleted(event, cluster.DomainProjection); err != nil {
 			return nil, err

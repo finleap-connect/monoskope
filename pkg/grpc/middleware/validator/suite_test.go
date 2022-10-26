@@ -130,7 +130,7 @@ func NewValidClusterCreatedV2() *eventdata.ClusterCreatedV2 {
 
 func NewValidUpdateCluster() *commanddata.UpdateCluster {
 	return &commanddata.UpdateCluster{
-		Name:             &wrapperspb.StringValue{Value: validDisplayName},
+		Name:             &wrapperspb.StringValue{Value: validName},
 		ApiServerAddress: &wrapperspb.StringValue{Value: validApiServerAddress},
 		CaCertBundle:     []byte(validCertificate),
 	}

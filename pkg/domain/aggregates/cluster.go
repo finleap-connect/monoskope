@@ -153,6 +153,9 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
+		if data.Name != nil {
+			a.name = data.Name.Value
+		}
 		if data.ApiServerAddress != nil {
 			a.apiServerAddr = data.ApiServerAddress.Value
 		}

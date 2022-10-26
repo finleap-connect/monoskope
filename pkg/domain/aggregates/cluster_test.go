@@ -44,7 +44,6 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		err = event.Data().ToProto(data)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(data.DisplayName).To(Equal(expectedClusterDisplayName))
 		Expect(data.Name).To(Equal(expectedClusterName))
 		Expect(data.ApiServerAddress).To(Equal(expectedClusterApiServerAddress))
 		Expect(data.CaCertificateBundle).To(Equal(expectedClusterCACertBundle))
@@ -82,7 +81,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdatedV2{
 				Name: wrapperspb.String(expectedNewName),
 			})
-			esEvent := es.NewEvent(ctx, events.ClusterUpdated, ed, time.Now().UTC(),
+			esEvent := es.NewEvent(ctx, events.ClusterUpdatedV2, ed, time.Now().UTC(),
 				agg.Type(), agg.ID(), agg.Version()+1)
 
 			err := agg.ApplyEvent(esEvent)
