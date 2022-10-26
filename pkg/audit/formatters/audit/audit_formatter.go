@@ -21,11 +21,11 @@ import (
 	"github.com/finleap-connect/monoskope/internal/gateway/auth"
 	"github.com/finleap-connect/monoskope/pkg/api/domain/audit"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
-	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	_ "github.com/finleap-connect/monoskope/pkg/domain/formatters/events"
 	"github.com/finleap-connect/monoskope/pkg/domain/formatters/overviews"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
+	"github.com/finleap-connect/monoskope/pkg/domain/snapshots"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/logger"
 	"github.com/google/uuid"
@@ -80,9 +80,10 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, timestamp time.Time) *audit.UserOverview {
 	userOverview := &audit.UserOverview{}
 	overviewFormatter := overviews.NewUserOverviewFormatter(f.esClient)
-	userSnapshotter := formatters.NewUserSnapshotter(f.esClient, projectors.NewUserProjector())
+	userSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewUserProjector())
+	userRoleBindingSnapshot := snapshots.NewUserRoleBindingSnapshot(f.esClient)
 
-	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
+	user, err := userSnapshot.Create(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(timestamp),
 		AggregateId:  wrapperspb.String(userId.String()),
 	})
@@ -90,8 +91,7 @@ func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, 
 		f.log.Error(err, "failed to create user snapshot", "userId", userId, "timeStamp", timestamp)
 		return userOverview
 	}
-
-	for _, role := range userSnapshotter.CreateRoleBindingSnapshots(ctx, userId, timestamp) {
+	for _, role := range userRoleBindingSnapshot.CreateAll(ctx, userId, timestamp) {
 		user.Roles = append(user.Roles, role.Proto())
 	}
 

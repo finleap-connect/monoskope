@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package formatters
+package snapshots
 
 import (
 	"context"
@@ -24,21 +24,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// Snapshotter implements basic snapshot creation for audit formatters
-type Snapshotter[T es.Projection] struct {
+type Snapshot[T es.Projection] struct {
 	esClient  esApi.EventStoreClient
 	projector es.Projector[T]
 }
 
-func NewSnapshotter[T es.Projection](esClient esApi.EventStoreClient, projector es.Projector[T]) *Snapshotter[T] {
-	return &Snapshotter[T]{esClient, projector}
+func NewSnapshot[T es.Projection](esClient esApi.EventStoreClient, projector es.Projector[T]) *Snapshot[T] {
+	return &Snapshot[T]{esClient, projector}
 }
 
-// CreateSnapshot creates a snapshot based on an event-filter and the corresponding projector for
-// the aggregate of which the id is used in the filter.
-// This is a temporary implementation until snapshots are fully implemented,
-// and it is not meant to be used extensively.
-func (s *Snapshotter[T]) CreateSnapshot(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
+// Create creates a snapshot based on an event-filter and the corresponding projector for
+// the aggregate of which the id is to be specified in the filter.
+func (s *Snapshot[T]) Create(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
 	var nilResult T
 
 	id, err := uuid.Parse(eventFilter.AggregateId.Value)
