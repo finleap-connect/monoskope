@@ -85,9 +85,9 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV2(event *esApi
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdated) (string, error) {
-	clusterSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewClusterProjector())
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 
-	cluster, err := clusterSnapshot.Create(ctx, &esApi.EventFilter{
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)
@@ -106,9 +106,9 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	clusterSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewClusterProjector())
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 
-	cluster, err := clusterSnapshot.Create(ctx, &esApi.EventFilter{
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
 	)

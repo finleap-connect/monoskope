@@ -29,16 +29,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserRoleBindingSnapshot struct {
-	*Snapshot[*projections.UserRoleBinding]
+type UserRoleBindingSnapshotter struct {
+	*Snapshotter[*projections.UserRoleBinding]
 }
 
-func NewUserRoleBindingSnapshot(esClient esApi.EventStoreClient) *UserRoleBindingSnapshot {
-	return &UserRoleBindingSnapshot{Snapshot: &Snapshot[*projections.UserRoleBinding]{esClient, projectors.NewUserRoleBindingProjector()}}
+func NewUserRoleBindingSnapshotter(esClient esApi.EventStoreClient) *UserRoleBindingSnapshotter {
+	return &UserRoleBindingSnapshotter{Snapshotter: &Snapshotter[*projections.UserRoleBinding]{esClient, projectors.NewUserRoleBindingProjector()}}
 }
 
-// CreateAll returns all userRoleBinding snapshots of the user specified by its id
-func (s *UserRoleBindingSnapshot) CreateAll(ctx context.Context, userId uuid.UUID, timestamp time.Time) []*projections.UserRoleBinding {
+// CreateAllSnapshots returns all userRoleBinding snapshots of the user specified by its id
+func (s *UserRoleBindingSnapshotter) CreateAllSnapshots(ctx context.Context, userId uuid.UUID, timestamp time.Time) []*projections.UserRoleBinding {
 	var userRoleBindings []*projections.UserRoleBinding
 	roleBindingEvents, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{
 		MaxTimestamp:  timestamppb.New(timestamp),

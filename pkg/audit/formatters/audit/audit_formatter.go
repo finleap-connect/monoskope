@@ -80,10 +80,10 @@ func (f *auditFormatter) NewHumanReadableEvent(ctx context.Context, event *esApi
 func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, timestamp time.Time) *audit.UserOverview {
 	userOverview := &audit.UserOverview{}
 	overviewFormatter := overviews.NewUserOverviewFormatter(f.esClient)
-	userSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewUserProjector())
-	userRoleBindingSnapshot := snapshots.NewUserRoleBindingSnapshot(f.esClient)
+	userSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewUserProjector())
+	userRoleBindingSnapshotter := snapshots.NewUserRoleBindingSnapshotter(f.esClient)
 
-	user, err := userSnapshot.Create(ctx, &esApi.EventFilter{
+	user, err := userSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(timestamp),
 		AggregateId:  wrapperspb.String(userId.String()),
 	})
@@ -91,7 +91,7 @@ func (f *auditFormatter) NewUserOverview(ctx context.Context, userId uuid.UUID, 
 		f.log.Error(err, "failed to create user snapshot", "userId", userId, "timeStamp", timestamp)
 		return userOverview
 	}
-	for _, role := range userRoleBindingSnapshot.CreateAll(ctx, userId, timestamp) {
+	for _, role := range userRoleBindingSnapshotter.CreateAllSnapshots(ctx, userId, timestamp) {
 		user.Roles = append(user.Roles, role.Proto())
 	}
 

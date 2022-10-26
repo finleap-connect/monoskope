@@ -83,9 +83,9 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Eve
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
-	tenantSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantProjector())
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 
-	tenant, err := tenantSnapshot.Create(ctx, &esApi.EventFilter{
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
 	})
@@ -103,15 +103,15 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.TenantId}
 
-	tenantSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantProjector())
-	tenant, err := tenantSnapshot.Create(ctx, eventFilter)
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.ClusterId}
 
-	clusterSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewClusterProjector())
-	cluster, err := clusterSnapshot.Create(ctx, eventFilter)
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
@@ -121,8 +121,8 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	tenantSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantProjector())
-	tenant, err := tenantSnapshot.Create(ctx, &esApi.EventFilter{
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
 	})
@@ -137,22 +137,22 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
 
-	tenantClusterBindingSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantClusterBindingProjector())
-	tcb, err := tenantClusterBindingSnapshot.Create(ctx, eventFilter)
+	tenantClusterBindingSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantClusterBindingProjector())
+	tcb, err := tenantClusterBindingSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.TenantId}
-	tenantSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantProjector())
-	tenant, err := tenantSnapshot.Create(ctx, eventFilter)
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.ClusterId}
-	clusterSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewClusterProjector())
-	cluster, err := clusterSnapshot.Create(ctx, eventFilter)
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}

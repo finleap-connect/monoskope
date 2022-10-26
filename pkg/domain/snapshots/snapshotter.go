@@ -24,18 +24,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type Snapshot[T es.Projection] struct {
+type Snapshotter[T es.Projection] struct {
 	esClient  esApi.EventStoreClient
 	projector es.Projector[T]
 }
 
-func NewSnapshot[T es.Projection](esClient esApi.EventStoreClient, projector es.Projector[T]) *Snapshot[T] {
-	return &Snapshot[T]{esClient, projector}
+func NewSnapshotter[T es.Projection](esClient esApi.EventStoreClient, projector es.Projector[T]) *Snapshotter[T] {
+	return &Snapshotter[T]{esClient, projector}
 }
 
-// Create creates a snapshot based on an event-filter and the corresponding projector for
+// CreateSnapshot creates a snapshot based on an event-filter and the corresponding projector for
 // the aggregate of which the id is to be specified in the filter.
-func (s *Snapshot[T]) Create(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
+func (s *Snapshotter[T]) CreateSnapshot(ctx context.Context, eventFilter *esApi.EventFilter) (T, error) {
 	var nilResult T
 
 	id, err := uuid.Parse(eventFilter.AggregateId.Value)

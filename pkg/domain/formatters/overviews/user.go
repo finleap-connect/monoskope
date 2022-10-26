@@ -46,10 +46,10 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	var details string
 	eventFilter := &esApi.EventFilter{MaxTimestamp: timestamppb.New(timestamp)}
 	userProjector := projectors.NewUserProjector()
-	userSnapshot := snapshots.NewSnapshot(f.esClient, userProjector)
+	userSnapshotter := snapshots.NewSnapshotter(f.esClient, userProjector)
 
 	eventFilter.AggregateId = wrapperspb.String(user.GetCreatedById())
-	creator, err := userSnapshot.Create(ctx, eventFilter)
+	creator, err := userSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil { // possible if user was created by a system user that was created manually (no events)
 		ok := false
 		creator, ok = users.AvailableSystemUsers[uuid.MustParse(eventFilter.AggregateId.Value)]
@@ -65,7 +65,7 @@ func (f *userOverviewFormatter) GetFormattedDetails(ctx context.Context, user *p
 	}
 
 	eventFilter.AggregateId = wrapperspb.String(user.GetDeletedById())
-	deleter, err := userSnapshot.Create(ctx, eventFilter)
+	deleter, err := userSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		ok := false
 		deleter, ok = users.AvailableSystemUsers[uuid.MustParse(eventFilter.AggregateId.Value)]
@@ -101,15 +101,15 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 
 		eventFilter.AggregateId = wrapperspb.String(role.Resource)
 
-		tenantSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewTenantProjector())
-		tenant, err := tenantSnapshot.Create(ctx, eventFilter)
+		tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+		tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
 			tenantsDetails += fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint(tenant.Name, role.Role)
 			continue // it's either a tenant or cluster
 		}
 
-		clusterSnapshot := snapshots.NewSnapshot(f.esClient, projectors.NewClusterProjector())
-		cluster, err := clusterSnapshot.Create(ctx, eventFilter)
+		clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+		cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
 			clustersDetails += fConsts.ClusterUserRoleBindingOverviewDetailsFormat.Sprint(cluster.DisplayName, role.Role)
 		}

@@ -37,7 +37,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-var _ = Describe("pkg/domain/snapshots", func() {
+var _ = Describe("pkg/domain/snapshots/snapshotter", func() {
 	expectedUserId := uuid.New()
 	expectedUserName := "Jane Doe"
 	expectedUserEmail := "jane.doe@monoskope.io"
@@ -80,8 +80,8 @@ var _ = Describe("pkg/domain/snapshots", func() {
 		}), maxTimestamp, aggregates.User, expectedUserId, 2)), nil)
 		esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF)
 
-		userSnapshot := NewSnapshot(esClient, projectors.NewUserProjector())
-		user, err := userSnapshot.Create(ctx, eventFilter)
+		userSnapshotter := NewSnapshotter(esClient, projectors.NewUserProjector())
+		user, err := userSnapshotter.CreateSnapshot(ctx, eventFilter)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(user.Name).To(Equal(expectedUserName))
 	})

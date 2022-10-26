@@ -33,7 +33,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("pkg/domain/user_role_binding", func() {
+var _ = Describe("pkg/domain/snapshots/user_role_binding", func() {
 	expectedUserId := uuid.New()
 
 	var mockCtrl *gomock.Controller
@@ -80,8 +80,8 @@ var _ = Describe("pkg/domain/user_role_binding", func() {
 		userRolesCount++
 		esRetrieveClient.EXPECT().Recv().Return(nil, io.EOF)
 
-		userRoleBindingSnapshot := NewUserRoleBindingSnapshot(esClient)
-		userRoles := userRoleBindingSnapshot.CreateAll(ctx, expectedUserId, maxTimestamp)
+		userRoleBindingSnapshot := NewUserRoleBindingSnapshotter(esClient)
+		userRoles := userRoleBindingSnapshot.CreateAllSnapshots(ctx, expectedUserId, maxTimestamp)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(userRoles)).To(Equal(userRolesCount))
 		Expect(userRoles[0].UserId).To(Equal(expectedUserId.String()))

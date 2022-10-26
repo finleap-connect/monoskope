@@ -25,5 +25,5 @@ import (
 
 func TestSnapshot(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "pkg/domain/projectors")
+	RunSpecs(t, "pkg/domain/snapshots")
 }
