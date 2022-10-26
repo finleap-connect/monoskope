@@ -251,6 +251,112 @@ var _ interface {
 	ErrorName() string
 } = ClusterCreatedV2ValidationError{}
 
+// Validate checks the field values on ClusterCreatedV3 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ClusterCreatedV3) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClusterCreatedV3 with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ClusterCreatedV3MultiError, or nil if none found.
+func (m *ClusterCreatedV3) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClusterCreatedV3) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for ApiServerAddress
+
+	// no validation rules for CaCertificateBundle
+
+	if len(errors) > 0 {
+		return ClusterCreatedV3MultiError(errors)
+	}
+
+	return nil
+}
+
+// ClusterCreatedV3MultiError is an error wrapping multiple validation errors
+// returned by ClusterCreatedV3.ValidateAll() if the designated constraints
+// aren't met.
+type ClusterCreatedV3MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClusterCreatedV3MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClusterCreatedV3MultiError) AllErrors() []error { return m }
+
+// ClusterCreatedV3ValidationError is the validation error returned by
+// ClusterCreatedV3.Validate if the designated constraints aren't met.
+type ClusterCreatedV3ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterCreatedV3ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterCreatedV3ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterCreatedV3ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterCreatedV3ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterCreatedV3ValidationError) ErrorName() string { return "ClusterCreatedV3ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterCreatedV3ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterCreatedV3.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterCreatedV3ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterCreatedV3ValidationError{}
+
 // Validate checks the field values on ClusterUpdated with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -356,3 +462,163 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ClusterUpdatedValidationError{}
+
+// Validate checks the field values on ClusterUpdatedV2 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ClusterUpdatedV2) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ClusterUpdatedV2 with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ClusterUpdatedV2MultiError, or nil if none found.
+func (m *ClusterUpdatedV2) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ClusterUpdatedV2) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetName()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClusterUpdatedV2ValidationError{
+					field:  "Name",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClusterUpdatedV2ValidationError{
+					field:  "Name",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClusterUpdatedV2ValidationError{
+				field:  "Name",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetApiServerAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ClusterUpdatedV2ValidationError{
+					field:  "ApiServerAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ClusterUpdatedV2ValidationError{
+					field:  "ApiServerAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetApiServerAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ClusterUpdatedV2ValidationError{
+				field:  "ApiServerAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for CaCertificateBundle
+
+	if len(errors) > 0 {
+		return ClusterUpdatedV2MultiError(errors)
+	}
+
+	return nil
+}
+
+// ClusterUpdatedV2MultiError is an error wrapping multiple validation errors
+// returned by ClusterUpdatedV2.ValidateAll() if the designated constraints
+// aren't met.
+type ClusterUpdatedV2MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ClusterUpdatedV2MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ClusterUpdatedV2MultiError) AllErrors() []error { return m }
+
+// ClusterUpdatedV2ValidationError is the validation error returned by
+// ClusterUpdatedV2.Validate if the designated constraints aren't met.
+type ClusterUpdatedV2ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterUpdatedV2ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterUpdatedV2ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterUpdatedV2ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterUpdatedV2ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterUpdatedV2ValidationError) ErrorName() string { return "ClusterUpdatedV2ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterUpdatedV2ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterUpdatedV2.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterUpdatedV2ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterUpdatedV2ValidationError{}

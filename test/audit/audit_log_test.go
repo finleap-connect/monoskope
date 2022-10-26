@@ -193,7 +193,7 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		// CreateCluster
 		command = cmd.NewCommandWithData(
 			uuid.Nil, commandTypes.CreateCluster,
-			&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: expectedClusterCACertBundle},
+			&cmdData.CreateCluster{Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -207,7 +207,7 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		// UpdateCluster
 		command = cmd.NewCommandWithData(
 			clusterId, commandTypes.UpdateCluster,
-			&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: expectedClusterCACertBundle},
+			&cmdData.UpdateCluster{Name: &wrapperspb.StringValue{Value: "cluster-z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: expectedClusterCACertBundle},
 		)
 		Eventually(func(g Gomega) {
 			var err error

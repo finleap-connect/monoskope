@@ -353,7 +353,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("creating the cluster")
 			command := cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
@@ -378,7 +378,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("ensuring the same cluster can't be created again")
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName,
+				&cmdData.CreateCluster{
 					Name:             strings.ToUpper(expectedClusterName), // regardless of the case and white spaces
 					ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
@@ -399,7 +399,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("recreating the cluster after deletion")
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
@@ -440,7 +440,7 @@ var _ = Describe("internal/integration_test", func() {
 			// create the cluster
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: "Cluster Z", Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err = commandHandlerClient().Execute(ctx, command)

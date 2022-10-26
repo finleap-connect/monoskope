@@ -17,6 +17,8 @@ syntax = "proto3";
 // This file follows google's gRPC naming conventions:
 // https://cloud.google.com/apis/design/naming_convention
 
+import "google/protobuf/wrappers.proto";
+
 option go_package = "github.com/finleap-connect/monoskope/pkg/api/domain/eventdata";
 
 package eventdata;
@@ -45,11 +47,31 @@ message ClusterCreatedV2 {
   bytes ca_certificate_bundle = 4;
 }
 
+message ClusterCreatedV3 {
+  // Unique name of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
+  string name = 1;
+  // Address of the KubeApiServer
+  string api_server_address = 2;
+  // CA certificate of the K8s cluster
+  bytes ca_certificate_bundle = 3;
+}
+
 message ClusterUpdated {
   // Display name of the cluster
   string display_name = 1;
   // Address of the KubeApiServer
   string api_server_address = 2;
+  // CA certificate of the K8s cluster
+  bytes ca_certificate_bundle = 3;
+}
+
+message ClusterUpdatedV2 {
+  // Unique name of the cluster, to be utilized for generating unique labels
+  // and symbols, e.g. with metrics.
+  google.protobuf.StringValue name = 1;
+  // Address of the KubeApiServer
+  google.protobuf.StringValue api_server_address = 2;
   // CA certificate of the K8s cluster
   bytes ca_certificate_bundle = 3;
 }

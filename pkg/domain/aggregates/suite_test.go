@@ -69,7 +69,6 @@ func createCluster(ctx context.Context, agg es.Aggregate) (*es.CommandReply, err
 	esCommand, ok := cmd.NewCreateClusterCommand(uuid.New()).(*cmd.CreateClusterCommand)
 	Expect(ok).To(BeTrue())
 
-	esCommand.CreateCluster.DisplayName = expectedClusterDisplayName
 	esCommand.CreateCluster.Name = expectedClusterName
 	esCommand.CreateCluster.ApiServerAddress = expectedClusterApiServerAddress
 	esCommand.CreateCluster.CaCertBundle = expectedClusterCACertBundle

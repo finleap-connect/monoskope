@@ -39,7 +39,8 @@ const (
 	ClusterCreated   es.EventType = "ClusterCreated"
 	ClusterCreatedV2 es.EventType = "ClusterCreatedV2"
 	// ClusterUpdated event emitted when a Cluster has been created
-	ClusterUpdated es.EventType = "ClusterUpdated"
+	ClusterUpdated   es.EventType = "ClusterUpdated"
+	ClusterUpdatedV2 es.EventType = "ClusterUpdatedV2"
 	// ClusterDeleted event emitted when a Cluster has been deleted
 	ClusterDeleted es.EventType = "ClusterDeleted"
 	// IGNORED: ClusterBootstrapTokenCreated event emitted when a bootstrap token has been created
