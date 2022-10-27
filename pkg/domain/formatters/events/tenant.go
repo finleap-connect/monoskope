@@ -23,11 +23,11 @@ import (
 	"github.com/finleap-connect/monoskope/pkg/api/domain/eventdata"
 	esApi "github.com/finleap-connect/monoskope/pkg/api/eventsourcing"
 	"github.com/finleap-connect/monoskope/pkg/audit/errors"
-	"github.com/finleap-connect/monoskope/pkg/audit/formatters"
 	"github.com/finleap-connect/monoskope/pkg/audit/formatters/event"
 	"github.com/finleap-connect/monoskope/pkg/domain/constants/events"
 	fConsts "github.com/finleap-connect/monoskope/pkg/domain/constants/formatters"
 	"github.com/finleap-connect/monoskope/pkg/domain/projectors"
+	"github.com/finleap-connect/monoskope/pkg/domain/snapshots"
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -83,9 +83,9 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantCreated(event *esApi.Eve
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantUpdated(ctx context.Context, event *esApi.Event, eventData *eventdata.TenantUpdated) (string, error) {
-	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 
-	tenant, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
+	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
 	})
@@ -103,14 +103,14 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.TenantId}
 
-	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: eventData.ClusterId}
 
-	clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
@@ -121,7 +121,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
-	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: event.GetTimestamp(),
 		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId},
@@ -137,21 +137,21 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 	eventFilter := &esApi.EventFilter{MaxTimestamp: event.GetTimestamp()}
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: event.AggregateId}
 
-	tenantClusterBindingSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantClusterBindingProjector())
+	tenantClusterBindingSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantClusterBindingProjector())
 	tcb, err := tenantClusterBindingSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.TenantId}
-	tenantSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
+	tenantSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewTenantProjector())
 	tenant, err := tenantSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err
 	}
 
 	eventFilter.AggregateId = &wrapperspb.StringValue{Value: tcb.ClusterId}
-	clusterSnapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 	cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 	if err != nil {
 		return "", err

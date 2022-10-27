@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package formatters
+package snapshots
 
 import (
 	"context"
@@ -29,19 +29,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserSnapshotter implements basic snapshot creation for the user aggregate
-type UserSnapshotter struct {
-	*Snapshotter[*projections.User]
+type UserRoleBindingSnapshotter struct {
+	*Snapshotter[*projections.UserRoleBinding]
 }
 
-func NewUserSnapshotter(esClient esApi.EventStoreClient, projector es.Projector[*projections.User]) *UserSnapshotter {
-	return &UserSnapshotter{Snapshotter: &Snapshotter[*projections.User]{esClient, projector}}
+func NewUserRoleBindingSnapshotter(esClient esApi.EventStoreClient) *UserRoleBindingSnapshotter {
+	return &UserRoleBindingSnapshotter{Snapshotter: &Snapshotter[*projections.UserRoleBinding]{esClient, projectors.NewUserRoleBindingProjector()}}
 }
 
-// CreateRoleBindingSnapshots returns a list of userRoleBinding snapshots for the user specified by its id
-// This is a temporary implementation until snapshots are fully implemented,
-// and it is not meant to be used extensively.
-func (s *UserSnapshotter) CreateRoleBindingSnapshots(ctx context.Context, userId uuid.UUID, timestamp time.Time) []*projections.UserRoleBinding {
+// CreateAllSnapshots returns all userRoleBinding snapshots of the user specified by its id
+func (s *UserRoleBindingSnapshotter) CreateAllSnapshots(ctx context.Context, userId uuid.UUID, timestamp time.Time) []*projections.UserRoleBinding {
 	var userRoleBindings []*projections.UserRoleBinding
 	roleBindingEvents, err := s.esClient.Retrieve(ctx, &esApi.EventFilter{
 		MaxTimestamp:  timestamppb.New(timestamp),
@@ -51,7 +48,6 @@ func (s *UserSnapshotter) CreateRoleBindingSnapshots(ctx context.Context, userId
 		return userRoleBindings
 	}
 
-	roleBindingProjector := projectors.NewUserRoleBindingProjector()
 	roleBindings := make(map[string]*projections.UserRoleBinding)
 	for {
 		eventPorto, err := roleBindingEvents.Recv()
@@ -69,7 +65,7 @@ func (s *UserSnapshotter) CreateRoleBindingSnapshots(ctx context.Context, userId
 
 		userRoleBinding, exist := roleBindings[e.AggregateID().String()]
 		if !exist {
-			userRoleBinding = roleBindingProjector.NewProjection(e.AggregateID())
+			userRoleBinding = s.projector.NewProjection(e.AggregateID())
 			roleBindings[e.AggregateID().String()] = userRoleBinding
 		}
 
@@ -77,7 +73,7 @@ func (s *UserSnapshotter) CreateRoleBindingSnapshots(ctx context.Context, userId
 			continue // after projecting once to ensure the roleBinding is irrelevant
 		}
 
-		userRoleBinding, err = roleBindingProjector.Project(ctx, e, userRoleBinding)
+		userRoleBinding, err = s.projector.Project(ctx, e, userRoleBinding)
 		if err != nil {
 			continue
 		}
