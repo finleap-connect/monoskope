@@ -55,13 +55,12 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 
 	switch cmd := cmd.(type) {
 	case *commands.CreateClusterCommand:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-			DisplayName:         cmd.GetName(),
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV3{
 			Name:                cmd.GetName(),
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetCaCertBundle(),
 		})
-		_ = a.AppendEvent(ctx, events.ClusterCreatedV2, ed)
+		_ = a.AppendEvent(ctx, events.ClusterCreatedV3, ed)
 	case *commands.UpdateClusterCommand:
 		ed := new(eventdata.ClusterUpdatedV2)
 		ed.Name = cmd.Name
@@ -134,6 +133,15 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		a.name = clusterCreatedV2.GetName()
 		a.apiServerAddr = clusterCreatedV2.GetApiServerAddress()
 		a.caCertBundle = clusterCreatedV2.GetCaCertificateBundle()
+	case events.ClusterCreatedV3:
+		clusterCreatedV3 := new(eventdata.ClusterCreatedV3)
+		err := event.Data().ToProto(clusterCreatedV3)
+		if err != nil {
+			return err
+		}
+		a.name = clusterCreatedV3.GetName()
+		a.apiServerAddr = clusterCreatedV3.GetApiServerAddress()
+		a.caCertBundle = clusterCreatedV3.GetCaCertificateBundle()
 	case events.ClusterUpdated:
 		data := new(eventdata.ClusterUpdated)
 		err := event.Data().ToProto(data)

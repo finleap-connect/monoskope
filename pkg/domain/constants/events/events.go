@@ -38,6 +38,7 @@ const (
 	// ClusterCreated event emitted when a Cluster has been created
 	ClusterCreated   es.EventType = "ClusterCreated"
 	ClusterCreatedV2 es.EventType = "ClusterCreatedV2"
+	ClusterCreatedV3 es.EventType = "ClusterCreatedV3"
 	// ClusterUpdated event emitted when a Cluster has been created
 	ClusterUpdated   es.EventType = "ClusterUpdated"
 	ClusterUpdatedV2 es.EventType = "ClusterUpdatedV2"
@@ -81,7 +82,9 @@ var (
 	ClusterEvents = []es.EventType{
 		ClusterCreated,
 		ClusterCreatedV2,
+		ClusterCreatedV3,
 		ClusterUpdated,
+		ClusterUpdatedV2,
 		ClusterDeleted,
 	}
 

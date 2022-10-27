@@ -296,6 +296,7 @@ var _ = Describe("test/audit/audit_log_test", func() {
 				Expect(e.Issuer).ToNot(BeEmpty())
 				Expect(e.IssuerId).ToNot(BeEmpty())
 				Expect(e.EventType).ToNot(BeEmpty())
+				testEnv.Log.Info(e.Details)
 				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedDetailMsgs[counter]))+`.*`, e.Details)).To(BeTrue())
 				counter++
 			}
