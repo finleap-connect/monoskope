@@ -114,7 +114,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterUpdatedV2(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdatedV2) (string, error) {
-	snapshotter := formatters.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+	snapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 
 	cluster, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
 		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
