@@ -38,7 +38,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 
 		event := agg.UncommittedEvents()[0]
 
-		Expect(event.EventType()).To(Equal(events.ClusterCreatedV2))
+		Expect(event.EventType()).To(Equal(events.ClusterCreatedV3))
 
 		data := new(eventdata.ClusterCreatedV2)
 		err = event.Data().ToProto(data)
