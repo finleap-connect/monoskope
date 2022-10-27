@@ -72,6 +72,20 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 		if err := c.projectCreated(event, cluster.DomainProjection); err != nil {
 			return nil, err
 		}
+	case events.ClusterCreatedV3:
+		data := new(eventdata.ClusterCreatedV3)
+		if err := event.Data().ToProto(data); err != nil {
+			return nil, err
+		}
+
+		cluster.DisplayName = data.GetName()
+		cluster.Name = data.GetName()
+		cluster.ApiServerAddress = data.GetApiServerAddress()
+		cluster.CaCertBundle = data.GetCaCertificateBundle()
+
+		if err := c.projectCreated(event, cluster.DomainProjection); err != nil {
+			return nil, err
+		}
 	case events.ClusterUpdated:
 		data := new(eventdata.ClusterUpdated)
 		if err := event.Data().ToProto(data); err != nil {
@@ -93,6 +107,7 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 		}
 		if data.Name != nil {
 			cluster.Name = data.Name.Value
+			cluster.DisplayName = data.Name.Value
 		}
 		if data.ApiServerAddress != nil {
 			cluster.ApiServerAddress = data.ApiServerAddress.Value
