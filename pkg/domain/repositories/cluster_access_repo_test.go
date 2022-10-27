@@ -50,7 +50,6 @@ var _ = Describe("pkg/domain/repositories/clusterAccessRepository", func() {
 
 	cluster := projections.NewClusterProjection(clusterId)
 	cluster.Name = "test-cluster"
-	cluster.DisplayName = "Test Cluster"
 
 	tenant := projections.NewTenantProjection(tenantId)
 	tenant.Name = "test-tenant"

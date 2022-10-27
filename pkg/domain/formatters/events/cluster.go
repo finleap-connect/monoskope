@@ -105,7 +105,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 
 	var details strings.Builder
 	details.WriteString(fConsts.ClusterUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
-	f.AppendUpdate("Display name", eventData.DisplayName, cluster.DisplayName, &details)
+	f.AppendUpdate("Display name", eventData.DisplayName, cluster.Name, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, cluster.ApiServerAddress, &details)
 	if len(eventData.CaCertificateBundle) != 0 {
 		f.AppendUpdate("Certificate", "a new one", "", &details)
@@ -127,7 +127,7 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdatedV2(ctx context.
 	var details strings.Builder
 	details.WriteString(fConsts.ClusterUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
 	if eventData.Name != nil {
-		f.AppendUpdate("Name", eventData.Name.Value, cluster.DisplayName, &details)
+		f.AppendUpdate("Name", eventData.Name.Value, cluster.Name, &details)
 	}
 	if eventData.ApiServerAddress != nil {
 		f.AppendUpdate("API server address", eventData.ApiServerAddress.Value, cluster.ApiServerAddress, &details)
@@ -149,5 +149,5 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Co
 		return "", err
 	}
 
-	return fConsts.ClusterDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName), nil
+	return fConsts.ClusterDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], cluster.Name), nil
 }

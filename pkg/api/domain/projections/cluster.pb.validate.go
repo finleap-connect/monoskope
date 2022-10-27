@@ -60,8 +60,6 @@ func (m *Cluster) validate(all bool) error {
 
 	// no validation rules for Name
 
-	// no validation rules for DisplayName
-
 	// no validation rules for ApiServerAddress
 
 	// no validation rules for CaCertBundle

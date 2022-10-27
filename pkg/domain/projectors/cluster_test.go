@@ -63,7 +63,6 @@ var _ = Describe("domain/projectors/cluster", func() {
 		clusterProjection, err := clusterProjector.Project(context.Background(), event, clusterProjection)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
-		Expect(clusterProjection.GetDisplayName()).To(Equal(expectedDisplayName))
 		Expect(clusterProjection.GetName()).To(Equal(expectedName))
 		Expect(clusterProjection.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
 		Expect(clusterProjection.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
@@ -89,7 +88,6 @@ var _ = Describe("domain/projectors/cluster", func() {
 
 		Expect(clusterProjection.Version()).To(Equal(uint64(1)))
 
-		Expect(clusterProjection.GetDisplayName()).To(Equal(expectedDisplayName))
 		Expect(clusterProjection.GetName()).To(Equal(expectedName))
 		Expect(clusterProjection.GetApiServerAddress()).To(Equal(expectedApiServerAddress))
 		Expect(clusterProjection.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
@@ -143,7 +141,6 @@ var _ = Describe("domain/projectors/cluster", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(clusterProjection.Version()).To(Equal(uint64(2)))
 
-		Expect(clusterProjection.GetDisplayName()).To(Equal(newDisplayName))
 		Expect(clusterProjection.GetApiServerAddress()).To(Equal(newApiServerAddress))
 		Expect(clusterProjection.GetCaCertBundle()).To(Equal(newClusterCaCertificate))
 	})

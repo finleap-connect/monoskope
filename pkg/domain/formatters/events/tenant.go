@@ -117,7 +117,7 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingCreated(ct
 	}
 
 	return fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(
-		event.Metadata[auth.HeaderAuthEmail], tenant.Name, cluster.DisplayName), nil
+		event.Metadata[auth.HeaderAuthEmail], tenant.Name, cluster.Name), nil
 }
 
 func (f *tenantEventFormatter) getFormattedDetailsTenantDeleted(ctx context.Context, event *esApi.Event) (string, error) {
@@ -158,5 +158,5 @@ func (f *tenantEventFormatter) getFormattedDetailsTenantClusterBindingDeleted(ct
 	}
 
 	return fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(
-		event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName, tenant.Name), nil
+		event.Metadata[auth.HeaderAuthEmail], cluster.Name, tenant.Name), nil
 }
