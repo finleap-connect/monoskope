@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	expectedClusterName = "the one cluster"
+	expectedClusterName = "the-one-cluster"
 	// expectedClusterLabel        = "one-cluster"
 	// expectedApiServerAddress    = "one.example.com"
 	// expectedClusterCACertBundle = []byte("This should be a certificate")

@@ -56,7 +56,7 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		agg := NewClusterAggregate(NewTestAggregateManager())
 
 		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-			DisplayName:         expectedClusterDisplayName,
+			DisplayName:         expectedClusterName,
 			Name:                expectedClusterName,
 			ApiServerAddress:    expectedClusterApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,

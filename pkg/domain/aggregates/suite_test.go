@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	expectedUserName = "the one cluster"
+	expectedUserName = "the one user"
 	expectedEmail    = "me@example.com"
 
 	expectedTenantScope = scopes.Tenant
@@ -41,7 +41,6 @@ var (
 	expectedResourceId  = uuid.New()
 	expectedUserId      = uuid.New()
 
-	expectedClusterDisplayName      = "the one cluster"
 	expectedClusterName             = "one-cluster"
 	expectedClusterApiServerAddress = "one.example.com"
 	expectedClusterCACertBundle     = []byte("This should be a certificate")

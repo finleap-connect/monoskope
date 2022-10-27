@@ -50,7 +50,6 @@ var _ = Describe("internal/integration_test", func() {
 	expectedTenantNameUpdated := "tenantx"
 	expectedTenantPrefix := "tx"
 
-	expectedClusterDisplayName := "the one cluster"
 	expectedClusterName := "one-cluster"
 	expectedClusterApiServerAddress := "one.example.com"
 	expectedClusterCACertBundle := []byte(`-----BEGIN CERTIFICATE-----
@@ -369,7 +368,7 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(cluster).ToNot(BeNil())
 				g.Expect(cluster.Id).To(Equal(clusterId.String()))
-				g.Expect(cluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
+				g.Expect(cluster.GetDisplayName()).To(Equal(expectedClusterName))
 				g.Expect(cluster.GetName()).To(Equal(expectedClusterName))
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
