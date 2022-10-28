@@ -25,8 +25,8 @@ package commanddata;
 
 // Command data to give a tenant access to an existing cluster
 message CreateTenantClusterBindingCommandData {
-    // Unique identifier of the tenant (UUID 128-bit number)
-    string tenant_id = 1 [(validate.rules).string.uuid = true];
-    // Unique identifier of the cluster (UUID 128-bit number)
-    string cluster_id = 2 [(validate.rules).string.uuid = true];
+  // Unique identifier of the tenant (UUID 128-bit number)
+  string tenant_id = 1 [ (validate.rules).string.uuid = true ];
+  // Unique identifier of the cluster (UUID 128-bit number)
+  string cluster_id = 2 [ (validate.rules).string.uuid = true ];
 }

@@ -3,7 +3,6 @@
 While m8 has no classic CRUD database with tables for storing state, the transient state built based on that has.
 Here is how the projected transient state is modeled:
 
-
 ```mermaid
 erDiagram
     User {
@@ -23,7 +22,6 @@ erDiagram
     Cluster {
         uuid id
         string name
-        string display_name
         string api_server_address
         bytes ca_cert_bundle
     }
@@ -31,7 +29,6 @@ erDiagram
     Tenant {
         uuid id
         string name
-        string display_name
         string prefix
     }
 
