@@ -55,13 +55,12 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx := createSysAdminCtx()
 		agg := NewClusterAggregate(NewTestAggregateManager())
 
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-			DisplayName:         expectedClusterName,
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV3{
 			Name:                expectedClusterName,
 			ApiServerAddress:    expectedClusterApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,
 		})
-		esEvent := es.NewEvent(ctx, events.ClusterCreatedV2, ed, time.Now().UTC(),
+		esEvent := es.NewEvent(ctx, events.ClusterCreatedV3, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
 		err := agg.ApplyEvent(esEvent)
