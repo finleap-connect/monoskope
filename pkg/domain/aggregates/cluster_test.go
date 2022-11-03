@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var _ = Describe("Unit Test for Cluster Aggregate", func() {
@@ -37,13 +38,12 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 
 		event := agg.UncommittedEvents()[0]
 
-		Expect(event.EventType()).To(Equal(events.ClusterCreatedV2))
+		Expect(event.EventType()).To(Equal(events.ClusterCreatedV3))
 
-		data := new(eventdata.ClusterCreatedV2)
+		data := new(eventdata.ClusterCreatedV3)
 		err = event.Data().ToProto(data)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(data.DisplayName).To(Equal(expectedClusterDisplayName))
 		Expect(data.Name).To(Equal(expectedClusterName))
 		Expect(data.ApiServerAddress).To(Equal(expectedClusterApiServerAddress))
 		Expect(data.CaCertificateBundle).To(Equal(expectedClusterCACertBundle))
@@ -55,19 +55,17 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 		ctx := createSysAdminCtx()
 		agg := NewClusterAggregate(NewTestAggregateManager())
 
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-			DisplayName:         expectedClusterDisplayName,
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV3{
 			Name:                expectedClusterName,
 			ApiServerAddress:    expectedClusterApiServerAddress,
 			CaCertificateBundle: expectedClusterCACertBundle,
 		})
-		esEvent := es.NewEvent(ctx, events.ClusterCreatedV2, ed, time.Now().UTC(),
+		esEvent := es.NewEvent(ctx, events.ClusterCreatedV3, ed, time.Now().UTC(),
 			agg.Type(), agg.ID(), agg.Version())
 
 		err := agg.ApplyEvent(esEvent)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(agg.(*ClusterAggregate).displayName).To(Equal(expectedClusterDisplayName))
 		Expect(agg.(*ClusterAggregate).name).To(Equal(expectedClusterName))
 		Expect(agg.(*ClusterAggregate).apiServerAddr).To(Equal(expectedClusterApiServerAddress))
 		Expect(agg.(*ClusterAggregate).caCertBundle).To(Equal(expectedClusterCACertBundle))
@@ -79,16 +77,16 @@ var _ = Describe("Unit Test for Cluster Aggregate", func() {
 			agg := NewClusterAggregate(NewTestAggregateManager())
 
 			expectedNewName := "the-new-name"
-			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdated{
-				DisplayName: expectedNewName,
+			ed := es.ToEventDataFromProto(&eventdata.ClusterUpdatedV2{
+				Name: wrapperspb.String(expectedNewName),
 			})
-			esEvent := es.NewEvent(ctx, events.ClusterUpdated, ed, time.Now().UTC(),
+			esEvent := es.NewEvent(ctx, events.ClusterUpdatedV2, ed, time.Now().UTC(),
 				agg.Type(), agg.ID(), agg.Version()+1)
 
 			err := agg.ApplyEvent(esEvent)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(agg.(*ClusterAggregate).displayName).To(Equal(expectedNewName))
+			Expect(agg.(*ClusterAggregate).name).To(Equal(expectedNewName))
 		})
 		It("should update the ApiServerAddress", func() {
 			ctx := createSysAdminCtx()

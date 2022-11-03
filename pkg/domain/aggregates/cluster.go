@@ -32,7 +32,6 @@ import (
 type ClusterAggregate struct {
 	*DomainAggregateBase
 	aggregateManager es.AggregateStore
-	displayName      string
 	name             string
 	apiServerAddr    string
 	caCertBundle     []byte
@@ -56,30 +55,20 @@ func (a *ClusterAggregate) HandleCommand(ctx context.Context, cmd es.Command) (*
 
 	switch cmd := cmd.(type) {
 	case *commands.CreateClusterCommand:
-		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV2{
-			DisplayName:         cmd.GetDisplayName(),
+		ed := es.ToEventDataFromProto(&eventdata.ClusterCreatedV3{
 			Name:                cmd.GetName(),
 			ApiServerAddress:    cmd.GetApiServerAddress(),
 			CaCertificateBundle: cmd.GetCaCertBundle(),
 		})
-		_ = a.AppendEvent(ctx, events.ClusterCreatedV2, ed)
+		_ = a.AppendEvent(ctx, events.ClusterCreatedV3, ed)
 	case *commands.UpdateClusterCommand:
-		ed := new(eventdata.ClusterUpdated)
-
-		displayName := cmd.GetDisplayName()
-		apiServerAddr := cmd.GetApiServerAddress()
-		caCertBundle := cmd.GetCaCertBundle()
-
-		if displayName != nil && a.displayName != displayName.Value {
-			ed.DisplayName = displayName.Value
+		ed := new(eventdata.ClusterUpdatedV2)
+		ed.Name = cmd.Name
+		ed.ApiServerAddress = cmd.ApiServerAddress
+		if cmd.CaCertBundle != nil && !bytes.Equal(a.caCertBundle, cmd.CaCertBundle) {
+			ed.CaCertificateBundle = cmd.CaCertBundle
 		}
-		if apiServerAddr != nil && a.apiServerAddr != apiServerAddr.Value {
-			ed.ApiServerAddress = apiServerAddr.Value
-		}
-		if caCertBundle != nil && !bytes.Equal(a.caCertBundle, caCertBundle) {
-			ed.CaCertificateBundle = caCertBundle
-		}
-		_ = a.AppendEvent(ctx, events.ClusterUpdated, es.ToEventDataFromProto(ed))
+		_ = a.AppendEvent(ctx, events.ClusterUpdatedV2, es.ToEventDataFromProto(ed))
 	case *commands.DeleteClusterCommand:
 		_ = a.AppendEvent(ctx, events.ClusterDeleted, nil)
 	default:
@@ -132,7 +121,6 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
-		a.displayName = clusterCreatedV1.GetName()
 		a.name = clusterCreatedV1.GetLabel()
 		a.apiServerAddr = clusterCreatedV1.GetApiServerAddress()
 		a.caCertBundle = clusterCreatedV1.GetCaCertificateBundle()
@@ -142,10 +130,18 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 		if err != nil {
 			return err
 		}
-		a.displayName = clusterCreatedV2.GetDisplayName()
 		a.name = clusterCreatedV2.GetName()
 		a.apiServerAddr = clusterCreatedV2.GetApiServerAddress()
 		a.caCertBundle = clusterCreatedV2.GetCaCertificateBundle()
+	case events.ClusterCreatedV3:
+		clusterCreatedV3 := new(eventdata.ClusterCreatedV3)
+		err := event.Data().ToProto(clusterCreatedV3)
+		if err != nil {
+			return err
+		}
+		a.name = clusterCreatedV3.GetName()
+		a.apiServerAddr = clusterCreatedV3.GetApiServerAddress()
+		a.caCertBundle = clusterCreatedV3.GetCaCertificateBundle()
 	case events.ClusterUpdated:
 		data := new(eventdata.ClusterUpdated)
 		err := event.Data().ToProto(data)
@@ -153,13 +149,25 @@ func (a *ClusterAggregate) ApplyEvent(event es.Event) error {
 			return err
 		}
 
-		if len(data.GetDisplayName()) > 0 && a.displayName != data.GetDisplayName() {
-			a.displayName = data.GetDisplayName()
-		}
 		if len(data.GetApiServerAddress()) > 0 && a.apiServerAddr != data.GetApiServerAddress() {
 			a.apiServerAddr = data.GetApiServerAddress()
 		}
 		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
+			a.caCertBundle = data.GetCaCertificateBundle()
+		}
+	case events.ClusterUpdatedV2:
+		data := new(eventdata.ClusterUpdatedV2)
+		err := event.Data().ToProto(data)
+		if err != nil {
+			return err
+		}
+		if data.Name != nil {
+			a.name = data.Name.Value
+		}
+		if data.ApiServerAddress != nil {
+			a.apiServerAddr = data.ApiServerAddress.Value
+		}
+		if data.CaCertificateBundle != nil && !bytes.Equal(a.caCertBundle, data.GetCaCertificateBundle()) {
 			a.caCertBundle = data.GetCaCertificateBundle()
 		}
 	case events.ClusterBootstrapTokenCreated:

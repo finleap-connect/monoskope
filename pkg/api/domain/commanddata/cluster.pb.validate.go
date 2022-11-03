@@ -79,28 +79,6 @@ func (m *CreateCluster) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetDisplayName()) > 150 {
-		err := CreateClusterValidationError{
-			field:  "DisplayName",
-			reason: "value length must be at most 150 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_CreateCluster_DisplayName_Pattern.MatchString(m.GetDisplayName()) {
-		err := CreateClusterValidationError{
-			field:  "DisplayName",
-			reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if !_CreateCluster_ApiServerAddress_Pattern.MatchString(m.GetApiServerAddress()) {
 		err := CreateClusterValidationError{
 			field:  "ApiServerAddress",
@@ -214,8 +192,6 @@ var _ interface {
 
 var _CreateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
-var _CreateCluster_DisplayName_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
-
 var _CreateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")
 
 // Validate checks the field values on UpdateCluster with the rules defined in
@@ -240,12 +216,12 @@ func (m *UpdateCluster) validate(all bool) error {
 
 	var errors []error
 
-	if wrapper := m.GetDisplayName(); wrapper != nil {
+	if wrapper := m.GetName(); wrapper != nil {
 
-		if utf8.RuneCountInString(wrapper.GetValue()) > 150 {
+		if utf8.RuneCountInString(wrapper.GetValue()) > 60 {
 			err := UpdateClusterValidationError{
-				field:  "DisplayName",
-				reason: "value length must be at most 150 runes",
+				field:  "Name",
+				reason: "value length must be at most 60 runes",
 			}
 			if !all {
 				return err
@@ -253,10 +229,10 @@ func (m *UpdateCluster) validate(all bool) error {
 			errors = append(errors, err)
 		}
 
-		if !_UpdateCluster_DisplayName_Pattern.MatchString(wrapper.GetValue()) {
+		if !_UpdateCluster_Name_Pattern.MatchString(wrapper.GetValue()) {
 			err := UpdateClusterValidationError{
-				field:  "DisplayName",
-				reason: "value does not match regex pattern \"^[^\\\\s]+(\\\\s+[^\\\\s]+)*$\"",
+				field:  "Name",
+				reason: "value does not match regex pattern \"^[a-zA-Z][A-Za-z0-9_-]+$\"",
 			}
 			if !all {
 				return err
@@ -381,6 +357,6 @@ var _ interface {
 	ErrorName() string
 } = UpdateClusterValidationError{}
 
-var _UpdateCluster_DisplayName_Pattern = regexp.MustCompile("^[^\\s]+(\\s+[^\\s]+)*$")
+var _UpdateCluster_Name_Pattern = regexp.MustCompile("^[a-zA-Z][A-Za-z0-9_-]+$")
 
 var _UpdateCluster_ApiServerAddress_Pattern = regexp.MustCompile("^(https?://)?[^\\s/$.?#/_].[^\\s_]*$")

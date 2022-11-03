@@ -77,14 +77,14 @@ var _ = Describe("Test validation rules for cluster messages", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should check for a valid DisplayName", func() {
+		It("should check for a valid Name", func() {
 			By("not being too long", func() {
-				cd.DisplayName = wrapperspb.String(invalidDisplayNameTooLong)
+				cd.Name = wrapperspb.String(invalidDisplayNameTooLong)
 				ValidateErrorExpected()
 			})
 
 			By("not containing white spaces", func() {
-				cd.DisplayName = wrapperspb.String(invalidDisplayNameWhiteSpaces)
+				cd.Name = wrapperspb.String(invalidDisplayNameWhiteSpaces)
 				ValidateErrorExpected()
 			})
 		})

@@ -55,7 +55,6 @@ func init() {
 	TestTenantAdminUser.Roles = append(TestTenantAdminUser.Roles, TestTenantAdminUserRoleBinding.Proto())
 
 	TestCluster.Name = "test-cluster"
-	TestCluster.DisplayName = "Test Cluster"
 	TestCluster.ApiServerAddress = "https://somecluster.io"
 	TestCluster.CaCertBundle = []byte("some-bundle")
 

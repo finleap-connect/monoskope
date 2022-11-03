@@ -50,7 +50,6 @@ var _ = Describe("internal/integration_test", func() {
 	expectedTenantNameUpdated := "tenantx"
 	expectedTenantPrefix := "tx"
 
-	expectedClusterDisplayName := "the one cluster"
 	expectedClusterName := "one-cluster"
 	expectedClusterApiServerAddress := "one.example.com"
 	expectedClusterCACertBundle := []byte(`-----BEGIN CERTIFICATE-----
@@ -353,7 +352,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("creating the cluster")
 			command := cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err := commandHandlerClient().Execute(ctx, command)
@@ -369,7 +368,6 @@ var _ = Describe("internal/integration_test", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(cluster).ToNot(BeNil())
 				g.Expect(cluster.Id).To(Equal(clusterId.String()))
-				g.Expect(cluster.GetDisplayName()).To(Equal(expectedClusterDisplayName))
 				g.Expect(cluster.GetName()).To(Equal(expectedClusterName))
 				g.Expect(cluster.GetApiServerAddress()).To(Equal(expectedClusterApiServerAddress))
 				g.Expect(cluster.GetCaCertBundle()).To(Equal(expectedClusterCACertBundle))
@@ -378,7 +376,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("ensuring the same cluster can't be created again")
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName,
+				&cmdData.CreateCluster{
 					Name:             strings.ToUpper(expectedClusterName), // regardless of the case and white spaces
 					ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
@@ -399,7 +397,7 @@ var _ = Describe("internal/integration_test", func() {
 			By("recreating the cluster after deletion")
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: expectedClusterDisplayName, Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: expectedClusterName, ApiServerAddress: expectedClusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err = commandHandlerClient().Execute(ctx, command)
@@ -440,7 +438,7 @@ var _ = Describe("internal/integration_test", func() {
 			// create the cluster
 			command = cmd.NewCommandWithData(
 				uuid.Nil, commandTypes.CreateCluster,
-				&cmdData.CreateCluster{DisplayName: "Cluster Z", Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
+				&cmdData.CreateCluster{Name: "cluster-z", ApiServerAddress: "z.cluster.com", CaCertBundle: expectedClusterCACertBundle},
 			)
 
 			reply, err = commandHandlerClient().Execute(ctx, command)

@@ -98,9 +98,10 @@ var _ = Describe("test/audit/audit_log_test", func() {
 
 	initEvents := func(commandHandlerClient func() esApi.CommandHandlerClient) time.Time {
 		// CreateUser
+		userName := "XYZ"
 		command := cmd.NewCommandWithData(
 			uuid.Nil, commandTypes.CreateUser,
-			&cmdData.CreateUserCommandData{Name: "XYZ", Email: userEmail},
+			&cmdData.CreateUserCommandData{Name: userName, Email: userEmail},
 		)
 		var reply *esApi.CommandReply
 		Eventually(func(g Gomega) {
@@ -130,9 +131,10 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.Admin, scopes.System, userEmail))
 
 		// UpdateUser
+		userName = "XYZ New"
 		command = cmd.NewCommandWithData(
 			userId, commandTypes.UpdateUser,
-			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: "XYZ New"}},
+			&cmdData.UpdateUserCommandData{Name: &wrapperspb.StringValue{Value: userName}},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -144,9 +146,11 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
 
 		// CreateTenant
+		tenantName := "Tenant Y"
+		tenantPrefix := "ty"
 		command = cmd.NewCommandWithData(
 			uuid.Nil, commandTypes.CreateTenant,
-			&cmdData.CreateTenantCommandData{Name: "Tenant Y", Prefix: "ty"},
+			&cmdData.CreateTenantCommandData{Name: tenantName, Prefix: tenantPrefix},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -155,7 +159,7 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		}).Should(Succeed())
 		tenantId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Y", "ty"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, tenantName, tenantPrefix))
 
 		// CreateUserRoleBinding on tenant level
 		command = cmd.NewCommandWithData(
@@ -172,12 +176,12 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		expectedNumEventsDoneOnUser++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.UserRoleAddedDetailsFormat.Sprint(mock.TestAdminUser.Email, roles.User, scopes.Tenant, userEmail))
 		expectedUserOverviewRoleMsgs = append(expectedUserOverviewRoleMsgs, fConsts.UserRoleBindingOverviewDetailsFormat.Sprint(scopes.Tenant, roles.User))
-		expectedUserOverviewTenantMsgs = append(expectedUserOverviewTenantMsgs, fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint("Tenant Z", roles.User))
 
 		// UpdateTenant
+		tenantName = "Tenant Z"
 		command = cmd.NewCommandWithData(
 			tenantId, commandTypes.UpdateTenant,
-			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: "Tenant Z"}},
+			&cmdData.UpdateTenantCommandData{Name: &wrapperspb.StringValue{Value: tenantName}},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -186,14 +190,17 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		}).Should(Succeed())
 		expectedNumEventsDoneByAdmin++
 		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantUpdatedDetailsFormat.Sprint(mock.TestAdminUser.Email))
+		expectedUserOverviewTenantMsgs = append(expectedUserOverviewTenantMsgs, fConsts.TenantUserRoleBindingOverviewDetailsFormat.Sprint(tenantName, roles.User))
 
 		midTime := time.Now().UTC()
 		expectedNumEventsDoneByAdminMidTime = expectedNumEventsDoneByAdmin
 
 		// CreateCluster
+		clusterName := "cluster-y"
+		clusterApiServerAddress := "y.cluster.com"
 		command = cmd.NewCommandWithData(
 			uuid.Nil, commandTypes.CreateCluster,
-			&cmdData.CreateCluster{DisplayName: "Cluster Y", Name: "cluster-y", ApiServerAddress: "y.cluster.com", CaCertBundle: expectedClusterCACertBundle},
+			&cmdData.CreateCluster{Name: clusterName, ApiServerAddress: clusterApiServerAddress, CaCertBundle: expectedClusterCACertBundle},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -202,12 +209,14 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		}).Should(Succeed())
 		clusterId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "cluster-y"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, clusterName))
 
 		// UpdateCluster
+		clusterName = "cluster-z"
+		clusterApiServerAddress = "z.cluster.com"
 		command = cmd.NewCommandWithData(
 			clusterId, commandTypes.UpdateCluster,
-			&cmdData.UpdateCluster{DisplayName: &wrapperspb.StringValue{Value: "Cluster Z"}, ApiServerAddress: &wrapperspb.StringValue{Value: "z.cluster.com"}, CaCertBundle: expectedClusterCACertBundle},
+			&cmdData.UpdateCluster{Name: &wrapperspb.StringValue{Value: clusterName}, ApiServerAddress: &wrapperspb.StringValue{Value: clusterApiServerAddress}, CaCertBundle: expectedClusterCACertBundle},
 		)
 		Eventually(func(g Gomega) {
 			var err error
@@ -229,7 +238,7 @@ var _ = Describe("test/audit/audit_log_test", func() {
 		}).Should(Succeed())
 		tenantClusterBindingId := uuid.MustParse(reply.AggregateId)
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z", "Cluster Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingCreatedDetailsFormat.Sprint(mock.TestAdminUser.Email, tenantName, clusterName))
 
 		// DeleteUser
 		var err error
@@ -252,19 +261,19 @@ var _ = Describe("test/audit/audit_log_test", func() {
 			cmd.NewCommand(tenantId, commandTypes.DeleteTenant))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Tenant Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, tenantName))
 
 		// DeleteTenantClusterBinding
 		_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(tenantClusterBindingId, commandTypes.DeleteTenantClusterBinding))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z", "Tenant Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.TenantClusterBindingDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, clusterName, tenantName))
 
 		// DeleteCluster
 		_, err = commandHandlerClient().Execute(ctx, cmd.NewCommand(clusterId, commandTypes.DeleteCluster))
 		Expect(err).ToNot(HaveOccurred())
 		expectedNumEventsDoneByAdmin++
-		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, "Cluster Z"))
+		expectedDetailMsgs = append(expectedDetailMsgs, fConsts.ClusterDeletedDetailsFormat.Sprint(mock.TestAdminUser.Email, clusterName))
 
 		return midTime
 	}
@@ -296,6 +305,8 @@ var _ = Describe("test/audit/audit_log_test", func() {
 				Expect(e.Issuer).ToNot(BeEmpty())
 				Expect(e.IssuerId).ToNot(BeEmpty())
 				Expect(e.EventType).ToNot(BeEmpty())
+				testEnv.Log.Info(regexp.QuoteMeta(strings.TrimSpace(expectedDetailMsgs[counter])))
+				testEnv.Log.Info(e.Details)
 				Expect(regexp.MatchString(`.*`+regexp.QuoteMeta(strings.TrimSpace(expectedDetailMsgs[counter]))+`.*`, e.Details)).To(BeTrue())
 				counter++
 			}

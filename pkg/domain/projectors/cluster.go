@@ -50,7 +50,6 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 			return nil, err
 		}
 
-		cluster.DisplayName = data.GetName()
 		cluster.Name = data.GetLabel()
 		cluster.ApiServerAddress = data.GetApiServerAddress()
 		cluster.CaCertBundle = data.GetCaCertificateBundle()
@@ -64,7 +63,19 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 			return nil, err
 		}
 
-		cluster.DisplayName = data.GetDisplayName()
+		cluster.Name = data.GetName()
+		cluster.ApiServerAddress = data.GetApiServerAddress()
+		cluster.CaCertBundle = data.GetCaCertificateBundle()
+
+		if err := c.projectCreated(event, cluster.DomainProjection); err != nil {
+			return nil, err
+		}
+	case events.ClusterCreatedV3:
+		data := new(eventdata.ClusterCreatedV3)
+		if err := event.Data().ToProto(data); err != nil {
+			return nil, err
+		}
+
 		cluster.Name = data.GetName()
 		cluster.ApiServerAddress = data.GetApiServerAddress()
 		cluster.CaCertBundle = data.GetCaCertificateBundle()
@@ -77,14 +88,25 @@ func (c *clusterProjector) Project(ctx context.Context, event es.Event, cluster 
 		if err := event.Data().ToProto(data); err != nil {
 			return nil, err
 		}
-		if len(data.GetDisplayName()) > 0 && cluster.DisplayName != data.GetDisplayName() {
-			cluster.DisplayName = data.GetDisplayName()
-		}
 		if len(data.GetApiServerAddress()) > 0 && cluster.ApiServerAddress != data.GetApiServerAddress() {
 			cluster.ApiServerAddress = data.GetApiServerAddress()
 		}
 		if len(data.GetCaCertificateBundle()) > 0 && !bytes.Equal(cluster.CaCertBundle, data.GetCaCertificateBundle()) {
 			cluster.CaCertBundle = data.GetCaCertificateBundle()
+		}
+	case events.ClusterUpdatedV2:
+		data := new(eventdata.ClusterUpdatedV2)
+		if err := event.Data().ToProto(data); err != nil {
+			return nil, err
+		}
+		if data.Name != nil {
+			cluster.Name = data.Name.Value
+		}
+		if data.ApiServerAddress != nil {
+			cluster.ApiServerAddress = data.ApiServerAddress.Value
+		}
+		if data.CaCertificateBundle != nil {
+			cluster.CaCertBundle = data.CaCertificateBundle
 		}
 	case events.ClusterDeleted:
 		if err := c.projectDeleted(event, cluster.DomainProjection); err != nil {

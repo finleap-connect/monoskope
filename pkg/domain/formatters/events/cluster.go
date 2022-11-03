@@ -69,8 +69,12 @@ func (f *clusterEventFormatter) GetFormattedDetails(ctx context.Context, event *
 		return f.getFormattedDetailsClusterCreated(event, ed)
 	case *eventdata.ClusterCreatedV2:
 		return f.getFormattedDetailsClusterCreatedV2(event, ed)
+	case *eventdata.ClusterCreatedV3:
+		return f.getFormattedDetailsClusterCreatedV3(event, ed)
 	case *eventdata.ClusterUpdated:
 		return f.getFormattedDetailsClusterUpdated(ctx, event, ed)
+	case *eventdata.ClusterUpdatedV2:
+		return f.getFormattedDetailsClusterUpdatedV2(ctx, event, ed)
 	}
 
 	return "", errors.ErrMissingFormatterImplementationForEventType
@@ -81,6 +85,10 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterCreated(event *esApi.E
 }
 
 func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV2(event *esApi.Event, eventData *eventdata.ClusterCreatedV2) (string, error) {
+	return fConsts.ClusterCreatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
+}
+
+func (f *clusterEventFormatter) getFormattedDetailsClusterCreatedV3(event *esApi.Event, eventData *eventdata.ClusterCreatedV3) (string, error) {
 	return fConsts.ClusterCreatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], eventData.Name), nil
 }
 
@@ -97,8 +105,32 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterUpdated(ctx context.Co
 
 	var details strings.Builder
 	details.WriteString(fConsts.ClusterUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
-	f.AppendUpdate("Display name", eventData.DisplayName, cluster.DisplayName, &details)
 	f.AppendUpdate("API server address", eventData.ApiServerAddress, cluster.ApiServerAddress, &details)
+	if len(eventData.CaCertificateBundle) != 0 {
+		f.AppendUpdate("Certificate", "a new one", "", &details)
+	}
+	return details.String(), nil
+}
+
+func (f *clusterEventFormatter) getFormattedDetailsClusterUpdatedV2(ctx context.Context, event *esApi.Event, eventData *eventdata.ClusterUpdatedV2) (string, error) {
+	snapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
+
+	cluster, err := snapshotter.CreateSnapshot(ctx, &esApi.EventFilter{
+		MaxTimestamp: timestamppb.New(event.GetTimestamp().AsTime().Add(time.Duration(-1) * time.Microsecond)), // exclude the update event
+		AggregateId:  &wrapperspb.StringValue{Value: event.AggregateId}},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	var details strings.Builder
+	details.WriteString(fConsts.ClusterUpdatedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail]))
+	if eventData.Name != nil {
+		f.AppendUpdate("Name", eventData.Name.Value, cluster.Name, &details)
+	}
+	if eventData.ApiServerAddress != nil {
+		f.AppendUpdate("API server address", eventData.ApiServerAddress.Value, cluster.ApiServerAddress, &details)
+	}
 	if len(eventData.CaCertificateBundle) != 0 {
 		f.AppendUpdate("Certificate", "a new one", "", &details)
 	}
@@ -116,5 +148,5 @@ func (f *clusterEventFormatter) getFormattedDetailsClusterDeleted(ctx context.Co
 		return "", err
 	}
 
-	return fConsts.ClusterDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], cluster.DisplayName), nil
+	return fConsts.ClusterDeletedDetailsFormat.Sprint(event.Metadata[auth.HeaderAuthEmail], cluster.Name), nil
 }

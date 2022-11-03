@@ -111,7 +111,7 @@ func (f *userOverviewFormatter) GetRolesDetails(ctx context.Context, user *proje
 		clusterSnapshotter := snapshots.NewSnapshotter(f.esClient, projectors.NewClusterProjector())
 		cluster, err := clusterSnapshotter.CreateSnapshot(ctx, eventFilter)
 		if err == nil {
-			clustersDetails += fConsts.ClusterUserRoleBindingOverviewDetailsFormat.Sprint(cluster.DisplayName, role.Role)
+			clustersDetails += fConsts.ClusterUserRoleBindingOverviewDetailsFormat.Sprint(cluster.Name, role.Role)
 		}
 	}
 

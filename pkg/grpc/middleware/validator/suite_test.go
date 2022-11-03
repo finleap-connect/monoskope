@@ -105,7 +105,6 @@ func TestUtil(t *testing.T) {
 func NewValidCreateCluster() *commanddata.CreateCluster {
 	return &commanddata.CreateCluster{
 		Name:             validName,
-		DisplayName:      validDisplayName,
 		ApiServerAddress: validApiServerAddress,
 		CaCertBundle:     []byte(validCertificate),
 	}
@@ -131,7 +130,7 @@ func NewValidClusterCreatedV2() *eventdata.ClusterCreatedV2 {
 
 func NewValidUpdateCluster() *commanddata.UpdateCluster {
 	return &commanddata.UpdateCluster{
-		DisplayName:      &wrapperspb.StringValue{Value: validDisplayName},
+		Name:             &wrapperspb.StringValue{Value: validName},
 		ApiServerAddress: &wrapperspb.StringValue{Value: validApiServerAddress},
 		CaCertBundle:     []byte(validCertificate),
 	}
