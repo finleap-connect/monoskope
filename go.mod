@@ -28,7 +28,7 @@ require (
 	github.com/open-policy-agent/opa v0.45.0
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/spf13/cobra v1.6.1
