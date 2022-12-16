@@ -192,7 +192,7 @@ func (b *rabbitEventBus) addHandler(ctx context.Context, handler evs.EventHandle
 	if workQueueName == "" {
 		options = append(options, rabbitmq.WithConsumeOptionsQueueExclusive)
 	} else {
-		options = append(options, rabbitmq.WithConsumeOptionsQueueDurable)
+		options = append(options, rabbitmq.WithConsumeOptionsQueueDurable, rabbitmq.WithConsumeOptionsQuorum)
 	}
 
 	err := b.consumer.StartConsuming(
