@@ -56,7 +56,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-pg/pg/extra/pgotel/v10 v10.10.7
 	github.com/uptrace/opentelemetry-go-extra/otelzap v0.1.17
-	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.4
+	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.37.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.4
 	go.opentelemetry.io/contrib/instrumentation/host v0.36.4
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.36.4
