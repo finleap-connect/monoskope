@@ -14,7 +14,7 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
-	github.com/go-pg/pg/v10 v10.10.7
+	github.com/go-pg/pg/v10 v10.11.0
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
@@ -54,7 +54,7 @@ require (
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-pg/pg/extra/pgotel/v10 v10.10.7
+	github.com/go-pg/pg/extra/pgotel/v10 v10.11.0
 	github.com/uptrace/opentelemetry-go-extra/otelzap v0.1.17
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.4
@@ -188,7 +188,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
-	mellium.im/sasl v0.2.1 // indirect
+	mellium.im/sasl v0.3.1 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
