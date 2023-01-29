@@ -48,7 +48,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.26.1
-	k8s.io/client-go v0.26.0 // indirect
+	k8s.io/client-go v0.26.1 // indirect
 	sigs.k8s.io/controller-runtime v0.13.1
 )
 
@@ -65,7 +65,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.33.0
 	go.opentelemetry.io/otel/trace v1.11.2
 	k8s.io/api v0.26.1
-	k8s.io/cli-runtime v0.26.0
+	k8s.io/cli-runtime v0.26.1
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 )
 
