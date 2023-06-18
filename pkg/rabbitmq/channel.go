@@ -16,6 +16,7 @@ package rabbitmq
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -40,9 +41,15 @@ type channelManager struct {
 
 func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Duration) (*channelManager, error) {
 	log := logger.WithName("rabbitmq-channel-manager")
-	log.Info("attempting to connect to amqp server", "server", url)
+	uri, err := amqp.ParseURI(url)
+	if err != nil {
+		return nil, fmt.Errorf("invalid amqp connection string: %w", err)
+	}
 
-	conn, ch, err := getNewChannel(url, conf)
+	address := fmt.Sprintf("%s://%s:%d", uri.Scheme, uri.Host, uri.Port)
+	log.Info("attempting to connect to amqp server", "server", address)
+
+	conn, ch, err := getNewChannel(uri.String(), conf)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +64,8 @@ func newChannelManager(url string, conf *amqp.Config, maximumBackoff time.Durati
 		maximumBackoff: maximumBackoff,
 	}
 	go chManager.startNotifyCancelOrClosed()
-	log.Info("connected to amqp server!", "url", url)
+
+	log.Info("connected to amqp server", "url", address)
 
 	return &chManager, nil
 }
