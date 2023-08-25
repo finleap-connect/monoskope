@@ -202,7 +202,8 @@ rabbitmq:
   rbac:
     create: false
   service:
-    tlsPort: 5671
+    ports:
+      amqpTls: 5671
   auth:
     username: eventstore # admin user with read/write access
     password: "w1!!b3r3pl4c3d" # in case you use VaultOperator this will be overwritten by the load definition which takes the password from a generated secret
