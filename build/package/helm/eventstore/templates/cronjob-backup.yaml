@@ -1,6 +1,10 @@
 {{- $merged := merge (deepCopy .Values) (deepCopy (default (dict) .Values.global)) -}}
-{{- if .Values.backup.enabled }}
+{{- if .Values.backup.enabled -}}
+{{- if .Capabilities.APIVersions.Has "batch/v1/CronJob" }}
+apiVersion: batch/v1
+{{- else }}
 apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
   name: {{ include "eventstore.fullname" . }}-backup
