@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout Project
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
         - name: Test Open Policy Agent (OPA) Policies
           uses: finleap-connect/opa-test-action@v3.0.0
           with:
