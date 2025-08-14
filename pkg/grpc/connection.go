@@ -61,21 +61,22 @@ func (factory *GrpcConnectionFactory) WithOSCaTransportCredentials() *GrpcConnec
 }
 
 // WithPerRPCCredentials adds a DialOption which sets credentials and places auth state on each outbound RPC.
-func (factory *GrpcConnectionFactory) WithPerRPCCredentials(creds credentials.PerRPCCredentials) *GrpcConnectionFactory {
+func (factory *GrpcConnectionFactory) WithPerRPCCredentials(
+	creds credentials.PerRPCCredentials,
+) *GrpcConnectionFactory {
 	factory.opts = append(factory.opts, grpc.WithPerRPCCredentials(creds))
 	return factory
 }
 
 // WithBlock adds a DialOption which makes caller of Dial blocks until the underlying connection is up. Without this, Dial returns immediately and connecting the server happens in background.
 func (factory *GrpcConnectionFactory) WithBlock() *GrpcConnectionFactory {
-	factory.opts = append(factory.opts, grpc.WithBlock())
+	factory.opts = append(factory.opts, grpc.WithBlock()) // nolint:staticcheck
 	return factory
 }
 
 // WithOpenTelemetry adds a DialOption which adds OpenTelemetry to the client.
 func (factory *GrpcConnectionFactory) WithOpenTelemetry() *GrpcConnectionFactory {
-	factory.opts = append(factory.opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
-	factory.opts = append(factory.opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
+	factory.opts = append(factory.opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	return factory
 }
 
@@ -94,25 +95,36 @@ func (factory *GrpcConnectionFactory) WithRetry() *GrpcConnectionFactory {
 }
 
 // Connect creates a client connection based on the factory.
-func (factory *GrpcConnectionFactory) WithTransportCredentials(creds credentials.TransportCredentials) *GrpcConnectionFactory {
+func (factory *GrpcConnectionFactory) WithTransportCredentials(
+	creds credentials.TransportCredentials,
+) *GrpcConnectionFactory {
 	factory.opts = append(factory.opts, grpc.WithTransportCredentials(creds))
 	return factory
 }
 
 // Connect creates a client connection based on the factory.
 func (factory *GrpcConnectionFactory) Connect(ctx context.Context) (*grpc.ClientConn, error) {
-	return grpc.DialContext(ctx, factory.url, factory.opts...)
+	// The NewClient API is non-blocking, so that the context is not used
+	return grpc.NewClient(factory.url, factory.opts...)
 }
 
 // ConnectWithTimeout creates a client connection based on the factory with a given timeout.
-func (factory *GrpcConnectionFactory) ConnectWithTimeout(ctx context.Context, timeout time.Duration) (*grpc.ClientConn, error) {
+func (factory *GrpcConnectionFactory) ConnectWithTimeout(
+	ctx context.Context,
+	timeout time.Duration,
+) (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return factory.Connect(ctx)
 }
 
 // NewClientWithAuthForward creates a new gRPC client which forwards the authentication bearer token received from the client (TLS optional)
-func NewClientWithAuthForward[T any](ctx context.Context, addr string, requireTransportSecurity bool, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+func NewClientWithAuthForward[T any](
+	ctx context.Context,
+	addr string,
+	requireTransportSecurity bool,
+	clientFactory func(cc grpc.ClientConnInterface) T,
+) (*grpc.ClientConn, T, error) {
 	conn, err := NewGrpcConnectionFactory(addr).
 		WithInsecure().
 		WithPerRPCCredentials(NewForwardedOauthAccess(requireTransportSecurity)).
@@ -128,7 +140,11 @@ func NewClientWithAuthForward[T any](ctx context.Context, addr string, requireTr
 }
 
 // NewClientWithInsecureAuth (USE ONLY IF SECURED BY SERVICE MESH OR SIMILAR) creates a new gRPC client which sends the auth token without TLS
-func NewClientWithInsecureAuth[T any](ctx context.Context, addr, authToken string, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+func NewClientWithInsecureAuth[T any](
+	ctx context.Context,
+	addr, authToken string,
+	clientFactory func(cc grpc.ClientConnInterface) T,
+) (*grpc.ClientConn, T, error) {
 	conn, err := NewGrpcConnectionFactory(addr).
 		WithInsecure().
 		WithPerRPCCredentials(NewOauthAccessWithoutTransportSecurity(&oauth2.Token{AccessToken: authToken})).
@@ -144,7 +160,11 @@ func NewClientWithInsecureAuth[T any](ctx context.Context, addr, authToken strin
 }
 
 // NewClientWithInsecure creates a new gRPC client which connects without TLS
-func NewClientWithInsecure[T any](ctx context.Context, addr string, clientFactory func(cc grpc.ClientConnInterface) T) (*grpc.ClientConn, T, error) {
+func NewClientWithInsecure[T any](
+	ctx context.Context,
+	addr string,
+	clientFactory func(cc grpc.ClientConnInterface) T,
+) (*grpc.ClientConn, T, error) {
 	conn, err := NewGrpcConnectionFactoryWithInsecure(addr).
 		ConnectWithTimeout(ctx, 10*time.Second)
 	if err != nil {
