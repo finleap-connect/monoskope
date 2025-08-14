@@ -21,6 +21,7 @@ import (
 	es "github.com/finleap-connect/monoskope/pkg/eventsourcing"
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/spf13/cobra"
 )
 
@@ -49,31 +50,17 @@ func NewReportCommands() *cobra.Command {
 				})
 			}
 
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Command", "Aggregate"})
-
+			var opts []tablewriter.Option
 			if formatMarkdown {
-				table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-				table.SetAutoMergeCellsByColumnIndex([]int{0})
-				table.SetCenterSeparator("|")
-			} else {
-				table.SetAutoWrapText(false)
-				table.SetAutoFormatHeaders(true)
-				table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-				table.SetAlignment(tablewriter.ALIGN_LEFT)
-				table.SetCenterSeparator("")
-				table.SetColumnSeparator("")
-				table.SetRowSeparator("")
-				table.SetHeaderLine(false)
-				table.SetBorder(false)
-				table.SetTablePadding("\t") // pad with tabs
-				table.SetNoWhiteSpace(true)
+				opts = append(opts, tablewriter.WithRenderer(renderer.NewMarkdown()))
 			}
+			table := tablewriter.NewTable(os.Stdout, opts...)
+			table.Header([]string{"Command", "Aggregate"})
 
-			table.AppendBulk(data) // Add Bulk Data
-			table.Render()
-
-			return nil
+			if err := table.Bulk(data); err != nil {
+				return err
+			}
+			return table.Render()
 		},
 	}
 

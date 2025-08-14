@@ -22,9 +22,9 @@ on:
 
 env:
   GO_MODULE: github.com/finleap-connect/monoskope
-  GO_VERSION: 1.19.x
+  GO_VERSION: 1.24.x
   GINKGO_VERSION: v1.16.5
-  GO_CI_LINT_VERSION: v1.48.0
+  GO_CI_LINT_VERSION: v1.64.8
 
 jobs:
   lint:

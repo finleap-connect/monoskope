@@ -61,7 +61,12 @@ var serveCmd = &cobra.Command{
 
 		// Create CommandHandler client
 		log.Info("Connecting command handler...", "commandHandlerAddr", commandHandlerAddr)
-		conn, commandHandlerClient, err := grpcUtil.NewClientWithAuthForward(ctx, commandHandlerAddr, false, commandHandlerApi.NewCommandHandlerClient)
+		conn, commandHandlerClient, err := grpcUtil.NewClientWithAuthForward(
+			ctx,
+			commandHandlerAddr,
+			false,
+			commandHandlerApi.NewCommandHandlerClient,
+		)
 		if err != nil {
 			return err
 		}
@@ -69,7 +74,12 @@ var serveCmd = &cobra.Command{
 
 		// Create User client
 		log.Info("Connecting queryhandler...", "queryHandlerAddr", queryHandlerAddr)
-		conn, userClient, err := grpcUtil.NewClientWithAuthForward(ctx, queryHandlerAddr, false, domainApi.NewUserClient)
+		conn, userClient, err := grpcUtil.NewClientWithAuthForward(
+			ctx,
+			queryHandlerAddr,
+			false,
+			domainApi.NewUserClient,
+		)
 		if err != nil {
 			return err
 		}
@@ -99,7 +109,10 @@ var serveCmd = &cobra.Command{
 		providerConfig := scimserver.NewProvierConfig()
 		userHandler := scimserver.NewUserHandler(commandHandlerClient, userClient)
 		groupHandler := scimserver.NewGroupHandler(commandHandlerClient, userClient)
-		scimServer := scimserver.NewServer(providerConfig, userHandler, groupHandler)
+		scimServer, err := scimserver.NewServer(&providerConfig, userHandler, groupHandler)
+		if err != nil {
+			return err
+		}
 
 		// Start routine waiting for signals
 		shutdown.RegisterSignalHandler(func() {
@@ -139,6 +152,16 @@ func init() {
 	flags := serveCmd.Flags()
 	flags.StringVar(&httpApiAddr, "http-api-addr", ":8081", "Address the HTTP service will listen on")
 	flags.StringVar(&healthApiAddr, "health-api-addr", ":8082", "Address the health check HTTP service will listen on")
-	flags.StringVar(&commandHandlerAddr, "command-handler-api-addr", ":8081", "Address the command handler gRPC service is listening on")
-	flags.StringVar(&queryHandlerAddr, "query-handler-api-addr", ":8082", "Address the query handler gRPC service is listening on")
+	flags.StringVar(
+		&commandHandlerAddr,
+		"command-handler-api-addr",
+		":8081",
+		"Address the command handler gRPC service is listening on",
+	)
+	flags.StringVar(
+		&queryHandlerAddr,
+		"query-handler-api-addr",
+		":8082",
+		"Address the query handler gRPC service is listening on",
+	)
 }

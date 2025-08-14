@@ -45,7 +45,10 @@ type userHandler struct {
 }
 
 // NewUserHandler creates a new scim.ResourceHandler for handling User resources
-func NewUserHandler(cmdHandlerClient eventsourcing.CommandHandlerClient, userClient domain.UserClient) scim.ResourceHandler {
+func NewUserHandler(
+	cmdHandlerClient eventsourcing.CommandHandlerClient,
+	userClient domain.UserClient,
+) scim.ResourceHandler {
 	return &userHandler{
 		cmdHandlerClient, userClient, logger.WithName("scim-user-handler"),
 	}
@@ -155,8 +158,9 @@ func (h *userHandler) GetAll(r *http.Request, params scim.ListRequestParams) (sc
 	}
 
 	var filterByName string
-	if params.Filter != nil {
-		switch e := params.Filter.(type) {
+	f := params.FilterValidator.GetFilter()
+	if f != nil {
+		switch e := f.(type) {
 		case *filter.AttributeExpression:
 			if e.AttributePath.AttributeName == m8scim.UserNameAttribute && e.Operator == filter.EQ {
 				filterByName = e.CompareValue.(string)

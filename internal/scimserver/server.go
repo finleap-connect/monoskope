@@ -25,7 +25,11 @@ import (
 	m8scim "github.com/finleap-connect/monoskope/pkg/scim"
 )
 
-func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandler, groupHandler scim.ResourceHandler) scim.Server {
+func NewServer(
+	config *scim.ServiceProviderConfig,
+	userHandler scim.ResourceHandler,
+	groupHandler scim.ResourceHandler,
+) (scim.Server, error) {
 	resourceTypes := []scim.ResourceType{
 		{
 			ID:          optional.NewString("User"),
@@ -44,10 +48,10 @@ func NewServer(config scim.ServiceProviderConfig, userHandler scim.ResourceHandl
 			Handler:     NewAuthHandler(groupHandler),
 		},
 	}
-	return scim.Server{
-		Config:        config,
-		ResourceTypes: resourceTypes,
-	}
+	return scim.NewServer(&scim.ServerArgs{
+		ServiceProviderConfig: config,
+		ResourceTypes:         resourceTypes,
+	})
 }
 
 func logDebug(log logger.Logger, r *http.Request) {
@@ -55,5 +59,6 @@ func logDebug(log logger.Logger, r *http.Request) {
 	if r.Body != nil {
 		body, _ = io.ReadAll(r.Body)
 	}
-	log.V(logger.DebugLevel).Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body), "Header", r.Header)
+	log.V(logger.DebugLevel).
+		Info("Handling request...", "Method", r.Method, "URI", r.RequestURI, "Body", string(body), "Header", r.Header)
 }

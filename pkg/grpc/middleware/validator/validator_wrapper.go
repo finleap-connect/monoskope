@@ -16,6 +16,7 @@ package validator
 
 import (
 	"context"
+
 	"github.com/finleap-connect/monoskope/pkg/api/eventsourcing/commands"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -32,7 +33,7 @@ type validator interface {
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if err := validate(req); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 		}
 		return handler(ctx, req)
 	}
@@ -44,7 +45,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 func UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if err := validate(req); err != nil {
-			return status.Errorf(codes.InvalidArgument, err.Error())
+			return status.Errorf(codes.InvalidArgument, "%s", err.Error())
 		}
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
@@ -72,7 +73,7 @@ func (s *recvWrapper) RecvMsg(m interface{}) error {
 		return err
 	}
 	if err := validate(m); err != nil {
-		return status.Errorf(codes.InvalidArgument, err.Error())
+		return status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
 	return nil
 }

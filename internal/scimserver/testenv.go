@@ -79,12 +79,22 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 		return nil, err
 	}
 
-	env.userServiceConn, env.userSvcClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.queryHandlerTestEnv.GetApiAddr(), false, domainApi.NewUserClient)
+	env.userServiceConn, env.userSvcClient, err = grpcUtil.NewClientWithAuthForward(
+		ctx,
+		env.queryHandlerTestEnv.GetApiAddr(),
+		false,
+		domainApi.NewUserClient,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	env.commandHandlerConn, env.commandHandlerClient, err = grpcUtil.NewClientWithAuthForward(ctx, env.commandHandlerTestEnv.GetApiAddr(), false, commandHandlerApi.NewCommandHandlerClient)
+	env.commandHandlerConn, env.commandHandlerClient, err = grpcUtil.NewClientWithAuthForward(
+		ctx,
+		env.commandHandlerTestEnv.GetApiAddr(),
+		false,
+		commandHandlerApi.NewCommandHandlerClient,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +107,10 @@ func NewTestEnv(testEnv *test.TestEnv) (*TestEnv, error) {
 	providerConfig := NewProvierConfig()
 	userHandler := NewUserHandler(env.commandHandlerClient, env.userSvcClient)
 	groupHandler := NewGroupHandler(env.commandHandlerClient, env.userSvcClient)
-	env.scimServer = NewServer(providerConfig, userHandler, groupHandler)
+	env.scimServer, err = NewServer(&providerConfig, userHandler, groupHandler)
+	if err != nil {
+		return nil, err
+	}
 
 	// Start server
 	go func() {

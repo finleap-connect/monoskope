@@ -82,7 +82,8 @@ func GetServiceName() string {
 
 // InitOpenTelemetry configures and sets the global MeterProvider and TracerProvider for OpenTelemetry
 func InitOpenTelemetry(ctx context.Context) (func() error, error) {
-	log := logger.WithName("telemetry").WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
+	log := logger.WithName("telemetry").
+		WithValues("serviceName", GetServiceName(), "version", version.Version, "instance", instanceKey)
 	otel.SetLogger(log)
 
 	if !getIsOpenTelemetryEnabled() {
@@ -96,10 +97,7 @@ func InitOpenTelemetry(ctx context.Context) (func() error, error) {
 	}
 
 	log.Info("Establishing connection to OpenTelemetry collector...", "endpoint", endpoint)
-	timeoutContext, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	conn, err := grpc.DialContext(timeoutContext, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.NewClient(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Error(err, "unable to connect to OpenTelemetry collector", "endpoint", endpoint)
 		return nil, err
@@ -175,7 +173,10 @@ func initMeterProvider(ctx context.Context, conn *grpc.ClientConn, log logger.Lo
 		return nil, err
 	}
 
-	meterProvider := metric.NewMeterProvider(metric.WithResource(res), metric.WithReader(metric.NewPeriodicReader(meterExporter)))
+	meterProvider := metric.NewMeterProvider(
+		metric.WithResource(res),
+		metric.WithReader(metric.NewPeriodicReader(meterExporter)),
+	)
 	otel.SetMeterProvider(meterProvider)
 
 	err = host.Start(host.WithMeterProvider(meterProvider))

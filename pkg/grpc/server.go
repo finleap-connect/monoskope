@@ -58,7 +58,13 @@ func NewServer(name string, keepAlive bool, opt ...grpc.ServerOption) *Server {
 }
 
 // NewServerWithOpts returns a new configured instance of Server with additional interceptors specified
-func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor, opt ...grpc.ServerOption) *Server {
+func NewServerWithOpts(
+	name string,
+	keepAlive bool,
+	unaryServerInterceptors []grpc.UnaryServerInterceptor,
+	streamServerInterceptors []grpc.StreamServerInterceptor,
+	opt ...grpc.ServerOption,
+) *Server {
 	s := &Server{
 		http:     metrics.NewServer(),
 		log:      logger.WithName(name),
@@ -74,22 +80,24 @@ func NewServerWithOpts(name string, keepAlive bool, unaryServerInterceptors []gr
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.UnaryServerInterceptor(), // add message validator
 		grpc_validator_wrapper.UnaryServerInterceptor(), // add message validator wrapper
-		otelgrpc.UnaryServerInterceptor(),
 	)
-	streamServerInterceptors = append(streamServerInterceptors,
-		grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
+	streamServerInterceptors = append(
+		streamServerInterceptors,
+		grpc_ctxtags.StreamServerInterceptor(
+			grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor),
+		),
 		grpc_prometheus.StreamServerInterceptor, // add prometheus metrics interceptors
 		grpc_recovery.StreamServerInterceptor(), // add recovery from panics
 		// own wrapper is used to unpack nested messages
 		//grpc_validator.StreamServerInterceptor(), // add message validator
 		grpc_validator_wrapper.StreamServerInterceptor(), // add message validator wrapper
-		otelgrpc.StreamServerInterceptor(),
 	)
 
 	// Configure gRPC server
 	opts := []grpc.ServerOption{
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamServerInterceptors...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryServerInterceptors...)),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	}
 	if keepAlive {
 		opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.19-buster AS builder
+FROM golang:1.24-bullseye AS builder
 
 ARG VERSION
 ARG GO_MODULE
@@ -22,7 +22,7 @@ ARG NAME
 
 WORKDIR /workdir
 
-ENV GRPC_HEALTH_PROBE_VERSION=v0.3.5
+ENV GRPC_HEALTH_PROBE_VERSION=v0.3.44
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64

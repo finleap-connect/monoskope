@@ -169,7 +169,7 @@ func (h *localServerHandler) handleCodeResponse(w http.ResponseWriter, r *http.R
 		return &authorizationResponse{err: fmt.Errorf("state does not match (wants %s but got %s)", h.state, state)}
 	}
 	w.Header().Add("Content-Type", "text/html")
-	if _, err := fmt.Fprintf(w, h.localServerSuccessHTML); err != nil {
+	if _, err := fmt.Fprint(w, h.localServerSuccessHTML); err != nil {
 		http.Error(w, "server error", 500)
 		return &authorizationResponse{err: fmt.Errorf("write error: %w", err)}
 	}
@@ -181,5 +181,7 @@ func (h *localServerHandler) handleErrorResponse(w http.ResponseWriter, r *http.
 	errorCode, errorDescription := q.Get("error"), q.Get("error_description")
 
 	http.Error(w, "authorization error", 500)
-	return &authorizationResponse{err: fmt.Errorf("authorization error from server: %s %s", errorCode, errorDescription)}
+	return &authorizationResponse{
+		err: fmt.Errorf("authorization error from server: %s %s", errorCode, errorDescription),
+	}
 }
