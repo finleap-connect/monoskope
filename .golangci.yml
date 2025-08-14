@@ -1,0 +1,10 @@
+issues:
+  exclude-rules:
+    - path: 'internal/eventstore/backup/s3/.*\.go'
+      linters:
+        - staticcheck
+      text: 'SA1019:'
+    - path: 'pkg/util/crypto\.go|internal/gateway/auth_server\.go'
+      linters:
+        - staticcheck
+      text: 'SA1019:'
